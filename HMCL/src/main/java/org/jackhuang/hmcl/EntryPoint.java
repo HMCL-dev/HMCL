@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.TLSSecurity;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import javax.swing.JOptionPane;
 import java.io.IOException;
@@ -40,7 +41,7 @@ public final class EntryPoint {
 
         checkWine();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+        if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
             System.getProperties().putIfAbsent("apple.awt.application.appearance", "system");
             if (!isInsideMacAppBundle())
                 initIcon();
@@ -64,7 +65,7 @@ public final class EntryPoint {
         if (!Files.isDirectory(Metadata.HMCL_LOCAL_HOME)) {
             try {
                 Files.createDirectories(Metadata.HMCL_LOCAL_HOME);
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     try {
                         Files.setAttribute(Metadata.HMCL_LOCAL_HOME, "dos:hidden", true);
                     } catch (IOException e) {
@@ -145,7 +146,7 @@ public final class EntryPoint {
     }
 
     private static void checkWine() {
-        if (OperatingSystem.isRunningUnderWine()) {
+        if (SystemInfo.isRunningUnderWine()) {
             LOG.warning("HMCL is running under Wine or its distributions!");
             showWarning(i18n("fatal.wine_warning"));
         }

@@ -7,6 +7,7 @@ import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -33,14 +34,14 @@ final class FastFetchUtils {
 
     /// Runs Fastfetch for one module, returning `null` if execution or response parsing fails.
     private static <T> @Nullable T get(String type, TypeToken<T> resultType) {
-        @Nullable Path fastfetch = SystemUtils.which(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "fastfetch.exe" : "fastfetch");
+        @Nullable Path fastfetch = SystemUtils.which(SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS ? "fastfetch.exe" : "fastfetch");
         if (fastfetch == null)
             return null;
 
         String output;
         try {
             output = SystemUtils.run(Arrays.asList(fastfetch.toString(), "--structure", type, "--format", "json"),
-                    inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET));
+                    inputStream -> IOUtils.readFullyAsString(inputStream, SystemInfo.NATIVE_CHARSET));
         } catch (Throwable e) {
             LOG.warning("Failed to get result from fastfetch", e);
             return null;

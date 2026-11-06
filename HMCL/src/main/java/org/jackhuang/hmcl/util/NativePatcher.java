@@ -9,9 +9,10 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,9 +34,9 @@ public final class NativePatcher {
 
     private static final Library NONEXISTENT_LIBRARY = new Library(new Artifact("com.example", "nonexistent", "0.0.0"));
 
-    private static final Map<Platform, Map<String, Library>> natives = new HashMap<>();
+    private static final Map<NativePlatform, Map<String, Library>> natives = new HashMap<>();
 
-    private static Map<String, Library> getNatives(Platform platform) {
+    private static Map<String, Library> getNatives(NativePlatform platform) {
         return natives.computeIfAbsent(platform, p -> {
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(NativePatcher.class.getResourceAsStream("/assets/natives.json"), StandardCharsets.UTF_8)) {
@@ -85,7 +86,7 @@ public final class NativePatcher {
         final boolean useNativeGLFWorSDL = settings.getInheritable(GameSettings::useNativeGLFWorSDLProperty);
         final boolean useNativeOpenAL = settings.getInheritable(GameSettings::useNativeOpenALProperty);
 
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
+        if (SystemInfo.CURRENT_OS.isUnixLike() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS
                 && (useNativeGLFWorSDL || useNativeOpenAL) && gameVersion.compareTo("1.19") >= 0) {
 
             manifest = manifest.withLibraries(manifest.getLibraries().stream()
@@ -106,7 +107,7 @@ public final class NativePatcher {
 
         // Try patch natives
 
-        OperatingSystem os = javaVersion.getPlatform().getOperatingSystem();
+        OperatingSystem os = javaVersion.getPlatform().os();
         Architecture arch = javaVersion.getArchitecture();
 
         if (settings.getInheritable(GameSettings::notPatchNativesProperty))
@@ -190,30 +191,30 @@ public final class NativePatcher {
         }
     }
 
-    public static SupportStatus checkSupportedStatus(GameVersionNumber gameVersion, Platform platform,
+    public static SupportStatus checkSupportedStatus(GameVersionNumber gameVersion, NativePlatform platform,
                                                      OSVersion systemVersion) {
-        if (platform.equals(Platform.WINDOWS_X86_64)) {
+        if (platform.equals(NativePlatform.WINDOWS_X86_64)) {
             if (!systemVersion.isAtLeast(OSVersion.WINDOWS_7) && gameVersion.isAtLeast("1.20.5", "24w14a"))
                 return SupportStatus.UNSUPPORTED;
 
             return SupportStatus.OFFICIAL_SUPPORTED;
         }
 
-        if (platform.equals(Platform.MACOS_X86_64) || platform.equals(Platform.LINUX_X86_64))
+        if (platform.equals(NativePlatform.MACOS_X86_64) || platform.equals(NativePlatform.LINUX_X86_64))
             return SupportStatus.OFFICIAL_SUPPORTED;
 
-        if (platform.equals(Platform.WINDOWS_X86) || platform.equals(Platform.LINUX_X86)) {
+        if (platform.equals(NativePlatform.WINDOWS_X86) || platform.equals(NativePlatform.LINUX_X86)) {
             if (gameVersion.isAtLeast("1.20.5", "24w14a"))
                 return SupportStatus.UNSUPPORTED;
             else
                 return SupportStatus.OFFICIAL_SUPPORTED;
         }
 
-        if (platform.equals(Platform.WINDOWS_ARM64) || platform.equals(Platform.MACOS_ARM64)) {
+        if (platform.equals(NativePlatform.WINDOWS_ARM64) || platform.equals(NativePlatform.MACOS_ARM64)) {
             if (gameVersion.compareTo("1.19") >= 0)
                 return SupportStatus.OFFICIAL_SUPPORTED;
 
-            String minVersion = platform.getOperatingSystem() == OperatingSystem.WINDOWS
+            String minVersion = platform.os() == OperatingSystem.WINDOWS
                     ? "1.8"
                     : "1.6";
 
@@ -225,23 +226,23 @@ public final class NativePatcher {
         String minVersion = null;
         String maxVersion = null;
 
-        if (platform.equals(Platform.FREEBSD_X86_64)) {
+        if (platform.equals(NativePlatform.FREEBSD_X86_64)) {
             minVersion = "1.13";
-        } else if (platform.equals(Platform.LINUX_ARM64)) {
+        } else if (platform.equals(NativePlatform.LINUX_ARM64)) {
             minVersion = "1.6";
-        } else if (platform.equals(Platform.LINUX_RISCV64)) {
+        } else if (platform.equals(NativePlatform.LINUX_RISCV64)) {
             minVersion = "1.8";
 
             if (gameVersion.compareTo("1.21.5") > 0 && gameVersion.compareTo("26.1-snapshot-8") < 0) {
                 // LWJGL version mismatch
                 return SupportStatus.UNSUPPORTED;
             }
-        } else if (platform.equals(Platform.LINUX_LOONGARCH64)) {
+        } else if (platform.equals(NativePlatform.LINUX_LOONGARCH64)) {
             minVersion = "1.6";
-        } else if (platform.equals(Platform.LINUX_LOONGARCH64_OW)) {
+        } else if (platform.equals(NativePlatform.LINUX_LOONGARCH64_OW)) {
             minVersion = "1.6";
             maxVersion = "1.20.1";
-        } else if (platform.equals(Platform.LINUX_MIPS64EL) || platform.equals(Platform.LINUX_ARM32)) {
+        } else if (platform.equals(NativePlatform.LINUX_MIPS64EL) || platform.equals(NativePlatform.LINUX_ARM32)) {
             minVersion = "1.8";
             maxVersion = "1.20.1";
         }

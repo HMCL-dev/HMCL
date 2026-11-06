@@ -6,6 +6,8 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
@@ -50,7 +52,7 @@ public final class Metadata {
     public static final String GITHUB_SHA = JarUtils.getAttribute("hmcl.version.hash", null);
 
     public static final Path CURRENT_DIRECTORY = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize();
-    public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
+    public static final Path MINECRAFT_DIRECTORY = SystemUtils.getWorkingDirectory("minecraft");
     public static final Path HMCL_USER_HOME;
     public static final Path HMCL_LOCAL_HOME;
     public static final Path DEPENDENCIES_DIRECTORY;
@@ -58,7 +60,7 @@ public final class Metadata {
     static {
         String hmclHome = System.getProperty("hmcl.home", System.getenv("HMCL_USER_HOME"));
         if (StringUtils.isBlank(hmclHome)) {
-            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            if (SystemInfo.isXdgPreferred()) {
                 String xdgData = System.getenv("XDG_DATA_HOME");
                 if (StringUtils.isNotBlank(xdgData)) {
                     HMCL_USER_HOME = Path.of(xdgData, "hmcl").toAbsolutePath().normalize();
@@ -66,7 +68,7 @@ public final class Metadata {
                     HMCL_USER_HOME = Path.of(System.getProperty("user.home"), ".local", "share", "hmcl").toAbsolutePath().normalize();
                 }
             } else {
-                HMCL_USER_HOME = OperatingSystem.getWorkingDirectory("hmcl");
+                HMCL_USER_HOME = SystemUtils.getWorkingDirectory("hmcl");
             }
         } else {
             HMCL_USER_HOME = Path.of(hmclHome).toAbsolutePath().normalize();
@@ -96,26 +98,26 @@ public final class Metadata {
     }
 
     public static @Nullable String getSuggestedJavaDownloadLink() {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM_ARCH == Architecture.LOONGARCH64_OW)
+        if (SystemInfo.CURRENT_OS == OperatingSystem.LINUX && SystemInfo.SYSTEM_ARCH == Architecture.LOONGARCH64_OW)
             return "https://www.loongnix.cn/zh/api/java/downloads-jdk21/index.html";
         else {
             EnumSet<Architecture> supportedArchitectures;
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+            if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
                 supportedArchitectures = EnumSet.of(Architecture.X86_64, Architecture.X86, Architecture.ARM64);
-            else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+            else if (SystemInfo.CURRENT_OS == OperatingSystem.LINUX)
                 supportedArchitectures = EnumSet.of(
                         Architecture.X86_64, Architecture.X86,
                         Architecture.ARM64, Architecture.ARM32,
                         Architecture.RISCV64, Architecture.LOONGARCH64
                 );
-            else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+            else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS)
                 supportedArchitectures = EnumSet.of(Architecture.X86_64, Architecture.ARM64);
             else
                 supportedArchitectures = EnumSet.noneOf(Architecture.class);
-            if (supportedArchitectures.contains(Architecture.SYSTEM_ARCH))
+            if (supportedArchitectures.contains(SystemInfo.SYSTEM_ARCH))
                 return String.format("https://docs.hmcl.net/downloads/%s/%s.html",
-                        OperatingSystem.CURRENT_OS.getCheckedName(),
-                        Architecture.SYSTEM_ARCH.getCheckedName()
+                        SystemInfo.CURRENT_OS.getCheckedName(),
+                        SystemInfo.SYSTEM_ARCH.getCheckedName()
                 );
             else
                 return null;

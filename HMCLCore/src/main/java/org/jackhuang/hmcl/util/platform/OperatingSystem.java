@@ -2,253 +2,73 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.KeyValuePairUtils;
-import org.jackhuang.hmcl.util.platform.windows.Kernel32;
-import org.jackhuang.hmcl.util.platform.windows.WinReg;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.charset.UnsupportedCharsetException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Locale;
 
-/**
- * Represents the operating system.
- *
- * @author huangyuhui
- */
+/// Operating system categories and their platform identifiers, independent of the current machine.
+///
+/// @author huangyuhui
+@NotNullByDefault
 public enum OperatingSystem {
-    /**
-     * Microsoft Windows.
-     */
+    /// Microsoft Windows.
     WINDOWS("windows"),
-    /**
-     * Linux and Unix like OS, including Solaris.
-     */
+
+    /// Linux and the fallback category for generic Unix names, including Solaris and SunOS.
     LINUX("linux"),
-    /**
-     * macOS.
-     */
+
+    /// macOS.
     MACOS("macos", "osx"),
-    /**
-     * FreeBSD.
-     */
+
+    /// FreeBSD.
     FREEBSD("freebsd", "linux"),
-    /**
-     * Unknown operating system.
-     */
+
+    /// Unrecognized or unspecified operating system, identified as `universal`.
     UNKNOWN("universal");
 
+    /// Identifier used in HMCL platform names.
     private final String checkedName;
+
+    /// Identifier used to select Minecraft libraries and evaluate operating system restrictions.
     private final String mojangName;
 
+    /// Creates a category with the same HMCL and Minecraft identifier.
     OperatingSystem(String checkedName) {
         this.checkedName = checkedName;
         this.mojangName = checkedName;
     }
 
+    /// Creates a category with separate HMCL and Minecraft identifiers.
     OperatingSystem(String checkedName, String mojangName) {
         this.checkedName = checkedName;
         this.mojangName = mojangName;
     }
 
+    /// Returns the HMCL identifier, such as `macos` or `freebsd`.
     public String getCheckedName() {
         return checkedName;
     }
 
+    /// Returns the Minecraft identifier, mapping macOS to `osx` and FreeBSD to `linux`.
     public String getMojangName() {
         return mojangName;
     }
 
-    public boolean isLinuxOrBSD() {
-        return this == LINUX || this == FREEBSD;
-    }
-
+    /// Returns whether this category is Linux, FreeBSD, or macOS; unknown systems return `false`.
     public boolean isUnixLike() {
-        return isLinuxOrBSD() || this == MACOS;
+        return this == LINUX || this == FREEBSD || this == MACOS;
     }
 
+    /// Returns `java.exe` for Windows and `java` for all other categories, including unknown systems.
     public String getJavaExecutable() {
         return this == WINDOWS ? "java.exe" : "java";
     }
 
-    /**
-     * The current operating system.
-     */
-    public static final OperatingSystem CURRENT_OS = parseOSName(System.getProperty("os.name"));
-
-    /**
-     * The system default charset.
-     */
-    public static final Charset NATIVE_CHARSET;
-
-    /**
-     * Windows system build number.
-     * When the version number is not recognized or on another system, the value will be -1.
-     */
-    public static final int SYSTEM_BUILD_NUMBER;
-
-    /**
-     * The name of current operating system.
-     */
-    public static final String SYSTEM_NAME;
-
-    /// The version of current operating system.
-    ///
-    /// If [#CURRENT_OS] is [#WINDOWS], then [#SYSTEM_VERSION] must be an instance of [OSVersion.Windows].
-    public static final OSVersion SYSTEM_VERSION;
-
-    public static final String OS_RELEASE_NAME;
-    public static final String OS_RELEASE_PRETTY_NAME;
-
-    public static final int CODE_PAGE;
-
-    static {
-        String nativeEncoding = System.getProperty("native.encoding");
-        String hmclNativeEncoding = System.getProperty("hmcl.native.encoding");
-        Charset nativeCharset = Charset.defaultCharset();
-
-        try {
-            if (hmclNativeEncoding != null) {
-                nativeCharset = Charset.forName(hmclNativeEncoding);
-            } else {
-                if (nativeEncoding != null && !nativeEncoding.equalsIgnoreCase(nativeCharset.name())) {
-                    nativeCharset = Charset.forName(nativeEncoding);
-                }
-
-                if (nativeCharset == StandardCharsets.UTF_8 || nativeCharset == StandardCharsets.US_ASCII) {
-                    nativeCharset = StandardCharsets.UTF_8;
-                } else if ("GBK".equalsIgnoreCase(nativeCharset.name()) || "GB2312".equalsIgnoreCase(nativeCharset.name())) {
-                    nativeCharset = Charset.forName("GB18030");
-                }
-            }
-        } catch (UnsupportedCharsetException e) {
-            e.printStackTrace(System.err);
-        }
-        NATIVE_CHARSET = nativeCharset;
-
-        if (CURRENT_OS == WINDOWS) {
-            int codePage = -1;
-            OSVersion.Windows windowsVersion = null;
-
-            Kernel32 kernel32 = Kernel32.INSTANCE;
-            WinReg reg = WinReg.INSTANCE;
-
-            // Get Windows version number
-            if (reg != null) {
-                var baseVersion = OSVersion.Windows.parse(System.getProperty("os.version"));
-                int majorVersion = baseVersion.major();
-                int minorVersion = baseVersion.minor();
-                int buildNumber = baseVersion.build();
-                int revision = baseVersion.revision();
-
-                Object currentBuild = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
-                        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentBuild");
-                if (currentBuild instanceof String currentBuildStr) {
-                    try {
-                        buildNumber = Integer.parseInt(currentBuildStr);
-                    } catch (NumberFormatException e) {
-                        System.err.println("Invalid Windows build number: " + currentBuildStr);
-                    }
-                }
-
-                if (majorVersion >= 10) {
-                    Object ubr = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
-                            "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "UBR");
-
-                    if (ubr instanceof Integer ubrValue)
-                        revision = ubrValue;
-                }
-
-                windowsVersion = new OSVersion.Windows(majorVersion, minorVersion, buildNumber, revision);
-            }
-
-            if (windowsVersion == null) {
-                try {
-                    Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
-                        Matcher matcher = Pattern.compile("(?<version>\\d+\\.\\d+\\.\\d+\\.\\d+?)]$")
-                                .matcher(reader.readLine().trim());
-                        if (matcher.find())
-                            windowsVersion = OSVersion.Windows.parse(matcher.group("version"));
-                    }
-                    process.destroy();
-                } catch (Throwable ignored) {
-                }
-            }
-
-            if (windowsVersion == null)
-                windowsVersion = OSVersion.Windows.parse(System.getProperty("os.version"));
-
-            // Get Code Page
-
-            if (kernel32 != null)
-                codePage = kernel32.GetACP();
-            else {
-                try {
-                    Process process = Runtime.getRuntime().exec(new String[]{"chcp.com"});
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
-                        Matcher matcher = Pattern.compile("(?<cp>[0-9]+)$")
-                                .matcher(reader.readLine().trim());
-
-                        if (matcher.find())
-                            codePage = Integer.parseInt(matcher.group("cp"));
-                    }
-                    process.destroy();
-                } catch (Throwable ignored) {
-                }
-            }
-
-            String osName = System.getProperty("os.name");
-
-            // Java 17 or earlier recognizes Windows 11 as Windows 10
-            if (osName.equals("Windows 10") && windowsVersion.isAtLeast(OSVersion.WINDOWS_11))
-                osName = "Windows 11";
-
-            if (windowsVersion.isAtLeast(OSVersion.WINDOWS_10) && reg != null) {
-                Object displayVersion = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
-                        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "DisplayVersion");
-
-                if (displayVersion instanceof String displayVersionStr
-                        && displayVersionStr.matches("\\d{2}H\\d")) {
-                    osName = osName + " " + displayVersionStr;
-                }
-            }
-
-            SYSTEM_NAME = osName;
-            SYSTEM_VERSION = windowsVersion;
-            SYSTEM_BUILD_NUMBER = windowsVersion.build();
-            CODE_PAGE = codePage;
-        } else {
-            SYSTEM_NAME = System.getProperty("os.name");
-            SYSTEM_VERSION = OSVersion.of(CURRENT_OS, System.getProperty("os.version"));
-            SYSTEM_BUILD_NUMBER = -1;
-            CODE_PAGE = -1;
-        }
-
-        Map<String, String> osRelease = Collections.emptyMap();
-        if (CURRENT_OS == LINUX || CURRENT_OS == FREEBSD) {
-            Path osReleaseFile = Paths.get("/etc/os-release");
-            if (Files.exists(osReleaseFile)) {
-                try {
-                    osRelease = KeyValuePairUtils.loadProperties(osReleaseFile);
-                } catch (IOException e) {
-                    e.printStackTrace(System.err);
-                }
-            }
-        }
-        OS_RELEASE_NAME = osRelease.get("NAME");
-        OS_RELEASE_PRETTY_NAME = osRelease.get("PRETTY_NAME");
-    }
-
-    public static OperatingSystem parseOSName(String name) {
+    /// Parses a system name case-insensitively, ignoring surrounding whitespace.
+    /// Recognizes common JVM names and aliases without consulting the current machine.
+    /// Returns [#UNKNOWN] for `null`, blank, or unrecognized input.
+    public static OperatingSystem parseOSName(@Nullable String name) {
         if (name == null) {
             return UNKNOWN;
         }
@@ -266,44 +86,4 @@ public enum OperatingSystem {
         else
             return UNKNOWN;
     }
-
-    public static boolean isWindows7OrLater() {
-        return SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7);
-    }
-
-    public static boolean isRunningUnderWine() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
-            return false;
-        }
-
-        String[] wineEnvVars = {
-                "WINEPREFIX",
-                "WINELOADER",
-                "WINEDLLPATH"
-        };
-
-        for (String var : wineEnvVars) {
-            if (System.getenv(var) != null) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static Path getWorkingDirectory(String folder) {
-        String home = System.getProperty("user.home", ".");
-        switch (OperatingSystem.CURRENT_OS) {
-            case LINUX:
-            case FREEBSD:
-                return Paths.get(home, "." + folder).toAbsolutePath();
-            case WINDOWS:
-                String appdata = System.getenv("APPDATA");
-                return Paths.get(appdata == null ? home : appdata, "." + folder).toAbsolutePath();
-            case MACOS:
-                return Paths.get(home, "Library", "Application Support", folder).toAbsolutePath();
-            default:
-                return Paths.get(home, folder).toAbsolutePath();
-        }
-    }
-
 }

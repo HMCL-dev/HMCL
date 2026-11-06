@@ -4,7 +4,7 @@ package org.jackhuang.hmcl.util.platform.windows;
 
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
@@ -177,7 +177,7 @@ final class WindowsGPUDetector {
     /// Returns an empty list if the query or its processing fails.
     private static List<GraphicsCard> detectByCim() {
         try {
-            String getCimInstance = OperatingSystem.SYSTEM_VERSION.getVersion().startsWith("6.1")
+            String getCimInstance = SystemInfo.SYSTEM_VERSION.getVersion().startsWith("6.1")
                     ? "Get-WmiObject"
                     : "Get-CimInstance";
 
@@ -186,7 +186,7 @@ final class WindowsGPUDetector {
                             "-NoProfile",
                             "-Command",
                             buildCimQuery(getCimInstance)),
-                    inputStream -> KeyValuePairUtils.loadList(new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))));
+                    inputStream -> KeyValuePairUtils.loadList(new BufferedReader(new InputStreamReader(inputStream, SystemInfo.NATIVE_CHARSET))));
 
             ArrayList<GraphicsCard> cards = new ArrayList<>(videoControllers.size());
             for (Map<String, String> videoController : videoControllers) {

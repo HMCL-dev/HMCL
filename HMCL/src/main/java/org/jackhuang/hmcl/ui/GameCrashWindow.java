@@ -85,7 +85,7 @@ public class GameCrashWindow extends Stage {
 
         total_memory = MEGABYTES.formatBytes(SystemInfo.getTotalMemorySize());
 
-        this.java = launchOptions.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
+        this.java = launchOptions.getJava().getArchitecture() == SystemInfo.SYSTEM_ARCH
                 ? launchOptions.getJava().getVersion()
                 : launchOptions.getJava().getVersion() + " (" + launchOptions.getJava().getArchitecture().getDisplayName() + ")";
 
@@ -347,12 +347,12 @@ public class GameCrashWindow extends Stage {
                 TwoLineListItem os = new TwoLineListItem();
                 os.getStyleClass().setAll("two-line-item-second-large");
                 os.setTitle(i18n("system.operating_system"));
-                os.setSubtitle(Objects.requireNonNullElse(OperatingSystem.OS_RELEASE_NAME, OperatingSystem.SYSTEM_NAME));
+                os.setSubtitle(SystemInfo.getOperatingSystemName());
 
                 TwoLineListItem arch = new TwoLineListItem();
                 arch.getStyleClass().setAll("two-line-item-second-large");
                 arch.setTitle(i18n("system.architecture"));
-                arch.setSubtitle(Architecture.SYSTEM_ARCH.getDisplayName());
+                arch.setSubtitle(SystemInfo.SYSTEM_ARCH.getDisplayName());
 
                 infoPane.getChildren().setAll(launcher, instance, total_memory, memory, java, os, arch);
             }

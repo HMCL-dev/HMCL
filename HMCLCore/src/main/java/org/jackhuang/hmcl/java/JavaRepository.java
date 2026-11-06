@@ -5,7 +5,7 @@ package org.jackhuang.hmcl.java;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -15,15 +15,15 @@ import java.util.Collection;
  */
 public interface JavaRepository {
 
-    Path getJavaDir(Platform platform, String name);
+    Path getJavaDir(NativePlatform platform, String name);
 
-    Path getManifestFile(Platform platform, String name);
+    Path getManifestFile(NativePlatform platform, String name);
 
-    Collection<Path> getAllJava(Platform platform);
+    Collection<Path> getAllJava(NativePlatform platform);
 
-    Task<JavaRuntime> getDownloadJavaTask(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion);
+    Task<JavaRuntime> getDownloadJavaTask(DownloadProvider downloadProvider, NativePlatform platform, GameJavaVersion gameJavaVersion);
 
-    Task<Void> getUninstallJavaTask(Platform platform, String name);
+    Task<Void> getUninstallJavaTask(NativePlatform platform, String name);
 
     Task<Void> getUninstallJavaTask(JavaRuntime java);
 }

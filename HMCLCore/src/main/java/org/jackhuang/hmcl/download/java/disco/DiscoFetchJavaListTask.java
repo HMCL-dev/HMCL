@@ -8,8 +8,8 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.*;
@@ -25,17 +25,17 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
     private final String archiveType;
     private final Task<String> fetchPackagesTask;
 
-    public DiscoFetchJavaListTask(DownloadProvider downloadProvider, DiscoJavaDistribution distribution, Platform platform) {
+    public DiscoFetchJavaListTask(DownloadProvider downloadProvider, DiscoJavaDistribution distribution, NativePlatform platform) {
         this.distribution = distribution;
-        this.archiveType = platform.getOperatingSystem() == OperatingSystem.WINDOWS ? "zip" : "tar.gz";
+        this.archiveType = platform.os() == OperatingSystem.WINDOWS ? "zip" : "tar.gz";
 
         HashMap<String, String> params = new HashMap<>();
         params.put("distribution", distribution.getApiParameter());
-        params.put("operating_system", platform.getOperatingSystem().getCheckedName());
-        params.put("architecture", platform.getArchitecture().getCheckedName());
+        params.put("operating_system", platform.os().getCheckedName());
+        params.put("architecture", platform.arch().getCheckedName());
         params.put("archive_type", archiveType);
         params.put("directly_downloadable", "true");
-        if (platform.getOperatingSystem() == OperatingSystem.LINUX)
+        if (platform.os() == OperatingSystem.LINUX)
             params.put("lib_c_type", "glibc");
 
         this.fetchPackagesTask = new GetTask(downloadProvider.getDownloadCandidates(NetworkUtils.withQuery(API_ROOT + "/packages", params)));

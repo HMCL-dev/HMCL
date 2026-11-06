@@ -66,6 +66,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -219,7 +220,7 @@ public final class FXUtils {
         FOCUS_VISIBLE_PROPERTY = focusVisibleProperty;
     }
 
-    public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
+    public static final String DEFAULT_MONOSPACE_FONT = SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
 
     public static final List<String> IMAGE_EXTENSIONS = List.of(
             "png", "jpg", "jpeg", "bmp", "gif", "webp", "svg", "apng"
@@ -505,11 +506,11 @@ public final class FXUtils {
         String path = FileUtils.getAbsolutePath(file);
 
         String openCommand;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommand = "explorer.exe";
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+        else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS)
             openCommand = "/usr/bin/open";
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && Files.exists(Path.of("/usr/bin/xdg-open")))
+        else if (SystemInfo.isXdgPreferred() && Files.exists(Path.of("/usr/bin/xdg-open")))
             openCommand = "/usr/bin/xdg-open";
         else
             openCommand = null;
@@ -520,7 +521,7 @@ public final class FXUtils {
                     int exitCode = SystemUtils.callExternalProcess(openCommand, path);
 
                     // explorer.exe always return 1
-                    if (exitCode == 0 || (exitCode == 1 && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS))
+                    if (exitCode == 0 || (exitCode == 1 && SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS))
                         return;
                     else
                         LOG.warning("Open " + path + " failed with code " + exitCode);
@@ -542,11 +543,11 @@ public final class FXUtils {
         String path = file.toAbsolutePath().toString();
 
         String[] openCommands;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommands = new String[]{"explorer.exe", "/select,", path};
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+        else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemUtils.which("dbus-send") != null)
+        else if (SystemInfo.isXdgPreferred() && SystemUtils.which("dbus-send") != null)
             openCommands = new String[]{
                     "dbus-send",
                     "--print-reply",
@@ -565,7 +566,7 @@ public final class FXUtils {
                     int exitCode = SystemUtils.callExternalProcess(openCommands);
 
                     // explorer.exe always return 1
-                    if (exitCode == 0 || (exitCode == 1 && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS))
+                    if (exitCode == 0 || (exitCode == 1 && SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS))
                         return;
                     else
                         LOG.warning("Show " + path + " in explorer failed with code " + exitCode);
@@ -604,10 +605,10 @@ public final class FXUtils {
         String url = NetworkUtils.encodeLocation(link);
         thread(() -> {
             try {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", url});
                     return;
-                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
                     Runtime.getRuntime().exec(new String[]{"open", url});
                     return;
                 } else {
@@ -864,9 +865,9 @@ public final class FXUtils {
 
     public static void setIcon(Stage stage) {
         String icon;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
             icon = "/assets/img/icon.png";
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+        } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
             icon = "/assets/img/icon-mac.png";
         } else {
             icon = "/assets/img/icon@4x.png";
@@ -1193,7 +1194,7 @@ public final class FXUtils {
 
     public static void addMacOSCloseWindowHandler(Window window, @Nullable Supplier<Boolean> restriction) {
         window.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+            if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS
                     && event.isMetaDown()
                     && event.getCode() == KeyCode.W
                     && (restriction == null || restriction.get())) {
