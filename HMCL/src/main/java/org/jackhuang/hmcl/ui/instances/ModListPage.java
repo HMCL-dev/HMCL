@@ -424,12 +424,18 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             String message;
 
                             if (selectedMods.size() == 1) {
-                                message = i18n("mods.delete.confirm", selectedMods.get(0).getModInfo().getName());
+                                message = i18n("mods.delete.confirm", selectedMods.get(0).getModInfo().getName()
+                                    .replace("&", "&amp;")
+                                    .replace("<", "&lt;")
+                                    .replace(">", "&gt;"));
                             } else {
                                 String modNames = String.join(
                                     "\n",
                                     selectedMods.stream()
-                                        .map(mod -> mod.getModInfo().getName())
+                                        .map(mod -> mod.getModInfo().getName()
+                                            .replace("&", "&amp;")
+                                            .replace("<", "&lt;")
+                                            .replace(">", "&gt;"))
                                         .toList()
                                 );
 
