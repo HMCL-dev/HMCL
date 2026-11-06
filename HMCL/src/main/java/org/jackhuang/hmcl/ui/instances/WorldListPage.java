@@ -133,6 +133,12 @@ public final class WorldListPage extends ListPageBase<World> {
         }).start();
     }
 
+    public void openSavesFolder() {
+        if (gameInstance != null) {
+            FXUtils.openFolder(gameInstance.getSavesDirectory());
+        }
+    }
+
     public void add() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("world.add.title"));
@@ -236,6 +242,7 @@ public final class WorldListPage extends ListPageBase<World> {
                     chkShowAll,
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
+                    createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openSavesFolder),
                     createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download)
             );
         }

@@ -31,26 +31,32 @@ import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
-import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
-import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -242,13 +248,19 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
     }
 
+    /// Checks the supplied mods for updates and opens the results for the current instance.
+    /// The target directory is retained even if this page switches instances during the check.
+    /// Does nothing while the list is loading or no instance is selected.
+    ///
+    /// @param mods the mods to check
     public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
+        @Nullable HMCLGameInstance gameInstance = this.gameInstance;
         if (isLoading() || gameInstance == null) {
             return;
         }
 
-        HMCLGameInstance gameInstance = this.gameInstance;
+        Path modDirectory = gameInstance.getModManager().getDirectory();
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
@@ -267,7 +279,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), modManager.getDirectory(), result));
+                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), modDirectory, result));
                             }
                         })
                         .withStagesHints("update.checking"),
@@ -620,10 +632,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             TwoLineListItem title = new TwoLineListItem();
             title.getTitleLabel().setWrapText(true);
-            if (modInfo.getProjectInfo() != null && I18n.isUseChinese())
-                title.setTitle(modInfo.getProjectInfo().displayName());
-            else
-                title.setTitle(modInfo.getModInfo().getName());
+            String displayName = modInfo.getModInfo().getName();
+            if (modInfo.getProjectInfo() != null && I18n.isUseChinese()) {
+                String chineseName = modInfo.getProjectInfo().mainName();
+                if (StringUtils.containsChinese(chineseName)) {
+                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName))
+                        displayName = chineseName + " (" + displayName + ")";
+                }
+            }
+            title.setTitle(displayName);
 
             StringJoiner subtitle = new StringJoiner("\n");
             subtitle.add(i18n("archive.file.name") + ": " + FileUtils.getName(modInfo.getModInfo().getFile()));
@@ -761,15 +778,18 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
+            // free up space when not visible
+            restoreButton.managedProperty().bind(restoreButton.visibleProperty());
+
             HBox actions = new HBox();
             actions.setAlignment(Pos.CENTER);
             actions.getChildren().setAll(restoreButton, revealButton, infoButton, activeSwitch);
 
-            activeSwitch.setSize(24);
+            activeSwitch.setSize(20);
             activeSwitch.setMinSize(30, 30);
             activeSwitch.setPrefSize(30, 30);
             activeSwitch.setMaxSize(30, 30);
-            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 8));
+            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             container.getChildren().setAll(imageContainer, content, actions);
 
@@ -806,20 +826,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (projectInfo != null && I18n.isUseChinese()) {
                 String chineseName = projectInfo.mainName();
                 if (StringUtils.containsChinese(chineseName)) {
-                    if (StringUtils.containsEmoji(chineseName)) {
-                        StringBuilder builder = new StringBuilder();
-
-                        chineseName.codePoints().forEach(ch -> {
-                            if (ch < 0x1F300 || ch > 0x1FAFF)
-                                builder.appendCodePoint(ch);
-                        });
-
-                        chineseName = builder.toString().trim();
-                    }
-
-                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName)) {
-                        displayName = displayName + " (" + chineseName + ")";
-                    }
+                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName))
+                        displayName = chineseName + " (" + displayName + ")";
                 }
             }
             content.setTitle(displayName);
@@ -848,6 +856,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
             updateActiveState(modInfo.isActive());
+            activeSwitch.setDisableAnimation(true);
+            activeSwitch.setSelected(modInfo.isActive());
             activeSwitch.setOnAction(event -> {
                 try {
                     modInfo.setActive(activeSwitch.isSelected());
@@ -858,6 +868,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     activeSwitch.setSelected(modInfo.isActive());
                 }
             });
+            activeSwitch.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()

@@ -8,6 +8,7 @@ import com.sun.jna.WString;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
@@ -46,6 +47,31 @@ public final class WindowsHardwareDetector extends HardwareDetector {
         if (!OperatingSystem.isWindows7OrLater())
             return List.of();
         return WindowsGPUDetector.detect();
+    }
+
+    /// Reads `SystemProductName` from `HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS` using JNA.
+    ///
+    /// Applies the shared hardware model name cleaning and placeholder filtering to produce a simple device identity.
+    /// Returns `null` outside Windows, when native access is disabled or unavailable, or if the value
+    /// is missing, not a string, invalid, or cannot be read.
+    @Override
+    public @Nullable DeviceInfo detectDeviceInfo() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS || !NativeUtils.USE_JNA)
+            return null;
+
+        try {
+            @Nullable WinReg registry = WinReg.INSTANCE;
+            if (registry == null)
+                return null;
+
+            @Nullable Object value = registry.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                    "HARDWARE\\DESCRIPTION\\System\\BIOS", "SystemProductName");
+            @Nullable String name = value instanceof String string ? cleanDeviceName(string) : null;
+            return name == null ? null : new DeviceInfo.Simple(name);
+        } catch (RuntimeException | LinkageError e) {
+            LOG.warning("Failed to detect device name", e);
+            return null;
+        }
     }
 
     /// Queries current page file capacity in bytes; returns zero for no page files, or -1 on failure.

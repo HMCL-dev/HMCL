@@ -60,7 +60,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         registerChangeListener(skinnable.activeProperty(), observable -> updateSelection(true));
         registerChangeListener(skinnable.sceneProperty(), observable -> updateSelection(false));
         registerChangeListener(JFXNodeUtils.treeVisibleProperty(skinnable), observable -> updateSelection(false));
-        setPrepareAction(skinnable.getPrepareAction());
+        updateActionDisabled();
     }
 
     /// Applies the control's selected background paint without changing animation progress.
@@ -97,10 +97,17 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         selectionTransition.playFromStart();
     }
 
-    /// Forwards a registration while consuming the control's reference before user code executes.
+    /// Updates main-action feedback and preparation without allocating the control's property.
+    void updateActionDisabled() {
+        AdvancedListItem item = getSkinnable();
+        container.setPressFeedbackEnabled(!item.isActionDisabled());
+        setPrepareAction(item.getPrepareAction());
+    }
+
+    /// Suspends preparation while the main action is disabled and consumes it before execution.
     void setPrepareAction(@Nullable Runnable action) {
         AdvancedListItem item = getSkinnable();
-        container.setPrepareAction(action == null ? null : () -> {
+        container.setPrepareAction(action == null || item.isActionDisabled() ? null : () -> {
             if (item.getPrepareAction() == action) {
                 item.setPrepareAction(null);
                 action.run();

@@ -4,11 +4,13 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
+import org.jackhuang.hmcl.util.platform.macos.MacDeviceInfo;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.*;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -49,6 +51,9 @@ public final class SystemInfo {
         /// The immutable graphics card snapshot, empty if detection is unavailable or fails.
         public static final @Unmodifiable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
 
+        /// The cached device identity, or `null` if unavailable.
+        public static final @Nullable DeviceInfo DEVICE_INFO = DETECTOR.detectDeviceInfo();
+
         /// The cached desktop environment description, or `null` if unavailable.
         public static final @Nullable String DESKTOP = DETECTOR.detectDesktopEnvironment();
     }
@@ -56,6 +61,16 @@ public final class SystemInfo {
     /// Initializes cached hardware information if needed and logs a system summary on each call.
     public static void initialize() {
         StringBuilder builder = new StringBuilder("System Info:");
+
+        @Nullable DeviceInfo deviceInfo = getDeviceInfo();
+        if (deviceInfo != null) {
+            builder.append("\n - Device: ").append(deviceInfo.name());
+            if (deviceInfo instanceof MacDeviceInfo macDeviceInfo) {
+                @Nullable String modelIdentifier = macDeviceInfo.modelIdentifier();
+                if (modelIdentifier != null && !modelIdentifier.isBlank() && !modelIdentifier.equals(deviceInfo.name()))
+                    builder.append(" (").append(modelIdentifier).append(')');
+            }
+        }
 
         // CPU
         @Unmodifiable List<CentralProcessor> processors = getCentralProcessors();
@@ -164,6 +179,14 @@ public final class SystemInfo {
     /// Returns the cached immutable graphics card list, empty if no cards were reported or detection failed.
     public static @Unmodifiable List<GraphicsCard> getGraphicsCards() {
         return Holder.GRAPHICS_CARDS;
+    }
+
+    /// Returns the cached device identity, or `null` if unavailable or unsupported.
+    ///
+    /// This describes the hardware product, not the user-configured hostname.
+    /// Detection runs once during initialization of the cached system information.
+    public static @Nullable DeviceInfo getDeviceInfo() {
+        return Holder.DEVICE_INFO;
     }
 
     /// Returns the cached desktop environment description, or `null` if detection is unsupported or no name is available.

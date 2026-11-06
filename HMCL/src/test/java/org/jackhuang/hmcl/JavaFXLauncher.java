@@ -3,7 +3,13 @@
 package org.jackhuang.hmcl;
 
 import javafx.application.Platform;
+import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
 
 /// Owns the shared JavaFX toolkit for the lifetime of the test process.
 @NotNullByDefault
@@ -17,7 +23,10 @@ public final class JavaFXLauncher {
     private static boolean started = false;
 
     static {
+        // Keep pixel-distance assertions independent of local launcher preferences.
+        System.setProperty("hmcl.scroll.speed", "1");
         try {
+            initializeAnimationPolicy();
             Platform.startup(() -> {
             });
             started = true;
@@ -30,6 +39,23 @@ public final class JavaFXLauncher {
         // JavaFX cannot be restarted; the test worker process owns its final shutdown.
         if (started)
             Platform.setImplicitExit(false);
+    }
+
+    /// Initializes the cached animation policy before any JavaFX test can select a different default.
+    /// Tests that exercise animations explicitly enable them on their controls.
+    /// The temporary settings are not persisted and the original configuration is restored.
+    private static void initializeAnimationPolicy() throws ReflectiveOperationException {
+        Field field = SettingsManager.class.getDeclaredField("launcherSettings");
+        field.setAccessible(true);
+        @Nullable Object previous = field.get(null);
+        LauncherSettings settings = new LauncherSettings();
+        settings.animationDisabledProperty().set(true);
+        field.set(null, settings);
+        try {
+            AnimationUtils.init();
+        } finally {
+            field.set(null, previous);
+        }
     }
 
     /// Triggers initialization of the shared toolkit.

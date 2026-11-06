@@ -151,8 +151,19 @@
     -fx-cursor: hand;
 }
 
+.advanced-list-item:action-disabled > .rippler-container > .container > .title,
+.advanced-list-item:action-disabled > .rippler-container > .container > .subtitle,
+.advanced-list-item:action-disabled > .rippler-container > .container > :action-disabled {
+    -fx-opacity: 0.4;
+}
+
 .advanced-list-item:selected .rippler-container {
     -jfx-feedback-fill: -monet-on-secondary-container;
+}
+
+.advanced-list-item:action-disabled > .rippler-container {
+    -jfx-feedback-fill: transparent;
+    -fx-cursor: default;
 }
 
 .advanced-list-item > .rippler-container > .container {
@@ -255,6 +266,11 @@
 
 .iconed-menu-item {
     -jfx-feedback-fill: -monet-secondary-container;
+    -fx-cursor: hand;
+}
+
+.iconed-menu-item:disabled {
+    -fx-cursor: default;
 }
 
 .iconed-menu-item .iconed-item-container {
@@ -689,6 +705,10 @@
 
 .jfx-tool-bar .jfx-decorator-button .svg {
     -fx-fill: -monet-on-primary-container;
+}
+
+.jfx-decorator-button .jfx-spinner .arc {
+    -fx-stroke: -monet-on-primary-container;
 }
 
 .jfx-tool-bar Label {
