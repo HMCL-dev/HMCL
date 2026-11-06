@@ -75,8 +75,8 @@ public class DownloadListPage extends Control implements DecoratorPage {
     protected final RemoteAddonRepository repository;
     protected final @NotNull RemoteAddon.Type type;
     private final DownloadProvider downloadProvider;
-
     private Runnable retrySearch;
+    private final StringProperty searchFilterProperty = new SimpleStringProperty();
 
     public DownloadListPage(@NotNull RemoteAddon.Type type, RemoteAddonRepository repository) {
         this(type, repository, null, false);
@@ -88,6 +88,13 @@ public class DownloadListPage extends Control implements DecoratorPage {
         this.callback = callback;
         this.instanceSelection = instanceSelection;
         this.downloadProvider = DownloadProviders.getDownloadProvider();
+
+        FXUtils.onChange(searchFilterProperty, filter -> {
+            if (searchInitialized) {
+                pageOffset.set(0);
+                search("", null, 0, Objects.requireNonNullElse(filter, ""), RemoteAddonRepository.SortType.RELEVANCY);
+            }
+        });
     }
 
     public DownloadProvider getDownloadProvider() {
@@ -106,7 +113,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
         if (!searchInitialized) {
             searchInitialized = true;
-            search("", null, 0, "", RemoteAddonRepository.SortType.RELEVANCY);
+            search("", null, 0, Objects.requireNonNullElse(searchFilterProperty.get(), ""), RemoteAddonRepository.SortType.RELEVANCY);
         }
 
         if (instanceSelection) {
@@ -220,6 +227,10 @@ public class DownloadListPage extends Control implements DecoratorPage {
         }
     }
 
+    public StringProperty searchFilterProperty() {
+        return searchFilterProperty;
+    }
+
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
@@ -233,7 +244,6 @@ public class DownloadListPage extends Control implements DecoratorPage {
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
         private final JFXListView<RemoteAddon> listView = new JFXListView<>();
         private final RemoteImageLoader iconLoader;
-
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
 
@@ -300,6 +310,12 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 }
 
                 JFXTextField nameField = new JFXTextField();
+                nameField.setText(control.searchFilterProperty().get());
+                FXUtils.onChange(control.searchFilterProperty(), text -> {
+                    if (!Objects.equals(nameField.getText(), text)) {
+                        nameField.setText(text);
+                    }
+                });
                 nameField.setPromptText(getSkinnable().supportChinese.get() ? i18n("search.hint.chinese") : i18n("search.hint.english"));
                 if (getSkinnable().supportChinese.get()) {
                     FXUtils.installFastTooltip(nameField, i18n("search.hint.chinese"));
@@ -371,6 +387,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
                 IntegerProperty filterID = new SimpleIntegerProperty(this, "Filter ID", 0);
                 IntegerProperty currentFilterID = new SimpleIntegerProperty(this, "Current Filter ID", -1);
+
                 EventHandler<ActionEvent> searchAction = e -> {
                     iconLoader.clearInvalidCache();
                     if (currentFilterID.get() != -1 && currentFilterID.get() != filterID.get()) {
@@ -509,19 +526,19 @@ public class DownloadListPage extends Control implements DecoratorPage {
             {
                 spinnerPane.loadingProperty().bind(getSkinnable().loadingProperty());
                 spinnerPane.failedReasonProperty().bind(
-                    Bindings.createStringBinding(() -> {
-                        if (getSkinnable().isFailed()) {
-                            return i18n("download.failed.refresh");
-                        } else if (!getSkinnable().isLoading() && getSkinnable().pageCount.get() >= 0 && getSkinnable().items.isEmpty()) {
-                            return i18n("search.no_results_found");
-                        } else {
-                            return null;
-                        }
-                    },
-                    getSkinnable().failedProperty(),
-                    getSkinnable().loadingProperty(),
-                    getSkinnable().pageCount,
-                    getSkinnable().items)
+                        Bindings.createStringBinding(() -> {
+                                    if (getSkinnable().isFailed()) {
+                                        return i18n("download.failed.refresh");
+                                    } else if (!getSkinnable().isLoading() && getSkinnable().pageCount.get() >= 0 && getSkinnable().items.isEmpty()) {
+                                        return i18n("search.no_results_found");
+                                    } else {
+                                        return null;
+                                    }
+                                },
+                                getSkinnable().failedProperty(),
+                                getSkinnable().loadingProperty(),
+                                getSkinnable().pageCount,
+                                getSkinnable().items)
                 );
                 spinnerPane.setOnFailedAction(e -> {
                     if (getSkinnable().isFailed() && getSkinnable().retrySearch != null) {
@@ -612,9 +629,9 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 setGraphic(null);
             } else {
                 setPadding(
-                    getIndex() == listView.getItems().size() - 1
-                        ? LAST_PADDING
-                        : PADDING
+                        getIndex() == listView.getItems().size() - 1
+                                ? LAST_PADDING
+                                : PADDING
                 );
 
                 @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(page.type);

@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -237,6 +238,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     public void showWorldDownloads() {
         tabController.selectTab(worldTab, false);
+    }
+
+
+    @FXThread
+    public DownloadListPage getModpackDownloadPage() {
+        return modpackTab.getNode();
     }
 
     private static final class DownloadNavigator implements Navigation {

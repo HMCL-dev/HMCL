@@ -28,25 +28,27 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     private final HMCLGameRepository repository;
     private final Path file;
     private final String updateVersion;
+    private final String modpackName;
     private String iconUrl;
     private boolean hasSource;
 
     public ModpackInstallWizardProvider(HMCLGameRepository repository) {
-        this(repository, null, null);
+        this(repository, null);
     }
 
     public ModpackInstallWizardProvider(HMCLGameRepository repository, Path modpackFile) {
-        this(repository, modpackFile, null);
+        this(repository, modpackFile, null, null);
     }
 
-    public ModpackInstallWizardProvider(HMCLGameRepository repository, GameInstanceID updateInstanceId) {
-        this(repository, null, updateInstanceId);
+    public ModpackInstallWizardProvider(HMCLGameRepository repository, GameInstanceID updateInstanceId, String modpackName) {
+        this(repository, null, updateInstanceId, modpackName);
     }
 
-    public ModpackInstallWizardProvider(HMCLGameRepository repository, Path modpackFile, GameInstanceID updateInstanceId) {
+    public ModpackInstallWizardProvider(HMCLGameRepository repository, Path modpackFile, GameInstanceID updateInstanceId, String modpackName) {
         this.repository = repository;
         this.file = modpackFile;
         this.updateVersion = updateInstanceId != null ? updateInstanceId.toString() : null;
+        this.modpackName = modpackName;
     }
 
     public void setIconUrl(String iconUrl) {
@@ -58,7 +60,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         if (file != null)
             settings.put(LocalModpackPage.MODPACK_FILE, file);
         if (updateVersion != null)
-            settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
+            settings.put(LocalModpackPage.UPDATE_MODPACK_INSTANCE_ID, updateVersion);
+        if (modpackName != null)
+            settings.put(LocalModpackPage.UPDATE_MODPACK_NAME, modpackName);
         if (StringUtils.isNotBlank(iconUrl))
             settings.put(LocalModpackPage.MODPACK_ICON_URL, iconUrl);
         settings.put(ModpackPage.GAME_DIRECTORY, repository.getGameDirectory());
@@ -70,7 +74,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         Path selected = settings.get(LocalModpackPage.MODPACK_FILE);
         ServerModpackManifest serverModpackManifest = settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
         Modpack modpack = settings.get(LocalModpackPage.MODPACK_MANIFEST);
-        String name = settings.get(LocalModpackPage.MODPACK_NAME);
+        String name = settings.get(LocalModpackPage.UPDATE_MODPACK_INSTANCE_ID);
         String iconUrl = settings.get(LocalModpackPage.MODPACK_ICON_URL);
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
         var excludedFiles = settings.get(LocalModpackPage.MODPACK_EXCLUDED_FILES);
