@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.countly;
 
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.time.LocalDateTime;
