@@ -36,7 +36,7 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
     private final ReadOnlyObjectWrapper<State> state;
 
     public GameProcessPage() {
-        Bindings.bindContent(getItems(), GameProcessManager.displayedHolders);
+        Bindings.bindContent(getItems(), GameProcessManager.processHolders);
 
         Label titleLabel = new Label();
         titleLabel.textProperty().bind(GameProcessManager.aliveProcessCount.asString(i18n("game.process") + " (%d)"));
@@ -56,21 +56,10 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
         return state.getReadOnlyProperty();
     }
 
-    @Override
-    public void refresh() {
+    private void cleanup() {
         setLoading(true);
-        GameProcessManager.updateDisplay();
+        GameProcessManager.cleanup();
         setLoading(false);
-    }
-
-    public void onPageShown() {
-        setLoading(true);
-        GameProcessManager.setDisplay(true);
-        setLoading(false);
-    }
-
-    public void onPageHidden() {
-        GameProcessManager.setDisplay(false);
     }
 
     private void launch() {
@@ -92,7 +81,7 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
         @Override
         protected List<Node> initializeToolbar(GameProcessPage skinnable) {
             return List.of(
-                    ToolbarListPageSkin.createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    ToolbarListPageSkin.createToolbarButton2(i18n("button.cleanup"), SVG.MOP, skinnable::cleanup),
                     ToolbarListPageSkin.createToolbarButton2(i18n("instance.launch"), SVG.ROCKET_LAUNCH, skinnable::launch),
                     ToolbarListPageSkin.createToolbarButton2(i18n("game.process.terminate_all"), SVG.SHUTDOWN, () -> skinnable.terminateSelected(skinnable.getItems()))
             );

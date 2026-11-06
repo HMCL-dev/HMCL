@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -28,45 +26,25 @@ public final class GameProcessManager {
     @FXThread
     private static final Map<String, Integer> idToLaunchedCount = new HashMap<>();
 
-    private static final ObservableList<GameProcessHolder> aliveProcessHolders = FXCollections.observableArrayList();
+    public static final ObservableList<GameProcessHolder> processHolders = FXCollections.observableArrayList();
 
-    public static final ObservableList<GameProcessHolder> displayedHolders = FXCollections.observableArrayList();
-
-    public static final IntegerBinding aliveProcessCount = Bindings.size(aliveProcessHolders);
-
-    private static final BooleanProperty display = new SimpleBooleanProperty() {
-        @Override
-        public void invalidated() {
-            if (display.get()) {
-                updateDisplay();
-            } else {
-                displayedHolders.clear();
-            }
-        }
-    };
+    public static final ReadOnlyIntegerWrapper aliveProcessCount = new ReadOnlyIntegerWrapper(0);
 
     @FXThread
-    public static void setDisplay(boolean display) {
-        GameProcessManager.display.set(display);
+    private static void countAliveProcesses() {
+        aliveProcessCount.set((int) processHolders.stream().filter(holder -> !holder.exitedProperty().get()).count());
     }
 
-    public static void updateDisplay() {
-        FXUtils.runInFX(() -> {
-            aliveProcessHolders.removeIf(holder -> holder.exited.get());
-            displayedHolders.setAll(aliveProcessHolders);
-        });
-    }
-
+    @FXThread
     public static void add(LauncherHelper.HMCLProcessListener processListener) {
-        FXUtils.runInFX(() -> {
-            var holder = new GameProcessHolder(processListener);
-            aliveProcessHolders.add(0, holder);
-            if (display.get()) displayedHolders.add(0, holder);
-        });
+        processHolders.add(0, new GameProcessHolder(processListener));
+        countAliveProcesses();
     }
 
-    private static void remove(GameProcessHolder holder) {
-        FXUtils.runInFX(() -> aliveProcessHolders.remove(holder));
+    @FXThread
+    public static void cleanup() {
+        processHolders.removeIf(holder -> holder.exitedProperty().get());
+        countAliveProcesses();
     }
 
     public static final class GameProcessHolder {
@@ -94,8 +72,8 @@ public final class GameProcessManager {
             }
             holder.onWeakChangeAndOperate(processListener.exitedProperty(), b -> {
                 if (b) {
-                    remove(this);
                     this.exited.set(true);
+                    countAliveProcesses();
                 }
             });
         }

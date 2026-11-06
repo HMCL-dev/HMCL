@@ -1018,7 +1018,7 @@ public final class LauncherHelper {
                 runLater(() -> logsHolder.setLogFile(logFile));
             }
 
-            GameProcessManager.add(this);
+            runLater(() -> GameProcessManager.add(this));
         }
 
         private void finishLaunch() {
