@@ -240,7 +240,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         tabController.selectTab(worldTab, false);
     }
 
-
     @FXThread
     public DownloadListPage getModpackDownloadPage() {
         return modpackTab.getNode();
