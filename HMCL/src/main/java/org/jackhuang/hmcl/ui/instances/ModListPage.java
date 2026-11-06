@@ -584,6 +584,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         private Image loadIcon() {
+            if (localModFile.getModLoaderType() == ModLoaderType.UNKNOWN || localModFile.getModLoaderType() == ModLoaderType.CORRUPT)
+                return getDefaultIcon();
+
             List<String> iconPaths = new ArrayList<>();
 
             if (StringUtils.isNotBlank(this.localModFile.getLogoPath())) {

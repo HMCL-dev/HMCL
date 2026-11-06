@@ -12,6 +12,7 @@ import java.util.Set;
 @NotNullByDefault
 public enum ModLoaderType implements AddonLoaderType {
     UNKNOWN("Unknown", null),
+    CORRUPT("Corrupt", null),
     FORGE("Forge", "INST_FORGE", "forge"),
     CLEANROOM("Cleanroom", "INST_CLEANROOM", "cleanroom"),
     NEO_FORGE("NeoForge", "INST_NEOFORGE", "neoforge"),
