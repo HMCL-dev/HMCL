@@ -372,8 +372,8 @@
     -fx-background-radius: 2px;
 }
 
-.bubble > HBox > .two-line-list-item > .title,
-.bubble > HBox > .two-line-list-item > .subtitle {
+.bubble > RipplerContainer > HBox > .two-line-list-item > .title,
+.bubble > RipplerContainer > HBox > .two-line-list-item > .subtitle {
     -fx-text-fill: -monet-inverse-on-surface;
 }
 
