@@ -4,18 +4,30 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// A class that describes a Minecraft dependency.
 ///
@@ -220,6 +232,63 @@ public record Library(
                 temp != null ? temp.getSha1() : null,
                 temp != null ? temp.getSize() : 0
         );
+    }
+
+    /// Validates the legacy `checksums` list against the complete file or a Forge JAR's `checksums.sha1` index.
+    /// An absent or empty list skips validation without reading the file. I/O failures are logged and return `false`.
+    /// This does not check the separate SHA-1 in [#getDownload()] or general archive integrity.
+    public boolean validateChecksums(Path file) {
+        if (checksums == null || checksums.isEmpty()) {
+            return true;
+        }
+        try {
+            byte[] data = Files.readAllBytes(file);
+            return checksums.contains(DigestUtils.digestToString("SHA-1", data))
+                    || (FileUtils.getName(file).endsWith(".jar") && validateJarChecksums(data, checksums));
+        } catch (IOException e) {
+            LOG.warning("Failed to validate " + file, e);
+            return false;
+        }
+    }
+
+    /// Verifies a trusted Forge checksum index and every file it names, preserving the legacy line format.
+    private static boolean validateJarChecksums(byte[] data, List<String> checksums) throws IOException {
+        Map<String, String> files = new HashMap<>();
+        String @Nullable [] hashes = null;
+        try (JarInputStream jar = new JarInputStream(new ByteArrayInputStream(data))) {
+            @Nullable JarEntry entry;
+            while ((entry = jar.getNextJarEntry()) != null) {
+                byte[] entryData = jar.readAllBytes();
+                if (entry.getName().equals("checksums.sha1")) {
+                    hashes = new String(entryData, StandardCharsets.UTF_8).split("\n");
+                }
+                if (!entry.isDirectory()) {
+                    files.put(entry.getName(), DigestUtils.digestToString("SHA-1", entryData));
+                }
+            }
+        }
+
+        if (hashes == null || !checksums.contains(files.get("checksums.sha1"))) {
+            return false;
+        }
+        for (String hash : hashes) {
+            int separator = hash.indexOf(' ');
+            if (hash.trim().isEmpty() || separator < 0) {
+                continue;
+            }
+            // Only the first space separates the checksum; the remaining text is the exact entry name.
+            String validChecksum = hash.substring(0, separator);
+            String target = hash.substring(separator + 1);
+            @Nullable String checksum = files.get(target);
+            if (checksum == null) {
+                LOG.warning("    " + target + " : missing");
+                return false;
+            } else if (!checksum.equals(validChecksum)) {
+                LOG.warning("    " + target + " : failed (" + checksum + ", " + validChecksum + ")");
+                return false;
+            }
+        }
+        return true;
     }
 
     private String computePath(@Nullable LibraryDownloadInfo raw, String path) {
