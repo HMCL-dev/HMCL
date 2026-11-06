@@ -16,7 +16,6 @@ import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.platform.windows.WindowsHardwareDetector;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -47,145 +46,16 @@ public final class SystemInfo {
     public static final Charset NATIVE_CHARSET = detectNativeCharset();
 
     /// The current system version; always an [OSVersion.Windows] instance on Windows.
-    public static final OSVersion SYSTEM_VERSION;
+    public static final OSVersion SYSTEM_VERSION = detectSystemVersion();
 
     /// The Windows ANSI code page, falling back to the console code page; -1 if unavailable or not on Windows.
-    public static final int CODE_PAGE;
-
-    static {
-        if (CURRENT_OS == OperatingSystem.WINDOWS) {
-            int codePage = -1;
-            @Nullable OSVersion.Windows windowsVersion = null;
-
-            @Nullable Kernel32 kernel32 = Kernel32.INSTANCE;
-            @Nullable WinReg reg = WinReg.INSTANCE;
-
-            // Get Windows version number
-            if (reg != null) {
-                var baseVersion = OSVersion.Windows.parse(System.getProperty("os.version", "Unknown"));
-                int majorVersion = baseVersion.major();
-                int minorVersion = baseVersion.minor();
-                int buildNumber = baseVersion.build();
-                int revision = baseVersion.revision();
-
-                @Nullable Object currentBuild = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
-                        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentBuild");
-                if (currentBuild instanceof String currentBuildStr) {
-                    try {
-                        buildNumber = Integer.parseInt(currentBuildStr);
-                    } catch (NumberFormatException e) {
-                        System.err.println("Invalid Windows build number: " + currentBuildStr);
-                    }
-                }
-
-                if (majorVersion >= 10) {
-                    @Nullable Object ubr = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
-                            "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "UBR");
-
-                    if (ubr instanceof Integer ubrValue)
-                        revision = ubrValue;
-                }
-
-                windowsVersion = new OSVersion.Windows(majorVersion, minorVersion, buildNumber, revision);
-            }
-
-            if (windowsVersion == null) {
-                try {
-                    Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
-                        @Nullable String line = reader.readLine();
-                        Matcher matcher = Pattern.compile("(?<version>\\d+\\.\\d+\\.\\d+\\.\\d+?)]$")
-                                .matcher(line == null ? "" : line.trim());
-                        if (matcher.find())
-                            windowsVersion = OSVersion.Windows.parse(matcher.group("version"));
-                    }
-                    process.destroy();
-                } catch (Throwable ignored) {
-                }
-            }
-
-            if (windowsVersion == null)
-                windowsVersion = OSVersion.Windows.parse(System.getProperty("os.version", "Unknown"));
-
-            // Get Code Page
-
-            if (kernel32 != null)
-                codePage = kernel32.GetACP();
-            else {
-                try {
-                    Process process = Runtime.getRuntime().exec(new String[]{"chcp.com"});
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
-                        @Nullable String line = reader.readLine();
-                        Matcher matcher = Pattern.compile("(?<cp>[0-9]+)$")
-                                .matcher(line == null ? "" : line.trim());
-
-                        if (matcher.find())
-                            codePage = Integer.parseInt(matcher.group("cp"));
-                    }
-                    process.destroy();
-                } catch (Throwable ignored) {
-                }
-            }
-
-            SYSTEM_VERSION = windowsVersion;
-            CODE_PAGE = codePage;
-        } else {
-            SYSTEM_VERSION = OSVersion.of(CURRENT_OS, System.getProperty("os.version", "Unknown"));
-            CODE_PAGE = -1;
-        }
-    }
+    public static final int CODE_PAGE = detectCodePage();
 
     /// The current JVM architecture, including native byte-order and ABI refinements.
-    public static final Architecture CURRENT_ARCH;
+    public static final Architecture CURRENT_ARCH = detectArchitecture(System.getProperty("os.arch"), SYSTEM_VERSION, ByteOrder.nativeOrder());
 
     /// The host architecture, falling back to the JVM architecture when detection fails.
-    public static final Architecture SYSTEM_ARCH;
-
-    static {
-        CURRENT_ARCH = detectArchitecture(System.getProperty("os.arch"), SYSTEM_VERSION, ByteOrder.nativeOrder());
-
-        @Nullable Architecture sysArch = null;
-        if (CURRENT_OS == OperatingSystem.WINDOWS) {
-            @Nullable String processorIdentifier = System.getenv("PROCESSOR_IDENTIFIER");
-            if (processorIdentifier != null) {
-                int idx = processorIdentifier.indexOf(' ');
-                if (idx > 0) {
-                    sysArch = detectArchitecture(processorIdentifier.substring(0, idx), SYSTEM_VERSION, ByteOrder.nativeOrder());
-                }
-            }
-        } else if (CURRENT_OS == OperatingSystem.MACOS) {
-            if (CURRENT_ARCH == Architecture.X86_64) {
-                try {
-                    Process process = Runtime.getRuntime().exec(new String[]{"/usr/sbin/sysctl", "-n", "sysctl.proc_translated"});
-                    if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0
-                            && "1".equals(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim())) {
-                        sysArch = Architecture.ARM64;
-                    }
-                } catch (Throwable e) {
-                    e.printStackTrace(System.err);
-                }
-            }
-        } else {
-            for (String uname : new String[]{
-                    "/bin/uname",
-                    "/usr/bin/uname"
-            }) {
-                if (Files.exists(Path.of(uname))) {
-                    try {
-                        Process process = Runtime.getRuntime().exec(new String[]{uname, "-m"});
-                        if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0) {
-                            sysArch = detectArchitecture(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim(), SYSTEM_VERSION, ByteOrder.nativeOrder());
-                        }
-                    } catch (Throwable e) {
-                        e.printStackTrace(System.err);
-                    }
-                    break;
-                }
-            }
-        }
-
-        SYSTEM_ARCH = sysArch == null || sysArch == Architecture.UNKNOWN ? CURRENT_ARCH : sysArch;
-    }
+    public static final Architecture SYSTEM_ARCH = detectSystemArchitecture();
 
     /// The operating system and architecture of the current JVM.
     public static final NativePlatform CURRENT_PLATFORM = NativePlatform.of(CURRENT_OS, CURRENT_ARCH);
@@ -194,18 +64,7 @@ public final class SystemInfo {
     public static final NativePlatform SYSTEM_PLATFORM = NativePlatform.of(CURRENT_OS, SYSTEM_ARCH);
 
     /// Whether the ARM64 host supports executing x86-64 applications through translation.
-    private static final boolean SUPPORTED_TRANSLATION_X86_64;
-
-    static {
-        if (SYSTEM_PLATFORM.equals(NativePlatform.WINDOWS_ARM64)) {
-            SUPPORTED_TRANSLATION_X86_64 = SYSTEM_VERSION instanceof OSVersion.Windows windowsVersion
-                    && windowsVersion.build() >= 21277;
-        } else if (SYSTEM_PLATFORM.equals(NativePlatform.MACOS_ARM64)) {
-            SUPPORTED_TRANSLATION_X86_64 = Files.isRegularFile(Path.of("/usr/libexec/rosetta/runtime"));
-        } else {
-            SUPPORTED_TRANSLATION_X86_64 = false;
-        }
-    }
+    private static final boolean SUPPORTED_TRANSLATION_X86_64 = detectTranslationX86_64Support();
 
     /// Lazily initializes the platform detector and cached system information.
     private static final class Holder {
@@ -445,6 +304,75 @@ public final class SystemInfo {
         return nativeCharset;
     }
 
+    /// Returns the system version, refining Windows builds from the registry or command output when available.
+    private static OSVersion detectSystemVersion() {
+        if (CURRENT_OS != OperatingSystem.WINDOWS)
+            return OSVersion.of(CURRENT_OS, System.getProperty("os.version", "Unknown"));
+
+        @Nullable OSVersion.Windows windowsVersion = null;
+
+        @Nullable WinReg reg = WinReg.INSTANCE;
+
+        if (reg != null) {
+            var baseVersion = OSVersion.Windows.parse(System.getProperty("os.version", "Unknown"));
+            int majorVersion = baseVersion.major();
+            int minorVersion = baseVersion.minor();
+            int buildNumber = baseVersion.build();
+            int revision = baseVersion.revision();
+
+            @Nullable Object currentBuild = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                    "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentBuild");
+            if (currentBuild instanceof String currentBuildStr) {
+                try {
+                    buildNumber = Integer.parseInt(currentBuildStr);
+                } catch (NumberFormatException e) {
+                    System.err.println("Invalid Windows build number: " + currentBuildStr);
+                }
+            }
+
+            if (majorVersion >= 10) {
+                @Nullable Object ubr = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "UBR");
+
+                if (ubr instanceof Integer ubrValue)
+                    revision = ubrValue;
+            }
+
+            windowsVersion = new OSVersion.Windows(majorVersion, minorVersion, buildNumber, revision);
+        }
+
+        if (windowsVersion == null) {
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
+                    @Nullable String line = reader.readLine();
+                    Matcher matcher = Pattern.compile("(?<version>\\d+\\.\\d+\\.\\d+\\.\\d+?)]$")
+                            .matcher(line == null ? "" : line.trim());
+                    if (matcher.find())
+                        windowsVersion = OSVersion.Windows.parse(matcher.group("version"));
+                }
+                process.destroy();
+            } catch (Throwable ignored) {
+            }
+        }
+
+        if (windowsVersion == null)
+            windowsVersion = OSVersion.Windows.parse(System.getProperty("os.version", "Unknown"));
+
+        return windowsVersion;
+    }
+
+    /// Returns the Windows ANSI or fallback console code page, or -1 if unavailable or not on Windows.
+    private static int detectCodePage() {
+        if (CURRENT_OS != OperatingSystem.WINDOWS)
+            return -1;
+
+        @Nullable Kernel32 kernel32 = Kernel32.INSTANCE;
+        if (kernel32 != null)
+            return kernel32.GetACP();
+        return -1;
+    }
+
     /// Resolves ambiguous architecture names using the current JVM byte order and kernel version.
     private static Architecture detectArchitecture(
             @Nullable String name,
@@ -459,6 +387,63 @@ public final class SystemInfo {
                 && !systemVersion.isAtLeast(OSVersion.of(OperatingSystem.LINUX, "5.19")))
             return Architecture.LOONGARCH64_OW;
         return architecture;
+    }
+
+    /// Detects the host architecture, falling back to the current JVM architecture when unavailable.
+    private static Architecture detectSystemArchitecture() {
+        @Nullable Architecture sysArch = null;
+        if (CURRENT_OS == OperatingSystem.WINDOWS) {
+            @Nullable String processorIdentifier = System.getenv("PROCESSOR_IDENTIFIER");
+            if (processorIdentifier != null) {
+                int idx = processorIdentifier.indexOf(' ');
+                if (idx > 0) {
+                    sysArch = detectArchitecture(processorIdentifier.substring(0, idx), SYSTEM_VERSION, ByteOrder.nativeOrder());
+                }
+            }
+        } else if (CURRENT_OS == OperatingSystem.MACOS) {
+            if (CURRENT_ARCH == Architecture.X86_64) {
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{"/usr/sbin/sysctl", "-n", "sysctl.proc_translated"});
+                    if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0
+                            && "1".equals(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim())) {
+                        sysArch = Architecture.ARM64;
+                    }
+                } catch (Throwable e) {
+                    e.printStackTrace(System.err);
+                }
+            }
+        } else {
+            for (String uname : new String[]{
+                    "/bin/uname",
+                    "/usr/bin/uname"
+            }) {
+                if (Files.exists(Path.of(uname))) {
+                    try {
+                        Process process = Runtime.getRuntime().exec(new String[]{uname, "-m"});
+                        if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0) {
+                            sysArch = detectArchitecture(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim(), SYSTEM_VERSION, ByteOrder.nativeOrder());
+                        }
+                    } catch (Throwable e) {
+                        e.printStackTrace(System.err);
+                    }
+                    break;
+                }
+            }
+        }
+
+        return sysArch == null || sysArch == Architecture.UNKNOWN ? CURRENT_ARCH : sysArch;
+    }
+
+    /// Detects x86-64 translation support from the host platform, Windows build, and Rosetta installation.
+    private static boolean detectTranslationX86_64Support() {
+        if (SYSTEM_PLATFORM.equals(NativePlatform.WINDOWS_ARM64)) {
+            return SYSTEM_VERSION instanceof OSVersion.Windows windowsVersion
+                    && windowsVersion.build() >= 21277;
+        } else if (SYSTEM_PLATFORM.equals(NativePlatform.MACOS_ARM64)) {
+            return Files.isRegularFile(Path.of("/usr/libexec/rosetta/runtime"));
+        } else {
+            return false;
+        }
     }
 
     /// Prevents instantiation of this utility class.
