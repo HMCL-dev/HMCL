@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.util.platform;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
@@ -182,6 +183,7 @@ public enum Architecture {
     static {
         CURRENT_ARCH = parseArchName(System.getProperty("os.arch"));
 
+        // Architecture probes return ASCII tokens and must not depend on SystemInfo initialization.
         Architecture sysArch = null;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             String processorIdentifier = System.getenv("PROCESSOR_IDENTIFIER");
@@ -196,7 +198,7 @@ public enum Architecture {
                 try {
                     Process process = Runtime.getRuntime().exec(new String[]{"/usr/sbin/sysctl", "-n", "sysctl.proc_translated"});
                     if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0
-                            && "1".equals(IOUtils.readFullyAsString(process.getInputStream(), SystemInfo.NATIVE_CHARSET).trim())) {
+                            && "1".equals(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim())) {
                         sysArch = ARM64;
                     }
                 } catch (Throwable e) {
@@ -212,7 +214,7 @@ public enum Architecture {
                     try {
                         Process process = Runtime.getRuntime().exec(new String[]{uname, "-m"});
                         if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0) {
-                            sysArch = parseArchName(IOUtils.readFullyAsString(process.getInputStream(), SystemInfo.NATIVE_CHARSET).trim());
+                            sysArch = parseArchName(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim());
                         }
                     } catch (Throwable e) {
                         e.printStackTrace(System.err);

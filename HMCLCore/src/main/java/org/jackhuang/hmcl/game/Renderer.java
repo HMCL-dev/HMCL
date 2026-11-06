@@ -431,7 +431,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                                     if (driver != null) {
                                         driverToIcdFile.put(driver, icdFile);
 
-                                        if (driver.isSupported(Platform.CURRENT_PLATFORM, SystemInfo.getGraphicsCards())) {
+                                        if (driver.isSupported(SystemInfo.CURRENT_PLATFORM, SystemInfo.getGraphicsCards())) {
                                             foundSupported.add(driver);
                                         }
                                     }
@@ -509,7 +509,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                 Stream.concat(
                         Stream.of(DEFAULT),
                         Stream.of(OpenGL.values()).filter(it -> it.isSupported(
-                                Platform.CURRENT_PLATFORM,
+                                SystemInfo.CURRENT_PLATFORM,
                                 null // We don't need to pass graphics cards for OpenGL yet
                         ))
                 ).toList();

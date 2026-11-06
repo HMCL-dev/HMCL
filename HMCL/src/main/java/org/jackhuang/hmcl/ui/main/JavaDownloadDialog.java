@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -65,7 +66,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class JavaDownloadDialog extends StackPane {
 
     public static Runnable showDialogAction(DownloadProvider downloadProvider) {
-        Platform platform = Platform.SYSTEM_PLATFORM;
+        Platform platform = SystemInfo.SYSTEM_PLATFORM;
 
         List<GameJavaVersion> supportedVersions = GameJavaVersion.getSupportedVersions(platform);
 

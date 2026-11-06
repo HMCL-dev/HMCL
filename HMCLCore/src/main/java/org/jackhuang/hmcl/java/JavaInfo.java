@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Contract;
@@ -131,7 +132,7 @@ public final class JavaInfo {
         return new Builder(platform, version);
     }
 
-    public static final JavaInfo CURRENT_ENVIRONMENT = new JavaInfo(Platform.CURRENT_PLATFORM, System.getProperty("java.version"), System.getProperty("java.vendor"));
+    public static final JavaInfo CURRENT_ENVIRONMENT = new JavaInfo(SystemInfo.CURRENT_PLATFORM, System.getProperty("java.version"), System.getProperty("java.vendor"));
 
     private final Platform platform;
     private final String version;

@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-
+/// An operating system and architecture pair, independent of the current runtime environment.
 public record Platform(OperatingSystem os, Architecture arch) {
     public static final Platform UNKNOWN = new Platform(OperatingSystem.UNKNOWN, Architecture.UNKNOWN);
 
@@ -25,29 +23,6 @@ public record Platform(OperatingSystem os, Architecture arch) {
     public static final Platform MACOS_ARM64 = new Platform(OperatingSystem.MACOS, Architecture.ARM64);
 
     public static final Platform FREEBSD_X86_64 = new Platform(OperatingSystem.FREEBSD, Architecture.X86_64);
-
-    public static final Platform CURRENT_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.CURRENT_ARCH);
-    public static final Platform SYSTEM_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.SYSTEM_ARCH);
-
-    private static final boolean SUPPORTED_TRANSLATION_X86_64;
-
-    static {
-        if (SYSTEM_PLATFORM.equals(WINDOWS_ARM64)) {
-            SUPPORTED_TRANSLATION_X86_64 = SystemInfo.SYSTEM_VERSION instanceof OSVersion.Windows windowsVersion
-                    && windowsVersion.build() >= 21277;
-        } else if (SYSTEM_PLATFORM.equals(MACOS_ARM64)) {
-            SUPPORTED_TRANSLATION_X86_64 = Files.isRegularFile(Path.of("/usr/libexec/rosetta/runtime"));
-        } else {
-            SUPPORTED_TRANSLATION_X86_64 = false;
-        }
-    }
-
-    /// Returns `true` if the current platform architecture is not x86-64,
-    /// but can support executing x86-64 applications through translation;
-    /// otherwise, returns `false`.
-    public static boolean isSupportedTranslationX86_64() {
-        return SUPPORTED_TRANSLATION_X86_64;
-    }
 
     public static Platform getPlatform(OperatingSystem os, Architecture arch) {
         if (os == OperatingSystem.UNKNOWN && arch == Architecture.UNKNOWN) {

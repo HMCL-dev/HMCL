@@ -24,6 +24,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -147,6 +149,31 @@ public final class SystemInfo {
             SYSTEM_VERSION = OSVersion.of(OperatingSystem.CURRENT_OS, System.getProperty("os.version", "Unknown"));
             CODE_PAGE = -1;
         }
+    }
+
+    /// The operating system and architecture of the current JVM.
+    public static final Platform CURRENT_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.CURRENT_ARCH);
+
+    /// The operating system and native architecture of the host system.
+    public static final Platform SYSTEM_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.SYSTEM_ARCH);
+
+    /// Whether the ARM64 host supports executing x86-64 applications through translation.
+    private static final boolean SUPPORTED_TRANSLATION_X86_64;
+
+    static {
+        if (SYSTEM_PLATFORM.equals(Platform.WINDOWS_ARM64)) {
+            SUPPORTED_TRANSLATION_X86_64 = SYSTEM_VERSION instanceof OSVersion.Windows windowsVersion
+                    && windowsVersion.build() >= 21277;
+        } else if (SYSTEM_PLATFORM.equals(Platform.MACOS_ARM64)) {
+            SUPPORTED_TRANSLATION_X86_64 = Files.isRegularFile(Path.of("/usr/libexec/rosetta/runtime"));
+        } else {
+            SUPPORTED_TRANSLATION_X86_64 = false;
+        }
+    }
+
+    /// Returns whether the ARM64 host supports x86-64 translation based on Windows build or Rosetta availability.
+    public static boolean isSupportedTranslationX86_64() {
+        return SUPPORTED_TRANSLATION_X86_64;
     }
 
     /// Returns whether the current system is Windows 7 or later.

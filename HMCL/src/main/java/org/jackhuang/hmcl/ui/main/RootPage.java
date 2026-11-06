@@ -125,7 +125,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                         && !SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
                     message = i18n("terracotta.unsupported.os.windows.old");
-                else if (Platform.SYSTEM_PLATFORM.equals(OperatingSystem.LINUX, Architecture.LOONGARCH64_OW))
+                else if (SystemInfo.SYSTEM_PLATFORM.equals(OperatingSystem.LINUX, Architecture.LOONGARCH64_OW))
                     message = i18n("terracotta.unsupported.arch.loongarch64_ow");
                 else
                     message = i18n("terracotta.unsupported");

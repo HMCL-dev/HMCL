@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -114,7 +115,7 @@ public final class JavaManager {
                 if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
 
                     // Since Windows 10 Build 21277, Windows Arm64 has been compatible with x86-64 programs via translation
-                    if (architecture == Architecture.X86_64 && Platform.isSupportedTranslationX86_64())
+                    if (architecture == Architecture.X86_64 && SystemInfo.isSupportedTranslationX86_64())
                         return true;
 
                     // Windows Arm64 is compatible with x86 programs via translation
@@ -129,7 +130,7 @@ public final class JavaManager {
                 break;
             case MACOS:
                 // macOS Arm64 compatible with x86-64 programs via Rosetta 2.
-                if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && Platform.isSupportedTranslationX86_64())
+                if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && SystemInfo.isSupportedTranslationX86_64())
                     return architecture == Architecture.X86_64;
                 break;
         }
@@ -358,19 +359,19 @@ public final class JavaManager {
         if (useCache)
             searcher.loadCache();
 
-        searcher.searchAllJavaInRepository(Platform.SYSTEM_PLATFORM);
+        searcher.searchAllJavaInRepository(SystemInfo.SYSTEM_PLATFORM);
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64)
                     searcher.searchAllJavaInRepository(Platform.WINDOWS_X86);
                 if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                    if (Platform.isSupportedTranslationX86_64())
+                    if (SystemInfo.isSupportedTranslationX86_64())
                         searcher.searchAllJavaInRepository(Platform.WINDOWS_X86_64);
                     searcher.searchAllJavaInRepository(Platform.WINDOWS_X86);
                 }
                 break;
             case MACOS:
-                if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && Platform.isSupportedTranslationX86_64())
+                if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && SystemInfo.isSupportedTranslationX86_64())
                     searcher.searchAllJavaInRepository(Platform.MACOS_X86_64);
                 break;
         }
@@ -775,7 +776,7 @@ public final class JavaManager {
             // $HOME/Library/Application Support/minecraft/runtime/java-runtime-beta/mac-os/java-runtime-beta/jre.bundle/Contents/Home
             // $HOME/.minecraft/runtime/java-runtime-beta/linux/java-runtime-beta
 
-            String javaPlatform = getMojangJavaPlatform(Platform.SYSTEM_PLATFORM);
+            String javaPlatform = getMojangJavaPlatform(SystemInfo.SYSTEM_PLATFORM);
             if (javaPlatform != null) {
                 searchAllOfficialJava(directory, javaPlatform, verify);
             }
@@ -784,13 +785,13 @@ public final class JavaManager {
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
                     searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86), verify);
                 } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                    if (Platform.isSupportedTranslationX86_64()) {
+                    if (SystemInfo.isSupportedTranslationX86_64()) {
                         searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86_64), verify);
                     }
                     searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86), verify);
                 }
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && Platform.isSupportedTranslationX86_64()) {
+                if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && SystemInfo.isSupportedTranslationX86_64()) {
                     searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.MACOS_X86_64), verify);
                 }
             }
