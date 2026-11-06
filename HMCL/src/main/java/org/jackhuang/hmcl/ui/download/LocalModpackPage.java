@@ -61,7 +61,7 @@ public final class LocalModpackPage extends ModpackPage {
 
         HMCLGameRepository repository = controller.getSettings().get(ModpackPage.REPOSITORY);
 
-        String name = controller.getSettings().get(UPDATE_MODPACK_INSTANCE_ID);
+        String name = controller.getSettings().get(MODPACK_INSTANCE_ID);
         if (name != null) {
             txtModpackName.setText(name);
             txtModpackName.setDisable(true);
@@ -198,7 +198,7 @@ public final class LocalModpackPage extends ModpackPage {
     }
 
     private void finishInstall(String name) {
-        controller.getSettings().put(UPDATE_MODPACK_INSTANCE_ID, name);
+        controller.getSettings().put(MODPACK_INSTANCE_ID, name);
         controller.getSettings().put(MODPACK_EXCLUDED_FILES, getExcludedFiles());
         controller.onFinish();
     }
@@ -226,8 +226,8 @@ public final class LocalModpackPage extends ModpackPage {
     }
 
     public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("MODPACK_FILE");
-    public static final SettingsMap.Key<String> UPDATE_MODPACK_INSTANCE_ID = new SettingsMap.Key<>("UPDATE_MODPACK_INSTANCE_ID");
-    public static final SettingsMap.Key<String> UPDATE_MODPACK_NAME = new SettingsMap.Key<>("UPDATE_MODPACK_NAME");
+    public static final SettingsMap.Key<String> MODPACK_INSTANCE_ID = new SettingsMap.Key<>("MODPACK_INSTANCE_ID");
+    public static final SettingsMap.Key<String> MODPACK_NAME = new SettingsMap.Key<>("MODPACK_NAME");
     public static final SettingsMap.Key<Modpack> MODPACK_MANIFEST = new SettingsMap.Key<>("MODPACK_MANIFEST");
     public static final SettingsMap.Key<Boolean> MODPACK_MANUALLY_CREATED = new SettingsMap.Key<>("MODPACK_MANUALLY_CREATED");
     public static final SettingsMap.Key<String> MODPACK_ICON_URL = new SettingsMap.Key<>("MODPACK_ICON_URL");

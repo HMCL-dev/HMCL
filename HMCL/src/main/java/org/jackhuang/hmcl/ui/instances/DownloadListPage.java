@@ -313,7 +313,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 nameField.setText(control.searchFilterProperty().get());
                 FXUtils.onChange(control.searchFilterProperty(), text -> {
                     if (!Objects.equals(nameField.getText(), text)) {
-                        nameField.setText(text);
+                        nameField.setText(text == null ? "" : text);
                     }
                 });
                 nameField.setPromptText(getSkinnable().supportChinese.get() ? i18n("search.hint.chinese") : i18n("search.hint.english"));
