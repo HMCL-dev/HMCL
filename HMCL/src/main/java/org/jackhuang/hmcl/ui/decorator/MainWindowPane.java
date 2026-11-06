@@ -46,7 +46,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 @NotNullByDefault
 final class MainWindowPane extends StackPane {
     /// The diameter, in pixels, of the rounded window corners.
-    private static final double ARC = 8.0;
+    private static final double ARC = 32.0;
 
     /// The decorator whose state and actions are represented by this pane.
     private final Decorator decorator;
