@@ -253,10 +253,6 @@
     -fx-padding: 0 0 0 0;
 }
 
-.iconed-item {
-    -jfx-feedback-fill: -monet-secondary;
-}
-
 .iconed-item .iconed-item-container {
     -fx-padding: 10 16 10 16;
     -fx-spacing: 10;
@@ -265,7 +261,6 @@
 }
 
 .iconed-menu-item {
-    -jfx-feedback-fill: -monet-secondary;
     -fx-cursor: hand;
 }
 
