@@ -80,94 +80,38 @@ public enum Architecture {
         }
         value = value.trim().toLowerCase(Locale.ROOT);
 
-        switch (value) {
-            case "x8664":
-            case "x86-64":
-            case "x86_64":
-            case "amd64":
-            case "ia32e":
-            case "em64t":
-            case "x64":
-            case "intel64":
-                return X86_64;
-            case "x8632":
-            case "x86-32":
-            case "x86_32":
-            case "x86":
-            case "i86pc":
-            case "i386":
-            case "i486":
-            case "i586":
-            case "i686":
-            case "ia32":
-            case "x32":
-                return X86;
-            case "arm64":
-            case "aarch64":
-                return ARM64;
-            case "arm":
-            case "arm32":
-                return ARM32;
-            case "mips64":
-                return MIPS64;
-            case "mips64el":
-                return MIPS64EL;
-            case "mips":
-            case "mips32":
-                return MIPS;
-            case "mipsel":
-            case "mips32el":
-                return MIPSEL;
-            case "riscv":
-            case "risc-v":
-            case "riscv64":
-                return RISCV64;
-            case "ia64":
-            case "ia64w":
-            case "itanium64":
-                return IA64;
-            case "ia64n":
-                return IA32;
-            case "sparcv9":
-            case "sparc64":
-                return SPARCV9;
-            case "sparc":
-            case "sparc32":
-                return SPARC;
-            case "ppc64":
-            case "powerpc64":
-                return PPC64;
-            case "ppc64le":
-            case "powerpc64le":
-                return PPC64LE;
-            case "ppc":
-            case "ppc32":
-            case "powerpc":
-            case "powerpc32":
-                return PPC;
-            case "ppcle":
-            case "ppc32le":
-            case "powerpcle":
-            case "powerpc32le":
-                return PPCLE;
-            case "s390":
-                return S390;
-            case "s390x":
-                return S390X;
-            case "loongarch32":
-                return LOONGARCH32;
-            case "loongarch64":
-                return LOONGARCH64;
-            case "loongarch64_ow":
-                return LOONGARCH64_OW;
-            default:
+        return switch (value) {
+            case "x8664", "x86-64", "x86_64", "amd64", "ia32e", "em64t", "x64", "intel64" -> X86_64;
+            case "x8632", "x86-32", "x86_32", "x86", "i86pc", "i386", "i486", "i586", "i686", "ia32", "x32" -> X86;
+            case "arm64", "aarch64" -> ARM64;
+            case "arm", "arm32" -> ARM32;
+            case "mips64" -> MIPS64;
+            case "mips64el" -> MIPS64EL;
+            case "mips", "mips32" -> MIPS;
+            case "mipsel", "mips32el" -> MIPSEL;
+            case "riscv", "risc-v", "riscv64" -> RISCV64;
+            case "ia64", "ia64w", "itanium64" -> IA64;
+            case "ia64n" -> IA32;
+            case "sparcv9", "sparc64" -> SPARCV9;
+            case "sparc", "sparc32" -> SPARC;
+            case "ppc64", "powerpc64" -> PPC64;
+            case "ppc64le", "powerpc64le" -> PPC64LE;
+            case "ppc", "ppc32", "powerpc", "powerpc32" -> PPC;
+            case "ppcle", "ppc32le", "powerpcle", "powerpc32le" -> PPCLE;
+            case "s390" -> S390;
+            case "s390x" -> S390X;
+            case "loongarch32" -> LOONGARCH32;
+            case "loongarch64" -> LOONGARCH64;
+            case "loongarch64_ow" -> LOONGARCH64_OW;
+            default -> {
                 if (value.startsWith("armv7")) {
-                    return ARM32;
+                    yield ARM32;
                 }
                 if (value.startsWith("armv8") || value.startsWith("armv9")) {
-                    return ARM64;
+                    yield ARM64;
                 }
-                return UNKNOWN;
-        }
+                yield UNKNOWN;
+            }
+        };
     }
 }
