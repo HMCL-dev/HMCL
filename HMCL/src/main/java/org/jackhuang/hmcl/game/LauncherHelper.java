@@ -945,7 +945,7 @@ public final class LauncherHelper {
                             try {
                                 currentLogs.add(logBufferIO.take());
                                 //noinspection BusyWait
-                                Thread.sleep(200); // Wait for more logs
+                                Thread.sleep(100); // Wait for more logs
                             } catch (InterruptedException e) {
                                 break;
                             }
@@ -994,7 +994,7 @@ public final class LauncherHelper {
                             try {
                                 currentLogs.add(logBufferUI.take());
                                 //noinspection BusyWait
-                                Thread.sleep(200); // Wait for more logs
+                                Thread.sleep(100); // Wait for more logs
                             } catch (InterruptedException e) {
                                 break;
                             }
