@@ -16,31 +16,23 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Represents the operating system.
- *
- * @author huangyuhui
- */
+/// Represents the operating system.
+///
+/// @author huangyuhui
 public enum OperatingSystem {
-    /**
-     * Microsoft Windows.
-     */
+    /// Microsoft Windows.
     WINDOWS("windows"),
-    /**
-     * Linux and Unix like OS, including Solaris.
-     */
+
+    /// Linux and Unix like OS, including Solaris.
     LINUX("linux"),
-    /**
-     * macOS.
-     */
+
+    /// macOS.
     MACOS("macos", "osx"),
-    /**
-     * FreeBSD.
-     */
+
+    /// FreeBSD.
     FREEBSD("freebsd", "linux"),
-    /**
-     * Unknown operating system.
-     */
+
+    /// Unknown operating system.
     UNKNOWN("universal");
 
     private final String checkedName;
