@@ -43,7 +43,7 @@ public final class SystemInfo {
     public static final OperatingSystem CURRENT_OS = OperatingSystem.parseOSName(System.getProperty("os.name"));
 
     /// The charset used for native text, honoring the `hmcl.native.encoding` override.
-    public static final Charset NATIVE_CHARSET;
+    public static final Charset NATIVE_CHARSET = detectNativeCharset();
 
     /// The current system version; always an [OSVersion.Windows] instance on Windows.
     public static final OSVersion SYSTEM_VERSION;
@@ -52,29 +52,6 @@ public final class SystemInfo {
     public static final int CODE_PAGE;
 
     static {
-        @Nullable String nativeEncoding = System.getProperty("native.encoding");
-        @Nullable String hmclNativeEncoding = System.getProperty("hmcl.native.encoding");
-        Charset nativeCharset = Charset.defaultCharset();
-
-        try {
-            if (hmclNativeEncoding != null) {
-                nativeCharset = Charset.forName(hmclNativeEncoding);
-            } else {
-                if (nativeEncoding != null && !nativeEncoding.equalsIgnoreCase(nativeCharset.name())) {
-                    nativeCharset = Charset.forName(nativeEncoding);
-                }
-
-                if (nativeCharset == StandardCharsets.UTF_8 || nativeCharset == StandardCharsets.US_ASCII) {
-                    nativeCharset = StandardCharsets.UTF_8;
-                } else if ("GBK".equalsIgnoreCase(nativeCharset.name()) || "GB2312".equalsIgnoreCase(nativeCharset.name())) {
-                    nativeCharset = Charset.forName("GB18030");
-                }
-            }
-        } catch (UnsupportedCharsetException e) {
-            e.printStackTrace(System.err);
-        }
-        NATIVE_CHARSET = nativeCharset;
-
         if (CURRENT_OS == OperatingSystem.WINDOWS) {
             int codePage = -1;
             @Nullable OSVersion.Windows windowsVersion = null;
@@ -439,6 +416,32 @@ public final class SystemInfo {
     /// Queries configured page file sizing policy without caching; changes may require a restart.
     public static PageFileConfiguration getPageFileConfiguration() {
         return Holder.DETECTOR.getPageFileConfiguration();
+    }
+
+    /// Selects the native charset, honoring the explicit override and otherwise normalizing ASCII and GBK-family encodings.
+    private static Charset detectNativeCharset() {
+        @Nullable String nativeEncoding = System.getProperty("native.encoding");
+        @Nullable String hmclNativeEncoding = System.getProperty("hmcl.native.encoding");
+        Charset nativeCharset = Charset.defaultCharset();
+
+        try {
+            if (hmclNativeEncoding != null) {
+                nativeCharset = Charset.forName(hmclNativeEncoding);
+            } else {
+                if (nativeEncoding != null && !nativeEncoding.equalsIgnoreCase(nativeCharset.name())) {
+                    nativeCharset = Charset.forName(nativeEncoding);
+                }
+
+                if (nativeCharset == StandardCharsets.UTF_8 || nativeCharset == StandardCharsets.US_ASCII) {
+                    nativeCharset = StandardCharsets.UTF_8;
+                } else if ("GBK".equalsIgnoreCase(nativeCharset.name()) || "GB2312".equalsIgnoreCase(nativeCharset.name())) {
+                    nativeCharset = Charset.forName("GB18030");
+                }
+            }
+        } catch (UnsupportedCharsetException e) {
+            e.printStackTrace(System.err);
+        }
+        return nativeCharset;
     }
 
     /// Resolves ambiguous architecture names using the current JVM byte order and kernel version.
