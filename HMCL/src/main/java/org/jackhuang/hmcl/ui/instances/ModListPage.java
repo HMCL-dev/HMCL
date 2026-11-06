@@ -807,10 +807,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             if (empty || dataItem == null) return;
 
-            List<String> warning = new ArrayList<>();
-
-            var tags = new ArrayList<Tag>(2);
-
             LocalModFile modInfo = dataItem.getModInfo();
             @Nullable ModProjectInfo projectInfo = dataItem.getProjectInfo();
 
@@ -848,6 +844,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             content.setSubtitle(joiner.toString());
 
+            List<String> warning = new ArrayList<>(3);
+            List<Tag> tags = new ArrayList<>(3);
             {
                 var instance = modInfo.getModManager().getInstance();
                 GameVersionNumber gameVersionNumber = instance.getVersion();
@@ -867,15 +865,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             warnCoreMod = true;
                             warning.add(i18n("mods.coremods.check_dir"));
                         }
-                        if (warnCoreMod) content.addTagWarning("CoreMod");
-                        else content.addTag("CoreMod");
+                        tags.add(warnCoreMod ? Tag.warning("CoreMod") : new Tag("CoreMod"));
                     } else {
-                        content.addTagWarning(i18n("mods.unknown"));
+                        tags.add(Tag.warning(i18n("mods.unknown")));
                     }
                 } else if (!page.supportedLoaders.contains(modLoaderType)) {
-                    content.addTagWarning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType()));
+                    tags.add(Tag.warning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType())));
                     if (modInfo.isCoreMod()) {
-                        content.addTagWarning("CoreMod");
+                        tags.add(Tag.warning("CoreMod"));
                         if (coreModLoaderMismatches) warning.add((i18n("mods.coremods.loader_mismatch")));
                         warning.add(i18n("mods.coremods.supported_only_as_coremod"));
                         if (wrongCoreModDir) warning.add(i18n("mods.coremods.check_dir"));
@@ -885,10 +882,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 } else {
                     if (modInfo.isCoreMod()) {
                         if (wrongCoreModDir) {
-                            content.addTagWarning("CoreMod");
+                            tags.add(Tag.warning("CoreMod"));
                             warning.add(i18n("mods.coremods.check_dir"));
                         } else {
-                            content.addTag("CoreMod");
+                            tags.add(new Tag("CoreMod"));
                         }
                     }
                 }
