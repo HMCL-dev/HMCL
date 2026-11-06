@@ -346,11 +346,11 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             setSelectable();
 
             activeSwitch.disableProperty().bind(isReadOnlyProperty);
-            activeSwitch.setSize(24);
+            activeSwitch.setSize(20);
             activeSwitch.setMinSize(30, 30);
             activeSwitch.setPrefSize(30, 30);
             activeSwitch.setMaxSize(30, 30);
-            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 8));
+            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             imageContainer.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
 
