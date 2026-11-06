@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
-import org.jackhuang.hmcl.ui.instances.GameProcessesPage;
+import org.jackhuang.hmcl.ui.instances.GameProcessPage;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
@@ -250,14 +250,14 @@ public final class Controllers {
         return terracottaPage;
     }
 
-    private static @Nullable GameProcessesPage gameProcessesPage;
+    private static @Nullable GameProcessPage gameProcessPage;
 
     @FXThread
-    public static Node getGameProcessesPage() {
-        if (gameProcessesPage == null) {
-            gameProcessesPage = new GameProcessesPage();
+    public static Node getGameProcessPage() {
+        if (gameProcessPage == null) {
+            gameProcessPage = new GameProcessPage();
         }
-        return gameProcessesPage;
+        return gameProcessPage;
     }
 
     /// Returns the initialized main-window decorator.
@@ -784,7 +784,7 @@ public final class Controllers {
         accountListPage = null;
         settingsPage = null;
         terracottaPage = null;
-        gameProcessesPage = null;
+        gameProcessPage = null;
         decorator = null;
 
         FXUtils.shutdown();

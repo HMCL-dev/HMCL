@@ -31,15 +31,15 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// Page for managing running game processes.
 ///
 /// @author Calboot
-public class GameProcessesPage extends ListPageBase<GameProcessHolder> implements DecoratorPage, PageAware {
+public class GameProcessPage extends ListPageBase<GameProcessHolder> implements DecoratorPage, PageAware {
 
     private final ReadOnlyObjectWrapper<State> state;
 
-    public GameProcessesPage() {
+    public GameProcessPage() {
         Bindings.bindContent(getItems(), GameProcessManager.displayedHolders);
 
         Label titleLabel = new Label();
-        titleLabel.textProperty().bind(GameProcessManager.aliveProcessCount.asString(i18n("game.processes") + " (%d)"));
+        titleLabel.textProperty().bind(GameProcessManager.aliveProcessCount.asString(i18n("game.process") + " (%d)"));
         titleLabel.textFillProperty().bind(Themes.titleFillProperty());
         titleLabel.getStyleClass().add("jfx-decorator-title");
         titleLabel.setMinWidth(0);
@@ -83,18 +83,18 @@ public class GameProcessesPage extends ListPageBase<GameProcessHolder> implement
         }
     }
 
-    private static final class GameProcessPageSkin extends ToolbarListPageSkin<GameProcessHolder, GameProcessesPage> {
+    private static final class GameProcessPageSkin extends ToolbarListPageSkin<GameProcessHolder, GameProcessPage> {
 
-        public GameProcessPageSkin(GameProcessesPage skinnable) {
+        public GameProcessPageSkin(GameProcessPage skinnable) {
             super(skinnable);
         }
 
         @Override
-        protected List<Node> initializeToolbar(GameProcessesPage skinnable) {
+        protected List<Node> initializeToolbar(GameProcessPage skinnable) {
             return List.of(
                     ToolbarListPageSkin.createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     ToolbarListPageSkin.createToolbarButton2(i18n("instance.launch"), SVG.ROCKET_LAUNCH, skinnable::launch),
-                    ToolbarListPageSkin.createToolbarButton2(i18n("game.processes.terminate_all"), SVG.SHUTDOWN, () -> skinnable.terminateSelected(skinnable.getItems()))
+                    ToolbarListPageSkin.createToolbarButton2(i18n("game.process.terminate_all"), SVG.SHUTDOWN, () -> skinnable.terminateSelected(skinnable.getItems()))
             );
         }
 
@@ -121,9 +121,9 @@ public class GameProcessesPage extends ListPageBase<GameProcessHolder> implement
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
 
-            FXUtils.installFastTooltip(relaunchButton, i18n("game.processes.relaunch"));
-            FXUtils.installFastTooltip(logWindowButton, i18n("game.processes.show_log"));
-            FXUtils.installFastTooltip(terminateButton, i18n("game.processes.terminate"));
+            FXUtils.installFastTooltip(relaunchButton, i18n("game.process.relaunch"));
+            FXUtils.installFastTooltip(logWindowButton, i18n("game.process.show_log"));
+            FXUtils.installFastTooltip(terminateButton, i18n("game.process.terminate"));
 
             settingsButton.setOnAction(event -> {
                 if (getItem() != null && !isEmpty()) getItem().openSettings();

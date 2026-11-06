@@ -37,7 +37,7 @@ import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.instances.GameProcessesPage;
+import org.jackhuang.hmcl.ui.instances.GameProcessPage;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.TaskManager;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -214,14 +214,14 @@ final class MainWindowPane extends StackPane {
         JFXButton processesButton = new JFXButton();
         processesButton.setFocusTraversable(false);
         processesButton.setGraphic(SVG.TERMINAL.createIcon(Themes.titleFillProperty()));
-        processesButton.setAccessibleText(i18n("game.processes"));
+        processesButton.setAccessibleText(i18n("game.process"));
         processesButton.getStyleClass().add("jfx-decorator-button");
         processesButton.setOnAction(event -> {
-            if (!(decorator.getNavigator().getCurrentPage() instanceof GameProcessesPage))
-                Controllers.navigate(Controllers.getGameProcessesPage());
+            if (!(decorator.getNavigator().getCurrentPage() instanceof GameProcessPage))
+                Controllers.navigate(Controllers.getGameProcessPage());
         });
         var tooltip = new Tooltip();
-        tooltip.textProperty().bind(GameProcessManager.aliveProcessCount.asString(i18n("game.processes") + " (%d)"));
+        tooltip.textProperty().bind(GameProcessManager.aliveProcessCount.asString(i18n("game.process") + " (%d)"));
         FXUtils.installFastTooltip(processesButton, tooltip);
         decorator.forbidDraggingWindow(processesButton);
 
