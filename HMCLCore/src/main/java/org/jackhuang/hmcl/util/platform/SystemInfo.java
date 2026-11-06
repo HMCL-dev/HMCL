@@ -142,7 +142,7 @@ public final class SystemInfo {
     public static final Architecture SYSTEM_ARCH;
 
     static {
-        CURRENT_ARCH = detectArchitecture(System.getProperty("os.arch"));
+        CURRENT_ARCH = detectArchitecture(System.getProperty("os.arch"), SYSTEM_VERSION, ByteOrder.nativeOrder());
 
         @Nullable Architecture sysArch = null;
         if (CURRENT_OS == OperatingSystem.WINDOWS) {
@@ -150,7 +150,7 @@ public final class SystemInfo {
             if (processorIdentifier != null) {
                 int idx = processorIdentifier.indexOf(' ');
                 if (idx > 0) {
-                    sysArch = detectArchitecture(processorIdentifier.substring(0, idx));
+                    sysArch = detectArchitecture(processorIdentifier.substring(0, idx), SYSTEM_VERSION, ByteOrder.nativeOrder());
                 }
             }
         } else if (CURRENT_OS == OperatingSystem.MACOS) {
@@ -174,7 +174,7 @@ public final class SystemInfo {
                     try {
                         Process process = Runtime.getRuntime().exec(new String[]{uname, "-m"});
                         if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0) {
-                            sysArch = detectArchitecture(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim());
+                            sysArch = detectArchitecture(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim(), SYSTEM_VERSION, ByteOrder.nativeOrder());
                         }
                     } catch (Throwable e) {
                         e.printStackTrace(System.err);
@@ -446,12 +446,17 @@ public final class SystemInfo {
     }
 
     /// Resolves ambiguous architecture names using the current JVM byte order and kernel version.
-    private static Architecture detectArchitecture(@Nullable String name) {
+    private static Architecture detectArchitecture(
+            @Nullable String name,
+            OSVersion systemVersion,
+            ByteOrder byteOrder
+    ) {
         Architecture architecture = Architecture.parseArchName(name);
-        if (architecture == Architecture.PPC64 && ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN)
+        if (architecture == Architecture.PPC64 && byteOrder == ByteOrder.LITTLE_ENDIAN)
             return Architecture.PPC64LE;
         if (architecture == Architecture.LOONGARCH64
-                && VersionNumber.compare(System.getProperty("os.version", "0"), "5.19") < 0)
+                && systemVersion.getOperatingSystem() == OperatingSystem.LINUX
+                && !systemVersion.isAtLeast(OSVersion.of(OperatingSystem.LINUX, "5.19")))
             return Architecture.LOONGARCH64_OW;
         return architecture;
     }
