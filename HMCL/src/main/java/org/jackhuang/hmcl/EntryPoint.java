@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.TLSSecurity;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import javax.swing.JOptionPane;
 import java.io.IOException;
@@ -145,7 +146,7 @@ public final class EntryPoint {
     }
 
     private static void checkWine() {
-        if (OperatingSystem.isRunningUnderWine()) {
+        if (SystemInfo.isRunningUnderWine()) {
             LOG.warning("HMCL is running under Wine or its distributions!");
             showWarning(i18n("fatal.wine_warning"));
         }

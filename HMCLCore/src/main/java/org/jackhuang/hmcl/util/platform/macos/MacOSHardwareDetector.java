@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
@@ -168,7 +169,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
         try {
             Map<String, String> stats = SystemUtils.run(List.of("/usr/bin/vm_stat"),
                     inputStream -> KeyValuePairUtils.loadPairs(
-                            new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))));
+                            new BufferedReader(new InputStreamReader(inputStream, SystemInfo.NATIVE_CHARSET))));
             String statistics = stats.get("Mach Virtual Memory Statistics");
 
             long pageSize;

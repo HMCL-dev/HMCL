@@ -194,7 +194,7 @@ public final class LauncherHelper {
                                         || renderer.mesaDriverName() == null)
                                     return null;
 
-                                Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
+                                Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, SystemInfo.SYSTEM_VERSION);
                                 if (lib == null)
                                     return null;
                                 Path file = gameInstance.getLayout().getLibraryFile(gameInstance.getId(), lib);

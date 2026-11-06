@@ -284,10 +284,10 @@ public final class Launcher extends Application {
                 LOG.info("Process PID: " + ProcessHandle.current().pid());
             } catch (UnsupportedOperationException ignored) {
             }
-            LOG.info("Native Encoding: " + OperatingSystem.NATIVE_CHARSET);
+            LOG.info("Native Encoding: " + SystemInfo.NATIVE_CHARSET);
             LOG.info("JNU Encoding: " + System.getProperty("sun.jnu.encoding"));
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                LOG.info("Code Page: " + OperatingSystem.CODE_PAGE);
+                LOG.info("Code Page: " + SystemInfo.CODE_PAGE);
             }
             LOG.info("Java Architecture: " + Architecture.CURRENT_ARCH.getDisplayName());
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
@@ -487,7 +487,7 @@ public final class Launcher extends Application {
                     @Nullable String xftDpi = xrdb != null ? SystemUtils.run(List.of(FileUtils.getAbsolutePath(xrdb), "-query"), inputStream -> {
                         @Nullable String dpiLine;
 
-                        try (var reader = new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET);
+                        try (var reader = new InputStreamReader(inputStream, SystemInfo.NATIVE_CHARSET);
                              BufferedReader bufferedReader = new BufferedReader(reader);
                              Stream<String> lines = bufferedReader.lines()) {
                             dpiLine = lines.filter(line -> line.trim().startsWith("Xft.dpi:"))

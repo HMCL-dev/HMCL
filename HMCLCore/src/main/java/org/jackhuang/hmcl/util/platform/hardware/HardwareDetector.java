@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.util.platform.hardware;
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.OperatingSystemInfo;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -54,7 +55,7 @@ public class HardwareDetector {
     /// Falls back to JVM properties if release information is absent or cannot be read.
     public OperatingSystemInfo detectOperatingSystemInfo() {
         String systemName = System.getProperty("os.name", "Unknown");
-        String description = systemName + ' ' + OperatingSystem.SYSTEM_VERSION.getVersion();
+        String description = systemName + ' ' + SystemInfo.SYSTEM_VERSION.getVersion();
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
             Path osReleaseFile = Path.of("/etc/os-release");
             try {

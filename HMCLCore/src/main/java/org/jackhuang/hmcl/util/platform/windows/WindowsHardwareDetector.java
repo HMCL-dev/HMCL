@@ -9,6 +9,7 @@ import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.OperatingSystemInfo;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
@@ -43,7 +44,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
             return super.detectOperatingSystemInfo();
 
         String systemName = System.getProperty("os.name", "Unknown");
-        OSVersion version = OperatingSystem.SYSTEM_VERSION;
+        OSVersion version = SystemInfo.SYSTEM_VERSION;
         // Older Java releases identify Windows 11 as Windows 10.
         if (systemName.equals("Windows 10") && version.isAtLeast(OSVersion.WINDOWS_11))
             systemName = "Windows 11";
@@ -61,14 +62,14 @@ public final class WindowsHardwareDetector extends HardwareDetector {
     /// Detects Windows processors, using the default detector when native information is unavailable.
     @Override
     public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
-        @Unmodifiable List<CentralProcessor> processors = OperatingSystem.isWindows7OrLater() ? WindowsCPUDetector.detect() : List.of();
+        @Unmodifiable List<CentralProcessor> processors = SystemInfo.isWindows7OrLater() ? WindowsCPUDetector.detect() : List.of();
         return processors.isEmpty() ? super.detectCentralProcessors() : processors;
     }
 
     /// Returns an immutable graphics card list, empty if detection is unsupported or fails.
     @Override
     public @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
-        if (!OperatingSystem.isWindows7OrLater())
+        if (!SystemInfo.isWindows7OrLater())
             return List.of();
         return WindowsGPUDetector.detect();
     }

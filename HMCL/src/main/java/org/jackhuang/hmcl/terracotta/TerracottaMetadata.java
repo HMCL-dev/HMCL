@@ -18,6 +18,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.jetbrains.annotations.Nullable;
@@ -140,7 +141,7 @@ public final class TerracottaMetadata {
         //        non-existent files in non-native platform logic without assertion errors during debugging.
         return switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS -> {
-                if (!OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
+                if (!SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
                     yield null;
 
                 yield new GeneralProvider(bundle, bundle.locate(prefix + ".exe"));

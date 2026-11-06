@@ -33,7 +33,8 @@ public record Platform(OperatingSystem os, Architecture arch) {
 
     static {
         if (SYSTEM_PLATFORM.equals(WINDOWS_ARM64)) {
-            SUPPORTED_TRANSLATION_X86_64 = OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277;
+            SUPPORTED_TRANSLATION_X86_64 = SystemInfo.SYSTEM_VERSION instanceof OSVersion.Windows windowsVersion
+                    && windowsVersion.build() >= 21277;
         } else if (SYSTEM_PLATFORM.equals(MACOS_ARM64)) {
             SUPPORTED_TRANSLATION_X86_64 = Files.isRegularFile(Path.of("/usr/libexec/rosetta/runtime"));
         } else {

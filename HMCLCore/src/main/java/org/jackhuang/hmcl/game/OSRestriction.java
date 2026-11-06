@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.util.regex.Pattern;
 
@@ -70,7 +71,7 @@ public final class OSRestriction {
             return false;
 
         if (version != null)
-            if (Lang.test(() -> !Pattern.compile(version).matcher(OperatingSystem.SYSTEM_VERSION.getVersion()).matches()))
+            if (Lang.test(() -> !Pattern.compile(version).matcher(SystemInfo.SYSTEM_VERSION.getVersion()).matches()))
                 return false;
 
         if (arch != null)

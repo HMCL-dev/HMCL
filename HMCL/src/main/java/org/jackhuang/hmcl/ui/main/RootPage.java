@@ -123,7 +123,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
                     message = i18n("terracotta.unsupported.arch.32bit");
                 else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                        && !OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
+                        && !SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
                     message = i18n("terracotta.unsupported.os.windows.old");
                 else if (Platform.SYSTEM_PLATFORM.equals(OperatingSystem.LINUX, Architecture.LOONGARCH64_OW))
                     message = i18n("terracotta.unsupported.arch.loongarch64_ow");

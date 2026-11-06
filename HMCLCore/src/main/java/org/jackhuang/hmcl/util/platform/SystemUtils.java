@@ -68,7 +68,7 @@ public final class SystemUtils {
     }
 
     public static String run(List<String> command, Duration maxWaitTime) throws Exception {
-        return run(command, inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET), maxWaitTime);
+        return run(command, inputStream -> IOUtils.readFullyAsString(inputStream, SystemInfo.NATIVE_CHARSET), maxWaitTime);
     }
 
     public static <T> T run(List<String> command, ExceptionalFunction<InputStream, T, ?> convert) throws Exception {

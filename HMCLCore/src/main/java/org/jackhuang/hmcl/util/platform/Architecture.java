@@ -196,7 +196,7 @@ public enum Architecture {
                 try {
                     Process process = Runtime.getRuntime().exec(new String[]{"/usr/sbin/sysctl", "-n", "sysctl.proc_translated"});
                     if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0
-                            && "1".equals(IOUtils.readFullyAsString(process.getInputStream(), OperatingSystem.NATIVE_CHARSET).trim())) {
+                            && "1".equals(IOUtils.readFullyAsString(process.getInputStream(), SystemInfo.NATIVE_CHARSET).trim())) {
                         sysArch = ARM64;
                     }
                 } catch (Throwable e) {
@@ -212,7 +212,7 @@ public enum Architecture {
                     try {
                         Process process = Runtime.getRuntime().exec(new String[]{uname, "-m"});
                         if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0) {
-                            sysArch = parseArchName(IOUtils.readFullyAsString(process.getInputStream(), OperatingSystem.NATIVE_CHARSET).trim());
+                            sysArch = parseArchName(IOUtils.readFullyAsString(process.getInputStream(), SystemInfo.NATIVE_CHARSET).trim());
                         }
                     } catch (Throwable e) {
                         e.printStackTrace(System.err);

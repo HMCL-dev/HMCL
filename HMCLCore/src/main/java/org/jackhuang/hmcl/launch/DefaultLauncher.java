@@ -103,7 +103,7 @@ public class DefaultLauncher extends Launcher {
 
         res.addAllDefaultWithoutParsing(options.getJavaArguments());
 
-        Charset encoding = OperatingSystem.NATIVE_CHARSET;
+        Charset encoding = SystemInfo.NATIVE_CHARSET;
         String fileEncoding = res.addDefault("-Dfile.encoding=", encoding.name());
         if (fileEncoding != null && !"-Dfile.encoding=COMPAT".equals(fileEncoding)) {
             try {
@@ -906,7 +906,7 @@ public class DefaultLauncher extends Launcher {
                         throw e;
                     }
                 } else {
-                    charset = OperatingSystem.NATIVE_CHARSET;
+                    charset = SystemInfo.NATIVE_CHARSET;
                 }
             }
 

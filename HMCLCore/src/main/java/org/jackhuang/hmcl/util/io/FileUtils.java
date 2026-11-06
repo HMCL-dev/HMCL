@@ -7,6 +7,7 @@ import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -243,7 +244,7 @@ public final class FileUtils {
     public static String readTextMaybeNativeEncoding(Path file) throws IOException {
         byte[] bytes = Files.readAllBytes(file);
 
-        if (OperatingSystem.NATIVE_CHARSET == UTF_8)
+        if (SystemInfo.NATIVE_CHARSET == UTF_8)
             return new String(bytes, UTF_8);
 
         EncodingDetector detector = EncodingDetector.MODERN_WEB;
@@ -253,7 +254,7 @@ public final class FileUtils {
         if (detectedCharset != null && (detectedCharset == UTF_8 || detectedCharset == US_ASCII))
             return new String(bytes, UTF_8);
         else
-            return new String(bytes, OperatingSystem.NATIVE_CHARSET);
+            return new String(bytes, SystemInfo.NATIVE_CHARSET);
     }
 
     public static void deleteDirectory(Path directory) throws IOException {

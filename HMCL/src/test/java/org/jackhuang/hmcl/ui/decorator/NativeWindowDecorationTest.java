@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.JavaFXLauncher;
 import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -71,7 +72,7 @@ final class NativeWindowDecorationTest {
                 assertEquals(supported, forced != null);
 
                 boolean automatic = supported && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
-                        || OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11));
+                        || SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11));
                 System.setProperty("hmcl.nativeDecoration", " AUTO ");
                 @Nullable NativeWindowDecoration decoration = NativeWindowDecoration.create();
                 assertEquals(automatic, decoration != null);

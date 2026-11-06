@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.platform.windows.Dwmapi;
 import org.jackhuang.hmcl.util.platform.windows.WinConstants;
@@ -1147,7 +1148,7 @@ public final class Themes {
         if (stage.getProperties().containsKey(NATIVE_DARK_MODE_LISTENER)) {
             return;
         }
-        if (OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11) && NativeUtils.USE_JNA && Dwmapi.INSTANCE != null) {
+        if (SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11) && NativeUtils.USE_JNA && Dwmapi.INSTANCE != null) {
             ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), darkMode -> {
                 if (stage.isShowing()) {
                     WindowsNativeUtils.getWindowHandle(stage).ifPresent(handle -> {

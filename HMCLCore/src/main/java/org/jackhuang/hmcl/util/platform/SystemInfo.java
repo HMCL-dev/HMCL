@@ -12,18 +12,167 @@ import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.macos.MacDeviceInfo;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
+import org.jackhuang.hmcl.util.platform.windows.Kernel32;
+import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.platform.windows.WindowsHardwareDetector;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Provides cached operating system and hardware information and current physical memory usage.
 @NotNullByDefault
 public final class SystemInfo {
+
+    /// The charset used for native text, honoring the `hmcl.native.encoding` override.
+    public static final Charset NATIVE_CHARSET;
+
+    /// The current system version; always an [OSVersion.Windows] instance on Windows.
+    public static final OSVersion SYSTEM_VERSION;
+
+    /// The Windows ANSI code page, falling back to the console code page; -1 if unavailable or not on Windows.
+    public static final int CODE_PAGE;
+
+    static {
+        @Nullable String nativeEncoding = System.getProperty("native.encoding");
+        @Nullable String hmclNativeEncoding = System.getProperty("hmcl.native.encoding");
+        Charset nativeCharset = Charset.defaultCharset();
+
+        try {
+            if (hmclNativeEncoding != null) {
+                nativeCharset = Charset.forName(hmclNativeEncoding);
+            } else {
+                if (nativeEncoding != null && !nativeEncoding.equalsIgnoreCase(nativeCharset.name())) {
+                    nativeCharset = Charset.forName(nativeEncoding);
+                }
+
+                if (nativeCharset == StandardCharsets.UTF_8 || nativeCharset == StandardCharsets.US_ASCII) {
+                    nativeCharset = StandardCharsets.UTF_8;
+                } else if ("GBK".equalsIgnoreCase(nativeCharset.name()) || "GB2312".equalsIgnoreCase(nativeCharset.name())) {
+                    nativeCharset = Charset.forName("GB18030");
+                }
+            }
+        } catch (UnsupportedCharsetException e) {
+            e.printStackTrace(System.err);
+        }
+        NATIVE_CHARSET = nativeCharset;
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            int codePage = -1;
+            @Nullable OSVersion.Windows windowsVersion = null;
+
+            @Nullable Kernel32 kernel32 = Kernel32.INSTANCE;
+            @Nullable WinReg reg = WinReg.INSTANCE;
+
+            // Get Windows version number
+            if (reg != null) {
+                var baseVersion = OSVersion.Windows.parse(System.getProperty("os.version", "Unknown"));
+                int majorVersion = baseVersion.major();
+                int minorVersion = baseVersion.minor();
+                int buildNumber = baseVersion.build();
+                int revision = baseVersion.revision();
+
+                @Nullable Object currentBuild = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentBuild");
+                if (currentBuild instanceof String currentBuildStr) {
+                    try {
+                        buildNumber = Integer.parseInt(currentBuildStr);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Invalid Windows build number: " + currentBuildStr);
+                    }
+                }
+
+                if (majorVersion >= 10) {
+                    @Nullable Object ubr = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                            "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "UBR");
+
+                    if (ubr instanceof Integer ubrValue)
+                        revision = ubrValue;
+                }
+
+                windowsVersion = new OSVersion.Windows(majorVersion, minorVersion, buildNumber, revision);
+            }
+
+            if (windowsVersion == null) {
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
+                        @Nullable String line = reader.readLine();
+                        Matcher matcher = Pattern.compile("(?<version>\\d+\\.\\d+\\.\\d+\\.\\d+?)]$")
+                                .matcher(line == null ? "" : line.trim());
+                        if (matcher.find())
+                            windowsVersion = OSVersion.Windows.parse(matcher.group("version"));
+                    }
+                    process.destroy();
+                } catch (Throwable ignored) {
+                }
+            }
+
+            if (windowsVersion == null)
+                windowsVersion = OSVersion.Windows.parse(System.getProperty("os.version", "Unknown"));
+
+            // Get Code Page
+
+            if (kernel32 != null)
+                codePage = kernel32.GetACP();
+            else {
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{"chcp.com"});
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
+                        @Nullable String line = reader.readLine();
+                        Matcher matcher = Pattern.compile("(?<cp>[0-9]+)$")
+                                .matcher(line == null ? "" : line.trim());
+
+                        if (matcher.find())
+                            codePage = Integer.parseInt(matcher.group("cp"));
+                    }
+                    process.destroy();
+                } catch (Throwable ignored) {
+                }
+            }
+
+            SYSTEM_VERSION = windowsVersion;
+            CODE_PAGE = codePage;
+        } else {
+            SYSTEM_VERSION = OSVersion.of(OperatingSystem.CURRENT_OS, System.getProperty("os.version", "Unknown"));
+            CODE_PAGE = -1;
+        }
+    }
+
+    /// Returns whether the current system is Windows 7 or later.
+    public static boolean isWindows7OrLater() {
+        return SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7);
+    }
+
+    /// Returns whether a Wine environment variable is present on Windows.
+    public static boolean isRunningUnderWine() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+            return false;
+        }
+
+        String @Unmodifiable [] wineEnvVars = {
+                "WINEPREFIX",
+                "WINELOADER",
+                "WINEDLLPATH"
+        };
+
+        for (String var : wineEnvVars) {
+            if (System.getenv(var) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /// Lazily initializes the platform detector and cached system information.
     private static final class Holder {
