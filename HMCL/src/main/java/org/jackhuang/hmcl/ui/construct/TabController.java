@@ -132,7 +132,7 @@ public final class TabController implements PageAware {
 
         if (contentPane != null && selectedTab.get() != tab) {
             @Nullable Node content = tab.getNode();
-            if (content != null) contentPane.prewarm(content);
+            if (content != null && content.getParent() == null && content.getScene() == null) contentPane.prewarm(content);
         }
     }
 
