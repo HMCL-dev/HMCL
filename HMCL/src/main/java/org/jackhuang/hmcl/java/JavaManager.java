@@ -21,8 +21,8 @@ import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
@@ -65,7 +65,7 @@ public final class JavaManager {
     public static final HMCLJavaRepository REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_USER_HOME.resolve("java"));
     public static final HMCLJavaRepository LOCAL_REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_LOCAL_HOME.resolve("java"));
 
-    public static String getMojangJavaPlatform(Platform platform) {
+    public static String getMojangJavaPlatform(NativePlatform platform) {
         if (platform.getOperatingSystem() == OperatingSystem.WINDOWS) {
             if (Architecture.SYSTEM_ARCH == Architecture.X86) {
                 return "windows-x86";
@@ -99,7 +99,7 @@ public final class JavaManager {
         return javaHome.resolve("jre.bundle/Contents/Home/bin/java");
     }
 
-    public static boolean isCompatible(Platform platform) {
+    public static boolean isCompatible(NativePlatform platform) {
         if (platform.getOperatingSystem() != OperatingSystem.CURRENT_OS)
             return false;
 
@@ -211,7 +211,7 @@ public final class JavaManager {
                 });
     }
 
-    public static Task<JavaRuntime> getDownloadJavaTask(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion) {
+    public static Task<JavaRuntime> getDownloadJavaTask(DownloadProvider downloadProvider, NativePlatform platform, GameJavaVersion gameJavaVersion) {
         return REPOSITORY.getDownloadJavaTask(downloadProvider, platform, gameJavaVersion)
                 .thenApplyAsync(Schedulers.javafx(), java -> {
                     addJava(java);
@@ -219,7 +219,7 @@ public final class JavaManager {
                 });
     }
 
-    public static Task<JavaRuntime> getInstallJavaTask(Platform platform, String name, Map<String, Object> update, Path archiveFile) {
+    public static Task<JavaRuntime> getInstallJavaTask(NativePlatform platform, String name, Map<String, Object> update, Path archiveFile) {
         return REPOSITORY.getInstallJavaTask(platform, name, update, archiveFile)
                 .thenApplyAsync(Schedulers.javafx(), java -> {
                     addJava(java);
@@ -363,16 +363,16 @@ public final class JavaManager {
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64)
-                    searcher.searchAllJavaInRepository(Platform.WINDOWS_X86);
+                    searcher.searchAllJavaInRepository(NativePlatform.WINDOWS_X86);
                 if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                     if (SystemInfo.isSupportedTranslationX86_64())
-                        searcher.searchAllJavaInRepository(Platform.WINDOWS_X86_64);
-                    searcher.searchAllJavaInRepository(Platform.WINDOWS_X86);
+                        searcher.searchAllJavaInRepository(NativePlatform.WINDOWS_X86_64);
+                    searcher.searchAllJavaInRepository(NativePlatform.WINDOWS_X86);
                 }
                 break;
             case MACOS:
                 if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && SystemInfo.isSupportedTranslationX86_64())
-                    searcher.searchAllJavaInRepository(Platform.MACOS_X86_64);
+                    searcher.searchAllJavaInRepository(NativePlatform.MACOS_X86_64);
                 break;
         }
 
@@ -538,7 +538,7 @@ public final class JavaManager {
                         Architecture osArch = Architecture.parseArchName(obj.getAsJsonPrimitive("os.arch").getAsString());
                         String javaVersion = obj.getAsJsonPrimitive("java.version").getAsString();
 
-                        JavaInfo.Builder infoBuilder = JavaInfo.newBuilder(Platform.getPlatform(osName, osArch), javaVersion);
+                        JavaInfo.Builder infoBuilder = JavaInfo.newBuilder(NativePlatform.of(osName, osArch), javaVersion);
 
                         if (obj.get("java.vendor") instanceof JsonPrimitive vendor)
                             infoBuilder.setVendor(vendor.getAsString());
@@ -753,7 +753,7 @@ public final class JavaManager {
             tryAddJavaHome(dir);
         }
 
-        void searchAllJavaInRepository(Platform platform) {
+        void searchAllJavaInRepository(NativePlatform platform) {
             for (Path java : REPOSITORY.getAllJava(platform)) {
                 tryAddJavaExecutable(java, true);
             }
@@ -783,16 +783,16 @@ public final class JavaManager {
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
-                    searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86), verify);
+                    searchAllOfficialJava(directory, getMojangJavaPlatform(NativePlatform.WINDOWS_X86), verify);
                 } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                     if (SystemInfo.isSupportedTranslationX86_64()) {
-                        searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86_64), verify);
+                        searchAllOfficialJava(directory, getMojangJavaPlatform(NativePlatform.WINDOWS_X86_64), verify);
                     }
-                    searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86), verify);
+                    searchAllOfficialJava(directory, getMojangJavaPlatform(NativePlatform.WINDOWS_X86), verify);
                 }
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                 if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && SystemInfo.isSupportedTranslationX86_64()) {
-                    searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.MACOS_X86_64), verify);
+                    searchAllOfficialJava(directory, getMojangJavaPlatform(NativePlatform.MACOS_X86_64), verify);
                 }
             }
         }

@@ -7,8 +7,8 @@ import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +49,7 @@ public final class JavaInfoUtils {
             }
 
             Architecture architecture = Architecture.parseArchName(result.osArch);
-            Platform platform = Platform.getPlatform(OperatingSystem.CURRENT_OS,
+            NativePlatform platform = NativePlatform.of(OperatingSystem.CURRENT_OS,
                     architecture != Architecture.UNKNOWN
                             ? architecture
                             : Architecture.SYSTEM_ARCH);

@@ -152,19 +152,19 @@ public final class SystemInfo {
     }
 
     /// The operating system and architecture of the current JVM.
-    public static final Platform CURRENT_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.CURRENT_ARCH);
+    public static final NativePlatform CURRENT_PLATFORM = NativePlatform.of(OperatingSystem.CURRENT_OS, Architecture.CURRENT_ARCH);
 
     /// The operating system and native architecture of the host system.
-    public static final Platform SYSTEM_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.SYSTEM_ARCH);
+    public static final NativePlatform SYSTEM_PLATFORM = NativePlatform.of(OperatingSystem.CURRENT_OS, Architecture.SYSTEM_ARCH);
 
     /// Whether the ARM64 host supports executing x86-64 applications through translation.
     private static final boolean SUPPORTED_TRANSLATION_X86_64;
 
     static {
-        if (SYSTEM_PLATFORM.equals(Platform.WINDOWS_ARM64)) {
+        if (SYSTEM_PLATFORM.equals(NativePlatform.WINDOWS_ARM64)) {
             SUPPORTED_TRANSLATION_X86_64 = SYSTEM_VERSION instanceof OSVersion.Windows windowsVersion
                     && windowsVersion.build() >= 21277;
-        } else if (SYSTEM_PLATFORM.equals(Platform.MACOS_ARM64)) {
+        } else if (SYSTEM_PLATFORM.equals(NativePlatform.MACOS_ARM64)) {
             SUPPORTED_TRANSLATION_X86_64 = Files.isRegularFile(Path.of("/usr/libexec/rosetta/runtime"));
         } else {
             SUPPORTED_TRANSLATION_X86_64 = false;

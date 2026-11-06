@@ -6,8 +6,8 @@ import org.jackhuang.hmcl.download.java.JavaDistribution;
 import org.jackhuang.hmcl.download.java.JavaPackageType;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.util.*;
 
@@ -111,7 +111,7 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
         return supportedPackageTypes;
     }
 
-    public boolean isSupport(Platform platform) {
+    public boolean isSupport(NativePlatform platform) {
         EnumSet<Architecture> architectures = supportedPlatforms.get(platform.getOperatingSystem());
         return architectures != null && architectures.contains(platform.getArchitecture());
     }

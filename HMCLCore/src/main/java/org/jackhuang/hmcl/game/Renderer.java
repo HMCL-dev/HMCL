@@ -114,7 +114,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// Using Dozen can run Minecraft 1.21.11 + VulkanMod, but it will cause the game to crash after playing for a while
         DOZEN("dzn") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() == OperatingSystem.WINDOWS;
             }
 
@@ -131,7 +131,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// @see <a href="https://developer.nvidia.com/vulkan">Vulkan Open Standard Modern GPU API | NVIDIA Developer</a>
         NVIDIA_VULKAN("nvidia") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return Vulkan.hasCard(cards, HardwareVendor.NVIDIA);
             }
         },
@@ -143,7 +143,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// @see <a href="https://docs.mesa3d.org/drivers/nvk.html">NVK - The Mesa 3D Graphics Library</a>
         NVIDIA_NVK("nouveau") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() == OperatingSystem.LINUX && Vulkan.hasCard(cards, HardwareVendor.NVIDIA);
             }
         },
@@ -155,7 +155,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// @see <a href="https://github.com/GPUOpen-Drivers/AMDVLK">GPUOpen-Drivers/AMDVLK - GitHub</a>
         AMDVLK("amd") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() == OperatingSystem.LINUX && Vulkan.hasCard(cards, HardwareVendor.AMD);
             }
         },
@@ -167,7 +167,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// @see <a href="https://docs.mesa3d.org/drivers/radv.html">RADV - The Mesa 3D Graphics Library</a>
         AMD_RADV("radeon") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return Vulkan.hasCard(cards, HardwareVendor.AMD);
             }
         },
@@ -177,7 +177,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// It is a Vulkan driver for Intel GPUs.
         INTEL_VULKAN("ig") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() == OperatingSystem.WINDOWS && Vulkan.hasCard(cards, HardwareVendor.INTEL);
             }
         },
@@ -189,7 +189,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// @see <a href="https://docs.mesa3d.org/drivers/anv.html">ANV - The Mesa 3D Graphics Library</a>
         INTEL_ANV("intel") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() != OperatingSystem.WINDOWS && Vulkan.hasCard(cards, HardwareVendor.INTEL);
             }
         },
@@ -201,7 +201,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// @see <a href="https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/18208">intel: split vulkan driver between gfx7/8 and above</a>
         INTEL_HASVK("intel_hasvk") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() != OperatingSystem.WINDOWS
                         && cards != null
                         && cards.stream().anyMatch(card -> card.getVendor() == HardwareVendor.INTEL && card.getName().startsWith("Intel HD Graphics "));
@@ -213,8 +213,8 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// It is a Vulkan driver for Qualcomm Adreno GPUs.
         QUALCOMM("qc") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
-                return platform.equals(Platform.WINDOWS_ARM64);
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
+                return platform.equals(NativePlatform.WINDOWS_ARM64);
             }
         },
 
@@ -225,7 +225,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// @see <a href="https://docs.mesa3d.org/drivers/freedreno.html">Freedreno - The Mesa 3D Graphics Library</a>
         TURNIP("freedreno") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() != OperatingSystem.WINDOWS && platform.arch().isArm();
             }
         },
@@ -237,7 +237,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// @see <a href="https://github.com/KhronosGroup/MoltenVK">KhronosGroup/MoltenVK - GitHub</a>
         MOLTENVK("MoltenVK") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() == OperatingSystem.MACOS;
             }
         },
@@ -249,7 +249,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// @see <a href="https://docs.mesa3d.org/drivers/kosmickrisp.html">KosmicKrisp - The Mesa 3D Graphics Library</a>
         KOSMICKRISP("kosmickrisp_mesa") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() == OperatingSystem.MACOS && platform.arch() == Architecture.ARM64;
             }
         },
@@ -261,7 +261,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// @see <a href="https://docs.mesa3d.org/drivers/powervr.html">PowerVR - The Mesa 3D Graphics Library</a>
         POWERVR("powervr") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() == OperatingSystem.LINUX && Vulkan.hasCard(cards, HardwareVendor.IMG);
             }
         },
@@ -273,7 +273,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// @see <a href="https://docs.mesa3d.org/drivers/panfrost.html">Panfrost - The Mesa 3D Graphics Library</a>
         PANVK("panfrost") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() == OperatingSystem.LINUX && platform.arch().isArm();
             }
         },
@@ -285,7 +285,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// @see <a href="https://docs.mesa3d.org/drivers/v3dv.html">V3DV - The Mesa 3D Graphics Library</a>
         V3DV("broadcom") {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() == OperatingSystem.LINUX && platform.arch().isArm()
                         && Vulkan.hasCard(cards, HardwareVendor.BROADCOM);
             }
@@ -495,7 +495,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         },
         D3D12 {
             @Override
-            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+            public boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() == OperatingSystem.WINDOWS;
             }
 
@@ -527,7 +527,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
     /// Whether this renderer is supported on the given platform and graphics cards.
     ///
     /// If `cards` is `null`, it means that the graphics cards are unknown.
-    default boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+    default boolean isSupported(NativePlatform platform, @Nullable List<GraphicsCard> cards) {
         return true;
     }
 

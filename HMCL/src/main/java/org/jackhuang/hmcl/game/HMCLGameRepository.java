@@ -23,8 +23,8 @@ import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Bits;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -498,7 +498,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public static long getAutoAllocatedMemory(PhysicalMemoryStatus memoryStatus, Platform platform) {
+    public static long getAutoAllocatedMemory(PhysicalMemoryStatus memoryStatus, NativePlatform platform) {
         final long minHeapSize;
         final long maxHeapSize;
 

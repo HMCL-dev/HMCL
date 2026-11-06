@@ -6,8 +6,8 @@ import kala.compress.archivers.ArchiveEntry;
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -68,7 +68,7 @@ public final class JavaInfo {
         if (javaVersion == null)
             throw new IOException("Missing Java version");
 
-        return new JavaInfo(Platform.getPlatform(os, arch), javaVersion, vendor);
+        return new JavaInfo(NativePlatform.of(os, arch), javaVersion, vendor);
     }
 
     public static <F, E extends ArchiveEntry> JavaInfo fromArchive(ArchiveFileTree<F, E> tree) throws IOException {
@@ -108,11 +108,11 @@ public final class JavaInfo {
     }
 
     public static final class Builder {
-        private final Platform platform;
+        private final NativePlatform platform;
         private final String version;
         private @Nullable String vendor;
 
-        public Builder(Platform platform, String version) {
+        public Builder(NativePlatform platform, String version) {
             this.platform = platform;
             this.version = version;
         }
@@ -128,20 +128,20 @@ public final class JavaInfo {
         }
     }
 
-    public static Builder newBuilder(@NotNull Platform platform, @NotNull String version) {
+    public static Builder newBuilder(@NotNull NativePlatform platform, @NotNull String version) {
         return new Builder(platform, version);
     }
 
     public static final JavaInfo CURRENT_ENVIRONMENT = new JavaInfo(SystemInfo.CURRENT_PLATFORM, System.getProperty("java.version"), System.getProperty("java.vendor"));
 
-    private final Platform platform;
+    private final NativePlatform platform;
     private final String version;
     private final @Nullable String vendor;
 
     private final transient int parsedVersion;
     private final transient VersionNumber versionNumber;
 
-    public JavaInfo(Platform platform, String version, @Nullable String vendor) {
+    public JavaInfo(NativePlatform platform, String version, @Nullable String vendor) {
         this.platform = platform;
         this.version = version;
         this.parsedVersion = parseVersion(version);
@@ -149,7 +149,7 @@ public final class JavaInfo {
         this.vendor = vendor;
     }
 
-    public Platform getPlatform() {
+    public NativePlatform getPlatform() {
         return platform;
     }
 

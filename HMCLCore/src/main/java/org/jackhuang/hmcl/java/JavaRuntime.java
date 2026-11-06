@@ -4,8 +4,8 @@ package org.jackhuang.hmcl.java;
 
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.Bits;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +48,7 @@ public final class JavaRuntime implements Comparable<JavaRuntime> {
         return info.getVersion();
     }
 
-    public Platform getPlatform() {
+    public NativePlatform getPlatform() {
         return info.getPlatform();
     }
 

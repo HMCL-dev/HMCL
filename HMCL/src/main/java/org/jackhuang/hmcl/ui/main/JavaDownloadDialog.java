@@ -44,8 +44,8 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.io.IOException;
@@ -66,7 +66,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class JavaDownloadDialog extends StackPane {
 
     public static Runnable showDialogAction(DownloadProvider downloadProvider) {
-        Platform platform = SystemInfo.SYSTEM_PLATFORM;
+        NativePlatform platform = SystemInfo.SYSTEM_PLATFORM;
 
         List<GameJavaVersion> supportedVersions = GameJavaVersion.getSupportedVersions(platform);
 
@@ -83,11 +83,11 @@ public final class JavaDownloadDialog extends StackPane {
     }
 
     private final DownloadProvider downloadProvider;
-    private final Platform platform;
+    private final NativePlatform platform;
     private final List<GameJavaVersion> supportedGameJavaVersions;
     private final EnumSet<DiscoJavaDistribution> distributions;
 
-    private JavaDownloadDialog(DownloadProvider downloadProvider, Platform platform, List<GameJavaVersion> supportedGameJavaVersions, EnumSet<DiscoJavaDistribution> distributions) {
+    private JavaDownloadDialog(DownloadProvider downloadProvider, NativePlatform platform, List<GameJavaVersion> supportedGameJavaVersions, EnumSet<DiscoJavaDistribution> distributions) {
         this.downloadProvider = downloadProvider;
         this.platform = platform;
         this.supportedGameJavaVersions = supportedGameJavaVersions;
