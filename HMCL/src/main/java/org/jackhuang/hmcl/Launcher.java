@@ -32,12 +32,18 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
+import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
+import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
 import org.jackhuang.hmcl.util.platform.macos.LibSystem;
+import org.jackhuang.hmcl.util.platform.macos.MacDeviceInfo;
 import org.jackhuang.hmcl.util.platform.windows.Gdi32;
 import org.jackhuang.hmcl.util.platform.windows.Shell32;
 import org.jackhuang.hmcl.util.platform.windows.User32;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -320,7 +326,66 @@ public final class Launcher extends Application {
 
             LOG.info("Zlib Compatible: " + ZlibUtils.IS_ZLIB_COMPATIBLE);
 
-            Lang.thread(SystemInfo::initialize, "Detection System Information", true);
+            Lang.thread(() -> {
+                StringBuilder builder = new StringBuilder("System Info:");
+                builder.append("\n - Operating System: ").append(SystemInfo.getOperatingSystemDescription());
+
+                @Nullable DeviceInfo deviceInfo = SystemInfo.getDeviceInfo();
+                if (deviceInfo != null) {
+                    builder.append("\n - Device: ").append(deviceInfo.name());
+                    if (deviceInfo instanceof MacDeviceInfo macDeviceInfo) {
+                        @Nullable String modelIdentifier = macDeviceInfo.modelIdentifier();
+                        if (modelIdentifier != null && !modelIdentifier.isBlank() && !modelIdentifier.equals(deviceInfo.name()))
+                            builder.append(" (").append(modelIdentifier).append(')');
+                    }
+                }
+
+                // CPU
+                @Unmodifiable List<CentralProcessor> processors = SystemInfo.getCentralProcessors();
+                for (int i = 0; i < processors.size(); i++) {
+                    builder.append("\n - CPU");
+                    if (processors.size() > 1)
+                        builder.append(' ').append(i + 1);
+                    builder.append(": ").append(processors.get(i));
+                }
+
+                // Graphics Card
+                @Unmodifiable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
+                if (graphicsCards.isEmpty())
+                    builder.append("\n - GPU: Not Found");
+                else if (graphicsCards.size() == 1)
+                    builder.append("\n - GPU: ").append(graphicsCards.get(0));
+                else {
+                    int index = 1;
+                    for (GraphicsCard graphicsCard : graphicsCards) {
+                        builder.append("\n - GPU ").append(index++).append(": ").append(graphicsCard);
+                    }
+                }
+
+                // Memory
+                long totalMemorySize = SystemInfo.getTotalMemorySize();
+                long usedMemorySize = SystemInfo.getUsedMemorySize();
+
+                builder.append("\n - Memory: ")
+                        .append(DataSizeUnit.format(usedMemorySize))
+                        .append(" / ")
+                        .append(DataSizeUnit.format(totalMemorySize));
+
+                if (totalMemorySize > 0 && usedMemorySize > 0)
+                    builder.append(" (").append((int) (((double) usedMemorySize / totalMemorySize) * 100)).append("%)");
+
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    long pageFileSize = SystemInfo.getTotalPageFileSize();
+                    builder.append("\n - Page Files (Current Capacity): ")
+                            .append(pageFileSize >= 0 ? DataSizeUnit.format(pageFileSize) : "Unknown");
+                    PageFileConfiguration configuration = SystemInfo.getPageFileConfiguration();
+                    builder.append(", Configuration: ").append(configuration.mode());
+                    if (configuration.mode() == PageFileConfiguration.Mode.MANUAL)
+                        builder.append(", Configured Limit: ").append(DataSizeUnit.format(configuration.maximumSize()));
+                }
+
+                LOG.info(builder.toString());
+            }, "Detection System Information", true);
 
             try {
                 SettingsManager.init();

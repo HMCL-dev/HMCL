@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
@@ -11,7 +10,6 @@ import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
-import org.jackhuang.hmcl.util.platform.macos.MacDeviceInfo;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
@@ -32,8 +30,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Provides cached operating system and hardware information and current physical memory usage.
 @NotNullByDefault
@@ -100,68 +96,6 @@ public final class SystemInfo {
 
         /// The cached desktop environment description, or `null` if unavailable.
         public static final @Nullable String DESKTOP = DETECTOR.detectDesktopEnvironment();
-    }
-
-    /// Initializes cached system information if needed and logs a system summary on each call.
-    public static void initialize() {
-        StringBuilder builder = new StringBuilder("System Info:");
-        builder.append("\n - Operating System: ").append(getOperatingSystemDescription());
-
-        @Nullable DeviceInfo deviceInfo = getDeviceInfo();
-        if (deviceInfo != null) {
-            builder.append("\n - Device: ").append(deviceInfo.name());
-            if (deviceInfo instanceof MacDeviceInfo macDeviceInfo) {
-                @Nullable String modelIdentifier = macDeviceInfo.modelIdentifier();
-                if (modelIdentifier != null && !modelIdentifier.isBlank() && !modelIdentifier.equals(deviceInfo.name()))
-                    builder.append(" (").append(modelIdentifier).append(')');
-            }
-        }
-
-        // CPU
-        @Unmodifiable List<CentralProcessor> processors = getCentralProcessors();
-        for (int i = 0; i < processors.size(); i++) {
-            builder.append("\n - CPU");
-            if (processors.size() > 1)
-                builder.append(' ').append(i + 1);
-            builder.append(": ").append(processors.get(i));
-        }
-
-        // Graphics Card
-        @Unmodifiable List<GraphicsCard> graphicsCards = getGraphicsCards();
-        if (graphicsCards.isEmpty())
-            builder.append("\n - GPU: Not Found");
-        else if (graphicsCards.size() == 1)
-            builder.append("\n - GPU: ").append(graphicsCards.get(0));
-        else {
-            int index = 1;
-            for (GraphicsCard graphicsCard : graphicsCards) {
-                builder.append("\n - GPU ").append(index++).append(": ").append(graphicsCard);
-            }
-        }
-
-        // Memory
-        long totalMemorySize = getTotalMemorySize();
-        long usedMemorySize = getUsedMemorySize();
-
-        builder.append("\n - Memory: ")
-                .append(DataSizeUnit.format(usedMemorySize))
-                .append(" / ")
-                .append(DataSizeUnit.format(totalMemorySize));
-
-        if (totalMemorySize > 0 && usedMemorySize > 0)
-            builder.append(" (").append((int) (((double) usedMemorySize / totalMemorySize) * 100)).append("%)");
-
-        if (CURRENT_OS == OperatingSystem.WINDOWS) {
-            long pageFileSize = getTotalPageFileSize();
-            builder.append("\n - Page Files (Current Capacity): ")
-                    .append(pageFileSize >= 0 ? DataSizeUnit.format(pageFileSize) : "Unknown");
-            PageFileConfiguration configuration = getPageFileConfiguration();
-            builder.append(", Configuration: ").append(configuration.mode());
-            if (configuration.mode() == PageFileConfiguration.Mode.MANUAL)
-                builder.append(", Configured Limit: ").append(DataSizeUnit.format(configuration.maximumSize()));
-        }
-
-        LOG.info(builder.toString());
     }
 
     /// Returns the cached distribution or system name, falling back to `os.name`.
