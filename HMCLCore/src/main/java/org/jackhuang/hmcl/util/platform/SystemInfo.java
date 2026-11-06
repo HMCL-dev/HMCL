@@ -48,7 +48,7 @@ public final class SystemInfo {
     public static final int CODE_PAGE = detectCodePage();
 
     /// The current JVM architecture, including native byte-order and ABI refinements.
-    public static final Architecture CURRENT_ARCH = detectArchitecture(System.getProperty("os.arch"), SYSTEM_VERSION, ByteOrder.nativeOrder());
+    public static final Architecture CURRENT_ARCH = detectArchitecture(System.getProperty("os.arch"));
 
     /// The host architecture, falling back to the JVM architecture when detection fails.
     public static final Architecture SYSTEM_ARCH = detectSystemArchitecture();
@@ -121,6 +121,13 @@ public final class SystemInfo {
     /// The result is detected once during initialization of the cached system information and is not refreshed.
     public static @Nullable String getDesktopEnvironment() {
         return Holder.DESKTOP;
+    }
+
+    /// Resolves a locally reported architecture name using the current JVM byte order and system version.
+    /// Applies the kernel-version heuristic for the LoongArch ABI; not intended for foreign binaries.
+    /// Returns [Architecture#UNKNOWN] for null or unrecognized names.
+    public static Architecture detectArchitecture(@Nullable String name) {
+        return detectArchitecture(name, SYSTEM_VERSION, ByteOrder.nativeOrder());
     }
 
     /// Returns whether the ARM64 host supports x86-64 translation based on Windows build or Rosetta availability.
@@ -313,8 +320,8 @@ public final class SystemInfo {
         return -1;
     }
 
-    /// Resolves ambiguous architecture names using the current JVM byte order and kernel version.
-    private static Architecture detectArchitecture(
+    /// Resolves ambiguous architecture names using the supplied system version and byte order.
+    static Architecture detectArchitecture(
             @Nullable String name,
             OSVersion systemVersion,
             ByteOrder byteOrder
@@ -337,7 +344,7 @@ public final class SystemInfo {
             if (processorIdentifier != null) {
                 int idx = processorIdentifier.indexOf(' ');
                 if (idx > 0) {
-                    sysArch = detectArchitecture(processorIdentifier.substring(0, idx), SYSTEM_VERSION, ByteOrder.nativeOrder());
+                    sysArch = detectArchitecture(processorIdentifier.substring(0, idx));
                 }
             }
         } else if (CURRENT_OS == OperatingSystem.MACOS) {
@@ -361,7 +368,7 @@ public final class SystemInfo {
                     try {
                         Process process = Runtime.getRuntime().exec(new String[]{uname, "-m"});
                         if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0) {
-                            sysArch = detectArchitecture(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim(), SYSTEM_VERSION, ByteOrder.nativeOrder());
+                            sysArch = detectArchitecture(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim());
                         }
                     } catch (Throwable e) {
                         e.printStackTrace(System.err);
