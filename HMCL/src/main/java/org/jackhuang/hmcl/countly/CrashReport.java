@@ -5,7 +5,7 @@ package org.jackhuang.hmcl.countly;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -36,6 +36,7 @@ public class CrashReport {
         return true;
     }
 
+    /// Returns the crash details with cached system information and current runtime statistics.
     public String getDisplayText() {
         return "---- Hello Minecraft! Crash Report ----\n" +
                 "  Version: " + Metadata.VERSION + "\n" +
@@ -44,7 +45,7 @@ public class CrashReport {
                 "\n  Content: \n    " +
                 stackTrace + "\n\n" +
                 "-- System Details --\n" +
-                "  Operating System: " + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION.getVersion() + "\n" +
+                "  Operating System: " + SystemInfo.getOperatingSystemDescription() + "\n" +
                 "  System Architecture: " + Architecture.SYSTEM_ARCH.getDisplayName() + "\n" +
                 "  Java Architecture: " + Architecture.CURRENT_ARCH.getDisplayName() + "\n" +
                 "  Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor") + "\n" +

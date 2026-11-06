@@ -2,20 +2,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -95,18 +92,10 @@ public enum OperatingSystem {
      */
     public static final int SYSTEM_BUILD_NUMBER;
 
-    /**
-     * The name of current operating system.
-     */
-    public static final String SYSTEM_NAME;
-
     /// The version of current operating system.
     ///
     /// If [#CURRENT_OS] is [#WINDOWS], then [#SYSTEM_VERSION] must be an instance of [OSVersion.Windows].
     public static final OSVersion SYSTEM_VERSION;
-
-    public static final String OS_RELEASE_NAME;
-    public static final String OS_RELEASE_PRETTY_NAME;
 
     public static final int CODE_PAGE;
 
@@ -206,46 +195,14 @@ public enum OperatingSystem {
                 }
             }
 
-            String osName = System.getProperty("os.name");
-
-            // Java 17 or earlier recognizes Windows 11 as Windows 10
-            if (osName.equals("Windows 10") && windowsVersion.isAtLeast(OSVersion.WINDOWS_11))
-                osName = "Windows 11";
-
-            if (windowsVersion.isAtLeast(OSVersion.WINDOWS_10) && reg != null) {
-                Object displayVersion = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
-                        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "DisplayVersion");
-
-                if (displayVersion instanceof String displayVersionStr
-                        && displayVersionStr.matches("\\d{2}H\\d")) {
-                    osName = osName + " " + displayVersionStr;
-                }
-            }
-
-            SYSTEM_NAME = osName;
             SYSTEM_VERSION = windowsVersion;
             SYSTEM_BUILD_NUMBER = windowsVersion.build();
             CODE_PAGE = codePage;
         } else {
-            SYSTEM_NAME = System.getProperty("os.name");
             SYSTEM_VERSION = OSVersion.of(CURRENT_OS, System.getProperty("os.version"));
             SYSTEM_BUILD_NUMBER = -1;
             CODE_PAGE = -1;
         }
-
-        Map<String, String> osRelease = Collections.emptyMap();
-        if (CURRENT_OS == LINUX || CURRENT_OS == FREEBSD) {
-            Path osReleaseFile = Paths.get("/etc/os-release");
-            if (Files.exists(osReleaseFile)) {
-                try {
-                    osRelease = KeyValuePairUtils.loadProperties(osReleaseFile);
-                } catch (IOException e) {
-                    e.printStackTrace(System.err);
-                }
-            }
-        }
-        OS_RELEASE_NAME = osRelease.get("NAME");
-        OS_RELEASE_PRETTY_NAME = osRelease.get("PRETTY_NAME");
     }
 
     public static OperatingSystem parseOSName(String name) {

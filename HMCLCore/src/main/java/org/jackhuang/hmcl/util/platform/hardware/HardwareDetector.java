@@ -2,16 +2,26 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform.hardware;
 
+import org.jackhuang.hmcl.util.KeyValuePairUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.OperatingSystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-/// Detects hardware information, with platform-specific subclasses providing native queries.
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
+/// Detects system and hardware information, with platform-specific subclasses providing native queries.
 ///
 /// @author Glavo
 @NotNullByDefault
@@ -38,6 +48,28 @@ public class HardwareDetector {
             return null;
         name = name.strip();
         return name.isEmpty() || DEVICE_NAME_PLACEHOLDERS.contains(name.toLowerCase(Locale.ROOT)) ? null : name;
+    }
+
+    /// Returns the system name and version from JVM properties, using `/etc/os-release` on Linux and BSD.
+    /// Falls back to JVM properties if release information is absent or cannot be read.
+    public OperatingSystemInfo detectOperatingSystemInfo() {
+        String systemName = System.getProperty("os.name", "Unknown");
+        String description = systemName + ' ' + OperatingSystem.SYSTEM_VERSION.getVersion();
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            Path osReleaseFile = Path.of("/etc/os-release");
+            try {
+                if (Files.exists(osReleaseFile)) {
+                    Map<String, String> osRelease = KeyValuePairUtils.loadProperties(osReleaseFile);
+                    @Nullable String releaseName = osRelease.get("NAME");
+                    @Nullable String releasePrettyName = osRelease.get("PRETTY_NAME");
+                    return new OperatingSystemInfo(Objects.requireNonNullElse(releaseName, systemName),
+                            releasePrettyName == null ? description : releasePrettyName + " (" + description + ')');
+                }
+            } catch (IOException | SecurityException e) {
+                LOG.warning("Failed to read operating system release information", e);
+            }
+        }
+        return new OperatingSystemInfo(systemName, description);
     }
 
     /// Returns a nonempty immutable processor list, estimating missing counts for a single entry.

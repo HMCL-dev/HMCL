@@ -6,7 +6,9 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
+import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.OperatingSystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
@@ -22,7 +24,7 @@ import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Detects Windows hardware information.
+/// Detects Windows system and hardware information.
 ///
 /// @author Glavo
 @NotNullByDefault
@@ -33,6 +35,28 @@ public final class WindowsHardwareDetector extends HardwareDetector {
 
     /// An absolute drive path, including the wildcard drive used by automatic management.
     private static final Pattern PAGE_FILE_PATH = Pattern.compile("(?i)^[a-z?]:\\\\[^\\r\\n]+$");
+
+    /// Returns the Windows name and version, correcting Windows 11 names and including the display release when available.
+    @Override
+    public OperatingSystemInfo detectOperatingSystemInfo() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+            return super.detectOperatingSystemInfo();
+
+        String systemName = System.getProperty("os.name", "Unknown");
+        OSVersion version = OperatingSystem.SYSTEM_VERSION;
+        // Older Java releases identify Windows 11 as Windows 10.
+        if (systemName.equals("Windows 10") && version.isAtLeast(OSVersion.WINDOWS_11))
+            systemName = "Windows 11";
+
+        @Nullable WinReg reg = WinReg.INSTANCE;
+        if (version.isAtLeast(OSVersion.WINDOWS_10) && reg != null) {
+            @Nullable Object displayVersion = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                    "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "DisplayVersion");
+            if (displayVersion instanceof String displayVersionStr && displayVersionStr.matches("[0-9]{2}H[0-9]"))
+                systemName += " " + displayVersionStr;
+        }
+        return new OperatingSystemInfo(systemName, systemName + ' ' + version.getVersion());
+    }
 
     /// Detects Windows processors, using the default detector when native information is unavailable.
     @Override

@@ -12,7 +12,7 @@ import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.macos.MacDeviceInfo;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
-import org.jackhuang.hmcl.util.platform.windows.*;
+import org.jackhuang.hmcl.util.platform.windows.WindowsHardwareDetector;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -21,11 +21,11 @@ import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Provides cached hardware information and current physical memory usage.
+/// Provides cached operating system and hardware information and current physical memory usage.
 @NotNullByDefault
 public final class SystemInfo {
 
-    /// Lazily initializes the platform detector and cached hardware information.
+    /// Lazily initializes the platform detector and cached system information.
     private static final class Holder {
 
         /// The hardware detector for the current operating system.
@@ -41,6 +41,9 @@ public final class SystemInfo {
             else
                 DETECTOR = new HardwareDetector();
         }
+
+        /// The cached operating system name and detailed description.
+        public static final OperatingSystemInfo OPERATING_SYSTEM = DETECTOR.detectOperatingSystemInfo();
 
         /// The detected total physical memory size, in bytes.
         public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
@@ -58,9 +61,10 @@ public final class SystemInfo {
         public static final @Nullable String DESKTOP = DETECTOR.detectDesktopEnvironment();
     }
 
-    /// Initializes cached hardware information if needed and logs a system summary on each call.
+    /// Initializes cached system information if needed and logs a system summary on each call.
     public static void initialize() {
         StringBuilder builder = new StringBuilder("System Info:");
+        builder.append("\n - Operating System: ").append(getOperatingSystemDescription());
 
         @Nullable DeviceInfo deviceInfo = getDeviceInfo();
         if (deviceInfo != null) {
@@ -117,6 +121,17 @@ public final class SystemInfo {
         }
 
         LOG.info(builder.toString());
+    }
+
+    /// Returns the cached distribution or system name, falling back to `os.name`.
+    /// Windows names include the display release when available.
+    public static String getOperatingSystemName() {
+        return Holder.OPERATING_SYSTEM.name();
+    }
+
+    /// Returns the cached system name and version, prefixed with the distribution's pretty name when available.
+    public static String getOperatingSystemDescription() {
+        return Holder.OPERATING_SYSTEM.description();
     }
 
     /// Returns a snapshot using the cached total and currently available physical memory.

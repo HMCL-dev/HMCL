@@ -347,7 +347,7 @@ public class GameCrashWindow extends Stage {
                 TwoLineListItem os = new TwoLineListItem();
                 os.getStyleClass().setAll("two-line-item-second-large");
                 os.setTitle(i18n("system.operating_system"));
-                os.setSubtitle(Objects.requireNonNullElse(OperatingSystem.OS_RELEASE_NAME, OperatingSystem.SYSTEM_NAME));
+                os.setSubtitle(SystemInfo.getOperatingSystemName());
 
                 TwoLineListItem arch = new TwoLineListItem();
                 arch.getStyleClass().setAll("two-line-item-second-large");
