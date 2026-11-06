@@ -287,7 +287,7 @@ public final class CommandBuilder {
     public static boolean hasExecutionPolicy() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
             return true;
-        if (!SystemInfo.isWindows7OrLater())
+        if (!SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7))
             return false;
 
         try {
@@ -301,7 +301,7 @@ public final class CommandBuilder {
     public static boolean setExecutionPolicy() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
             return true;
-        if (!SystemInfo.isWindows7OrLater())
+        if (!SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7))
             return false;
 
         try {

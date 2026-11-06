@@ -62,14 +62,14 @@ public final class WindowsHardwareDetector extends HardwareDetector {
     /// Detects Windows processors, using the default detector when native information is unavailable.
     @Override
     public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
-        @Unmodifiable List<CentralProcessor> processors = SystemInfo.isWindows7OrLater() ? WindowsCPUDetector.detect() : List.of();
+        @Unmodifiable List<CentralProcessor> processors = SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7) ? WindowsCPUDetector.detect() : List.of();
         return processors.isEmpty() ? super.detectCentralProcessors() : processors;
     }
 
     /// Returns an immutable graphics card list, empty if detection is unsupported or fails.
     @Override
     public @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
-        if (!SystemInfo.isWindows7OrLater())
+        if (!SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7))
             return List.of();
         return WindowsGPUDetector.detect();
     }

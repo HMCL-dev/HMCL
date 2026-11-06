@@ -176,11 +176,6 @@ public final class SystemInfo {
         return SUPPORTED_TRANSLATION_X86_64;
     }
 
-    /// Returns whether the current system is Windows 7 or later.
-    public static boolean isWindows7OrLater() {
-        return SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7);
-    }
-
     /// Returns whether a Wine environment variable is present on Windows.
     public static boolean isRunningUnderWine() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
