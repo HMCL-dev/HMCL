@@ -316,7 +316,7 @@ public final class Launcher extends Application {
             } catch (NoClassDefFoundError ignored) {
             }
             LOG.info("Native Backend: " + (NativeUtils.USE_JNA ? "JNA" : "None"));
-            if (SystemInfo.CURRENT_OS.isUnixLike() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS) {
+            if (SystemInfo.isXdgPreferred()) {
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
                 LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
             }
@@ -541,7 +541,7 @@ public final class Launcher extends Application {
             } catch (Throwable e) {
                 LOG.warning("Invalid UI scale: " + uiScale);
             }
-        } else if (SystemInfo.CURRENT_OS.isUnixLike() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS) {
+        } else if (SystemInfo.isXdgPreferred()) {
             String xdgSessionType = Objects.requireNonNullElse(System.getenv("XDG_SESSION_TYPE"), "");
             String xdgCurrentDesktop = Objects.requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "");
 

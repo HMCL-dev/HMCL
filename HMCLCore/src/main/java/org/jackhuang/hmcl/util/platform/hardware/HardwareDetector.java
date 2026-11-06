@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.OperatingSystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -51,12 +50,12 @@ public class HardwareDetector {
         return name.isEmpty() || DEVICE_NAME_PLACEHOLDERS.contains(name.toLowerCase(Locale.ROOT)) ? null : name;
     }
 
-    /// Returns the system name and version from JVM properties, using `/etc/os-release` on Unix-like systems other than macOS.
+    /// Returns the system name and version from JVM properties, using `/etc/os-release` when XDG conventions are preferred.
     /// Falls back to JVM properties if release information is absent or cannot be read.
     public OperatingSystemInfo detectOperatingSystemInfo() {
         String systemName = System.getProperty("os.name", "Unknown");
         String description = systemName + ' ' + SystemInfo.SYSTEM_VERSION.getVersion();
-        if (SystemInfo.CURRENT_OS.isUnixLike() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS) {
+        if (SystemInfo.isXdgPreferred()) {
             Path osReleaseFile = Path.of("/etc/os-release");
             try {
                 if (Files.exists(osReleaseFile)) {

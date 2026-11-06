@@ -60,7 +60,7 @@ public final class Metadata {
     static {
         String hmclHome = System.getProperty("hmcl.home", System.getenv("HMCL_USER_HOME"));
         if (StringUtils.isBlank(hmclHome)) {
-            if (SystemInfo.CURRENT_OS.isUnixLike() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS) {
+            if (SystemInfo.isXdgPreferred()) {
                 String xdgData = System.getenv("XDG_DATA_HOME");
                 if (StringUtils.isNotBlank(xdgData)) {
                     HMCL_USER_HOME = Path.of(xdgData, "hmcl").toAbsolutePath().normalize();

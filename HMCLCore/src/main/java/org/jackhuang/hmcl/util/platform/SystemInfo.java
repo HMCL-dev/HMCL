@@ -109,6 +109,12 @@ public final class SystemInfo {
         return Holder.OPERATING_SYSTEM.description();
     }
 
+    /// Returns whether XDG conventions are preferred for system and desktop integration.
+    /// Uses the operating system category without checking individual tools or services.
+    public static boolean isXdgPreferred() {
+        return CURRENT_OS.isUnixLike() && CURRENT_OS != OperatingSystem.MACOS;
+    }
+
     /// Returns the cached desktop environment description, or `null` if detection is unsupported or no name is available.
     ///
     /// The description includes the session type when supplied by the platform detector.
