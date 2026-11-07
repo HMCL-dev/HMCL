@@ -60,6 +60,7 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -196,11 +197,14 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = targetPath.resolve(result);
+            AtomicReference<List<ModDependencyResolver.SkippedDependency>> skippedDependencies = new AtomicReference<>(List.of());
 
             Controllers.taskDialog(Task.composeAsync(Schedulers.io(), () -> {
-                List<RemoteAddon.Version> dependencies = autoDependencies
+                ModDependencyResolver.ResolutionResult resolution = autoDependencies
                         ? ModDependencyResolver.resolveRequiredDependencies(downloadProvider, file, gameVersion, targetLoaders)
-                        : List.of();
+                        : new ModDependencyResolver.ResolutionResult(List.of(), List.of());
+                skippedDependencies.set(resolution.skippedDependencies());
+                List<RemoteAddon.Version> dependencies = resolution.versions();
                 List<RemoteAddon.Version> missingDependencies = dependencies;
 
                 if (autoDependencies) {
@@ -240,10 +244,23 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     }
                 } else {
                     Controllers.showToast(i18n("install.success"));
+                    List<ModDependencyResolver.SkippedDependency> skipped = skippedDependencies.get();
+                    if (!skipped.isEmpty()) {
+                        Controllers.dialog(i18n("mods.install.dependencies_skipped", formatSkippedDependencies(skipped)),
+                                i18n("mods.install.dependencies_skipped.title"), MessageDialogPane.MessageType.WARNING);
+                    }
                 }
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
             handler.resolve();
         }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("game_directory.already_exists"), existingPaths::notContains));
+    }
+
+    /// Formats skipped dependencies as a readable list for the manual-installation warning.
+    private static String formatSkippedDependencies(List<ModDependencyResolver.SkippedDependency> dependencies) {
+        return dependencies.stream().map(dependency -> {
+            String version = dependency.versionId() != null ? " [" + dependency.versionId() + "]" : "";
+            return "- " + dependency.title() + " (" + dependency.projectId() + ")" + version;
+        }).collect(Collectors.joining("\n"));
     }
 
     /// Creates a named download task using the configured download candidates.

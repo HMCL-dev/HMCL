@@ -82,16 +82,19 @@ public final class ModDependencyResolverTest {
         assertEquals(List.of(requiredVersion), resolve(catalog, root));
     }
 
-    /// Rejects an exact requirement that cannot run in the selected instance.
+    /// Skips an exact requirement that cannot run in the selected instance and reports it for manual installation.
     @Test
-    public void rejectsIncompatibleRequiredVersion() {
+    public void skipsIncompatibleRequiredVersion() throws IOException {
         RemoteAddon.Version requiredVersion = version(RemoteAddon.Source.MODRINTH, "dependency", "wrong-game", Instant.EPOCH,
                 RemoteAddon.VersionType.Release, List.of(), List.of("1.20"), List.of(loader(ModLoaderType.FORGE)));
         RemoteAddon.Version root = compatibleVersion("root", List.of(
                 required(RemoteAddon.Source.MODRINTH, "dependency", requiredVersion.versionId())));
         FakeCatalog catalog = new FakeCatalog().add(mod(RemoteAddon.Source.MODRINTH, "dependency"), List.of(requiredVersion));
 
-        assertThrows(IOException.class, () -> resolve(catalog, root));
+        ModDependencyResolver.ResolutionResult result = resolveResult(catalog, root);
+        assertTrue(result.versions().isEmpty());
+        assertEquals(requiredVersion.versionId(), result.skippedDependencies().get(0).versionId());
+        assertEquals("dependency", result.skippedDependencies().get(0).projectId());
     }
 
     /// Rejects two parent mods that require different exact versions of one dependency.
@@ -167,15 +170,30 @@ public final class ModDependencyResolverTest {
         assertThrows(IOException.class, () -> resolve(new FakeCatalog(), missingProject));
     }
 
-    /// Rejects non-mod dependencies and dependencies without a compatible recommended version.
+    /// Rejects non-mod dependencies because their project metadata is invalid for mod installation.
     @Test
-    public void rejectsInvalidOrIncompatibleDependencies() {
+    public void rejectsNonModDependencies() {
         RemoteAddon.Version root = compatibleVersion("root", List.of(required(RemoteAddon.Source.CURSEFORGE, "dependency")));
         RemoteAddon.Version dependency = compatibleVersion("dependency", List.of());
         assertThrows(IOException.class, () -> resolve(new FakeCatalog()
                 .add(addon(RemoteAddon.Source.CURSEFORGE, "dependency", RemoteAddon.Type.RESOURCE_PACK), List.of(dependency)), root));
-        assertThrows(IOException.class, () -> resolve(new FakeCatalog()
-                .add(mod(RemoteAddon.Source.CURSEFORGE, "dependency"), List.of()), root));
+    }
+
+    /// Skips an incompatible dependency while continuing to resolve other compatible dependencies.
+    @Test
+    public void skipsOnlyDependenciesWithoutCompatibleVersions() throws IOException {
+        RemoteAddon.Version compatible = compatibleVersion("compatible", List.of());
+        RemoteAddon.Version root = compatibleVersion("root", List.of(
+                required(RemoteAddon.Source.CURSEFORGE, "incompatible"),
+                required(RemoteAddon.Source.CURSEFORGE, "compatible")));
+        FakeCatalog catalog = new FakeCatalog()
+                .add(mod(RemoteAddon.Source.CURSEFORGE, "incompatible"), List.of())
+                .add(mod(RemoteAddon.Source.CURSEFORGE, "compatible"), List.of(compatible));
+
+        ModDependencyResolver.ResolutionResult result = resolveResult(catalog, root);
+        assertEquals(List.of(compatible), result.versions());
+        assertEquals(List.of("incompatible"), result.skippedDependencies().stream()
+                .map(ModDependencyResolver.SkippedDependency::projectId).toList());
     }
 
     /// Resolves a deep chain iteratively rather than consuming the Java call stack.
@@ -196,6 +214,11 @@ public final class ModDependencyResolverTest {
 
     /// Runs the package-level resolver entry point with the standard test compatibility target.
     private static List<RemoteAddon.Version> resolve(FakeCatalog catalog, RemoteAddon.Version root) throws IOException {
+        return resolveResult(catalog, root).versions();
+    }
+
+    /// Runs the resolver and retains warnings for assertions.
+    private static ModDependencyResolver.ResolutionResult resolveResult(FakeCatalog catalog, RemoteAddon.Version root) throws IOException {
         return ModDependencyResolver.resolveRequiredDependencies(catalog, root, GAME_VERSION, Set.of(ModLoaderType.FORGE));
     }
 

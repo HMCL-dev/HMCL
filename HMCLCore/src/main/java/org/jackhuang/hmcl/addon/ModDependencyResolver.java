@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 public final class ModDependencyResolver {
 
     /// Resolves required dependencies using the remote repositories declared by each dependency.
-    public static @Unmodifiable List<RemoteAddon.Version> resolveRequiredDependencies(
+    public static ResolutionResult resolveRequiredDependencies(
             DownloadProvider downloadProvider,
             RemoteAddon.Version rootVersion,
             String gameVersion,
@@ -32,7 +32,7 @@ public final class ModDependencyResolver {
     }
 
     /// Resolves required dependencies through the given catalog, keeping network access outside the graph algorithm.
-    static @Unmodifiable List<RemoteAddon.Version> resolveRequiredDependencies(
+    static ResolutionResult resolveRequiredDependencies(
             Catalog catalog,
             RemoteAddon.Version rootVersion,
             String gameVersion,
@@ -41,6 +41,7 @@ public final class ModDependencyResolver {
         ArrayDeque<RemoteAddon.Version> pending = new ArrayDeque<>();
         pending.add(rootVersion);
         Map<ProjectKey, RemoteAddon.Version> resolved = new LinkedHashMap<>();
+        Map<ProjectKey, SkippedDependency> skipped = new LinkedHashMap<>();
 
         while (!pending.isEmpty()) {
             RemoteAddon.Version current = pending.removeFirst();
@@ -60,8 +61,15 @@ public final class ModDependencyResolver {
                 }
 
                 @Nullable ProjectKey key = projectId != null ? new ProjectKey(source, projectId) : null;
-                if (key != null && findExistingVersion(rootVersion, rootKey, resolved, key, requiredVersionId, current) != null) {
-                    continue;
+                if (key != null) {
+                    @Nullable SkippedDependency skippedDependency = skipped.get(key);
+                    if (skippedDependency != null
+                            && (requiredVersionId == null || requiredVersionId.equals(skippedDependency.versionId()))) {
+                        continue;
+                    }
+                    if (findExistingVersion(rootVersion, rootKey, resolved, key, requiredVersionId, current) != null) {
+                        continue;
+                    }
                 }
 
                 RemoteAddon.@Nullable Version selected = null;
@@ -73,6 +81,10 @@ public final class ModDependencyResolver {
                     }
 
                     key = new ProjectKey(selected.source(), selected.projectId());
+                    @Nullable SkippedDependency skippedDependency = skipped.get(key);
+                    if (skippedDependency != null && requiredVersionId.equals(skippedDependency.versionId())) {
+                        continue;
+                    }
                     if (findExistingVersion(rootVersion, rootKey, resolved, key, requiredVersionId, current) != null) {
                         continue;
                     }
@@ -87,23 +99,34 @@ public final class ModDependencyResolver {
                 }
 
                 if (selected == null) {
-                    ProjectKey dependencyKey = key;
                     try (Stream<RemoteAddon.Version> versions = catalog.loadVersions(addon, source)) {
-                        selected = findRecommendedModVersion(versions, gameVersion, targetLoaders)
-                                .orElseThrow(() -> new IOException("No compatible version of required dependency " + dependencyKey
-                                        + " for Minecraft " + gameVersion + " and loaders " + targetLoaders));
+                        selected = findRecommendedModVersion(versions, gameVersion, targetLoaders).orElse(null);
+                    }
+                    if (selected == null) {
+                        skipped.put(key, new SkippedDependency(source, key.projectId(), null, addon.title()));
+                        continue;
                     }
                 } else if (!isCompatible(selected, gameVersion, targetLoaders)) {
-                    throw new IOException("Required version " + requiredVersionId + " of dependency " + key
-                            + " is incompatible with Minecraft " + gameVersion + " and loaders " + targetLoaders);
+                    skipped.put(key, new SkippedDependency(source, key.projectId(), requiredVersionId, addon.title()));
+                    continue;
                 }
 
+                skipped.remove(key);
                 resolved.put(key, selected);
                 pending.addLast(selected);
             }
         }
 
-        return List.copyOf(resolved.values());
+        return new ResolutionResult(List.copyOf(resolved.values()), List.copyOf(skipped.values()));
+    }
+
+    /// Contains the dependencies to download and incompatible dependencies that require manual installation.
+    public record ResolutionResult(@Unmodifiable List<RemoteAddon.Version> versions,
+                                   @Unmodifiable List<SkippedDependency> skippedDependencies) {
+    }
+
+    /// Describes a required dependency skipped because it has no compatible version for the instance.
+    public record SkippedDependency(RemoteAddon.Source source, String projectId, @Nullable String versionId, String title) {
     }
 
     /// Returns an already selected version, rejecting a conflicting exact requirement from another mod.
