@@ -28,11 +28,9 @@ import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.IOException;
@@ -48,7 +46,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -70,16 +67,16 @@ public class GameCrashWindow extends Stage {
     private final View view;
     private final StackPane stackPane;
 
-    private final List<Log> logs;
+    private final GameLogsHolder logsHolder;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, HMCLGameInstance gameInstance, LaunchOptions launchOptions, List<Log> logs) {
+    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, HMCLGameInstance gameInstance, LaunchOptions launchOptions, GameLogsHolder logsHolder) {
         Themes.applyNativeDarkMode(this);
 
         this.managedProcess = managedProcess;
         this.exitType = exitType;
         this.gameInstance = gameInstance;
         this.launchOptions = launchOptions;
-        this.logs = logs;
+        this.logsHolder = logsHolder;
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " " + i18n("settings.memory.unit.mib")).orElse("-");
 
@@ -108,7 +105,19 @@ public class GameCrashWindow extends Stage {
     private void analyzeCrashReport() {
         loading.set(true);
         Task.allOf(Task.supplyAsync(() -> {
-            String rawLog = logs.stream().map(Log::getLog).collect(Collectors.joining("\n"));
+            Path tempLogFile = logsHolder.getLogFile();
+            String rawLog;
+            if (tempLogFile != null) {
+                try {
+                    rawLog = Files.readString(tempLogFile);
+                } catch (IOException e) {
+                    LOG.warning("Failed to read temporary log file", e);
+                    rawLog = "";
+                }
+            } else {
+                LOG.warning("No log file available");
+                rawLog = "";
+            }
 
             // Get the crash-report from the crash-reports/xxx, or the output of console.
             String crashReport = null;
@@ -247,44 +256,48 @@ public class GameCrashWindow extends Stage {
     }
 
     private void showLogWindow() {
-        LogWindow logWindow = new LogWindow(managedProcess);
-
-        logWindow.logLine(new Log(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO));
-        if (managedProcess.getClasspath() != null)
-            logWindow.logLine(new Log("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO));
-        logWindow.logLines(logs);
-        logWindow.show();
+        logsHolder.showWindow();
     }
 
     private CompletableFuture<Path> exportGameCrashInfo() {
         Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
 
-        return CompletableFuture.supplyAsync(() ->
-                        logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
-                .thenComposeAsync(logs -> {
-                    long processStartTime = managedProcess.getProcess().info()
-                            .startInstant()
-                            .map(Instant::toEpochMilli).orElseGet(() -> {
-                                try {
-                                    return ManagementFactory.getRuntimeMXBean().getStartTime();
-                                } catch (Throwable e) {
-                                    LOG.warning("Failed to get process start time", e);
-                                    return 0L;
-                                }
-                            });
+        return CompletableFuture.supplyAsync(() -> {
+            Path tempLogFile = logsHolder.getLogFile();
+            if (tempLogFile != null) {
+                try {
+                    return Files.readString(tempLogFile);
+                } catch (IOException e) {
+                    LOG.warning("Failed to read temporary log file", e);
+                }
+            } else {
+                LOG.warning("No log file available");
+            }
+            return "";
+        }).thenComposeAsync(logs -> {
+            long processStartTime = managedProcess.getProcess().info()
+                    .startInstant()
+                    .map(Instant::toEpochMilli).orElseGet(() -> {
+                        try {
+                            return ManagementFactory.getRuntimeMXBean().getStartTime();
+                        } catch (Throwable e) {
+                            LOG.warning("Failed to get process start time", e);
+                            return 0L;
+                        }
+                    });
 
-                    return LogExporter.exportLogs(logFile, gameInstance, launchOptions, logs,
-                            new CommandBuilder().addAll(managedProcess.getCommands()).toString(),
-                            path -> {
-                                try {
-                                    FileTime lastModifiedTime = Files.getLastModifiedTime(path);
-                                    return lastModifiedTime.toMillis() >= processStartTime;
-                                } catch (Throwable e) {
-                                    LOG.warning("Failed to read file attributes", e);
-                                    return false;
-                                }
-                            });
-                }).thenApply(ignored -> logFile);
+            return LogExporter.exportLogs(logFile, gameInstance, launchOptions, logs,
+                    new CommandBuilder().addAll(managedProcess.getCommands()).toString(),
+                    path -> {
+                try {
+                    FileTime lastModifiedTime = Files.getLastModifiedTime(path);
+                    return lastModifiedTime.toMillis() >= processStartTime;
+                } catch (Throwable e) {
+                    LOG.warning("Failed to read file attributes", e);
+                    return false;
+                }
+            });
+        }).thenApply(ignored -> logFile);
     }
 
     private final class View extends VBox {
