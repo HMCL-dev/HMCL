@@ -6,7 +6,9 @@ import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
+import org.jackhuang.hmcl.addon.ModDependencyResolver;
 import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
@@ -47,10 +49,14 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -61,7 +67,20 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
     public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_MOD =
-            (downloadProvider, repository, version, mod, file) -> download(downloadProvider, repository, version, file, "mods");
+            new org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback() {
+                @Override
+                public void download(DownloadProvider downloadProvider, HMCLGameRepository repository,
+                                     @Nullable GameInstanceID instanceId, RemoteAddon addon, RemoteAddon.Version file) {
+                    DownloadPage.download(downloadProvider, repository, instanceId, file, "mods");
+                }
+
+                @Override
+                public void download(DownloadProvider downloadProvider, HMCLGameRepository repository,
+                                     @Nullable GameInstanceID instanceId, RemoteAddon addon, RemoteAddon.Version file,
+                                     boolean downloadDependencies) {
+                    DownloadPage.download(downloadProvider, repository, instanceId, file, "mods", downloadDependencies);
+                }
+            };
     public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_RESOURCE_PACK =
             (downloadProvider, repository, version, pack, file) -> download(downloadProvider, repository, version, file, "resourcepacks");
     public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_SHADER =
@@ -151,12 +170,21 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
+        download(downloadProvider, repository, instanceId, file, subdirectoryName, false);
+    }
+
+    /// Downloads content to an instance or the shared game directory, optionally expanding required mod dependencies.
+    private static void download(DownloadProvider downloadProvider, HMCLGameRepository repository,
+                                 @Nullable GameInstanceID instanceId, RemoteAddon.Version file,
+                                 String subdirectoryName, boolean resolveDependencies) {
         @Nullable HMCLGameInstance instance = instanceId != null
                 ? repository.findInstance(instanceId)
                 : repository.getSelectedInstance();
         Path runDirectory = instance != null ? instance.getRunDirectory() : repository.getBaseDirectory();
-
-        var targetPath = runDirectory.resolve(subdirectoryName);
+        Path targetPath = runDirectory.resolve(subdirectoryName);
+        boolean autoDependencies = resolveDependencies && instance != null;
+        String gameVersion = autoDependencies ? instance.getVersion().toString() : "";
+        Set<ModLoaderType> targetLoaders = autoDependencies ? Set.copyOf(instance.getModLoaders()) : Set.of();
 
         FileNameSet existingPaths;
         try {
@@ -169,10 +197,42 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = targetPath.resolve(result);
 
-            Controllers.taskDialog(Task.composeAsync(() -> {
-                var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(file.file().url()), dest);
-                task.setName(file.name());
-                return task;
+            Controllers.taskDialog(Task.composeAsync(Schedulers.io(), () -> {
+                List<RemoteAddon.Version> dependencies = autoDependencies
+                        ? ModDependencyResolver.resolveRequiredDependencies(downloadProvider, file, gameVersion, targetLoaders)
+                        : List.of();
+                List<RemoteAddon.Version> missingDependencies = dependencies;
+
+                if (autoDependencies) {
+                    FileNameSet currentPaths = Files.exists(targetPath)
+                            ? FileNameSet.list(targetPath, null)
+                            : new FileNameSet(false);
+                    FileNameSet plannedNames = new FileNameSet(false);
+                    if (currentPaths.contains(result) || !plannedNames.add(result)) {
+                        throw new IOException("A file named " + result + " already exists in " + targetPath);
+                    }
+
+                    missingDependencies = new ArrayList<>(dependencies.size());
+                    for (RemoteAddon.Version dependency : dependencies) {
+                        String filename = dependency.file().filename();
+                        if (!FileUtils.isNameValid(filename)) {
+                            throw new IOException("Invalid dependency filename: " + filename);
+                        }
+                        if (!plannedNames.add(filename)) {
+                            throw new IOException("Multiple mods resolve to the same filename: " + filename);
+                        }
+                        if (!currentPaths.contains(filename)) {
+                            missingDependencies.add(dependency);
+                        }
+                    }
+                }
+
+                List<FileDownloadTask> tasks = new ArrayList<>(missingDependencies.size() + 1);
+                tasks.add(createDownloadTask(downloadProvider, file, dest));
+                for (RemoteAddon.Version dependency : missingDependencies) {
+                    tasks.add(createDownloadTask(downloadProvider, dependency, targetPath.resolve(dependency.file().filename())));
+                }
+                return Task.allOf(tasks);
             }).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {
                     if (!(exception instanceof CancellationException)) {
@@ -184,7 +244,13 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
             handler.resolve();
         }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("game_directory.already_exists"), existingPaths::notContains));
+    }
 
+    /// Creates a named download task using the configured download candidates.
+    private static FileDownloadTask createDownloadTask(DownloadProvider downloadProvider, RemoteAddon.Version file, Path dest) {
+        var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(file.file().url()), dest);
+        task.setName(file.name());
+        return task;
     }
 
     private void loadVersions(HMCLGameRepository repository) {
