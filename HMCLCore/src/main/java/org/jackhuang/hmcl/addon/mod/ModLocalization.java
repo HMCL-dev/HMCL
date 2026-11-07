@@ -5,10 +5,12 @@ package org.jackhuang.hmcl.addon.mod;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Locale;
@@ -19,23 +21,24 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Wulian233
  */
-public record ModLocalization(Set<String> languages, String name, String description) {
+@NotNullByDefault
+public record ModLocalization(@Unmodifiable Set<String> languages, String name, String description) {
     public static final ModLocalization EMPTY = new ModLocalization(Set.of(), "", "");
 
     public ModLocalization {
         languages = Collections.unmodifiableSet(new LinkedHashSet<>(languages));
     }
 
-    public static ModLocalization read(Path file, String modId, String language) {
-        try (var tree = CompressingUtils.openZipTree(file)) {
-            var assets = tree.getDirectory("assets");
+    public static ModLocalization read(ZipFileTree tree, String modId, String language) {
+        try {
+            @Nullable var assets = tree.getDirectory("assets");
             if (assets == null) return EMPTY;
 
             Set<String> languages = new LinkedHashSet<>();
             String name = "", description = "";
             String filename = language.toLowerCase(Locale.ROOT) + ".json";
             for (var namespace : assets.getSubDirs().values()) {
-                var lang = namespace.getSubDirs().get("lang");
+                @Nullable var lang = namespace.getSubDirs().get("lang");
                 if (lang == null) continue;
 
                 for (String languageFile : lang.getFiles().keySet()) {
@@ -44,7 +47,7 @@ public record ModLocalization(Set<String> languages, String name, String descrip
                 }
 
                 if (!name.isEmpty() && !description.isEmpty()) continue;
-                var entry = lang.getFiles().get(filename);
+                @Nullable var entry = lang.getFiles().get(filename);
                 if (entry == null) continue;
 
                 JsonObject translations = JsonUtils.fromNonNullJsonFully(tree.getInputStream(entry), JsonObject.class);
@@ -55,7 +58,7 @@ public record ModLocalization(Set<String> languages, String name, String descrip
             }
             return new ModLocalization(languages, name, description);
         } catch (IOException | JsonParseException e) {
-            LOG.warning("Failed to scan mod language files in " + file, e);
+            LOG.warning("Failed to scan mod language files", e);
             return EMPTY;
         }
     }
@@ -66,7 +69,7 @@ public record ModLocalization(Set<String> languages, String name, String descrip
     }
 
     private static String string(JsonObject json, String key) {
-        var value = json.get(key);
+        @Nullable var value = json.get(key);
         if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) return "";
         String text = value.getAsString();
         return text.isBlank() ? "" : text;

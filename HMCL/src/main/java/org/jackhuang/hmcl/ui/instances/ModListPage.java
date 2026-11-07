@@ -143,7 +143,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
             try {
-                modManager.refresh();
+                modManager.refresh(HMCLGameLauncher.modLocalizationLanguageTag(
+                        I18n.getLocale().getDisplayLocale(), modManager.getInstance().getVersion()));
                 return modManager.getLocalFiles().stream().map(ModInfoObject::new).toList();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
@@ -580,9 +581,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     .filter(StringUtils::isNotBlank)
                     .findFirst().orElse("");
 
-            this.localization = ModLocalization.read(localModFile.getFile(), localModFile.getId(),
-                    HMCLGameLauncher.modLocalizationLanguageTag(I18n.getLocale().getDisplayLocale(),
-                            GameVersionNumber.asGameVersion(localModFile.getModManager().getGameVersion())));
+            this.localization = localModFile.getLocalization();
 
             this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
