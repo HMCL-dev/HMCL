@@ -56,6 +56,9 @@ public final class MessageDialogPane extends HBox {
         this.setSpacing(16);
         this.getStyleClass().add("jfx-dialog-layout");
 
+        maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
+        maxHeightProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.5));
+
         Label graphic = new Label();
         graphic.setTranslateX(10);
         graphic.setTranslateY(10);
