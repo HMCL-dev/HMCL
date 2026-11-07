@@ -1358,6 +1358,24 @@
     -jfx-mask-type: CIRCLE;
 }
 
+/* Row action that disables the update checks of a mod, revealed on row hover. */
+.pause-button .svg {
+    -fx-fill: -monet-on-surface-variant;
+}
+
+.pause-button:hover .svg,
+.pause-button:focused .svg {
+    -fx-fill: -monet-on-surface;
+}
+
+.pause-button:pinned .svg {
+    -fx-fill: -monet-primary;
+}
+
+.pause-button:disabled .svg {
+    -fx-fill: -monet-on-surface-variant-transparent-38;
+}
+
 .toggle-icon-tiny {
     -fx-toggle-icon-tiny-size: 15px;
     -fx-pref-width: -fx-toggle-icon-tiny-size;
