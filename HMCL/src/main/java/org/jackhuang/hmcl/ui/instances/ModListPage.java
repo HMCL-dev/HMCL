@@ -26,6 +26,9 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.AddonLoader;
@@ -614,8 +617,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
     }
 
+    /// Displays local mod details and links to matching remote projects.
     private static final class ModInfoDialog extends JFXDialogLayout {
 
+        /// Builds the dialog and starts remote lookups for loader tags and project links.
         ModInfoDialog(ModInfoObject modInfo) {
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
@@ -629,8 +634,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             titleContainer.setAlignment(Pos.CENTER_LEFT);
             modInfo.iconCache.attachValue(imageContainer.imageProperty(), null);
 
-            TwoLineListItem title = new TwoLineListItem();
-            title.getTitleLabel().setWrapText(true);
             String displayName = modInfo.getModInfo().getName();
             if (modInfo.getProjectInfo() != null && I18n.isUseChinese()) {
                 String chineseName = modInfo.getProjectInfo().mainName();
@@ -639,7 +642,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         displayName = chineseName + " (" + displayName + ")";
                 }
             }
-            title.setTitle(displayName);
+            Text titleText = new Text(displayName);
+            titleText.getStyleClass().add("mod-info-title");
+            TextFlow title = new TextFlow(titleText);
 
             StringJoiner subtitle = new StringJoiner("\n");
             subtitle.add(i18n("archive.file.name") + ": " + FileUtils.getName(modInfo.getModInfo().getFile()));
@@ -652,9 +657,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
                 subtitle.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
             }
-            title.setSubtitle(subtitle.toString());
+            Label subtitleLabel = new Label(subtitle.toString());
+            subtitleLabel.getStyleClass().add("subtitle");
+            subtitleLabel.setWrapText(true);
 
-            titleContainer.getChildren().setAll(imageContainer, title);
+            VBox details = new VBox(title, subtitleLabel);
+            details.getStyleClass().add("two-line-list-item");
+            details.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(details, Priority.ALWAYS);
+            titleContainer.getChildren().setAll(imageContainer, details);
             setHeading(titleContainer);
 
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
@@ -674,6 +685,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             setBody(descriptionPane);
 
+            Set<String> displayedLoaders = new LinkedHashSet<>();
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
                 for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
                         pair("addon.curseforge", CurseForgeRemoteAddonRepository.getInstance()),
@@ -691,7 +703,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                                     String tag = I18n.translateLoaderName(loader);
                                     if (tag != null) tags.add(tag);
                                 }
-                                title.addTagsIfNotExist(tags);
+                                for (String tag : tags) {
+                                    if (displayedLoaders.add(tag)) {
+                                        Label label = new Label(tag);
+                                        label.getStyleClass().add("tag");
+                                        title.getChildren().addAll(new Text(" "), label);
+                                    }
+                                }
 
                                 button.setExternalLink(remoteAddon.pageUrl());
                                 button.setDisable(false);
