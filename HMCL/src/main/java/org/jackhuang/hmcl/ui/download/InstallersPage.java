@@ -34,6 +34,8 @@ public class InstallersPage extends AbstractInstallersPage {
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
 
         txtName.textProperty().addListener((obs, oldText, newText) -> isNameModifiedByUser = true);
+
+        if (!controller.getSettings().containsKey(INSTALL_FABRIC_API_KEY)) controller.getSettings().put(INSTALL_FABRIC_API_KEY, true);
     }
 
     @Override
