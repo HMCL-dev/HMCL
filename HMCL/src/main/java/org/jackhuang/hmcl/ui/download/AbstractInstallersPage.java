@@ -117,6 +117,10 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
     /// Restores the default value of the name field.
     protected abstract void resetDefaultName();
 
+    protected boolean showFabricApiAutoInstallOption() {
+        return false;
+    }
+
     protected static class InstallersPageSkin extends SkinBase<AbstractInstallersPage> {
         /**
          * Constructor for all SkinBase instances.
