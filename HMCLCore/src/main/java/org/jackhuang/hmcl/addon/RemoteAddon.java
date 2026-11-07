@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 public record RemoteAddon(String slug, String author, String title, String description, List<String> categories,
@@ -54,25 +55,32 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
         private final @Nullable String id;
 
+        private final @Nullable String versionId;
+
         private transient RemoteAddon remoteAddon = null;
 
-        private Dependency(DependencyType type, @Nullable Source source, @Nullable String id) {
+        private Dependency(DependencyType type, @Nullable Source source, @Nullable String id, @Nullable String versionId) {
             this.type = type;
             this.source = source;
             this.id = id;
+            this.versionId = versionId;
         }
 
         public static Dependency ofGeneral(DependencyType type, Source source, String id) {
+            return ofGeneral(type, source, id, null);
+        }
+
+        public static Dependency ofGeneral(DependencyType type, Source source, @Nullable String id, @Nullable String versionId) {
             if (type == DependencyType.BROKEN) {
                 return ofBroken();
             } else {
-                return new Dependency(type, source, id);
+                return new Dependency(type, source, id, versionId);
             }
         }
 
         public static Dependency ofBroken() {
             if (BROKEN_DEPENDENCY == null) {
-                BROKEN_DEPENDENCY = new Dependency(DependencyType.BROKEN, null, null);
+                BROKEN_DEPENDENCY = new Dependency(DependencyType.BROKEN, null, null, null);
             }
             return BROKEN_DEPENDENCY;
         }
@@ -91,12 +99,24 @@ public record RemoteAddon(String slug, String author, String title, String descr
             return this.id;
         }
 
+        @Nullable
+        public String getVersionId() {
+            return this.versionId;
+        }
+
         public RemoteAddon load(DownloadProvider downloadProvider) throws IOException {
             if (this.remoteAddon == null) {
                 if (this.type == DependencyType.BROKEN) {
                     this.remoteAddon = RemoteAddon.BROKEN;
-                } else {
+                } else if (this.id != null) {
                     this.remoteAddon = this.source.getRepository().resolveDependency(downloadProvider, this.id);
+                } else if (this.versionId != null) {
+                    var version = this.source.getRepository().getRemoteVersionById(downloadProvider, this.versionId);
+                    this.remoteAddon = version.isPresent()
+                            ? this.source.getRepository().resolveDependency(downloadProvider, version.orElseThrow().projectId())
+                            : RemoteAddon.BROKEN;
+                } else {
+                    this.remoteAddon = RemoteAddon.BROKEN;
                 }
             }
             return this.remoteAddon;
@@ -111,14 +131,15 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
             if (type != that.type) return false;
             if (source != that.source) return false;
-            return id.equals(that.id);
+            if (!Objects.equals(id, that.id)) return false;
+            return id != null || Objects.equals(versionId, that.versionId);
         }
 
         @Override
         public int hashCode() {
             int result = type.hashCode();
-            result = 31 * result + source.hashCode();
-            result = 31 * result + id.hashCode();
+            result = 31 * result + Objects.hashCode(source);
+            result = 31 * result + Objects.hashCode(id != null ? id : versionId);
             return result;
         }
     }

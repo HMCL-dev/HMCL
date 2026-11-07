@@ -5,12 +5,12 @@ package org.jackhuang.hmcl.addon;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,9 +37,7 @@ public final class ModDependencyResolver {
             RemoteAddon.Version rootVersion,
             String gameVersion,
             Set<ModLoaderType> targetLoaders) throws IOException {
-        Set<ProjectKey> visited = new HashSet<>();
-        visited.add(new ProjectKey(rootVersion.source(), rootVersion.projectId()));
-
+        ProjectKey rootKey = new ProjectKey(rootVersion.source(), rootVersion.projectId());
         ArrayDeque<RemoteAddon.Version> pending = new ArrayDeque<>();
         pending.add(rootVersion);
         Map<ProjectKey, RemoteAddon.Version> resolved = new LinkedHashMap<>();
@@ -54,18 +52,33 @@ public final class ModDependencyResolver {
                     continue;
                 }
 
-                RemoteAddon.Source source = dependency.getSource();
-                String projectId = dependency.getId();
-                if (source == null || projectId == null) {
+                RemoteAddon.@Nullable Source source = dependency.getSource();
+                @Nullable String projectId = dependency.getId();
+                @Nullable String requiredVersionId = dependency.getVersionId();
+                if (source == null || projectId == null && requiredVersionId == null) {
                     throw new IOException("Unresolvable required dependency declared by " + describe(current));
                 }
 
-                ProjectKey key = new ProjectKey(source, projectId);
-                if (!visited.add(key)) {
+                @Nullable ProjectKey key = projectId != null ? new ProjectKey(source, projectId) : null;
+                if (key != null && findExistingVersion(rootVersion, rootKey, resolved, key, requiredVersionId, current) != null) {
                     continue;
                 }
 
-                RemoteAddon addon = catalog.loadAddon(dependency);
+                RemoteAddon.@Nullable Version selected = null;
+                if (requiredVersionId != null) {
+                    selected = catalog.loadVersion(dependency).orElseThrow(() ->
+                            new IOException("Required version " + requiredVersionId + " declared by " + describe(current) + " was not found"));
+                    if (selected.source() != source || projectId != null && !projectId.equals(selected.projectId())) {
+                        throw new IOException("Required version " + requiredVersionId + " does not belong to the declared project");
+                    }
+
+                    key = new ProjectKey(selected.source(), selected.projectId());
+                    if (findExistingVersion(rootVersion, rootKey, resolved, key, requiredVersionId, current) != null) {
+                        continue;
+                    }
+                }
+
+                RemoteAddon addon = catalog.loadAddon(dependency, selected);
                 if (addon == RemoteAddon.BROKEN) {
                     throw new IOException("Failed to resolve required dependency " + key);
                 }
@@ -73,20 +86,45 @@ public final class ModDependencyResolver {
                     throw new IOException("Required dependency " + key + " is not a mod");
                 }
 
-                RemoteAddon.Version selected;
-                try (Stream<RemoteAddon.Version> versions = catalog.loadVersions(addon, source)) {
-                    selected = findRecommendedModVersion(versions, gameVersion, targetLoaders)
-                            .orElseThrow(() -> new IOException("No compatible version of required dependency " + key
-                                    + " for Minecraft " + gameVersion + " and loaders " + targetLoaders));
+                if (selected == null) {
+                    ProjectKey dependencyKey = key;
+                    try (Stream<RemoteAddon.Version> versions = catalog.loadVersions(addon, source)) {
+                        selected = findRecommendedModVersion(versions, gameVersion, targetLoaders)
+                                .orElseThrow(() -> new IOException("No compatible version of required dependency " + dependencyKey
+                                        + " for Minecraft " + gameVersion + " and loaders " + targetLoaders));
+                    }
+                } else if (!isCompatible(selected, gameVersion, targetLoaders)) {
+                    throw new IOException("Required version " + requiredVersionId + " of dependency " + key
+                            + " is incompatible with Minecraft " + gameVersion + " and loaders " + targetLoaders);
                 }
 
                 resolved.put(key, selected);
-                visited.add(new ProjectKey(selected.source(), selected.projectId()));
                 pending.addLast(selected);
             }
         }
 
         return List.copyOf(resolved.values());
+    }
+
+    /// Returns an already selected version, rejecting a conflicting exact requirement from another mod.
+    private static RemoteAddon.@Nullable Version findExistingVersion(
+            RemoteAddon.Version rootVersion,
+            ProjectKey rootKey,
+            Map<ProjectKey, RemoteAddon.Version> resolved,
+            ProjectKey key,
+            @Nullable String requiredVersionId,
+            RemoteAddon.Version requester) throws IOException {
+        RemoteAddon.@Nullable Version existing = key.equals(rootKey) ? rootVersion : resolved.get(key);
+        if (existing != null && requiredVersionId != null && !requiredVersionId.equals(existing.versionId())) {
+            throw new IOException("Conflicting versions of required dependency " + key + " declared by " + describe(requester));
+        }
+        return existing;
+    }
+
+    /// Checks whether a version supports the exact game version and at least one target loader.
+    private static boolean isCompatible(RemoteAddon.Version version, String gameVersion, Set<ModLoaderType> targetLoaders) {
+        return version.gameVersions().contains(gameVersion) && version.loaders().stream().anyMatch(loader ->
+                loader.type() instanceof ModLoaderType modLoaderType && targetLoaders.contains(modLoaderType));
     }
 
     /// Finds the same default mod version as the download UI: newest publication for the exact game version and any target loader.
@@ -95,10 +133,8 @@ public final class ModDependencyResolver {
             String gameVersion,
             Set<ModLoaderType> targetLoaders) {
         return versions
-                .filter(version -> version.gameVersions().contains(gameVersion))
+                .filter(version -> isCompatible(version, gameVersion, targetLoaders))
                 .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
-                .filter(version -> version.loaders().stream().anyMatch(loader ->
-                        loader.type() instanceof ModLoaderType modLoaderType && targetLoaders.contains(modLoaderType)))
                 .findFirst();
     }
 
@@ -118,8 +154,11 @@ public final class ModDependencyResolver {
     /// Supplies project metadata and versions to the dependency graph algorithm.
     interface Catalog {
 
-        /// Loads the project referenced by a dependency.
-        RemoteAddon loadAddon(RemoteAddon.Dependency dependency) throws IOException;
+        /// Loads the project referenced by a dependency, reusing an already resolved version when possible.
+        RemoteAddon loadAddon(RemoteAddon.Dependency dependency, RemoteAddon.@Nullable Version requiredVersion) throws IOException;
+
+        /// Loads the exact version requested by a dependency.
+        Optional<RemoteAddon.Version> loadVersion(RemoteAddon.Dependency dependency) throws IOException;
 
         /// Loads all versions of a resolved project from the dependency's source repository.
         Stream<RemoteAddon.Version> loadVersions(RemoteAddon addon, RemoteAddon.Source source) throws IOException;
@@ -136,8 +175,17 @@ public final class ModDependencyResolver {
 
         /// Resolves a dependency through its own source repository.
         @Override
-        public RemoteAddon loadAddon(RemoteAddon.Dependency dependency) throws IOException {
+        public RemoteAddon loadAddon(RemoteAddon.Dependency dependency, RemoteAddon.@Nullable Version requiredVersion) throws IOException {
+            if (dependency.getId() == null && requiredVersion != null) {
+                return dependency.getSource().getRepository().resolveDependency(downloadProvider, requiredVersion.projectId());
+            }
             return dependency.load(downloadProvider);
+        }
+
+        /// Resolves the exact version requested by a dependency.
+        @Override
+        public Optional<RemoteAddon.Version> loadVersion(RemoteAddon.Dependency dependency) throws IOException {
+            return dependency.getSource().getRepository().getRemoteVersionById(downloadProvider, dependency.getVersionId());
         }
 
         /// Loads versions through the repository associated with the dependency source.

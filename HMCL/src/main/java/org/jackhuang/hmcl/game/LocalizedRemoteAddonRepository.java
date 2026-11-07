@@ -135,6 +135,11 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
     }
 
     @Override
+    public Optional<RemoteAddon.Version> getRemoteVersionById(DownloadProvider downloadProvider, String versionId) throws IOException {
+        return getBackedRemoteModRepository().getRemoteVersionById(downloadProvider, versionId);
+    }
+
+    @Override
     public Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
         return getBackedRemoteModRepository().getRemoteVersionsById(downloadProvider, id);
     }

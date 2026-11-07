@@ -31,6 +31,8 @@ public interface RemoteAddonRepository {
 
     RemoteAddon.File getAddonFile(String projectId, String fileId) throws IOException;
 
+    Optional<RemoteAddon.Version> getRemoteVersionById(DownloadProvider downloadProvider, String versionId) throws IOException;
+
     Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException;
 
     @Nullable

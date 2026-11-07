@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.addon;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -52,6 +54,58 @@ public final class ModDependencyResolverTest {
                 Stream.of(older, newer), GAME_VERSION, Set.of(ModLoaderType.FORGE, ModLoaderType.NEO_FORGE)).orElseThrow());
         assertTrue(ModDependencyResolver.findRecommendedModVersion(
                 Stream.of(older), GAME_VERSION, Set.of()).isEmpty());
+    }
+
+    /// Uses the exact dependency version declared by the parent instead of a newer recommended version.
+    @Test
+    public void honorsVersionRequiredByDeclaringMod() throws IOException {
+        RemoteAddon.Version requiredVersion = version(RemoteAddon.Source.MODRINTH, "dependency", "required", Instant.EPOCH,
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version newer = version(RemoteAddon.Source.MODRINTH, "dependency", "newer", Instant.EPOCH.plusSeconds(1),
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version root = compatibleVersion("root", List.of(
+                required(RemoteAddon.Source.MODRINTH, "dependency", requiredVersion.versionId())));
+        FakeCatalog catalog = new FakeCatalog().add(mod(RemoteAddon.Source.MODRINTH, "dependency"), List.of(newer, requiredVersion));
+
+        assertEquals(List.of(requiredVersion), resolve(catalog, root));
+    }
+
+    /// Resolves Modrinth dependencies that identify their requirement only by version ID.
+    @Test
+    public void resolvesVersionOnlyRequirement() throws IOException {
+        RemoteAddon.Version requiredVersion = version(RemoteAddon.Source.MODRINTH, "dependency", "required", Instant.EPOCH,
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version root = compatibleVersion("root", List.of(
+                required(RemoteAddon.Source.MODRINTH, null, requiredVersion.versionId())));
+        FakeCatalog catalog = new FakeCatalog().add(mod(RemoteAddon.Source.MODRINTH, "dependency"), List.of(requiredVersion));
+
+        assertEquals(List.of(requiredVersion), resolve(catalog, root));
+    }
+
+    /// Rejects an exact requirement that cannot run in the selected instance.
+    @Test
+    public void rejectsIncompatibleRequiredVersion() {
+        RemoteAddon.Version requiredVersion = version(RemoteAddon.Source.MODRINTH, "dependency", "wrong-game", Instant.EPOCH,
+                RemoteAddon.VersionType.Release, List.of(), List.of("1.20"), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version root = compatibleVersion("root", List.of(
+                required(RemoteAddon.Source.MODRINTH, "dependency", requiredVersion.versionId())));
+        FakeCatalog catalog = new FakeCatalog().add(mod(RemoteAddon.Source.MODRINTH, "dependency"), List.of(requiredVersion));
+
+        assertThrows(IOException.class, () -> resolve(catalog, root));
+    }
+
+    /// Rejects two parent mods that require different exact versions of one dependency.
+    @Test
+    public void rejectsConflictingRequiredVersions() {
+        RemoteAddon.Version first = compatibleVersion("dependency", List.of());
+        RemoteAddon.Version second = version(RemoteAddon.Source.CURSEFORGE, "dependency", "second", Instant.EPOCH.plusSeconds(1),
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version root = compatibleVersion("root", List.of(
+                required(RemoteAddon.Source.CURSEFORGE, "dependency", first.versionId()),
+                required(RemoteAddon.Source.CURSEFORGE, "dependency", second.versionId())));
+        FakeCatalog catalog = new FakeCatalog().add(mod(RemoteAddon.Source.CURSEFORGE, "dependency"), List.of(first, second));
+
+        assertThrows(IOException.class, () -> resolve(catalog, root));
     }
 
     /// Resolves a required chain while ignoring optional, embedded, and incompatible edges.
@@ -155,6 +209,11 @@ public final class ModDependencyResolverTest {
         return dependency(RemoteAddon.DependencyType.REQUIRED, source, id);
     }
 
+    /// Creates a required dependency reference with an optional exact version requirement.
+    private static RemoteAddon.Dependency required(RemoteAddon.Source source, @Nullable String id, String versionId) {
+        return RemoteAddon.Dependency.ofGeneral(RemoteAddon.DependencyType.REQUIRED, source, id, versionId);
+    }
+
     /// Creates a dependency reference of the requested type.
     private static RemoteAddon.Dependency dependency(RemoteAddon.DependencyType type, RemoteAddon.Source source, String id) {
         return RemoteAddon.Dependency.ofGeneral(type, source, id);
@@ -232,10 +291,20 @@ public final class ModDependencyResolverTest {
 
         /// Resolves a fake project or returns the standard broken sentinel.
         @Override
-        public RemoteAddon loadAddon(RemoteAddon.Dependency dependency) {
-            String key = key(dependency.getSource(), dependency.getId());
+        public RemoteAddon loadAddon(RemoteAddon.Dependency dependency, RemoteAddon.@Nullable Version requiredVersion) {
+            String id = dependency.getId() != null ? dependency.getId() : requiredVersion.projectId();
+            String key = key(dependency.getSource(), id);
             loadCounts.merge(key, 1, Integer::sum);
             return addons.getOrDefault(key, RemoteAddon.BROKEN);
+        }
+
+        /// Finds an exact required version in the fake project metadata.
+        @Override
+        public Optional<RemoteAddon.Version> loadVersion(RemoteAddon.Dependency dependency) {
+            return versions.values().stream()
+                    .flatMap(List::stream)
+                    .filter(version -> version.versionId().equals(dependency.getVersionId()))
+                    .findFirst();
         }
 
         /// Streams the registered versions of a fake project.

@@ -274,6 +274,11 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     }
 
     @Override
+    public Optional<RemoteAddon.Version> getRemoteVersionById(DownloadProvider downloadProvider, String versionId) throws IOException {
+        throw new UnsupportedOperationException("CurseForge version lookup requires a project ID");
+    }
+
+    @Override
     public Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
