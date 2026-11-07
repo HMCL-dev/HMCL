@@ -249,6 +249,9 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 }
 
                 switch (NativePatcher.checkSupportedStatus(gameVersion, Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION)) {
+                    case OFFICIAL_SUPPORTED -> { }
+                    case LAUNCHER_SUPPORTED -> tags.add(new Tag(i18n("instance.game.support_status.launcher_supported")));
+                    case TRANSLATION_SUPPORTED -> tags.add(new Tag(i18n("instance.game.support_status.translation_supported")));
                     case UNTESTED -> tags.add(Tag.warning(i18n("instance.game.support_status.untested")));
                     case UNSUPPORTED -> tags.add(Tag.warning(i18n("instance.game.support_status.unsupported")));
                 }
