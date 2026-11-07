@@ -313,12 +313,6 @@
     -fx-fill: -monet-on-surface-variant;
 }
 
-.mod-info-title {
-    -fx-fill: -monet-on-surface;
-    -fx-font-size: 20px;
-    -fx-font-weight: bold;
-}
-
 .tag {
     -fx-alignment: center;
     -fx-text-fill: -monet-on-secondary-container;

@@ -641,8 +641,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 }
             }
             Text titleText = new Text(displayName);
-            titleText.getStyleClass().add("mod-info-title");
             TextFlow title = new TextFlow(titleText);
+            title.getStyleClass().add("title");
 
             StringJoiner subtitle = new StringJoiner("\n");
             subtitle.add(i18n("archive.file.name") + ": " + FileUtils.getName(modInfo.getModInfo().getFile()));
