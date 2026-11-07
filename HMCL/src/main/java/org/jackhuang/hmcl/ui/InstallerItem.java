@@ -5,7 +5,9 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.css.PseudoClass;
@@ -41,6 +43,8 @@ public class InstallerItem extends Control {
 
     private final ObjectProperty<Runnable> onInstall = new SimpleObjectProperty<>(this, "onInstall");
     private final ObjectProperty<Runnable> onRemove = new SimpleObjectProperty<>(this, "onRemove");
+
+    private final BooleanProperty autoSelectedProperty = new SimpleBooleanProperty(this, "autoSelected", false);
 
     public sealed interface State {
     }
@@ -103,6 +107,10 @@ public class InstallerItem extends Control {
 
     public void setOnRemove(Runnable onRemove) {
         this.onRemove.set(onRemove);
+    }
+
+    public void setAutoSelected(boolean autoSelected) {
+        this.autoSelectedProperty.set(autoSelected);
     }
 
     @Override
@@ -288,15 +296,19 @@ public class InstallerItem extends Control {
                     }
                     return i18n("install.installer.version", installedState.version);
                 } else if (state instanceof InstallableState) {
-                    return control.style == Style.CARD
-                            ? i18n("install.installer.do_not_install")
-                            : i18n("install.installer.not_installed");
+                    if (control.autoSelectedProperty.get()) {
+                        return i18n("install.installer.auto_selected");
+                    } else {
+                        return control.style == Style.CARD
+                                ? i18n("install.installer.do_not_install")
+                                : i18n("install.installer.not_installed");
+                    }
                 } else if (state instanceof IncompatibleState incompatibleState) {
                     return i18n("install.installer.incompatible", i18n("install.installer." + incompatibleState.incompatibleItemName));
                 } else {
                     throw new AssertionError("Unknown state type: " + state.getClass());
                 }
-            }, control.resolvedStateProperty));
+            }, control.resolvedStateProperty, control.autoSelectedProperty));
             FXUtils.onChangeAndOperate(
                 control.resolvedStateProperty,
                 state -> statusLabel.pseudoClassStateChanged(
