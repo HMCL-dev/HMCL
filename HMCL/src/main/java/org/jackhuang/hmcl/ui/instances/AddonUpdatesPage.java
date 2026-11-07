@@ -102,7 +102,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             setMargin(listView, new Insets(0, 10, 0, 10));
             VBox.setVgrow(listView, Priority.ALWAYS);
 
-            listView.setCellFactory(listView -> new AddonUpdateListCell());
+            listView.setCellFactory(AddonUpdateListCell::new);
 
             ComponentList.setVgrow(listView, Priority.ALWAYS);
 
@@ -352,7 +352,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton changelogButton = FXUtils.newToggleButton4(SVG.INFO);
 
-        AddonUpdateListCell() {
+        AddonUpdateListCell(ListView<AddonUpdatesPage.AddonUpdateObject> listView) {
             HBox hbox = new HBox(16);
             HBox.setHgrow(content, Priority.ALWAYS);
             hbox.setAlignment(Pos.CENTER);
@@ -382,6 +382,8 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     item.enabled.set(!item.isEnabled());
                 }
             });
+
+            FXUtils.limitCellWidth(listView, this);
         }
 
         /// Updates addon version information and replaces tags together, reusing their labels.
