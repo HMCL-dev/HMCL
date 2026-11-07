@@ -70,6 +70,73 @@ public final class ModDependencyResolverTest {
         assertEquals(List.of(requiredVersion), resolve(catalog, root));
     }
 
+    /// Uses the exact constraint's own repository reference after merging with a project-only requirement.
+    @Test
+    public void mergesProjectOnlyAndExactRequirementsBeforeSelection() throws IOException {
+        RemoteAddon.Version requiredVersion = version(RemoteAddon.Source.MODRINTH, "shared", "required", Instant.EPOCH,
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version newer = version(RemoteAddon.Source.MODRINTH, "shared", "newer", Instant.EPOCH.plusSeconds(1),
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version projectOnlyParent = version(RemoteAddon.Source.MODRINTH, "project-only-parent", "parent", Instant.EPOCH,
+                RemoteAddon.VersionType.Release, List.of(required(RemoteAddon.Source.MODRINTH, "shared")),
+                List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version exactParent = version(RemoteAddon.Source.MODRINTH, "exact-parent", "parent", Instant.EPOCH,
+                RemoteAddon.VersionType.Release,
+                List.of(required(RemoteAddon.Source.MODRINTH, "shared", requiredVersion.versionId())),
+                List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version root = compatibleVersion("root", List.of(
+                required(RemoteAddon.Source.MODRINTH, "project-only-parent"),
+                required(RemoteAddon.Source.MODRINTH, "exact-parent")));
+        FakeCatalog catalog = new FakeCatalog()
+                .add(mod(RemoteAddon.Source.MODRINTH, "shared"), List.of(newer, requiredVersion))
+                .add(mod(RemoteAddon.Source.MODRINTH, "project-only-parent"), List.of(projectOnlyParent))
+                .add(mod(RemoteAddon.Source.MODRINTH, "exact-parent"), List.of(exactParent));
+
+        List<RemoteAddon.Version> resolved = resolve(catalog, root);
+        assertEquals(requiredVersion, resolved.stream().filter(version -> version.projectId().equals("shared")).findFirst().orElseThrow());
+    }
+
+    /// Rechecks a newly declared exact version after an earlier incompatible requirement was skipped.
+    @Test
+    public void resolvesDifferentExactRequirementAfterSkippedVersion() throws IOException {
+        RemoteAddon.Version incompatible = version(RemoteAddon.Source.MODRINTH, "shared", "incompatible", Instant.EPOCH,
+                RemoteAddon.VersionType.Release, List.of(), List.of("1.20"), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version compatible = version(RemoteAddon.Source.MODRINTH, "shared", "compatible", Instant.EPOCH.plusSeconds(1),
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version parent = version(RemoteAddon.Source.MODRINTH, "parent", "parent", Instant.EPOCH,
+                RemoteAddon.VersionType.Release, List.of(required(RemoteAddon.Source.MODRINTH, "shared", compatible.versionId())),
+                List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version root = compatibleVersion("root", List.of(
+                required(RemoteAddon.Source.MODRINTH, "shared", incompatible.versionId()),
+                required(RemoteAddon.Source.MODRINTH, "parent")));
+        FakeCatalog catalog = new FakeCatalog()
+                .add(mod(RemoteAddon.Source.MODRINTH, "shared"), List.of(incompatible, compatible))
+                .add(mod(RemoteAddon.Source.MODRINTH, "parent"), List.of(parent));
+
+        ModDependencyResolver.ResolutionResult result = resolveResult(catalog, root);
+        assertEquals(compatible, result.versions().stream().filter(version -> version.projectId().equals("shared")).findFirst().orElseThrow());
+        assertTrue(result.skippedDependencies().isEmpty());
+    }
+
+    /// Uses a later exact reference after an unconstrained project was skipped for lack of compatible versions.
+    @Test
+    public void skipsExactRequirementAfterProjectOnlySkip() throws IOException {
+        RemoteAddon.Version incompatible = version(RemoteAddon.Source.MODRINTH, "shared", "incompatible", Instant.EPOCH,
+                RemoteAddon.VersionType.Release, List.of(), List.of("1.20"), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version parent = version(RemoteAddon.Source.MODRINTH, "parent", "parent", Instant.EPOCH,
+                RemoteAddon.VersionType.Release, List.of(required(RemoteAddon.Source.MODRINTH, "shared", incompatible.versionId())),
+                List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version root = compatibleVersion("root", List.of(
+                required(RemoteAddon.Source.MODRINTH, "shared"), required(RemoteAddon.Source.MODRINTH, "parent")));
+        FakeCatalog catalog = new FakeCatalog()
+                .add(mod(RemoteAddon.Source.MODRINTH, "shared"), List.of(incompatible))
+                .add(mod(RemoteAddon.Source.MODRINTH, "parent"), List.of(parent));
+
+        ModDependencyResolver.ResolutionResult result = resolveResult(catalog, root);
+        assertEquals(List.of("parent"), projectIds(result.versions()));
+        assertEquals(incompatible.versionId(), result.skippedDependencies().get(0).versionId());
+    }
+
     /// Resolves Modrinth dependencies that identify their requirement only by version ID.
     @Test
     public void resolvesVersionOnlyRequirement() throws IOException {
@@ -109,6 +176,88 @@ public final class ModDependencyResolverTest {
         FakeCatalog catalog = new FakeCatalog().add(mod(RemoteAddon.Source.CURSEFORGE, "dependency"), List.of(first, second));
 
         assertThrows(IOException.class, () -> resolve(catalog, root));
+    }
+
+    /// Backtracks an earlier recommendation when a later parent requires a different exact version.
+    @Test
+    public void backtracksRecommendedVersionAfterExactVersionConflict() throws IOException {
+        RemoteAddon.Version newer = version(RemoteAddon.Source.CURSEFORGE, "shared", "newer", Instant.EPOCH.plusSeconds(2),
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version older = version(RemoteAddon.Source.CURSEFORGE, "shared", "older", Instant.EPOCH.plusSeconds(1),
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version parent = compatibleVersion("parent", List.of(
+                required(RemoteAddon.Source.CURSEFORGE, "shared", older.versionId())));
+        RemoteAddon.Version root = compatibleVersion("root", List.of(
+                required(RemoteAddon.Source.CURSEFORGE, "shared"), required(RemoteAddon.Source.CURSEFORGE, "parent")));
+        FakeCatalog catalog = new FakeCatalog()
+                .add(mod(RemoteAddon.Source.CURSEFORGE, "shared"), List.of(newer, older))
+                .add(mod(RemoteAddon.Source.CURSEFORGE, "parent"), List.of(parent));
+
+        List<RemoteAddon.Version> resolved = resolve(catalog, root);
+        assertEquals(older, resolved.stream().filter(version -> version.projectId().equals("shared")).findFirst().orElseThrow());
+        assertEquals(List.of("shared", "parent"), projectIds(resolved));
+    }
+
+    /// Rejects an entire parent candidate when its transitive constraints conflict with another branch.
+    @Test
+    public void backtracksParentCandidateWithTransitiveConflict() throws IOException {
+        RemoteAddon.Version sharedV1 = version(RemoteAddon.Source.CURSEFORGE, "shared", "v1", Instant.EPOCH,
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version sharedV2 = version(RemoteAddon.Source.CURSEFORGE, "shared", "v2", Instant.EPOCH.plusSeconds(1),
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version oldParent = version(RemoteAddon.Source.CURSEFORGE, "parent", "old", Instant.EPOCH.plusSeconds(1),
+                RemoteAddon.VersionType.Release, List.of(required(RemoteAddon.Source.CURSEFORGE, "shared", sharedV1.versionId())),
+                List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version newParent = version(RemoteAddon.Source.CURSEFORGE, "parent", "new", Instant.EPOCH.plusSeconds(2),
+                RemoteAddon.VersionType.Release, List.of(required(RemoteAddon.Source.CURSEFORGE, "shared", sharedV2.versionId())),
+                List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version sibling = compatibleVersion("sibling", List.of(
+                required(RemoteAddon.Source.CURSEFORGE, "shared", sharedV1.versionId())));
+        RemoteAddon.Version root = compatibleVersion("root", List.of(
+                required(RemoteAddon.Source.CURSEFORGE, "parent"), required(RemoteAddon.Source.CURSEFORGE, "sibling")));
+        FakeCatalog catalog = new FakeCatalog()
+                .add(mod(RemoteAddon.Source.CURSEFORGE, "parent"), List.of(newParent, oldParent))
+                .add(mod(RemoteAddon.Source.CURSEFORGE, "sibling"), List.of(sibling))
+                .add(mod(RemoteAddon.Source.CURSEFORGE, "shared"), List.of(sharedV2, sharedV1));
+
+        List<RemoteAddon.Version> resolved = resolve(catalog, root);
+        assertEquals(List.of("old", "sibling", "v1"), resolved.stream().map(RemoteAddon.Version::name).toList());
+    }
+
+    /// Exhausts every recommended candidate before rejecting an unsatisfiable constraint graph.
+    @Test
+    public void rejectsGraphOnlyAfterExhaustingAllCandidates() {
+        RemoteAddon.Version first = version(RemoteAddon.Source.CURSEFORGE, "shared", "first", Instant.EPOCH.plusSeconds(2),
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version second = version(RemoteAddon.Source.CURSEFORGE, "shared", "second", Instant.EPOCH.plusSeconds(1),
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version firstParent = compatibleVersion("first-parent", List.of(
+                required(RemoteAddon.Source.CURSEFORGE, "shared", first.versionId())));
+        RemoteAddon.Version secondParent = compatibleVersion("second-parent", List.of(
+                required(RemoteAddon.Source.CURSEFORGE, "shared", second.versionId())));
+        RemoteAddon.Version root = compatibleVersion("root", List.of(
+                required(RemoteAddon.Source.CURSEFORGE, "shared"),
+                required(RemoteAddon.Source.CURSEFORGE, "first-parent"),
+                required(RemoteAddon.Source.CURSEFORGE, "second-parent")));
+        FakeCatalog catalog = new FakeCatalog()
+                .add(mod(RemoteAddon.Source.CURSEFORGE, "shared"), List.of(first, second))
+                .add(mod(RemoteAddon.Source.CURSEFORGE, "first-parent"), List.of(firstParent))
+                .add(mod(RemoteAddon.Source.CURSEFORGE, "second-parent"), List.of(secondParent));
+
+        assertThrows(IOException.class, () -> resolve(catalog, root));
+    }
+
+    /// Tries an older candidate when the newest candidate contains broken dependency metadata.
+    @Test
+    public void backtracksCandidateWithBrokenDependencies() throws IOException {
+        RemoteAddon.Version newer = version(RemoteAddon.Source.CURSEFORGE, "dependency", "newer", Instant.EPOCH.plusSeconds(1),
+                RemoteAddon.VersionType.Release, List.of(RemoteAddon.Dependency.ofBroken()),
+                List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version older = compatibleVersion("dependency", List.of());
+        RemoteAddon.Version root = compatibleVersion("root", List.of(required(RemoteAddon.Source.CURSEFORGE, "dependency")));
+        FakeCatalog catalog = new FakeCatalog().add(mod(RemoteAddon.Source.CURSEFORGE, "dependency"), List.of(newer, older));
+
+        assertEquals(List.of(older), resolve(catalog, root));
     }
 
     /// Resolves a required chain while ignoring optional, embedded, and incompatible edges.
@@ -326,6 +475,8 @@ public final class ModDependencyResolverTest {
         public Optional<RemoteAddon.Version> loadVersion(RemoteAddon.Dependency dependency) {
             return versions.values().stream()
                     .flatMap(List::stream)
+                    .filter(version -> version.source() == dependency.getSource())
+                    .filter(version -> dependency.getId() == null || version.projectId().equals(dependency.getId()))
                     .filter(version -> version.versionId().equals(dependency.getVersionId()))
                     .findFirst();
         }
