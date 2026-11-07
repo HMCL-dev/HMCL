@@ -401,6 +401,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
         public RemoteAddon toAddon() {
             return new RemoteAddon(
+                    id,
                     slug,
                     "",
                     title,
@@ -409,7 +410,8 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     String.format("https://modrinth.com/%s/%s", projectType, id),
                     iconUrl,
                     this,
-                    toAddonType(projectType)
+                    toAddonType(projectType),
+                    RemoteAddon.Source.MODRINTH
             );
         }
     }
@@ -510,6 +512,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
         public RemoteAddon toAddon() {
             return new RemoteAddon(
+                    projectId,
                     slug,
                     author,
                     title,
@@ -518,7 +521,8 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
                     this,
-                    toAddonType(projectType)
+                    toAddonType(projectType),
+                    RemoteAddon.Source.MODRINTH
             );
         }
     }
