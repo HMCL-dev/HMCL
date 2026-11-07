@@ -20,6 +20,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -742,6 +743,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ModListPage page;
 
+        private final ColorAdjust colorAdjust = new ColorAdjust();
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
@@ -749,7 +751,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXSwitch activeSwitch = new JFXSwitch();
 
-        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getModInfo().isActive());
+        private final InvalidationListener activeListener = obs -> updateActiveState(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
@@ -770,6 +772,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             setSelectable();
 
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
+            imageContainer.setEffect(colorAdjust);
+
+            content.setEffect(colorAdjust);
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
@@ -850,6 +855,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.getTags().setAll(tags);
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
+            updateActiveState(modInfo.isActive());
             activeSwitch.setDisableAnimation(true);
             activeSwitch.setSelected(modInfo.isActive());
             activeSwitch.setOnAction(event -> {
@@ -886,6 +892,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         : new Tooltip(String.join("\n", warning));
                 FXUtils.installFastTooltip(this, warningTooltip);
             }
+        }
+
+        private void updateActiveState(boolean active) {
+            colorAdjust.setSaturation(active ? 0.0 : -0.75);
+            colorAdjust.setBrightness(active ? 0.0 : -0.50);
+            content.getTitleLabel().setOpacity(active ? 1.0 : 0.5);
+            content.getSubtitleLabel().setOpacity(active ? 1.0 : 0.5);
+            activeSwitch.setSelected(active);
         }
     }
 }
