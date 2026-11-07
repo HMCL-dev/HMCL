@@ -617,10 +617,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
     }
 
-    /// Displays local mod details and links to matching remote projects.
     private static final class ModInfoDialog extends JFXDialogLayout {
 
-        /// Builds the dialog and starts remote lookups for loader tags and project links.
         ModInfoDialog(ModInfoObject modInfo) {
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
