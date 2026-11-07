@@ -557,7 +557,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     downloadDependenciesButton = new JFXButton(i18n("mods.install.with_dependencies"));
                     downloadDependenciesButton.getStyleClass().add("dialog-accept");
                     downloadDependenciesButton.setOnAction(e -> {
-                        if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                        if (type == RemoteAddon.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                             fireEvent(new DialogCloseEvent());
                         }
                         selfPage.download(mod, version, true);
