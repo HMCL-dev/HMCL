@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXPopup;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -11,6 +12,7 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -541,30 +543,52 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            ButtonBase downloadButton = null;
+            Node downloadButton = null;
             if (selfPage.callback != null) {
                 if (type == RemoteAddon.Type.MOD && selfPage.instanceReference.instance() != null) {
-                    SplitMenuButton modDownloadButton = new SplitMenuButton();
-                    modDownloadButton.setText(i18n("mods.install"));
-                    MenuItem downloadWithDependencies = new MenuItem(i18n("mods.install.with_dependencies"));
-                    downloadWithDependencies.setOnAction(e -> {
+                    JFXButton installButton = new JFXButton(i18n("mods.install"));
+                    installButton.getStyleClass().add("dialog-accept");
+                    installButton.setOnAction(e -> {
+                        if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                            fireEvent(new DialogCloseEvent());
+                        }
+                        selfPage.download(mod, version);
+                    });
+
+                    JFXButton downloadOptionsButton = new JFXButton();
+                    downloadOptionsButton.getStyleClass().add("dialog-accept");
+                    downloadOptionsButton.setAccessibleText(i18n("mods.install.with_dependencies"));
+                    var downloadArrow = SVG.ARROW_DROP_DOWN.createIcon();
+                    downloadArrow.fillProperty().bind(downloadOptionsButton.textFillProperty());
+                    downloadOptionsButton.setGraphic(downloadArrow);
+
+                    PopupMenu popupMenu = new PopupMenu();
+                    JFXPopup downloadOptionsPopup = new JFXPopup(popupMenu);
+                    popupMenu.getContent().add(new IconedMenuItem(SVG.DOWNLOAD, i18n("mods.install.with_dependencies"), () -> {
                         if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                             fireEvent(new DialogCloseEvent());
                         }
                         selfPage.download(mod, version, true);
-                    });
-                    modDownloadButton.getItems().add(downloadWithDependencies);
+                    }, downloadOptionsPopup));
+                    downloadOptionsButton.setOnAction(e -> downloadOptionsPopup.show(
+                            downloadOptionsButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT,
+                            0, downloadOptionsButton.getHeight()
+                    ));
+
+                    HBox modDownloadButton = new HBox(0, installButton, downloadOptionsButton);
+                    modDownloadButton.setAlignment(Pos.CENTER_LEFT);
                     downloadButton = modDownloadButton;
                 } else {
-                    downloadButton = new JFXButton(type == RemoteAddon.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
+                    JFXButton standardDownloadButton = new JFXButton(type == RemoteAddon.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
+                    standardDownloadButton.getStyleClass().add("dialog-accept");
+                    standardDownloadButton.setOnAction(e -> {
+                        if (type == RemoteAddon.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                            fireEvent(new DialogCloseEvent());
+                        }
+                        selfPage.download(mod, version);
+                    });
+                    downloadButton = standardDownloadButton;
                 }
-                downloadButton.getStyleClass().add("dialog-accept");
-                downloadButton.setOnAction(e -> {
-                    if (type == RemoteAddon.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
-                        fireEvent(new DialogCloseEvent());
-                    }
-                    selfPage.download(mod, version);
-                });
             }
 
             JFXButton saveAsButton = new JFXButton(i18n("mods.save_as"));
