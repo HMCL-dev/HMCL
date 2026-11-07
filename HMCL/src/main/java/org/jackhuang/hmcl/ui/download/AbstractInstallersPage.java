@@ -231,10 +231,6 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
     private void setInstallFabricApi(boolean selected) {
         installFabricApiProperty.setValue(selected);
-
-        controller.getSettings().put(
-            InstallersPage.INSTALL_FABRIC_API_KEY,
-            selected
-        );
+        controller.getSettings().put(INSTALL_FABRIC_API_KEY, selected);
     }
 }
