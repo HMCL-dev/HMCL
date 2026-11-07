@@ -32,6 +32,7 @@ jobs:
       uses: gradle/actions/setup-gradle@v5
       with:
         cache-cleanup: never
+        cache-read-only: ${{ matrix.java != '17' && github.event.repository != null && github.ref_name != github.event.repository.default_branch }}
     - name: Build with Gradle on Ubuntu
       if: runner.os == 'Linux'
       run: xvfb-run --auto-servernum ./gradlew build --no-daemon --parallel --stacktrace
@@ -63,26 +64,30 @@ jobs:
         name: HMCL-test-report-html-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}
         path: "**/build/reports/tests/test/"
     - name: Upload JAR
+      if: runner.os == 'Linux' && matrix.java == '17'
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-jar
+        name: HMCL-${{ env.SHORT_SHA }}-jar
         path: HMCL/build/libs/HMCL-*.jar
         archive: false
     - name: Upload EXE
+      if: runner.os == 'Linux' && matrix.java == '17'
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-exe
+        name: HMCL-${{ env.SHORT_SHA }}-exe
         path: HMCL/build/libs/HMCL-*.exe
         archive: false
     - name: Upload SH
+      if: runner.os == 'Linux' && matrix.java == '17'
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-sh
+        name: HMCL-${{ env.SHORT_SHA }}-sh
         path: HMCL/build/libs/HMCL-*.sh
         archive: false
     - name: Upload DEB
+      if: runner.os == 'Linux' && matrix.java == '17'
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-deb
+        name: HMCL-${{ env.SHORT_SHA }}-deb
         path: HMCL/build/libs/HMCL-*.deb
         archive: false
