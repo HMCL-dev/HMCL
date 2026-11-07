@@ -17,9 +17,9 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfo;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
+import org.jackhuang.hmcl.addon.ModDependencyResolver;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -145,10 +145,15 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     public void download(RemoteAddon addon, RemoteAddon.Version file) {
+        download(addon, file, false);
+    }
+
+    /// Downloads the selected version, optionally including required dependencies when supported by the callback.
+    public void download(RemoteAddon addon, RemoteAddon.Version file, boolean downloadDependencies) {
         if (this.callback == null) {
             saveAs(file);
         } else {
-            this.callback.download(page.getDownloadProvider(), instanceReference.repository(), instanceReference.instanceId(), addon, file);
+            this.callback.download(page.getDownloadProvider(), instanceReference.repository(), instanceReference.instanceId(), addon, file, downloadDependencies);
         }
     }
 
@@ -264,27 +269,19 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 && control.versions.containsKey(gameVersion)) {
                             List<RemoteAddon.Version> addonVersions = control.versions.get(gameVersion);
                             if (addonVersions != null && !addonVersions.isEmpty()) {
-                                Set<ModLoaderType> targetLoaders = instance.getModLoaders();
-
-                                resolve:
-                                for (RemoteAddon.Version addonVersion : addonVersions) {
-                                    if (getSkinnable().type == RemoteAddon.Type.MOD) {
-                                        for (AddonLoader loader : addonVersion.loaders()) {
-                                            if (loader.type() instanceof ModLoaderType modLoaderType && targetLoaders.contains(modLoaderType)) {
-                                                list.getContent().addAll(
-                                                        ComponentList.createComponentListTitle(i18n("addon.download.recommend", gameVersion)),
-                                                        new AddonItem(control.addon, addonVersion, control)
-                                                );
-                                                break resolve;
-                                            }
-                                        }
-                                    } else {
-                                        list.getContent().addAll(
-                                                ComponentList.createComponentListTitle(i18n("addon.download.recommend", gameVersion)),
-                                                new AddonItem(control.addon, addonVersion, control)
-                                        );
-                                        break;
-                                    }
+                                if (getSkinnable().type == RemoteAddon.Type.MOD) {
+                                    ModDependencyResolver.findRecommendedModVersion(
+                                            addonVersions.stream(), gameVersion, instance.getModLoaders()
+                                    ).ifPresent(addonVersion -> list.getContent().addAll(
+                                            ComponentList.createComponentListTitle(i18n("addon.download.recommend", gameVersion)),
+                                            new AddonItem(control.addon, addonVersion, control)
+                                    ));
+                                } else {
+                                    RemoteAddon.Version addonVersion = addonVersions.get(0);
+                                    list.getContent().addAll(
+                                            ComponentList.createComponentListTitle(i18n("addon.download.recommend", gameVersion)),
+                                            new AddonItem(control.addon, addonVersion, control)
+                                    );
                                 }
                             }
                         }
@@ -544,7 +541,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXButton downloadButton = null;
+            @Nullable JFXButton downloadButton = null;
+            @Nullable JFXButton downloadDependenciesButton = null;
             if (selfPage.callback != null) {
                 downloadButton = new JFXButton(type == RemoteAddon.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
                 downloadButton.getStyleClass().add("dialog-accept");
@@ -554,6 +552,17 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
                     selfPage.download(mod, version);
                 });
+
+                if (type == RemoteAddon.Type.MOD && selfPage.instanceReference.instance() != null) {
+                    downloadDependenciesButton = new JFXButton(i18n("mods.install.with_dependencies"));
+                    downloadDependenciesButton.getStyleClass().add("dialog-accept");
+                    downloadDependenciesButton.setOnAction(e -> {
+                        if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                            fireEvent(new DialogCloseEvent());
+                        }
+                        selfPage.download(mod, version, true);
+                    });
+                }
             }
 
             JFXButton saveAsButton = new JFXButton(i18n("mods.save_as"));
@@ -571,6 +580,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             if (downloadButton == null) {
                 this.setActions(saveAsButton, cancelButton);
+            } else if (downloadDependenciesButton != null) {
+                this.setActions(downloadButton, downloadDependenciesButton, saveAsButton, cancelButton);
             } else {
                 this.setActions(downloadButton, saveAsButton, cancelButton);
             }
@@ -721,5 +732,11 @@ public class DownloadPage extends Control implements DecoratorPage {
     @FunctionalInterface
     public interface DownloadCallback {
         void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon addon, RemoteAddon.Version file);
+
+        /// Downloads with optional dependencies by default retaining the callback's original single-file behavior.
+        default void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId,
+                              RemoteAddon addon, RemoteAddon.Version file, boolean downloadDependencies) {
+            download(downloadProvider, repository, instanceId, addon, file);
+        }
     }
 }
