@@ -97,6 +97,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             listView = new JFXListView<>();
             listView.setItems(objects);
             listView.getStyleClass().add("jfx-list-view-float");
+            listView.getStyleClass().add("no-horizontal-scrollbar");
             listView.setPlaceholder(placeholderContainer);
 
             setMargin(listView, new Insets(0, 10, 0, 10));
