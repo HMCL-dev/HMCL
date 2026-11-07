@@ -377,13 +377,15 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     GameComponentType.FABRIC_API,
                     gameVersion.getGameVersion(),
                     false
-                ).thenComposeAsync(versions -> {
+                ).thenApplyAsync(versions -> {
                     if (versions.isEmpty()) throw new IllegalStateException("No compatible Fabric API version found");
 
                     settings.put(GameComponentType.FABRIC_API.getPatchId(), versions.get(0));
 
-                    return finishVersionDownloadingAsync(settings);
-                });
+                    return versions;
+                }).withStage("hmcl.install.fabric-api")
+                    .thenComposeAsync(versions -> finishVersionDownloadingAsync(settings))
+                    .withStagesHints(new Task.StagesHint("hmcl.install.fabric-api"));
             }
 
             return finishVersionDownloadingAsync(settings);
