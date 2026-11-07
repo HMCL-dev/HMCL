@@ -223,10 +223,10 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
     }
 
     private void updateFabricApiOptionVisible() {
-        fabricApiOptionVisible.set(
-            showFabricApiAutoInstallOption()
-                    && controller.getSettings().get(GameComponentType.FABRIC.getPatchId()) instanceof ComponentRemoteVersion
-        );
+        boolean hasFabric = controller.getSettings().get(GameComponentType.FABRIC.getPatchId()) instanceof ComponentRemoteVersion;
+        boolean hasFabricApi = controller.getSettings().get(GameComponentType.FABRIC_API.getPatchId()) instanceof ComponentRemoteVersion;
+
+        fabricApiOptionVisible.set(showFabricApiAutoInstallOption() && hasFabric && !hasFabricApi);
     }
 
     private void setInstallFabricApi(boolean selected) {
