@@ -33,8 +33,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_FILE;
-import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_NAME;
+import static org.jackhuang.hmcl.ui.download.LocalModpackPage.*;
 import static org.jackhuang.hmcl.ui.download.RemoteModpackPage.MODPACK_SERVER_MANIFEST;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -149,10 +148,13 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
     }
 
     public void onChooseRepository() {
-        String modPackName = controller.getSettings().get(MODPACK_NAME);
-        DownloadPage downloadPage = new DownloadPage(modPackName != null ? new GameInstanceID(modPackName) : null);
+        String updateModpackInstanceId = controller.getSettings().get(MODPACK_INSTANCE_ID);
+        DownloadPage downloadPage = new DownloadPage(updateModpackInstanceId != null ? new GameInstanceID(updateModpackInstanceId) : null);
         downloadPage.showModpackDownloads();
+        downloadPage.getSidebar().setDisable(true);
         Controllers.navigate(downloadPage);
+        String modpackName = controller.getSettings().get(MODPACK_NAME);
+        downloadPage.getModpackDownloadPage().searchFilterProperty().set(modpackName);
     }
 
     @Override
