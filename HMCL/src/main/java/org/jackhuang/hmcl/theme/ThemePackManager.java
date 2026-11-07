@@ -20,6 +20,7 @@ import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.aprilfools.TheCopperAge;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.ContentEncoding;
@@ -705,6 +706,9 @@ public final class ThemePackManager {
                 return ThemeColorSource.DEFAULT;
             }
             return ThemeColorSource.wallpaper();
+        }
+        if (themeColorType == ThemeColorType.COPPER) {
+            return ThemeColorSource.custom(ThemeColor.of(TheCopperAge.getColor()));
         }
 
         ThemeColor color = Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);

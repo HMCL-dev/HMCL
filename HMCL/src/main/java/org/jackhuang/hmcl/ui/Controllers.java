@@ -48,7 +48,8 @@ import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
-import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.aprilfools.AprilFools;
+import org.jackhuang.hmcl.util.aprilfools.Lzh;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -60,7 +61,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -81,8 +81,6 @@ public final class Controllers {
     public static final String JAVA_INTERPRETED_MODE_TIP = "javaInterpretedMode";
     /// The shown-tip key for the software-rendering warning.
     public static final String SOFTWARE_RENDERING = "softwareRendering";
-    /// The shown-tip key storing the year of the April Fools prompt.
-    public static final String APRIL_FOOLS = "aprilFools";
 
     /// The coordinator for the main window's scene graph and navigation stack.
     private static @Nullable Decorator decorator;
@@ -290,6 +288,7 @@ public final class Controllers {
     /// Initializes the main application stage, scene graph, and background services.
     ///
     /// @param stage the primary application stage, which must not have been shown
+    @FXThread
     public static void initialize(Stage stage) {
         LOG.info("Start initializing application");
 
@@ -407,32 +406,16 @@ public final class Controllers {
             Controllers.dialog(agreementPane);
         }
 
-        aprilFools:
-        if (AprilFools.isEnabled()) {
-            int currentYear = LocalDate.now().getYear();
-            if (state().getShownTips().get(APRIL_FOOLS) instanceof Number year && year.intValue() >= currentYear)
-                break aprilFools;
-
-            if (!I18n.getLocale().getLocale().getLanguage().equals("zh"))
-                break aprilFools;
-
-            @Nullable SupportedLocale lzh = SupportedLocale.getSupportedLocales().stream()
-                    .filter(locale -> "lzh".equals(locale.getName()))
-                    .findFirst().orElse(null);
-
-            if (lzh == null) {
-                LOG.warning("No supported locale found for lzh");
-                break aprilFools;
-            }
-
-            Runnable updateShowTips = () -> state().getShownTips().put(APRIL_FOOLS, currentYear);
-
+        @Nullable AprilFools.Type aprilFoolsType = AprilFools.getRandomTypeToPrompt();
+        if (aprilFoolsType == AprilFools.Type.LZH) {
             Controllers.confirmWithCountdown(i18n("launcher.april_fools.switch_lzh"), null, 10,
                     MessageType.QUESTION, () -> {
                         Controllers.confirm(i18n("launcher.april_fools.switch_lzh.confirm"), null, MessageType.QUESTION, () -> {
+                            SupportedLocale lzh = Lzh.getLzhLocale();
+
                             LOG.info("Switching locale to " + lzh);
 
-                            updateShowTips.run();
+                            AprilFools.updateShownTips();
                             settings().languageProperty().set(lzh);
 
                             Controllers.onApplicationStop();
@@ -450,8 +433,17 @@ public final class Controllers {
                             }
 
                             Platform.exit();
-                        }, updateShowTips);
-                    }, updateShowTips);
+                        }, AprilFools::updateShownTips);
+                    }, AprilFools::updateShownTips);
+        } else if (aprilFoolsType == AprilFools.Type.THE_COPPER_AGE) {
+            Controllers.confirmWithCountdown(i18n("launcher.april_fools.copper"), null, 10,
+                    MessageType.QUESTION, () -> {
+                        Controllers.confirm(i18n("launcher.april_fools.copper.confirm"), null, MessageType.QUESTION, () -> {
+                            AprilFools.updateShownTips();
+                            settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_COLOR);
+                            settings().themeColorTypeProperty().set(ThemeColorType.COPPER);
+                        }, AprilFools::updateShownTips);
+                    }, AprilFools::updateShownTips);
         }
 
         tryInstallBundledModpack(GameDirectoryManager.getSelectedRepository());
