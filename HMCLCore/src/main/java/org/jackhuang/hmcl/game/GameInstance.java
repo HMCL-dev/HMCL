@@ -179,4 +179,11 @@ public interface GameInstance {
     default Path getNativeDirectory(Platform platform) {
         return getInstanceRoot().resolve("natives-" + platform);
     }
+
+    /// Returns the server dat file held by this instance.
+    ///
+    /// @return the server dat file below the held
+    default Path getServersDatFilePath() {
+        return getRunDirectory().resolve("servers.dat");
+    }
 }
