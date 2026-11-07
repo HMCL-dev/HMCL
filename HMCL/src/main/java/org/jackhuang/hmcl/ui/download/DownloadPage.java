@@ -370,7 +370,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             boolean autoInstallFabricApi = Boolean.TRUE.equals(settings.get(InstallersPage.INSTALL_FABRIC_API_KEY));
             boolean hasFabric = settings.get(GameComponentType.FABRIC.getPatchId()) instanceof ComponentRemoteVersion;
-            boolean hasFabricApi = settings.get(GameComponentType.FABRIC_API.getPatchId())instanceof ComponentRemoteVersion;
+            boolean hasFabricApi = settings.get(GameComponentType.FABRIC_API.getPatchId()) instanceof ComponentRemoteVersion;
 
             if (autoInstallFabricApi && hasFabric && !hasFabricApi) {
                 return downloadProvider.getVersionsAsync(
