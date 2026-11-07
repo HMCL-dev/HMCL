@@ -53,7 +53,6 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -238,12 +237,18 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
+    /// Checks the supplied resource packs for updates and opens the results for the current instance.
+    /// The target directory is retained even if this page switches instances during the check.
+    /// Does nothing when no instance is selected.
+    ///
+    /// @param resourcePacks the resource packs to check
     public void checkUpdates(Collection<ResourcePackFile> resourcePacks) {
-        HMCLGameInstance gameInstance = this.gameInstance;
+        @Nullable HMCLGameInstance gameInstance = this.gameInstance;
         if (gameInstance == null) {
             return;
         }
 
+        Path resourcePackDirectory = gameInstance.getResourcePackManager().getDirectory();
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
@@ -260,7 +265,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                             } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), resourcePackManager.getDirectory(), result));
+                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), resourcePackDirectory, result));
                             }
                         })
                         .withStagesHints("update.checking"),
@@ -522,11 +527,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private final ResourcePackListPage page;
 
-        private final JFXCheckBox checkBox;
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
+        private final JFXSwitch activeSwitch;
 
         private BooleanProperty booleanProperty = null;
 
@@ -540,8 +545,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             HBox root = new HBox(8);
             root.setPickOnBounds(false);
             root.setAlignment(Pos.CENTER_LEFT);
+            root.setPadding(new Insets(0, 8, 0, 8));
 
-            checkBox = new JFXCheckBox() {
+            activeSwitch = new JFXSwitch() {
                 @Override
                 public void fire() {
                     if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !isSelected() && getItem() != null && !getItem().getFile().isCompatible()) {
@@ -558,13 +564,22 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     }
                 }
             };
-            checkBox.setOnAction(e -> {
-                if (getItem() != null) getItem().getFile().setEnabled(checkBox.isSelected());
+            activeSwitch.setOnAction(e -> {
+                if (getItem() != null) getItem().getFile().setEnabled(activeSwitch.isSelected());
             });
+            activeSwitch.setSize(20);
+            activeSwitch.setMinSize(30, 30);
+            activeSwitch.setPrefSize(30, 30);
+            activeSwitch.setMaxSize(30, 30);
+            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             HBox.setHgrow(content, Priority.ALWAYS);
 
-            root.getChildren().setAll(checkBox, imageContainer, content, btnReveal, btnInfo);
+            HBox actions = new HBox();
+            actions.setAlignment(Pos.CENTER);
+            actions.getChildren().setAll(btnReveal, btnInfo, activeSwitch);
+
+            root.getChildren().setAll(imageContainer, content, actions);
 
             setSelectable();
 
@@ -594,9 +609,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(item)));
 
             if (booleanProperty != null) {
-                checkBox.selectedProperty().unbindBidirectional(booleanProperty);
+                activeSwitch.selectedProperty().unbindBidirectional(booleanProperty);
             }
-            checkBox.selectedProperty().bindBidirectional(booleanProperty = item.enabledProperty());
+            activeSwitch.selectedProperty().bindBidirectional(booleanProperty = item.enabledProperty());
 
             {
                 var compatibility = file.getCompatibility();

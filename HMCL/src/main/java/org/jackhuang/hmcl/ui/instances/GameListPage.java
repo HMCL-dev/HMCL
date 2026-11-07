@@ -19,7 +19,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
@@ -60,51 +59,42 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     @SuppressWarnings("FieldCanBeLocal")
     private final ObservableList<GameDirectoryListItem> gameDirectoryListItems;
 
+    /// Creates game-directory navigation, its bottom action, and the instance list.
     public GameListPage() {
         gameDirectoryListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), gameDirectory -> {
             GameDirectoryListItem item = new GameDirectoryListItem(gameDirectory);
-            FXUtils.setLimitWidth(item, 200);
             FXUtils.onSecondaryButtonClicked(item, () -> {
                 PopupMenu menu = new PopupMenu();
                 JFXPopup popup = new JFXPopup(menu);
-                menu.getContent().add(new IconedMenuItem(
-                        SVG.EDIT,
-                        i18n("button.edit"),
-                        () -> Controllers.navigate(new GameDirectoryPage(gameDirectory)),
-                        popup));
+                menu.getContent().addAll(
+                        new IconedMenuItem(
+                                SVG.EDIT,
+                                i18n("button.edit"),
+                                () -> Controllers.navigate(new GameDirectoryPage(gameDirectory)),
+                                popup),
+                        new IconedMenuItem(
+                                SVG.FOLDER,
+                                i18n("button.reveal_dir"),
+                                () -> FXUtils.openFolder(gameDirectory.getPath().toPath()),
+                                popup));
                 popup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, item.getWidth(), 0);
             });
             return item;
         });
 
-        {
-            ScrollPane pane = new ScrollPane();
-            VBox.setVgrow(pane, Priority.ALWAYS);
-            {
-                AdvancedListItem addGameDirectoryItem = new AdvancedListItem();
-                addGameDirectoryItem.getStyleClass().add("navigation-drawer-item");
-                addGameDirectoryItem.setTitle(i18n("game_directory.new"));
-                addGameDirectoryItem.setLeftIcon(SVG.ADD_CIRCLE);
-                addGameDirectoryItem.setOnAction(e -> Controllers.navigate(new GameDirectoryPage(null)));
+        AdvancedListItem addGameDirectoryItem = new AdvancedListItem();
+        addGameDirectoryItem.getStyleClass().add("navigation-drawer-item");
+        addGameDirectoryItem.setTitle(i18n("game_directory.new"));
+        addGameDirectoryItem.setLeftIcon(SVG.ADD_CIRCLE);
+        addGameDirectoryItem.setOnAction(e -> Controllers.navigate(new GameDirectoryPage(null)));
 
-                pane.setFitToWidth(true);
-                VBox wrapper = new VBox();
-                wrapper.getStyleClass().add("advanced-list-box-content");
-                VBox box = new VBox();
-                box.setFillWidth(true);
-                Bindings.bindContent(box.getChildren(), gameDirectoryListItems);
-                wrapper.getChildren().setAll(box, addGameDirectoryItem);
-                pane.setContent(wrapper);
-            }
-            FXUtils.smoothScrolling(pane);
+        VBox directories = new VBox();
+        Bindings.bindContent(directories.getChildren(), gameDirectoryListItems);
+        getSidebar().add(directories).add(addGameDirectoryItem);
+        setSidebarBottom(new AdvancedListBox()
+                .addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.SETTINGS, this::modifyGlobalGameSettings));
 
-            AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
-                    .addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.SETTINGS, this::modifyGlobalGameSettings);
-            FXUtils.setLimitHeight(bottomLeftCornerList, 40 + 12 * 2);
-            setLeft(pane, bottomLeftCornerList);
-        }
-
-        setCenter(new GameList());
+        setContent(new GameList());
 
         FXUtils.applyDragListener(this, file -> ModpackHelper.isFileModpackByExtension(file) || "json".equalsIgnoreCase(FileUtils.getNameWithoutExtension(file)), files -> {
             Path file = files.get(0);
@@ -207,6 +197,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 ComponentList root = new ComponentList();
                 root.getStyleClass().add("no-padding");
                 JFXListView<GameListItem> listView = new JFXListView<>();
+                listView.getStyleClass().add("no-horizontal-scrollbar");
 
                 {
                     toolbarPane = new TransitionPane();

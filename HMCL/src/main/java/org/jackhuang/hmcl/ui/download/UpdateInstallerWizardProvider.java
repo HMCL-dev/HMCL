@@ -98,7 +98,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                         controller.onNext(new AdditionalInstallersPage(gameInstance, newGameVersion, controller, downloadProvider));
                     } else {
                         Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + componentType.getPatchId()), oldLibraryVersion, ((ComponentRemoteVersion) settings.get(componentType.getPatchId())).getSelfVersion()),
-                                i18n("install.change_version"), controller::onFinish, controller::onCancel);
+                                i18n("install.change_version"), controller::onFinish, () -> {});
                     }
                 });
             default:
