@@ -5,6 +5,8 @@ package org.jackhuang.hmcl.game;
 import com.jfoenix.controls.JFXButton;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
@@ -214,6 +216,39 @@ public final class LauncherHelper {
                                 }
                             })
                     );
+                })
+                .thenComposeAsync(() -> {
+                    if (!setting.getInheritable(GameSettings::checkCorruptModsProperty)
+                            || gameInstance.getModLoaders().isEmpty()) {
+                        return Task.completed(null);
+                    }
+                    return Task.composeAsync(() -> {
+                        var modManager = gameInstance.getModManager();
+                        modManager.refresh();
+                        List<LocalModFile> corruptMods = modManager.getModFilesForLoaderType(ModLoaderType.CORRUPT)
+                                .stream()
+                                .filter(LocalModFile::isActive)
+                                .filter(modFile -> !modFile.isOld())
+                                .toList();
+                        if (corruptMods.isEmpty()) return null;
+
+                        String message = corruptMods.stream()
+                                .map(modFile -> " · " + modFile.getFile().getFileName().toString() + "\n")
+                                .collect(Collectors.joining(
+                                        "",
+                                        i18n("launch.advice.corrupt_mods.prefix"),
+                                        i18n("launch.advice.corrupt_mods.suffix")
+                                ));
+                        CompletableFuture<Void> future = new CompletableFuture<>();
+                        runInFX(() -> {
+                            Controllers.confirm(message, i18n("launch.advice.corrupt_mods"), MessageType.WARNING, () -> {
+                                future.complete(null);
+                            }, () -> {
+                                future.completeExceptionally(new CancellationException());
+                            });
+                        });
+                        return Task.fromCompletableFuture(future);
+                    });
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> new GameVerificationFixTask(gameInstance, gameInstance.getVersion(), context.launchManifest))
                 .thenComposeAsync(() -> {

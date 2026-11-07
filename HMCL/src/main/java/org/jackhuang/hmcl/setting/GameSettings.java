@@ -834,6 +834,18 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return useNativeOpenAL;
     }
 
+    /// Property name for checking corrupt mods
+    public static final String PROPERTY_CHECK_CORRUPT_MODS = "checkCorruptMods";
+
+    /// If `true`, HMCL will check for corrupt mods before launching
+    @SerializedName(PROPERTY_CHECK_CORRUPT_MODS)
+    private final InheritableProperty<Boolean> checkCorruptMods = newInheritableProperty(PROPERTY_CHECK_CORRUPT_MODS, true);
+
+    /// Returns the check corrupt mods property.
+    public InheritableProperty<Boolean> checkCorruptModsProperty() {
+        return checkCorruptMods;
+    }
+
     private static Renderer selectRenderer(GraphicsAPI api, @Nullable Renderer renderer) {
         if (renderer instanceof Renderer.Driver driver && driver.api() != api) {
             return Renderer.DEFAULT;

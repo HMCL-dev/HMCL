@@ -169,6 +169,7 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
 
     @Override
     protected AddonUpdateConditions getTargetVersionRestrictions() {
+        if (getModLoaderType() == ModLoaderType.UNKNOWN || getModLoaderType() == ModLoaderType.CORRUPT) return null;
         return new AddonUpdateConditions(v -> v.loaders().stream().map(AddonLoader::type).collect(Collectors.toSet()).contains(getModLoaderType()));
     }
 
