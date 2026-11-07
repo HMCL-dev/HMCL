@@ -159,12 +159,13 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                 exceptions.add(e);
             }
 
-            if (coreModInfo.isLiteLoaderAsMod()) {
+            if (coreModInfo.getKnownCoreMod() != null) {
+                var knownCoreMod = coreModInfo.getKnownCoreMod();
                 modInfo = new LocalModFile(this,
-                        getLocalMod("liteloader-forge", ModLoaderType.FORGE),
+                        getLocalMod(knownCoreMod.getModId(), knownCoreMod.getModLoaderType()),
                         file,
-                        "LiteLoader",
-                        new LocalAddonFile.Description("LiteLoader working together with Forge as a mod"),
+                        knownCoreMod.getName(),
+                        new LocalAddonFile.Description(knownCoreMod.getDesc()),
                         coreModInfo
                 );
             } else {

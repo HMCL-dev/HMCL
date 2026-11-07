@@ -14,6 +14,7 @@ import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,28 +32,28 @@ public final class CoreModInfo {
     public static final CoreModInfo EMPTY = new CoreModInfo();
 
     private final Map<ModLoaderType, List<VersionRange<GameVersionNumber>>> coreMods;
-    private final boolean liteLoaderAsMod;
+    private final @Nullable KnownCoreMod knownCoreMod;
 
     private CoreModInfo() {
         this.coreMods = Collections.emptyMap();
-        this.liteLoaderAsMod = false;
+        this.knownCoreMod = null;
     }
 
-    private CoreModInfo(List<CoreMod> coreModList, boolean liteloaderAsMod) {
+    private CoreModInfo(List<CoreMod> coreModList, @Nullable KnownCoreMod knownCoreMod) {
         EnumMap<ModLoaderType, List<VersionRange<GameVersionNumber>>> map = new EnumMap<>(ModLoaderType.class);
         for (var coreMod : coreModList) {
             map.computeIfAbsent(coreMod.modLoaderType(), k -> new ArrayList<>()).add(coreMod.mcVersionRange());
         }
         this.coreMods = Collections.unmodifiableMap(map);
-        this.liteLoaderAsMod = liteloaderAsMod;
+        this.knownCoreMod = knownCoreMod;
     }
 
     public boolean isEmpty() {
         return coreMods.isEmpty();
     }
 
-    public boolean isLiteLoaderAsMod() {
-        return liteLoaderAsMod;
+    public @Nullable KnownCoreMod getKnownCoreMod() {
+        return knownCoreMod;
     }
 
     public EnumSet<ModLoaderType> getModLoaders(GameVersionNumber gameVersionNumber) {
@@ -72,7 +73,7 @@ public final class CoreModInfo {
     @NotNull
     public static CoreModInfo fromFile(Path modFile, ZipFileTree tree) {
         List<CoreMod> coreModList = new ArrayList<>();
-        boolean liteloaderAsMod = false;
+        @Nullable KnownCoreMod knownCoreMod = null;
         {
             // Below 1.13
             ZipArchiveEntry mf = tree.getEntry("META-INF/MANIFEST.MF");
@@ -93,7 +94,8 @@ public final class CoreModInfo {
                         ));
                     if (StringUtils.isNotBlank(tweakClass)) {
                         // I have no idea why LiteLoader tries to use TweakClass in 1.5.2, when it is not supported
-                        if (tweakClass.equals("com.mumfrey.liteloader.launch.LiteLoaderTweaker")) liteloaderAsMod = true;
+                        if ("com.mumfrey.liteloader.launch.LiteLoaderTweaker".equals(tweakClass)) knownCoreMod = KnownCoreMod.LITE_LOADER;
+                        else if ("optifine.OptiFineForgeTweaker".equals(tweakClass)) knownCoreMod = KnownCoreMod.OPTIFINE;
                         coreModList.addAll(List.of(
                                 new CoreMod(ModLoaderType.FORGE, "1.6.1", "1.12.2"),
                                 new CoreMod(ModLoaderType.LITE_LOADER, "1.6.1", "1.12.2"),
@@ -126,11 +128,19 @@ public final class CoreModInfo {
         }
         {
             // ITransformationService
-            if (tree.getEntry("META-INF/services/cpw.mods.modlauncher.api.ITransformationService") != null)
+            ZipArchiveEntry entry = tree.getEntry("META-INF/services/cpw.mods.modlauncher.api.ITransformationService");
+            if (entry != null) {
+                try {
+                    String content = tree.readTextEntry(entry);
+                    if ("optifine.OptiFineTransformationService".equals(content)) knownCoreMod = KnownCoreMod.OPTIFINE;
+                } catch (IOException e) {
+                    LOG.warning("Failed to read ITransformationService for jar: " + modFile, e);
+                }
                 coreModList.addAll(List.of(
                         new CoreMod(ModLoaderType.FORGE, "1.13.2"),
                         new CoreMod(ModLoaderType.NEO_FORGE, "1.20.1", "1.21.8") // Replaced by ClassProcessorProvider
                 ));
+            }
         }
         {
             // ICoreMod for NeoForge
@@ -147,7 +157,44 @@ public final class CoreModInfo {
             if (tree.getEntry("META-INF/services/net.neoforged.neoforgespi.transformation.ClassProcessorProvider") != null)
                 coreModList.add(new CoreMod(ModLoaderType.NEO_FORGE, "1.21.9"));
         }
-        return new CoreModInfo(coreModList, liteloaderAsMod);
+
+        // OptiFine has not supported NeoForge yet
+        if (knownCoreMod == KnownCoreMod.OPTIFINE) coreModList.removeIf(it -> it.modLoaderType == ModLoaderType.NEO_FORGE);
+
+        return new CoreModInfo(coreModList, knownCoreMod);
+    }
+
+    public enum KnownCoreMod {
+        LITE_LOADER(ModLoaderType.FORGE, "liteloader-forge", "LiteLoader", "LiteLoader working together with Forge as a mod"),
+        OPTIFINE(ModLoaderType.FORGE, "optifine-forge", "OptiFine", "OptiFine working together with Forge as a mod");
+
+        private final ModLoaderType modLoaderType;
+        private final String modId;
+        private final String name;
+        private final String desc;
+
+        KnownCoreMod(ModLoaderType modLoaderType, String modId, String name, String desc) {
+            this.modLoaderType = modLoaderType;
+            this.modId = modId;
+            this.name = name;
+            this.desc = desc;
+        }
+
+        public ModLoaderType getModLoaderType() {
+            return modLoaderType;
+        }
+
+        public String getModId() {
+            return modId;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getDesc() {
+            return desc;
+        }
     }
 
     private record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumber> mcVersionRange) {
