@@ -1,0 +1,52 @@
+name: Update Minecraft version numbers
+
+on:
+  schedule:
+    - cron: '0 16 * * *' # Every day at 00:00 UTC+8
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-versions:
+    if: ${{ github.repository_owner == 'HMCL-dev' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            .github/scripts/update-versions.js
+            .github/scripts/update-chunkbase-versions.js
+            HMCLCore/src/main/resources/assets/game/versions.txt
+            HMCL/src/main/resources/assets/chunkbase/game_versions.json
+          sparse-checkout-cone-mode: false
+
+      - name: Update Minecraft versions
+        id: update-minecraft
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const script = require("./.github/scripts/update-versions.js");
+            await script({ github, context, core });
+
+      - name: Update Chunkbase game versions
+        id: update-chunkbase
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const script = require("./.github/scripts/update-chunkbase-versions.js");
+            await script({ github, context, core });
+
+      - name: Create Pull Request
+        if: ${{ steps.update-minecraft.outputs.updated == 'true' || steps.update-chunkbase.outputs.updated == 'true' }}
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update Minecraft version numbers [skip ci]"
+          title: "Update Minecraft version numbers [skip ci]"
+          body: "Automatically updated the Minecraft supported version numbers."
+          branch: auto-update-minecraft-version-numbers
+          delete-branch: true
