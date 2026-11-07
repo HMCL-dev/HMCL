@@ -17,6 +17,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -45,6 +46,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
     protected BooleanProperty installable = new SimpleBooleanProperty();
 
+    private final BooleanProperty fabricApiOptionVisible = new SimpleBooleanProperty(false);
     private final BooleanProperty installFabricApiProperty = new SimpleBooleanProperty(true);
     public static final String INSTALL_FABRIC_API_KEY = "installFabricApi";
 
@@ -82,6 +84,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             component.setOnRemove(() -> {
                 controller.getSettings().remove(type.getPatchId());
                 reload();
+                updateFabricApiOptionVisible();
             });
         }
     }
@@ -98,6 +101,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
     @Override
     public void onNavigate(SettingsMap settings) {
         reload();
+        updateFabricApiOptionVisible();
     }
 
     @Override
@@ -181,6 +185,8 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
                 {
                     HBox fabricApiBox = new HBox(8);
+                    fabricApiBox.visibleProperty().bind(control.fabricApiOptionVisible);
+                    fabricApiBox.managedProperty().bind(fabricApiBox.visibleProperty());
 
                     JFXCheckBox fabricApiCheckBox = new JFXCheckBox(i18n("install.installer.install", i18n("install.installer.fabric-api")));
                     fabricApiCheckBox.selectedProperty().bindBidirectional(control.installFabricApiProperty);
@@ -214,6 +220,13 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
             getChildren().setAll(root);
         }
+    }
+
+    private void updateFabricApiOptionVisible() {
+        fabricApiOptionVisible.set(
+            showFabricApiAutoInstallOption()
+                    && controller.getSettings().get(GameComponentType.FABRIC.getPatchId()) instanceof ComponentRemoteVersion
+        );
     }
 
     private void setInstallFabricApi(boolean selected) {
