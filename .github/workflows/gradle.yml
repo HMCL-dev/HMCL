@@ -6,6 +6,9 @@ on:
     paths-ignore:
       - '**.md'
 
+env:
+  JAVA_COMPATIBILITY: '17'
+
 jobs:
   build:
 
@@ -13,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
-        java: ['17', '25', '27']
+        java: [env.JAVA_COMPATIBILITY, '25', '27']
 
     runs-on: ${{ matrix.os }}
 
@@ -32,7 +35,7 @@ jobs:
       uses: gradle/actions/setup-gradle@v5
       with:
         cache-cleanup: never
-        cache-read-only: ${{ matrix.java != '17' || github.event.repository != null && github.ref_name != github.event.repository.default_branch }}
+        cache-read-only: ${{ matrix.java != env.JAVA_COMPATIBILITY || github.event.repository != null && github.ref_name != github.event.repository.default_branch }}
     - name: Build with Gradle on Ubuntu
       if: runner.os == 'Linux'
       run: xvfb-run --auto-servernum ./gradlew build --no-daemon --parallel --stacktrace
@@ -64,28 +67,28 @@ jobs:
         name: HMCL-test-report-html-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}
         path: "**/build/reports/tests/test/"
     - name: Upload JAR
-      if: runner.os == 'Linux' && matrix.java == '17'
+      if: runner.os == 'Linux' && matrix.java == env.JAVA_COMPATIBILITY
       uses: actions/upload-artifact@v7
       with:
         name: HMCL-${{ env.SHORT_SHA }}-jar
         path: HMCL/build/libs/HMCL-*.jar
         archive: false
     - name: Upload EXE
-      if: runner.os == 'Linux' && matrix.java == '17'
+      if: runner.os == 'Linux' && matrix.java == env.JAVA_COMPATIBILITY
       uses: actions/upload-artifact@v7
       with:
         name: HMCL-${{ env.SHORT_SHA }}-exe
         path: HMCL/build/libs/HMCL-*.exe
         archive: false
     - name: Upload SH
-      if: runner.os == 'Linux' && matrix.java == '17'
+      if: runner.os == 'Linux' && matrix.java == env.JAVA_COMPATIBILITY
       uses: actions/upload-artifact@v7
       with:
         name: HMCL-${{ env.SHORT_SHA }}-sh
         path: HMCL/build/libs/HMCL-*.sh
         archive: false
     - name: Upload DEB
-      if: runner.os == 'Linux' && matrix.java == '17'
+      if: runner.os == 'Linux' && matrix.java == env.JAVA_COMPATIBILITY
       uses: actions/upload-artifact@v7
       with:
         name: HMCL-${{ env.SHORT_SHA }}-deb
