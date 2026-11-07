@@ -383,9 +383,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     settings.put(GameComponentType.FABRIC_API.getPatchId(), versions.get(0));
 
                     return versions;
-                }).withStage("hmcl.install.fabric-api")
+                }).withStage("install.installer.fabric-api.fetch")
                     .thenComposeAsync(versions -> finishVersionDownloadingAsync(settings))
-                    .withStagesHints(new Task.StagesHint("hmcl.install.fabric-api"));
+                    .withStagesHints(new Task.StagesHint("install.installer.fabric-api.fetch"));
             }
 
             return finishVersionDownloadingAsync(settings);
