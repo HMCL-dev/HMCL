@@ -367,6 +367,38 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.put("success_message", i18n("install.success"));
             settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
+            boolean autoInstallFabricApi = Boolean.TRUE.equals(settings.get(AbstractInstallersPage.INSTALL_FABRIC_API_KEY));
+            boolean hasFabric = settings.get(GameComponentType.FABRIC.getPatchId()) instanceof ComponentRemoteVersion;
+            boolean hasFabricApi = settings.get(GameComponentType.FABRIC_API.getPatchId()) instanceof ComponentRemoteVersion;
+
+            if (autoInstallFabricApi && hasFabric && !hasFabricApi) {
+                String fetchStage = "install.installer.fabric-api.fetch";
+                String skipStage = "install.installer.fabric-api.skip";
+                String autoChooseStage = "install.installer.fabric-api.auto_choose";
+
+                return downloadProvider.getVersionsAsync(
+                    GameComponentType.FABRIC_API,
+                    gameVersion.getGameVersion(),
+                    false
+                ).withStage(fetchStage)
+                    .thenComposeAsync(versions -> {
+                        if (versions.isEmpty()) {
+                            return Task.<ComponentRemoteVersionList<?>>completed(versions)
+                                .withStage(skipStage)
+                                .withStagesHints(new Task.StagesHint(skipStage));
+                        }
+
+                        return Task.<ComponentRemoteVersionList<?>>supplyAsync(() -> {
+                            settings.put(GameComponentType.FABRIC_API.getPatchId(), versions.get(0));
+
+                            return versions;
+                        }).withStage(autoChooseStage)
+                            .withStagesHints(new Task.StagesHint(autoChooseStage));
+                    })
+                    .thenComposeAsync(versions -> finishVersionDownloadingAsync(settings))
+                    .withStagesHints(new Task.StagesHint(fetchStage));
+            }
+
             return finishVersionDownloadingAsync(settings);
         }
 
