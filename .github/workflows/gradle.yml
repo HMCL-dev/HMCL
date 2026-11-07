@@ -32,7 +32,7 @@ jobs:
       uses: gradle/actions/setup-gradle@v5
       with:
         cache-cleanup: never
-        cache-read-only: ${{ matrix.java != '17' && github.event.repository != null && github.ref_name != github.event.repository.default_branch }}
+        cache-read-only: ${{ matrix.java != '17' || github.event.repository != null && github.ref_name != github.event.repository.default_branch }}
     - name: Build with Gradle on Ubuntu
       if: runner.os == 'Linux'
       run: xvfb-run --auto-servernum ./gradlew build --no-daemon --parallel --stacktrace
