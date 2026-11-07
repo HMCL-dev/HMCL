@@ -548,6 +548,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 if (type == RemoteAddon.Type.MOD && selfPage.instanceReference.instance() != null) {
                     JFXButton installButton = new JFXButton(i18n("mods.install"));
                     installButton.getStyleClass().add("dialog-accept");
+                    installButton.setStyle("-fx-padding: 0.7em 0.2em 0.7em 0.8em;");
                     installButton.setOnAction(e -> {
                         if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                             fireEvent(new DialogCloseEvent());
@@ -557,6 +558,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     JFXButton downloadOptionsButton = new JFXButton();
                     downloadOptionsButton.getStyleClass().add("dialog-accept");
+                    downloadOptionsButton.setStyle("-fx-padding: 0.7em 0.8em 0.7em 0.2em;");
                     downloadOptionsButton.setAccessibleText(i18n("mods.install.with_dependencies"));
                     var downloadArrow = SVG.ARROW_DROP_DOWN.createIcon();
                     downloadArrow.fillProperty().bind(downloadOptionsButton.textFillProperty());
