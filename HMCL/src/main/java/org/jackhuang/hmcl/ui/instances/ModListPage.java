@@ -853,6 +853,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 boolean wrongCoreModDir = instance.getCoreModsDirectory() != null
                         && modInfo.getCoreModInfo().isLegacy()
                         && !modInfo.getFile().getParent().equals(instance.getCoreModsDirectory());
+                boolean wrongModDir = !modInfo.getCoreModInfo().isLegacy() && modInfo.getFile().getParent().equals(instance.getCoreModsDirectory());
 
                 if (modLoaderType == ModLoaderType.UNKNOWN) {
                     if (modInfo.isCoreMod()) {
@@ -889,6 +890,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         }
                     }
                 }
+
+                if (wrongModDir) warning.add(i18n("mods.check_dir"));
             }
 
             String modVersion = modInfo.getVersion();

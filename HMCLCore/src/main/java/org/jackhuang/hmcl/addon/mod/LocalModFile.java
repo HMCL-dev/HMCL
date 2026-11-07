@@ -121,8 +121,7 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
         return !coreModInfo.isEmpty();
     }
 
-    @NotNull
-    public CoreModInfo getCoreModInfo() {
+    public @NotNull CoreModInfo getCoreModInfo() {
         return coreModInfo;
     }
 
