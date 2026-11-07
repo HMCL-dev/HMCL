@@ -368,7 +368,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.put("success_message", i18n("install.success"));
             settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
-            boolean autoInstallFabricApi = Boolean.TRUE.equals(settings.get(InstallersPage.INSTALL_FABRIC_API_KEY));
+            boolean autoInstallFabricApi = Boolean.TRUE.equals(settings.get(AbstractInstallersPage.INSTALL_FABRIC_API_KEY));
             boolean hasFabric = settings.get(GameComponentType.FABRIC.getPatchId()) instanceof ComponentRemoteVersion;
             boolean hasFabricApi = settings.get(GameComponentType.FABRIC_API.getPatchId()) instanceof ComponentRemoteVersion;
 

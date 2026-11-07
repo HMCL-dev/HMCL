@@ -46,6 +46,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
     protected BooleanProperty installable = new SimpleBooleanProperty();
 
     private final BooleanProperty installFabricApiProperty = new SimpleBooleanProperty(true);
+    public static final String INSTALL_FABRIC_API_KEY = "installFabricApi";
 
     public AbstractInstallersPage(WizardController controller, GameVersionNumber gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
