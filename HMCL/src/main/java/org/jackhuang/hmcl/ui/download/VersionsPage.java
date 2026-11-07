@@ -4,11 +4,7 @@ package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.*;
 import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -46,7 +42,6 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.NativePatcher;
-import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -74,28 +69,19 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     private final ObservableList<ComponentRemoteVersion> versions = FXCollections.observableArrayList();
     private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.LOADING);
 
-    private final boolean enableFabricApiAutoInstall;
-    private final BooleanProperty installFabricApiProperty = new SimpleBooleanProperty(true);
-    private final ObjectProperty<FabricApiStatus> fabricApiStatusProperty = new SimpleObjectProperty<>(FabricApiStatus.LOADING);
-    private int fabricApiRequestId;
-
     public VersionsPage(Navigation navigation,
                         String title, GameVersionNumber gameVersion,
                         DownloadProvider downloadProvider,
                         GameComponentType componentType,
-                        Runnable callback,
-                        boolean enableFabricApiAutoInstall) {
+                        Runnable callback) {
         this.title = title;
         this.gameVersion = componentType == GameComponentType.GAME ? null : gameVersion;
         this.componentType = componentType;
         this.navigation = navigation;
         this.downloadProvider = downloadProvider;
         this.callback = callback;
-        this.enableFabricApiAutoInstall = enableFabricApiAutoInstall;
 
         load(false);
-
-        if (enableFabricApiAutoInstall && componentType == GameComponentType.FABRIC) setInstallFabricApi(true);
     }
 
     @Override
@@ -106,18 +92,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     @Override
     public void refresh() {
         load(true);
-        if (enableFabricApiAutoInstall
-                && componentType == GameComponentType.FABRIC
-                && installFabricApiProperty.get()
-        ) {
-            setInstallFabricApi(true);
-        }
-    }
-
-    @Override
-    public void cleanup(SettingsMap settings) {
-        ++fabricApiRequestId;
-        if (enableFabricApiAutoInstall && componentType == GameComponentType.FABRIC) settings.remove(GameComponentType.FABRIC_API.getPatchId());
     }
 
     private void load(boolean refresh) {
@@ -160,13 +134,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         SNAPSHOTS,
         APRIL_FOOLS,
         OLD
-    }
-
-    private enum FabricApiStatus {
-        LOADING,
-        READY,
-        EMPTY,
-        FAILED
     }
 
     private static class RemoteVersionListCell extends ListCell<ComponentRemoteVersion> {
@@ -333,13 +300,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             BorderPane root = new BorderPane();
 
-            VBox topBox = new VBox(8);
-            root.setTop(topBox);
-
             GridPane searchPane = new GridPane();
-            topBox.getChildren().add(searchPane);
-            topBox.getStyleClass().addAll("card");
-            BorderPane.setMargin(topBox, new Insets(10, 10, 0, 10));
+            root.setTop(searchPane);
+            searchPane.getStyleClass().addAll("card");
+            BorderPane.setMargin(searchPane, new Insets(10, 10, 0, 10));
 
             ColumnConstraints nameColumn = new ColumnConstraints();
             nameColumn.setMinWidth(USE_PREF_SIZE);
@@ -388,72 +352,17 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     JFXButton refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
                     refreshButton.setOnAction(event -> control.onRefresh());
 
-                    if (control.enableFabricApiAutoInstall && control.componentType == GameComponentType.FABRIC) {
-                        HBox loadingBox = new HBox(8);
-                        HBox fabricApiBox = new HBox(8);
-
-                        BooleanBinding loading = Bindings.createBooleanBinding(
-                            () -> control.fabricApiStatusProperty.get() == FabricApiStatus.LOADING,
-                            control.fabricApiStatusProperty
-                        );
-
-                        BooleanBinding ready = Bindings.createBooleanBinding(
-                            () -> control.fabricApiStatusProperty.get() == FabricApiStatus.READY,
-                            control.fabricApiStatusProperty
-                        );
-
-                        loadingBox.visibleProperty().bind(loading);
-                        loadingBox.managedProperty().bind(loadingBox.visibleProperty());
-
-                        fabricApiBox.visibleProperty().bind(ready);
-                        fabricApiBox.managedProperty().bind(fabricApiBox.visibleProperty());
-
-                        {
-                            JFXSpinner fabricApiProgress = new JFXSpinner();
-                            fabricApiProgress.getStyleClass().add("small-spinner");
-                            fabricApiProgress.setRadius(8);
-                            fabricApiProgress.setPrefSize(16, 16);
-                            fabricApiProgress.setMaxSize(16, 16);
-                            fabricApiProgress.setMouseTransparent(true);
-
-                            Label loadingLabel = new Label(i18n("install.installer.install", i18n("install.installer.fabric-api")));
-
-                            loadingBox.getChildren().addAll(fabricApiProgress, loadingLabel);
-                            loadingBox.setAlignment(Pos.CENTER);
-                        }
-
-                        {
-                            JFXCheckBox fabricApiCheckBox = new JFXCheckBox(i18n("install.installer.install", i18n("install.installer.fabric-api")));
-                            fabricApiCheckBox.selectedProperty().bindBidirectional(control.installFabricApiProperty);
-                            fabricApiCheckBox.setOnAction(event -> control.setInstallFabricApi(fabricApiCheckBox.isSelected()));
-
-                            StackPane fabricApiHelpIcon = new StackPane(SVG.HELP.createIcon(16));
-                            FXUtils.installFastTooltip(fabricApiHelpIcon, i18n("install.installer.fabric-quilt-api.warning", i18n("install.installer.fabric-api")));
-
-                            fabricApiBox.getChildren().addAll(fabricApiCheckBox, fabricApiHelpIcon);
-                            fabricApiBox.setAlignment(Pos.CENTER);
-                        }
-
+                    if (control.downloadProvider.hasType(control.componentType)) {
                         searchPane.addRow(rowIndex++,
                                 new Label(i18n("instance.search")), nameField,
-                                loadingBox,
-                                fabricApiBox,
+                                new Label(i18n("instance.game.type")), categoryField,
                                 refreshButton
                         );
                     } else {
-
-                        if (control.downloadProvider.hasType(control.componentType)) {
-                            searchPane.addRow(rowIndex++,
-                                    new Label(i18n("instance.search")), nameField,
-                                    new Label(i18n("instance.game.type")), categoryField,
-                                    refreshButton
-                            );
-                        } else {
-                            searchPane.addRow(rowIndex++,
-                                    new Label(i18n("instance.search")), nameField,
-                                    refreshButton
-                            );
-                        }
+                        searchPane.addRow(rowIndex++,
+                                new Label(i18n("instance.search")), nameField,
+                                refreshButton
+                        );
                     }
                 }
             }
@@ -577,45 +486,5 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             list.getItems().setAll(versions.toList());
             list.scrollTo(0);
         }
-    }
-
-    private void setInstallFabricApi(boolean selected) {
-        installFabricApiProperty.setValue(selected);
-
-        int requestId = ++fabricApiRequestId;
-        String key = GameComponentType.FABRIC_API.getPatchId();
-
-        if (!selected) {
-            navigation.getSettings().remove(key);
-
-            return;
-        }
-
-        if (componentType != GameComponentType.FABRIC || gameVersion == null) return;
-
-        fabricApiStatusProperty.setValue(FabricApiStatus.LOADING);
-
-        downloadProvider.getVersionsAsync(GameComponentType.FABRIC_API, gameVersion, false)
-            .whenComplete(Schedulers.javafx(), (versions, exception) -> {
-                if (requestId != fabricApiRequestId || !installFabricApiProperty.getValue()) return;
-
-                if (exception != null) {
-                    LOG.warning("Failed to fetch Fabric API versions", exception);
-                    fabricApiStatusProperty.setValue(FabricApiStatus.FAILED);
-
-                    return;
-                }
-
-                if (versions.isEmpty()) {
-                    LOG.warning("No compatible Fabric API version found for " + gameVersion);
-                    installFabricApiProperty.setValue(false);
-                    fabricApiStatusProperty.setValue(FabricApiStatus.EMPTY);
-
-                    return;
-                }
-
-                navigation.getSettings().put(key, versions.get(0));
-                fabricApiStatusProperty.setValue(FabricApiStatus.READY);
-            }).start();
     }
 }

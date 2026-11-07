@@ -24,6 +24,8 @@ public class InstallersPage extends AbstractInstallersPage {
 
     private boolean isNameModifiedByUser = false;
 
+    public static final String INSTALL_FABRIC_API_KEY = "installFabricApi";
+
     public InstallersPage(WizardController controller, HMCLGameRepository repository, GameVersionNumber gameVersion, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
 
@@ -135,10 +137,5 @@ public class InstallersPage extends AbstractInstallersPage {
     protected void resetDefaultName() {
         isNameModifiedByUser = false;
         setTxtNameWithLoaders();
-    }
-
-    @Override
-    protected boolean enableFabricApiAutoInstall() {
-        return true;
     }
 }

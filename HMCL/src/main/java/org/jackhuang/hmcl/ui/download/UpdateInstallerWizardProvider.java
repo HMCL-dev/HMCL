@@ -100,8 +100,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                         Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + componentType.getPatchId()), oldLibraryVersion, ((ComponentRemoteVersion) settings.get(componentType.getPatchId())).getSelfVersion()),
                                 i18n("install.change_version"), controller::onFinish, controller::onCancel);
                     }
-                },
-                false);
+                });
             default:
                 throw new IllegalStateException();
         }

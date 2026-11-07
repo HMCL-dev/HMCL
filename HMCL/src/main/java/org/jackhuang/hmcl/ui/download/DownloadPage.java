@@ -98,8 +98,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 i18n("install.installer.choose", i18n("install.installer.game")),
                 GameVersionNumber.unknown(),
                 DownloadProviders.getDownloadProvider(),
-                GameComponentType.GAME, versionPageNavigator::onGameSelected,
-                false));
+                GameComponentType.GAME, versionPageNavigator::onGameSelected));
         this.modpackTab = newDownloadListTab(() -> {
             DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((downloadProvider, repository, __, modpack, file) -> {
                 Instances.downloadModpackImpl(downloadProvider, repository, uploadInstance, modpack, file);
@@ -368,6 +367,24 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.put("title", i18n("install.new_game.installation"));
             settings.put("success_message", i18n("install.success"));
             settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
+
+            boolean autoInstallFabricApi = Boolean.TRUE.equals(settings.get(InstallersPage.INSTALL_FABRIC_API_KEY));
+            boolean hasFabric = settings.get(GameComponentType.FABRIC.getPatchId()) instanceof ComponentRemoteVersion;
+            boolean hasFabricApi = settings.get(GameComponentType.FABRIC_API.getPatchId())instanceof ComponentRemoteVersion;
+
+            if (autoInstallFabricApi && hasFabric && !hasFabricApi) {
+                return downloadProvider.getVersionsAsync(
+                    GameComponentType.FABRIC_API,
+                    gameVersion.getGameVersion(),
+                    false
+                ).thenComposeAsync(versions -> {
+                    if (versions.isEmpty()) throw new IllegalStateException("No compatible Fabric API version found");
+
+                    settings.put(GameComponentType.FABRIC_API.getPatchId(), versions.get(0));
+
+                    return finishVersionDownloadingAsync(settings);
+                });
+            }
 
             return finishVersionDownloadingAsync(settings);
         }
