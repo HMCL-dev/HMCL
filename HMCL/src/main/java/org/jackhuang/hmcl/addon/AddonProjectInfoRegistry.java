@@ -97,6 +97,9 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     /// Softly caches projects indexed by CurseForge identifier.
     private volatile @Nullable SoftReference<@Unmodifiable Map<String, I>> curseForgeMapRef;
 
+    /// Softly caches projects indexed by Modrinth identifier.
+    private volatile @Nullable SoftReference<@Unmodifiable Map<String, I>> modrinthMapRef;
+
     /// Softly caches searchable names in resource and field order.
     private volatile @Nullable SoftReference<@Unmodifiable List<Pair<String, I>>> keywordsRef;
 
@@ -338,6 +341,39 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     /// identifier is null, blank or unknown.
     public @Nullable I getInfoByCurseForgeId(@Nullable String id) {
         return StringUtils.isBlank(id) ? null : getCurseForgeMap().get(id);
+    }
+
+    /// Returns an unmodifiable index, rebuilding it after its soft reference is cleared.
+    /// Duplicate keys retain the first project in resource order.
+    private @Unmodifiable Map<String, I> getModrinthMap() {
+        @Nullable SoftReference<@Unmodifiable Map<String, I>> reference = this.modrinthMapRef;
+        @Unmodifiable Map<String, I> cached = reference != null ? reference.get() : null;
+        if (cached != null)
+            return cached;
+        lock.lock();
+        try {
+            reference = this.modrinthMapRef;
+            cached = reference != null ? reference.get() : null;
+            if (cached != null)
+                return cached;
+            Map<String, I> map = new HashMap<>();
+            for (I info : getInfos()) {
+                String id = info.modrinthId();
+                if (StringUtils.isNotBlank(id))
+                    map.putIfAbsent(id, info);
+            }
+            cached = Collections.unmodifiableMap(map);
+            this.modrinthMapRef = new SoftReference<>(cached);
+            return cached;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// Returns the first project with the exact Modrinth identifier, or `null` if the
+    /// identifier is null, blank or unknown.
+    public @Nullable I getInfoByModrinthId(@Nullable String id) {
+        return StringUtils.isBlank(id) ? null : getModrinthMap().get(id);
     }
 
     /// Finds a project by its cleaned secondary name, falling back to its exact mod ID.

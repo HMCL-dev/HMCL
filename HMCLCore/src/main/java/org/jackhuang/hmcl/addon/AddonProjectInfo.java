@@ -45,6 +45,11 @@ public abstract class AddonProjectInfo {
         return curseforgeId;
     }
 
+    /// Returns the recorded Modrinth identifier, possibly empty.
+    public String modrinthId() {
+        return modrinthId;
+    }
+
     /// Returns the recorded primary name.
     public String mainName() {
         return mainName;

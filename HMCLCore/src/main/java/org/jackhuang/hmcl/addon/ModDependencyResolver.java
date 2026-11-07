@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -43,7 +44,33 @@ public final class ModDependencyResolver {
 
     /// Contains the dependencies to download and incompatible dependencies that require manual installation.
     public record ResolutionResult(@Unmodifiable List<RemoteAddon.Version> versions,
-                                   @Unmodifiable List<SkippedDependency> skippedDependencies) {
+                                   @Unmodifiable List<SkippedDependency> skippedDependencies,
+                                   @Unmodifiable Map<RemoteAddon.Version, RemoteAddon> resolvedAddons,
+                                   @Unmodifiable Map<RemoteAddon.Version, String> exactVersionIds) {
+
+        /// Creates a result without project metadata for callers that only need the selected versions.
+        public ResolutionResult(@Unmodifiable List<RemoteAddon.Version> versions,
+                                @Unmodifiable List<SkippedDependency> skippedDependencies) {
+            this(versions, skippedDependencies, Map.of(), Map.of());
+        }
+
+        /// Defensively copies all result collections.
+        public ResolutionResult {
+            versions = List.copyOf(versions);
+            skippedDependencies = List.copyOf(skippedDependencies);
+            resolvedAddons = Map.copyOf(resolvedAddons);
+            exactVersionIds = Map.copyOf(exactVersionIds);
+        }
+
+        /// Returns the resolved project metadata for a selected dependency version.
+        public Optional<RemoteAddon> resolvedAddon(RemoteAddon.Version version) {
+            return Optional.ofNullable(resolvedAddons.get(version));
+        }
+
+        /// Returns the exact remote version required by a selected dependency, if one was declared.
+        public Optional<String> exactVersionId(RemoteAddon.Version version) {
+            return Optional.ofNullable(exactVersionIds.get(version));
+        }
     }
 
     /// Describes a required dependency skipped because it has no compatible version for the instance.
@@ -102,11 +129,25 @@ public final class ModDependencyResolver {
             while (true) {
                 @Nullable String conflict = advance();
                 if (conflict == null) {
-                    List<RemoteAddon.Version> dependencies = state.selected.entrySet().stream()
-                            .filter(entry -> !entry.getKey().equals(rootKey))
-                            .map(Map.Entry::getValue)
-                            .toList();
-                    return new ResolutionResult(dependencies, List.copyOf(state.skipped.values()));
+                    List<RemoteAddon.Version> dependencies = new ArrayList<>();
+                    Map<RemoteAddon.Version, RemoteAddon> resolvedAddons = new LinkedHashMap<>();
+                    Map<RemoteAddon.Version, String> exactVersionIds = new LinkedHashMap<>();
+                    for (Map.Entry<ProjectKey, RemoteAddon.Version> entry : state.selected.entrySet()) {
+                        if (entry.getKey().equals(rootKey)) {
+                            continue;
+                        }
+                        RemoteAddon.Version version = entry.getValue();
+                        dependencies.add(version);
+                        RemoteAddon addon = addonCache.get(entry.getKey());
+                        if (addon != null) {
+                            resolvedAddons.put(version, addon);
+                        }
+                        Requirements requirements = state.requirements.get(entry.getKey());
+                        if (requirements != null && requirements.exactRequirements.size() == 1) {
+                            exactVersionIds.put(version, requirements.exactRequirements.keySet().iterator().next());
+                        }
+                    }
+                    return new ResolutionResult(dependencies, List.copyOf(state.skipped.values()), resolvedAddons, exactVersionIds);
                 }
                 if (!backtrack()) {
                     throw new IOException("Unable to resolve required mod dependencies: " + conflict);

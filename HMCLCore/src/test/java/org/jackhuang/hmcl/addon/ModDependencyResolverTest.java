@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -147,6 +148,22 @@ public final class ModDependencyResolverTest {
         FakeCatalog catalog = new FakeCatalog().add(mod(RemoteAddon.Source.MODRINTH, "dependency"), List.of(requiredVersion));
 
         assertEquals(List.of(requiredVersion), resolve(catalog, root));
+    }
+
+    /// Exposes resolved project metadata and exact requirements for installed-dependency checks.
+    @Test
+    public void retainsResolvedProjectAndExactRequirement() throws IOException {
+        RemoteAddon.Version requiredVersion = version(RemoteAddon.Source.MODRINTH, "dependency", "required", Instant.EPOCH,
+                RemoteAddon.VersionType.Release, List.of(), List.of(GAME_VERSION), List.of(loader(ModLoaderType.FORGE)));
+        RemoteAddon.Version root = compatibleVersion("root", List.of(
+                required(RemoteAddon.Source.MODRINTH, "dependency", requiredVersion.versionId())));
+        RemoteAddon dependency = mod(RemoteAddon.Source.MODRINTH, "dependency");
+        FakeCatalog catalog = new FakeCatalog().add(dependency, List.of(requiredVersion));
+
+        ModDependencyResolver.ResolutionResult result = resolveResult(catalog, root);
+
+        assertSame(dependency, result.resolvedAddon(requiredVersion).orElseThrow());
+        assertEquals(requiredVersion.versionId(), result.exactVersionId(requiredVersion).orElseThrow());
     }
 
     /// Skips an exact requirement that cannot run in the selected instance and reports it for manual installation.

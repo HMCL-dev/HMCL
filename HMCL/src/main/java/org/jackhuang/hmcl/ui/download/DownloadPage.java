@@ -6,9 +6,11 @@ import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
+import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.addon.ModDependencyResolver;
 import org.jackhuang.hmcl.addon.RemoteAddon;
-import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
@@ -53,9 +55,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -184,8 +188,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         Path runDirectory = instance != null ? instance.getRunDirectory() : repository.getBaseDirectory();
         Path targetPath = runDirectory.resolve(subdirectoryName);
         boolean autoDependencies = resolveDependencies && instance != null;
-        String gameVersion = autoDependencies ? instance.getVersion().toString() : "";
-        Set<ModLoaderType> targetLoaders = autoDependencies ? Set.copyOf(instance.getModLoaders()) : Set.of();
 
         FileNameSet existingPaths;
         try {
@@ -197,62 +199,158 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = targetPath.resolve(result);
-            AtomicReference<List<ModDependencyResolver.SkippedDependency>> skippedDependencies = new AtomicReference<>(List.of());
-
-            Controllers.taskDialog(Task.composeAsync(Schedulers.io(), () -> {
-                ModDependencyResolver.ResolutionResult resolution = autoDependencies
-                        ? ModDependencyResolver.resolveRequiredDependencies(downloadProvider, file, gameVersion, targetLoaders)
-                        : new ModDependencyResolver.ResolutionResult(List.of(), List.of());
-                skippedDependencies.set(resolution.skippedDependencies());
-                List<RemoteAddon.Version> dependencies = resolution.versions();
-                List<RemoteAddon.Version> missingDependencies = dependencies;
-
-                if (autoDependencies) {
-                    FileNameSet currentPaths = Files.exists(targetPath)
-                            ? FileNameSet.list(targetPath, null)
-                            : new FileNameSet(false);
-                    FileNameSet plannedNames = new FileNameSet(false);
-                    if (currentPaths.contains(result) || !plannedNames.add(result)) {
-                        throw new IOException("A file named " + result + " already exists in " + targetPath);
-                    }
-
-                    missingDependencies = new ArrayList<>(dependencies.size());
-                    for (RemoteAddon.Version dependency : dependencies) {
-                        String filename = dependency.file().filename();
-                        if (!FileUtils.isNameValid(filename)) {
-                            throw new IOException("Invalid dependency filename: " + filename);
-                        }
-                        if (!plannedNames.add(filename)) {
-                            throw new IOException("Multiple mods resolve to the same filename: " + filename);
-                        }
-                        if (!currentPaths.contains(filename)) {
-                            missingDependencies.add(dependency);
-                        }
-                    }
-                }
-
-                List<FileDownloadTask> tasks = new ArrayList<>(missingDependencies.size() + 1);
-                tasks.add(createDownloadTask(downloadProvider, file, dest));
-                for (RemoteAddon.Version dependency : missingDependencies) {
-                    tasks.add(createDownloadTask(downloadProvider, dependency, targetPath.resolve(dependency.file().filename())));
-                }
-                return Task.allOf(tasks);
-            }).whenComplete(Schedulers.javafx(), exception -> {
+            Task<DownloadPreparation> preparationTask = Task.supplyAsync(Schedulers.io(), () ->
+                    prepareDownload(downloadProvider, instance, file, targetPath, result, autoDependencies));
+            preparationTask.whenComplete(Schedulers.javafx(), (preparation, exception) -> {
                 if (exception != null) {
                     if (!(exception instanceof CancellationException)) {
                         Controllers.dialog(I18n.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
                     }
-                } else {
-                    Controllers.showToast(i18n("install.success"));
-                    List<ModDependencyResolver.SkippedDependency> skipped = skippedDependencies.get();
-                    if (!skipped.isEmpty()) {
-                        Controllers.dialog(i18n("mods.install.dependencies_skipped", formatSkippedDependencies(skipped)),
-                                i18n("mods.install.dependencies_skipped.title"), MessageDialogPane.MessageType.WARNING);
-                    }
+                    return;
                 }
-            }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+
+                if (preparation.plan().versionConflicts().isEmpty()) {
+                    startDownloadTasks(downloadProvider, file, dest, targetPath, preparation);
+                } else {
+                    Controllers.confirm(
+                            i18n("mods.install.dependencies_conflict", formatDependencyConflicts(preparation.plan().versionConflicts())),
+                            i18n("mods.install.dependencies_conflict.title"),
+                            MessageDialogPane.MessageType.WARNING,
+                            () -> startDownloadTasks(downloadProvider, file, dest, targetPath,
+                                    new DownloadPreparation(preparation.resolution(), preparation.plan().resolveConflicts(true))),
+                            () -> startDownloadTasks(downloadProvider, file, dest, targetPath,
+                                    new DownloadPreparation(preparation.resolution(), preparation.plan().resolveConflicts(false)))
+                    );
+                }
+            });
+            Controllers.taskDialog(preparationTask, i18n("message.downloading"), TaskCancellationAction.NORMAL);
             handler.resolve();
         }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("game_directory.already_exists"), existingPaths::notContains));
+    }
+
+    /// Resolves required dependencies, detects installed mods and validates target filenames before downloading.
+    private static DownloadPreparation prepareDownload(DownloadProvider downloadProvider, @Nullable HMCLGameInstance instance,
+                                                       RemoteAddon.Version file, Path targetPath, String selectedFileName,
+                                                       boolean autoDependencies) throws IOException {
+        ModDependencyResolver.ResolutionResult resolution = autoDependencies && instance != null
+                ? ModDependencyResolver.resolveRequiredDependencies(
+                        downloadProvider, file, instance.getVersion().toString(), Set.copyOf(instance.getModLoaders()))
+                : new ModDependencyResolver.ResolutionResult(List.of(), List.of());
+
+        FileNameSet currentPaths = Files.exists(targetPath)
+                ? FileNameSet.list(targetPath, null)
+                : new FileNameSet(false);
+        FileNameSet plannedNames = new FileNameSet(false);
+        if (currentPaths.contains(selectedFileName) || !plannedNames.add(selectedFileName)) {
+            throw new IOException("A file named " + selectedFileName + " already exists in " + targetPath);
+        }
+
+        for (RemoteAddon.Version dependency : resolution.versions()) {
+            String filename = dependency.file().filename();
+            if (!FileUtils.isNameValid(filename)) {
+                throw new IOException("Invalid dependency filename: " + filename);
+            }
+            if (!plannedNames.add(filename)) {
+                throw new IOException("Multiple mods resolve to the same filename: " + filename);
+            }
+        }
+
+        ModDependencyInstaller.Plan plan = planInstalledDependencies(instance, resolution, autoDependencies);
+        List<RemoteAddon.Version> missingDependencies = new ArrayList<>(plan.dependenciesToDownload().size());
+        for (RemoteAddon.Version dependency : plan.dependenciesToDownload()) {
+            String filename = dependency.file().filename();
+            if (!currentPaths.contains(filename)) {
+                missingDependencies.add(dependency);
+            } else if (!ModDependencyInstaller.fileHashesMatch(targetPath.resolve(filename), dependency.file())) {
+                throw new IOException("A different file named " + filename + " already exists in " + targetPath);
+            }
+        }
+        return new DownloadPreparation(resolution, new ModDependencyInstaller.Plan(missingDependencies, plan.versionConflicts()));
+    }
+
+    /// Compares resolved dependencies with active local mods using HMCL's project metadata mapping.
+    private static ModDependencyInstaller.Plan planInstalledDependencies(
+            @Nullable HMCLGameInstance instance, ModDependencyResolver.ResolutionResult resolution, boolean autoDependencies) throws IOException {
+        if (!autoDependencies || instance == null) {
+            return new ModDependencyInstaller.Plan(resolution.versions(), List.of());
+        }
+
+        Map<RemoteAddon.Version, Set<String>> projectModIds = dependencyModIds(resolution);
+        List<ModDependencyInstaller.LocalModSnapshot> installedMods = instance.getModManager().getLocalFiles().stream()
+                .map(DownloadPage::toLocalModSnapshot)
+                .toList();
+        return ModDependencyInstaller.plan(installedMods, resolution, dependency -> projectModIds.getOrDefault(dependency, Set.of()));
+    }
+
+    /// Maps every resolved dependency to the local Mod IDs recorded for its remote project.
+    private static Map<RemoteAddon.Version, Set<String>> dependencyModIds(ModDependencyResolver.ResolutionResult resolution) {
+        Map<RemoteAddon.Version, Set<String>> projectModIds = new HashMap<>();
+        for (RemoteAddon.Version dependency : resolution.versions()) {
+            Set<String> modIds = resolution.resolvedAddon(dependency)
+                    .flatMap(addon -> findProjectInfo(dependency.source(), addon))
+                    .map(ModProjectInfo::getModIds)
+                    .map(Set::copyOf)
+                    .orElse(Set.of());
+            projectModIds.put(dependency, modIds);
+        }
+        return projectModIds;
+    }
+
+    /// Finds localized project metadata for the dependency's original repository.
+    private static Optional<ModProjectInfo> findProjectInfo(RemoteAddon.Source source, RemoteAddon addon) {
+        AddonProjectInfoRegistry<ModProjectInfo> registry = AddonProjectInfoRegistry.MOD;
+        ModProjectInfo info = switch (source) {
+            case CURSEFORGE -> registry.getInfoByCurseForgeId(addon.slug());
+            case MODRINTH -> registry.getInfoByModrinthId(addon.slug());
+        };
+        return Optional.ofNullable(info);
+    }
+
+    /// Reduces a parsed local mod file to the metadata needed by the dependency planner.
+    private static ModDependencyInstaller.LocalModSnapshot toLocalModSnapshot(LocalModFile mod) {
+        return new ModDependencyInstaller.LocalModSnapshot(mod.getId(), mod.getFile(), mod.getVersion(), mod.isActive());
+    }
+
+    /// Starts the actual download tasks after any installed-version conflicts have been resolved.
+    private static void startDownloadTasks(DownloadProvider downloadProvider, RemoteAddon.Version file, Path dest,
+                                           Path targetPath, DownloadPreparation preparation) {
+        Controllers.taskDialog(Task.composeAsync(Schedulers.io(), () -> {
+            List<FileDownloadTask> tasks = new ArrayList<>(preparation.plan().dependenciesToDownload().size() + 1);
+            tasks.add(createDownloadTask(downloadProvider, file, dest));
+            for (RemoteAddon.Version dependency : preparation.plan().dependenciesToDownload()) {
+                tasks.add(createDownloadTask(downloadProvider, dependency, targetPath.resolve(dependency.file().filename())));
+            }
+            return Task.allOf(tasks);
+        }).whenComplete(Schedulers.javafx(), exception -> {
+            if (exception != null) {
+                if (!(exception instanceof CancellationException)) {
+                    Controllers.dialog(I18n.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                }
+            } else {
+                Controllers.showToast(i18n("install.success"));
+                List<ModDependencyResolver.SkippedDependency> skipped = preparation.resolution().skippedDependencies();
+                if (!skipped.isEmpty()) {
+                    Controllers.dialog(i18n("mods.install.dependencies_skipped", formatSkippedDependencies(skipped)),
+                            i18n("mods.install.dependencies_skipped.title"), MessageDialogPane.MessageType.WARNING);
+                }
+            }
+        }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+    }
+
+    /// Formats installed dependencies whose versions may not satisfy the selected requirements.
+    private static String formatDependencyConflicts(List<ModDependencyInstaller.InstalledDependency> conflicts) {
+        return conflicts.stream().map(conflict -> {
+            String installedVersion = conflict.installedMod().version();
+            if (installedVersion == null || installedVersion.isBlank()) {
+                installedVersion = conflict.installedMod().file().getFileName().toString();
+            }
+            return "- " + conflict.dependency().name() + " (" + installedVersion + ")";
+        }).collect(Collectors.joining("\n"));
+    }
+
+    /// Keeps the resolution result and the final dependency download plan together.
+    private record DownloadPreparation(ModDependencyResolver.ResolutionResult resolution,
+                                       ModDependencyInstaller.Plan plan) {
     }
 
     /// Formats skipped dependencies as a readable list for the manual-installation warning.

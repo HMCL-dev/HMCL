@@ -47,6 +47,8 @@ class AddonProjectInfoRegistryTest {
         var first = registry.getInfos().get(0);
         var second = registry.getInfos().get(1);
         assertSame(first, registry.getInfoByCurseForgeId("shared"));
+        assertSame(first, registry.getInfoByModrinthId("modrinth-first"));
+        assertSame(second, registry.getInfoByModrinthId("modrinth-second"));
         assertSame(first, registry.getInfo("shared-id", null));
         assertSame(second, registry.getInfo(null, "Second_Name!"));
         assertSame(first, registry.getInfo("first", "Second Name"));
@@ -63,8 +65,9 @@ class AddonProjectInfoRegistryTest {
         assertSame(first, registry.getInfo("first", "First Name"));
         assertSame(first, registry.getInfo("first", null));
         assertSame(first, registry.getInfoByCurseForgeId("shared"));
+        assertSame(first, registry.getInfoByModrinthId("modrinth-first"));
         var matches = registry.search("First");
-        for (String name : List.of("modIdMapRef", "subnameMapRef", "curseForgeMapRef", "keywordsRef")) {
+        for (String name : List.of("modIdMapRef", "subnameMapRef", "curseForgeMapRef", "modrinthMapRef", "keywordsRef")) {
             var field = AddonProjectInfoRegistry.class.getDeclaredField(name);
             field.setAccessible(true);
             @Nullable Reference<?> reference = (Reference<?>) field.get(registry);
@@ -74,6 +77,7 @@ class AddonProjectInfoRegistryTest {
         assertSame(first, registry.getInfo("first", "First Name"));
         assertSame(first, registry.getInfo("first", null));
         assertSame(first, registry.getInfoByCurseForgeId("shared"));
+        assertSame(first, registry.getInfoByModrinthId("modrinth-first"));
         assertEquals(matches, registry.search("First"));
     }
 
