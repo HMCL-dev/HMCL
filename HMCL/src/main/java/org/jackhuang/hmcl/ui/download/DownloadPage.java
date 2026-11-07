@@ -373,19 +373,31 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             boolean hasFabricApi = settings.get(GameComponentType.FABRIC_API.getPatchId()) instanceof ComponentRemoteVersion;
 
             if (autoInstallFabricApi && hasFabric && !hasFabricApi) {
+                String fetchStage = "install.installer.fabric-api.fetch";
+                String skipStage = "install.installer.fabric-api.skip";
+                String autoSelecteStage = "install.installer.fabric-api.auto_selecte";
+
                 return downloadProvider.getVersionsAsync(
                     GameComponentType.FABRIC_API,
                     gameVersion.getGameVersion(),
                     false
-                ).thenApplyAsync(versions -> {
-                    if (versions.isEmpty()) throw new IllegalStateException("No compatible Fabric API version found");
+                ).withStage(fetchStage)
+                    .thenComposeAsync(versions -> {
+                        if (versions.isEmpty()) {
+                            return Task.<ComponentRemoteVersionList<?>>completed(versions)
+                                .withStage(skipStage)
+                                .withStagesHints(new Task.StagesHint(skipStage));
+                        }
 
-                    settings.put(GameComponentType.FABRIC_API.getPatchId(), versions.get(0));
+                        return Task.<ComponentRemoteVersionList<?>>supplyAsync(() -> {
+                            settings.put(GameComponentType.FABRIC_API.getPatchId(), versions.get(0));
 
-                    return versions;
-                }).withStage("install.installer.fabric-api.fetch")
+                            return versions;
+                        }).withStage(autoSelecteStage)
+                            .withStagesHints(new Task.StagesHint(autoSelecteStage));
+                    })
                     .thenComposeAsync(versions -> finishVersionDownloadingAsync(settings))
-                    .withStagesHints(new Task.StagesHint("install.installer.fabric-api.fetch"));
+                    .withStagesHints(new Task.StagesHint(fetchStage));
             }
 
             return finishVersionDownloadingAsync(settings);

@@ -297,7 +297,7 @@ public class InstallerItem extends Control {
                     return i18n("install.installer.version", installedState.version);
                 } else if (state instanceof InstallableState) {
                     if (control.autoSelectedProperty.get()) {
-                        return i18n("install.installer.auto_selected");
+                        return i18n("install.installer.auto_choose");
                     } else {
                         return control.style == Style.CARD
                                 ? i18n("install.installer.do_not_install")
