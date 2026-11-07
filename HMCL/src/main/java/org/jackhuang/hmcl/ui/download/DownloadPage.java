@@ -375,7 +375,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             if (autoInstallFabricApi && hasFabric && !hasFabricApi) {
                 String fetchStage = "install.installer.fabric-api.fetch";
                 String skipStage = "install.installer.fabric-api.skip";
-                String autoSelecteStage = "install.installer.fabric-api.auto_select";
+                String autoChooseStage = "install.installer.fabric-api.auto_choose";
 
                 return downloadProvider.getVersionsAsync(
                     GameComponentType.FABRIC_API,
@@ -393,8 +393,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                             settings.put(GameComponentType.FABRIC_API.getPatchId(), versions.get(0));
 
                             return versions;
-                        }).withStage(autoSelecteStage)
-                            .withStagesHints(new Task.StagesHint(autoSelecteStage));
+                        }).withStage(autoChooseStage)
+                            .withStagesHints(new Task.StagesHint(autoChooseStage));
                     })
                     .thenComposeAsync(versions -> finishVersionDownloadingAsync(settings))
                     .withStagesHints(new Task.StagesHint(fetchStage));
