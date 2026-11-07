@@ -265,7 +265,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                             } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), resourcePackDirectory, result));
+                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), result));
                             }
                         })
                         .withStagesHints("update.checking"),

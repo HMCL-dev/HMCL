@@ -8,6 +8,8 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.BooleanExpression;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -135,6 +137,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         loadMods(gameInstance.getModManager());
     }
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private BooleanExpression hasLiteLoader = null;
+
     private void loadMods(ModManager modManager) {
         setLoading(true);
 
@@ -159,6 +164,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             supportedLoaders.clear();
             supportedLoaders.addAll(modManager.getSupportedLoaders());
+
+            hasLiteLoader = modManager.liteLoaderAsModFiles()
+                    .stream()
+                    .map(LocalModFile::activeProperty)
+                    .map(BooleanBinding::booleanExpression)
+                    .reduce(new SimpleBooleanProperty(), BooleanExpression::or);
+            FXUtils.onChangeAndOperate(hasLiteLoader, __ -> {
+                if (!isLoading()) Platform.runLater(this::refresh);
+            });
 
             if (exception == null) {
                 getItems().setAll(list);
@@ -278,7 +292,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), modDirectory, result));
+                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), result));
                             }
                         })
                         .withStagesHints("update.checking"),
@@ -806,10 +820,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             if (empty || dataItem == null) return;
 
-            List<String> warning = new ArrayList<>();
-
-            var tags = new ArrayList<Tag>(2);
-
             LocalModFile modInfo = dataItem.getModInfo();
             @Nullable ModProjectInfo projectInfo = dataItem.getProjectInfo();
 
@@ -835,11 +845,51 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             content.setSubtitle(joiner.toString());
 
-            if (modLoaderType == ModLoaderType.UNKNOWN) {
-                tags.add(Tag.warning(i18n("mods.unknown")));
-            } else if (!page.supportedLoaders.contains(modLoaderType)) {
-                warning.add(i18n("mods.warning.loader_mismatch"));
-                tags.add(Tag.warning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType())));
+            List<String> warning = new ArrayList<>(3);
+            List<Tag> tags = new ArrayList<>(3);
+            {
+                var instance = modInfo.getModManager().getInstance();
+                GameVersionNumber gameVersionNumber = instance.getVersion();
+                boolean coreModLoaderMismatches = modInfo.getCoreModInfo().getModLoaders(gameVersionNumber).stream().noneMatch(page.supportedLoaders::contains);
+                boolean wrongCoreModDir = instance.getCoreModsDirectory() != null
+                        && modInfo.getCoreModInfo().isLegacy()
+                        && !modInfo.getFile().getParent().equals(instance.getCoreModsDirectory());
+
+                if (modLoaderType == ModLoaderType.UNKNOWN) {
+                    if (modInfo.isCoreMod()) {
+                        boolean warnCoreMod = false;
+                        if (coreModLoaderMismatches) {
+                            warnCoreMod = true;
+                            warning.add(i18n("mods.coremods.loader_mismatch"));
+                        }
+                        if (wrongCoreModDir) {
+                            warnCoreMod = true;
+                            warning.add(i18n("mods.coremods.check_dir"));
+                        }
+                        tags.add(warnCoreMod ? Tag.warning("CoreMod") : new Tag("CoreMod"));
+                    } else {
+                        tags.add(Tag.warning(i18n("mods.unknown")));
+                    }
+                } else if (!page.supportedLoaders.contains(modLoaderType)) {
+                    tags.add(Tag.warning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType())));
+                    if (modInfo.isCoreMod()) {
+                        tags.add(Tag.warning("CoreMod"));
+                        if (coreModLoaderMismatches) warning.add((i18n("mods.coremods.loader_mismatch")));
+                        warning.add(i18n("mods.coremods.supported_only_as_coremod"));
+                        if (wrongCoreModDir) warning.add(i18n("mods.coremods.check_dir"));
+                    } else {
+                        warning.add(i18n("mods.warning.loader_mismatch"));
+                    }
+                } else {
+                    if (modInfo.isCoreMod()) {
+                        if (wrongCoreModDir) {
+                            tags.add(Tag.warning("CoreMod"));
+                            warning.add(i18n("mods.coremods.check_dir"));
+                        } else {
+                            tags.add(new Tag("CoreMod"));
+                        }
+                    }
+                }
             }
 
             String modVersion = modInfo.getVersion();
