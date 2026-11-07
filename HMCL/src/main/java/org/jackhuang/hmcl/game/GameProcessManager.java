@@ -5,10 +5,12 @@ package org.jackhuang.hmcl.game;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -54,7 +56,7 @@ public final class GameProcessManager {
         private final WeakListenerHolder holder = new WeakListenerHolder();
 
         private final String id;
-        private final HMCLGameInstance instance;
+        private @Nullable HMCLGameInstance.Optional instanceOptional;
 
         private final GameLogsHolder logsHolder;
         private final ReadOnlyBooleanWrapper exited = new ReadOnlyBooleanWrapper();
@@ -62,7 +64,7 @@ public final class GameProcessManager {
         private GameProcessHolder(LauncherHelper.HMCLProcessListener processListener) {
             this.processRef = new WeakReference<>(processListener.getProcess());
             this.logsHolder = processListener.getLogsHolder();
-            this.instance = processListener.getGameInstance();
+            this.instanceOptional = HMCLGameInstance.Optional.of(processListener.getGameInstance());
             {
                 String id = processListener.getGameInstance().getId().id();
                 int i = idToLaunchedCount.computeIfAbsent(id, k -> 0) + 1;
@@ -89,12 +91,29 @@ public final class GameProcessManager {
             return exited.getReadOnlyProperty();
         }
 
+        public @Nullable HMCLGameInstance getInstance() {
+            if (instanceOptional == null) return null;
+
+            HMCLGameRepository repo = instanceOptional.repository();
+            if (GameDirectoryManager.hasRepository(repo) && repo.isLoaded()) {
+                instanceOptional = instanceOptional.refreshed();
+                return instanceOptional.instance();
+            }
+
+            instanceOptional = null;
+            return null;
+        }
+
         public void openSettings() {
-            Instances.modifyGameSettings(instance);
+            var instance = getInstance();
+            if (instance != null) Instances.modifyGameSettings(instance);
         }
 
         public void relaunch() {
-            if (exitedProperty().get()) Instances.launch(instance);
+            if (exitedProperty().get()) {
+                var instance = getInstance();
+                if (instance != null) Instances.launch(instance);
+            }
         }
 
         public void showLogWindow() {

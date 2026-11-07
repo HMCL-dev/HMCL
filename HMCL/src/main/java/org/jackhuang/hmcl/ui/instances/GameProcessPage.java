@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,12 +18,15 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.GameProcessManager;
 import org.jackhuang.hmcl.game.GameProcessManager.GameProcessHolder;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -143,7 +147,30 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
             content.setTitle(item.getId());
             content.subtitleProperty().bind(item.lastLogLineProperty());
 
-            relaunchButton.disableProperty().bind(item.exitedProperty().not());
+            BooleanBinding instanceDoesNotExist = new BooleanBinding() {
+                private @Nullable HMCLGameInstance instance = null;
+
+                {
+                    bind(GameDirectoryManager.getGameDirectories());
+                }
+
+                @Override
+                protected void onInvalidating() {
+                    super.onInvalidating();
+                    if (instance != null) unbind(instance.getRepository().snapshotProperty());
+                }
+
+                @Override
+                protected boolean computeValue() {
+                    instance = item.getInstance();
+                    if (instance != null) bind(instance.getRepository().snapshotProperty());
+                    return instance == null;
+                }
+            };
+            instanceDoesNotExist.invalidate();
+
+            settingsButton.disableProperty().bind(instanceDoesNotExist);
+            relaunchButton.disableProperty().bind(item.exitedProperty().not().or(instanceDoesNotExist));
             terminateButton.disableProperty().bind(item.exitedProperty());
         }
     }
