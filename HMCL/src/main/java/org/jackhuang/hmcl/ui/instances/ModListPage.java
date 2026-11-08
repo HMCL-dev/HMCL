@@ -32,15 +32,13 @@ import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.mod.LocalModFile;
-import org.jackhuang.hmcl.addon.mod.ModLoaderType;
-import org.jackhuang.hmcl.addon.mod.ModManager;
-import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
+import org.jackhuang.hmcl.addon.mod.*;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.game.HMCLGameLauncher;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
@@ -156,7 +154,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
             try {
-                modManager.refresh();
+                modManager.refresh(HMCLGameLauncher.modLocalizationLanguageTag(
+                        I18n.getLocale().getDisplayLocale(), modManager.getInstance().getVersion()));
                 return modManager.getLocalFiles().stream().map(ModInfoObject::new).toList();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
@@ -494,14 +493,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 placeholderContainer.getStyleClass().add("notice-pane");
                 Label placeholderLabel = new Label(i18n("mods.empty"));
                 placeholderLabel.textProperty().bind(
-                    Bindings.createStringBinding(() -> {
-                        if (isSearching.get()) {
-                            return i18n("search.no_results_found");
-                        } else {
-                            return i18n("mods.empty");
-                        }
-                    },
-                    isSearching)
+                        Bindings.createStringBinding(() -> {
+                                    if (isSearching.get()) {
+                                        return i18n("search.no_results_found");
+                                    } else {
+                                        return i18n("mods.empty");
+                                    }
+                                },
+                                isSearching)
                 );
                 placeholderContainer.getChildren().add(placeholderLabel);
                 listView.setPlaceholder(placeholderContainer);
@@ -564,7 +563,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 // Do we need to search in the background thread?
                 for (ModListPage.ModInfoObject item : getSkinnable().getItems()) {
                     LocalModFile modInfo = item.getModInfo();
-                    if (predicate.test(modInfo.getFileName())
+                    if (predicate.test(item.localization.name())
+                            || predicate.test(String.join(" ", item.localization.languages()))
+                            || predicate.test(modInfo.getFileName())
                             || predicate.test(modInfo.getName())
                             || predicate.test(modInfo.getVersion())
                             || predicate.test(modInfo.getGameVersion())
@@ -581,6 +582,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
     public static final class ModInfoObject {
         private final LocalModFile localModFile;
+        private final ModLocalization localization;
+        private final String abbreviation;
         /// Matching project metadata, or null if the local mod cannot be identified.
         private final @Nullable ModProjectInfo projectInfo;
 
@@ -589,6 +592,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
             this.projectInfo = AddonProjectInfoRegistry.MOD.getInfo(localModFile.getId(), localModFile.getName());
+            this.abbreviation = projectInfo != null && StringUtils.isNotBlank(projectInfo.abbrName())
+                    ? projectInfo.abbrName()
+                    : AddonProjectInfoRegistry.MOD.search(localModFile.getName()).stream()
+                    .map(ModProjectInfo::abbrName)
+                    .filter(StringUtils::isNotBlank)
+                    .findFirst().orElse("");
+
+            this.localization = localModFile.getLocalization();
 
             this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
@@ -600,6 +611,25 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         /// Returns matching project metadata, or null if no project was found.
         public @Nullable ModProjectInfo getProjectInfo() {
             return projectInfo;
+        }
+
+        private String getDisplayName() {
+            String displayName = localModFile.getName();
+            if (StringUtils.isBlank(displayName) && projectInfo != null && StringUtils.isNotBlank(projectInfo.subName()))
+                displayName = projectInfo.subName();
+            if (StringUtils.isBlank(displayName))
+                displayName = localModFile.getFileName();
+            String localizedName = localization.name();
+            if (!localizedName.isEmpty())
+                return (abbreviation.isEmpty() ? "" : "[" + abbreviation.trim() + "] ")
+                        + localizedName + " (" + displayName + ")";
+            if (projectInfo != null && I18n.isUseChinese()) {
+                String chineseName = projectInfo.mainName();
+                if (StringUtils.containsChinese(chineseName) && StringUtils.isNotBlank(chineseName)
+                        && !displayName.equalsIgnoreCase(chineseName))
+                    return chineseName + " (" + displayName + ")";
+            }
+            return displayName;
         }
 
         private Image getDefaultIcon() {
@@ -649,15 +679,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             TwoLineListItem title = new TwoLineListItem();
             title.getTitleLabel().setWrapText(true);
-            String displayName = modInfo.getModInfo().getName();
-            if (modInfo.getProjectInfo() != null && I18n.isUseChinese()) {
-                String chineseName = modInfo.getProjectInfo().mainName();
-                if (StringUtils.containsChinese(chineseName)) {
-                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName))
-                        displayName = chineseName + " (" + displayName + ")";
-                }
-            }
-            title.setTitle(displayName);
+            title.setTitle(modInfo.getDisplayName());
 
             StringJoiner subtitle = new StringJoiner("\n");
             subtitle.add(i18n("archive.file.name") + ": " + FileUtils.getName(modInfo.getModInfo().getFile()));
@@ -675,7 +697,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             titleContainer.getChildren().setAll(imageContainer, title);
             setHeading(titleContainer);
 
-            Label description = new Label(modInfo.getModInfo().getDescription().toString());
+            Label description = new Label(!modInfo.localization.description().isEmpty()
+                    ? modInfo.localization.description() : modInfo.getModInfo().getDescription().toString());
             description.setWrapText(true);
             FXUtils.copyOnDoubleClick(description);
 
@@ -829,21 +852,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             var tags = new ArrayList<Tag>(2);
 
             LocalModFile modInfo = dataItem.getModInfo();
-            @Nullable ModProjectInfo projectInfo = dataItem.getProjectInfo();
-
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
             dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
 
-            String displayName = modInfo.getName();
-            if (projectInfo != null && I18n.isUseChinese()) {
-                String chineseName = projectInfo.mainName();
-                if (StringUtils.containsChinese(chineseName)) {
-                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName))
-                        displayName = chineseName + " (" + displayName + ")";
-                }
-            }
-            content.setTitle(displayName);
+            content.setTitle(dataItem.getDisplayName());
 
             StringJoiner joiner = new StringJoiner(" | ");
             if (modLoaderType != ModLoaderType.UNKNOWN && StringUtils.isNotBlank(modInfo.getId()))

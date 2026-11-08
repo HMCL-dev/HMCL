@@ -52,6 +52,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     private String gameVersion;
+    private String localizationLanguage = "";
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
     private final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
     private GameComponentAnalyzer analyzer;
@@ -161,6 +162,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     }
                 }
             }
+            if (modInfo != null && !localizationLanguage.isEmpty())
+                modInfo.setLocalization(ModLocalization.read(tree, modInfo.getId(), localizationLanguage));
         } catch (Exception e) {
             LOG.warning("Failed to open mod file " + file, e);
         }
@@ -201,8 +204,13 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     @Override
     public void refresh() throws IOException {
+        refresh(localizationLanguage);
+    }
+
+    public void refresh(String localizationLanguage) throws IOException {
         lock.lock();
         try {
+            this.localizationLanguage = localizationLanguage;
             localFiles.clear();
             localMods.clear();
 
