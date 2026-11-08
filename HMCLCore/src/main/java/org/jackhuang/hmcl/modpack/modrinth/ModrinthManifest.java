@@ -17,13 +17,20 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /// Modrinth modpack index (`modrinth.index.json`).
 @NotNullByDefault
-public class ModrinthManifest implements ModpackManifest, ModpackManifest.SupportOptional, Validation {
+public class ModrinthManifest implements ModpackManifest.SupportOptional, Validation {
 
     /// The game id, typically `minecraft`.
     private final String game;
@@ -128,7 +135,7 @@ public class ModrinthManifest implements ModpackManifest, ModpackManifest.Suppor
     }
 
     @Override
-    public ModpackProvider getProvider() {
+    public ModpackProvider.SupportOptional getProvider() {
         return ModrinthModpackProvider.INSTANCE;
     }
 
@@ -214,6 +221,103 @@ public class ModrinthManifest implements ModpackManifest, ModpackManifest.Suppor
         public int hashCode() {
             return Objects.hash(path, hashes, env, downloads, fileSize);
         }
-    }
 
+        @Override
+        public boolean looksLike(ModpackFile other) {
+            if (!(other instanceof File file))
+                return false;
+            if (other == this)
+                return true;
+
+            // If the sha512 hashes match, or the download URLs intersect
+            // They are exactly the same file.
+            String aSha512 = hashes.get("sha512");
+            String bSha512 = file.hashes.get("sha512");
+            if (aSha512 != null && aSha512.equals(bSha512))
+                return true;
+            HashSet<String> aDownloadUrls = new HashSet<>(downloads);
+            HashSet<String> bDownloadUrls = new HashSet<>(file.downloads);
+            if (!Collections.disjoint(aDownloadUrls, bDownloadUrls))
+                return true;
+
+            // Otherwise, we are going to consider heuristics based on file name and urls
+
+            // If the file paths are identical, we guess they are similar files
+            if (path.equals(file.path))
+                return true;
+
+            // If the two files are in same mod project on Modrinth, Github, or Gitlab
+            // with the base file name matching and only version differing, we consider them similar
+            Set<HashMap<String, String>> descriptions = downloads.stream()
+                .map(File::describeUrl)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+            if (file.downloads.stream().map(File::describeUrl).anyMatch(descriptions::contains)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static final Map<String, Pattern> URL_PATTERNS = Map.of(
+            "MODRINTH_CDN", Pattern.compile(
+                "^https://cdn\\.modrinth\\.com/data/(?<project>[a-zA-Z0-9]+)/versions/"
+                + "([a-zA-Z0-9]+)/(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
+            ),
+            "GITHUB_RELEASES", Pattern.compile(
+                "^https://github\\.com/(?<owner>[a-zA-Z0-9_-]+)/(?<repo>[a-zA-Z0-9_-]+)/releases/download/"
+                + "([^/?#]+)/(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
+            ),
+            "GITHUB_LATEST_RELEASES", Pattern.compile(
+                "^https://github\\.com/(?<owner>[a-zA-Z0-9_-]+)/(?<repo>[a-zA-Z0-9_-]+)/releases/latest/download/"
+                + "(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
+            ),
+            "GITHUB_RAW_CONTENT", Pattern.compile(
+                "^https://raw\\.githubusercontent\\.com/(?<owner>[a-zA-Z0-9_-]+)/(?<repo>[a-zA-Z0-9_-]+)"
+                + "/([^/?#]+)/(?<path>[^?#]+?)/(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
+            ),
+            "GITLAB_RELEASES", Pattern.compile(
+                "^https://gitlab\\.com/(?<owner>[a-zA-Z0-9_-]+)/(?<repo>[a-zA-Z0-9_-]+)/-/releases/"
+                + "([^/?#]+)/downloads/(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
+            ),
+            "GITLAB_LATEST_RELEASES", Pattern.compile(
+                "^https://gitlab\\.com/(?<owner>[a-zA-Z0-9_-]+)/(?<repo>[a-zA-Z0-9_-]+)/-/releases/permalink/latest/downloads/"
+                + "(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
+            ),
+            "GITLAB_RAW_CONTENT", Pattern.compile(
+                "^https://gitlab\\.com/(?<owner>[a-zA-Z0-9_-]+)/(?<repo>[a-zA-Z0-9_-]+)/-/raw/"
+                + "([^/?#]+)/(?<path>[^?#]+?)/(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
+            )
+        );
+
+        // Strip the version infomation and describe the URL components
+        private static HashMap<String, String> describeUrl(String url) {
+            if (url == null || url.isEmpty()) {
+                return null;
+            }
+            for (Map.Entry<String, Pattern> entry : URL_PATTERNS.entrySet()) {
+                Matcher matcher = entry.getValue().matcher(url);
+                if (matcher.matches()) {
+                    HashMap<String, String> result = new HashMap<>();
+                    result.put("_type", entry.getKey());
+                    result.put("name", matcher.group("name"));
+                    switch (entry.getKey()) {
+                        case "MODRINTH_CDN" -> result.put("project", matcher.group("project"));
+                        case "GITHUB_RELEASES", "GITHUB_LATEST_RELEASES", "GITLAB_RELEASES", "GITLAB_LATEST_RELEASES" -> {
+                            result.put("owner", matcher.group("owner"));
+                            result.put("repo", matcher.group("repo"));
+                        }
+                        case "GITHUB_RAW_CONTENT", "GITLAB_RAW_CONTENT" -> {
+                            result.put("owner", matcher.group("owner"));
+                            result.put("repo", matcher.group("repo"));
+                            result.put("path", matcher.group("path"));
+                        }
+                        default -> throw new IllegalStateException("Unknown URL pattern: " + entry.getKey());
+                    }
+                    return result;
+                }
+            }
+            return null;
+        }
+    }
 }

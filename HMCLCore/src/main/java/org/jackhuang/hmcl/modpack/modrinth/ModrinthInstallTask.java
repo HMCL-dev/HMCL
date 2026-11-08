@@ -221,12 +221,13 @@ public class ModrinthInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
+        LOG.error("Excluded files: " + excludedFiles);
         if (config != null) {
             // For update, remove mods not listed in new manifest
             for (ModrinthManifest.File oldManifestFile : config.getManifest().getFiles()) {
                 Path oldFile = run.resolve(oldManifestFile.path());
                 if (!Files.exists(oldFile)) continue;
-                if (manifest.getFiles().stream().noneMatch(oldManifestFile::equals)) {
+                if (manifest.getFiles().stream().filter(f -> (excludedFiles == null || !excludedFiles.contains(f.key()))).noneMatch(oldManifestFile::equals)) {
                     Files.deleteIfExists(oldFile);
                 }
             }

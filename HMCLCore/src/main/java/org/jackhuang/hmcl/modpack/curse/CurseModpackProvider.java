@@ -3,6 +3,8 @@
 package org.jackhuang.hmcl.modpack.curse;
 
 import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
+
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -13,6 +15,7 @@ import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -21,12 +24,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class CurseModpackProvider implements ModpackProvider {
+public final class CurseModpackProvider implements ModpackProvider.SupportOptional {
     public static final CurseModpackProvider INSTANCE = new CurseModpackProvider();
 
     @Override
@@ -77,7 +83,7 @@ public final class CurseModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public CurseManifest loadFiles(DownloadProvider downloadProvider, ModpackManifest manifest1) {
+    public CurseManifest loadFiles(DownloadProvider downloadProvider, ModpackManifest.SupportOptional manifest1) {
         if (!(manifest1 instanceof CurseManifest manifest))
             throw new IllegalArgumentException("manifest1 is not a CurseManifest");
         return manifest.setFiles(
@@ -108,5 +114,34 @@ public final class CurseModpackProvider implements ModpackProvider {
                             }
                         })
                         .toList());
+    }
+
+    @Override
+    public Pair<ModpackManifest.SupportOptional, Set<String>> recoverExcludedFiles(
+            Path instanceRoot, @Nullable ModpackManifest.SupportOptional newManifest) {
+        if (!(newManifest instanceof CurseManifest) && newManifest != null)
+            throw new IllegalArgumentException("newManifest is not a CurseManifest");
+        Set<String> excludedFiles = new HashSet<>();
+        Path oldManifestPath = instanceRoot.resolve("manifest.json");
+        CurseManifest oldManifest;
+        try {
+            oldManifest = JsonUtils.fromNonNullJson(Files.readString(oldManifestPath), CurseManifest.class);
+            if (newManifest == null)
+                newManifest = oldManifest;
+        } catch (IOException | JsonParseException e) {
+            LOG.warning("Unable to read old manifest", e);
+            return Pair.pair(newManifest, excludedFiles);
+        }
+        Path oldExcludedFilesPath = instanceRoot.resolve("excluded.json");
+        if (!Files.exists(oldExcludedFilesPath))
+            return Pair.pair(newManifest, excludedFiles);
+        Set<String> oldExcluded = new HashSet<>();
+        try {
+            oldExcluded = JsonUtils.fromNonNullJson(Files.readString(oldExcludedFilesPath), new TypeToken<Set<String>>(){});
+        } catch (IOException | JsonParseException e) {
+            LOG.warning("Unable to read old excluded files", e);
+        }
+        excludedFiles = newManifest.getExcludedFilesFromAnother(oldManifest, oldExcluded);
+        return Pair.pair(newManifest, newManifest.getExcludedFilesFromAnother(oldManifest, oldExcluded));
     }
 }

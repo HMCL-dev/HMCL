@@ -260,7 +260,7 @@ public final class CurseInstallTask extends Task<Void> {
                 String relativePath = "mods/" + oldCurseManifestFile.fileName();
                 Path oldFile = run.resolve(relativePath);
                 if (Files.notExists(oldFile)) continue;
-                if (!newManifestFiles.contains(oldCurseManifestFile) && !newOverridesMods.contains(relativePath))
+                if (newManifestFiles.stream().filter(f -> (excludedFiles == null || !excludedFiles.contains(f.key()))).noneMatch(oldCurseManifestFile::equals) && !newOverridesMods.contains(relativePath))
                     Files.deleteIfExists(oldFile);
             }
         }

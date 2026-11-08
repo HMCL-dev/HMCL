@@ -21,7 +21,7 @@ public record CurseManifest(@SerializedName("manifestType") String manifestType,
                             @SerializedName("overrides") String overrides,
                             @SerializedName("minecraft") CurseManifestMinecraft minecraft,
                             @SerializedName("files") @Unmodifiable List<CurseManifestFile> files)
-        implements ModpackManifest, ModpackManifest.SupportOptional {
+        implements ModpackManifest.SupportOptional {
 
     public CurseManifest setFiles(List<CurseManifestFile> files) {
         return new CurseManifest(manifestType, manifestVersion, name, version, author, overrides, minecraft, files);
@@ -33,7 +33,7 @@ public record CurseManifest(@SerializedName("manifestType") String manifestType,
     }
 
     @Override
-    public ModpackProvider getProvider() {
+    public ModpackProvider.SupportOptional getProvider() {
         return CurseModpackProvider.INSTANCE;
     }
 

@@ -9,6 +9,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Pair;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,14 +66,22 @@ public interface ModpackProvider {
     default void injectLaunchOptions(String modpackConfigurationJson, LaunchOptions.Builder builder) {
     }
 
-    /// Enriches a manifest with remote metadata for optional files (file names, URLs, addons).
-    /// The type of the result manifest must be same as the original one.
-    /// When the remote metadata can not be fetched, the original files are returned.
-    ///
-    /// @param downloadProvider the download provider used for remote queries
-    /// @param manifest         the parsed manifest
-    /// @return the enriched manifest, or `manifest` when no enrichment is needed
-    default ModpackManifest loadFiles(DownloadProvider downloadProvider, ModpackManifest manifest) {
-        return manifest;
+
+    interface SupportOptional extends ModpackProvider {
+        /// Enriches a manifest with remote metadata for optional files (file names, URLs, addons).
+        /// The type of the result manifest must be same as the original one.
+        /// When the remote metadata can not be fetched, the original files are returned.
+        ///
+        /// @param downloadProvider the download provider used for remote queries
+        /// @param manifest         the parsed manifest
+        /// @return the enriched manifest, or `manifest` when no enrichment is needed
+        ModpackManifest.SupportOptional loadFiles(DownloadProvider downloadProvider, ModpackManifest.SupportOptional manifest);
+
+        /// Recovers the excluded files list from an installed modpack instance.
+        /// @param instanceRoot the root path of the installed instance
+        /// @param newManifest  the new manifest to compare with the installed instance, or null if the already installed manifest should be used
+        /// @return a pair containing the used manifest and the excluded files
+        Pair<ModpackManifest.SupportOptional, Set<String>>
+        recoverExcludedFiles(Path instanceRoot, @Nullable ModpackManifest.SupportOptional newManifest);
     }
 }

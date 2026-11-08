@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Set;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -73,7 +74,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         String name = settings.get(LocalModpackPage.MODPACK_NAME);
         String iconUrl = settings.get(LocalModpackPage.MODPACK_ICON_URL);
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
-        var excludedFiles = settings.get(LocalModpackPage.MODPACK_EXCLUDED_FILES);
+        Set<String> excludedFiles = settings.get(LocalModpackPage.MODPACK_EXCLUDED_FILES);
 
         if (isManuallyCreated) {
             return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name);
