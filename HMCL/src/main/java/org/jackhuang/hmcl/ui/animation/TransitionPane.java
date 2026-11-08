@@ -22,6 +22,15 @@ import org.jetbrains.annotations.Nullable;
 @NotNullByDefault
 public class TransitionPane extends StackPane {
 
+    /// The default easing curve for page transitions.
+    public static final Interpolator DEFAULT_INTERPOLATOR = Motion.EASE;
+
+    /// The default duration for page transitions.
+    public static final Duration DEFAULT_DURATION = Motion.SHORT4;
+
+    /// Half the default duration for transitions with two phases.
+    public static final Duration DEFAULT_DURATION_HALF = DEFAULT_DURATION.divide(2);
+
     /// Stores an explicit opt-out from bitmap caching during transitions.
     private static final IdentityPropertyKey<Boolean> CACHE_ALLOWED_KEY = new IdentityPropertyKey<>(TransitionPane.class, "CACHE_ALLOWED_KEY");
 
@@ -160,16 +169,6 @@ public class TransitionPane extends StackPane {
         }
     }
 
-    /// Replaces the content using [Motion#SHORT4] and [Motion#EASE].
-    public final void setContent(Node newView, AnimationProducer transition) {
-        setContent(newView, transition, Motion.SHORT4);
-    }
-
-    /// Replaces the content using the given duration and [Motion#EASE].
-    public final void setContent(Node newView, AnimationProducer transition, Duration duration) {
-        setContent(newView, transition, duration, Motion.EASE);
-    }
-
     /// Replaces the current page, cancelling any preceding transition.
     /// Animated changes wait for CSS, layout, and first-display rendering preparation; mouse input is
     /// suppressed while pending or running. Detaching the container or hiding
@@ -179,8 +178,7 @@ public class TransitionPane extends StackPane {
     /// Previously undisplayed pages initialized at zero opacity render almost transparently
     /// before playback, provided they are visible and their opacity is not bound. Preparation
     /// preserves initialized transforms, so offscreen content may still be culled.
-    public void setContent(Node newView, AnimationProducer transition,
-                           Duration duration, Interpolator interpolator) {
+    public void setContent(Node newView, AnimationProducer transition) {
         if (activeTransition != null) {
             activeTransition.stop();
         }
@@ -250,7 +248,7 @@ public class TransitionPane extends StackPane {
                             }
                             return;
                         }
-                        animation = transition.animate(TransitionPane.this, previousNode, newView, duration, interpolator);
+                        animation = transition.animate(TransitionPane.this, previousNode, newView);
                         if (activeTransition != this) {
                             return;
                         }
@@ -328,11 +326,10 @@ public class TransitionPane extends StackPane {
             AnimationUtils.reset(nextNode, false);
         }
 
-        /// Creates the transition between the prepared pages using the given timing.
+        /// Creates the transition between the prepared pages using implementation-selected timing and interpolators.
         /// Temporary settings such as caching belong in the animation's key values, with their
         /// original values restored at its finite end so cancellation can apply them by jumping there.
-        Animation animate(Pane container, Node previousNode, Node nextNode,
-                          Duration duration, Interpolator interpolator);
+        Animation animate(Pane container, Node previousNode, Node nextNode);
 
         /// Restores the target page to its settled state after completion or cancellation,
         /// or when animation is skipped. May be called without [#init] or [#animate]

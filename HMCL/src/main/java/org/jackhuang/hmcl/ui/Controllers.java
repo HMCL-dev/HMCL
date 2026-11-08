@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
@@ -159,6 +158,15 @@ public final class Controllers {
     /// The cached game-list page.
     private static @Nullable GameListPage gameListPage;
 
+    /// Creates and attaches the game-list page for a layout pulse unless already cached.
+    @FXThread
+    public static void prepareGameListPage() {
+        if (gameListPage == null) {
+            LOG.info("Preparing game list page");
+            gameListPage = getDecorator().prewarmPage(new GameListPage());
+        }
+    }
+
     /// Returns the cached game-list page, creating it if necessary.
     @FXThread
     public static GameListPage getGameListPage() {
@@ -167,6 +175,7 @@ public final class Controllers {
         }
         return gameListPage;
     }
+
 
     /// The cached root page.
     private static @Nullable RootPage rootPage;
@@ -673,12 +682,12 @@ public final class Controllers {
 
     /// Navigates to the node using the standard navigation animation. Requires an initialized decorator.
     public static void navigate(Node node) {
-        decorator.navigate(node, ContainerAnimations.NAVIGATION, Motion.SHORT4, Motion.EASE);
+        decorator.navigate(node, ContainerAnimations.NAVIGATION);
     }
 
     /// Navigates to the node using the forward animation. Requires an initialized decorator.
     public static void navigateForward(Node node) {
-        decorator.navigate(node, ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE);
+        decorator.navigate(node, ContainerAnimations.FORWARD);
     }
 
     /// Shows a toast in the main window. Requires an initialized decorator.
