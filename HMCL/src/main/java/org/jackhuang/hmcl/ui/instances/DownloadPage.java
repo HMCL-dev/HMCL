@@ -575,9 +575,6 @@ public class DownloadPage extends Control implements DecoratorPage {
                 this.setActions(downloadButton, saveAsButton, cancelButton);
             }
 
-            this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.8));
-
             onEscPressed(this, cancelButton::fire);
         }
 
@@ -662,9 +659,13 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
+    /// Displays an add-on version's changelog in a scrollable dialog.
     private static final class AddonChangelog extends JFXDialogLayout {
 
+        /// Creates a changelog dialog with a preferred height that follows the window height.
         public AddonChangelog(RemoteAddon.Version version, RemoteAddonRepository repo, DownloadProvider provider) {
+            prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
+
             setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + version.name())));
 
             VBox box = new VBox(8);
@@ -690,9 +691,6 @@ public class DownloadPage extends Control implements DecoratorPage {
             closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             setActions(closeButton);
-
-            this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.8));
 
             onEscPressed(this, closeButton::fire);
         }
