@@ -13,15 +13,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
@@ -66,6 +58,9 @@ final class MainWindowPane extends StackPane {
     /// The transition container used when the title-bar state changes.
     private final TransitionPane navBarPane;
 
+    /// The pane that behaves as the overlay of dialogs.
+    private final StackPane dialogOverlayPane;
+
     /// Retains listener delegates that are registered through weak listener wrappers.
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
@@ -102,11 +97,12 @@ final class MainWindowPane extends StackPane {
         FXUtils.setOverflowHidden(center);
         frame.setCenter(center);
 
-        windowButtons = createWindowButtons();
+        Rectangle buttonsPlaceholder = new Rectangle();
+        buttonsPlaceholder.setFill(null);
         titleBar = new BorderPane();
         titleBar.setPickOnBounds(false);
         titleBar.getStyleClass().add("jfx-tool-bar");
-        titleBar.setRight(windowButtons);
+        titleBar.setRight(buttonsPlaceholder);
 
         navBarPane = new TransitionPane();
         titleBar.setCenter(navBarPane);
@@ -124,7 +120,19 @@ final class MainWindowPane extends StackPane {
 
         decorator.capableDraggingWindow(titleBar);
 
-        getChildren().setAll(backgroundNode, frame);
+        dialogOverlayPane = new StackPane();
+        dialogOverlayPane.setVisible(false);
+        decorator.capableDraggingOverlay(dialogOverlayPane);
+
+        windowButtons = createWindowButtons();
+        AnchorPane buttonsLayer = new AnchorPane(windowButtons);
+        buttonsLayer.setPickOnBounds(false);
+        AnchorPane.setTopAnchor(windowButtons, 0D);
+        AnchorPane.setRightAnchor(windowButtons, 0D);
+        buttonsPlaceholder.heightProperty().bind(windowButtons.heightProperty());
+        buttonsPlaceholder.widthProperty().bind(windowButtons.widthProperty());
+
+        getChildren().setAll(backgroundNode, frame, dialogOverlayPane, buttonsLayer);
     }
 
     /// Moves the custom title bar into or out of the native dragging header.
@@ -230,6 +238,7 @@ final class MainWindowPane extends StackPane {
         decorator.forbidDraggingWindow(closeButton);
 
         buttons.getChildren().setAll(tasksButton, helpButton, minimizeButton, closeButton);
+        buttons.getStyleClass().add("jfx-tool-bar");
         return buttons;
     }
 
@@ -348,6 +357,10 @@ final class MainWindowPane extends StackPane {
         }
 
         return navBar;
+    }
+
+    public StackPane getDialogOverlayPane() {
+        return dialogOverlayPane;
     }
 
     /// Produces directional transitions for page-title changes.

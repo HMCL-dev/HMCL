@@ -316,6 +316,13 @@ public final class Decorator {
         return mainWindowPane;
     }
 
+    /// Returns the pane that behaves as the overlay of dialogs.
+    ///
+    /// @return the dialog overlay pane
+    public StackPane getDialogOverlayPane() {
+        return mainWindowPane.getDialogOverlayPane();
+    }
+
     /// Prewarms a page for navigation using [TransitionPane#prewarm(Node)].
     ///
     /// @param page the page to prewarm
@@ -1221,5 +1228,4 @@ public final class Decorator {
         root.setScaleX(1);
         root.setScaleY(1);
     }
-
 }
