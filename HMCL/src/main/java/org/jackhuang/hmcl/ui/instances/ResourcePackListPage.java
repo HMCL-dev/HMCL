@@ -625,8 +625,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
+    /// Displays resource pack metadata with a scrollable description.
     private static final class ResourcePackInfoDialog extends JFXDialogLayout {
 
+        /// Creates a dialog whose description viewport follows its content and the window height.
         ResourcePackInfoDialog(ResourcePackInfoObject packInfoObject) {
             ResourcePackFile pack = packInfoObject.getFile();
 
@@ -656,6 +658,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
+            // Use the wrapped content height to request a readable viewport within the dialog size limit.
+            descriptionPane.prefViewportHeightProperty().bind(Bindings.min(
+                    description.heightProperty(),
+                    Controllers.getDecorator().contentHeightProperty().multiply(0.5)));
 
             setBody(descriptionPane);
 

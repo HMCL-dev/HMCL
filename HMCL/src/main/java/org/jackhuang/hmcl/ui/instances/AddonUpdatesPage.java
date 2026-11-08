@@ -435,9 +435,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         }
     }
 
+    /// Displays the target add-on version's changelog in a scrollable dialog.
     private static final class AddonChangelog extends JFXDialogLayout {
 
+        /// Creates a changelog dialog with a preferred height that follows the window height.
         public AddonChangelog(AddonUpdateObject object) {
+            prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
+
             RemoteAddon.Version targetVersion = object.data.targetVersion();
 
             this.setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + targetVersion.name())));

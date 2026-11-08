@@ -659,9 +659,13 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
+    /// Displays an add-on version's changelog in a scrollable dialog.
     private static final class AddonChangelog extends JFXDialogLayout {
 
+        /// Creates a changelog dialog with a preferred height that follows the window height.
         public AddonChangelog(RemoteAddon.Version version, RemoteAddonRepository repo, DownloadProvider provider) {
+            prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
+
             setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + version.name())));
 
             VBox box = new VBox(8);
