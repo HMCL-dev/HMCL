@@ -303,6 +303,10 @@
     -fx-padding: 0 8 0 0;
 }
 
+.two-line-list-item > .title > Text {
+    -fx-fill: -monet-on-surface;
+}
+
 .two-line-list-item > .subtitle {
     -fx-text-fill: -monet-on-surface-variant;
     -fx-font-weight: normal;
