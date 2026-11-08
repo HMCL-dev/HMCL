@@ -254,7 +254,7 @@
 }
 
 .iconed-item {
-    -jfx-feedback-fill: -monet-secondary-container;
+    -jfx-feedback-fill: -monet-on-surface;
 }
 
 .iconed-item .iconed-item-container {
@@ -265,7 +265,7 @@
 }
 
 .iconed-menu-item {
-    -jfx-feedback-fill: -monet-secondary-container;
+    -jfx-feedback-fill: -monet-on-surface;
     -fx-cursor: hand;
 }
 
