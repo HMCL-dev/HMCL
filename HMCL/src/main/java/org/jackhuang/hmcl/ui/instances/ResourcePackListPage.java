@@ -633,8 +633,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
-            maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-
             ImageContainer imageContainer = new ImageContainer(40);
             packInfoObject.iconCache.attachValue(imageContainer.imageProperty(), null);
 
@@ -658,11 +656,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
-            FXUtils.onChange(description.heightProperty(), newVal -> {
-                double maxHeight = Controllers.getDecorator().contentHeightProperty().get() * 0.5;
-                double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
-                descriptionPane.setPrefViewportHeight(targetHeight);
-            });
 
             setBody(descriptionPane);
 

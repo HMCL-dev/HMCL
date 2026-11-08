@@ -8,7 +8,6 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -621,10 +620,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             titleContainer.setSpacing(8);
             titleContainer.setPadding(new Insets(0, 0, 12, 0));
 
-            DoubleBinding widthBinding = Controllers.getDecorator().contentWidthProperty().multiply(0.7);
-            prefWidthProperty().bind(widthBinding);
-            maxWidthProperty().bind(widthBinding);
-
             var imageContainer = new ImageContainer(40);
             titleContainer.setAlignment(Pos.CENTER_LEFT);
             modInfo.iconCache.attachValue(imageContainer.imageProperty(), null);
@@ -666,11 +661,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
-            description.heightProperty().addListener((obs, oldVal, newVal) -> {
-                double maxHeight = Controllers.getDecorator().contentHeightProperty().get() * 0.5;
-                double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
-                descriptionPane.setPrefViewportHeight(targetHeight);
-            });
 
             setBody(descriptionPane);
 

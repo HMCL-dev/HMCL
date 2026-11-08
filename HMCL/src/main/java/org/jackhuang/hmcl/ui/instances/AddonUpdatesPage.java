@@ -470,9 +470,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             setActions(versionPageBtn, closeButton);
 
-            this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
-
             onEscPressed(this, closeButton::fire);
         }
 
