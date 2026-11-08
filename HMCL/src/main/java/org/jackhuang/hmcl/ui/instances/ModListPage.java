@@ -30,26 +30,32 @@ import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
-import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
-import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -66,7 +72,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -88,6 +93,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     private @Nullable HMCLGameInstance gameInstance;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
+
+    private final BooleanProperty isLoadingMods = new SimpleBooleanProperty(false);
+    private long modLoadRequestId;
 
     /// Creates a mod list that reloads when `instanceContext` changes.
     ///
@@ -118,6 +126,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     public void refresh() {
+        if (isLoadingMods.get()) {
+            return;
+        }
+
         loadMods(modManager);
     }
 
@@ -131,12 +143,16 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     private void loadMods(ModManager modManager) {
+        long requestId = ++modLoadRequestId;
+
         setLoading(true);
+        isLoadingMods.set(true);
 
         if (this.modManager != modManager) {
             getItems().clear();
         }
         this.modManager = modManager;
+
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
             try {
@@ -148,20 +164,24 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
-            if (this.modManager != modManager) {
+            if (this.modManager != modManager || requestId != modLoadRequestId) {
                 return;
             }
 
-            supportedLoaders.clear();
-            supportedLoaders.addAll(modManager.getSupportedLoaders());
+            try {
+                supportedLoaders.clear();
+                supportedLoaders.addAll(modManager.getSupportedLoaders());
 
-            if (exception == null) {
-                getItems().setAll(list);
-            } else {
-                LOG.warning("Failed to load mods", exception);
-                getItems().clear();
+                if (exception == null) {
+                    getItems().setAll(list);
+                } else {
+                    LOG.warning("Failed to load mods", exception);
+                    getItems().clear();
+                }
+            } finally {
+                isLoadingMods.set(false);
+                setLoading(false);
             }
-            setLoading(false);
         }, Schedulers.javafx());
     }
 
@@ -242,13 +262,19 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
     }
 
+    /// Checks the supplied mods for updates and opens the results for the current instance.
+    /// The target directory is retained even if this page switches instances during the check.
+    /// Does nothing while the list is loading or no instance is selected.
+    ///
+    /// @param mods the mods to check
     public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
+        @Nullable HMCLGameInstance gameInstance = this.gameInstance;
         if (isLoading() || gameInstance == null) {
             return;
         }
 
-        HMCLGameInstance gameInstance = this.gameInstance;
+        Path modDirectory = gameInstance.getModManager().getDirectory();
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
@@ -267,7 +293,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), modManager.getDirectory(), result));
+                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), modDirectory, result));
                             }
                         })
                         .withStagesHints("update.checking"),
@@ -379,9 +405,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
                 searchBar.getChildren().setAll(searchField, closeSearchBar);
 
+                JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh);
+                refreshButton.disableProperty().bind(skinnable.isLoadingMods);
+
                 // Toolbar Normal
                 toolbarNormal.getChildren().setAll(
-                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                        refreshButton,
                         createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
@@ -620,10 +649,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             TwoLineListItem title = new TwoLineListItem();
             title.getTitleLabel().setWrapText(true);
-            if (modInfo.getProjectInfo() != null && I18n.isUseChinese())
-                title.setTitle(modInfo.getProjectInfo().displayName());
-            else
-                title.setTitle(modInfo.getModInfo().getName());
+            String displayName = modInfo.getModInfo().getName();
+            if (modInfo.getProjectInfo() != null && I18n.isUseChinese()) {
+                String chineseName = modInfo.getProjectInfo().mainName();
+                if (StringUtils.containsChinese(chineseName)) {
+                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName))
+                        displayName = chineseName + " (" + displayName + ")";
+                }
+            }
+            title.setTitle(displayName);
 
             StringJoiner subtitle = new StringJoiner("\n");
             subtitle.add(i18n("archive.file.name") + ": " + FileUtils.getName(modInfo.getModInfo().getFile()));
@@ -726,19 +760,20 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ModListPage page;
 
-        private final JFXCheckBox checkBox = new JFXCheckBox();
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
-        private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
+        private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
+        private final JFXSwitch activeSwitch = new JFXSwitch();
 
-        private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getModInfo().isActive());
+        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
         private Tooltip warningTooltip;
 
+        /// Creates a selectable mod row with file actions for the supplied page.
         ModInfoListCell(JFXListView<ModInfoObject> listView, ModListPage page) {
             super(listView);
             this.page = page;
@@ -748,22 +783,36 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
+            container.setPadding(new Insets(0, 8, 0, 8));
             HBox.setHgrow(content, Priority.ALWAYS);
-            content.setMouseTransparent(true);
             setSelectable();
 
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
-            container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton);
+            // free up space when not visible
+            restoreButton.managedProperty().bind(restoreButton.visibleProperty());
+
+            HBox actions = new HBox();
+            actions.setAlignment(Pos.CENTER);
+            actions.getChildren().setAll(restoreButton, revealButton, infoButton, activeSwitch);
+
+            activeSwitch.setSize(20);
+            activeSwitch.setMinSize(30, 30);
+            activeSwitch.setPrefSize(30, 30);
+            activeSwitch.setMaxSize(30, 30);
+            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
+
+            container.getChildren().setAll(imageContainer, content, actions);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
         }
 
+        /// Updates mod details, warnings, and tags while retaining reusable tag labels.
         @Override
-        protected void updateControl(ModInfoObject dataItem, boolean empty) {
+        protected void updateControl(@Nullable ModInfoObject dataItem, boolean empty) {
             if (observedActiveProperty != null)
                 observedActiveProperty.removeListener(weakActiveListener);
 
@@ -773,11 +822,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 warningTooltip = null;
             }
 
-            if (empty) return;
+            if (empty || dataItem == null) return;
 
             List<String> warning = new ArrayList<>();
 
-            content.getTags().clear();
+            var tags = new ArrayList<Tag>(2);
 
             LocalModFile modInfo = dataItem.getModInfo();
             @Nullable ModProjectInfo projectInfo = dataItem.getProjectInfo();
@@ -790,20 +839,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (projectInfo != null && I18n.isUseChinese()) {
                 String chineseName = projectInfo.mainName();
                 if (StringUtils.containsChinese(chineseName)) {
-                    if (StringUtils.containsEmoji(chineseName)) {
-                        StringBuilder builder = new StringBuilder();
-
-                        chineseName.codePoints().forEach(ch -> {
-                            if (ch < 0x1F300 || ch > 0x1FAFF)
-                                builder.appendCodePoint(ch);
-                        });
-
-                        chineseName = builder.toString().trim();
-                    }
-
-                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName)) {
-                        displayName = displayName + " (" + chineseName + ")";
-                    }
+                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName))
+                        displayName = chineseName + " (" + displayName + ")";
                 }
             }
             content.setTitle(displayName);
@@ -817,29 +854,33 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.setSubtitle(joiner.toString());
 
             if (modLoaderType == ModLoaderType.UNKNOWN) {
-                content.addTagWarning(i18n("mods.unknown"));
+                tags.add(Tag.warning(i18n("mods.unknown")));
             } else if (!page.supportedLoaders.contains(modLoaderType)) {
                 warning.add(i18n("mods.warning.loader_mismatch"));
-                content.addTagWarning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType()));
+                tags.add(Tag.warning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType())));
             }
 
             String modVersion = modInfo.getVersion();
             if (StringUtils.isNotBlank(modVersion) && !"${version}".equals(modVersion)) {
-                content.addTag(modVersion);
+                tags.add(new Tag(modVersion));
             }
 
+            content.getTags().setAll(tags);
+
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
-            checkBox.setSelected(modInfo.isActive());
-            checkBox.setOnAction(event -> {
+            activeSwitch.setDisableAnimation(true);
+            activeSwitch.setSelected(modInfo.isActive());
+            activeSwitch.setOnAction(event -> {
                 try {
-                    modInfo.setActive(checkBox.isSelected());
+                    modInfo.setActive(activeSwitch.isSelected());
                 } catch (IOException e) {
                     LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
                     Controllers.showToast(i18n("mods.toggle.failed"));
                 } finally {
-                    checkBox.setSelected(modInfo.isActive());
+                    activeSwitch.setSelected(modInfo.isActive());
                 }
             });
+            activeSwitch.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()

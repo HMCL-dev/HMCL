@@ -567,7 +567,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
             maxMemory = noJVMOptions
                     ? null
                     : Math.toIntExact(HMCLGameRepository.getAutoAllocatedMemory(
-                            SystemInfo.getPhysicalMemoryStatus().available(),
+                            SystemInfo.getPhysicalMemoryStatus(),
                             javaRuntime.getPlatform()) / 1024L / 1024L);
         } else {
             maxMemory = vs.getMaxMemory();

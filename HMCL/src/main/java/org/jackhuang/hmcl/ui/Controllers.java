@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
@@ -157,6 +156,15 @@ public final class Controllers {
     /// The cached game-list page.
     private static @Nullable GameListPage gameListPage;
 
+    /// Creates and attaches the game-list page for a layout pulse unless already cached.
+    @FXThread
+    public static void prepareGameListPage() {
+        if (gameListPage == null) {
+            LOG.info("Preparing game list page");
+            gameListPage = getDecorator().prewarmPage(new GameListPage());
+        }
+    }
+
     /// Returns the cached game-list page, creating it if necessary.
     @FXThread
     public static GameListPage getGameListPage() {
@@ -165,6 +173,7 @@ public final class Controllers {
         }
         return gameListPage;
     }
+
 
     /// The cached root page.
     private static @Nullable RootPage rootPage;
@@ -181,7 +190,7 @@ public final class Controllers {
     /// The cached settings page.
     private static @Nullable LauncherSettingsPage settingsPage;
 
-    /// Creates and attaches the settings page for a layout pulse unless already cached.
+    /// Creates and prewarms the settings page unless already cached.
     @FXThread
     public static void prepareSettingsPage() {
         if (settingsPage == null) {
@@ -638,36 +647,39 @@ public final class Controllers {
         return pane.getCompletableFuture();
     }
 
-    /// Creates and returns a progress pane without starting the executor.
+    /// Creates a task dialog and submits its executor to the serial business-task queue.
     ///
-    /// Requests closure when the executor stops. A null title supplies no title text.
-    /// The pane is connected to the executor even if no decorator exists. See [#dialog(Region)].
-    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, @Nullable String title, TaskCancellationAction onCancel) {
+    /// Submits the executor even if the pane cannot be shown, and returns the pane.
+    public static TaskExecutorDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel) {
+        return taskDialog(task, title, onCancel, null);
+    }
+
+    /// Creates and submits a task dialog, optionally as a required child of an executing task.
+    ///
+    /// @param task the task to execute
+    /// @param title the dialog title, or `null`
+    /// @param onCancel the cancellation action
+    /// @param parent the executing parent dialog, or `null` to queue an independent operation
+    /// @return the submitted task dialog
+    public static TaskExecutorDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel,
+                                                  @Nullable TaskExecutorDialogPane parent) {
+        TaskExecutor executor = task.executor();
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
         pane.setTitle(title);
         pane.setExecutor(executor);
         dialog(pane);
-        return pane;
-    }
-
-    /// Creates a pane using [#taskDialog(TaskExecutor, String, TaskCancellationAction)], then starts the task's executor.
-    ///
-    /// Starts the executor even if the pane cannot be shown, and returns the pane.
-    public static TaskExecutorDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel) {
-        TaskExecutor executor = task.executor();
-        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
-        executor.start();
+        pane.startExecutor(parent);
         return pane;
     }
 
     /// Navigates to the node using the standard navigation animation. Requires an initialized decorator.
     public static void navigate(Node node) {
-        decorator.navigate(node, ContainerAnimations.NAVIGATION, Motion.SHORT4, Motion.EASE);
+        decorator.navigate(node, ContainerAnimations.NAVIGATION);
     }
 
     /// Navigates to the node using the forward animation. Requires an initialized decorator.
     public static void navigateForward(Node node) {
-        decorator.navigate(node, ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE);
+        decorator.navigate(node, ContainerAnimations.FORWARD);
     }
 
     /// Shows a toast in the main window. Requires an initialized decorator.
