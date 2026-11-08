@@ -14,9 +14,11 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
@@ -26,6 +28,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +38,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
+import static org.jackhuang.hmcl.ui.export.ModpackInfoPage.MODPACK_INFO;
+import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE;
+import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -47,6 +54,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huangyuhui
  */
 public final class ModpackFileSelectionPage extends BorderPane implements WizardPage {
+    public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("modpack.file");
     private final WizardController controller;
     private final HMCLGameInstance gameInstance;
     private final ModAdviser adviser;
@@ -204,6 +212,22 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     }
 
     private void onNext() {
+        var info = Objects.requireNonNull(controller.getSettings().get(MODPACK_INFO));
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(i18n("modpack.wizard.step.initialization.save"));
+        if (!info.isPackWithLauncher() && MODPACK_TYPE_MODRINTH.equals(controller.getSettings().get(MODPACK_TYPE))) {
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.mrpack"));
+            fileChooser.setInitialFileName(info.getName() + (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ? "" : ".mrpack"));
+        } else {
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
+            fileChooser.setInitialFileName(info.getName() + ".zip");
+        }
+        Path file = Controllers.showSaveDialog(fileChooser);
+        if (file == null) {
+            return;
+        }
+        controller.getSettings().put(MODPACK_FILE, file);
+
         ArrayList<String> list = new ArrayList<>();
         getFilesNeeded(rootNode, "minecraft", list);
         controller.getSettings().put(MODPACK_FILE_SELECTION, list);
