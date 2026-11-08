@@ -67,7 +67,18 @@ public interface ModpackProvider {
     }
 
 
+    /// Provider operations for manifests with optional files.
+    @NotNullByDefault
     interface SupportOptional extends ModpackProvider {
+        /// Reads installed pack metadata for the basic-information and optional-file selection pages.
+        /// The returned manifest implements [ModpackManifest.SupportOptional], and its install callback
+        /// performs an optional-only update using the original manifest and recovered exclusions.
+        ///
+        /// @param instanceRoot the installed instance root
+        /// @param configuration the installed pack's display name and version
+        /// @throws IOException if the installed manifest or exclusions cannot be read
+        Modpack readInstalledModpack(Path instanceRoot, ModpackConfiguration<?> configuration) throws IOException;
+
         /// Enriches a manifest with remote metadata for optional files (file names, URLs, addons).
         /// The type of the result manifest must be same as the original one.
         /// When the remote metadata can not be fetched, the original files are returned.
@@ -81,7 +92,8 @@ public interface ModpackProvider {
         /// @param instanceRoot the root path of the installed instance
         /// @param newManifest  the new manifest to compare with the installed instance, or null if the already installed manifest should be used
         /// @return a pair containing the used manifest and the excluded files
+        /// @throws IOException if the installed manifest or exclusion record cannot be read
         Pair<ModpackManifest.SupportOptional, Set<String>>
-        recoverExcludedFiles(Path instanceRoot, @Nullable ModpackManifest.SupportOptional newManifest);
+            recoverExcludedFiles(Path instanceRoot, @Nullable ModpackManifest.SupportOptional newManifest) throws IOException;
     }
 }

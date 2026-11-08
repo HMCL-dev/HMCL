@@ -21,13 +21,14 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -43,6 +44,25 @@ public final class CurseModpackProvider implements ModpackProvider.SupportOption
     @Override
     public Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
         return new CurseCompletionTask(dependencyManager, instance);
+    }
+
+    /// Reads installed CurseForge metadata and binds the original pack's optional-only update.
+    @Override
+    public Modpack readInstalledModpack(Path instanceRoot, ModpackConfiguration<?> configuration) throws IOException {
+        var installed = recoverExcludedFiles(instanceRoot, null);
+        CurseManifest manifest = (CurseManifest) installed.getKey();
+        @Unmodifiable Set<String> previousExcluded = Set.copyOf(installed.getValue());
+        return new Modpack(configuration.getName(), manifest.author(), configuration.getVersion(),
+                manifest.minecraft().gameVersion(), "", manifest) {
+            /// Changes optional files through the normal CurseForge update and backup tasks.
+            @Override
+            public Task<?> getInstallTask(DefaultDependencyManager dependency, Path file, GameInstanceID id,
+                                          @Nullable String iconUrl, @Nullable Set<String> excludedFiles) {
+                var instance = dependency.getGameRepository().getInstance(id);
+                return new ModpackUpdateTask(instance, new CurseInstallTask(dependency, manifest, instance,
+                        Objects.requireNonNull(excludedFiles), previousExcluded));
+            }
+        };
     }
 
     @Override
@@ -116,9 +136,11 @@ public final class CurseModpackProvider implements ModpackProvider.SupportOption
                         .toList());
     }
 
+    /// Reads the installed manifest and maps its persisted optional-file exclusions.
+    /// Malformed or unreadable records fail instead of silently selecting every file.
     @Override
     public Pair<ModpackManifest.SupportOptional, Set<String>> recoverExcludedFiles(
-            Path instanceRoot, @Nullable ModpackManifest.SupportOptional newManifest) {
+            Path instanceRoot, @Nullable ModpackManifest.SupportOptional newManifest) throws IOException {
         if (!(newManifest instanceof CurseManifest) && newManifest != null)
             throw new IllegalArgumentException("newManifest is not a CurseManifest");
         Set<String> excludedFiles = new HashSet<>();
@@ -129,8 +151,7 @@ public final class CurseModpackProvider implements ModpackProvider.SupportOption
             if (newManifest == null)
                 newManifest = oldManifest;
         } catch (IOException | JsonParseException e) {
-            LOG.warning("Unable to read old manifest", e);
-            return Pair.pair(newManifest, excludedFiles);
+            throw new IOException("Unable to read installed CurseForge manifest", e);
         }
         Path oldExcludedFilesPath = instanceRoot.resolve("excluded.json");
         if (!Files.exists(oldExcludedFilesPath))
@@ -139,9 +160,8 @@ public final class CurseModpackProvider implements ModpackProvider.SupportOption
         try {
             oldExcluded = JsonUtils.fromNonNullJson(Files.readString(oldExcludedFilesPath), new TypeToken<Set<String>>(){});
         } catch (IOException | JsonParseException e) {
-            LOG.warning("Unable to read old excluded files", e);
+            throw new IOException("Unable to read installed optional-file exclusions", e);
         }
-        excludedFiles = newManifest.getExcludedFilesFromAnother(oldManifest, oldExcluded);
         return Pair.pair(newManifest, newManifest.getExcludedFilesFromAnother(oldManifest, oldExcluded));
     }
 }

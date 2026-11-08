@@ -18,6 +18,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -40,6 +42,25 @@ public final class ModrinthModpackProvider implements ModpackProvider.SupportOpt
     @Override
     public Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
         return new ModrinthCompletionTask(dependencyManager, instance);
+    }
+
+    /// Reads installed Modrinth metadata and binds the original pack's optional-only update.
+    @Override
+    public Modpack readInstalledModpack(Path instanceRoot, ModpackConfiguration<?> configuration) throws IOException {
+        var installed = recoverExcludedFiles(instanceRoot, null);
+        ModrinthManifest manifest = (ModrinthManifest) installed.getKey();
+        @Unmodifiable Set<String> previousExcluded = Set.copyOf(installed.getValue());
+        return new Modpack(configuration.getName(), "", configuration.getVersion(),
+                manifest.getGameVersion(), manifest.getSummary(), manifest) {
+            /// Changes optional files through the normal Modrinth update and backup tasks.
+            @Override
+            public Task<?> getInstallTask(DefaultDependencyManager dependency, Path file, GameInstanceID id,
+                                          @Nullable String iconUrl, @Nullable Set<String> excludedFiles) {
+                var instance = dependency.getGameRepository().getInstance(id);
+                return new ModpackUpdateTask(instance, new ModrinthInstallTask(dependency, manifest, instance,
+                        Objects.requireNonNull(excludedFiles), previousExcluded));
+            }
+        };
     }
 
     @Override
@@ -109,9 +130,11 @@ public final class ModrinthModpackProvider implements ModpackProvider.SupportOpt
         }).toList());
     }
 
+    /// Reads the installed manifest and maps its persisted optional-file exclusions.
+    /// Malformed or unreadable records fail instead of silently selecting every file.
     @Override
     public Pair<ModpackManifest.SupportOptional, Set<String>> recoverExcludedFiles(
-            Path instanceRoot, @Nullable ModpackManifest.SupportOptional newManifest) {
+            Path instanceRoot, @Nullable ModpackManifest.SupportOptional newManifest) throws IOException {
         if (!(newManifest instanceof ModrinthManifest) && newManifest != null)
             throw new IllegalArgumentException("newManifest is not a ModrinthManifest");
         Set<String> excludedFiles = new HashSet<>();
@@ -122,8 +145,7 @@ public final class ModrinthModpackProvider implements ModpackProvider.SupportOpt
             if (newManifest == null)
                 newManifest = oldManifest;
         } catch (IOException | JsonParseException e) {
-            LOG.warning("Unable to read old manifest", e);
-            return Pair.pair(newManifest, excludedFiles);
+            throw new IOException("Unable to read installed Modrinth manifest", e);
         }
         Path oldExcludedFilesPath = instanceRoot.resolve("excluded.json");
         if (!Files.exists(oldExcludedFilesPath))
@@ -132,9 +154,8 @@ public final class ModrinthModpackProvider implements ModpackProvider.SupportOpt
         try {
             oldExcluded = JsonUtils.fromNonNullJson(Files.readString(oldExcludedFilesPath), new TypeToken<Set<String>>(){});
         } catch (IOException | JsonParseException e) {
-            LOG.warning("Unable to read old excluded files", e);
+            throw new IOException("Unable to read installed optional-file exclusions", e);
         }
-        excludedFiles = newManifest.getExcludedFilesFromAnother(oldManifest, oldExcluded);
         return Pair.pair(newManifest, newManifest.getExcludedFilesFromAnother(oldManifest, oldExcluded));
     }
 }

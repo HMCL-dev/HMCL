@@ -45,12 +45,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class LocalModpackPage extends ModpackPage {
 
     private final BooleanProperty installAsVersion = new SimpleBooleanProperty(true);
-    private Modpack manifest = null;
+    private @Nullable Modpack manifest = null;
     private final ObservableList<ModpackFile> allFiles = FXCollections.observableList(new ArrayList<>());
     private final ObservableSet<String> excludedFiles = FXCollections.observableSet(new HashSet<>());
     private final BooleanProperty loadingOptionalFiles = new SimpleBooleanProperty(false);
     private final BooleanProperty loadedOptionalFiles = new SimpleBooleanProperty(true);
 
+    /// Shows basic information and optional-file choices for an archive or the original installed pack.
     public LocalModpackPage(WizardController controller) {
         super(controller);
 
@@ -107,7 +108,9 @@ public final class LocalModpackPage extends ModpackPage {
         }
 
         showSpinner();
-        Task.supplyAsync(() -> ModpackHelper.readModpackManifest(selectedFile))
+        Task.supplyAsync(() -> controller.getSettings().getOrDefault(ModpackSelectionPage.CHANGE_OPTIONAL_FILES, false)
+                ? Objects.requireNonNull(controller.getSettings().get(MODPACK_MANIFEST))
+                : ModpackHelper.readModpackManifest(selectedFile))
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
                     if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
@@ -159,20 +162,18 @@ public final class LocalModpackPage extends ModpackPage {
                 }).start();
     }
 
+    /// Loads optional-file metadata and the installed exclusions, reporting recovery failures.
     private void loadOptionalFiles(@Nullable String instanceId) {
-        ModpackManifest.SupportOptional supportOptional = (ModpackManifest.SupportOptional) manifest.getManifest();
-        Objects.requireNonNull(manifest);
+        ModpackManifest.SupportOptional supportOptional = (ModpackManifest.SupportOptional) Objects.requireNonNull(manifest).getManifest();
         loadingOptionalFiles.set(true);
         loadedOptionalFiles.set(false);
-        Path root;
+        @Nullable Path root;
         if (instanceId != null) {
             GameInstanceID instanceID = new GameInstanceID(instanceId);
             HMCLGameRepository repository = controller.getSettings().get(ModpackPage.REPOSITORY);
             root = repository.getLayout().getInstanceRoot(instanceID);
-            LOG.error("Instance root: " + root);
         } else {
             root = null;
-            LOG.error("Fresh instance, no root directory.");
         }
         Task.supplyAsync(() -> {
                 ModpackManifest.SupportOptional manifest1 = supportOptional.getProvider().loadFiles(DownloadProviders.getDownloadProvider(), supportOptional);
@@ -195,9 +196,11 @@ public final class LocalModpackPage extends ModpackPage {
             }).start();
     }
 
+    /// Clears source and optional-only mode when returning to source selection.
     @Override
     public void cleanup(SettingsMap settings) {
         settings.remove(MODPACK_FILE);
+        settings.remove(ModpackSelectionPage.CHANGE_OPTIONAL_FILES);
     }
 
     protected void onInstall() {

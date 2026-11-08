@@ -9,18 +9,29 @@ import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
 import org.jackhuang.hmcl.modpack.Modpack;
+import org.jackhuang.hmcl.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.modpack.ModpackFile;
+import org.jackhuang.hmcl.modpack.ModpackUpdateTask;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
+import org.jackhuang.hmcl.modpack.curse.CurseModpackProvider;
+import org.jackhuang.hmcl.modpack.curse.CurseManifest;
+import org.jackhuang.hmcl.modpack.curse.CurseManifestFile;
+import org.jackhuang.hmcl.modpack.curse.CurseManifestMinecraft;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackProvider;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthManifest;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -36,6 +47,8 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -44,10 +57,86 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 /// Tests snapshot-bound behavior of [DefaultGameInstance].
 @NotNullByDefault
 public final class DefaultGameInstanceTest {
+
+    /// Installed provider metadata retains basic information and binds optional-only updates with normal removal rules.
+    @Test
+    public void testOptionalOnlyUpdate(@TempDir Path directory) throws Exception {
+        for (String type : List.of("Modrinth", "Curse")) {
+            TestRepository repository = new TestRepository(directory.resolve(type));
+            GameInstanceID id = new GameInstanceID("instance");
+            TestGameInstance instance = repository.publish(id, new GameInstanceManifest(id));
+            Path root = instance.getInstanceRoot();
+            Path configurationFile = repository.getLayout().getModpackConfigurationFile(id);
+            Files.createDirectories(root.resolve("mods"));
+            Files.writeString(root.resolve("mods/enabled.jar"), "enabled");
+            Files.writeString(root.resolve("mods/disabled.jar.disabled"), "disabled");
+            Files.writeString(root.resolve("mods/backup.jar.old"), "backup");
+            Files.writeString(root.resolve("mods/override.jar"), "override");
+            @Unmodifiable List<String> paths = List.of("mods/enabled.jar", "mods/disabled.jar", "mods/backup.jar",
+                    "mods/override.jar", "mods/new.jar", "mods/unchanged.jar", "mods/required.jar");
+            DefaultCacheRepository cache = new DefaultCacheRepository(directory.resolve(type + "-cache"));
+            DefaultDependencyManager dependency = new DefaultDependencyManager(repository, new TestDownloadProvider(cache), cache);
+            Modpack installed;
+            Set<String> excluded;
+            if ("Modrinth".equals(type)) {
+                @Unmodifiable List<ModrinthManifest.File> files = paths.stream().map(path -> new ModrinthManifest.File(
+                        path, Map.of("sha512", "0".repeat(128)), Map.of("client", path.endsWith("required.jar") ? "required" : "optional"),
+                        List.of("https://example.invalid/" + path), 1)).toList();
+                ModrinthManifest modrinth = new ModrinthManifest("minecraft", 1, "1", "pack", null, files, Map.of("minecraft", "1.20.1"));
+                ModpackConfiguration<ModrinthManifest> stored = new ModpackConfiguration<>(
+                        modrinth, type, "installed pack", "installed version", List.of());
+                JsonUtils.writeToJsonFile(configurationFile, stored);
+                JsonUtils.writeToJsonFile(root.resolve("modrinth.index.json"), modrinth);
+                JsonUtils.writeToJsonFile(root.resolve("excluded.json"), Set.of(files.get(4).key()));
+                installed = ModrinthModpackProvider.INSTANCE.readInstalledModpack(root, stored);
+                excluded = files.subList(0, 4).stream().map(ModpackFile::key).collect(Collectors.toSet());
+            } else {
+                @Unmodifiable List<CurseManifestFile> files = IntStream.range(0, paths.size()).mapToObj(index ->
+                        new CurseManifestFile(index + 1, index + 1, Path.of(paths.get(index)).getFileName().toString(), null,
+                                index == 6)).toList();
+                CurseManifest curse = new CurseManifest("minecraftModpack", 1, "pack", "1", "author", "overrides",
+                        new CurseManifestMinecraft("1.20.1", List.of()), files);
+                JsonUtils.writeToJsonFile(root.resolve("manifest.json"), curse);
+                ModpackConfiguration<CurseManifest> stored = new ModpackConfiguration<>(
+                        curse, type, "installed pack", "installed version",
+                        List.of(new ModpackConfiguration.FileInformation("mods/override.jar", "hash")));
+                JsonUtils.writeToJsonFile(configurationFile, stored);
+                installed = CurseModpackProvider.INSTANCE.readInstalledModpack(root, stored);
+                excluded = files.subList(0, 4).stream().map(ModpackFile::key).collect(Collectors.toSet());
+            }
+            assertEquals("installed pack", installed.getName());
+            assertEquals("installed version", installed.getVersion());
+            assertEquals("1.20.1", installed.getGameVersion());
+            assertEquals("Curse".equals(type) ? "author" : "", installed.getAuthor());
+            Task<?> wrapped = installed.getInstallTask(dependency, configurationFile, id, null, excluded);
+            assertInstanceOf(ModpackUpdateTask.class, wrapped);
+            Task<?> update = wrapped.getDependencies().iterator().next();
+            String configuration = Files.readString(configurationFile);
+            assertTrue(update.getDependents().isEmpty(), "Must not reinstall components or overrides");
+            update.execute();
+            assertFalse(Files.exists(root.resolve("mods/enabled.jar")));
+            assertEquals("disabled", Files.readString(root.resolve("mods/disabled.jar.disabled")));
+            assertEquals("backup", Files.readString(root.resolve("mods/backup.jar.old")));
+            assertEquals("Curse".equals(type), Files.exists(root.resolve("mods/override.jar")));
+            assertEquals(configuration, Files.readString(configurationFile));
+            Task<?> completion = update.getDependencies().iterator().next();
+            completion.execute();
+            assertEquals("Modrinth".equals(type) ? 1 : 0, completion.getDependencies().size());
+            if ("Modrinth".equals(type)) {
+                FileDownloadTask download = assertInstanceOf(FileDownloadTask.class,
+                        completion.getDependencies().iterator().next().getDependents().iterator().next());
+                assertEquals(instance.getRunDirectory().resolve("mods/new.jar").toAbsolutePath().normalize(), download.getPath());
+            }
+            assertSame(instance, repository.getInstance(id));
+            assertEquals(4, JsonUtils.fromNonNullJson(Files.readString(root.resolve("excluded.json")),
+                    JsonUtils.listTypeOf(String.class)).size());
+        }
+    }
 
     /// Launch repair for ModLauncher adds support metadata without materializing bundled files.
     @Test

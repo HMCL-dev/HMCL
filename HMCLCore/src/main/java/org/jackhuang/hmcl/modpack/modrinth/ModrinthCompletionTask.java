@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -47,6 +48,9 @@ public class ModrinthCompletionTask extends Task<Void> {
     /// Keys of optional files the user chose not to install; `null` means install all.
     private @Nullable Set<String> excludedFiles;
 
+    /// Limits downloads to previously excluded keys; `null` preserves normal full completion.
+    private final @Nullable @Unmodifiable Set<String> filesToDownload;
+
     /// Download tasks produced during [#execute()].
     private final List<Task<?>> dependencies = new ArrayList<>();
 
@@ -79,12 +83,20 @@ public class ModrinthCompletionTask extends Task<Void> {
             DefaultGameInstance instance,
             @Nullable ModrinthManifest manifest,
             @Nullable Set<String> excludedFiles) {
+        this(dependencyManager, instance, manifest, excludedFiles, null);
+    }
+
+    /// Runs normal completion with an optional download-key restriction.
+    public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance,
+                                  @Nullable ModrinthManifest manifest, @Nullable Set<String> excludedFiles,
+                                  @Nullable Set<String> filesToDownload) {
         dependencyManager.validateGameInstance(instance);
         this.dependency = dependencyManager;
         this.instance = instance;
         this.modManager = instance.getModManager();
         this.manifest = manifest;
         this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
+        this.filesToDownload = filesToDownload == null ? null : Set.copyOf(filesToDownload);
 
         if (manifest == null)
             try {
@@ -132,6 +144,8 @@ public class ModrinthCompletionTask extends Task<Void> {
         }
 
         for (ModrinthManifest.File file : manifest.getFiles()) {
+            if (filesToDownload != null && !filesToDownload.contains(file.key()))
+                continue;
             if (file.env() != null && file.env().getOrDefault("client", "required").equals("unsupported"))
                 continue;
             if (file.downloads().isEmpty())

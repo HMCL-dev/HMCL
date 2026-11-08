@@ -16,6 +16,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -50,6 +51,9 @@ public final class CurseCompletionTask extends Task<Void> {
     /// Keys of optional files the user chose not to install; `null` means install all.
     private @Nullable Set<String> excludedFiles;
 
+    /// Limits downloads to previously excluded keys; `null` preserves normal full completion.
+    private final @Nullable @Unmodifiable Set<String> filesToDownload;
+
     /// Download tasks produced during [#execute()].
     private List<Task<?>> dependencies = List.of();
 
@@ -82,12 +86,20 @@ public final class CurseCompletionTask extends Task<Void> {
             DefaultGameInstance instance,
             @Nullable CurseManifest manifest,
             @Nullable Set<String> excludedFiles) {
+        this(dependencyManager, instance, manifest, excludedFiles, null);
+    }
+
+    /// Runs normal completion with an optional download-key restriction.
+    public CurseCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance,
+                               @Nullable CurseManifest manifest, @Nullable Set<String> excludedFiles,
+                               @Nullable Set<String> filesToDownload) {
         dependencyManager.validateGameInstance(instance);
         this.dependency = dependencyManager;
         this.instance = instance;
         this.modManager = instance.getModManager();
         this.manifest = manifest;
         this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
+        this.filesToDownload = filesToDownload == null ? null : Set.copyOf(filesToDownload);
 
         if (manifest == null)
             try {
@@ -132,6 +144,8 @@ public final class CurseCompletionTask extends Task<Void> {
         CurseManifest newManifest = manifest.setFiles(
                 manifest.files().parallelStream()
                         .map(file -> {
+                            if (filesToDownload != null && !filesToDownload.contains(file.key()))
+                                return file;
                             updateProgress(finished.incrementAndGet(), manifest.files().size());
                             if (StringUtils.isBlank(file.fileName()) || file.url() == null) {
                                 try {
@@ -169,6 +183,7 @@ public final class CurseCompletionTask extends Task<Void> {
                 .stream().parallel()
                 .filter(f -> f.fileName() != null)
                 .filter(f -> excludedFiles == null || !excludedFiles.contains(f.key()))
+                .filter(f -> filesToDownload == null || filesToDownload.contains(f.key()))
                 .flatMap(f -> {
                     try {
                         Path path = guessFilePath(f, dependency.getDownloadProvider(), resourcePacksRoot, shaderPacksRoot);
@@ -204,25 +219,28 @@ public final class CurseCompletionTask extends Task<Void> {
     /// @return the destination, or `null` when the file already exists
     /// @throws IOException if CurseForge metadata cannot be read
     private @Nullable Path guessFilePath(CurseManifestFile file, DownloadProvider downloadProvider, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
-        RemoteAddon mod = CurseForgeRemoteAddonRepository.getInstance().getAddonById(downloadProvider, Integer.toString(file.projectID()));
+        Path path = resolveFilePath(file, downloadProvider, modManager.getDirectory(), resourcePacksRoot, shaderPacksRoot);
+        if (path.getParent().equals(modManager.getDirectory())) {
+            return modManager.hasSimpleMod(path.getFileName().toString()) ? null : path;
+        }
+        return Files.exists(path) ? null : path;
+    }
+
+    /// Resolves a CurseForge file's destination by its project class, even if it already exists.
+    /// Reuses queried addon metadata when available.
+    public static Path resolveFilePath(CurseManifestFile file, DownloadProvider downloadProvider,
+                                       Path modsRoot, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
+        @Nullable String fileName = file.fileName();
+        if (StringUtils.isBlank(fileName))
+            throw new IOException("Unresolved CurseForge file name: " + file.key());
+        @Nullable RemoteAddon mod = file.remoteAddon();
+        if (mod == null)
+            mod = CurseForgeRemoteAddonRepository.getInstance().getAddonById(downloadProvider, Integer.toString(file.projectID()));
         int classID = ((CurseForgeRemoteAddonRepository.CurseAddon) mod.data()).classId();
-        String fileName = file.fileName();
         return switch (classID) {
-            case 12,       // Resource pack
-                 6945 -> { // Data pack
-                Path path = resourcePacksRoot.resolve(fileName);
-                yield Files.exists(path) ? null : path;
-            }
-            case 6552 -> { // Shader pack
-                Path path = shaderPacksRoot.resolve(fileName);
-                yield Files.exists(path) ? null : path;
-            }
-            default -> {
-                if (modManager.hasSimpleMod(fileName)) {
-                    yield null;
-                }
-                yield modManager.getSimpleModPath(fileName);
-            }
+            case 12, 6945 -> resourcePacksRoot.resolve(fileName);
+            case 6552 -> shaderPacksRoot.resolve(fileName);
+            default -> modsRoot.resolve(fileName);
         };
     }
 
