@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -20,6 +21,7 @@ import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -36,8 +38,11 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -150,6 +155,140 @@ public class DownloadPage extends Control implements DecoratorPage {
         } else {
             this.callback.download(page.getDownloadProvider(), instanceReference.repository(), instanceReference.instanceId(), addon, file);
         }
+    }
+
+    /// Installs `version` into the instance together with its required dependencies, recursively.
+    /// A dependency that already exists in the `mods` directory is kept as it is.
+    public void downloadWithDependencies(RemoteAddon.Version version) {
+        HMCLGameInstance instance = instanceReference.instanceId() != null
+                ? instanceReference.repository().findInstance(instanceReference.instanceId())
+                : instanceReference.repository().getSelectedInstance();
+        if (instance == null) {
+            Controllers.dialog(i18n("addon.dependencies.no_instance"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
+            return;
+        }
+
+        DownloadProvider downloadProvider = page.getDownloadProvider();
+        ModManager modManager = instance.getModManager();
+        Path modsDirectory = instance.getModsDirectory();
+
+        Controllers.taskDialog(Task.composeAsync(() -> {
+            Files.createDirectories(modsDirectory);
+
+            List<Task<?>> downloads = new ArrayList<>();
+            Set<String> queued = new HashSet<>();
+            Deque<RemoteAddon.Version> queue = new ArrayDeque<>();
+            Set<String> visited = new HashSet<>();
+
+            addDownloadTask(downloads, queued, downloadProvider, version, modsDirectory);
+            queue.add(version);
+
+            while (!queue.isEmpty()) {
+                for (RemoteAddon.Dependency dependency : queue.removeFirst().dependencies()) {
+                    if (dependency.getType() != RemoteAddon.DependencyType.REQUIRED) {
+                        continue;
+                    }
+                    if (!visited.add(dependency.getSource() + ":" + dependency.getId())) {
+                        continue;
+                    }
+
+                    RemoteAddon addon = dependency.load(downloadProvider);
+                    if (addon == null || addon == RemoteAddon.BROKEN) {
+                        continue;
+                    }
+
+                    RemoteAddon.Version best = pickVersion(addon, dependency.getSource(), modManager, downloadProvider);
+                    if (best == null) {
+                        continue;
+                    }
+
+                    addDownloadTask(downloads, queued, downloadProvider, best, modsDirectory);
+                    queue.add(best);
+                }
+            }
+
+            return Task.allOf(downloads);
+        }).whenComplete(Schedulers.javafx(), exception -> {
+            if (exception == null) {
+                Controllers.showToast(i18n("install.success"));
+            } else if (!(exception instanceof CancellationException)) {
+                Controllers.dialog(I18n.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+            }
+        }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+    }
+
+    private static void addDownloadTask(List<Task<?>> downloads, Set<String> queued,
+                                        DownloadProvider downloadProvider, RemoteAddon.Version version, Path directory) {
+        String fileName = version.file().filename();
+        if (!queued.add(fileName) || Files.exists(directory.resolve(fileName))) {
+            return;
+        }
+
+        FileDownloadTask task = new FileDownloadTask(
+                downloadProvider.getDownloadCandidates(version.file().url()),
+                directory.resolve(fileName),
+                version.file().getIntegrityCheck());
+        task.setName(version.name());
+        downloads.add(task);
+    }
+
+    /// The newest version of `addon` that can run on the instance, or null when there is none.
+    @Nullable
+    private static RemoteAddon.Version pickVersion(RemoteAddon addon, RemoteAddon.Source source,
+                                                   ModManager modManager, DownloadProvider downloadProvider) throws IOException {
+        String gameVersion = modManager.getGameVersion();
+        Set<ModLoaderType> loaders = modManager.getSupportedLoaders();
+
+        try (Stream<RemoteAddon.Version> versions = addon.data().loadVersions(source.getRepository(), downloadProvider)) {
+            return versions
+                    .filter(version -> version != null && version.file() != null
+                            && version.file().filename() != null && version.file().url() != null)
+                    .filter(version -> matchesGameVersion(version.gameVersions(), gameVersion))
+                    .filter(version -> matchesLoader(version.loaders(), loaders))
+                    .max(Comparator.comparingInt(DownloadPage::versionTypePriority)
+                            .thenComparing(RemoteAddon.Version::datePublished, Comparator.nullsFirst(Comparator.naturalOrder())))
+                    .orElse(null);
+        }
+    }
+
+    /// No declared game version means the mod works everywhere, otherwise the versions only have to be related.
+    private static boolean matchesGameVersion(@Nullable List<String> declared, @Nullable String gameVersion) {
+        if (gameVersion == null || declared == null || declared.isEmpty()) {
+            return true;
+        }
+        for (String version : declared) {
+            if (gameVersion.equals(version) || gameVersion.startsWith(version + ".") || version.startsWith(gameVersion + ".")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// Only the loaders reported by the download source are used, and a version reporting none is accepted.
+    private static boolean matchesLoader(@Nullable List<AddonLoader> declared, Set<ModLoaderType> supported) {
+        if (supported.isEmpty() || declared == null || declared.isEmpty()) {
+            return true;
+        }
+
+        boolean reported = false;
+        for (AddonLoader loader : declared) {
+            if (loader != null && loader.type() instanceof ModLoaderType modLoader) {
+                reported = true;
+                if (supported.contains(modLoader)) {
+                    return true;
+                }
+            }
+        }
+        return !reported;
+    }
+
+    private static int versionTypePriority(RemoteAddon.Version version) {
+        RemoteAddon.VersionType type = version.versionType();
+        return type == null ? 3 : switch (type) {
+            case Release -> 0;
+            case Beta -> 1;
+            case Alpha -> 2;
+        };
     }
 
     public void saveAs(RemoteAddon.Version file) {
@@ -525,6 +664,16 @@ public class DownloadPage extends Control implements DecoratorPage {
             HBox additionalBox = new HBox(changelogButton, versionPageBtn);
             box.getChildren().add(additionalBox);
 
+            JFXCheckBox installDependencies;
+            if (selfPage.callback != null && type == RemoteAddon.Type.MOD) {
+                installDependencies = new JFXCheckBox(i18n("addon.dependencies.install"));
+                installDependencies.setSelected(true);
+                installDependencies.setPadding(new Insets(0, 8, 0, 8));
+                box.getChildren().add(installDependencies);
+            } else {
+                installDependencies = null;
+            }
+
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList dependenciesList = new ComponentList();
@@ -532,6 +681,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
 
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            scrollPane.setMinHeight(150);
             scrollPane.setContent(dependenciesList);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
@@ -549,6 +699,11 @@ public class DownloadPage extends Control implements DecoratorPage {
                 downloadButton = new JFXButton(type == RemoteAddon.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
                 downloadButton.getStyleClass().add("dialog-accept");
                 downloadButton.setOnAction(e -> {
+                    if (type == RemoteAddon.Type.MOD && installDependencies != null && installDependencies.isSelected()) {
+                        fireEvent(new DialogCloseEvent());
+                        selfPage.downloadWithDependencies(version);
+                        return;
+                    }
                     if (type == RemoteAddon.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                         fireEvent(new DialogCloseEvent());
                     }
