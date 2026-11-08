@@ -248,7 +248,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             return;
         }
 
-        Path resourcePackDirectory = gameInstance.getResourcePackManager().getDirectory();
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();

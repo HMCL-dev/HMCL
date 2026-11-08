@@ -288,7 +288,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return;
         }
 
-        Path modDirectory = gameInstance.getModManager().getDirectory();
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
