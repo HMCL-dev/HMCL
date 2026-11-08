@@ -74,16 +74,13 @@ public final class MessageDialogPane extends HBox {
             content.getStyleClass().add("jfx-layout-body");
             EnhancedTextFlow textFlow = new EnhancedTextFlow(text);
             textFlow.setStyle("-fx-font-size: 14px;");
-            if (textFlow.computePrefHeight(400.0) <= 350.0)
-                content.getChildren().setAll(textFlow);
-            else {
-                ScrollPane scrollPane = new ScrollPane(textFlow);
-                FXUtils.smoothScrolling(scrollPane);
-                scrollPane.setPrefHeight(350);
-                VBox.setVgrow(scrollPane, Priority.ALWAYS);
-                scrollPane.setFitToWidth(true);
-                content.getChildren().setAll(scrollPane);
-            }
+
+            ScrollPane scrollPane = new ScrollPane(textFlow);
+            FXUtils.smoothScrolling(scrollPane);
+            scrollPane.setPrefHeight(350);
+            VBox.setVgrow(scrollPane, Priority.ALWAYS);
+            scrollPane.setFitToWidth(true);
+            content.getChildren().setAll(scrollPane);
 
             actions = new HBox();
             actions.getStyleClass().add("jfx-layout-actions");
