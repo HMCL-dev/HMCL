@@ -23,7 +23,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -130,10 +129,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 content = i18n("update.channel.dev.hint");
             }
 
-            BorderPane titleBar = new BorderPane();
-            titleBar.getStyleClass().add("title");
-            titleBar.setLeft(new Label(title));
-
             JFXButton btnHide = new JFXButton();
             btnHide.setOnAction(e -> {
                 announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
@@ -143,12 +138,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
             });
             btnHide.getStyleClass().add("announcement-close-button");
             btnHide.setGraphic(SVG.CLOSE.createIcon(20));
-            titleBar.setRight(btnHide);
 
             TextFlow body = FXUtils.segmentToTextFlow(content, Controllers::onHyperlinkAction);
             body.setLineSpacing(4);
 
-            JFXCard announcementCard = new JFXCard(new VBox(16, titleBar, body));
+            JFXCard announcementCard = new JFXCard(body);
+            announcementCard.setHeadline(title);
+            announcementCard.setHeaderAction(btnHide);
             announcementCard.setCardType(JFXCard.CardType.OUTLINED);
             announcementCard.getStyleClass().add("announcement");
 

@@ -123,18 +123,12 @@
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
 }
 
-.announcement .title {
-    -fx-text-fill: -monet-on-surface;
-    -fx-font-size: 14px;
-    -fx-font-weight: BOLD;
-}
-
-.announcement Text {
+.announcement .card-body Text {
     -fx-fill: -monet-on-surface;
     -fx-font-size: 13px;
 }
 
-.announcement .hyperlink {
+.announcement .card-body .hyperlink {
     -fx-fill: -monet-primary;
     -fx-font-size: 13px;
 }
@@ -1080,9 +1074,57 @@
     -fx-background-radius: 12;
     -fx-border-radius: 12;
     -fx-border-width: 0;
-    -fx-padding: 16;
+    -fx-padding: 0;
     -fx-cursor: default;
     -jfx-feedback-fill: transparent;
+}
+
+.jfx-card .card-header,
+.jfx-card .card-body,
+.jfx-card .card-actions,
+.jfx-card .card-side-row {
+    -fx-padding: 16;
+}
+
+.jfx-card .card-header,
+.jfx-card .card-body,
+.jfx-card .card-side-row {
+    -fx-spacing: 16;
+}
+
+.jfx-card .card-titles {
+    -fx-spacing: 8;
+}
+
+.jfx-card .card-body:continuation,
+.jfx-card .card-actions:continuation {
+    -fx-padding: 0 16 16 16;
+}
+
+.jfx-card .card-header:embedded,
+.jfx-card .card-body:embedded {
+    -fx-padding: 0;
+}
+
+.jfx-card .card-body:embedded:continuation {
+    -fx-padding: 16 0 0 0;
+}
+
+.jfx-card .card-actions {
+    -fx-hgap: 8;
+    -fx-vgap: 8;
+}
+
+.jfx-card .card-headline {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.jfx-card .card-subhead,
+.jfx-card .card-supporting-text {
+    -fx-font-size: 14px;
+    -fx-text-fill: -monet-on-surface-variant;
 }
 
 .jfx-card:elevated {

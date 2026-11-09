@@ -6,12 +6,15 @@ import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventType;
+import javafx.geometry.Bounds;
+import javafx.geometry.NodeOrientation;
 import javafx.scene.AccessibleAction;
 import javafx.scene.AccessibleRole;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
@@ -138,7 +141,7 @@ public final class JFXCardTest {
             assertNull(card.getClip(), "The card's shadow must not be clipped");
             Region clip = (Region) Objects.requireNonNull(card.getContainer().getClip());
             assertEquals(card.getWidth(), clip.getWidth());
-            assertEquals(-16, clip.getLayoutX());
+            assertEquals(0, clip.getLayoutX(), 0.001);
             card.setStyle("-fx-background-radius: 24; -fx-padding: 0;");
             root.applyCss();
             root.layout();
@@ -149,12 +152,200 @@ public final class JFXCardTest {
             card.setContent(replacement);
             assertNull(content.getParent());
             assertSame(originalClip, content.getClip());
-            assertSame(card.getContainer(), replacement.getParent());
+            assertSame(card.lookup(".card-body"), replacement.getParent());
             card.setContent(null);
             assertNull(replacement.getParent());
             assertEquals(2, card.getChildren().size(), "Content removal must preserve the feedback layer");
             return null;
         });
+    }
+
+    /// The card owns section spacing, text hierarchy, action alignment, and empty-slot removal.
+    @Test
+    void sectionLayoutAndVisibility() throws Exception {
+        onFxThread(() -> {
+            Region content = fixedRegion(100, 40);
+            Region graphic = fixedRegion(40, 40);
+            Region trailing = fixedRegion(24, 24);
+            Region action = fixedRegion(72, 32);
+            JFXCard card = new JFXCard(content);
+            card.setHeadline("Headline");
+            card.setSubhead("Subhead");
+            card.setHeaderGraphic(graphic);
+            card.setHeaderAction(trailing);
+            card.getActions().add(action);
+            StackPane root = scene(card);
+            Label headline = (Label) Objects.requireNonNull(card.lookup(".card-headline"));
+            Label subhead = (Label) Objects.requireNonNull(card.lookup(".card-subhead"));
+            Bounds cardBounds = bounds(card);
+            assertEquals(cardBounds.getMinX() + 16, bounds(graphic).getMinX(), 0.01);
+            assertEquals(bounds(graphic).getMaxX() + 16, bounds(headline).getMinX(), 0.01);
+            assertEquals(8, bounds(subhead).getMinY() - bounds(headline).getMaxY(), 0.01);
+            assertEquals(cardBounds.getMaxX() - 16, bounds(trailing).getMaxX(), 0.01);
+            assertEquals(16, bounds(content).getMinY() - bounds(subhead).getMaxY(), 0.01);
+            assertEquals(16, bounds(action).getMinY() - bounds(content).getMaxY(), 0.01);
+            assertEquals(cardBounds.getMaxX() - 16, bounds(action).getMaxX(), 0.01);
+
+            double withContent = card.prefHeight(card.getWidth());
+            content.setVisible(false);
+            root.applyCss();
+            root.layout();
+            assertEquals(withContent - 56, card.prefHeight(card.getWidth()), 0.01);
+            content.setVisible(true);
+            root.applyCss();
+            root.layout();
+            assertEquals(withContent, card.prefHeight(card.getWidth()), 0.01);
+            card.setHeadline(null);
+            card.setSubhead("");
+            card.setHeaderGraphic(null);
+            card.setHeaderAction(null);
+            card.setContent(null);
+            card.getActions().clear();
+            root.applyCss();
+            root.layout();
+            assertEquals(0, card.prefHeight(card.getWidth()), 0.01);
+            assertNull(content.getParent());
+            assertNull(action.getParent());
+            return null;
+        });
+    }
+
+    /// Long text and action rows adapt to width, and logical start/end positions mirror in RTL.
+    @Test
+    void wrappingAndRightToLeft() throws Exception {
+        onFxThread(() -> {
+            JFXCard card = new JFXCard();
+            card.setHeadline("A long headline that wraps across multiple lines");
+            card.setSupportingText("Supporting text with enough words to test width-dependent card sizing. ".repeat(3));
+            Region graphic = fixedRegion(32, 32);
+            Region trailing = fixedRegion(24, 24);
+            card.setHeaderGraphic(graphic);
+            card.setHeaderAction(trailing);
+            Region first = fixedRegion(100, 32);
+            Region second = fixedRegion(100, 32);
+            Region third = fixedRegion(100, 32);
+            card.getActions().setAll(first, second, third);
+            StackPane root = scene(card);
+            double wideHeight = card.prefHeight(500);
+            double narrowHeight = card.prefHeight(260);
+            assertTrue(narrowHeight > wideHeight);
+            root.resize(260, narrowHeight);
+            root.layout();
+            assertEquals(bounds(first).getMinY(), bounds(second).getMinY(), 0.01);
+            assertEquals(bounds(second).getMaxY() + 8, bounds(third).getMinY(), 0.01);
+            assertEquals(bounds(card).getMaxX() - 16, bounds(third).getMaxX(), 0.01);
+
+            root.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
+            root.applyCss();
+            root.layout();
+            assertEquals(bounds(card).getMaxX() - 16, bounds(graphic).getMaxX(), 0.01);
+            assertEquals(bounds(card).getMinX() + 16, bounds(trailing).getMinX(), 0.01);
+            assertTrue(bounds(first).getMinX() > bounds(second).getMinX());
+            assertEquals(bounds(card).getMinX() + 16, bounds(third).getMinX(), 0.01);
+            return null;
+        });
+    }
+
+    /// Media moves between full-width and side layouts, preserving caller-owned node state.
+    @Test
+    void mediaPlacementAndCropping() throws Exception {
+        onFxThread(() -> {
+            Rectangle media = new Rectangle(200, 100, Color.DARKBLUE);
+            Rectangle originalClip = new Rectangle(200, 100);
+            media.setClip(originalClip);
+            JFXCard card = new JFXCard();
+            card.setHeadline("Headline");
+            card.setSupportingText("Supporting text");
+            card.setMedia(media);
+            card.setMediaAspectRatio(2);
+            StackPane root = scene(card);
+            Region frame = (Region) Objects.requireNonNull(card.lookup(".card-media"));
+            Label headline = (Label) Objects.requireNonNull(card.lookup(".card-headline"));
+            assertEquals(card.getWidth(), frame.getWidth(), 0.01);
+            assertEquals(frame.getWidth() / 2, frame.getHeight(), 0.01);
+            assertTrue(bounds(headline).getMinY() > bounds(frame).getMaxY());
+            assertSame(originalClip, media.getClip());
+            assertEquals(1, media.getScaleX());
+            assertEquals(1, media.getScaleY());
+
+            card.setMediaPlacement(JFXCard.MediaPlacement.BELOW_HEADER);
+            root.applyCss();
+            root.layout();
+            assertTrue(bounds(headline).getMaxY() < bounds(frame).getMinY());
+            card.setMediaPlacement(JFXCard.MediaPlacement.END);
+            root.applyCss();
+            root.layout();
+            assertEquals(80, frame.getWidth(), 0.01);
+            assertEquals(80, frame.getHeight(), 0.01);
+            assertEquals(bounds(card).getMaxX() - 16, bounds(frame).getMaxX(), 0.01);
+            assertTrue(bounds(media).getWidth() > frame.getWidth(), "A wide image must be cropped in a square frame");
+            card.setSideMediaSize(64);
+            root.layout();
+            assertEquals(64, frame.getWidth(), 0.01);
+            card.setMediaPlacement(JFXCard.MediaPlacement.START);
+            root.applyCss();
+            root.layout();
+            assertEquals(bounds(card).getMinX() + 16, bounds(frame).getMinX(), 0.01);
+            card.setMediaPlacement(JFXCard.MediaPlacement.TOP);
+            card.setMediaAspectRatio(1);
+            root.applyCss();
+            root.layout();
+            assertEquals(frame.getWidth(), frame.getHeight(), 0.01);
+            media.setWidth(100);
+            media.setScaleX(2);
+            media.setScaleY(2);
+            root.layout();
+            assertEquals(frame.getWidth(), bounds(media).getWidth(), 0.01,
+                    "Changing media bounds and transforms must update center-cropping");
+            assertEquals(2, media.getScaleX());
+            assertEquals(2, media.getScaleY());
+            card.setMedia(null);
+            assertNull(media.getParent());
+            assertSame(originalClip, media.getClip());
+            return null;
+        });
+    }
+
+    /// Full-bleed media is clipped to the inside of an outlined card rather than covering its stroke.
+    @Test
+    void mediaPreservesRoundedOutline() throws Exception {
+        onFxThread(() -> {
+            JFXCard card = new JFXCard();
+            card.setCardType(JFXCard.CardType.OUTLINED);
+            card.setStyle("-monet-outline-variant: #00ff00;");
+            Region media = new Region();
+            media.setStyle("-fx-background-color: #000000;");
+            card.setMedia(media);
+            card.setMediaAspectRatio(2);
+            StackPane root = scene(card);
+            root.resize(300, card.prefHeight(300));
+            root.layout();
+            Region clip = (Region) Objects.requireNonNull(card.getContainer().getClip());
+            assertEquals(1, clip.getBackground().getFills().get(0).getInsets().getTop());
+            assertEquals(11, clip.getBackground().getFills().get(0).getRadii().getTopLeftHorizontalRadius());
+            SnapshotParameters parameters = new SnapshotParameters();
+            parameters.setTransform(new Scale(4, 4));
+            WritableImage image = card.snapshot(parameters, null);
+            Color topStroke = image.getPixelReader().getColor((int) image.getWidth() / 2, 1);
+            assertTrue(topStroke.getGreen() > 0.9 && topStroke.getRed() < 0.1);
+            Color mediaPixel = image.getPixelReader().getColor((int) image.getWidth() / 2, 8);
+            assertTrue(mediaPixel.getGreen() < 0.1);
+            return null;
+        });
+    }
+
+    /// Creates a fixed-size placeholder so spacing assertions do not depend on platform font metrics.
+    private static Region fixedRegion(double width, double height) {
+        Region region = new Region();
+        region.setMinSize(width, height);
+        region.setPrefSize(width, height);
+        region.setMaxSize(width, height);
+        return region;
+    }
+
+    /// Returns a node's layout bounds in scene coordinates, excluding visual effects.
+    private static Bounds bounds(Node node) {
+        return node.localToScene(node.getLayoutBounds());
     }
 
     /// CSS-driven pseudo-class changes must reach the screen on normal pulses without manual CSS passes.
