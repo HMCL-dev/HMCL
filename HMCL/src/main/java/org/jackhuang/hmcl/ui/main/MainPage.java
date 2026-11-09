@@ -146,7 +146,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             announcementCard.setHeadline(title);
             announcementCard.setHeaderAction(btnHide);
             announcementCard.setCardType(JFXCard.CardType.OUTLINED);
-            announcementCard.getStyleClass().add("announcement");
 
             VBox announcementBox = new VBox(16);
             announcementBox.setPadding(new Insets(15));

@@ -123,16 +123,6 @@
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
 }
 
-.announcement .card-body Text {
-    -fx-fill: -monet-on-surface;
-    -fx-font-size: 13px;
-}
-
-.announcement .card-body .hyperlink {
-    -fx-fill: -monet-primary;
-    -fx-font-size: 13px;
-}
-
 .rippler-container {
     -jfx-feedback-fill: -monet-on-surface;
 }
@@ -1125,6 +1115,17 @@
 .jfx-card .card-supporting-text {
     -fx-font-size: 14px;
     -fx-text-fill: -monet-on-surface-variant;
+}
+
+.jfx-card .card-body > Text,
+.jfx-card .card-body > TextFlow > Text {
+    -fx-font-size: 14px;
+    -fx-fill: -monet-on-surface-variant;
+}
+
+.jfx-card .card-body > Text.hyperlink,
+.jfx-card .card-body > TextFlow > Text.hyperlink {
+    -fx-fill: -monet-primary;
 }
 
 .jfx-card:elevated {
