@@ -4,17 +4,23 @@ package org.jackhuang.hmcl.addon.mod;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.update.AddonUpdateConditions;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  *
@@ -108,8 +114,22 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
         return url;
     }
 
-    public String getLogoPath() {
-        return logoPath;
+    public @Nullable Image loadIcon() {
+        if (StringUtils.isBlank(logoPath))
+            return null;
+
+        try (var zipFileTree = CompressingUtils.openZipTree(getFile())) {
+            @Nullable var iconEntry = zipFileTree.getEntry(logoPath);
+            if (iconEntry == null)
+                return null;
+
+            try (var inputStream = zipFileTree.getInputStream(iconEntry)) {
+                return new Image(inputStream, 80, 80, true, true);
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to load mod icon: " + getFile(), e);
+            return null;
+        }
     }
 
     public ReadOnlyBooleanProperty activeProperty() {

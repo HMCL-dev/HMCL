@@ -939,6 +939,13 @@ public final class FXUtils {
         }
     }
 
+    public static Image ensureValidIcon(@Nullable Image icon, Supplier<Image> fallback) {
+        if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1)
+            return icon;
+
+        return fallback.get();
+    }
+
     /**
      * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
      *
