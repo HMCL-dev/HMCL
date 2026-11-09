@@ -369,7 +369,8 @@
     -fx-cursor: hand;
 }
 
-.installer-item-status:incompatible {
+.installer-item-status:incompatible,
+.jfx-card.installer-card:incompatible .card-supporting-text {
     -fx-opacity: 0.6;
 }
 
@@ -379,8 +380,8 @@
     -fx-pref-width: 180px;
 }
 
-.installer-item-wrapper:card {
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+.jfx-card.installer-card {
+    -fx-pref-width: 180px;
 }
 
 .installer-item-wrapper .installer-item:list-item {
@@ -396,10 +397,6 @@
 
 .installer-item-wrapper .installer-item:list-item > .installer-item-status {
     -fx-max-width: infinity;
-}
-
-.installer-item-wrapper .installer-item:card {
-    -fx-alignment: center;
 }
 
 /*******************************************************************************

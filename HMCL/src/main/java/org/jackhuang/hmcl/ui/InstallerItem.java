@@ -3,13 +3,15 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCard;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Control;
@@ -24,6 +26,8 @@ import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -108,6 +112,13 @@ public class InstallerItem extends Control {
     @Override
     protected Skin<?> createDefaultSkin() {
         return new InstallerItemSkin(this);
+    }
+
+    /// Returns horizontal bias for cards so wrapping is measured at the allocated width.
+    /// List rows retain the default content bias.
+    @Override
+    public @Nullable Orientation getContentBias() {
+        return style == Style.CARD ? Orientation.HORIZONTAL : super.getContentBias();
     }
 
     public final static class InstallerItemGroup {
@@ -224,111 +235,37 @@ public class InstallerItem extends Control {
         }
     }
 
+    /// Presents an installer as an interactive card or a compact list row.
+    @NotNullByDefault
     private static final class InstallerItemSkin extends SkinBase<InstallerItem> {
+        /// Selects the compact row's layout rules.
         private static final PseudoClass LIST_ITEM = PseudoClass.getPseudoClass("list-item");
-        private static final PseudoClass CARD = PseudoClass.getPseudoClass("card");
 
-        @SuppressWarnings({"FieldCanBeLocal", "unused"})
-        private final ChangeListener<Number> holder;
+        /// Dims the description of an incompatible component.
+        private static final PseudoClass INCOMPATIBLE = PseudoClass.getPseudoClass("incompatible");
 
-        /// Creates an installer row with its surface and feedback in the same rounded container.
+        /// The card or compact row whose size determines the control's preferred dimensions.
+        private final RipplerContainer container;
+
+        /// Creates state-bound actions and the layout selected by the control's style.
         InstallerItemSkin(InstallerItem control) {
             super(control);
-
-            Pane pane;
-            if (control.style == Style.CARD) {
-                pane = new VBox();
-                holder = FXUtils.onWeakChangeAndOperate(pane.widthProperty(), v -> FXUtils.setLimitHeight(pane, v.doubleValue() * 0.7));
-            } else {
-                pane = new HBox();
-                holder = null;
-            }
-            pane.getStyleClass().add("installer-item");
-            RipplerContainer container = new RipplerContainer(pane);
-            container.getStyleClass().add("installer-item-wrapper");
-            getChildren().setAll(container);
-
-            pane.pseudoClassStateChanged(LIST_ITEM, control.style == Style.LIST_ITEM);
-            pane.pseudoClassStateChanged(CARD, control.style == Style.CARD);
-            container.pseudoClassStateChanged(CARD, control.style == Style.CARD);
-
-            if (control.iconType != null) {
-                var imageContainer = new ImageContainer(32);
-                imageContainer.setImage(control.iconType.getIcon());
-                imageContainer.setMouseTransparent(true);
-                imageContainer.getStyleClass().add("installer-item-image");
-                pane.getChildren().add(imageContainer);
-
-                if (control.style == Style.CARD) {
-                    VBox.setMargin(imageContainer, new Insets(8, 0, 8, 0));
-                }
-            }
-
-            Label nameLabel = new Label();
-            nameLabel.getStyleClass().add("installer-item-name");
-            nameLabel.setMouseTransparent(true);
-            pane.getChildren().add(nameLabel);
-            nameLabel.textProperty().set(I18n.hasKey("install.installer." + control.type.getPatchId()) ? i18n("install.installer." + control.type.getPatchId()) : control.type.getPatchId());
-            HBox.setMargin(nameLabel, new Insets(0, 4, 0, 4));
-
-            Label statusLabel = new Label();
-            statusLabel.getStyleClass().add("installer-item-status");
-            statusLabel.setMouseTransparent(true);
-            pane.getChildren().add(statusLabel);
-            HBox.setHgrow(statusLabel, Priority.ALWAYS);
-            statusLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                State state = control.resolvedStateProperty.get();
-
-                if (state instanceof InstalledState installedState) {
-                    if (installedState.incompatibleWithGame) {
-                        return i18n("install.installer.change_version", installedState.version);
-                    }
-                    if (installedState.external) {
-                        return i18n("install.installer.external_version", installedState.version);
-                    }
-                    return i18n("install.installer.version", installedState.version);
-                } else if (state instanceof InstallableState) {
-                    return control.style == Style.CARD
-                            ? i18n("install.installer.do_not_install")
-                            : i18n("install.installer.not_installed");
-                } else if (state instanceof IncompatibleState incompatibleState) {
-                    return i18n("install.installer.incompatible", i18n("install.installer." + incompatibleState.incompatibleItemName));
-                } else {
-                    throw new AssertionError("Unknown state type: " + state.getClass());
-                }
-            }, control.resolvedStateProperty));
-            FXUtils.onChangeAndOperate(
-                control.resolvedStateProperty,
-                state -> statusLabel.pseudoClassStateChanged(
-                    PseudoClass.getPseudoClass("incompatible"),
-                    state instanceof IncompatibleState
-                )
-            );
-            BorderPane.setMargin(statusLabel, new Insets(0, 0, 0, 8));
-            BorderPane.setAlignment(statusLabel, Pos.CENTER_LEFT);
-
-            HBox buttonsContainer = new HBox();
-            buttonsContainer.setPickOnBounds(false);
-            buttonsContainer.setSpacing(8);
-            buttonsContainer.setAlignment(Pos.CENTER);
-            pane.getChildren().add(buttonsContainer);
 
             JFXButton removeButton = FXUtils.newToggleButton4(SVG.CLOSE);
             if (control.type == GameComponentType.GAME) {
                 removeButton.setVisible(false);
             } else {
                 removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
-                    State state = control.resolvedStateProperty.get();
+                    @Nullable State state = control.resolvedStateProperty.get();
                     return state instanceof InstalledState installedState && !installedState.external;
                 }, control.resolvedStateProperty));
             }
             removeButton.managedProperty().bind(removeButton.visibleProperty());
             removeButton.setOnAction(e -> {
-                Runnable onRemove = control.getOnRemove();
+                @Nullable Runnable onRemove = control.getOnRemove();
                 if (onRemove != null)
                     onRemove.run();
             });
-            buttonsContainer.getChildren().add(removeButton);
 
             JFXButton installButton = new JFXButton();
             installButton.graphicProperty().bind(Bindings.createObjectBinding(() ->
@@ -343,7 +280,7 @@ public class InstallerItem extends Control {
                     return false;
                 }
 
-                State state = control.resolvedStateProperty.get();
+                @Nullable State state = control.resolvedStateProperty.get();
                 if (state instanceof InstallableState) {
                     return true;
                 }
@@ -355,16 +292,119 @@ public class InstallerItem extends Control {
             }, control.resolvedStateProperty, control.onInstall));
             installButton.managedProperty().bind(installButton.visibleProperty());
             installButton.setOnAction(e -> {
-                Runnable onInstall = control.getOnInstall();
+                @Nullable Runnable onInstall = control.getOnInstall();
                 if (onInstall != null)
                     onInstall.run();
             });
-            buttonsContainer.getChildren().add(installButton);
+
+            @Nullable ImageContainer image = null;
+            if (control.iconType != null) {
+                image = new ImageContainer(32);
+                image.setImage(control.iconType.getIcon());
+                image.setMouseTransparent(true);
+                image.getStyleClass().add("installer-item-image");
+            }
+            String name = I18n.hasKey("install.installer." + control.type.getPatchId())
+                    ? i18n("install.installer." + control.type.getPatchId()) : control.type.getPatchId();
+            StringBinding status = createStatusText(control);
+            container = control.style == Style.CARD
+                    ? createCard(control, image, name, status, removeButton, installButton)
+                    : createListItem(control, image, name, status, removeButton, installButton);
+            getChildren().setAll(container);
+        }
+
+        /// Measures card wrapping at the available width, using its preferred width when unspecified.
+        @Override
+        protected double computePrefHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
+            if (container instanceof JFXCard) {
+                double contentWidth = width < 0 ? container.prefWidth(-1) : Math.max(0, width - leftInset - rightInset);
+                return topInset + container.prefHeight(contentWidth) + bottomInset;
+            }
+            return super.computePrefHeight(width, topInset, rightInset, bottomInset, leftInset);
+        }
+
+        /// Keeps the card's minimum height consistent with its width-dependent preferred height.
+        @Override
+        protected double computeMinHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
+            return container instanceof JFXCard
+                    ? computePrefHeight(width, topInset, rightInset, bottomInset, leftInset)
+                    : super.computeMinHeight(width, topInset, rightInset, bottomInset, leftInset);
+        }
+
+        /// Formats the resolved installation state for the selected presentation.
+        private static StringBinding createStatusText(InstallerItem control) {
+            return Bindings.createStringBinding(() -> {
+                State state = Objects.requireNonNull(control.resolvedStateProperty.get());
+                if (state instanceof InstalledState installedState) {
+                    if (installedState.incompatibleWithGame)
+                        return i18n("install.installer.change_version", installedState.version);
+                    if (installedState.external)
+                        return i18n("install.installer.external_version", installedState.version);
+                    return i18n("install.installer.version", installedState.version);
+                } else if (state instanceof InstallableState) {
+                    return control.style == Style.CARD
+                            ? i18n("install.installer.do_not_install")
+                            : i18n("install.installer.not_installed");
+                } else if (state instanceof IncompatibleState incompatibleState) {
+                    return i18n("install.installer.incompatible", i18n("install.installer." + incompatibleState.incompatibleItemName));
+                } else {
+                    throw new AssertionError("Unknown state type: " + state.getClass());
+                }
+            }, control.resolvedStateProperty);
+        }
+
+        /// Creates an outlined card whose background action follows installation availability.
+        private static JFXCard createCard(InstallerItem control, @Nullable ImageContainer image, String name,
+                                          StringBinding status, JFXButton removeButton, JFXButton installButton) {
+            JFXCard card = new JFXCard();
+            card.getStyleClass().add("installer-card");
+            card.setCardType(JFXCard.CardType.OUTLINED);
+            card.setMinHeight(Region.USE_PREF_SIZE);
+            card.setHeaderGraphic(image);
+            card.setHeadline(name);
+            card.supportingTextProperty().bind(status);
+            card.getActions().addAll(removeButton, installButton);
+            card.interactiveProperty().bind(installButton.visibleProperty());
+            card.accessibleTextProperty().bind(Bindings.concat(name, ", ", status));
+            card.setOnAction(event -> installButton.fire());
+            FXUtils.onChangeAndOperate(control.resolvedStateProperty,
+                    state -> card.pseudoClassStateChanged(INCOMPATIBLE, state instanceof IncompatibleState));
+            return card;
+        }
+
+        /// Creates the compact row with its existing horizontal layout and mouse activation.
+        private static RipplerContainer createListItem(InstallerItem control, @Nullable ImageContainer image, String name,
+                                                       StringBinding status, JFXButton removeButton, JFXButton installButton) {
+            HBox pane = new HBox();
+            pane.getStyleClass().add("installer-item");
+            pane.pseudoClassStateChanged(LIST_ITEM, true);
+            RipplerContainer container = new RipplerContainer(pane);
+            container.getStyleClass().add("installer-item-wrapper");
+            if (image != null)
+                pane.getChildren().add(image);
+
+            Label nameLabel = new Label(name);
+            nameLabel.getStyleClass().add("installer-item-name");
+            nameLabel.setMouseTransparent(true);
+            HBox.setMargin(nameLabel, new Insets(0, 4, 0, 4));
+
+            Label statusLabel = new Label();
+            statusLabel.getStyleClass().add("installer-item-status");
+            statusLabel.setMouseTransparent(true);
+            statusLabel.textProperty().bind(status);
+            HBox.setHgrow(statusLabel, Priority.ALWAYS);
+            FXUtils.onChangeAndOperate(control.resolvedStateProperty,
+                    state -> statusLabel.pseudoClassStateChanged(INCOMPATIBLE, state instanceof IncompatibleState));
+
+            HBox buttonsContainer = new HBox(8, removeButton, installButton);
+            buttonsContainer.setPickOnBounds(false);
+            buttonsContainer.setAlignment(Pos.CENTER);
+            pane.getChildren().addAll(nameLabel, statusLabel, buttonsContainer);
 
             FXUtils.onChangeAndOperate(installButton.visibleProperty(), clickable -> {
                 if (clickable) {
                     container.setOnMouseClicked(event -> {
-                        Runnable onInstall = control.getOnInstall();
+                        @Nullable Runnable onInstall = control.getOnInstall();
                         if (onInstall != null && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
                             onInstall.run();
                             event.consume();
@@ -376,6 +416,7 @@ public class InstallerItem extends Control {
                     pane.setCursor(Cursor.DEFAULT);
                 }
             });
+            return container;
         }
     }
 }
