@@ -1079,6 +1079,54 @@
     -fx-padding: 8px;
 }
 
+.jfx-card {
+    -fx-background-color: -monet-surface-container-low;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-width: 0;
+    -fx-padding: 16;
+    -fx-cursor: default;
+    -jfx-feedback-fill: transparent;
+}
+
+.jfx-card:elevated {
+    -fx-background-color: -monet-surface-container-low;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.20), 3, 0, 0, 1);
+}
+
+.jfx-card:filled {
+    -fx-background-color: -monet-surface-container-highest;
+    -fx-effect: null;
+}
+
+.jfx-card:outlined {
+    -fx-background-color: -monet-surface;
+    -fx-border-color: -monet-outline-variant;
+    -fx-border-width: 1;
+    -fx-effect: null;
+}
+
+.jfx-card:interactive {
+    -fx-cursor: hand;
+    -jfx-feedback-fill: -monet-on-surface;
+}
+
+.jfx-card:elevated:interactive:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.20), 6, 0, 0, 2);
+}
+
+.jfx-card:filled:interactive:hover,
+.jfx-card:outlined:interactive:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.20), 3, 0, 0, 1);
+}
+
+.jfx-card:disabled,
+.jfx-card:interactive:disabled:hover {
+    -fx-cursor: default;
+    -jfx-feedback-fill: transparent;
+    -fx-effect: null;
+}
+
 .card {
     -fx-background-color: -monet-surface-container-low-transparent-80;
     -fx-background-radius: 4;
