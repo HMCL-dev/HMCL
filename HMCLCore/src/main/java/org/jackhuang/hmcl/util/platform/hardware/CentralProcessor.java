@@ -37,6 +37,8 @@ public final class CentralProcessor {
             name = name.replace("(tm)", "");
             idx = name.indexOf(" w/ Radeon "); // Radeon 780M Graphics
             if (idx < 0)
+                idx = name.indexOf(" W/ Radeon ");
+            if (idx < 0)
                 idx = name.indexOf(" with Radeon ");
             if (idx < 0)
                 idx = name.indexOf(" with AMD Radeon ");

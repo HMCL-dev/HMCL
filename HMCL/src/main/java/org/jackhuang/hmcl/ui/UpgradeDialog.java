@@ -31,9 +31,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class UpgradeDialog extends JFXDialogLayout {
 
     public UpgradeDialog(RemoteVersion remoteVersion, Runnable updateRunnable) {
-        maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-        maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
-
         Label heading = new Label(i18n("update.changelog"));
         heading.setPadding(new Insets(0, 0, 8, 0));
         setHeading(heading);
