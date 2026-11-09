@@ -8,7 +8,10 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.Charset;
 import java.time.Duration;
@@ -136,6 +139,10 @@ public final class NetworkUtils {
     }
 
     public static List<Pair<String, String>> parseQuery(String queryParameterString) {
+        return parseQuery(queryParameterString, false);
+    }
+
+    public static List<Pair<String, String>> parseQuery(String queryParameterString, boolean lenient) {
         if (queryParameterString == null) return Collections.emptyList();
 
         List<Pair<String, String>> result = new ArrayList<>();
@@ -143,13 +150,29 @@ public final class NetworkUtils {
         try (Scanner scanner = new Scanner(queryParameterString)) {
             scanner.useDelimiter("&");
             while (scanner.hasNext()) {
-                String[] nameValue = scanner.next().split(NAME_VALUE_SEPARATOR);
-                if (nameValue.length == 0 || nameValue.length > 2) {
-                    throw new IllegalArgumentException("bad query string");
+                String token = scanner.next();
+
+                String name;
+                String value;
+                if (lenient) {
+                    if (token.isEmpty()) continue;
+                    int idx = token.indexOf('=');
+                    if (idx < 0) {
+                        name = decodeURL(token);
+                        value = null;
+                    } else {
+                        name = decodeURL(token.substring(0, idx));
+                        value = decodeURL(token.substring(idx + 1));
+                    }
+                } else {
+                    String[] nv = token.split(NAME_VALUE_SEPARATOR);
+                    if (nv.length == 0 || nv.length > 2) {
+                        throw new IllegalArgumentException("bad query string");
+                    }
+                    name = decodeURL(nv[0]);
+                    value = nv.length == 2 ? decodeURL(nv[1]) : null;
                 }
 
-                String name = decodeURL(nameValue[0]);
-                String value = nameValue.length == 2 ? decodeURL(nameValue[1]) : null;
                 result.add(pair(name, value));
             }
         }

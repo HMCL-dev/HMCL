@@ -97,12 +97,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             listView = new JFXListView<>();
             listView.setItems(objects);
             listView.getStyleClass().add("jfx-list-view-float");
+            listView.getStyleClass().add("no-horizontal-scrollbar");
             listView.setPlaceholder(placeholderContainer);
 
             setMargin(listView, new Insets(0, 10, 0, 10));
             VBox.setVgrow(listView, Priority.ALWAYS);
 
-            listView.setCellFactory(listView -> new AddonUpdateListCell());
+            listView.setCellFactory(AddonUpdateListCell::new);
 
             ComponentList.setVgrow(listView, Priority.ALWAYS);
 
@@ -352,7 +353,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton changelogButton = FXUtils.newToggleButton4(SVG.INFO);
 
-        AddonUpdateListCell() {
+        AddonUpdateListCell(ListView<AddonUpdatesPage.AddonUpdateObject> listView) {
             HBox hbox = new HBox(16);
             HBox.setHgrow(content, Priority.ALWAYS);
             hbox.setAlignment(Pos.CENTER);
@@ -382,6 +383,8 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     item.enabled.set(!item.isEnabled());
                 }
             });
+
+            FXUtils.limitCellWidth(listView, this);
         }
 
         /// Updates addon version information and replaces tags together, reusing their labels.
@@ -432,9 +435,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         }
     }
 
+    /// Displays the target add-on version's changelog in a scrollable dialog.
     private static final class AddonChangelog extends JFXDialogLayout {
 
+        /// Creates a changelog dialog with a preferred height that follows the window height.
         public AddonChangelog(AddonUpdateObject object) {
+            prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
+
             RemoteAddon.Version targetVersion = object.data.targetVersion();
 
             this.setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + targetVersion.name())));
@@ -466,9 +473,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             setActions(versionPageBtn, closeButton);
-
-            this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
 
             onEscPressed(this, closeButton::fire);
         }
