@@ -233,7 +233,8 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             }
 
             for (DataPackInfoObject item : getSkinnable().getItems()) {
-                if (predicate.test(item.getTitle()) || predicate.test(item.getSubtitle())) {
+                DataPackFile datapack = item.getFile();
+                if (predicate.test(datapack.getFileName()) || predicate.test(datapack.getDescription().toString())) {
                     listView.getItems().add(item);
                 }
             }
@@ -258,14 +259,6 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
         DataPackInfoObject(DataPackFile file) {
             this.file = file;
-        }
-
-        String getTitle() {
-            return file.getFileName();
-        }
-
-        String getSubtitle() {
-            return file.getInfo().description().toString();
         }
 
         DataPackFile getFile() {
@@ -345,8 +338,8 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             if (observedActiveProperty != null)
                 observedActiveProperty.removeListener(weakActiveListener);
             if (empty || dataItem == null) return;
-            content.setTitle(dataItem.getTitle());
-            content.setSubtitle(dataItem.getSubtitle());
+            content.setTitle(dataItem.file.getFileName());
+            content.setSubtitle(dataItem.file.getDescription().toString());
 
             DataPackFile dataPackInfo = dataItem.getFile();
             (observedActiveProperty = dataPackInfo.activeProperty()).addListener(weakActiveListener);

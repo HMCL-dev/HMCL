@@ -6,7 +6,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.addon.datapack.DataPackFile;
 import org.jackhuang.hmcl.addon.datapack.DataPackManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -101,15 +100,14 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
 
     void removeSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
         List<String> failed = new ArrayList<>();
-        for (DataPackListPageSkin.DataPackInfoObject item : selectedItems) {
-            DataPackFile dataPack = item.getFile();
+        selectedItems.stream().map(DataPackListPageSkin.DataPackInfoObject::getFile).forEach(dataPack -> {
             try {
                 dataPackManager.removePack(dataPack);
             } catch (IOException e) {
                 failed.add(dataPack.getFile().toString());
                 LOG.warning("Failed to delete datapack \"" + dataPack.getFileName() + "\"", e);
             }
-        }
+        });
         refresh();
         if (!failed.isEmpty())
             Controllers.dialog(i18n("datapack.delete.failed") + "\n" + String.join(",\n", failed),
@@ -118,16 +116,14 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
 
     void setSelectedEnabled(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems, boolean enabled) {
         List<String> failed = new ArrayList<>();
-        selectedItems.stream()
-                .map(DataPackListPageSkin.DataPackInfoObject::getFile)
-                .forEach(dataPack -> {
-                    try {
-                        dataPack.setActive(enabled);
-                    } catch (IOException e) {
-                        failed.add(dataPack.getFile().toString());
-                        LOG.warning("Failed to enable or disable datapack \"" + dataPack.getFileName() + "\"", e);
-                    }
-                });
+        selectedItems.stream().map(DataPackListPageSkin.DataPackInfoObject::getFile).forEach(dataPack -> {
+            try {
+                dataPack.setActive(enabled);
+            } catch (IOException e) {
+                failed.add(dataPack.getFile().toString());
+                LOG.warning("Failed to enable or disable datapack \"" + dataPack.getFileName() + "\"", e);
+            }
+        });
         if (!failed.isEmpty())
             Controllers.dialog(i18n("datapack.toggle.failed") + "\n" + String.join(",\n", failed),
                     i18n("message.error"), MessageDialogPane.MessageType.ERROR);

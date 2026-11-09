@@ -61,6 +61,10 @@ public class DataPackFile extends LocalAddonFile<DataPackFile> {
         return info;
     }
 
+    public LocalAddonFile.Description getDescription() {
+        return info.description();
+    }
+
     public ReadOnlyBooleanProperty activeProperty() {
         return activeProperty.getReadOnlyProperty();
     }
