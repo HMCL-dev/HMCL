@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCard;
 import com.jfoenix.controls.JFXPopup;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -129,8 +130,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 content = i18n("update.channel.dev.hint");
             }
 
-            VBox announcementCard = new VBox();
-
             BorderPane titleBar = new BorderPane();
             titleBar.getStyleClass().add("title");
             titleBar.setLeft(new Label(title));
@@ -149,9 +148,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
             TextFlow body = FXUtils.segmentToTextFlow(content, Controllers::onHyperlinkAction);
             body.setLineSpacing(4);
 
-            announcementCard.getChildren().setAll(titleBar, body);
-            announcementCard.setSpacing(16);
-            announcementCard.getStyleClass().addAll("card", "announcement");
+            JFXCard announcementCard = new JFXCard(new VBox(16, titleBar, body));
+            announcementCard.getStyleClass().add("announcement");
 
             VBox announcementBox = new VBox(16);
             announcementBox.setPadding(new Insets(15));

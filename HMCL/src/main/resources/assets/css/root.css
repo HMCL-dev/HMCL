@@ -123,10 +123,6 @@
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
 }
 
-.announcement {
-    -fx-padding: 16;
-}
-
 .announcement .title {
     -fx-text-fill: -monet-on-surface;
     -fx-font-size: 14px;
