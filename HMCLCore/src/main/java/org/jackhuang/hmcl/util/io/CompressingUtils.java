@@ -12,12 +12,14 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
 import java.nio.file.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
+import java.util.zip.CRC32;
 import java.util.zip.ZipException;
 
 /// Provides ZIP archive access and filename encoding detection.
@@ -292,6 +294,85 @@ public final class CompressingUtils {
     /// @throws NullPointerException if the entry does not exist
     public static String readTextZipEntry(ZipArchiveReader zipFile, String name) throws IOException {
         return IOUtils.readFullyAsString(zipFile.getInputStream(zipFile.getEntry(name)));
+    }
+
+    /// Buffer size for reading ZIP entry data.
+    private static final int BUFFER_SIZE = 64 * 1024;
+
+    /// Maximum number of bytes to decompress across all entries in strict mode.
+    ///
+    /// Strict mode must decompress entries to verify their checksums, so a highly compressible
+    /// archive (a decompression bomb) would otherwise consume unbounded CPU and time. Genuine
+    /// mods stay far below this bound; exceeding it yields `false` because the check
+    /// could not be completed, not because the archive is known to be damaged.
+    private static final long MAX_TOTAL_DECOMPRESSED_BYTES = 2L * 1024 * 1024 * 1024;
+
+    /// Maximum number of entries to inspect.
+    ///
+    /// Bounds the loop itself: an archive made of millions of tiny entries would stay under the
+    /// byte limit while still consuming unbounded CPU. Exceeding it yields `false`.
+    private static final int MAX_ENTRIES = 100_000;
+
+    /// Checks the integrity of the given archive file.
+    ///
+    /// This method decompresses entries up to the inspection limits
+    /// ([MAX_ENTRIES] and [MAX_TOTAL_DECOMPRESSED_BYTES]) and verifies their CRC32 checksum
+    /// and uncompressed size. This detects damaged entry payloads that a structurally valid
+    /// archive can still contain, but such mods often still launch, so the result is advisory.
+    /// Entries that record no usable CRC32 in the central directory are skipped rather than
+    /// failing the whole archive, so a single such entry cannot make an otherwise-verifiable
+    /// mod permanently unverifiable. In practice [java.util.zip.ZipFile] always resolves the
+    /// checksum from the central directory, so this path is defensive.
+    ///
+    /// @param reader reader of the archive file to check
+    /// @return true when damage was found, or false otherwise
+    public static boolean isCorrupt(ZipArchiveReader reader) {
+        try {
+            Iterable<? extends ZipArchiveEntry> entries = reader.getEntries();
+            byte[] buffer = new byte[BUFFER_SIZE];
+            CRC32 crc = new CRC32();
+            long totalDecompressed = 0;
+            int entryCount = 0;
+
+            for (ZipArchiveEntry entry : entries) {
+                if (++entryCount > MAX_ENTRIES) return false;
+
+                // Skip directories - they have no data to validate
+                if (entry.isDirectory()) continue;
+
+                crc.reset();
+                long actualSize = 0;
+                try (InputStream is = reader.getInputStream(entry)) {
+                    int n;
+                    while ((n = is.read(buffer)) != -1) {
+                        crc.update(buffer, 0, n);
+                        actualSize += n;
+                        totalDecompressed += n;
+                        if (totalDecompressed > MAX_TOTAL_DECOMPRESSED_BYTES) {
+                            return false;
+                        }
+                    }
+                }
+                // An entry that records no usable CRC32 in the central directory cannot be
+                // verified. Skip it rather than failing the whole archive: a single such
+                // entry would otherwise make an otherwise-verifiable mod permanently
+                // unverifiable. In practice ZipFile always resolves the checksum from the
+                // central directory, so this path is defensive.
+                if (entry.getCrc() < 0) continue;
+
+                if (entry.getCrc() != crc.getValue()) return true;
+
+                // Verify size if available
+                if (entry.getSize() >= 0 && entry.getSize() != actualSize) return true;
+            }
+            // If nothing could be verified, the archive's integrity is genuinely unknown
+            return false;
+        } catch (IOException e) {
+            // The file is missing, locked by another process, inaccessible, or hit a transient I/O
+            // error. The check could not be performed, so the result is unknown rather
+            // than "sound" — and must not be reported as damage.
+            return false;
+        }
     }
 
 }

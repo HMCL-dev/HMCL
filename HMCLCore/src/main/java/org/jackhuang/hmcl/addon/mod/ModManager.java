@@ -176,6 +176,10 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     }
                 }
             }
+
+            // We assume that if we can read the metadata, then the mod file should be okay to launch with.
+            // Therefore, we do the full verification here so that most mods won't be affected.
+            if (modInfo == null && CompressingUtils.isCorrupt(tree.getReader())) throw new ZipException();
         } catch (Exception e) {
             if (e instanceof ZipException || e.getCause() instanceof ZipException) {
                 LOG.warning("Found corrupt mod file " + file, e);
