@@ -601,7 +601,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         private Image loadIcon() {
-            return FXUtils.ensureValidIcon(localModFile.loadIcon(), this::getDefaultIcon);
+            return FXUtils.ensureValidIcon(localModFile.loadIcon((input, name) -> FXUtils.loadImage(input, name, 80, 80, true, true)), this::getDefaultIcon);
         }
     }
 

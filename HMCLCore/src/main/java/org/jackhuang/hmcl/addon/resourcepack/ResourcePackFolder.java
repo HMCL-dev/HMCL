@@ -4,10 +4,12 @@ package org.jackhuang.hmcl.addon.resourcepack;
 
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
+import org.jackhuang.hmcl.util.function.ExceptionalBiFunction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -34,9 +36,9 @@ final class ResourcePackFolder extends ResourcePackFile {
     }
 
     @Override
-    public @Nullable Image loadIcon() {
+    public @Nullable Image loadIcon(ExceptionalBiFunction<InputStream, String, Image, Exception> decoder) {
         try (var inputStream = Files.newInputStream(getFile().resolve("pack.png"))) {
-            return new Image(inputStream, 64, 64, true, true);
+            return decoder.apply(inputStream, "pack.png");
         } catch (Exception e) {
             LOG.warning("Failed to load resource pack icon", e);
             return null;

@@ -514,7 +514,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
 
         private Image loadIcon() {
-            return FXUtils.ensureValidIcon(file.loadIcon(), this::getDefaultIcon);
+            return FXUtils.ensureValidIcon(file.loadIcon((input, name) -> FXUtils.loadImage(input, name, 64, 64, true, true)), this::getDefaultIcon);
         }
     }
 

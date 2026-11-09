@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.function.ExceptionalBiFunction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
@@ -20,6 +21,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -301,17 +303,17 @@ public class DataPack {
             return isDirectory;
         }
 
-        public @Nullable Image loadIcon() {
+        public @Nullable Image loadIcon(ExceptionalBiFunction<InputStream, String, Image, Exception> decoder) {
             try {
                 if (isDirectory) {
                     try (var inputStream = Files.newInputStream(path.resolve("pack.png"))) {
-                        return new Image(inputStream, 64, 64, true, true);
+                        return decoder.apply(inputStream, "pack.png");
                     }
                 }
 
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path);
                      var inputStream = Files.newInputStream(fs.getPath("/pack.png"))) {
-                    return new Image(inputStream, 64, 64, true, true);
+                    return decoder.apply(inputStream, "pack.png");
                 }
             } catch (Exception e) {
                 LOG.warning("Failed to load data pack icon", e);

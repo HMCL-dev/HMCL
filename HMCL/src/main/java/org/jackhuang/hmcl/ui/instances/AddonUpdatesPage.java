@@ -291,9 +291,9 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private @Nullable Image loadIcon() {
             @Nullable Image image;
             if (data.localAddonFile() instanceof LocalModFile localModFile) {
-                image = localModFile.loadIcon();
+                image = localModFile.loadIcon((input, name) -> FXUtils.loadImage(input, name, 80, 80, true, true));
             } else if (data.localAddonFile() instanceof ResourcePackFile resourcePackFile) {
-                image = resourcePackFile.loadIcon();
+                image = resourcePackFile.loadIcon((input, name) -> FXUtils.loadImage(input, name, 64, 64, true, true));
             } else {
                 return getDefaultIcon();
             }

@@ -6,11 +6,13 @@ import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.function.ExceptionalBiFunction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -107,7 +109,7 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile<ResourcePac
     }
 
     // 64*64
-    public abstract @Nullable Image loadIcon();
+    public abstract @Nullable Image loadIcon(ExceptionalBiFunction<InputStream, String, Image, Exception> decoder);
 
     public enum Compatibility {
         COMPATIBLE,

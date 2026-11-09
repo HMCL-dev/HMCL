@@ -274,7 +274,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         }
 
         private Image loadIcon() {
-            return FXUtils.ensureValidIcon(packInfo.loadIcon(), this::getDefaultIcon);
+            return FXUtils.ensureValidIcon(packInfo.loadIcon((input, name) -> FXUtils.loadImage(input, name, 64, 64, true, true)), this::getDefaultIcon);
         }
     }
 

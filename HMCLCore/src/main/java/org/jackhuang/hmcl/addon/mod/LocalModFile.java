@@ -10,11 +10,13 @@ import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.update.AddonUpdateConditions;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.function.ExceptionalBiFunction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -114,7 +116,7 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
         return url;
     }
 
-    public @Nullable Image loadIcon() {
+    public @Nullable Image loadIcon(ExceptionalBiFunction<InputStream, String, Image, Exception> decoder) {
         if (StringUtils.isBlank(logoPath))
             return null;
 
@@ -124,7 +126,7 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
                 return null;
 
             try (var inputStream = zipFileTree.getInputStream(iconEntry)) {
-                return new Image(inputStream, 80, 80, true, true);
+                return decoder.apply(inputStream, logoPath);
             }
         } catch (Exception e) {
             LOG.warning("Failed to load mod icon: " + getFile(), e);
