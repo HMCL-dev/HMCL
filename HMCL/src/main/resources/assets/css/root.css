@@ -369,33 +369,27 @@
     -fx-cursor: hand;
 }
 
-.installer-item-status:incompatible,
-.jfx-card.installer-card:incompatible .card-supporting-text {
+.installer-item-status:incompatible {
     -fx-opacity: 0.6;
 }
 
 .installer-item-wrapper {
     -fx-background-color: -monet-surface;
     -fx-background-radius: 4;
-    -fx-pref-width: 180px;
 }
 
-.jfx-card.installer-card {
-    -fx-pref-width: 180px;
-}
-
-.installer-item-wrapper .installer-item:list-item {
+.installer-item-wrapper .installer-item {
     -fx-padding: 8px;
     -fx-border-color: -monet-outline-variant;
     -fx-border-width: 0 0 1 0;
     -fx-alignment: center-left;
 }
 
-.installer-item-wrapper .installer-item:list-item > .installer-item-name {
+.installer-item-wrapper .installer-item > .installer-item-name {
     -fx-pref-width: 100px;
 }
 
-.installer-item-wrapper .installer-item:list-item > .installer-item-status {
+.installer-item-wrapper .installer-item > .installer-item-status {
     -fx-max-width: infinity;
 }
 

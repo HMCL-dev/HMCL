@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCard;
 import javafx.application.Platform;
 import javafx.css.PseudoClass;
 import javafx.scene.Node;
@@ -12,7 +11,8 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
-import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -28,42 +28,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.junit.jupiter.api.Assertions.*;
 
-/// Verifies installer card state transitions, action boundaries, and compact row compatibility.
+/// Verifies installer row layout, state transitions, and independent actions.
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 public final class InstallerItemTest {
-    /// A one-row action area must not leave space reserved for a second row below it.
-    @Test
-    void cardDoesNotReserveExtraActionRow() throws Exception {
-        onFxThread(() -> {
-            InstallerItem item = new InstallerItem(GameComponentType.FORGE, InstallerItem.Style.CARD);
-            item.setOnInstall(() -> {});
-            item.resolvedStateProperty().set(new InstallerItem.InstalledState("66.1.5", false, false));
-            scene(item);
-            JFXCard card = (JFXCard) Objects.requireNonNull(item.lookup(".jfx-card"));
-            Node actions = Objects.requireNonNull(card.lookup(".card-actions"));
-            assertEquals(card.localToScene(card.getLayoutBounds()).getMaxY() - card.getInsets().getBottom(),
-                    actions.localToScene(actions.getLayoutBounds()).getMaxY(), 0.001);
-        });
-    }
-
     /// Background activation tracks availability while child actions execute exactly once.
     @Test
-    void cardActionsFollowInstallationState() throws Exception {
+    void actionsFollowInstallationState() throws Exception {
         onFxThread(() -> {
-            InstallerItem item = new InstallerItem(GameComponentType.FORGE, InstallerItem.Style.CARD);
+            InstallerItem item = new InstallerItem(GameComponentType.FORGE);
             AtomicInteger installs = new AtomicInteger();
             AtomicInteger removals = new AtomicInteger();
             item.setOnInstall(installs::incrementAndGet);
             item.setOnRemove(removals::incrementAndGet);
-            FlowPane root = scene(item);
-            JFXCard card = (JFXCard) Objects.requireNonNull(item.lookup(".jfx-card"));
-            JFXButton remove = (JFXButton) card.getActions().get(0);
-            JFXButton install = (JFXButton) card.getActions().get(1);
-            assertEquals(JFXCard.CardType.OUTLINED, card.getCardType());
-            assertTrue(card.isInteractive());
+            VBox root = scene(item);
+            RipplerContainer row = (RipplerContainer) Objects.requireNonNull(item.lookup(".installer-item-wrapper"));
+            Label status = (Label) Objects.requireNonNull(item.lookup(".installer-item-status"));
+            HBox buttons = buttons(item);
+            JFXButton remove = (JFXButton) buttons.getChildren().get(0);
+            JFXButton install = (JFXButton) buttons.getChildren().get(1);
+            assertTrue(install.isVisible());
             assertFalse(remove.isVisible());
-            click(card);
+            click(row);
             assertEquals(1, installs.get());
 
             item.resolvedStateProperty().set(new InstallerItem.InstalledState("1.0", false, false));
@@ -74,67 +60,52 @@ public final class InstallerItemTest {
             assertEquals(1, installs.get());
             install.fire();
             assertEquals(2, installs.get());
-            assertTrue(card.getSupportingText().contains("1.0"));
-            assertTrue(card.getAccessibleText().contains("1.0"));
+            assertTrue(status.getText().contains("1.0"));
 
             item.resolvedStateProperty().set(new InstallerItem.InstalledState("2.0", true, false));
-            assertFalse(card.isInteractive());
             assertFalse(remove.isVisible());
             assertFalse(install.isVisible());
-            click(card);
-            card.fire();
+            click(row);
             assertEquals(2, installs.get());
 
             item.resolvedStateProperty().set(new InstallerItem.IncompatibleState("fabric", "1.0"));
             root.applyCss();
-            assertFalse(card.isInteractive());
-            assertTrue(card.getPseudoClassStates().contains(PseudoClass.getPseudoClass("incompatible")));
-            assertEquals(0.6, card.lookup(".card-supporting-text").getOpacity(), 0.001);
+            assertTrue(status.getPseudoClassStates().contains(PseudoClass.getPseudoClass("incompatible")));
+            assertEquals(0.6, status.getOpacity(), 0.001);
 
             item.resolvedStateProperty().set(InstallerItem.InstallableState.INSTANCE);
-            assertTrue(card.isInteractive());
-            assertFalse(card.getPseudoClassStates().contains(PseudoClass.getPseudoClass("incompatible")));
+            assertTrue(install.isVisible());
+            assertFalse(status.getPseudoClassStates().contains(PseudoClass.getPseudoClass("incompatible")));
             item.setOnInstall(null);
-            assertFalse(card.isInteractive());
-            card.fire();
-            assertEquals(2, installs.get());
-            item.setOnInstall(installs::incrementAndGet);
-            item.setDisable(true);
-            card.fire();
+            assertFalse(install.isVisible());
+            click(row);
             assertEquals(2, installs.get());
         });
     }
 
-    /// Long version descriptions expand the card without overlapping its action area.
+    /// The game row never offers removal, even for a locally installed version.
     @Test
-    void cardFitsWrappedStatusAndProtectsGameRemoval() throws Exception {
+    void gameCannotBeRemoved() throws Exception {
         onFxThread(() -> {
-            InstallerItem item = new InstallerItem(GameComponentType.GAME, InstallerItem.Style.CARD);
+            InstallerItem item = new InstallerItem(GameComponentType.GAME);
             item.setOnInstall(() -> {});
-            item.resolvedStateProperty().set(new InstallerItem.InstalledState("preview version ".repeat(12), false, true));
+            item.resolvedStateProperty().set(new InstallerItem.InstalledState("1.0", false, false));
             scene(item);
-            JFXCard card = (JFXCard) Objects.requireNonNull(item.lookup(".jfx-card"));
-            Label status = (Label) Objects.requireNonNull(card.lookup(".card-supporting-text"));
-            Node actions = Objects.requireNonNull(card.lookup(".card-actions"));
-            assertEquals(180, card.getWidth(), 0.001);
-            assertTrue(status.getHeight() > status.prefHeight(-1));
-            assertTrue(card.getHeight() > card.getWidth() * 0.7);
-            assertTrue(status.localToScene(status.getBoundsInLocal()).getMaxY()
-                    <= actions.localToScene(actions.getBoundsInLocal()).getMinY() + 0.001);
-            assertTrue(actions.localToScene(actions.getBoundsInLocal()).getMaxY()
-                    <= card.localToScene(card.getBoundsInLocal()).getMaxY() + 0.001);
-            assertFalse(card.getActions().get(0).isVisible());
+            assertFalse(buttons(item).getChildren().get(0).isVisible());
+            assertTrue(buttons(item).getChildren().get(1).isVisible());
         });
     }
 
-    /// List mode keeps its row surface, localized state text, and mouse activation.
+    /// Rows fill the list width and retain their localized state text and mouse activation.
     @Test
-    void listModeRetainsItsPresentation() throws Exception {
+    void rowsFillTheListWidth() throws Exception {
         onFxThread(() -> {
-            InstallerItem item = new InstallerItem(GameComponentType.FORGE, InstallerItem.Style.LIST_ITEM);
+            InstallerItem item = new InstallerItem(GameComponentType.FORGE);
             AtomicInteger installs = new AtomicInteger();
             item.setOnInstall(installs::incrementAndGet);
-            scene(item);
+            VBox root = scene(item);
+            assertEquals(root.getWidth(), item.getWidth(), 0.001);
+            assertTrue(item.getHeight() < 80);
             assertNull(item.lookup(".jfx-card"));
             RipplerContainer row = (RipplerContainer) Objects.requireNonNull(item.lookup(".installer-item-wrapper"));
             Label status = (Label) Objects.requireNonNull(item.lookup(".installer-item-status"));
@@ -148,9 +119,15 @@ public final class InstallerItemTest {
         });
     }
 
-    /// Lays out an installer at its preferred size using the application's theme.
-    private static FlowPane scene(InstallerItem item) {
-        FlowPane root = new FlowPane(item);
+    /// Returns the row's independent remove and install buttons in their layout order.
+    private static HBox buttons(InstallerItem item) {
+        HBox row = (HBox) Objects.requireNonNull(item.lookup(".installer-item"));
+        return (HBox) row.getChildren().get(row.getChildren().size() - 1);
+    }
+
+    /// Lays out an installer in a full-width vertical list using the application's theme.
+    private static VBox scene(InstallerItem item) {
+        VBox root = new VBox(item);
         Scene scene = new Scene(root, 400, 800);
         scene.getStylesheets().addAll(
                 Objects.requireNonNull(InstallerItemTest.class.getResource("/assets/css/blue.css")).toExternalForm(),

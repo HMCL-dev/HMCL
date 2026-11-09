@@ -10,9 +10,9 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -43,7 +43,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
     public AbstractInstallersPage(WizardController controller, GameVersionNumber gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
-        this.group = new InstallerItem.InstallerItemGroup(gameVersion, getInstallerItemStyle());
+        this.group = new InstallerItem.InstallerItemGroup(gameVersion);
 
         for (InstallerItem component : group.getComponents()) {
             GameComponentType type = component.getComponentType();
@@ -77,10 +77,6 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                 reload();
             });
         }
-    }
-
-    protected InstallerItem.Style getInstallerItemStyle() {
-        return InstallerItem.Style.CARD;
     }
 
     @Override
@@ -153,15 +149,12 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             {
                 InstallerItem[] components = control.group.getComponents();
 
-                FlowPane libraryPane = new FlowPane(16, 16, components);
+                VBox libraryPane = new VBox(components);
                 ScrollPane scrollPane = new ScrollPane(libraryPane);
                 scrollPane.setFitToWidth(true);
                 scrollPane.setFitToHeight(true);
                 BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
                 root.setCenter(scrollPane);
-
-                if (components.length <= 8)
-                    scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             }
 
             {

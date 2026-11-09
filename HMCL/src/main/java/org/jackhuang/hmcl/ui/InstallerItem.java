@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCard;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
@@ -11,7 +10,6 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Control;
@@ -39,7 +37,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class InstallerItem extends Control {
     private final GameComponentType type;
     private final GameInstanceIconType iconType;
-    private final Style style;
     private final ObjectProperty<InstalledState> versionProperty = new SimpleObjectProperty<>(this, "version", null);
     private final ObjectProperty<State> resolvedStateProperty = new SimpleObjectProperty<>(this, "resolvedState", InstallableState.INSTANCE);
 
@@ -62,14 +59,9 @@ public class InstallerItem extends Control {
     public record InstalledState(String version, boolean external, boolean incompatibleWithGame) implements State {
     }
 
-    public enum Style {
-        LIST_ITEM,
-        CARD,
-    }
-
-    public InstallerItem(GameComponentType type, Style style) {
+    /// Creates a list row for the given game component.
+    public InstallerItem(GameComponentType type) {
         this.type = type;
-        this.style = style;
         this.iconType = GameInstanceIconType.getIconType(type);
     }
 
@@ -114,13 +106,6 @@ public class InstallerItem extends Control {
         return new InstallerItemSkin(this);
     }
 
-    /// Returns horizontal bias for cards so wrapping is measured at the allocated width.
-    /// List rows retain the default content bias.
-    @Override
-    public @Nullable Orientation getContentBias() {
-        return style == Style.CARD ? Orientation.HORIZONTAL : super.getContentBias();
-    }
-
     public final static class InstallerItemGroup {
         private final InstallerItem game;
 
@@ -150,19 +135,21 @@ public class InstallerItem extends Control {
             }
         }
 
-        public InstallerItemGroup(GameVersionNumber gameVersion, Style style) {
-            game = new InstallerItem(GameComponentType.GAME, style);
-            InstallerItem fabric = new InstallerItem(GameComponentType.FABRIC, style);
-            InstallerItem fabricApi = new InstallerItem(GameComponentType.FABRIC_API, style);
-            InstallerItem forge = new InstallerItem(GameComponentType.FORGE, style);
-            InstallerItem cleanroom = new InstallerItem(GameComponentType.CLEANROOM, style);
-            InstallerItem legacyfabric = new InstallerItem(GameComponentType.LEGACY_FABRIC, style);
-            InstallerItem legacyfabricApi = new InstallerItem(GameComponentType.LEGACY_FABRIC_API, style);
-            InstallerItem neoForge = new InstallerItem(GameComponentType.NEO_FORGE, style);
-            InstallerItem liteLoader = new InstallerItem(GameComponentType.LITELOADER, style);
-            InstallerItem optiFine = new InstallerItem(GameComponentType.OPTIFINE, style);
-            InstallerItem quilt = new InstallerItem(GameComponentType.QUILT, style);
-            InstallerItem quiltApi = new InstallerItem(GameComponentType.QUILT_API, style);
+        /// Creates component rows and their compatibility bindings for the game version.
+        /// A null version includes all supported components without marking the game as installed.
+        public InstallerItemGroup(@Nullable GameVersionNumber gameVersion) {
+            game = new InstallerItem(GameComponentType.GAME);
+            InstallerItem fabric = new InstallerItem(GameComponentType.FABRIC);
+            InstallerItem fabricApi = new InstallerItem(GameComponentType.FABRIC_API);
+            InstallerItem forge = new InstallerItem(GameComponentType.FORGE);
+            InstallerItem cleanroom = new InstallerItem(GameComponentType.CLEANROOM);
+            InstallerItem legacyfabric = new InstallerItem(GameComponentType.LEGACY_FABRIC);
+            InstallerItem legacyfabricApi = new InstallerItem(GameComponentType.LEGACY_FABRIC_API);
+            InstallerItem neoForge = new InstallerItem(GameComponentType.NEO_FORGE);
+            InstallerItem liteLoader = new InstallerItem(GameComponentType.LITELOADER);
+            InstallerItem optiFine = new InstallerItem(GameComponentType.OPTIFINE);
+            InstallerItem quilt = new InstallerItem(GameComponentType.QUILT);
+            InstallerItem quiltApi = new InstallerItem(GameComponentType.QUILT_API);
 
             Map<InstallerItem, Set<InstallerItem>> incompatibleMap = new HashMap<>();
             mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom, legacyfabric);
@@ -235,19 +222,13 @@ public class InstallerItem extends Control {
         }
     }
 
-    /// Presents an installer as an interactive card or a compact list row.
+    /// Presents an installer as a compact list row with state-bound actions.
     @NotNullByDefault
     private static final class InstallerItemSkin extends SkinBase<InstallerItem> {
-        /// Selects the compact row's layout rules.
-        private static final PseudoClass LIST_ITEM = PseudoClass.getPseudoClass("list-item");
-
         /// Dims the description of an incompatible component.
         private static final PseudoClass INCOMPATIBLE = PseudoClass.getPseudoClass("incompatible");
 
-        /// The card or compact row whose size determines the control's preferred dimensions.
-        private final RipplerContainer container;
-
-        /// Creates state-bound actions and the layout selected by the control's style.
+        /// Creates the row and binds its actions to the installation state.
         InstallerItemSkin(InstallerItem control) {
             super(control);
 
@@ -307,31 +288,10 @@ public class InstallerItem extends Control {
             String name = I18n.hasKey("install.installer." + control.type.getPatchId())
                     ? i18n("install.installer." + control.type.getPatchId()) : control.type.getPatchId();
             StringBinding status = createStatusText(control);
-            container = control.style == Style.CARD
-                    ? createCard(control, image, name, status, removeButton, installButton)
-                    : createListItem(control, image, name, status, removeButton, installButton);
-            getChildren().setAll(container);
+            getChildren().setAll(createListItem(control, image, name, status, removeButton, installButton));
         }
 
-        /// Measures card wrapping at the available width, using its preferred width when unspecified.
-        @Override
-        protected double computePrefHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
-            if (container instanceof JFXCard) {
-                double contentWidth = width < 0 ? container.prefWidth(-1) : Math.max(0, width - leftInset - rightInset);
-                return topInset + container.prefHeight(contentWidth) + bottomInset;
-            }
-            return super.computePrefHeight(width, topInset, rightInset, bottomInset, leftInset);
-        }
-
-        /// Keeps the card's minimum height consistent with its width-dependent preferred height.
-        @Override
-        protected double computeMinHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
-            return container instanceof JFXCard
-                    ? computePrefHeight(width, topInset, rightInset, bottomInset, leftInset)
-                    : super.computeMinHeight(width, topInset, rightInset, bottomInset, leftInset);
-        }
-
-        /// Formats the resolved installation state for the selected presentation.
+        /// Formats the resolved installation state for the row.
         private static StringBinding createStatusText(InstallerItem control) {
             return Bindings.createStringBinding(() -> {
                 State state = Objects.requireNonNull(control.resolvedStateProperty.get());
@@ -342,9 +302,7 @@ public class InstallerItem extends Control {
                         return i18n("install.installer.external_version", installedState.version);
                     return i18n("install.installer.version", installedState.version);
                 } else if (state instanceof InstallableState) {
-                    return control.style == Style.CARD
-                            ? i18n("install.installer.do_not_install")
-                            : i18n("install.installer.not_installed");
+                    return i18n("install.installer.not_installed");
                 } else if (state instanceof IncompatibleState incompatibleState) {
                     return i18n("install.installer.incompatible", i18n("install.installer." + incompatibleState.incompatibleItemName));
                 } else {
@@ -353,31 +311,11 @@ public class InstallerItem extends Control {
             }, control.resolvedStateProperty);
         }
 
-        /// Creates an outlined card whose background action follows installation availability.
-        private static JFXCard createCard(InstallerItem control, @Nullable ImageContainer image, String name,
-                                          StringBinding status, JFXButton removeButton, JFXButton installButton) {
-            JFXCard card = new JFXCard();
-            card.getStyleClass().add("installer-card");
-            card.setCardType(JFXCard.CardType.OUTLINED);
-            card.setMinHeight(Region.USE_PREF_SIZE);
-            card.setHeaderGraphic(image);
-            card.setHeadline(name);
-            card.supportingTextProperty().bind(status);
-            card.getActions().addAll(removeButton, installButton);
-            card.interactiveProperty().bind(installButton.visibleProperty());
-            card.accessibleTextProperty().bind(Bindings.concat(name, ", ", status));
-            card.setOnAction(event -> installButton.fire());
-            FXUtils.onChangeAndOperate(control.resolvedStateProperty,
-                    state -> card.pseudoClassStateChanged(INCOMPATIBLE, state instanceof IncompatibleState));
-            return card;
-        }
-
         /// Creates the compact row with its existing horizontal layout and mouse activation.
         private static RipplerContainer createListItem(InstallerItem control, @Nullable ImageContainer image, String name,
                                                        StringBinding status, JFXButton removeButton, JFXButton installButton) {
             HBox pane = new HBox();
             pane.getStyleClass().add("installer-item");
-            pane.pseudoClassStateChanged(LIST_ITEM, true);
             RipplerContainer container = new RipplerContainer(pane);
             container.getStyleClass().add("installer-item-wrapper");
             if (image != null)
