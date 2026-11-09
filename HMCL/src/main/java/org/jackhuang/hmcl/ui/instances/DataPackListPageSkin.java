@@ -339,7 +339,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                 observedActiveProperty.removeListener(weakActiveListener);
             if (empty || dataItem == null) return;
             content.setTitle(dataItem.file.getFileName());
-            content.setSubtitle(dataItem.file.getDescription().toString());
+            content.setSubtitle(dataItem.file.getDescription().toStringSingleLine());
 
             DataPackFile dataPackInfo = dataItem.getFile();
             (observedActiveProperty = dataPackInfo.activeProperty()).addListener(weakActiveListener);
