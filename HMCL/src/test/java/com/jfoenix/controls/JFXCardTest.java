@@ -10,8 +10,10 @@ import javafx.scene.AccessibleAction;
 import javafx.scene.AccessibleRole;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -21,6 +23,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.transform.Scale;
 import javafx.stage.Stage;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +43,38 @@ import static org.junit.jupiter.api.Assertions.*;
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 public final class JFXCardTest {
+    /// Rounded outlines must not expose a bright background fringe outside the darker stroke.
+    @Test
+    void outlinedCornersHaveNoOuterHalo() throws Exception {
+        onFxThread(() -> {
+            JFXCard card = new JFXCard();
+            card.setCardType(JFXCard.CardType.OUTLINED);
+            scene(card);
+            SnapshotParameters parameters = new SnapshotParameters();
+            parameters.setFill(Color.web("#151515"));
+            parameters.setTransform(new Scale(4, 4));
+            WritableImage image = card.snapshot(parameters, null);
+            int width = (int) image.getWidth();
+            int height = (int) image.getHeight();
+            for (int corner = 0; corner < 4; corner++) {
+                for (int y = 0; y < 48; y++) {
+                    double previous = 0;
+                    for (int x = 0; x < 72; x++) {
+                        int sampleX = (corner & 1) == 0 ? x : width - 1 - x;
+                        int sampleY = (corner & 2) == 0 ? y : height - 1 - y;
+                        double current = image.getPixelReader().getColor(sampleX, sampleY).getRed();
+                        // Moving inward should go from dark surroundings through the outline to the
+                        // light surface, without a bright fringe followed by a darker outline.
+                        assertTrue(current >= previous - 0.035,
+                                "Unexpected outer halo at corner " + corner + ", x=" + x + ", y=" + y);
+                        previous = current;
+                    }
+                }
+            }
+            return null;
+        });
+    }
+
     /// Applies CSS variants repeatedly, including bound properties and disabled hover precedence.
     @Test
     void variantsAndCss() throws Exception {

@@ -1099,6 +1099,8 @@
     -fx-background-color: -monet-surface;
     -fx-border-color: -monet-outline-variant;
     -fx-border-width: 1;
+    /* Align the inside stroke's centerline with the 12px background corner. */
+    -fx-border-radius: 11.5;
     -fx-effect: null;
 }
 

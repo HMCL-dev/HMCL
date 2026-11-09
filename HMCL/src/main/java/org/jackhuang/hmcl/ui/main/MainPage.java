@@ -149,6 +149,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             body.setLineSpacing(4);
 
             JFXCard announcementCard = new JFXCard(new VBox(16, titleBar, body));
+            announcementCard.setCardType(JFXCard.CardType.OUTLINED);
             announcementCard.getStyleClass().add("announcement");
 
             VBox announcementBox = new VBox(16);
