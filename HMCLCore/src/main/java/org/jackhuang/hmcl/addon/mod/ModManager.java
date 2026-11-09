@@ -15,6 +15,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
@@ -162,7 +163,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     }
                 }
             }
-            if (modInfo != null && !localizationLanguage.isEmpty())
+            if (modInfo != null && !localizationLanguage.isEmpty()
+                    && GameVersionNumber.compare(gameVersion, "1.13") >= 0)
                 modInfo.setLocalization(ModLocalization.read(tree, modInfo.getId(), localizationLanguage));
         } catch (Exception e) {
             LOG.warning("Failed to open mod file " + file, e);
