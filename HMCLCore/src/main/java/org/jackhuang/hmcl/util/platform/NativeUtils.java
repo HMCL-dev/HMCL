@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform;
 
 import com.sun.jna.Library;
@@ -61,7 +46,28 @@ public final class NativeUtils {
                     if (osVersion == null || osVersion.startsWith("5.") || osVersion.equals("6.0"))
                         return false;
 
-                    // Currently we only need to use JNA on Windows
+                    Native.getDefaultStringEncoding();
+                    return true;
+                }
+
+                if (Platform.isMac()) {
+                    String osVersion = System.getProperty("os.version");
+
+                    // Require macOS 10.14 or later
+                    if (osVersion != null) {
+                        String[] parts = osVersion.split("\\.");
+                        if (parts.length >= 2) {
+                            try {
+                                int major = Integer.parseInt(parts[0]);
+                                int minor = Integer.parseInt(parts[1]);
+                                if (major < 10 || (major == 10 && minor < 14)) {
+                                    return false;
+                                }
+                            } catch (NumberFormatException ignored) {
+                            }
+                        }
+                    }
+
                     Native.getDefaultStringEncoding();
                     return true;
                 }

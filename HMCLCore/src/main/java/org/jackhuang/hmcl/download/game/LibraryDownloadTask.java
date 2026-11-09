@@ -1,50 +1,29 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
+import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.DownloadException;
-import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Downloads a library or restores it from the cache, then publishes successful downloads to the cache.
 public class LibraryDownloadTask extends Task<Void> {
     private FileDownloadTask task;
-    protected final File jar;
+    protected final Path jar;
     protected final DefaultCacheRepository cacheRepository;
     protected final AbstractDependencyManager dependencyManager;
     protected final Library library;
@@ -52,7 +31,7 @@ public class LibraryDownloadTask extends Task<Void> {
     private final Library originalLibrary;
     private boolean cached = false;
 
-    public LibraryDownloadTask(AbstractDependencyManager dependencyManager, File file, Library library) {
+    public LibraryDownloadTask(AbstractDependencyManager dependencyManager, Path file, Library library) {
         this.dependencyManager = dependencyManager;
         this.originalLibrary = library;
 
@@ -106,7 +85,7 @@ public class LibraryDownloadTask extends Task<Void> {
         Optional<Path> libPath = cacheRepository.getLibrary(originalLibrary);
         if (libPath.isPresent()) {
             try {
-                FileUtils.copyFile(libPath.get().toFile(), jar);
+                FileUtils.copyFile(libPath.get(), jar);
                 cached = true;
                 return;
             } catch (IOException e) {
@@ -117,7 +96,8 @@ public class LibraryDownloadTask extends Task<Void> {
         }
 
 
-        List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
+        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+        DownloadCandidates urls = downloadProvider.getDownloadCandidates(url);
         task = new FileDownloadTask(urls, jar,
                 library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
         task.setCacheRepository(cacheRepository);
@@ -134,69 +114,10 @@ public class LibraryDownloadTask extends Task<Void> {
     public void postExecute() throws Exception {
         if (!cached) {
             try {
-                cacheRepository.cacheLibrary(library, jar.toPath(), false);
+                cacheRepository.cacheLibrary(library, jar, false);
             } catch (IOException e) {
                 LOG.warning("Failed to cache downloaded library " + library, e);
             }
         }
-    }
-
-    public static boolean checksumValid(File libPath, List<String> checksums) {
-        try {
-            if (checksums == null || checksums.isEmpty()) {
-                return true;
-            }
-            byte[] fileData = Files.readAllBytes(libPath.toPath());
-            boolean valid = checksums.contains(DigestUtils.digestToString("SHA-1", fileData));
-            if (!valid && libPath.getName().endsWith(".jar")) {
-                valid = validateJar(fileData, checksums);
-            }
-            return valid;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    private static boolean validateJar(byte[] data, List<String> checksums) throws IOException {
-        HashMap<String, String> files = new HashMap<>();
-        String[] hashes = null;
-        JarInputStream jar = new JarInputStream(new ByteArrayInputStream(data));
-        JarEntry entry = jar.getNextJarEntry();
-        while (entry != null) {
-            byte[] eData = IOUtils.readFullyWithoutClosing(jar);
-            if (entry.getName().equals("checksums.sha1")) {
-                hashes = new String(eData, StandardCharsets.UTF_8).split("\n");
-            }
-            if (!entry.isDirectory()) {
-                files.put(entry.getName(), DigestUtils.digestToString("SHA-1", eData));
-            }
-            entry = jar.getNextJarEntry();
-        }
-        jar.close();
-        if (hashes != null) {
-            boolean failed = !checksums.contains(files.get("checksums.sha1"));
-            if (!failed) {
-                for (String hash : hashes) {
-                    if ((!hash.trim().equals("")) && (hash.contains(" "))) {
-                        String[] e = hash.split(" ");
-                        String validChecksum = e[0];
-                        String target = hash.substring(validChecksum.length() + 1);
-                        String checksum = files.get(target);
-                        if ((!files.containsKey(target)) || (checksum == null)) {
-                            LOG.warning("    " + target + " : missing");
-                            failed = true;
-                            break;
-                        } else if (!checksum.equals(validChecksum)) {
-                            LOG.warning("    " + target + " : failed (" + checksum + ", " + validChecksum + ")");
-                            failed = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            return !failed;
-        }
-        return false;
     }
 }

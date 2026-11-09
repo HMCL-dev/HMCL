@@ -1,0 +1,423 @@
+[
+  {
+    "gameVersion": "1.5.2",
+    "version": "1.5.2_01",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.5.2/liteloader-1.5.2_01.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.5"
+      },
+      {
+        "name": "net.sf.jopt-simple:jopt-simple:4.5"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:4.1"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.6.2",
+    "version": "1.6.2_01",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.6.2/liteloader-1.6.2_01.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.6.2",
+    "version": "1.6.2_02",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.6.2/liteloader-1.6.2_02.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.6.2",
+    "version": "1.6.2_03",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.6.2/liteloader-1.6.2_03.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.6.2",
+    "version": "1.6.2_04",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.6.2/liteloader-1.6.2_04.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.6.4",
+    "version": "1.6.4_00",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.6.4/liteloader-1.6.4_00.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.8"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.6.4",
+    "version": "1.6.4_01",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.6.4/liteloader-1.6.4_01.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.8"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.7.2",
+    "version": "1.7.2_02",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.7.2/liteloader-1.7.2_02.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.9"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:4.1"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.7.2",
+    "version": "1.7.2_03",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.7.2/liteloader-1.7.2_03.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.9"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:4.1"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.7.2",
+    "version": "1.7.2_04",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.7.2/liteloader-1.7.2_04.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.9"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:4.1"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.7.2",
+    "version": "1.7.2_05",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.7.2/liteloader-1.7.2_05.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.9"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:4.1"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.7.10",
+    "version": "1.7.10_00",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.7.10/liteloader-1.7.10_00.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.9"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3",
+        "url": "http://repo.maven.apache.org/maven2/"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.7.10",
+    "version": "1.7.10_01",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.7.10/liteloader-1.7.10_01.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.9"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:4.1"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.7.10",
+    "version": "1.7.10_02",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.7.10/liteloader-1.7.10_02.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.9"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:4.1"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.7.10",
+    "version": "1.7.10_03",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.7.10/liteloader-1.7.10_03.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.9"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:4.1"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.7.10",
+    "version": "1.7.10_04",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.7.10/liteloader-1.7.10_04.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.11"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.8",
+    "version": "1.8",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/versions/com/mumfrey/liteloader/1.8/liteloader-1.8.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.11"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.8.9",
+    "version": "20260727.184607-11",
+    "snapshot": true,
+    "url": "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/1.8.9-SNAPSHOT/liteloader-1.8.9-20260727.184607-11-release.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.11"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.9",
+    "version": "20160522.202455-18",
+    "snapshot": true,
+    "url": "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/1.9-SNAPSHOT/liteloader-1.9-20160522.202455-18-release.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.11"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.9.4",
+    "version": "1.9.4",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/repo/com/mumfrey/liteloader/1.9.4/liteloader-1.9.4.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.12"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.9.4",
+    "version": "20160613.172849-17",
+    "snapshot": true,
+    "url": "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/1.9.4-SNAPSHOT/liteloader-1.9.4-20160613.172849-17-release.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.12"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.10",
+    "version": "20160728.094226-5",
+    "snapshot": true,
+    "url": "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/1.10-SNAPSHOT/liteloader-1.10-20160728.094226-5-release.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.12"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.10.2",
+    "version": "1.10.2",
+    "snapshot": false,
+    "url": "https://dl.liteloader.com/repo/com/mumfrey/liteloader/1.10.2/liteloader-1.10.2.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.12"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.10.2",
+    "version": "20170201.221303-9",
+    "snapshot": true,
+    "url": "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/1.10.2-SNAPSHOT/liteloader-1.10.2-20170201.221303-9-release.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.12"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.11",
+    "version": "20170814.110841-8",
+    "snapshot": true,
+    "url": "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/1.11-SNAPSHOT/liteloader-1.11-20170814.110841-8-release.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.12"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.11.2",
+    "version": "20170904.174310-11",
+    "snapshot": true,
+    "url": "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/1.11.2-SNAPSHOT/liteloader-1.11.2-20170904.174310-11-release.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.12"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.12",
+    "version": "20170904.174625-9",
+    "snapshot": true,
+    "url": "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/1.12-SNAPSHOT/liteloader-1.12-20170904.174625-9-release.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.12"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.12.1",
+    "version": "20170904.174937-3",
+    "snapshot": true,
+    "url": "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/1.12.1-SNAPSHOT/liteloader-1.12.1-20170904.174937-3-release.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.12"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.0.3"
+      }
+    ]
+  },
+  {
+    "gameVersion": "1.12.2",
+    "version": "20171128.144431-4",
+    "snapshot": true,
+    "url": "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/1.12.2-SNAPSHOT/liteloader-1.12.2-20171128.144431-4-release.jar",
+    "tweakClass": "com.mumfrey.liteloader.launch.LiteLoaderTweaker",
+    "libraries": [
+      {
+        "name": "net.minecraft:launchwrapper:1.12"
+      },
+      {
+        "name": "org.ow2.asm:asm-all:5.2"
+      }
+    ]
+  }
+]

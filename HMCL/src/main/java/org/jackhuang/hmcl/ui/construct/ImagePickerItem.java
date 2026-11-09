@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
@@ -28,11 +13,9 @@ import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
@@ -41,7 +24,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 @DefaultProperty("image")
 public final class ImagePickerItem extends BorderPane {
 
-    private final ImageView imageView;
+    private final ImageContainer imageContainer;
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
     private final ObjectProperty<EventHandler<ActionEvent>> onSelectButtonClicked = new SimpleObjectProperty<>(this, "onSelectButtonClicked");
@@ -49,24 +32,20 @@ public final class ImagePickerItem extends BorderPane {
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>(this, "image");
 
     public ImagePickerItem() {
-        imageView = new ImageView();
-        imageView.setSmooth(false);
-        imageView.setPreserveRatio(true);
+        imageContainer = new ImageContainer(32);
+        imageContainer.setSmooth(false);
 
-        JFXButton selectButton = new JFXButton();
-        selectButton.setGraphic(SVG.EDIT.createIcon(Theme.blackFill(), 20));
+        JFXButton selectButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
         selectButton.onActionProperty().bind(onSelectButtonClicked);
-        selectButton.getStyleClass().add("toggle-icon4");
 
-        JFXButton deleteButton = new JFXButton();
-        deleteButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 20));
+        JFXButton deleteButton = FXUtils.newToggleButton4(SVG.RESTORE, 20);
         deleteButton.onActionProperty().bind(onDeleteButtonClicked);
-        deleteButton.getStyleClass().add("toggle-icon4");
 
         FXUtils.installFastTooltip(selectButton, i18n("button.edit"));
+        FXUtils.installFastTooltip(deleteButton, i18n("button.reset"));
 
         HBox hBox = new HBox();
-        hBox.getChildren().setAll(imageView, selectButton, deleteButton);
+        hBox.getChildren().setAll(imageContainer, selectButton, deleteButton);
         hBox.setAlignment(Pos.CENTER_RIGHT);
         hBox.setSpacing(8);
         setRight(hBox);
@@ -78,7 +57,7 @@ public final class ImagePickerItem extends BorderPane {
         vBox.setAlignment(Pos.CENTER_LEFT);
         setLeft(vBox);
 
-        imageView.imageProperty().bind(image);
+        imageContainer.imageProperty().bind(image);
     }
 
     public String getTitle() {
@@ -127,9 +106,5 @@ public final class ImagePickerItem extends BorderPane {
 
     public void setImage(Image image) {
         this.image.set(image);
-    }
-
-    public ImageView getImageView() {
-        return imageView;
     }
 }

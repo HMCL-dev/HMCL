@@ -1,40 +1,19 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.upgrade;
 
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.util.Pack200Utils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.tukaani.xz.XZInputStream;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.jar.JarOutputStream;
 
-class HMCLDownloadTask extends FileDownloadTask {
+final class HMCLDownloadTask extends FileDownloadTask {
 
-    private RemoteVersion.Type archiveFormat;
+    private final RemoteVersion.Type archiveFormat;
 
     public HMCLDownloadTask(RemoteVersion version, Path target) {
-        super(NetworkUtils.toURL(version.getUrl()), target.toFile(), version.getIntegrityCheck());
-        archiveFormat = version.getType();
+        super(version.url(), target, version.integrityCheck());
+        archiveFormat = version.type();
     }
 
     @Override
@@ -42,25 +21,19 @@ class HMCLDownloadTask extends FileDownloadTask {
         super.execute();
 
         try {
-            Path target = getFile().toPath();
-
+            Path target = getPath();
             switch (archiveFormat) {
                 case JAR:
                     break;
-
-                case PACK_XZ:
-                    byte[] raw = Files.readAllBytes(target);
-                    try (InputStream in = new XZInputStream(new ByteArrayInputStream(raw));
-                            JarOutputStream out = new JarOutputStream(Files.newOutputStream(target))) {
-                        Pack200Utils.unpack(in, out);
-                    }
-                    break;
-
                 default:
                     throw new IllegalArgumentException("Unknown format: " + archiveFormat);
             }
         } catch (Throwable e) {
-            getFile().delete();
+            try {
+                Files.deleteIfExists(getPath());
+            } catch (Throwable e2) {
+                e.addSuppressed(e2);
+            }
             throw e;
         }
     }

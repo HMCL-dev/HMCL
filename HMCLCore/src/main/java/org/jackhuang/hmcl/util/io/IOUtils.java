@@ -1,26 +1,12 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.io;
 
-import org.glavo.chardet.DetectedCharset;
-import org.glavo.chardet.UniversalDetector;
+import kala.encdet.EncodingDetector;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -41,7 +27,7 @@ public final class IOUtils {
     private IOUtils() {
     }
 
-    public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
+    public static final int DEFAULT_BUFFER_SIZE = 32 * 1024;
 
     public static BufferedReader newBufferedReaderMaybeNativeEncoding(Path file) throws IOException {
         if (NATIVE_CHARSET == UTF_8)
@@ -50,10 +36,29 @@ public final class IOUtils {
         FileChannel channel = FileChannel.open(file);
         try {
             long oldPosition = channel.position();
-            DetectedCharset detectedCharset = UniversalDetector.detectCharset(channel);
-            Charset charset = detectedCharset != null && detectedCharset.isSupported()
-                    && (detectedCharset.getCharset() == UTF_8 || detectedCharset.getCharset() == US_ASCII)
-                    ? UTF_8 : NATIVE_CHARSET;
+            long size = channel.size();
+
+            EncodingDetector detector = EncodingDetector.MODERN_WEB;
+
+            int bufferSize = (int) Math.max(Math.min(size - oldPosition, detector.maxBytes()), 8192L);
+            ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
+
+            //noinspection StatementWithEmptyBody
+            while (buffer.hasRemaining() && channel.read(buffer) > 0) {
+                // do nothing
+            }
+
+            buffer.flip();
+            Charset charset;
+            if (buffer.remaining() == 0) {
+                charset = UTF_8;
+            } else {
+                EncodingDetector.@Nullable Encoding encoding = detector.detect(buffer).bestEncoding();
+                Charset detectedCharset = encoding != null ? encoding.approximateCharset() : null;
+                charset = detectedCharset != null && (detectedCharset == UTF_8 || detectedCharset == US_ASCII)
+                        ? UTF_8
+                        : NATIVE_CHARSET;
+            }
             channel.position(oldPosition);
             return new BufferedReader(new InputStreamReader(Channels.newInputStream(channel), charset));
         } catch (Throwable e) {
@@ -62,54 +67,33 @@ public final class IOUtils {
         }
     }
 
-    /**
-     * Read all bytes to a buffer from given input stream. The stream will not be closed.
-     *
-     * @param stream the InputStream being read.
-     * @return all bytes read from the stream
-     * @throws IOException if an I/O error occurs.
-     */
-    public static byte[] readFullyWithoutClosing(InputStream stream) throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(stream.available(), 32));
-        copyTo(stream, result);
-        return result.toByteArray();
-    }
-
-    public static String readFullyAsStringWithClosing(InputStream stream) throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(stream.available(), 32));
-        copyTo(stream, result);
-        return result.toString("UTF-8");
-    }
-
-    /**
-     * Read all bytes to a buffer from given input stream, and close the input stream finally.
-     *
-     * @param stream the InputStream being read, closed finally.
-     * @return all bytes read from the stream
-     * @throws IOException if an I/O error occurs.
-     */
-    public static ByteArrayOutputStream readFully(InputStream stream) throws IOException {
-        try (InputStream is = stream) {
-            ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(is.available(), 32));
-            copyTo(is, result);
-            return result;
+    public static byte[] readFully(InputStream stream) throws IOException {
+        try (stream) {
+            return stream.readAllBytes();
         }
     }
 
-    public static byte[] readFullyAsByteArray(InputStream stream) throws IOException {
-        return readFully(stream).toByteArray();
-    }
-
     public static String readFullyAsString(InputStream stream) throws IOException {
-        return readFully(stream).toString("UTF-8");
+        return new String(readFully(stream), UTF_8);
     }
 
     public static String readFullyAsString(InputStream stream, Charset charset) throws IOException {
-        return readFully(stream).toString(charset.name());
+        return new String(readFully(stream), charset);
     }
 
-    public static void copyTo(InputStream src, OutputStream dest) throws IOException {
-        copyTo(src, dest, new byte[DEFAULT_BUFFER_SIZE]);
+    public static void skipNBytes(InputStream input, long n) throws IOException {
+        while (n > 0) {
+            long ns = input.skip(n);
+            if (ns > 0 && ns <= n)
+                n -= ns;
+            else if (ns == 0) {
+                if (input.read() == -1)
+                    throw new EOFException();
+                n--;
+            } else {
+                throw new IOException("Unexpected skip bytes. Expected: " + n + ", Actual: " + ns);
+            }
+        }
     }
 
     public static void copyTo(InputStream src, OutputStream dest, byte[] buf) throws IOException {

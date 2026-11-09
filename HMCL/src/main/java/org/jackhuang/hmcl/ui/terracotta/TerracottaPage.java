@@ -1,0 +1,112 @@
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
+package org.jackhuang.hmcl.ui.terracotta;
+
+import com.jfoenix.controls.JFXPopup;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.value.ChangeListener;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
+import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.main.MainPage;
+import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
+import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.util.Lang;
+import org.jetbrains.annotations.Nullable;
+
+import static org.jackhuang.hmcl.setting.SettingsManager.userState;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+
+public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
+    private static final int TERRACOTTA_AGREEMENT_VERSION = 2;
+
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("terracotta.terracotta")));
+    /// Manages tab selection and content transitions independently of the sidebar.
+    private final TabController tabController;
+    /// The tab displaying the Terracotta controller page.
+    private final TabItem<TerracottaControllerPage> statusPage;
+    private final TransitionPane transitionPane = new TransitionPane();
+
+    @SuppressWarnings("unused")
+    private @Nullable ChangeListener<@Nullable HMCLGameInstance> instanceChangeListenerHolder;
+
+    /// Creates the connection tab and the fixed account and launch actions.
+    public TerracottaPage() {
+        statusPage = new TabItem<>(TerracottaControllerPage::new);
+        tabController = new TabController(transitionPane, statusPage);
+        tabController.selectTab(statusPage);
+
+        getSidebar()
+                .addNavigationDrawerTab(tabController, statusPage, i18n("terracotta.status"), SVG.TUNE);
+
+        AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
+        accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
+        accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
+        FXUtils.onSecondaryButtonClicked(accountListItem, () -> AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0));
+
+        AdvancedListBox toolbar = new AdvancedListBox()
+                .add(accountListItem)
+                .addNavigationDrawerItem(i18n("instance.launch"), SVG.ROCKET_LAUNCH, () -> {
+                    var repository = GameDirectoryManager.getSelectedRepository();
+                    Instances.launch(repository.getSelectedInstance(), launcherHelper -> {
+                        launcherHelper.setKeep();
+                        launcherHelper.setDisableOfflineSkin();
+                    });
+                }, item -> {
+                    instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(),
+                            instance -> item.setSubtitle(instance != null ? instance.getId().toString() : i18n("instance.empty"))
+                    );
+
+                    MainPage mainPage = Controllers.getRootPage().getMainPage();
+                    FXUtils.onScroll(item, mainPage.getInstances(), list -> {
+                        @Nullable HMCLGameInstance currentGame = mainPage.getCurrentGame();
+                        @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
+                        return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
+                    }, instance -> instance.getRepository().setSelectedInstance(instance));
+
+                    FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item,
+                            JFXPopup.PopupVPosition.BOTTOM,
+                            JFXPopup.PopupHPosition.LEFT,
+                            item.getWidth(),
+                            0,
+                            mainPage.getInstances()));
+                })
+                .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
+        setSidebarBottom(toolbar);
+
+        setContent(transitionPane);
+    }
+
+    @Override
+    public void onPageShown() {
+        tabController.onPageShown();
+
+        if (SettingsManager.userState().terracottaAgreementVersionProperty().get() < TERRACOTTA_AGREEMENT_VERSION) {
+            Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5, MessageDialogPane.MessageType.INFO, () -> {
+                UserState userState = userState();
+                userState.terracottaAgreementVersionProperty().set(TERRACOTTA_AGREEMENT_VERSION);
+            }, () -> fireEvent(new PageCloseEvent()));
+        }
+    }
+
+    @Override
+    public void onPageHidden() {
+        tabController.onPageHidden();
+    }
+
+    @Override
+    public ReadOnlyObjectProperty<State> stateProperty() {
+        return state.getReadOnlyProperty();
+    }
+}

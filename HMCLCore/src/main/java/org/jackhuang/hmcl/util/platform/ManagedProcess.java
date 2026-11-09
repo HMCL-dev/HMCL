@@ -1,42 +1,23 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/**
- * The managed process.
- *
- * @author huangyuhui
- * @see org.jackhuang.hmcl.launch.ExitWaiter
- * @see org.jackhuang.hmcl.launch.StreamPump
- */
+/// The managed process.
+///
+/// @author huangyuhui
+/// <!-- @see org.jackhuang.hmcl.launch.ExitWaiter -->
+/// @see org.jackhuang.hmcl.launch.StreamPump
 public final class ManagedProcess {
+    private final ReentrantLock lock = new ReentrantLock();
     private final Process process;
     private final List<String> commands;
     private final String classpath;
@@ -58,7 +39,7 @@ public final class ManagedProcess {
      */
     public ManagedProcess(Process process, List<String> commands) {
         this.process = process;
-        this.commands = Collections.unmodifiableList(new ArrayList<>(commands));
+        this.commands = List.copyOf(commands);
         this.classpath = null;
     }
 
@@ -71,7 +52,7 @@ public final class ManagedProcess {
      */
     public ManagedProcess(Process process, List<String> commands, String classpath) {
         this.process = process;
-        this.commands = Collections.unmodifiableList(new ArrayList<>(commands));
+        this.commands = List.copyOf(commands);
         this.classpath = classpath;
     }
 
@@ -82,47 +63,6 @@ public final class ManagedProcess {
      */
     public Process getProcess() {
         return process;
-    }
-
-    /**
-     * The PID of the raw system process
-     *
-     * @throws UnsupportedOperationException if current Java environment is not supported.
-     * @return PID
-     */
-    public long getPID() throws UnsupportedOperationException {
-        if (JavaRuntime.CURRENT_VERSION >= 9) {
-            // Method Process.pid() is provided (Java 9 or later). Invoke it to get the pid.
-            try {
-                return (long) MethodHandles.publicLookup()
-                        .findVirtual(Process.class, "pid", MethodType.methodType(long.class))
-                        .invokeExact(process);
-            } catch (Throwable e) {
-                throw new UnsupportedOperationException("Cannot get the pid", e);
-            }
-        } else {
-            // Method Process.pid() is not provided. (Java 8).
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                // On Windows, we can invoke method Process.pid() to get the pid.
-                // However, this method is supplied since Java 9.
-                // So, there is no ways to get the pid.
-                throw new UnsupportedOperationException("Cannot get the pid of a Process on Java 8 on Windows.");
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS || OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
-                // On Linux or Mac, we can get field UnixProcess.pid field to get the pid.
-                // All the Java version is accepted.
-                // See https://github.com/openjdk/jdk/blob/jdk8-b120/jdk/src/solaris/classes/java/lang/UNIXProcess.java.linux
-                try {
-                    Field pidField = process.getClass().getDeclaredField("pid");
-                    pidField.setAccessible(true);
-                    return pidField.getInt(process);
-                } catch (NoSuchFieldException | IllegalAccessException e) {
-                    throw new UnsupportedOperationException("Cannot get the pid of a Process on Java 8 on macOS/Linux.", e);
-                }
-            } else {
-                // Unknown Operating System, no fallback available.
-                throw new UnsupportedOperationException(String.format("Cannot get the pid of a Process on Java 8 on Unknown Operating System (%s).", System.getProperty("os.name")));
-            }
-        }
     }
 
     /**
@@ -156,20 +96,30 @@ public final class ManagedProcess {
      *
      * @see #addLine
      */
-    public synchronized List<String> getLines(Predicate<String> lineFilter) {
-        if (lineFilter == null)
-            return Collections.unmodifiableList(Arrays.asList(lines.toArray(new String[0])));
+    public List<String> getLines(Predicate<String> lineFilter) {
+        lock.lock();
+        try {
+            if (lineFilter == null)
+                return List.copyOf(lines);
 
-        ArrayList<String> res = new ArrayList<>();
-        for (String line : this.lines) {
-            if (lineFilter.test(line))
-                res.add(line);
+            ArrayList<String> res = new ArrayList<>();
+            for (String line : this.lines) {
+                if (lineFilter.test(line))
+                    res.add(line);
+            }
+            return Collections.unmodifiableList(res);
+        } finally {
+            lock.unlock();
         }
-        return Collections.unmodifiableList(res);
     }
 
-    public synchronized void addLine(String line) {
-        lines.add(line);
+    public void addLine(String line) {
+        lock.lock();
+        try {
+            lines.add(line);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -178,15 +128,20 @@ public final class ManagedProcess {
      * If a thread is monitoring this raw process,
      * you are required to add the instance by this method.
      */
-    public synchronized void addRelatedThread(Thread thread) {
-        relatedThreads.add(thread);
+    public void addRelatedThread(Thread thread) {
+        lock.lock();
+        try {
+            relatedThreads.add(thread);
+        } finally {
+            lock.unlock();
+        }
     }
 
-    public synchronized void pumpInputStream(Consumer<String> onLogLine) {
+    public void pumpInputStream(Consumer<String> onLogLine) {
         addRelatedThread(Lang.thread(new StreamPump(process.getInputStream(), onLogLine, OperatingSystem.NATIVE_CHARSET), "ProcessInputStreamPump", true));
     }
 
-    public synchronized void pumpErrorStream(Consumer<String> onLogLine) {
+    public void pumpErrorStream(Consumer<String> onLogLine) {
         addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), onLogLine, OperatingSystem.NATIVE_CHARSET), "ProcessErrorStreamPump", true));
     }
 
@@ -217,8 +172,13 @@ public final class ManagedProcess {
         destroyRelatedThreads();
     }
 
-    public synchronized void destroyRelatedThreads() {
-        relatedThreads.forEach(Thread::interrupt);
+    public void destroyRelatedThreads() {
+        lock.lock();
+        try {
+            relatedThreads.forEach(Thread::interrupt);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override

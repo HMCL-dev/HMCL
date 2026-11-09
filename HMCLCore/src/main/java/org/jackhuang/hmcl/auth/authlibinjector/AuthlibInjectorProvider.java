@@ -1,29 +1,12 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import static org.jackhuang.hmcl.util.io.NetworkUtils.toURL;
-
+import org.glavo.url.WebURL;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilProvider;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
-import java.net.URL;
 import java.util.UUID;
 
 public class AuthlibInjectorProvider implements YggdrasilProvider {
@@ -35,33 +18,33 @@ public class AuthlibInjectorProvider implements YggdrasilProvider {
     }
 
     @Override
-    public URL getAuthenticationURL() throws AuthenticationException {
-        return toURL(apiRoot + "authserver/authenticate");
+    public WebURL getAuthenticationURL() throws AuthenticationException {
+        return WebURL.parse(apiRoot + "authserver/authenticate");
     }
 
     @Override
-    public URL getRefreshmentURL() throws AuthenticationException {
-        return toURL(apiRoot + "authserver/refresh");
+    public WebURL getRefreshmentURL() throws AuthenticationException {
+        return WebURL.parse(apiRoot + "authserver/refresh");
     }
 
     @Override
-    public URL getValidationURL() throws AuthenticationException {
-        return toURL(apiRoot + "authserver/validate");
+    public WebURL getValidationURL() throws AuthenticationException {
+        return WebURL.parse(apiRoot + "authserver/validate");
     }
 
     @Override
-    public URL getInvalidationURL() throws AuthenticationException {
-        return toURL(apiRoot + "authserver/invalidate");
+    public WebURL getInvalidationURL() throws AuthenticationException {
+        return WebURL.parse(apiRoot + "authserver/invalidate");
     }
 
     @Override
-    public URL getSkinUploadURL(UUID uuid) throws UnsupportedOperationException {
-        return toURL(apiRoot + "api/user/profile/" + UUIDTypeAdapter.fromUUID(uuid) + "/skin");
+    public WebURL getSkinUploadURL(UUID uuid) throws UnsupportedOperationException {
+        return WebURL.parse(apiRoot + "api/user/profile/" + UUIDs.toCompactString(uuid) + "/skin");
     }
 
     @Override
-    public URL getProfilePropertiesURL(UUID uuid) throws AuthenticationException {
-        return toURL(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid));
+    public WebURL getProfilePropertiesURL(UUID uuid) throws AuthenticationException {
+        return WebURL.parse(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDs.toCompactString(uuid));
     }
 
     @Override

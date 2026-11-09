@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform.windows;
 
 import com.sun.jna.Memory;
@@ -25,6 +10,7 @@ import com.sun.jna.ptr.PointerByReference;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -86,6 +72,10 @@ public abstract class WinReg {
         list.replaceAll(str -> prefix + str);
         return list;
     }
+
+    public abstract boolean setValue(HKEY root, String key, String valueName, String value);
+
+    public abstract boolean deleteValue(HKEY root, String key, String valueName);
 
     private static final class JNAWinReg extends WinReg {
 
@@ -175,6 +165,26 @@ public abstract class WinReg {
 
                             return lpData.getWideString(0L);
                         }
+                        case WinConstants.REG_MULTI_SZ: {
+                            String str = new String(lpData.getByteArray(0L, cbData), StandardCharsets.UTF_16LE);
+
+                            var result = new ArrayList<String>();
+                            for (int start = 0; start < str.length(); ) {
+                                final int end = str.indexOf('\0', start);
+                                if (end < 0) {
+                                    result.add(str.substring(start));
+                                    break;
+                                } else if (end == start && end == str.length() - 1) {
+                                    // The terminator of the array
+                                    break;
+                                }
+
+                                result.add(str.substring(start, end));
+                                start = end + 1;
+                            }
+
+                            return result.toArray(new String[0]);
+                        }
                         default:
                             throw new RuntimeException("Unknown reg type: " + type);
                     }
@@ -223,6 +233,63 @@ public abstract class WinReg {
             }
 
             return Collections.emptyList();
+        }
+
+        @Override
+        public boolean setValue(HKEY root, String key, String valueName, String value) {
+            PointerByReference phkKey = new PointerByReference();
+            int status = advapi32.RegCreateKeyExW(
+                    root.toPointer(),
+                    new WString(key),
+                    0,
+                    null,
+                    WinConstants.REG_OPTION_NON_VOLATILE,
+                    WinConstants.KEY_WRITE,
+                    null,
+                    phkKey,
+                    null
+            );
+
+            if (status != WinConstants.ERROR_SUCCESS) {
+                return false;
+            }
+
+            Pointer hkey = phkKey.getValue();
+            try {
+                byte[] data = (value + "\0").getBytes(StandardCharsets.UTF_16LE);
+                try (Memory mem = new Memory(data.length)) {
+                    mem.write(0, data, 0, data.length);
+                    status = advapi32.RegSetValueExW(
+                            hkey,
+                            new WString(valueName),
+                            0,
+                            WinConstants.REG_SZ,
+                            mem,
+                            data.length
+                    );
+                }
+                return status == WinConstants.ERROR_SUCCESS;
+            } finally {
+                advapi32.RegCloseKey(hkey);
+            }
+        }
+
+        @Override
+        public boolean deleteValue(HKEY root, String key, String valueName) {
+            PointerByReference phkKey = new PointerByReference();
+            int status = advapi32.RegOpenKeyExW(root.toPointer(), new WString(key), 0, WinConstants.KEY_SET_VALUE, phkKey);
+
+            if (status != WinConstants.ERROR_SUCCESS) {
+                return false;
+            }
+
+            Pointer hkey = phkKey.getValue();
+            try {
+                status = advapi32.RegDeleteValueW(hkey, new WString(valueName));
+                return status == WinConstants.ERROR_SUCCESS;
+            } finally {
+                advapi32.RegCloseKey(hkey);
+            }
         }
     }
 

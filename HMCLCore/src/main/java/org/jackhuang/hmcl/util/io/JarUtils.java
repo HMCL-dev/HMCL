@@ -1,66 +1,55 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.io;
 
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.CodeSource;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
+import java.util.Properties;
 
 public final class JarUtils {
     private JarUtils() {
     }
 
     private static final Path THIS_JAR;
-
-    private static final Manifest manifest;
+    private static final Properties properties = new Properties();
 
     static {
-        CodeSource cs = JarUtils.class.getProtectionDomain().getCodeSource();
+        Class<?> entryPointClass = null;
+        CodeSource cs = null;
+        try {
+            entryPointClass = Class.forName("org.jackhuang.hmcl.EntryPoint");
+            cs = entryPointClass.getProtectionDomain().getCodeSource();
+        } catch (ClassNotFoundException ignored) {
+        }
+
         if (cs == null) {
             THIS_JAR = null;
-            manifest = new Manifest();
         } else {
             Path path;
             try {
-                path = Paths.get(cs.getLocation().toURI()).toAbsolutePath();
+                path = Path.of(cs.getLocation().toURI()).toAbsolutePath();
             } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
                 path = null;
             }
-            if (path == null || !Files.isRegularFile(path)) {
-                THIS_JAR = null;
-                manifest = new Manifest();
-            } else {
-                THIS_JAR = path;
-                Manifest mn;
-                try (JarFile file = new JarFile(path.toFile())) {
-                    mn = file.getManifest();
-                } catch (IOException e) {
-                    mn = new Manifest();
+            THIS_JAR = path != null && Files.isRegularFile(path) ? path : null;
+        }
+
+        if (entryPointClass != null) {
+            InputStream input = entryPointClass.getResourceAsStream("/assets/hmcl.properties");
+            if (input != null) {
+                try (var reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
+                    properties.load(reader);
+                } catch (IOException ignored) {
                 }
-                manifest = mn;
             }
         }
     }
@@ -70,8 +59,7 @@ public final class JarUtils {
         return THIS_JAR;
     }
 
-    public static String getManifestAttribute(String name, String defaultValue) {
-        String value = manifest.getMainAttributes().getValue(name);
-        return value != null ? value : defaultValue;
+    public static String getAttribute(String name, String defaultValue) {
+        return properties.getProperty(name, defaultValue);
     }
 }

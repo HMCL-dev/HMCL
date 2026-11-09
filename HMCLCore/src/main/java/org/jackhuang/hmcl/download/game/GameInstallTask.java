@@ -1,83 +1,93 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
+/// Downloads the base game component and returns its manifest patch without publishing it.
+///
+/// The vanilla client JAR is downloaded into shared cache storage; libraries and assets use their
+/// repository-wide stores. The caller owns the working manifest and must stage the returned patch
+/// in its repository draft.
+@NotNullByDefault
+public class GameInstallTask extends Task<GameInstancePatch> {
 
-public class GameInstallTask extends Task<Version> {
-
-    private final DefaultGameRepository gameRepository;
+    /// Dependency manager used by the download tasks.
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+
+    /// Working instance manifest that will receive the game patch.
+    private final GameInstanceManifest manifest;
+
+    /// Selected remote game version.
     private final GameRemoteVersion remote;
-    private final VersionJsonDownloadTask downloadTask;
+
+    /// Task that downloads the selected version's manifest JSON.
+    private final GameInstanceJsonDownloadTask downloadTask;
+
+    /// Downloads scheduled after the remote manifest has been decoded.
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public GameInstallTask(DefaultDependencyManager dependencyManager, Version version, GameRemoteVersion remoteVersion) {
+    /// Creates a base-game installation task.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param manifest          the working instance manifest
+    /// @param remoteVersion     the selected remote game version
+    public GameInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, GameRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.gameRepository = dependencyManager.getGameRepository();
-        this.version = version;
+        this.manifest = manifest;
         this.remote = remoteVersion;
-        this.downloadTask = new VersionJsonDownloadTask(remoteVersion.getGameVersion(), dependencyManager);
+        this.downloadTask = new GameInstanceJsonDownloadTask(remoteVersion.getGameVersion().toString(), dependencyManager);
     }
 
+    /// {@inheritDoc}
     @Override
     public Collection<Task<?>> getDependents() {
         return Collections.singleton(downloadTask);
     }
 
+    /// {@inheritDoc}
     @Override
     public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
 
+    /// {@inheritDoc}
     @Override
     public boolean isRelyingOnDependencies() {
         return false;
     }
 
+    /// Decodes the downloaded game manifest and schedules its files without saving repository state.
     @Override
     public void execute() throws Exception {
-        Version patch = JsonUtils.fromNonNullJson(downloadTask.getResult(), Version.class)
-                .setId(MINECRAFT.getPatchId()).setVersion(remote.getGameVersion()).setJar(null).setPriority(Version.PRIORITY_MC);
+        GameInstancePatch patch = GameInstancePatch.fromManifest(
+                JsonUtils.fromNonNullJson(downloadTask.getResult(), GameInstanceManifest.class),
+                GameComponentType.GAME.getPatchId(),
+                remote.getGameVersion().toString(),
+                GameInstancePatch.PRIORITY_MC).withJar(null);
         setResult(patch);
 
-        Version version = new Version(this.version.getId()).addPatch(patch);
+        GameInstanceManifest newManifest = new GameInstanceManifest(this.manifest.id()).addPatch(patch).reconstructByPatches();
         dependencies.add(Task.allOf(
-                new GameDownloadTask(dependencyManager, remote.getGameVersion(), version),
+                new GameDownloadTask(dependencyManager, newManifest),
                 Task.allOf(
-                        new GameAssetDownloadTask(dependencyManager, version, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
-                        new GameLibrariesTask(dependencyManager, version, true)
+                        new GameAssetDownloadTask(dependencyManager, newManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
+                        new GameLibrariesTask(dependencyManager, newManifest, true)
                 ).withRunAsync(() -> {
                     // ignore failure
                 })
-        ).thenComposeAsync(gameRepository.saveAsync(version)));
+        ));
     }
 
 }

@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.upgrade;
 
 import javafx.application.Platform;
@@ -25,16 +10,18 @@ import javafx.beans.value.ObservableBooleanValue;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Lang.thread;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class UpdateChecker {
-    private UpdateChecker() {}
+    private UpdateChecker() {
+    }
 
     private static final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
     private static final BooleanBinding outdated = Bindings.createBooleanBinding(
@@ -42,20 +29,21 @@ public final class UpdateChecker {
                 RemoteVersion latest = latestVersion.get();
                 if (latest == null || isDevelopmentVersion(Metadata.VERSION)) {
                     return false;
-                } else if (latest.isForce()
+                } else if (latest.force()
                         || Metadata.isNightly()
-                        || latest.getChannel() == UpdateChannel.NIGHTLY
-                        || latest.getChannel() != UpdateChannel.getChannel()) {
-                    return !latest.getVersion().equals(Metadata.VERSION);
+                        || latest.channel() == UpdateChannel.NIGHTLY
+                        || latest.channel() != UpdateChannel.getChannel()) {
+                    return !latest.version().equals(Metadata.VERSION);
                 } else {
-                    return VersionNumber.compare(Metadata.VERSION, latest.getVersion()) < 0;
+                    return VersionNumber.compare(Metadata.VERSION, latest.version()) < 0;
                 }
             },
             latestVersion);
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
+    private static final ReadOnlyObjectWrapper<@Nullable Throwable> error = new ReadOnlyObjectWrapper<>();
 
     public static void init() {
-        requestCheckUpdate(UpdateChannel.getChannel());
+        requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get());
     }
 
     public static RemoteVersion getLatestVersion() {
@@ -82,16 +70,21 @@ public final class UpdateChecker {
         return checkingUpdate.getReadOnlyProperty();
     }
 
-    private static RemoteVersion checkUpdate(UpdateChannel channel) throws IOException {
+    public static ReadOnlyObjectProperty<@Nullable Throwable> errorProperty() {
+        return error.getReadOnlyProperty();
+    }
+
+    private static RemoteVersion checkUpdate(UpdateChannel channel, boolean preview) throws IOException {
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
-            throw new IOException("Self verification failed");
+            throw new SelfVerificationException();
         }
 
-        String url = NetworkUtils.withQuery(Metadata.HMCL_UPDATE_URL, mapOf(
-                pair("version", Metadata.VERSION),
-                pair("channel", channel.channelName)));
+        var query = new LinkedHashMap<String, String>();
+        query.put("version", Metadata.VERSION);
+        query.put("channel", preview ? channel.channelName + "-preview" : channel.channelName);
 
-        return RemoteVersion.fetch(channel, url);
+        String url = NetworkUtils.withQuery(Metadata.HMCL_UPDATE_URL, query);
+        return RemoteVersion.fetch(channel, preview, url);
     }
 
     private static boolean isDevelopmentVersion(String version) {
@@ -99,7 +92,7 @@ public final class UpdateChecker {
                 version.contains("SNAPSHOT"); // eg. 3.5.SNAPSHOT
     }
 
-    public static void requestCheckUpdate(UpdateChannel channel) {
+    public static void requestCheckUpdate(UpdateChannel channel, boolean preview) {
         Platform.runLater(() -> {
             if (isCheckingUpdate())
                 return;
@@ -107,19 +100,26 @@ public final class UpdateChecker {
 
             thread(() -> {
                 RemoteVersion result = null;
+                Throwable t = null;
                 try {
-                    result = checkUpdate(channel);
-                    LOG.info("Latest version (" + channel + ") is " + result);
-                } catch (IOException e) {
+                    result = checkUpdate(channel, preview);
+                    LOG.info("Latest version (" + channel + ", preview=" + preview + ") is " + result);
+                } catch (Throwable e) {
+                    t = e;
                     LOG.warning("Failed to check for update", e);
                 }
+                Throwable throwable = t;
 
                 RemoteVersion finalResult = result;
                 Platform.runLater(() -> {
-                    checkingUpdate.set(false);
-                    if (finalResult != null) {
+                    if (throwable != null) {
+                        latestVersion.set(null);
+                        error.set(throwable);
+                    } else {
+                        error.set(null);
                         latestVersion.set(finalResult);
                     }
+                    checkingUpdate.set(false);
                 });
             }, "Update Checker", true);
         });

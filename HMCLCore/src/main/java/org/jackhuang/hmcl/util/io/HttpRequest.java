@@ -1,27 +1,11 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.io;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -29,7 +13,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -47,7 +30,6 @@ public abstract class HttpRequest {
     protected final String url;
     protected final String method;
     protected final Map<String, String> headers = new HashMap<>();
-    protected ExceptionalBiConsumer<URL, Integer, IOException> responseCodeTester;
     protected final Set<Integer> toleratedHttpCodes = new HashSet<>();
     protected int retryTimes = 1;
     protected boolean ignoreHttpCode;
@@ -55,6 +37,10 @@ public abstract class HttpRequest {
     private HttpRequest(String url, String method) {
         this.url = url;
         this.method = method;
+    }
+
+    public String getUrl() {
+        return url;
     }
 
     public HttpRequest accept(String contentType) {
@@ -67,10 +53,6 @@ public abstract class HttpRequest {
 
     public HttpRequest authorization(String tokenType, String tokenString) {
         return authorization(tokenType + " " + tokenString);
-    }
-
-    public HttpRequest authorization(Authorization authorization) {
-        return authorization(authorization.getTokenType(), authorization.getAccessToken());
     }
 
     public HttpRequest header(String key, String value) {
@@ -113,18 +95,13 @@ public abstract class HttpRequest {
         return getStringAsync().thenApplyAsync(jsonString -> JsonUtils.fromNonNullJson(jsonString, type));
     }
 
-    public HttpRequest filter(ExceptionalBiConsumer<URL, Integer, IOException> responseCodeTester) {
-        this.responseCodeTester = responseCodeTester;
-        return this;
-    }
-
     public HttpRequest ignoreHttpErrorCode(int code) {
         toleratedHttpCodes.add(code);
         return this;
     }
 
     public HttpURLConnection createConnection() throws IOException {
-        HttpURLConnection con = createHttpConnection(new URL(url));
+        HttpURLConnection con = createHttpConnection(url);
         con.setRequestMethod(method);
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             con.setRequestProperty(entry.getKey(), entry.getValue());
@@ -132,79 +109,110 @@ public abstract class HttpRequest {
         return con;
     }
 
-    public static class HttpGetRequest extends HttpRequest {
-        public HttpGetRequest(String url) {
-            super(url, "GET");
+    protected void checkResponseCode(HttpURLConnection con) throws IOException {
+        int code = con.getResponseCode();
+        if (code / 100 != 2) {
+            if (!ignoreHttpCode && !toleratedHttpCodes.contains(code)) {
+                try {
+                    throw new ResponseCodeException(this.url, code, NetworkUtils.readFullyAsString(con));
+                } catch (IOException e) {
+                    throw new ResponseCodeException(this.url, code, e);
+                }
+            }
+        }
+    }
+
+    public static abstract class HttpSimpleRequest extends HttpRequest {
+        protected HttpSimpleRequest(String url, String method) {
+            super(url, method);
         }
 
+        @Override
         public String getString() throws IOException {
             return getStringWithRetry(() -> {
                 HttpURLConnection con = createConnection();
                 con = resolveConnection(con);
-                return IOUtils.readFullyAsString("gzip".equals(con.getContentEncoding()) ? IOUtils.wrapFromGZip(con.getInputStream()) : con.getInputStream());
+                checkResponseCode(con);
+
+                return IOUtils.readFullyAsString("gzip".equals(con.getContentEncoding())
+                        ? IOUtils.wrapFromGZip(con.getInputStream())
+                        : con.getInputStream());
             }, retryTimes);
         }
     }
 
-    public static final class HttpPostRequest extends HttpRequest {
-        private byte[] bytes;
+    public static class HttpGetRequest extends HttpSimpleRequest {
+        protected HttpGetRequest(String url) {
+            super(url, "GET");
+        }
+    }
 
-        public HttpPostRequest(String url) {
-            super(url, "POST");
+    public static class HttpDeleteRequest extends HttpSimpleRequest {
+        protected HttpDeleteRequest(String url) {
+            super(url, "DELETE");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static abstract class HttpEntityRequest<T extends HttpEntityRequest<T>> extends HttpRequest {
+        protected byte[] bytes;
+
+        protected HttpEntityRequest(String url, String method) {
+            super(url, method);
         }
 
-        public HttpPostRequest contentType(String contentType) {
+        public T contentType(String contentType) {
             headers.put("Content-Type", contentType);
-            return this;
+            return (T) this;
         }
 
-        public HttpPostRequest json(Object payload) throws JsonParseException {
+        public T json(Object payload) throws JsonParseException {
             return string(payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         }
 
-        public HttpPostRequest form(Map<String, String> params) {
+        public T form(Map<String, String> params) {
             return string(NetworkUtils.withQuery("", params), "application/x-www-form-urlencoded");
         }
 
         @SafeVarargs
-        public final HttpPostRequest form(Pair<String, String>... params) {
+        public final T form(Pair<String, String>... params) {
             return form(mapOf(params));
         }
 
-        public HttpPostRequest string(String payload, String contentType) {
+        public T string(String payload, String contentType) {
             bytes = payload.getBytes(UTF_8);
-            header("Content-Length", "" + bytes.length);
+            header("Content-Length", String.valueOf(bytes.length));
             contentType(contentType + "; charset=utf-8");
-            return this;
+            return (T) this;
         }
 
+        @Override
         public String getString() throws IOException {
             return getStringWithRetry(() -> {
                 HttpURLConnection con = createConnection();
                 con.setDoOutput(true);
 
-                try (OutputStream os = con.getOutputStream()) {
-                    os.write(bytes);
-                }
-
-                URL url = new URL(this.url);
-
-                if (responseCodeTester != null) {
-                    responseCodeTester.accept(url, con.getResponseCode());
-                } else {
-                    if (con.getResponseCode() / 100 != 2) {
-                        if (!ignoreHttpCode && !toleratedHttpCodes.contains(con.getResponseCode())) {
-                            try {
-                                throw new ResponseCodeException(url, con.getResponseCode(), NetworkUtils.readData(con));
-                            } catch (IOException e) {
-                                throw new ResponseCodeException(url, con.getResponseCode(), e);
-                            }
-                        }
+                if (bytes != null) {
+                    try (OutputStream os = con.getOutputStream()) {
+                        os.write(bytes);
                     }
                 }
 
-                return NetworkUtils.readData(con);
+                checkResponseCode(con);
+                return NetworkUtils.readFullyAsString(con);
             }, retryTimes);
+        }
+    }
+
+    public static final class HttpPostRequest extends HttpEntityRequest<HttpPostRequest> {
+        private HttpPostRequest(String url) {
+            super(url, "POST");
+        }
+    }
+
+    public static final class HttpPutRequest extends HttpEntityRequest<HttpPutRequest> {
+        private HttpPutRequest(String url) {
+            super(url, "PUT");
         }
     }
 
@@ -219,6 +227,19 @@ public abstract class HttpRequest {
 
     public static HttpPostRequest POST(String url) throws MalformedURLException {
         return new HttpPostRequest(url);
+    }
+
+    public static HttpPutRequest PUT(String url) throws MalformedURLException {
+        return new HttpPutRequest(url);
+    }
+
+    public static HttpDeleteRequest DELETE(String url) {
+        return new HttpDeleteRequest(url);
+    }
+
+    @SafeVarargs
+    public static HttpDeleteRequest DELETE(String url, Pair<String, String>... query) {
+        return DELETE(NetworkUtils.withQuery(url, mapOf(query)));
     }
 
     private static String getStringWithRetry(ExceptionalSupplier<String, IOException> supplier, int retryTimes) throws IOException {
@@ -238,11 +259,5 @@ public abstract class HttpRequest {
             }
         }
         throw new IOException("retry 0");
-    }
-
-    public interface Authorization {
-        String getTokenType();
-
-        String getAccessToken();
     }
 }

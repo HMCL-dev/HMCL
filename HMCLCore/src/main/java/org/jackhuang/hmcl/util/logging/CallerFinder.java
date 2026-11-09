@@ -1,27 +1,23 @@
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.logging;
+
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * @author Glavo
  */
 final class CallerFinder {
+    private static final String PACKAGE_PREFIX = CallerFinder.class.getPackageName() + ".";
+    private static final Predicate<StackWalker.StackFrame> PREDICATE = stackFrame -> !stackFrame.getClassName().startsWith(PACKAGE_PREFIX);
+    private static final Function<Stream<StackWalker.StackFrame>, Optional<StackWalker.StackFrame>> FUNCTION = stream -> stream.filter(PREDICATE).findFirst();
+    private static final Function<StackWalker.StackFrame, String> FRAME_MAPPING = frame -> frame.getClassName() + "." + frame.getMethodName();
+
     static String getCaller() {
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-
-        int i = 0;
-        while (i++ < stackTrace.length) {
-            if (stackTrace[i].getClassName().equals(Logger.CLASS_NAME))
-                break;
-        }
-
-        while (i++ < stackTrace.length) {
-            StackTraceElement element = stackTrace[i];
-            String cname = element.getClassName();
-            if (!cname.equals(Logger.CLASS_NAME) && !cname.startsWith("java.lang.reflect.") && !cname.startsWith("sun.reflect.")) {
-                return cname + '.' + element.getMethodName();
-            }
-        }
-
-        return null;
+        return StackWalker.getInstance().walk(FUNCTION).map(FRAME_MAPPING).orElse(null);
     }
 
     private CallerFinder() {

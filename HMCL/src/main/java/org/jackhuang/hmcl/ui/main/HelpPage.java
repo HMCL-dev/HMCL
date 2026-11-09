@@ -1,24 +1,10 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.annotations.SerializedName;
-import javafx.geometry.Insets;
+
+import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
@@ -26,15 +12,17 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.LineButton;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class HelpPage extends SpinnerPane {
 
@@ -42,18 +30,17 @@ public class HelpPage extends SpinnerPane {
 
     public HelpPage() {
         content = new VBox();
-        content.setPadding(new Insets(10));
-        content.setSpacing(10);
-        content.setFillWidth(true);
+        content.getStyleClass().add("spinner-pane-content");
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         FXUtils.smoothScrolling(scrollPane);
         setContent(scrollPane);
 
-        IconedTwoLineListItem docPane = new IconedTwoLineListItem();
+        var docPane = LineButton.createExternalLinkButton(Metadata.DOCS_URL);
+        docPane.setLargeTitle(true);
         docPane.setTitle(i18n("help.doc"));
         docPane.setSubtitle(i18n("help.detail"));
-        docPane.setExternalLink(Metadata.DOCS_URL);
+
         ComponentList doc = new ComponentList();
         doc.getContent().setAll(docPane);
         content.getChildren().add(doc);
@@ -64,81 +51,58 @@ public class HelpPage extends SpinnerPane {
     private void loadHelp() {
         showSpinner();
         Task.supplyAsync(() -> HttpRequest.GET(Metadata.DOCS_URL + "/index.json").getJson(listTypeOf(HelpCategory.class)))
-                .thenAcceptAsync(Schedulers.javafx(), helpCategories -> {
+            .whenComplete(Schedulers.javafx(), (helpCategories, exception) -> {
+                if (exception != null) {
+                    LOG.warning("Failed to load help page: ", exception);
+                    showLoadFailure();
+                    return;
+                }
+
+                try {
+                    List<Node> nodes = new ArrayList<>();
+
                     for (HelpCategory category : helpCategories) {
                         ComponentList categoryPane = new ComponentList();
 
-                        for (Help help : category.getItems()) {
-                            IconedTwoLineListItem item = new IconedTwoLineListItem();
-                            item.setTitle(help.getTitle());
-                            item.setSubtitle(help.getSubtitle());
-                            item.setExternalLink(help.getUrl());
+                        for (Help help : category.items()) {
+                            var item = LineButton.createExternalLinkButton(help.url());
+                            item.setLargeTitle(true);
+                            item.setTitle(help.title());
+                            item.setSubtitle(help.subtitle());
 
                             categoryPane.getContent().add(item);
                         }
 
-                        content.getChildren().add(ComponentList.createComponentListTitle(category.title));
-                        content.getChildren().add(categoryPane);
+                        nodes.add(ComponentList.createComponentListTitle(category.title()));
+                        nodes.add(categoryPane);
                     }
+
+                    content.getChildren().addAll(nodes);
+
                     hideSpinner();
-                }).start();
+                } catch (Exception e) {
+                    LOG.warning("Failed to display help page: ", e);
+                    showLoadFailure();
+                }
+            }).start();
     }
 
-    private static class HelpCategory {
-        @SerializedName("title")
-        private final String title;
-
-        @SerializedName("items")
-        private final List<Help> items;
-
-        public HelpCategory() {
-            this("", Collections.emptyList());
-        }
-
-        public HelpCategory(String title, List<Help> items) {
-            this.title = title;
-            this.items = items;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public List<Help> getItems() {
-            return items;
-        }
+    private void showLoadFailure() {
+        setFailedReason(i18n("download.failed.refresh"));
+        setOnFailedAction(e -> loadHelp());
+        setLoading(false);
     }
 
-    private static class Help {
-        @SerializedName("title")
-        private final String title;
+    @JsonSerializable
+    private record HelpCategory(
+            @SerializedName("title") String title,
+            @SerializedName("items") List<Help> items) {
+    }
 
-        @SerializedName("subtitle")
-        private final String subtitle;
-
-        @SerializedName("url")
-        private final String url;
-
-        public Help() {
-            this("", "", "");
-        }
-
-        public Help(String title, String subtitle, String url) {
-            this.title = title;
-            this.subtitle = subtitle;
-            this.url = url;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public String getSubtitle() {
-            return subtitle;
-        }
-
-        public String getUrl() {
-            return url;
-        }
+    @JsonSerializable
+    private record Help(
+            @SerializedName("title") String title,
+            @SerializedName("subtitle") String subtitle,
+            @SerializedName("url") String url) {
     }
 }

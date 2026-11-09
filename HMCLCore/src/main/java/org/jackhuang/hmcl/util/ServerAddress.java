@@ -1,125 +1,112 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
  * @author Glavo
  */
 public final class ServerAddress {
+    private static final char USER_CHARACTER = '@';
+    private static final int DEFAULT_MINECRAFT_SERVER_PORT = 25565;
 
-    private static final int UNKNOWN_PORT = -1;
+    private transient final @NotNull HostAndPort hostAndPort;
+    private transient final @NotNull Map<String, String> queryProperties;
+    private final boolean includeParameterContent;
 
-    private static IllegalArgumentException illegalAddress(String address) {
-        return new IllegalArgumentException("Invalid server address: " + address);
+    // original address.
+    private final @NotNull String rawAddress;
+
+    private ServerAddress(
+            @NotNull HostAndPort hostAndPort,
+            @NotNull Map<String, String> queryProperties,
+            boolean includeParameterContent,
+            @NotNull String rawAddress
+    ) {
+        this.hostAndPort = hostAndPort;
+        this.queryProperties = Collections.unmodifiableMap(queryProperties);
+        this.includeParameterContent = includeParameterContent;
+        this.rawAddress = rawAddress;
     }
 
     /**
-     * @throws IllegalArgumentException if the address is not a valid server address
+     * @throws IllegalArgumentException if the rawAddress is not a valid server address
      */
-    public static @NotNull ServerAddress parse(@NotNull String address) {
-        Objects.requireNonNull(address);
+    public static @NotNull ServerAddress parse(@NotNull final String rawAddress) {
+        boolean includeParameterContent = false;
+        String input = rawAddress;
+        try {
+            input = input.trim();
 
-        if (!address.startsWith("[")) {
-            int colonPos = address.indexOf(':');
-            if (colonPos >= 0) {
-                if (colonPos == address.length() - 1)
-                    throw illegalAddress(address);
+            Map<String, String> queryProperties = new LinkedHashMap<>();
 
-                String host = address.substring(0, colonPos);
-                int port;
-                try {
-                    port = Integer.parseInt(address.substring(colonPos + 1));
-                } catch (NumberFormatException e) {
-                    throw illegalAddress(address);
+            // parse query properties
+            int queryStart = input.lastIndexOf('?');
+            if (queryStart != -1) {
+                includeParameterContent = true;
+                String queryPropertyStr = input.substring(queryStart + 1);
+
+                for (Pair<String, String> pair : NetworkUtils.parseQuery(queryPropertyStr, true)) {
+                    queryProperties.put(pair.key(), pair.value() == null ? "" : pair.value());
                 }
-                if (port < 0 || port > 0xFFFF)
-                    throw illegalAddress(address);
-                return new ServerAddress(host, port);
-            } else {
-                return new ServerAddress(address);
-            }
-        } else {
-            // Parse IPv6 address
-            int colonIndex = address.indexOf(':');
-            int closeBracketIndex = address.lastIndexOf(']');
 
-            if (colonIndex < 0 || closeBracketIndex < colonIndex)
-                throw illegalAddress(address);
-
-            String host = address.substring(1, closeBracketIndex);
-            if (closeBracketIndex == address.length() - 1)
-                return new ServerAddress(host);
-
-            if (address.length() < closeBracketIndex + 3 || address.charAt(closeBracketIndex + 1) != ':')
-                throw illegalAddress(address);
-
-            int port;
-            try {
-                port = Integer.parseInt(address.substring(closeBracketIndex + 2));
-            } catch (NumberFormatException e) {
-                throw illegalAddress(address);
+                input = input.substring(0, queryStart);
             }
 
-            if (port < 0 || port > 0xFFFF)
-                throw illegalAddress(address);
+            int atEnd = input.indexOf(USER_CHARACTER);
+            if (atEnd != -1) {
+                includeParameterContent = true;
+                String value = input.substring(0, atEnd);
+                queryProperties.put("_id", value);
 
-            return new ServerAddress(host, port);
+                input = input.substring(atEnd + 1);
+            }
+
+            return new ServerAddress(HostAndPort.parse(input, DEFAULT_MINECRAFT_SERVER_PORT), queryProperties, includeParameterContent, rawAddress);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to parse URL " + rawAddress, e);
         }
     }
 
-    private final String host;
-    private final int port;
-
-    public ServerAddress(@NotNull String host) {
-        this(host, UNKNOWN_PORT);
+    public @NotNull String getRawAddress() {
+        return rawAddress;
     }
 
-    public ServerAddress(@NotNull String host, int port) {
-        this.host = Objects.requireNonNull(host);
-        this.port = port;
+    public @NotNull HostAndPort getHostAndPort() {
+        return hostAndPort;
     }
 
-    public String getHost() {
-        return host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof ServerAddress)) return false;
-        ServerAddress that = (ServerAddress) o;
-        return port == that.port && Objects.equals(host, that.host);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(host, port);
+    public @NotNull Map<String, String> getQueryProperties() {
+        return queryProperties;
     }
 
     @Override
     public String toString() {
-        return String.format("ServerAddress[host='%s', port=%d]", host, port);
+        return "ServerAddress{" +
+                "rawAddress='" + rawAddress + '\'' +
+                '}';
+    }
+
+    public boolean isIncludeParameterContent() {
+        return includeParameterContent;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        ServerAddress that = (ServerAddress) o;
+        return Objects.equals(rawAddress, that.rawAddress);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(rawAddress);
     }
 }

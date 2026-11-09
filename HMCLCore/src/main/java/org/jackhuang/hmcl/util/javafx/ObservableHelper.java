@@ -1,24 +1,10 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.javafx;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -28,6 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @author yushijinhun
  */
+@NotNullByDefault
 public final class ObservableHelper implements Observable, InvalidationListener {
 
     private final List<InvalidationListener> listeners = new CopyOnWriteArrayList<>();
@@ -63,7 +50,7 @@ public final class ObservableHelper implements Observable, InvalidationListener 
 
     @Override
     public void invalidated(Observable observable) {
-        this.invalidate();
+        listeners.forEach(it -> it.invalidated(observable));
     }
 
     public void receiveUpdatesFrom(Observable observable) {

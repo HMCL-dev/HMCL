@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2024 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.download.java.disco;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -53,7 +38,7 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
         if (platform.getOperatingSystem() == OperatingSystem.LINUX)
             params.put("lib_c_type", "glibc");
 
-        this.fetchPackagesTask = new GetTask(downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(API_ROOT + "/packages", params)));
+        this.fetchPackagesTask = new GetTask(downloadProvider.getDownloadCandidates(NetworkUtils.withQuery(API_ROOT + "/packages", params)));
     }
 
     @Override

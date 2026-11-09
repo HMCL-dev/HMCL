@@ -1,24 +1,11 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.SettingsMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -27,7 +14,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class WizardController implements Navigation {
     private final WizardDisplayer displayer;
     private WizardProvider provider = null;
-    private final Map<String, Object> settings = new HashMap<>();
+    private final SettingsMap settings = new SettingsMap();
     private final Stack<Node> pages = new Stack<>();
     private boolean stopped = false;
 
@@ -36,7 +23,7 @@ public class WizardController implements Navigation {
     }
 
     @Override
-    public Map<String, Object> getSettings() {
+    public SettingsMap getSettings() {
         return settings;
     }
 
@@ -82,6 +69,10 @@ public class WizardController implements Navigation {
     }
 
     public void onNext(Node page) {
+        onNext(page, NavigationDirection.NEXT);
+    }
+
+    public void onNext(Node page, NavigationDirection direction) {
         pages.push(page);
 
         if (stopped) { // navigatingTo may stop this wizard.
@@ -92,11 +83,15 @@ public class WizardController implements Navigation {
             ((WizardPage) page).onNavigate(settings);
 
         LOG.info("Navigating to " + page + ", pages: " + pages);
-        displayer.navigateTo(page, NavigationDirection.NEXT);
+        displayer.navigateTo(page, direction);
     }
 
     @Override
     public void onPrev(boolean cleanUp) {
+        onPrev(cleanUp, NavigationDirection.PREVIOUS);
+    }
+
+    public void onPrev(boolean cleanUp, NavigationDirection direction) {
         if (!canPrev()) {
             if (provider.cancelIfCannotGoBack()) {
                 onCancel();
@@ -115,7 +110,7 @@ public class WizardController implements Navigation {
             ((WizardPage) prevPage).onNavigate(settings);
 
         LOG.info("Navigating to " + prevPage + ", pages: " + pages);
-        displayer.navigateTo(prevPage, NavigationDirection.PREVIOUS);
+        displayer.navigateTo(prevPage, direction);
     }
 
     @Override
@@ -123,9 +118,17 @@ public class WizardController implements Navigation {
         return pages.size() > 1;
     }
 
+    /// Finishes the provider and displays its result. Runtime exceptions thrown while preparing
+    /// the result are passed to the displayer as failed tasks, using its normal failure and cleanup handling.
     @Override
     public void onFinish() {
-        Object result = provider.finish(settings);
+        WizardProvider currentProvider = Objects.requireNonNull(provider);
+        @Nullable Object result;
+        try {
+            result = currentProvider.finish(settings);
+        } catch (RuntimeException failure) {
+            result = Task.failed(failure);
+        }
         if (result instanceof Summary) displayer.navigateTo(((Summary) result).getComponent(), NavigationDirection.NEXT);
         else if (result instanceof Task<?>) displayer.handleTask(settings, ((Task<?>) result));
         else if (result != null) throw new IllegalStateException("Unrecognized wizard result: " + result);

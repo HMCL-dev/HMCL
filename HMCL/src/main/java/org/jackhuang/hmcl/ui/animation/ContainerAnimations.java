@@ -1,312 +1,255 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.animation;
 
-import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
+import javafx.animation.*;
+import javafx.scene.Node;
+import javafx.scene.layout.Pane;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_DURATION;
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_DURATION_HALF;
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_INTERPOLATOR;
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.isCacheAllowed;
 
-public enum ContainerAnimations implements AnimationProducer {
+/// Supplies reusable page replacement animations that honor each cache target's transition preference.
+@NotNullByDefault
+public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     NONE {
         @Override
-        public void init(AnimationHandler c) {
-            c.getPreviousNode().setTranslateX(0);
-            c.getPreviousNode().setTranslateY(0);
-            c.getPreviousNode().setScaleX(1);
-            c.getPreviousNode().setScaleY(1);
-            c.getPreviousNode().setOpacity(1);
-            c.getCurrentNode().setTranslateX(0);
-            c.getCurrentNode().setTranslateY(0);
-            c.getCurrentNode().setScaleX(1);
-            c.getCurrentNode().setScaleY(1);
-            c.getCurrentNode().setOpacity(1);
+        public void init(TransitionPane container, Node previousNode, Node nextNode) {
+            AnimationUtils.reset(previousNode, false);
+            AnimationUtils.reset(nextNode, true);
+        }
+
+        /// Creates an empty transition.
+        @Override
+        public Timeline animate(
+                Pane container, Node previousNode, Node nextNode) {
+            return new Timeline();
         }
 
         @Override
-        public List<KeyFrame> animate(AnimationHandler c) {
-            return Collections.emptyList();
+        public TransitionPane.AnimationProducer opposite() {
+            return this;
         }
     },
 
-    /**
-     * A fade between the old and new view
-     */
+    /// A fade between the old and new view
     FADE {
+        /// Fades between pages while temporarily caching the incoming page.
         @Override
-        public void init(AnimationHandler c) {
-            c.getPreviousNode().setTranslateX(0);
-            c.getPreviousNode().setTranslateY(0);
-            c.getPreviousNode().setScaleX(1);
-            c.getPreviousNode().setScaleY(1);
-            c.getPreviousNode().setOpacity(1);
-            c.getCurrentNode().setTranslateX(0);
-            c.getCurrentNode().setTranslateY(0);
-            c.getCurrentNode().setScaleX(1);
-            c.getCurrentNode().setScaleY(1);
-            c.getCurrentNode().setOpacity(0);
+        public Timeline animate(Pane container, Node previousNode, Node nextNode) {
+            return new Timeline(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
+                            new KeyValue(previousNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR)),
+                    new KeyFrame(DEFAULT_DURATION,
+                            new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
+                            new KeyValue(previousNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR)));
         }
 
         @Override
-        public List<KeyFrame> animate(AnimationHandler c) {
-            return Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 0, Interpolator.EASE_BOTH)),
-                    new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 1, Interpolator.EASE_BOTH)));
+        public TransitionPane.AnimationProducer opposite() {
+            return this;
         }
     },
 
-    /**
-     * A fade between the old and new view
-     */
-    FADE_IN {
-        @Override
-        public void init(AnimationHandler c) {
-            c.getCurrentNode().setTranslateX(0);
-            c.getCurrentNode().setTranslateY(0);
-            c.getCurrentNode().setScaleX(1);
-            c.getCurrentNode().setScaleY(1);
-            c.getCurrentNode().setOpacity(0);
-        }
-
-        @Override
-        public List<KeyFrame> animate(AnimationHandler c) {
-            return Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 0, FXUtils.SINE)),
-                    new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 1, FXUtils.SINE)));
-        }
-    },
-
-    /**
-     * A fade between the old and new view
-     */
-    FADE_OUT {
-        @Override
-        public void init(AnimationHandler c) {
-            c.getCurrentNode().setTranslateX(0);
-            c.getCurrentNode().setTranslateY(0);
-            c.getCurrentNode().setScaleX(1);
-            c.getCurrentNode().setScaleY(1);
-            c.getCurrentNode().setOpacity(1);
-        }
-
-        @Override
-        public List<KeyFrame> animate(AnimationHandler c) {
-            return Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 1, FXUtils.SINE)),
-                    new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 0, FXUtils.SINE)));
-        }
-    },
-    /**
-     * A zoom effect
-     */
-    ZOOM_IN {
-        @Override
-        public void init(AnimationHandler c) {
-            c.getPreviousNode().setTranslateX(0);
-            c.getPreviousNode().setTranslateY(0);
-            c.getPreviousNode().setScaleX(1);
-            c.getPreviousNode().setScaleY(1);
-            c.getPreviousNode().setOpacity(1);
-            c.getCurrentNode().setTranslateX(0);
-            c.getCurrentNode().setTranslateY(0);
-        }
-
-        @Override
-        public List<KeyFrame> animate(AnimationHandler c) {
-            return Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getPreviousNode().scaleXProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().scaleYProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 1, Interpolator.EASE_BOTH)),
-                    new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getPreviousNode().scaleXProperty(), 4, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().scaleYProperty(), 4, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH)));
-        }
-    },
-    /**
-     * A zoom effect
-     */
-    ZOOM_OUT {
-        @Override
-        public void init(AnimationHandler c) {
-            c.getPreviousNode().setTranslateX(0);
-            c.getPreviousNode().setTranslateY(0);
-            c.getPreviousNode().setScaleX(1);
-            c.getPreviousNode().setScaleY(1);
-            c.getPreviousNode().setOpacity(1);
-            c.getCurrentNode().setTranslateX(0);
-            c.getCurrentNode().setTranslateY(0);
-        }
-
-        @Override
-        public List<KeyFrame> animate(AnimationHandler c) {
-            return Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getPreviousNode().scaleXProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().scaleYProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 1, Interpolator.EASE_BOTH)),
-                    new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getPreviousNode().scaleXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().scaleYProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH)));
-        }
-    },
-    /**
-     * A swipe effect
-     */
+    /// A swipe effect
     SWIPE_LEFT {
         @Override
-        public void init(AnimationHandler c) {
-            c.getPreviousNode().setScaleX(1);
-            c.getPreviousNode().setScaleY(1);
-            c.getPreviousNode().setOpacity(0);
-            c.getPreviousNode().setTranslateX(0);
-            c.getCurrentNode().setScaleX(1);
-            c.getCurrentNode().setScaleY(1);
-            c.getCurrentNode().setOpacity(1);
-            c.getCurrentNode().setTranslateX(c.getCurrentRoot().getWidth());
+        public void init(TransitionPane container, Node previousNode, Node nextNode) {
+            AnimationUtils.reset(previousNode, true);
+            AnimationUtils.reset(nextNode, true);
+            nextNode.setTranslateX(container.getWidth());
+        }
+
+        /// Slides pages left while temporarily caching the incoming page.
+        @Override
+        public Timeline animate(Pane container, Node previousNode, Node nextNode) {
+            return new Timeline(new KeyFrame(Duration.ZERO,
+                    new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
+                    new KeyValue(nextNode.translateXProperty(), container.getWidth(), DEFAULT_INTERPOLATOR),
+                    new KeyValue(previousNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR)),
+                    new KeyFrame(DEFAULT_DURATION,
+                            new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
+                            new KeyValue(nextNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.translateXProperty(), -container.getWidth(), DEFAULT_INTERPOLATOR)));
         }
 
         @Override
-        public List<KeyFrame> animate(AnimationHandler c) {
-            return Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getCurrentNode().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH)),
-                    new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().translateXProperty(), -c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH)));
+        public TransitionPane.AnimationProducer opposite() {
+            return SWIPE_RIGHT;
         }
     },
 
-    /**
-     * A swipe effect
-     */
+    /// A swipe effect
     SWIPE_RIGHT {
         @Override
-        public void init(AnimationHandler c) {
-            c.getPreviousNode().setScaleX(1);
-            c.getPreviousNode().setScaleY(1);
-            c.getPreviousNode().setOpacity(0);
-            c.getPreviousNode().setTranslateX(0);
-            c.getCurrentNode().setScaleX(1);
-            c.getCurrentNode().setScaleY(1);
-            c.getCurrentNode().setOpacity(1);
-            c.getCurrentNode().setTranslateX(-c.getCurrentRoot().getWidth());
+        public void init(TransitionPane container, Node previousNode, Node nextNode) {
+            AnimationUtils.reset(previousNode, true);
+            AnimationUtils.reset(nextNode, true);
+            nextNode.setTranslateX(-container.getWidth());
+        }
+
+        /// Slides pages right while temporarily caching the incoming page.
+        @Override
+        public Timeline animate(Pane container, Node previousNode, Node nextNode) {
+            return new Timeline(new KeyFrame(Duration.ZERO,
+                    new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
+                    new KeyValue(nextNode.translateXProperty(), -container.getWidth(), DEFAULT_INTERPOLATOR),
+                    new KeyValue(previousNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR)),
+                    new KeyFrame(DEFAULT_DURATION,
+                            new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
+                            new KeyValue(nextNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.translateXProperty(), container.getWidth(), DEFAULT_INTERPOLATOR)));
         }
 
         @Override
-        public List<KeyFrame> animate(AnimationHandler c) {
-            return Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getCurrentNode().translateXProperty(), -c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH)),
-                    new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH)));
+        public TransitionPane.AnimationProducer opposite() {
+            return SWIPE_LEFT;
         }
     },
 
-    SWIPE_LEFT_FADE_SHORT {
+    /// @see <a href="https://m3.material.io/styles/motion/transitions/transition-patterns">Transitions - Material Design 3</a>
+    FORWARD {
+        /// Animates forward navigation with temporary incoming-page caching.
         @Override
-        public void init(AnimationHandler c) {
-            c.getPreviousNode().setScaleX(1);
-            c.getPreviousNode().setScaleY(1);
-            c.getPreviousNode().setOpacity(0);
-            c.getPreviousNode().setTranslateX(0);
-            c.getCurrentNode().setScaleX(1);
-            c.getCurrentNode().setScaleY(1);
-            c.getCurrentNode().setOpacity(1);
-            c.getCurrentNode().setTranslateX(c.getCurrentRoot().getWidth());
+        public Timeline animate(Pane container, Node previousNode, Node nextNode) {
+            double offset = container.getWidth() > 0 ? container.getWidth() * 0.2 : 50;
+            return new Timeline(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
+                            new KeyValue(previousNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR)),
+                    new KeyFrame(DEFAULT_DURATION_HALF,
+                            new KeyValue(previousNode.translateXProperty(), -offset, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR),
+
+                            new KeyValue(nextNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.translateXProperty(), offset, DEFAULT_INTERPOLATOR)),
+                    new KeyFrame(DEFAULT_DURATION,
+                            new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
+                            new KeyValue(nextNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR))
+            );
         }
 
         @Override
-        public List<KeyFrame> animate(AnimationHandler c) {
-            return Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getCurrentNode().translateXProperty(), 50, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 1, Interpolator.EASE_BOTH)),
-                    new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().translateXProperty(), -50, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH)));
+        public TransitionPane.AnimationProducer opposite() {
+            return BACKWARD;
         }
     },
 
-    SWIPE_RIGHT_FADE_SHORT {
+    /// @see <a href="https://m3.material.io/styles/motion/transitions/transition-patterns">Transitions - Material Design 3</a>
+    BACKWARD {
+        /// Animates backward navigation with temporary incoming-page caching.
         @Override
-        public void init(AnimationHandler c) {
-            c.getPreviousNode().setScaleX(1);
-            c.getPreviousNode().setScaleY(1);
-            c.getPreviousNode().setOpacity(0);
-            c.getPreviousNode().setTranslateX(0);
-            c.getCurrentNode().setScaleX(1);
-            c.getCurrentNode().setScaleY(1);
-            c.getCurrentNode().setOpacity(1);
-            c.getCurrentNode().setTranslateX(c.getCurrentRoot().getWidth());
+        public Timeline animate(Pane container, Node previousNode, Node nextNode) {
+            double offset = container.getWidth() > 0 ? container.getWidth() * 0.2 : 50;
+            return new Timeline(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
+                            new KeyValue(previousNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR)),
+                    new KeyFrame(DEFAULT_DURATION_HALF,
+                            new KeyValue(previousNode.translateXProperty(), offset, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR),
+
+                            new KeyValue(nextNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.translateXProperty(), -offset, DEFAULT_INTERPOLATOR)),
+                    new KeyFrame(DEFAULT_DURATION,
+                            new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
+                            new KeyValue(nextNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR))
+            );
         }
 
         @Override
-        public List<KeyFrame> animate(AnimationHandler c) {
-            return Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getCurrentNode().translateXProperty(), -50, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 1, Interpolator.EASE_BOTH)),
-                    new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().translateXProperty(), 50, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH)));
+        public TransitionPane.AnimationProducer opposite() {
+            return FORWARD;
         }
-    };
+    },
 
-    private ContainerAnimations opposite;
+    NAVIGATION {
+        /// Also clears the horizontal offsets of the target page's navigation panels.
+        @Override
+        public void finish(Node nextNode) {
+            super.finish(nextNode);
+            if (nextNode instanceof DecoratorAnimatedPage nextPage) {
+                nextPage.getLeft().setTranslateX(0);
+                nextPage.getCenter().setTranslateX(0);
+            }
+        }
 
-    static {
-        NONE.opposite = NONE;
-        FADE.opposite = FADE;
-        SWIPE_LEFT.opposite = SWIPE_RIGHT;
-        SWIPE_RIGHT.opposite = SWIPE_LEFT;
-        FADE_IN.opposite = FADE_OUT;
-        FADE_OUT.opposite = FADE_IN;
-        ZOOM_IN.opposite = ZOOM_OUT;
-        ZOOM_OUT.opposite = ZOOM_IN;
-    }
+        /// Animates navigation panels, respecting the content's cache preference for each center panel.
+        /// Restores the panels' original cache states at the end.
+        @Override
+        public Animation animate(Pane container, Node previousNode, Node nextNode) {
+            Timeline timeline = new Timeline();
+            timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
+                    new KeyValue(previousNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR)));
+            timeline.getKeyFrames().add(new KeyFrame(DEFAULT_DURATION_HALF,
+                    new KeyValue(previousNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR)));
+            if (previousNode instanceof DecoratorAnimatedPage prevPage) {
+                Node left = prevPage.getLeft();
+                Node center = prevPage.getCenter();
+                @Nullable Node content = prevPage.getContent();
+                boolean cacheCenter = isCacheAllowed(center) && (content == null || isCacheAllowed(content));
 
-    @Override
-    public abstract void init(AnimationHandler handler);
+                timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
+                        new KeyValue(left.cacheProperty(), isCacheAllowed(left), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), cacheCenter, Interpolator.DISCRETE),
+                        new KeyValue(left.translateXProperty(), 0, DEFAULT_INTERPOLATOR),
+                        new KeyValue(center.translateXProperty(), 0, DEFAULT_INTERPOLATOR)));
+                timeline.getKeyFrames().add(new KeyFrame(DEFAULT_DURATION_HALF,
+                        new KeyValue(left.translateXProperty(), -30, DEFAULT_INTERPOLATOR),
+                        new KeyValue(center.translateXProperty(), 30, DEFAULT_INTERPOLATOR)));
+                timeline.getKeyFrames().add(new KeyFrame(DEFAULT_DURATION,
+                        new KeyValue(left.cacheProperty(), left.isCache(), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), center.isCache(), Interpolator.DISCRETE)));
+            }
 
-    @Override
-    public abstract List<KeyFrame> animate(AnimationHandler handler);
+            timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
+                    new KeyValue(nextNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR)));
+            timeline.getKeyFrames().add(new KeyFrame(DEFAULT_DURATION_HALF,
+                    new KeyValue(nextNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR)));
+            timeline.getKeyFrames().add(new KeyFrame(DEFAULT_DURATION,
+                    new KeyValue(nextNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR)));
+            if (nextNode instanceof DecoratorAnimatedPage nextPage) {
+                Node left = nextPage.getLeft();
+                Node center = nextPage.getCenter();
+                @Nullable Node content = nextPage.getContent();
+                boolean cacheCenter = isCacheAllowed(center) && (content == null || isCacheAllowed(content));
 
-    @Override
-    public @Nullable ContainerAnimations opposite() {
-        return opposite;
-    }
+                timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
+                        new KeyValue(left.cacheProperty(), isCacheAllowed(left), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), cacheCenter, Interpolator.DISCRETE)));
+                timeline.getKeyFrames().add(new KeyFrame(DEFAULT_DURATION_HALF,
+                        new KeyValue(left.translateXProperty(), -30, DEFAULT_INTERPOLATOR),
+                        new KeyValue(center.translateXProperty(), 30, DEFAULT_INTERPOLATOR)));
+                timeline.getKeyFrames().add(new KeyFrame(DEFAULT_DURATION,
+                        new KeyValue(left.cacheProperty(), left.isCache(), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), center.isCache(), Interpolator.DISCRETE),
+                        new KeyValue(left.translateXProperty(), 0, DEFAULT_INTERPOLATOR),
+                        new KeyValue(center.translateXProperty(), 0, DEFAULT_INTERPOLATOR)));
+            } else {
+                timeline.getKeyFrames().addAll(
+                        new KeyFrame(Duration.ZERO,
+                                new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE)),
+                        new KeyFrame(DEFAULT_DURATION,
+                                new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE)));
+            }
+
+            return timeline;
+        }
+    },
+    ;
 }

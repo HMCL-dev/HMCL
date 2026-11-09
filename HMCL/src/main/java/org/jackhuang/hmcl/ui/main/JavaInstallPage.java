@@ -1,29 +1,12 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2024 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
@@ -110,17 +93,13 @@ public final class JavaInstallPage extends WizardSinglePage {
 
 
             {
-                BorderPane namePane = new BorderPane();
+                var namePane = new LinePane();
                 {
-                    Label label = new Label(i18n("java.install.name"));
-                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                    namePane.setLeft(label);
+                    namePane.setTitle(i18n("java.install.name"));
 
                     nameField = new JFXTextField();
                     nameField.textProperty().bindBidirectional(control.nameProperty);
                     FXUtils.setLimitWidth(nameField, 200);
-                    BorderPane.setAlignment(nameField, Pos.CENTER_RIGHT);
-                    BorderPane.setMargin(nameField, new Insets(0, 0, 12, 0));
                     namePane.setRight(nameField);
                     nameField.setValidators(
                             new RequiredValidator(),
@@ -176,15 +155,9 @@ public final class JavaInstallPage extends WizardSinglePage {
         }
 
         private void addInfo(String name, String value) {
-            BorderPane pane = new BorderPane();
-
-            pane.setLeft(new Label(name));
-
-            Label valueLabel = FXUtils.truncatedLabel(value, 60);
-            FXUtils.copyOnDoubleClick(valueLabel);
-            BorderPane.setAlignment(valueLabel, Pos.CENTER_RIGHT);
-            pane.setCenter(valueLabel);
-
+            LineTextPane pane = new LineTextPane();
+            pane.setTitle(name);
+            pane.setText(value);
             this.componentList.getContent().add(pane);
         }
     }

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.versioning;
 
 import java.util.Objects;
@@ -31,6 +33,11 @@ public final class VersionRange<T extends Comparable<T>> {
     public static <T extends Comparable<T>> VersionRange<T> atMost(T maximum) {
         assert maximum != null;
         return new VersionRange<>(null, maximum);
+    }
+
+    public static <T extends Comparable<T>> VersionRange<T> is(T version) {
+        assert version != null;
+        return new VersionRange<>(version, version);
     }
 
     private final T minimum;

@@ -1,29 +1,14 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.auth.offline;
 
 import org.glavo.png.javafx.PNGJavaFXUtils;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.util.KeyUtils;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.HttpServer;
 
 import java.io.ByteArrayInputStream;
@@ -84,7 +69,7 @@ public class YggdrasilServer extends HttpServer {
         List<String> names = JsonUtils.fromNonNullJsonFully(request.getSession().getInputStream(), listTypeOf(String.class));
         return ok(names.stream().distinct()
                 .map(this::findCharacterByName)
-                .flatMap(Lang::toStream)
+                .flatMap(Optional::stream)
                 .map(Character::toSimpleResponse)
                 .collect(Collectors.toList()));
     }
@@ -112,7 +97,7 @@ public class YggdrasilServer extends HttpServer {
     private Response profile(Request request) {
         String uuid = request.getPathVariables().group("uuid");
 
-        Optional<Character> character = findCharacterByUuid(UUIDTypeAdapter.fromString(uuid));
+        Optional<Character> character = findCharacterByUuid(UUIDs.parse(uuid));
 
         //Workaround for JDK-8138667
         //noinspection OptionalIsPresent
@@ -128,7 +113,7 @@ public class YggdrasilServer extends HttpServer {
 
         if (Texture.hasTexture(hash)) {
             Texture texture = Texture.getTexture(hash);
-            byte[] data = PNGJavaFXUtils.writeImageToArray(texture.getImage());
+            byte[] data = PNGJavaFXUtils.writeImageToArray(texture.image());
             Response response = newFixedLengthResponse(Response.Status.OK, "image/png", new ByteArrayInputStream(data), data.length);
             response.addHeader("Etag", String.format("\"%s\"", hash));
             response.addHeader("Cache-Control", "max-age=2592000, public");
@@ -176,30 +161,30 @@ public class YggdrasilServer extends HttpServer {
 
         public Object toCompleteResponse(String rootUrl) {
             Map<String, Object> realTextures = new HashMap<>();
-            if (skin != null && skin.getSkin() != null) {
-                if (skin.getModel() == TextureModel.SLIM) {
+            if (skin != null && skin.skin() != null) {
+                if (skin.model() == TextureModel.SLIM) {
                     realTextures.put("SKIN", mapOf(
-                            pair("url", rootUrl + "/textures/" + skin.getSkin().getHash()),
+                            pair("url", rootUrl + "/textures/" + skin.skin().hash()),
                             pair("metadata", mapOf(
                                     pair("model", "slim")
                             ))));
                 } else {
-                    realTextures.put("SKIN", mapOf(pair("url", rootUrl + "/textures/" + skin.getSkin().getHash())));
+                    realTextures.put("SKIN", mapOf(pair("url", rootUrl + "/textures/" + skin.skin().hash())));
                 }
             }
-            if (skin != null && skin.getCape() != null) {
-                realTextures.put("CAPE", mapOf(pair("url", rootUrl + "/textures/" + skin.getCape().getHash())));
+            if (skin != null && skin.cape() != null) {
+                realTextures.put("CAPE", mapOf(pair("url", rootUrl + "/textures/" + skin.cape().hash())));
             }
 
             Map<String, Object> textureResponse = mapOf(
                     pair("timestamp", System.currentTimeMillis()),
-                    pair("profileId", uuid),
+                    pair("profileId", UUIDs.toCompactString(uuid)),
                     pair("profileName", name),
                     pair("textures", realTextures)
             );
 
             return mapOf(
-                    pair("id", uuid),
+                    pair("id", UUIDs.toCompactString(uuid)),
                     pair("name", name),
                     pair("properties", properties(true,
                             pair("textures", new String(
@@ -232,12 +217,7 @@ public class YggdrasilServer extends HttpServer {
     // === properties ===
 
     @SafeVarargs
-    public static List<?> properties(Map.Entry<String, String>... entries) {
-        return properties(false, entries);
-    }
-
-    @SafeVarargs
-    public static List<?> properties(boolean sign, Map.Entry<String, String>... entries) {
+    public static List<?> properties(boolean sign, Pair<String, String>... entries) {
         return Stream.of(entries)
                 .map(entry -> {
                     LinkedHashMap<String, String> property = new LinkedHashMap<>();
@@ -248,7 +228,6 @@ public class YggdrasilServer extends HttpServer {
                     }
                     return property;
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
-
 }

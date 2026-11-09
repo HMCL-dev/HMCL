@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.binding.Bindings;
@@ -29,6 +14,7 @@ import javafx.scene.image.Image;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthenticationException;
+import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -41,21 +27,22 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 import org.jackhuang.hmcl.util.skin.NormalizedSkin;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AccountListItem extends RadioButton {
 
@@ -79,13 +66,14 @@ public class AccountListItem extends RadioButton {
             subtitle.set(loginTypeName + portableSuffix);
         }
 
-        StringBinding characterName = Bindings.createStringBinding(account::getCharacter, account);
-        if (account instanceof OfflineAccount) {
-            title.bind(characterName);
+        StringBinding profileName = Bindings.createStringBinding(() -> {
+            String name = account.getProfileName();
+            return StringUtils.isBlank(name) ? account.getProfileID().toString() : name;
+        }, account);
+        if (account instanceof ClassicAccount classicAccount) {
+            title.bind(Bindings.concat(profileName, " - ", classicAccount.getLoginName()));
         } else {
-            title.bind(
-                    account.getUsername().isEmpty() ? characterName :
-                            Bindings.concat(account.getUsername(), " - ", characterName));
+            title.bind(profileName);
         }
     }
 
@@ -116,9 +104,8 @@ public class AccountListItem extends RadioButton {
     }
 
     public ObservableBooleanValue canUploadSkin() {
-        if (account instanceof AuthlibInjectorAccount) {
-            AuthlibInjectorAccount aiAccount = (AuthlibInjectorAccount) account;
-            ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
+        if (account instanceof AuthlibInjectorAccount aiAccount) {
+            ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getProfileID());
             return createBooleanBinding(() -> {
                 Set<TextureType> uploadableTextures = profile.get()
                         .map(AuthlibInjectorAccount::getUploadableTextures)
@@ -148,7 +135,7 @@ public class AccountListItem extends RadioButton {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("account.skin.upload"));
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("account.skin.file"), "*.png"));
-        File selectedFile = chooser.showOpenDialog(Controllers.getStage());
+        Path selectedFile = Controllers.showOpenDialog(chooser);
         if (selectedFile == null) {
             return null;
         }
@@ -156,7 +143,7 @@ public class AccountListItem extends RadioButton {
         return refreshAsync()
                 .thenRunAsync(() -> {
                     Image skinImg;
-                    try (FileInputStream input = new FileInputStream(selectedFile)) {
+                    try (var input = Files.newInputStream(selectedFile)) {
                         skinImg = new Image(input);
                     } catch (IOException e) {
                         throw new InvalidSkinException("Failed to read skin image", e);
@@ -164,10 +151,13 @@ public class AccountListItem extends RadioButton {
                     if (skinImg.isError()) {
                         throw new InvalidSkinException("Failed to read skin image", skinImg.getException());
                     }
+                    if (skinImg.getWidth() != 64 || (skinImg.getHeight() != 32 && skinImg.getHeight() != 64)) {
+                        throw new InvalidSkinException("Invalid skin size");
+                    }
                     NormalizedSkin skin = new NormalizedSkin(skinImg);
                     String model = skin.isSlim() ? "slim" : "";
                     LOG.info("Uploading skin [" + selectedFile + "], model [" + model + "]");
-                    account.uploadSkin(skin.isSlim(), selectedFile.toPath());
+                    account.uploadSkin(skin.isSlim(), selectedFile);
                 })
                 .thenComposeAsync(refreshAsync())
                 .whenComplete(Schedulers.javafx(), e -> {
@@ -178,6 +168,14 @@ public class AccountListItem extends RadioButton {
     }
 
     public void remove() {
+        if (!Accounts.canRemoveAccount(account)) {
+            Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
+                Accounts.forceOverwriteAccountFiles(account);
+                Accounts.getAccounts().remove(account);
+            });
+            return;
+        }
+
         Accounts.getAccounts().remove(account);
     }
 

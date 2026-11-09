@@ -1,0 +1,194 @@
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
+package org.jackhuang.hmcl.task;
+
+import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.DownloadCandidate;
+import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.*;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
+/// Downloads a remote file to a cache repository.
+///
+/// @author Glavo
+public final class CacheFileTask extends FetchTask<Path> {
+
+    /// Expected SHA-1 checksum, or `null` when the remote cache policy determines reuse.
+    private final @Nullable String expectedSha1;
+
+    /// Creates a task for one URL string using remote cache metadata.
+    ///
+    /// @param url the HTTP or HTTPS URL string
+    public CacheFileTask(@NotNull String url) {
+        this(WebURL.parse(url));
+    }
+
+    /// Creates a task for one URL using remote cache metadata.
+    ///
+    /// @param url the HTTP or HTTPS URL
+    public CacheFileTask(@NotNull WebURL url) {
+        this(List.of(url));
+    }
+
+    /// Creates a task for candidate URLs using remote cache metadata.
+    ///
+    /// @param urls candidate download URLs in attempt order
+    public CacheFileTask(@NotNull List<@NotNull WebURL> urls) {
+        this(DownloadCandidates.ofUrls(urls));
+    }
+
+    public CacheFileTask(DownloadCandidates candidates) {
+        super(candidates);
+        this.expectedSha1 = null;
+        validateUris(candidates);
+        setName(candidates.getPrimaryCandidate().displayUrl());
+    }
+
+    public CacheFileTask(DownloadCandidates candidates, String expectedSha1) {
+        super(candidates);
+        if (!DigestUtils.isSha1Digest(expectedSha1)) {
+            throw new IllegalArgumentException("Invalid SHA-1 checksum: " + expectedSha1);
+        }
+        this.expectedSha1 = expectedSha1.toLowerCase(Locale.ROOT);
+        validateUris(candidates);
+        setName(candidates.getPrimaryCandidate().displayUrl());
+    }
+
+    /// Verifies that all candidate URLs use HTTP or HTTPS.
+    ///
+    /// @param urls the candidate URLs
+    private static void validateUris(@NotNull DownloadCandidates urls) {
+        for (DownloadCandidate candidate : urls.getCandidates()) {
+            if (candidate.url() == null || !NetworkUtils.isHttpUri(candidate.url())) {
+                throw new IllegalArgumentException("Invalid URL: " + candidate.displayUrl());
+            }
+        }
+    }
+
+    /// Selects a verified content-addressed entry or the applicable remote-cache policy.
+    ///
+    /// @return the cache action to perform before downloading
+    @Override
+    protected EnumCheckETag shouldCheckETag() {
+        if (expectedSha1 != null) {
+            Optional<Path> cached = repository.checkExistentFile(
+                    null, CacheRepository.SHA1, expectedSha1);
+            if (cached.isPresent()) {
+                setResult(cached.get());
+                LOG.info("Using cached file with SHA-1 " + expectedSha1);
+                return EnumCheckETag.CACHED;
+            }
+            return EnumCheckETag.NOT_CHECK_E_TAG;
+        }
+
+        // Check cache
+        for (DownloadCandidate candidate : candidates.getCandidates()) {
+            WebURL url = candidate.url();
+            if (url == null) continue;
+
+            try {
+                setResult(repository.getCachedRemoteFile(url, true));
+                LOG.info("Using cached file for " + NetworkUtils.dropQuery(url));
+                return EnumCheckETag.CACHED;
+            } catch (CacheRepository.CacheExpiredException e) {
+                LOG.info("Cache expired for " + NetworkUtils.dropQuery(url));
+            } catch (IOException ignored) {
+            }
+        }
+        return EnumCheckETag.CHECK_E_TAG;
+    }
+
+    @Override
+    protected void useCachedResult(Path cache) {
+        setResult(cache);
+    }
+
+    /// Creates a temporary sink that publishes a successful download to the cache repository.
+    ///
+    /// @param response     the HTTP response metadata
+    /// @param checkETag    whether remote cache metadata is being checked
+    /// @param bmclapiHash  the hash supplied by BMCLAPI, or `null`
+    /// @return the temporary download sink
+    /// @throws IOException if the temporary file cannot be created
+    @Override
+    protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
+        if (expectedSha1 == null && (!checkETag || response == null)) {
+            throw new IOException("Remote response metadata is unavailable");
+        }
+
+        return new Context() {
+            private final Path temp = Files.createTempFile("hmcl-download-", null);
+            private final FileChannel fileOutput = FileChannel.open(temp,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.CREATE);
+
+            @Override
+            public void reset() throws IOException {
+                fileOutput.truncate(0L);
+            }
+
+            @Override
+            public void write(byte[] buffer, int offset, int len) throws IOException {
+                ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, offset, len);
+                while (byteBuffer.hasRemaining()) {
+                    //noinspection ResultOfMethodCallIgnored
+                    fileOutput.write(byteBuffer);
+                }
+            }
+
+            @Override
+            public void close() throws IOException {
+                try {
+                    fileOutput.close();
+                } catch (IOException e) {
+                    LOG.warning("Failed to close file: " + temp, e);
+                    deleteTempFile();
+                    throw e;
+                }
+
+                if (!isSuccess()) {
+                    deleteTempFile();
+                    return;
+                }
+
+                try {
+                    if (expectedSha1 != null) {
+                        ChecksumMismatchException.verifyChecksum(
+                                temp, CacheRepository.SHA1, expectedSha1);
+                        setResult(repository.cacheFile(
+                                temp, CacheRepository.SHA1, expectedSha1));
+                    } else {
+                        setResult(repository.cacheRemoteFile(
+                                Objects.requireNonNull(response), temp));
+                    }
+                } finally {
+                    deleteTempFile();
+                }
+            }
+
+            private void deleteTempFile() {
+                try {
+                    Files.deleteIfExists(temp);
+                } catch (IOException e) {
+                    LOG.warning("Failed to delete file: " + temp, e);
+                }
+            }
+        };
+    }
+}

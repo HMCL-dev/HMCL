@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform.windows;
 
 import com.sun.jna.Pointer;
@@ -56,4 +41,22 @@ public interface Advapi32 extends StdCallLibrary {
                       IntByReference lpReserved,
                       Pointer lpClass, IntByReference lpcchClass,
                       Pointer lpftLastWriteTime);
+
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/winreg/nf-winreg-regcreatekeyexw">RegCreateKeyExW function</a>
+     */
+    int RegCreateKeyExW(Pointer hKey, WString lpSubKey, int Reserved, WString lpClass,
+                        int dwOptions, int samDesired, Pointer lpSecurityAttributes,
+                        PointerByReference phkResult, IntByReference lpdwDisposition);
+
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/winreg/nf-winreg-regsetvalueexw">RegSetValueExW function</a>
+     */
+    int RegSetValueExW(Pointer hKey, WString lpValueName, int Reserved, int dwType,
+                       Pointer lpData, int cbData);
+
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/winreg/nf-winreg-regdeletevaluew">RegDeleteValueW function</a>
+     */
+    int RegDeleteValueW(Pointer hKey, WString lpValueName);
 }

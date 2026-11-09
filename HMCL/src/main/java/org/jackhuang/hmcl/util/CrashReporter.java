@@ -1,38 +1,17 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.countly.CrashReport;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.CrashWindow;
-import org.jackhuang.hmcl.upgrade.IntegrityChecker;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
-import java.io.IOException;
-import java.util.HashMap;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -73,6 +52,11 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
                         alert.setHeaderText(i18n("message.info"));
                         alert.showAndWait();
                     } catch (Throwable t) {
+                        try {
+                            SwingUtils.showErrorDialog(info);
+                        } catch (Throwable t2) {
+                            t.addSuppressed(t2);
+                        }
                         LOG.error("Unable to show message", t);
                     }
                 }
@@ -102,34 +86,13 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
                     if (showCrashWindow) {
                         new CrashWindow(report).show();
                     }
-                    if (!UpdateChecker.isOutdated() && IntegrityChecker.isSelfVerified()) {
-                        reportToServer(report);
-                    }
                 }
             });
         } catch (Throwable handlingException) {
             LOG.error("Unable to handle uncaught exception", handlingException);
         }
 
-        FileSaver.shutdown();
+        SettingsManager.shutdown();
         LOG.shutdown();
-    }
-
-    private void reportToServer(CrashReport crashReport) {
-        Thread t = new Thread(() -> {
-            HashMap<String, String> map = new HashMap<>();
-            map.put("crash_report", crashReport.getDisplayText());
-            map.put("version", Metadata.VERSION);
-            map.put("log", LOG.getLogs());
-            try {
-                String response = NetworkUtils.doPost(NetworkUtils.toURL(Metadata.PUBLISH_URL + "/hmcl/crash.php"), map);
-                if (StringUtils.isNotBlank(response))
-                    LOG.error("Crash server response: " + response);
-            } catch (IOException ex) {
-                LOG.error("Unable to post HMCL server.", ex);
-            }
-        });
-        t.setDaemon(true);
-        t.start();
     }
 }

@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2024 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.java;
 
 import kala.compress.archivers.ArchiveEntry;
@@ -25,14 +10,14 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -85,12 +70,6 @@ public final class JavaInfo {
         return new JavaInfo(Platform.getPlatform(os, arch), javaVersion, vendor);
     }
 
-    public static JavaInfo fromReleaseFile(Path releaseFile) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(releaseFile)) {
-            return fromReleaseFile(reader);
-        }
-    }
-
     public static <F, E extends ArchiveEntry> JavaInfo fromArchive(ArchiveFileTree<F, E> tree) throws IOException {
         if (tree.getRoot().getSubDirs().size() != 1 || !tree.getRoot().getFiles().isEmpty())
             throw new IOException();
@@ -116,24 +95,40 @@ public final class JavaInfo {
         if (vendor == null)
             return null;
 
-        switch (vendor) {
-            case "N/A":
-                return null;
-            case "Oracle Corporation":
-                return "Oracle";
-            case "Azul Systems, Inc.":
-                return "Azul";
-            case "IBM Corporation":
-            case "International Business Machines Corporation":
-            case "Eclipse OpenJ9":
-                return "IBM";
-            case "Eclipse Adoptium":
-                return "Adoptium";
-            case "Amazon.com Inc.":
-                return "Amazon";
-            default:
-                return vendor;
+        return switch (vendor) {
+            case "N/A" -> null;
+            case "Oracle Corporation" -> "Oracle";
+            case "Azul Systems, Inc." -> "Azul";
+            case "IBM Corporation", "International Business Machines Corporation", "Eclipse OpenJ9" -> "IBM";
+            case "Eclipse Adoptium" -> "Adoptium";
+            case "Amazon.com Inc." -> "Amazon";
+            default -> vendor;
+        };
+    }
+
+    public static final class Builder {
+        private final Platform platform;
+        private final String version;
+        private @Nullable String vendor;
+
+        public Builder(Platform platform, String version) {
+            this.platform = platform;
+            this.version = version;
         }
+
+        @Contract("_ -> this")
+        public Builder setVendor(@Nullable String vendor) {
+            this.vendor = vendor;
+            return this;
+        }
+
+        public JavaInfo build() {
+            return new JavaInfo(platform, version, vendor);
+        }
+    }
+
+    public static Builder newBuilder(@NotNull Platform platform, @NotNull String version) {
+        return new Builder(platform, version);
     }
 
     public static final JavaInfo CURRENT_ENVIRONMENT = new JavaInfo(Platform.CURRENT_PLATFORM, System.getProperty("java.version"), System.getProperty("java.vendor"));

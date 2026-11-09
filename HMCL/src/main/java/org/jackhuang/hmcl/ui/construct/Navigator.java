@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.BooleanProperty;
@@ -27,11 +12,11 @@ import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Stack;
 
@@ -47,7 +32,7 @@ public class Navigator extends TransitionPane {
     public void init(Node init) {
         stack.push(init);
         backable.set(canGoBack());
-        getChildren().setAll(init);
+        setContent(init, ContainerAnimations.NONE);
 
         fireEvent(new NavigationEvent(this, init, Navigation.NavigationDirection.START, NavigationEvent.NAVIGATED));
         if (init instanceof PageAware) ((PageAware) init).onPageShown();
@@ -55,6 +40,7 @@ public class Navigator extends TransitionPane {
         initialized = true;
     }
 
+    /// Pushes the page using the supplied transition.
     public void navigate(Node node, AnimationProducer animationProducer) {
         FXUtils.checkFxUserThread();
 
@@ -113,7 +99,7 @@ public class Navigator extends TransitionPane {
         Node poppedNode = stack.pop();
         NavigationEvent exited = new NavigationEvent(this, poppedNode, Navigation.NavigationDirection.PREVIOUS, NavigationEvent.EXITED);
         poppedNode.fireEvent(exited);
-        if (poppedNode instanceof PageAware) ((PageAware) poppedNode).onPageHidden();
+        if (poppedNode instanceof PageAware pageAware) pageAware.onPageHidden();
 
         backable.set(canGoBack());
         Node node = stack.peek();
@@ -123,8 +109,8 @@ public class Navigator extends TransitionPane {
         node.fireEvent(navigating);
 
         Object obj = from.getProperties().get("hmcl.navigator.animation");
-        if (obj instanceof AnimationProducer) {
-            setContent(node, (AnimationProducer) obj);
+        if (obj instanceof AnimationProducer animationProducer) {
+            setContent(node, Objects.requireNonNullElse(animationProducer.opposite(), animationProducer));
         } else {
             setContent(node, ContainerAnimations.NONE);
         }
@@ -160,12 +146,14 @@ public class Navigator extends TransitionPane {
         return stack.size();
     }
 
-    public void setContent(Node content, AnimationProducer animationProducer) {
-        super.setContent(content, animationProducer);
+    /// Replaces the page and allows region content to shrink within the clipped viewport.
+    @Override
+    public void setContent(Node newView, AnimationProducer transition) {
+        super.setContent(newView, transition);
 
-        if (content instanceof Region) {
-            ((Region) content).setMinSize(0, 0);
-            FXUtils.setOverflowHidden((Region) content);
+        if (newView instanceof Region region) {
+            region.setMinSize(0, 0);
+            FXUtils.setOverflowHidden(region);
         }
     }
 
@@ -181,7 +169,7 @@ public class Navigator extends TransitionPane {
         this.onNavigated.set(onNavigated);
     }
 
-    private ObjectProperty<EventHandler<NavigationEvent>> onNavigated = new SimpleObjectProperty<EventHandler<NavigationEvent>>(this, "onNavigated") {
+    private final ObjectProperty<EventHandler<NavigationEvent>> onNavigated = new SimpleObjectProperty<EventHandler<NavigationEvent>>(this, "onNavigated") {
         @Override
         protected void invalidated() {
             setEventHandler(NavigationEvent.NAVIGATED, get());
@@ -200,14 +188,14 @@ public class Navigator extends TransitionPane {
         this.onNavigating.set(onNavigating);
     }
 
-    private ObjectProperty<EventHandler<NavigationEvent>> onNavigating = new SimpleObjectProperty<EventHandler<NavigationEvent>>(this, "onNavigating") {
+    private final ObjectProperty<EventHandler<NavigationEvent>> onNavigating = new SimpleObjectProperty<EventHandler<NavigationEvent>>(this, "onNavigating") {
         @Override
         protected void invalidated() {
             setEventHandler(NavigationEvent.NAVIGATING, get());
         }
     };
 
-    public static class NavigationEvent extends Event {
+    public static final class NavigationEvent extends Event {
         public static final EventType<NavigationEvent> EXITED = new EventType<>("EXITED");
         public static final EventType<NavigationEvent> NAVIGATED = new EventType<>("NAVIGATED");
         public static final EventType<NavigationEvent> NAVIGATING = new EventType<>("NAVIGATING");

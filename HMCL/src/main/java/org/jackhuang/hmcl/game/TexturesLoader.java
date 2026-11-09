@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import javafx.beans.InvalidationListener;
@@ -26,8 +11,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.PixelWriter;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
@@ -35,6 +18,7 @@ import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -45,10 +29,12 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -68,29 +54,18 @@ public final class TexturesLoader {
     }
 
     // ==== Texture Loading ====
-    public static class LoadedTexture {
-        private final Image image;
-        private final Map<String, String> metadata;
-
-        public LoadedTexture(Image image, Map<String, String> metadata) {
-            this.image = requireNonNull(image);
-            this.metadata = requireNonNull(metadata);
-        }
-
-        public Image getImage() {
-            return image;
-        }
-
-        public Map<String, String> getMetadata() {
-            return metadata;
+    public record LoadedTexture(Image image, Map<String, String> metadata) {
+        public LoadedTexture {
+            requireNonNull(image);
+            requireNonNull(metadata);
         }
     }
 
     private static final ThreadPoolExecutor POOL = threadPool("TexturesDownload", true, 2, 10, TimeUnit.SECONDS);
-    private static final Path TEXTURES_DIR = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("skins");
+    private static final Path TEXTURES_DIR = Metadata.HMCL_USER_HOME.resolve("skins");
 
     private static Path getTexturePath(Texture texture) {
-        String url = texture.getUrl();
+        String url = texture.url();
         int slash = url.lastIndexOf('/');
         int dot = url.lastIndexOf('.');
         if (dot < slash) {
@@ -102,7 +77,7 @@ public final class TexturesLoader {
     }
 
     public static LoadedTexture loadTexture(Texture texture) throws Throwable {
-        if (StringUtils.isBlank(texture.getUrl())) {
+        if (StringUtils.isBlank(texture.url())) {
             throw new IOException("Texture url is empty");
         }
 
@@ -110,14 +85,14 @@ public final class TexturesLoader {
         if (!Files.isRegularFile(file)) {
             // download it
             try {
-                new FileDownloadTask(new URL(texture.getUrl()), file.toFile()).run();
-                LOG.info("Texture downloaded: " + texture.getUrl());
+                new FileDownloadTask(DownloadProviders.getDownloadProvider().getDownloadCandidates(texture.url()), file).run();
+                LOG.info("Texture downloaded: " + texture.url());
             } catch (Exception e) {
                 if (Files.isRegularFile(file)) {
                     // concurrency conflict?
-                    LOG.warning("Failed to download texture " + texture.getUrl() + ", but the file is available", e);
+                    LOG.warning("Failed to download texture " + texture.url() + ", but the file is available", e);
                 } else {
-                    throw new IOException("Failed to download texture " + texture.getUrl());
+                    throw new IOException("Failed to download texture " + texture.url());
                 }
             }
         }
@@ -130,7 +105,7 @@ public final class TexturesLoader {
         if (img.isError())
             throw img.getException();
 
-        Map<String, String> metadata = texture.getMetadata();
+        Map<String, String> metadata = texture.metadata();
         if (metadata == null) {
             metadata = emptyMap();
         }
@@ -161,7 +136,7 @@ public final class TexturesLoader {
     }
 
     public static TextureModel getDefaultModel(UUID uuid) {
-        return TextureModel.WIDE.modelName.equals(getDefaultSkin(uuid).getMetadata().get("model"))
+        return TextureModel.WIDE.modelName.equals(getDefaultSkin(uuid).metadata().get("model"))
                 ? TextureModel.WIDE
                 : TextureModel.SLIM;
     }
@@ -179,7 +154,7 @@ public final class TexturesLoader {
                             }
                         })
                         .flatMap(it -> Optional.ofNullable(it.get(TextureType.SKIN)))
-                        .filter(it -> StringUtils.isNotBlank(it.getUrl())))
+                        .filter(it -> StringUtils.isNotBlank(it.url())))
                 .asyncMap(it -> {
                     if (it.isPresent()) {
                         Texture texture = it.get();
@@ -187,7 +162,7 @@ public final class TexturesLoader {
                             try {
                                 return loadTexture(texture);
                             } catch (Throwable e) {
-                                LOG.warning("Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                LOG.warning("Failed to load texture " + texture.url() + ", using fallback texture", e);
                                 return uuidFallback;
                             }
                         }, POOL);
@@ -198,29 +173,29 @@ public final class TexturesLoader {
     }
 
     public static ObservableValue<LoadedTexture> skinBinding(Account account) {
-        LoadedTexture uuidFallback = getDefaultSkin(account.getUUID());
+        LoadedTexture uuidFallback = getDefaultSkin(account.getProfileID());
         if (account instanceof OfflineAccount) {
             OfflineAccount offlineAccount = (OfflineAccount) account;
 
             SimpleObjectProperty<LoadedTexture> binding = new SimpleObjectProperty<>();
             InvalidationListener listener = o -> {
                 Skin skin = offlineAccount.getSkin();
-                String username = offlineAccount.getUsername();
+                String profileName = offlineAccount.getProfileName();
 
                 binding.set(uuidFallback);
                 if (skin != null) {
-                    skin.load(username).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    skin.load(profileName).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load texture", exception);
-                        } else if (result != null && result.getSkin() != null && result.getSkin().getImage() != null) {
+                        } else if (result != null && result.skin() != null && result.skin().image() != null) {
                             Map<String, String> metadata;
-                            if (result.getModel() != null) {
-                                metadata = singletonMap("model", result.getModel().modelName);
+                            if (result.model() != null) {
+                                metadata = singletonMap("model", result.model().modelName);
                             } else {
                                 metadata = emptyMap();
                             }
 
-                            binding.set(new LoadedTexture(result.getSkin().getImage(), metadata));
+                            binding.set(new LoadedTexture(result.skin().image(), metadata));
                         }
                     }).start();
                 }
@@ -237,12 +212,12 @@ public final class TexturesLoader {
                     .asyncMap(textures -> {
                         if (textures.isPresent()) {
                             Texture texture = textures.get().get(TextureType.SKIN);
-                            if (texture != null && StringUtils.isNotBlank(texture.getUrl())) {
+                            if (texture != null && StringUtils.isNotBlank(texture.url())) {
                                 return CompletableFuture.supplyAsync(() -> {
                                     try {
                                         return loadTexture(texture);
                                     } catch (Throwable e) {
-                                        LOG.warning("Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                        LOG.warning("Failed to load texture " + texture.url() + ", using fallback texture", e);
                                         return uuidFallback;
                                     }
                                 }, POOL);
@@ -265,15 +240,8 @@ public final class TexturesLoader {
         int scale = (int) skin.getWidth() / 64;
         int faceOffset = (int) Math.round(size / 18.0);
 
-        try {
-            g.setImageSmoothing(false);
-            drawAvatar(g, skin, size, scale, faceOffset);
-        } catch (NoSuchMethodError ignored) {
-            // Earlier JavaFX did not support GraphicsContext::setImageSmoothing
-            // In order to prevent the blurring caused by bilinear interpolation,
-            // we use the self-implemented nearest neighbor interpolation to scale
-            drawAvatarSlow(g, skin, size, scale, faceOffset);
-        }
+        g.setImageSmoothing(false);
+        drawAvatar(g, skin, size, scale, faceOffset);
     }
 
     private static void drawAvatar(GraphicsContext g, Image skin, int size, int scale, int faceOffset) {
@@ -283,37 +251,6 @@ public final class TexturesLoader {
         g.drawImage(skin,
                 40 * scale, 8 * scale, 8 * scale, 8 * scale,
                 0, 0, size, size);
-    }
-
-    private static void drawAvatarSlow(GraphicsContext g, Image skin, int size, int scale, int faceOffset) {
-        PixelReader reader = skin.getPixelReader();
-        PixelWriter writer = g.getPixelWriter();
-        drawImage(writer, reader,
-                8 * scale, 8 * scale, 8 * scale, 8 * scale,
-                faceOffset, faceOffset, size - 2 * faceOffset, size - 2 * faceOffset);
-        drawImage(writer, reader,
-                40 * scale, 8 * scale, 8 * scale, 8 * scale,
-                0, 0, size, size);
-    }
-
-    /*
-     * Scale and draw image using nearest-neighbor interpolation
-     */
-    private static void drawImage(PixelWriter writer, PixelReader reader,
-                                  int sx, int sy, int sw, int sh,
-                                  int dx, int dy, int dw, int dh) {
-        double xScale = ((double) sw) / dw;
-        double yScale = ((double) sh) / dh;
-
-        for (int xOffset = 0; xOffset < dw; xOffset++) {
-            for (int yOffset = 0; yOffset < dh; yOffset++) {
-                int color = reader.getArgb(sx + (int) (xOffset * xScale), sy + (int) (yOffset * yScale));
-
-                // Draw only non-transparent pixels
-                if ((color >>> 24) != 0)
-                    writer.setArgb(dx + xOffset, dy + yOffset, color);
-            }
-        }
     }
 
     private static final class SkinBindingChangeListener implements ChangeListener<LoadedTexture> {
@@ -359,7 +296,7 @@ public final class TexturesLoader {
             fxAvatarBinding(canvas, skinBinding(account));
         else {
             unbindAvatar(canvas);
-            drawAvatar(canvas, getDefaultSkin(account.getUUID()).image);
+            drawAvatar(canvas, getDefaultSkin(account.getProfileID()).image);
         }
     }
 

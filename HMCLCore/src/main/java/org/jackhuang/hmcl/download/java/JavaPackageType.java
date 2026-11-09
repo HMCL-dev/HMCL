@@ -1,35 +1,22 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2024 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.download.java;
 
 /**
  * @author Glavo
  */
 public enum JavaPackageType {
-    JRE(false, false),
-    JDK(true, false),
-    JREFX(false, true),
-    JDKFX(true, true);
+    JRE("JRE", false, false),
+    JDK("JDK", true, false),
+    JREFX("JRE FX", false, true),
+    JDKFX("JDK FX", true, true);
 
+    private final String displayName;
     private final boolean jdk;
     private final boolean javafx;
 
-    JavaPackageType(boolean jdk, boolean javafx) {
+    JavaPackageType(String displayName, boolean jdk, boolean javafx) {
+        this.displayName = displayName;
         this.jdk = jdk;
         this.javafx = javafx;
     }
@@ -39,6 +26,10 @@ public enum JavaPackageType {
             return javafx ? JDKFX : JDK;
         else
             return javafx ? JREFX : JRE;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     public boolean isJDK() {

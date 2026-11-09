@@ -1,23 +1,7 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -30,6 +14,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -76,19 +61,23 @@ public final class SystemUtils {
         return managedProcess.getProcess().waitFor();
     }
 
+    private static final Duration DEFAULT_MAX_WAIT_TIME = Duration.ofSeconds(15);
+
     public static String run(String... command) throws Exception {
-        return run(Arrays.asList(command),
-                inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET));
+        return run(List.of(command), DEFAULT_MAX_WAIT_TIME);
+    }
+
+    public static String run(List<String> command, Duration maxWaitTime) throws Exception {
+        return run(command, inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET), maxWaitTime);
     }
 
     public static <T> T run(List<String> command, ExceptionalFunction<InputStream, T, ?> convert) throws Exception {
-        File nul = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                ? new File("NUL")
-                : new File("/dev/null");
+        return run(command, convert, DEFAULT_MAX_WAIT_TIME);
+    }
 
+    public static <T> T run(List<String> command, ExceptionalFunction<InputStream, T, ?> convert, Duration maxWaitTime) throws Exception {
         Process process = new ProcessBuilder(command)
-                .redirectInput(nul)
-                .redirectError(nul)
+                .redirectError(ProcessBuilder.Redirect.DISCARD)
                 .start();
         try {
             InputStream inputStream = process.getInputStream();
@@ -96,7 +85,7 @@ public final class SystemUtils {
                     Lang.wrap(() -> convert.apply(inputStream)),
                     Schedulers.io());
 
-            if (!process.waitFor(15, TimeUnit.SECONDS))
+            if (!process.waitFor(maxWaitTime.toMillis(), TimeUnit.MILLISECONDS))
                 throw new TimeoutException();
 
             if (process.exitValue() != 0)
@@ -110,10 +99,10 @@ public final class SystemUtils {
     }
 
     public static boolean supportJVMAttachment() {
-        return JavaRuntime.CURRENT_VERSION >= 9 && Thread.currentThread().getContextClassLoader().getResource("com/sun/tools/attach/VirtualMachine.class") != null;
+        return Thread.currentThread().getContextClassLoader().getResource("com/sun/tools/attach/VirtualMachine.class") != null;
     }
 
-    private static void onLogLine(String log) {
+    public static void onLogLine(String log) {
         LOG.info(log);
     }
 }

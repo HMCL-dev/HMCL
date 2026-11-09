@@ -1,49 +1,35 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.download;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.download.game.LibraryDownloadTask;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Caches verified library files and resolves cached or legacy library locations.
 public class DefaultCacheRepository extends CacheRepository {
     private Path librariesDir;
     private Path indexFile;
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private Index index = null;
 
     public DefaultCacheRepository() {
@@ -63,11 +49,15 @@ public class DefaultCacheRepository extends CacheRepository {
 
         lock.writeLock().lock();
         try {
-            if (Files.isRegularFile(indexFile))
-                index = JsonUtils.fromNonNullJson(FileUtils.readText(indexFile), Index.class);
-            else
+            if (Files.isRegularFile(indexFile)) {
+                index = JsonUtils.fromJsonFile(indexFile, Index.class);
+                if (index == null) {
+                    throw new JsonParseException("Index file is empty or invalid");
+                }
+            } else {
                 index = new Index();
-        } catch (IOException | JsonParseException e) {
+            }
+        } catch (Exception e) {
             LOG.warning("Unable to read index file", e);
             index = new Index();
         } finally {
@@ -75,18 +65,15 @@ public class DefaultCacheRepository extends CacheRepository {
         }
     }
 
-    /**
-     * Try to cache the library given.
-     * This library will be cached only if it is verified.
-     * If cannot be verified, the library will not be cached.
-     *
-     * @param library the library being cached
-     * @param jar the file of library
-     */
+    /// Caches a library only when its download SHA-1 or nonempty legacy checksum list verifies the file.
+    /// Already indexed libraries are skipped; I/O failures are logged without propagating.
+    ///
+    /// @param library the library metadata used for validation
+    /// @param jar the local file to verify and cache
     public void tryCacheLibrary(Library library, Path jar) {
         lock.readLock().lock();
         try {
-            if (index.getLibraries().stream().anyMatch(it -> library.getName().equals(it.getName())))
+            if (index.libraries().stream().anyMatch(it -> library.name().equals(it.name())))
                 return;
         } finally {
             lock.readLock().unlock();
@@ -94,31 +81,28 @@ public class DefaultCacheRepository extends CacheRepository {
 
         try {
             LibraryDownloadInfo info = library.getDownload();
-            String hash = info.getSha1();
+            @Nullable String hash = info.getSha1();
             if (hash != null) {
                 String checksum = DigestUtils.digestToString("SHA-1", jar);
                 if (hash.equalsIgnoreCase(checksum))
                     cacheLibrary(library, jar, false);
-            } else if (library.getChecksums() != null && !library.getChecksums().isEmpty()) {
-                if (LibraryDownloadTask.checksumValid(jar.toFile(), library.getChecksums()))
-                    cacheLibrary(library, jar, true);
-            } else {
-                // or we will not cache the library
+            } else if (library.checksums() != null && !library.checksums().isEmpty()
+                    && library.validateChecksums(jar)) {
+                cacheLibrary(library, jar, true);
             }
         } catch (IOException e) {
             LOG.warning("Unable to calc hash value of file " + jar, e);
         }
     }
 
-    /**
-     * Get the path of cached library, empty if not cached
-     *
-     * @param library the library we check if cached.
-     * @return the cached path if exists, otherwise empty
-     */
+    /// Finds a verified cached library, falling back to the legacy common-directory layout.
+    /// Legacy files without checksum metadata remain usable without being added to the cache.
+    ///
+    /// @param library the library to locate
+    /// @return its cached or legacy path, or empty when no usable file is found
     public Optional<Path> getLibrary(Library library) {
         LibraryDownloadInfo info = library.getDownload();
-        String hash = info.getSha1();
+        @Nullable String hash = info.getSha1();
 
         if (fileExists(SHA1, hash))
             return Optional.of(getFile(SHA1, hash));
@@ -128,14 +112,14 @@ public class DefaultCacheRepository extends CacheRepository {
 
         try {
             // check if this library is from Forge
-            List<LibraryIndex> libraries = index.getLibraries().stream()
-                    .filter(it -> it.getName().equals(library.getName()))
-                    .collect(Collectors.toList());
+            List<LibraryIndex> libraries = index.libraries().stream()
+                    .filter(it -> it.name().equals(library.name()))
+                    .toList();
             for (LibraryIndex libIndex : libraries) {
-                if (fileExists(SHA1, libIndex.getHash())) {
-                    Path file = getFile(SHA1, libIndex.getHash());
-                    if (libIndex.getType().equalsIgnoreCase(LibraryIndex.TYPE_FORGE)) {
-                        if (LibraryDownloadTask.checksumValid(file.toFile(), library.getChecksums()))
+                if (fileExists(SHA1, libIndex.hash())) {
+                    Path file = getFile(SHA1, libIndex.hash());
+                    if (libIndex.type().equalsIgnoreCase(LibraryIndex.TYPE_FORGE)) {
+                        if (library.validateChecksums(file))
                             return Optional.of(file);
                     }
                 }
@@ -152,11 +136,13 @@ public class DefaultCacheRepository extends CacheRepository {
                     String checksum = DigestUtils.digestToString("SHA-1", jar);
                     if (hash.equalsIgnoreCase(checksum))
                         return Optional.of(restore(jar, () -> cacheLibrary(library, jar, false)));
-                } else if (library.getChecksums() != null && !library.getChecksums().isEmpty()) {
-                    if (LibraryDownloadTask.checksumValid(jar.toFile(), library.getChecksums()))
-                        return Optional.of(restore(jar, () -> cacheLibrary(library, jar, true)));
                 } else {
-                    return Optional.of(jar);
+                    if (library.checksums() != null && !library.checksums().isEmpty()) {
+                        if (library.validateChecksums(jar))
+                            return Optional.of(restore(jar, () -> cacheLibrary(library, jar, true)));
+                    } else {
+                        return Optional.of(jar);
+                    }
                 }
             } catch (IOException e) {
                 // we cannot check the hashcode or unable to move file.
@@ -170,14 +156,14 @@ public class DefaultCacheRepository extends CacheRepository {
      * Caches the library file to repository.
      *
      * @param library the library to cache
-     * @param path the file being cached, must be verified
-     * @param forge true if this library is provided by Forge
+     * @param path    the file being cached, must be verified
+     * @param forge   true if this library is provided by Forge
      * @return cached file location
      * @throws IOException if failed to calculate hash code of {@code path} or copy the file to cache
      */
     public Path cacheLibrary(Library library, Path path, boolean forge) throws IOException {
         String hash = library.getDownload().getSha1();
-        if (hash == null)
+        if (!DigestUtils.isSha1Digest(hash))
             hash = DigestUtils.digestToString(SHA1, path);
 
         Path cache = getFile(SHA1, hash);
@@ -186,8 +172,8 @@ public class DefaultCacheRepository extends CacheRepository {
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
-            LibraryIndex libIndex = new LibraryIndex(library.getName(), hash, forge ? LibraryIndex.TYPE_FORGE : LibraryIndex.TYPE_JAR);
-            index.getLibraries().add(libIndex);
+            LibraryIndex libIndex = new LibraryIndex(library.name(), hash, forge ? LibraryIndex.TYPE_FORGE : LibraryIndex.TYPE_JAR);
+            index.libraries().add(libIndex);
             saveIndex();
         } finally {
             writeLock.unlock();
@@ -199,39 +185,37 @@ public class DefaultCacheRepository extends CacheRepository {
     private void saveIndex() {
         if (indexFile == null || index == null) return;
         try {
-            FileUtils.writeText(indexFile, JsonUtils.GSON.toJson(index));
+            Files.createDirectories(indexFile.getParent());
+            FileUtils.saveSafely(indexFile, outputStream -> {
+                try (var writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
+                    JsonUtils.GSON.toJson(index, writer);
+                }
+            });
         } catch (IOException e) {
             LOG.error("Unable to save index.json", e);
         }
     }
 
-    /**
-     * {
-     *     "libraries": {
-     *         // allow a library has multiple hash code.
-     *         [
-     *             "name": "net.minecraftforge:forge:1.11.2-13.20.0.2345",
-     *             "hash": "blablabla",
-     *             "type": "forge"
-     *         ]
-     *     }
-     *     // assets and versions will not be included in index.
-     * }
-     */
-    private static final class Index implements Validation {
-        private final Set<LibraryIndex> libraries;
-
+    /// ```json
+    /// {
+    ///     "libraries": {
+    ///         // allow a library has multiple hash code.
+    ///         [
+    ///             "name": "net.minecraftforge:forge:1.11.2-13.20.0.2345",
+    ///             "hash": "blablabla",
+    ///             "type": "forge"
+    ///         ]
+    ///     }
+    /// }
+    /// ```
+    /// assets and versions will not be included in index.
+    private record Index(@NotNull Set<LibraryIndex> libraries) implements Validation {
         public Index() {
             this(new HashSet<>());
         }
 
-        public Index(Set<LibraryIndex> libraries) {
+        private Index(Set<LibraryIndex> libraries) {
             this.libraries = Objects.requireNonNull(libraries);
-        }
-
-        @NotNull
-        public Set<LibraryIndex> getLibraries() {
-            return libraries;
         }
 
         @Override
@@ -241,55 +225,15 @@ public class DefaultCacheRepository extends CacheRepository {
         }
     }
 
-    private static final class LibraryIndex implements Validation {
-        private final String name;
-        private final String hash;
-        private final String type;
-
+    private record LibraryIndex(@NotNull String name, @NotNull String hash, @NotNull String type) implements Validation {
         public LibraryIndex() {
             this("", "", "");
-        }
-
-        public LibraryIndex(String name, String hash, String type) {
-            this.name = name;
-            this.hash = hash;
-            this.type = type;
-        }
-
-        @NotNull
-        public String getName() {
-            return name;
-        }
-
-        @NotNull
-        public String getHash() {
-            return hash;
-        }
-
-        @NotNull
-        public String getType() {
-            return type;
         }
 
         @Override
         public void validate() throws JsonParseException, TolerableValidationException {
             if (name == null || hash == null || type == null)
                 throw new JsonParseException("Index.LibraryIndex.* cannot be null");
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            LibraryIndex that = (LibraryIndex) o;
-            return Objects.equals(name, that.name) &&
-                    Objects.equals(hash, that.hash) &&
-                    Objects.equals(type, that.type);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(name, hash, type);
         }
 
         public static final String TYPE_FORGE = "forge";

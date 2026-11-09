@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import fi.iki.elonen.NanoHTTPD;
@@ -22,35 +7,68 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     private final int port;
     private final CompletableFuture<String> future = new CompletableFuture<>();
+    private final String codeVerifier;
+    private final String state;
 
     public static String lastlyOpenedURL;
 
     private String idToken;
 
     private OAuthServer(int port) {
-        super(port);
+        super("localhost", port);
 
         this.port = port;
+
+        var encoder = Base64.getUrlEncoder().withoutPadding();
+        var random = new SecureRandom();
+
+        {
+            // https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1
+            // https://datatracker.ietf.org/doc/html/rfc6749#section-10.12
+            byte[] bytes = new byte[32];
+            random.nextBytes(bytes);
+            this.state = encoder.encodeToString(bytes);
+        }
+
+        {
+            // https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
+            byte[] bytes = new byte[64];
+            random.nextBytes(bytes);
+            this.codeVerifier = encoder.encodeToString(bytes);
+        }
+    }
+
+    @Override
+    public String getCodeVerifier() {
+        return codeVerifier;
+    }
+
+    @Override
+    public String getState() {
+        return state;
     }
 
     @Override
@@ -92,18 +110,32 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         String parameters = session.getQueryParameterString();
 
         Map<String, String> query = mapOf(NetworkUtils.parseQuery(parameters));
-        if (query.containsKey("code")) {
-            idToken = query.get("id_token");
-            future.complete(query.get("code"));
+
+        String code = query.get("code");
+        if (code != null) {
+            if (this.state.equals(query.get("state"))) {
+                idToken = query.get("id_token");
+                future.complete(code);
+            } else if (query.containsKey("state")) {
+                LOG.warning("Failed to authenticate: invalid state in parameters");
+                future.completeExceptionally(new AuthenticationException("Failed to authenticate: invalid state"));
+            } else {
+                LOG.warning("Failed to authenticate: missing state in parameters");
+                future.completeExceptionally(new AuthenticationException("Failed to authenticate: missing state"));
+            }
         } else {
-            LOG.warning("Error: " + parameters);
-            future.completeExceptionally(new AuthenticationException("failed to authenticate"));
+            LOG.warning("Failed to authenticate: missing authorization code in parameters");
+            future.completeExceptionally(new AuthenticationException("Failed to authenticate: missing authorization code"));
         }
 
         String html;
         try {
             html = IOUtils.readFullyAsString(OAuthServer.class.getResourceAsStream("/assets/microsoft_auth.html"))
-                    .replace("%close-page%", i18n("account.methods.microsoft.close_page"));
+                    .replace("%style%", Themes.getTheme().toColorScheme().toStyleSheet().replace("-monet", "--monet"))
+                    .replace("%lang%", Locale.getDefault().toLanguageTag())
+                    .replace("%success%", i18n("message.success"))
+                    .replace("%ok%", i18n("button.ok"))
+                    .replace("%close_page%", i18n("account.methods.microsoft.close_page"));
         } catch (IOException e) {
             LOG.error("Failed to load html", e);
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "");
@@ -119,9 +151,18 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         return newFixedLengthResponse(Response.Status.OK, "text/html; charset=UTF-8", html);
     }
 
+    @Override
+    public void close() {
+        if (!future.isDone())
+            future.completeExceptionally(new AuthenticationException("OAuth server is closing"));
+        stop();
+    }
+
     public static class Factory implements OAuth.Callback {
         public final EventManager<GrantDeviceCodeEvent> onGrantDeviceCode = new EventManager<>();
-        public final EventManager<OpenBrowserEvent> onOpenBrowser = new EventManager<>();
+        public final EventManager<LoginCompletedDeviceCodeEvent> onLoginCompletedDeviceCode = new EventManager<>();
+        public final EventManager<OpenBrowserEvent> onOpenBrowserAuthorizationCode = new EventManager<>();
+        public final EventManager<OpenBrowserEvent> onOpenBrowserDevice = new EventManager<>();
 
         @Override
         public OAuth.Session startServer() throws IOException, AuthenticationException {
@@ -148,28 +189,24 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         }
 
         @Override
-        public void openBrowser(String url) throws IOException {
-            lastlyOpenedURL = url;
-            FXUtils.openLink(url);
+        public void loginCompletedDeviceCode() {
+            onLoginCompletedDeviceCode.fireEvent(new LoginCompletedDeviceCodeEvent(this));
+        }
 
-            onOpenBrowser.fireEvent(new OpenBrowserEvent(this, url));
+        @Override
+        public void openBrowser(OAuth.GrantFlow grantFlow, String url) throws IOException {
+            lastlyOpenedURL = url;
+
+            switch (grantFlow) {
+                case AUTHORIZATION_CODE -> onOpenBrowserAuthorizationCode.fireEvent(new OpenBrowserEvent(this, url));
+                case DEVICE -> onOpenBrowserDevice.fireEvent(new OpenBrowserEvent(this, url));
+            }
         }
 
         @Override
         public String getClientId() {
             return System.getProperty("hmcl.microsoft.auth.id",
-                    JarUtils.getManifestAttribute("Microsoft-Auth-Id", ""));
-        }
-
-        @Override
-        public String getClientSecret() {
-            return System.getProperty("hmcl.microsoft.auth.secret",
-                    JarUtils.getManifestAttribute("Microsoft-Auth-Secret", ""));
-        }
-
-        @Override
-        public boolean isPublicClient() {
-            return true; // We have turned on the device auth flow.
+                    JarUtils.getAttribute("hmcl.microsoft.auth.id", ""));
         }
     }
 
@@ -189,6 +226,12 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         public String getVerificationUri() {
             return verificationUri;
+        }
+    }
+
+    public static class LoginCompletedDeviceCodeEvent extends Event {
+        public LoginCompletedDeviceCodeEvent(Object source) {
+            super(source);
         }
     }
 

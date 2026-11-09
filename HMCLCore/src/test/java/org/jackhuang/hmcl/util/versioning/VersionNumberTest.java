@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.versioning;
 
 import org.junit.jupiter.api.Test;
@@ -90,12 +75,17 @@ public class VersionNumberTest {
         assertLessThan("1.99999999999999999999", "1.199999999999999999999");
         assertLessThan("1.99999999999999999999", "2");
         assertLessThan("1.99999999999999999999", "2.0");
+        assertLessThan("1.0", "1.0-zzz");
+        assertLessThan("1.0-beta.1", "1.0");
+        assertLessThan("1.0-alpha.1", "1.0-beta.1");
+        assertLessThan("3.6.15", "3.6.15.289");
+        assertLessThan("3.6.15.289", "3.6.16");
     }
 
     @Test
     public void testSorting() {
         final Comparator<String> comparator = ((Comparator<String>) VersionNumber::compare).thenComparing(String::compareTo);
-        final List<String> input = Collections.unmodifiableList(Arrays.asList(
+        final List<String> input = List.of(
                 "0",
                 "0.10.0",
                 "1.6.4",
@@ -120,6 +110,9 @@ public class VersionNumberTest {
                 "1.8.9",
                 "1.8.9-forge1902",
                 "1.9",
+                "1.10-alpha.2",
+                "1.10-beta.1",
+                "1.10-beta.2",
                 "1.10",
                 "1.10.2",
                 "1.10.2-AOE",
@@ -140,7 +133,8 @@ public class VersionNumberTest {
                 "1.99999999999999999999",
                 "2",
                 "2.0",
-                "2.1"));
+                "2.1"
+        );
 
         List<String> output = new ArrayList<>(input);
         output.sort(comparator);

@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
 import java.io.IOException;
@@ -23,9 +8,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 /**
- *
  * @author huangyuhui
  */
 public final class DigestUtils {
@@ -34,6 +19,36 @@ public final class DigestUtils {
     }
 
     private static final int STREAM_BUFFER_LENGTH = 1024;
+
+    public static boolean isSha1Digest(String digest) {
+        if (digest == null || digest.length() != 40) return false;
+
+        for (int i = 0; i < digest.length(); i++) {
+            char ch = digest.charAt(i);
+            if ((ch < '0' || ch > '9') && (ch < 'a' || ch > 'f') && (ch < 'A' || ch > 'F')) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// Returns whether `digest` is a 512-bit hexadecimal SHA-512 digest (128 hex digits).
+    ///
+    /// @param digest the digest string to check, or `null`
+    /// @return `true` when `digest` is a valid SHA-512 hex digest
+    public static boolean isSha512Digest(String digest) {
+        if (digest == null || digest.length() != 128) return false;
+
+        for (int i = 0; i < digest.length(); i++) {
+            char ch = digest.charAt(i);
+            if ((ch < '0' || ch > '9') && (ch < 'a' || ch > 'f') && (ch < 'A' || ch > 'F')) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     public static MessageDigest getDigest(String algorithm) {
         try {
@@ -61,16 +76,16 @@ public final class DigestUtils {
         return updateDigest(digest, data).digest();
     }
 
-    public static String digestToString(String algorithm, byte[] data) throws IOException {
-        return Hex.encodeHex(digest(algorithm, data));
+    public static String digestToString(String algorithm, byte[] data) {
+        return HexFormat.of().formatHex(digest(algorithm, data));
     }
 
     public static String digestToString(String algorithm, Path path) throws IOException {
-        return Hex.encodeHex(digest(algorithm, path));
+        return HexFormat.of().formatHex(digest(algorithm, path));
     }
 
     public static String digestToString(String algorithm, InputStream data) throws IOException {
-        return Hex.encodeHex(digest(algorithm, data));
+        return HexFormat.of().formatHex(digest(algorithm, data));
     }
 
     private static final ThreadLocal<byte[]> threadLocalBuffer = ThreadLocal.withInitial(() -> new byte[STREAM_BUFFER_LENGTH]);

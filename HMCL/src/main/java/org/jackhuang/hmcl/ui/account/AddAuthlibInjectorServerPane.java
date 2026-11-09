@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
@@ -23,20 +8,20 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.DialogAware;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -87,8 +72,26 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 actions.getChildren().setAll(cancel, nextPane);
             }
 
-            addServerPane.setBody(txtServerUrl);
-            addServerPane.setActions(lblCreationWarning, actions);
+            VBox body = new VBox();
+            body.setSpacing(8);
+
+            lblCreationWarning.setMinWidth(0);
+            lblCreationWarning.setPrefWidth(0);
+            lblCreationWarning.maxWidthProperty().bind(body.widthProperty());
+            lblCreationWarning.visibleProperty().bind(lblCreationWarning.textProperty().isNotEmpty());
+            lblCreationWarning.managedProperty().bind(lblCreationWarning.visibleProperty());
+
+            body.getChildren().addAll(
+                txtServerUrl,
+                lblCreationWarning
+            );
+
+            addServerPane.setBody(body);
+            addServerPane.setActions(actions);
+
+            txtServerUrl.getValidators().addAll(new RequiredValidator(), new URLValidator());
+            FXUtils.setValidateWhileTextChanged(txtServerUrl, true);
+            btnAddNext.disableProperty().bind(txtServerUrl.activeValidatorProperty().isNotNull());
         }
 
         confirmServerPane = new JFXDialogLayout();
@@ -113,9 +116,10 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 GridPane.setRowIndex(lblServerName, 1);
 
                 lblServerWarning = new Label(i18n("account.injector.http"));
-                lblServerWarning.setStyle("-fx-text-fill: red;");
+                lblServerWarning.setStyle("-fx-text-fill: -monet-error;");
                 GridPane.setColumnIndex(lblServerWarning, 0);
                 GridPane.setRowIndex(lblServerWarning, 2);
+                lblServerWarning.managedProperty().bind(lblServerWarning.visibleProperty());
                 GridPane.setColumnSpan(lblServerWarning, 2);
 
                 body.getChildren().setAll(
@@ -149,8 +153,6 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
         this.setContent(addServerPane, ContainerAnimations.NONE);
 
-        lblCreationWarning.maxWidthProperty().bind(((FlowPane) lblCreationWarning.getParent()).widthProperty());
-        btnAddNext.disableProperty().bind(txtServerUrl.textProperty().isEmpty());
         nextPane.hideSpinner();
 
         onEscPressed(this, this::onAddCancel);
@@ -163,6 +165,12 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
     private String resolveFetchExceptionMessage(Throwable exception) {
         if (exception instanceof SSLException) {
+            if (exception.getMessage() != null && exception.getMessage().contains("Remote host terminated")) {
+                return i18n("account.failed.connect_injector_server");
+            }
+            if (exception.getMessage() != null && (exception.getMessage().contains("No name matching") || exception.getMessage().contains("No subject alternative DNS name matching"))) {
+                return i18n("account.failed.dns");
+            }
             return i18n("account.failed.ssl");
         } else if (exception instanceof IOException) {
             return i18n("account.failed.connect_injector_server");
@@ -196,7 +204,8 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 lblServerName.setText(serverBeingAdded.getName());
                 lblServerUrl.setText(serverBeingAdded.getUrl());
 
-                lblServerWarning.setVisible("http".equals(NetworkUtils.toURL(serverBeingAdded.getUrl()).getProtocol()));
+                //noinspection HttpUrlsUsage
+                lblServerWarning.setVisible(serverBeingAdded.getUrl().startsWith("http://"));
 
                 this.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT);
             } else {
@@ -212,8 +221,21 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
     }
 
     private void onAddFinish() {
-        if (!config().getAuthlibInjectorServers().contains(serverBeingAdded)) {
-            config().getAuthlibInjectorServers().add(serverBeingAdded);
+        if (SettingsManager.isAuthlibInjectorServersReadOnly()) {
+            Controllers.confirmBackupAndOverwrite(i18n("account.injector.server.storage.read_only"), () -> {
+                SettingsManager.forceOverwriteAuthlibInjectorServers();
+                addServerAndClose();
+            });
+            return;
+        }
+
+        addServerAndClose();
+    }
+
+    /// Adds the resolved authlib-injector server and closes the dialog.
+    private void addServerAndClose() {
+        if (!getAuthlibInjectorServers().contains(serverBeingAdded)) {
+            getAuthlibInjectorServers().add(serverBeingAdded);
         }
         fireEvent(new DialogCloseEvent());
     }

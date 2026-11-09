@@ -1,0 +1,175 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
+package org.jackhuang.hmcl.ui.construct;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.css.CssMetaData;
+import javafx.css.Styleable;
+import javafx.css.StyleableDoubleProperty;
+import javafx.css.StyleableProperty;
+import javafx.css.converter.SizeConverter;
+import javafx.geometry.Pos;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Rectangle;
+import org.jackhuang.hmcl.ui.FXUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/// A custom ImageView with fixed size and corner radius support.
+public class ImageContainer extends StackPane {
+
+    private static final String DEFAULT_STYLE_CLASS = "image-container";
+
+    private final ImageView imageView = new ImageView();
+    private final Rectangle clip = new Rectangle();
+
+    public ImageContainer(double size) {
+        this(size, size);
+    }
+
+    public ImageContainer(double width, double height) {
+        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+
+        FXUtils.setLimitWidth(this, width);
+        FXUtils.setLimitHeight(this, height);
+
+        imageView.setPreserveRatio(true);
+        FXUtils.limitSize(imageView, width, height);
+        StackPane.setAlignment(imageView, Pos.CENTER);
+
+        clip.setWidth(width);
+        clip.setHeight(height);
+        updateCornerRadius(getCornerRadius());
+        this.setClip(clip);
+
+        this.getChildren().setAll(imageView);
+    }
+
+    public ImageContainer(Image image, double maxWidth, double maxHeight) {
+        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+
+        double width = maxWidth;
+        double height = width / image.getWidth() * image.getHeight();
+        if (height > maxHeight) {
+            height = maxHeight;
+            width = height / image.getHeight() * image.getWidth();
+        }
+
+        FXUtils.setLimitWidth(this, width);
+        FXUtils.setLimitHeight(this, height);
+
+        imageView.setPreserveRatio(true);
+        FXUtils.limitSize(imageView, width, height);
+        StackPane.setAlignment(imageView, Pos.CENTER);
+
+        clip.setWidth(width);
+        clip.setHeight(height);
+        updateCornerRadius(getCornerRadius());
+        this.setClip(clip);
+
+        setImage(image);
+
+        this.getChildren().setAll(imageView);
+    }
+
+    private void updateCornerRadius(double radius) {
+        clip.setArcWidth(radius);
+        clip.setArcHeight(radius);
+    }
+
+    private static final double DEFAULT_CORNER_RADIUS = 6.0;
+
+    private StyleableDoubleProperty cornerRadius;
+
+    public StyleableDoubleProperty cornerRadiusProperty() {
+        if (this.cornerRadius == null) {
+            cornerRadius = new StyleableDoubleProperty() {
+                @Override
+                public Object getBean() {
+                    return ImageContainer.this;
+                }
+
+                @Override
+                public String getName() {
+                    return "cornerRadius";
+                }
+
+                @Override
+                public CssMetaData<? extends Styleable, Number> getCssMetaData() {
+                    return StyleableProperties.CORNER_RADIUS;
+                }
+
+                @Override
+                protected void invalidated() {
+                    updateCornerRadius(get());
+                }
+            };
+        }
+
+        return cornerRadius;
+    }
+
+    public double getCornerRadius() {
+        return cornerRadius == null ? DEFAULT_CORNER_RADIUS : cornerRadius.get();
+    }
+
+    public void setCornerRadius(double radius) {
+        cornerRadiusProperty().set(radius);
+    }
+
+    public ObjectProperty<Image> imageProperty() {
+        return imageView.imageProperty();
+    }
+
+    public Image getImage() {
+        return imageView.getImage();
+    }
+
+    public void setImage(Image image) {
+        imageView.setImage(image);
+    }
+
+    public BooleanProperty smoothProperty() {
+        return imageView.smoothProperty();
+    }
+
+    public boolean isSmooth() {
+        return imageView.isSmooth();
+    }
+
+    public void setSmooth(boolean smooth) {
+        imageView.setSmooth(smooth);
+    }
+
+    @Override
+    public List<CssMetaData<? extends Styleable, ?>> getCssMetaData() {
+        return StyleableProperties.STYLEABLES;
+    }
+
+    private static final class StyleableProperties {
+        private static final CssMetaData<ImageContainer, Number> CORNER_RADIUS =
+                new CssMetaData<>("-jfx-corner-radius", SizeConverter.getInstance(), DEFAULT_CORNER_RADIUS) {
+                    @Override
+                    public boolean isSettable(ImageContainer control) {
+                        return control.cornerRadius == null || !control.cornerRadius.isBound();
+                    }
+
+                    @Override
+                    public StyleableProperty<Number> getStyleableProperty(ImageContainer control) {
+                        return control.cornerRadiusProperty();
+                    }
+                };
+
+        private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
+
+        static {
+            var styleables = new ArrayList<>(StackPane.getClassCssMetaData());
+            styleables.add(CORNER_RADIUS);
+            STYLEABLES = List.copyOf(styleables);
+        }
+    }
+}

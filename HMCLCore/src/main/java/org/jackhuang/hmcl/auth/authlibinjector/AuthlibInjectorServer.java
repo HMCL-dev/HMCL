@@ -1,74 +1,54 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.auth.authlibinjector;
+
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
+import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.util.io.HttpRequest;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.javafx.ObservableHelper;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import static java.util.Collections.emptyMap;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
-import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.javafx.ObservableHelper;
-import org.jetbrains.annotations.Nullable;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.annotations.JsonAdapter;
-
-import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-
 @JsonAdapter(AuthlibInjectorServer.Deserializer.class)
+@NotNullByDefault
 public class AuthlibInjectorServer implements Observable {
 
     private static final Gson GSON = new GsonBuilder().create();
 
     public static AuthlibInjectorServer locateServer(String url) throws IOException {
         try {
-            url = addHttpsIfMissing(url);
-            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-            conn.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
+            url = NetworkUtils.addHttpsIfMissing(url);
+
+            WebURL webURL = WebURL.parseBrowserInput(url);
+            url = webURL.toString();
+
+            HttpURLConnection conn = NetworkUtils.createHttpConnection(webURL);
+            conn = NetworkUtils.resolveConnection(conn);
 
             String ali = conn.getHeaderField("x-authlib-injector-api-location");
             if (ali != null) {
-                URL absoluteAli = new URL(conn.getURL(), ali);
-                if (!urlEqualsIgnoreSlash(url, absoluteAli.toString())) {
+                WebURL absoluteAli = WebURL.parse(ali, WebURL.of(conn.getURL()));
+                if (!urlEqualsIgnoreSlash(webURL.toString(), absoluteAli.toString())) {
                     conn.disconnect();
                     url = absoluteAli.toString();
-                    conn = (HttpURLConnection) absoluteAli.openConnection();
-                    conn.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
+                    conn = NetworkUtils.resolveConnection(NetworkUtils.createHttpConnection(absoluteAli));
                 }
             }
 
@@ -77,7 +57,7 @@ public class AuthlibInjectorServer implements Observable {
 
             try {
                 AuthlibInjectorServer server = new AuthlibInjectorServer(url);
-                server.refreshMetadata(IOUtils.readFullyAsStringWithClosing(conn.getInputStream()));
+                server.refreshMetadata(NetworkUtils.readFullyAsString(conn));
                 return server;
             } finally {
                 conn.disconnect();
@@ -85,14 +65,6 @@ public class AuthlibInjectorServer implements Observable {
         } catch (IllegalArgumentException e) {
             throw new IOException(e);
         }
-    }
-
-    private static String addHttpsIfMissing(String url) {
-        String lowercased = url.toLowerCase(Locale.ROOT);
-        if (!lowercased.startsWith("http://") && !lowercased.startsWith("https://")) {
-            url = "https://" + url;
-        }
-        return url;
     }
 
     private static boolean urlEqualsIgnoreSlash(String a, String b) {
@@ -103,10 +75,10 @@ public class AuthlibInjectorServer implements Observable {
         return a.equals(b);
     }
 
-    private String url;
+    private final String url;
     @Nullable
-    private String metadataResponse;
-    private long metadataTimestamp;
+    private transient String metadataResponse;
+    private transient long metadataTimestamp;
 
     @Nullable
     private transient String name;
@@ -205,8 +177,36 @@ public class AuthlibInjectorServer implements Observable {
         }
     }
 
+    /// Restores a cached metadata response without marking it as freshly fetched.
+    public void restoreMetadataCache(String metadataResponse, long metadataTimestamp) throws JsonParseException {
+        setMetadataResponse(metadataResponse, metadataTimestamp);
+    }
+
     public void invalidateMetadataCache() {
         metadataRefreshed = false;
+    }
+
+    public String getDisplayHostUrl() {
+        String url = this.getUrl();
+
+        try {
+            WebURL parsed = WebURL.parseBrowserInput(url);
+            if ("https".equals(parsed.getScheme())) {
+                StringBuilder builder = new StringBuilder();
+                builder.append(parsed.getHost());
+                if (parsed.getPort() != 443) {
+                    builder.append(':').append(parsed.getPort());
+                }
+
+                if (!"/api/yggdrasil/".equals(parsed.getPath()))
+                    builder.append(parsed.getPath());
+
+                return builder.toString();
+            }
+        } catch (Exception e) {
+            LOG.warning("Unparsable authlib-injector server url " + url, e);
+        }
+        return url;
     }
 
     @Override
@@ -215,7 +215,7 @@ public class AuthlibInjectorServer implements Observable {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (obj == this)
             return true;
         if (!(obj instanceof AuthlibInjectorServer))
@@ -239,24 +239,12 @@ public class AuthlibInjectorServer implements Observable {
         helper.removeListener(listener);
     }
 
+    @NotNullByDefault
     public static class Deserializer implements JsonDeserializer<AuthlibInjectorServer> {
         @Override
         public AuthlibInjectorServer deserialize(JsonElement json, Type type, JsonDeserializationContext ctx) throws JsonParseException {
             JsonObject jsonObj = json.getAsJsonObject();
-            AuthlibInjectorServer instance = new AuthlibInjectorServer(jsonObj.get("url").getAsString());
-
-            if (jsonObj.has("name")) {
-                instance.name = jsonObj.get("name").getAsString();
-            }
-
-            if (jsonObj.has("metadataResponse")) {
-                try {
-                    instance.setMetadataResponse(jsonObj.get("metadataResponse").getAsString(), jsonObj.get("metadataTimestamp").getAsLong());
-                } catch (JsonParseException e) {
-                    LOG.warning("Ignoring malformed metadata response cache: " + jsonObj.get("metadataResponse"), e);
-                }
-            }
-            return instance;
+            return new AuthlibInjectorServer(jsonObj.get("url").getAsString());
         }
 
     }

@@ -1,63 +1,41 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.io.FileUtils;
+import com.google.gson.reflect.TypeToken;
+import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
-/**
- *
- * @author huangyuhui
- */
+/// Downloads text, decoding HTTP responses using their declared charset or UTF-8.
 public final class GetTask extends FetchTask<String> {
 
-    private final Charset charset;
-
-    public GetTask(URL url) {
-        this(url, UTF_8);
+    /// Creates a text download task for one URL.
+    public GetTask(WebURL url) {
+        this(List.of(url));
+        setName(url.toString());
     }
 
-    public GetTask(URL url, Charset charset) {
-        this(url, charset, 3);
+    /// Creates a text download task with a snapshot of nonempty candidate URLs in attempt order.
+    public GetTask(List<WebURL> url) {
+        super(DownloadCandidates.ofUrls(url));
+        setName(url.get(0).toString());
     }
 
-    public GetTask(URL url, Charset charset, int retry) {
-        this(Collections.singletonList(url), charset, retry);
-    }
-
-    public GetTask(List<URL> url) {
-        this(url, UTF_8, 3);
-    }
-
-    public GetTask(List<URL> urls, Charset charset, int retry) {
-        super(urls, retry);
-        this.charset = charset;
-
-        setName(urls.get(0).toString());
+    public GetTask(DownloadCandidates candidates) {
+        super(candidates);
+        setName(candidates.getPrimaryCandidate().displayUrl());
     }
 
     @Override
@@ -67,13 +45,21 @@ public final class GetTask extends FetchTask<String> {
 
     @Override
     protected void useCachedResult(Path cachedFile) throws IOException {
-        setResult(FileUtils.readText(cachedFile));
+        setResult(Files.readString(cachedFile));
     }
 
     @Override
-    protected Context getContext(URLConnection conn, boolean checkETag) {
+    protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) {
+        long length = -1;
+        if (response != null)
+            length = response.headers().firstValueAsLong("content-length").orElse(-1L);
+        final var baos = new ByteArrayOutputStream(length <= 0 ? 8192 : (int) length);
+
         return new Context() {
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            @Override
+            public void reset() throws IOException {
+                baos.reset();
+            }
 
             @Override
             public void write(byte[] buffer, int offset, int len) {
@@ -84,14 +70,25 @@ public final class GetTask extends FetchTask<String> {
             public void close() throws IOException {
                 if (!isSuccess()) return;
 
-                String result = baos.toString(charset.name());
+                Charset charset = StandardCharsets.UTF_8;
+                if (response != null)
+                    charset = NetworkUtils.getCharsetFromContentType(response.headers().firstValue("content-type").orElse(null));
+
+                String result = baos.toString(charset);
                 setResult(result);
 
                 if (checkETag) {
-                    repository.cacheText(result, conn);
+                    repository.cacheText(response, result);
                 }
             }
         };
     }
 
+    public <T> Task<T> thenGetJsonAsync(Class<T> type) {
+        return thenGetJsonAsync(TypeToken.get(type));
+    }
+
+    public <T> Task<T> thenGetJsonAsync(TypeToken<T> type) {
+        return thenApplyAsync(jsonString -> JsonUtils.fromNonNullJson(jsonString, type));
+    }
 }

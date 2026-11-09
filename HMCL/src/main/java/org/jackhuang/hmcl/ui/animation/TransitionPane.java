@@ -1,111 +1,352 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.animation;
 
-import javafx.animation.Timeline;
+import javafx.animation.Animation;
+import javafx.animation.AnimationTimer;
+import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Window;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.IdentityPropertyKey;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
-public class TransitionPane extends StackPane implements AnimationHandler {
-    private static final Duration DEFAULT_DURATION = Duration.millis(200);
+/// Displays one page, retaining the preceding page while a transition runs.
+/// Content changes must be made on the JavaFX Application Thread.
+@NotNullByDefault
+public class TransitionPane extends StackPane {
 
-    private Duration duration;
-    private Node previousNode, currentNode;
+    /// The default easing curve for page transitions.
+    public static final Interpolator DEFAULT_INTERPOLATOR = Motion.EASE;
 
-    {
-        currentNode = getChildren().stream().findFirst().orElse(null);
+    /// The default duration for page transitions.
+    public static final Duration DEFAULT_DURATION = Motion.SHORT4;
+
+    /// Half the default duration for transitions with two phases.
+    public static final Duration DEFAULT_DURATION_HALF = DEFAULT_DURATION.divide(2);
+
+    /// Stores an explicit opt-out from bitmap caching during transitions.
+    private static final IdentityPropertyKey<Boolean> CACHE_ALLOWED_KEY = new IdentityPropertyKey<>(TransitionPane.class, "CACHE_ALLOWED_KEY");
+
+    /// Returns this node's transition cache preference, defaulting to true without allocating properties.
+    public static boolean isCacheAllowed(Node node) {
+        return !node.hasProperties() || !Boolean.FALSE.equals(node.getProperties().get(CACHE_ALLOWED_KEY));
+    }
+
+    /// Sets this node's transition cache preference without changing its cache property.
+    /// Passing true removes the override without allocating properties. Animations read the preference
+    /// when constructed; it is not inherited by ancestors or descendants.
+    public static void setCacheAllowed(Node node, boolean allowed) {
+        if (allowed) {
+            if (node.hasProperties())
+                node.getProperties().remove(CACHE_ALLOWED_KEY);
+        } else {
+            node.getProperties().put(CACHE_ALLOWED_KEY, Boolean.FALSE);
+        }
+    }
+
+    /// Marks pages that have completed a rendering preparation or entered their displayed state.
+    private static final IdentityPropertyKey<Boolean> RENDER_INITIALIZED_KEY = new IdentityPropertyKey<>(TransitionPane.class, "RENDER_INITIALIZED_KEY");
+
+    /// Keeps the first page render active while contributing negligible visible opacity.
+    private static final double PREPARATION_OPACITY = 0.00001;
+
+    /// The requested page, or `null` when content is absent.
+    private @Nullable Node currentNode;
+
+    /// The pending or running transition, or `null` when content is settled.
+    private @Nullable AnimationTimer activeTransition;
+
+    /// The hidden preparation container, or `null` when no candidate is retained.
+    private @Nullable StackPane preloadPane;
+
+    /// Whether the candidate is waiting for its first content layout pass.
+    private boolean preloadLayoutPending;
+
+    /// Creates an empty container that clips content to its bounds.
+    public TransitionPane() {
         FXUtils.setOverflowHidden(this);
     }
 
-    @Override
-    public Node getPreviousNode() {
-        return previousNode;
-    }
-
-    @Override
-    public Node getCurrentNode() {
+    /// Returns the requested page, or `null` if none has been assigned.
+    public @Nullable Node getCurrentNode() {
         return currentNode;
     }
 
+    /// Stops any transition and removes displayed and prewarmed content without animation.
+    /// Resets [#getCurrentNode()] to null. Repeated calls on an empty pane have no effect.
+    /// Nodes are detached even if settling the transition throws an exception.
+    public final void clearContent() {
+        try {
+            if (activeTransition != null)
+                activeTransition.stop();
+        } finally {
+            disposePreloadPane();
+            currentNode = null;
+            getChildren().clear();
+        }
+    }
+
+    /// Attaches unowned content for hidden CSS and layout prewarming.
+    /// Replaces any previous candidate without changing the current content. The hidden
+    /// container uses a snapshot of this pane's content-area size and does not affect
+    /// its size requirements. The content is detached after the layout pass.
+    /// Any call to [#setContent(Node, AnimationProducer)] cancels pending prewarming
+    /// and releases the hidden container.
+    /// The caller must retain the content for subsequent use. This method does not wait
+    /// for prewarming to finish and must be called on the JavaFX Application Thread.
+    ///
+    /// @param content the content to prewarm
+    /// @return the supplied content
+    /// @throws IllegalArgumentException if the content already belongs to a parent or scene
+    public final <N extends Node> N prewarm(N content) {
+        if (content.getParent() != null || content.getScene() != null) {
+            throw new IllegalArgumentException("Content already belongs to a parent or scene");
+        }
+        disposePreloadPane();
+        preloadPane = new StackPane(content);
+        preloadPane.setVisible(false);
+        preloadPane.setManaged(false);
+        preloadPane.setMouseTransparent(true);
+        getChildren().add(0, preloadPane);
+        preloadPane.resizeRelocate(snappedLeftInset(), snappedTopInset(),
+                Math.max(0, getWidth() - snappedLeftInset() - snappedRightInset()),
+                Math.max(0, getHeight() - snappedTopInset() - snappedBottomInset()));
+        preloadLayoutPending = true;
+        requestLayout();
+        return content;
+    }
+
+    /// Releases the preparation container after its descendants have been laid out.
     @Override
-    public StackPane getCurrentRoot() {
-        return this;
+    protected void layoutChildren() {
+        super.layoutChildren();
+        @Nullable Scene scene = getScene();
+        if (preloadPane != null && scene != null && preloadLayoutPending) {
+            preloadLayoutPending = false;
+            StackPane candidate = preloadPane;
+            Platform.runLater(() -> {
+                if (preloadPane == candidate) {
+                    disposePreloadPane();
+                }
+            });
+        }
     }
 
-    @Override
-    public Duration getDuration() {
-        return duration;
+    /// Suppresses future prewarming after a page enters its displayed state in a showing window.
+    private static void markDisplayed(Node content) {
+        @Nullable Scene scene = content.getScene();
+        @Nullable Window window = scene == null ? null : scene.getWindow();
+        if (window != null && window.isShowing()
+                && content.isVisible() && content.getOpacity() > 0) {
+            content.getProperties().put(RENDER_INITIALIZED_KEY, Boolean.TRUE);
+        }
     }
 
-    public void setContent(Node newView, AnimationProducer transition) {
-        setContent(newView, transition, DEFAULT_DURATION);
+    /// Releases the preparation container and its candidate without changing displayed pages.
+    private void disposePreloadPane() {
+        if (preloadPane != null) {
+            StackPane candidate = preloadPane;
+            preloadPane = null;
+            getChildren().remove(candidate);
+            candidate.getChildren().clear();
+        }
     }
 
-    public void setContent(Node newView, AnimationProducer transition, Duration duration) {
-        this.duration = duration;
-
-        updateContent(newView);
-
-        if (previousNode == EMPTY_PANE) {
+    /// Replaces content nodes and releases any prewarming candidate.
+    private void replaceContentNodes(@Nullable Node previousNode, Node newView) {
+        disposePreloadPane();
+        if (previousNode == null) {
             getChildren().setAll(newView);
+        } else {
+            getChildren().setAll(previousNode, newView);
+        }
+    }
+
+    /// Replaces the current page, cancelling any preceding transition.
+    /// Animated changes wait for CSS, layout, and first-display rendering preparation; mouse input is
+    /// suppressed while pending or running. Detaching the container or hiding
+    /// its window cancels the transition. Cancellation applies the end state
+    /// of a started animation with a finite duration and restores the target page
+    /// through [AnimationProducer#finish(Node)], even if playback has not started.
+    /// Previously undisplayed pages initialized at zero opacity render almost transparently
+    /// before playback, provided they are visible and their opacity is not bound. Preparation
+    /// preserves initialized transforms, so offscreen content may still be culled.
+    public void setContent(Node newView, AnimationProducer transition) {
+        if (activeTransition != null) {
+            activeTransition.stop();
+        }
+        @Nullable Node previousNode = currentNode != newView && getWidth() > 0 && getHeight() > 0 ? currentNode : null;
+        currentNode = newView;
+
+        @Nullable Scene scene = getScene();
+        @Nullable Window window = scene == null ? null : scene.getWindow();
+
+        if (!AnimationUtils.isAnimationEnabled() || previousNode == null || transition == ContainerAnimations.NONE
+                || window == null || !window.isShowing()) {
+            transition.finish(newView);
+            replaceContentNodes(null, newView);
+            markDisplayed(newView);
             return;
         }
 
-        if (AnimationUtils.isAnimationEnabled() && transition != ContainerAnimations.NONE) {
-            setMouseTransparent(true);
-            transition.init(this);
+        replaceContentNodes(previousNode, newView);
 
-            // runLater or "init" will not work
-            Platform.runLater(() -> {
-                Timeline newAnimation = new Timeline();
-                newAnimation.getKeyFrames().setAll(transition.animate(this));
-                newAnimation.setOnFinished(e -> {
-                    setMouseTransparent(false);
-                    getChildren().remove(previousNode);
+        boolean originalMouseTransparent = isMouseTransparent();
+
+        AnimationTimer timer = new AnimationTimer() {
+            /// Queues playback after the scene has completed CSS and layout.
+            private final Runnable layoutListener = this::layoutCompleted;
+            /// The animation created after preparation, or `null` before playback.
+            private @Nullable Animation animation;
+            /// Whether the near-transparent render still needs a subsequent scene synchronization.
+            private boolean renderingPending;
+
+            /// Arms a one-shot layout notification after navigation handlers return.
+            @Override
+            public void start() {
+                renderingPending = !newView.getProperties().containsKey(RENDER_INITIALIZED_KEY)
+                        && newView.isVisible() && !newView.opacityProperty().isBound()
+                        && newView.getOpacity() == 0;
+                if (renderingPending) {
+                    newView.setOpacity(PREPARATION_OPACITY);
+                }
+                if (!canContinue()) {
+                    return;
+                }
+                super.start();
+                Platform.runLater(() -> {
+                    if (canContinue()) {
+                        scene.addPostLayoutPulseListener(layoutListener);
+                        Platform.requestNextPulse();
+                    }
                 });
-                FXUtils.playAnimation(this, "transition_pane", newAnimation);
-            });
-        } else {
-            getChildren().remove(previousNode);
+            }
+
+            /// Leaves the layout callback before creating and playing the animation.
+            private void layoutCompleted() {
+                scene.removePostLayoutPulseListener(layoutListener);
+                Platform.runLater(() -> {
+                    if (!canContinue()) {
+                        return;
+                    }
+                    try {
+                        if (renderingPending) {
+                            renderingPending = false;
+                            // This dirty state forces the next scene synchronization to wait for
+                            // the preceding render. Only its following runLater starts the clock.
+                            newView.setOpacity(0);
+                            if (canContinue()) {
+                                scene.addPostLayoutPulseListener(layoutListener);
+                                Platform.requestNextPulse();
+                            }
+                            return;
+                        }
+                        animation = transition.animate(TransitionPane.this, previousNode, newView);
+                        if (activeTransition != this) {
+                            return;
+                        }
+                        animation.setOnFinished(e -> stop());
+                        animation.play();
+                    } catch (RuntimeException | Error e) {
+                        stop();
+                        throw e;
+                    }
+                });
+            }
+
+            /// Returns whether this transition is current, settling it if detached or hidden.
+            private boolean canContinue() {
+                if (activeTransition != this) {
+                    return false;
+                }
+                if (getScene() != scene || scene.getWindow() != window || !window.isShowing()) {
+                    stop();
+                    return false;
+                }
+                return true;
+            }
+
+            /// Monitors attachment and visibility without scheduling playback by frame count.
+            @Override
+            public void handle(long now) {
+                canContinue();
+            }
+
+            /// Releases this transition and restores its page and temporary settings.
+            @Override
+            public void stop() {
+                super.stop();
+                if (activeTransition != this) {
+                    return;
+                }
+                activeTransition = null;
+                scene.removePostLayoutPulseListener(layoutListener);
+                if (animation != null && animation.getStatus() != Animation.Status.STOPPED) {
+                    // Apply child-node key values before stop resets the play head.
+                    Duration end = animation.getTotalDuration();
+                    if (!end.isIndefinite() && !end.isUnknown()) {
+                        animation.jumpTo(end);
+                    }
+                    animation.stop();
+                }
+                transition.finish(newView);
+                if (animation != null) {
+                    markDisplayed(newView);
+                }
+                getChildren().removeIf(node -> node != newView && node != preloadPane);
+                setMouseTransparent(originalMouseTransparent);
+            }
+        };
+        activeTransition = timer;
+        try {
+            setMouseTransparent(true);
+            transition.init(this, previousNode, newView);
+            if (activeTransition != timer) {
+                return;
+            }
+            timer.start();
+        } catch (RuntimeException | Error e) {
+            timer.stop();
+            throw e;
         }
     }
 
-    private void updateContent(Node newView) {
-        if (getWidth() > 0 && getHeight() > 0) {
-            previousNode = currentNode;
-            if (previousNode == null)
-                previousNode = EMPTY_PANE;
-        } else
-            previousNode = EMPTY_PANE;
+    /// Prepares page properties and creates animations for content replacements.
+    public interface AnimationProducer {
+        /// Resets page transforms, making the old page opaque and the new page transparent.
+        default void init(TransitionPane container, Node previousNode, Node nextNode) {
+            AnimationUtils.reset(previousNode, true);
+            AnimationUtils.reset(nextNode, false);
+        }
 
-        if (previousNode == newView)
-            previousNode = EMPTY_PANE;
+        /// Creates the transition between the prepared pages using implementation-selected timing and interpolators.
+        /// Temporary settings such as caching belong in the animation's key values, with their
+        /// original values restored at its finite end so cancellation can apply them by jumping there.
+        Animation animate(Pane container, Node previousNode, Node nextNode);
 
-        currentNode = newView;
+        /// Restores the target page to its settled state after completion or cancellation,
+        /// or when animation is skipped. May be called without [#init] or [#animate]
+        /// having been called, and before CSS or layout has completed.
+        ///
+        /// @implSpec The default implementation sets the target page's X/Y translations
+        /// to zero, X/Y scales to one, and opacity to one. Implementations that animate child nodes
+        /// must also restore those nodes to their target state, including state retained
+        /// from an earlier transition. Repeated calls must leave the page settled.
+        /// @param nextNode the page being shown
+        default void finish(Node nextNode) {
+            AnimationUtils.reset(nextNode, true);
+        }
 
-        getChildren().setAll(previousNode, currentNode);
-    }
-
-    private final EmptyPane EMPTY_PANE = new EmptyPane();
-
-    public static class EmptyPane extends StackPane {
+        /// Returns the reverse transition, or `null` if none is specified.
+        default @Nullable TransitionPane.AnimationProducer opposite() {
+            return null;
+        }
     }
 }

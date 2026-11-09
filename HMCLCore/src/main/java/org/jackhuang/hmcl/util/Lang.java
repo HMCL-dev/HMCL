@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.function.*;
@@ -38,19 +23,12 @@ public final class Lang {
         return value != null ? value : defaultValue;
     }
 
-    public static <T> T requireNonNullElseGet(T value, Supplier<? extends T> defaultValue) {
-        return value != null ? value : defaultValue.get();
-    }
-
-    public static <T, U> U requireNonNullElseGet(T value, Function<? super T, ? extends U> mapper, Supplier<? extends U> defaultValue) {
-        return value != null ? mapper.apply(value) : defaultValue.get();
-    }
-
     /**
      * Construct a mutable map by given key-value pairs.
+     *
      * @param pairs entries in the new map
-     * @param <K> the type of keys
-     * @param <V> the type of values
+     * @param <K>   the type of keys
+     * @param <V>   the type of values
      * @return the map which contains data in {@code pairs}.
      */
     @SafeVarargs
@@ -60,9 +38,10 @@ public final class Lang {
 
     /**
      * Construct a mutable map by given key-value pairs.
+     *
      * @param pairs entries in the new map
-     * @param <K> the type of keys
-     * @param <V> the type of values
+     * @param <K>   the type of keys
+     * @param <V>   the type of values
      * @return the map which contains data in {@code pairs}.
      */
     public static <K, V> Map<K, V> mapOf(Iterable<Pair<K, V>> pairs) {
@@ -70,25 +49,6 @@ public final class Lang {
         for (Pair<K, V> pair : pairs)
             map.put(pair.getKey(), pair.getValue());
         return map;
-    }
-
-    @SafeVarargs
-    public static <T> List<T> immutableListOf(T... elements) {
-        return Collections.unmodifiableList(Arrays.asList(elements));
-    }
-
-    public static <T extends Comparable<T>> T clamp(T min, T val, T max) {
-        if (val.compareTo(min) < 0) return min;
-        else if (val.compareTo(max) > 0) return max;
-        else return val;
-    }
-
-    public static double clamp(double min, double val, double max) {
-        return Math.max(min, Math.min(val, max));
-    }
-
-    public static int clamp(int min, int val, int max) {
-        return Math.max(min, Math.min(val, max));
     }
 
     public static boolean test(ExceptionalRunnable<?> r) {
@@ -122,9 +82,10 @@ public final class Lang {
 
     /**
      * Cast {@code obj} to V dynamically.
-     * @param obj the object reference to be cast.
+     *
+     * @param obj   the object reference to be cast.
      * @param clazz the class reference of {@code V}.
-     * @param <V> the type that {@code obj} is being cast to.
+     * @param <V>   the type that {@code obj} is being cast to.
      * @return {@code obj} in the type of {@code V}.
      */
     public static <V> Optional<V> tryCast(Object obj, Class<V> clazz) {
@@ -145,17 +106,11 @@ public final class Lang {
         return operator.apply(a, b);
     }
 
-    public static <T> List<T> removingDuplicates(List<T> list) {
-        LinkedHashSet<T> set = new LinkedHashSet<>(list.size());
-        set.addAll(list);
-        return new ArrayList<>(set);
-    }
-
     /**
      * Join two collections into one list.
      *
-     * @param a one collection, to be joined.
-     * @param b another collection to be joined.
+     * @param a   one collection, to be joined.
+     * @param b   another collection to be joined.
      * @param <T> the super type of elements in {@code a} and {@code b}
      * @return the joint collection
      */
@@ -168,8 +123,14 @@ public final class Lang {
         return result;
     }
 
-    public static <T> List<T> copyList(List<T> list) {
-        return list == null ? null : list.isEmpty() ? null : new ArrayList<>(list);
+    public static <T> int indexWhere(List<T> list, Predicate<T> predicate) {
+        int idx = 0;
+        for (T value : list) {
+            if (predicate.test(value))
+                return idx;
+            idx++;
+        }
+        return -1;
     }
 
     public static void executeDelayed(Runnable runnable, TimeUnit timeUnit, long timeout, boolean isDaemon) {
@@ -185,6 +146,7 @@ public final class Lang {
 
     /**
      * Start a thread invoking {@code runnable} immediately.
+     *
      * @param runnable code to run.
      * @return the reference of the started thread
      */
@@ -194,8 +156,9 @@ public final class Lang {
 
     /**
      * Start a thread invoking {@code runnable} immediately.
+     *
      * @param runnable code to run
-     * @param name the name of thread
+     * @param name     the name of thread
      * @return the reference of the started thread
      */
     public static Thread thread(Runnable runnable, String name) {
@@ -204,8 +167,9 @@ public final class Lang {
 
     /**
      * Start a thread invoking {@code runnable} immediately.
+     *
      * @param runnable code to run
-     * @param name the name of thread
+     * @param name     the name of thread
      * @param isDaemon true if thread will be terminated when only daemon threads are running.
      * @return the reference of the started thread
      */
@@ -220,14 +184,22 @@ public final class Lang {
     }
 
     public static ThreadPoolExecutor threadPool(String name, boolean daemon, int threads, long timeout, TimeUnit timeunit) {
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(
+                threads, threads,
+                timeout, timeunit,
+                new LinkedBlockingQueue<>(),
+                counterThreadFactory(name, daemon));
+        pool.allowCoreThreadTimeOut(true);
+        return pool;
+    }
+
+    public static ThreadFactory counterThreadFactory(String name, boolean daemon) {
         AtomicInteger counter = new AtomicInteger(1);
-        ThreadPoolExecutor pool = new ThreadPoolExecutor(threads, threads, timeout, timeunit, new LinkedBlockingQueue<>(), r -> {
+        return r -> {
             Thread t = new Thread(r, name + "-" + counter.getAndIncrement());
             t.setDaemon(daemon);
             return t;
-        });
-        pool.allowCoreThreadTimeOut(true);
-        return pool;
+        };
     }
 
     public static int parseInt(Object string, int defaultValue) {
@@ -256,9 +228,19 @@ public final class Lang {
         }
     }
 
+    public static Float toFloatOrNull(Object string) {
+        try {
+            if (string == null) return null;
+            return Float.parseFloat(string.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     /**
      * Find the first non-null reference in given list.
-     * @param t nullable references list.
+     *
+     * @param t   nullable references list.
      * @param <T> the type of nullable references
      * @return the first non-null reference.
      */
@@ -337,25 +319,11 @@ public final class Lang {
         };
     }
 
-    @SafeVarargs
-    public static <T> Consumer<T> compose(Consumer<T>... consumers) {
-        return t -> {
-            for (Consumer<T> consumer : consumers) {
-                consumer.accept(t);
-            }
-        };
-    }
-
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public static <T> Stream<T> toStream(Optional<T> optional) {
-        return optional.map(Stream::of).orElseGet(Stream::empty);
-    }
-
     public static <T> Iterable<T> toIterable(Enumeration<T> enumeration) {
         if (enumeration == null) {
             throw new NullPointerException();
         }
-        return () -> new Iterator<T>() {
+        return () -> new Iterator<>() {
             public boolean hasNext() {
                 return enumeration.hasMoreElements();
             }
@@ -378,31 +346,14 @@ public final class Lang {
         return () -> iterator;
     }
 
-    public static <T, U> void forEachZipped(Iterable<T> i1, Iterable<U> i2, BiConsumer<T, U> action) {
-        Iterator<T> it1 = i1.iterator();
-        Iterator<U> it2 = i2.iterator();
-        while (it1.hasNext() && it2.hasNext())
-            action.accept(it1.next(), it2.next());
-    }
-
-    private static Timer timer;
-
-    public static synchronized Timer getTimer() {
-        if (timer == null) {
-            timer = new Timer(true);
-        }
-        return timer;
-    }
-
-    public static synchronized TimerTask setTimeout(Runnable runnable, long delayMs) {
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                runnable.run();
-            }
-        };
-        getTimer().schedule(task, delayMs);
-        return task;
+    public static <T> List<T> copyWithSize(List<T> list, int newSize, T defaultValue) {
+        if (list.size() == newSize) return new ArrayList<>(list);
+        if (list.size() > newSize) return new ArrayList<>(list.subList(0, newSize));
+        List<T> result = new ArrayList<>(newSize);
+        result.addAll(list);
+        for (int i = list.size(); i < newSize; i++)
+            result.add(defaultValue);
+        return result;
     }
 
     public static Throwable resolveException(Throwable e) {
@@ -411,16 +362,6 @@ public final class Lang {
         else
             return e;
     }
-
-    /**
-     * This is a useful function to prevent exceptions being eaten when using CompletableFuture.
-     * You can write:
-     * ... .exceptionally(handleUncaught);
-     */
-    public static final Function<Throwable, Void> handleUncaught = e -> {
-        handleUncaughtException(e);
-        return null;
-    };
 
     public static <R> R handleUncaughtException(Throwable e) {
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);

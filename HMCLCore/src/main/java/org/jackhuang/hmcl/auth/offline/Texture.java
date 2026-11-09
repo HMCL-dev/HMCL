@@ -1,50 +1,24 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.auth.offline;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
-import org.jackhuang.hmcl.util.Hex;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
-public final class Texture {
-    private final String hash;
-    private final Image image;
-
+public record Texture(String hash, Image image) {
     public Texture(String hash, Image image) {
         this.hash = requireNonNull(hash);
         this.image = requireNonNull(image);
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public Image getImage() {
-        return image;
     }
 
     private static final Map<String, Texture> textures = new HashMap<>();
@@ -90,7 +64,7 @@ public final class Texture {
             digest.update(buf, 0, pos);
         }
 
-        return Hex.encodeHex(digest.digest());
+        return HexFormat.of().formatHex(digest.digest());
     }
 
     private static void putInt(byte[] array, int offset, int x) {

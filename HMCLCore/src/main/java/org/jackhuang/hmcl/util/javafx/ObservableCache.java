@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.javafx;
 
 import java.util.HashMap;
@@ -24,6 +9,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -37,6 +23,7 @@ import javafx.beans.binding.ObjectBinding;
  */
 public final class ObservableCache<K, V, E extends Exception> {
 
+    private final ReentrantLock lock = new ReentrantLock();
     private final ExceptionalFunction<K, V, E> source;
     private final BiConsumer<K, Throwable> exceptionHandler;
     private final V fallbackValue;
@@ -54,22 +41,29 @@ public final class ObservableCache<K, V, E extends Exception> {
     }
 
     public Optional<V> getImmediately(K key) {
-        synchronized (this) {
+        lock.lock();
+        try {
             return Optional.ofNullable(cache.get(key));
+        } finally {
+            lock.unlock();
         }
     }
 
     public void put(K key, V value) {
-        synchronized (this) {
+        lock.lock();
+        try {
             cache.put(key, value);
             invalidated.remove(key);
+        } finally {
+            lock.unlock();
         }
         Platform.runLater(observable::invalidate);
     }
 
     private CompletableFuture<V> query(K key, Executor executor) {
         CompletableFuture<V> future;
-        synchronized (this) {
+        lock.lock();
+        try {
             CompletableFuture<V> prev = pendings.get(key);
             if (prev != null) {
                 return prev;
@@ -77,6 +71,8 @@ public final class ObservableCache<K, V, E extends Exception> {
                 future = new CompletableFuture<>();
                 pendings.put(key, future);
             }
+        } finally {
+            lock.unlock();
         }
 
         executor.execute(() -> {
@@ -84,18 +80,24 @@ public final class ObservableCache<K, V, E extends Exception> {
             try {
                 result = source.apply(key);
             } catch (Throwable ex) {
-                synchronized (this) {
+                lock.lock();
+                try {
                     pendings.remove(key);
+                } finally {
+                    lock.unlock();
                 }
                 exceptionHandler.accept(key, ex);
                 future.completeExceptionally(ex);
                 return;
             }
 
-            synchronized (this) {
+            lock.lock();
+            try {
                 cache.put(key, result);
                 invalidated.remove(key);
                 pendings.remove(key, future);
+            } finally {
+                lock.unlock();
             }
             future.complete(result);
             Platform.runLater(observable::invalidate);
@@ -106,11 +108,14 @@ public final class ObservableCache<K, V, E extends Exception> {
 
     public V get(K key) {
         V cached;
-        synchronized (this) {
+        lock.lock();
+        try {
             cached = cache.get(key);
             if (cached != null && !invalidated.containsKey(key)) {
                 return cached;
             }
+        } finally {
+            lock.unlock();
         }
 
         try {
@@ -143,7 +148,9 @@ public final class ObservableCache<K, V, E extends Exception> {
         return Bindings.createObjectBinding(() -> {
             V result;
             boolean refresh;
-            synchronized (this) {
+
+            lock.lock();
+            try {
                 result = cache.get(key);
                 if (result == null) {
                     result = fallbackValue;
@@ -151,6 +158,8 @@ public final class ObservableCache<K, V, E extends Exception> {
                 } else {
                     refresh = invalidated.containsKey(key);
                 }
+            } finally {
+                lock.unlock();
             }
             if (!quiet && refresh) {
                 query(key, executor);
@@ -160,10 +169,13 @@ public final class ObservableCache<K, V, E extends Exception> {
     }
 
     public void invalidate(K key) {
-        synchronized (this) {
+        lock.lock();
+        try {
             if (cache.containsKey(key)) {
                 invalidated.put(key, Boolean.TRUE);
             }
+        } finally {
+            lock.unlock();
         }
         Platform.runLater(observable::invalidate);
     }

@@ -1,45 +1,39 @@
-/**
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+ * SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+ * SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
  */
+
 .root {
 }
 
 .svg {
-    -fx-fill: black;
+    -fx-fill: -monet-on-surface;
+}
+
+.label {
+    -fx-text-fill: -monet-on-surface;
 }
 
 .scroll-bar .thumb {
-    -fx-fill: -theme-thumb;
-    -fx-arc-width: 0;
-    -fx-arc-height: 0;
-}
-
-.disabled Label {
-    -fx-text-fill: rgba(0, 0, 0, 0.5);
+    -fx-fill: -monet-surface-tint;
+    -fx-arc-width: 6;
+    -fx-arc-height: 6;
 }
 
 .title-label {
-    -fx-font-size: 16.0px;
-    -fx-padding: 14.0px;
-    -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
+    -fx-text-fill: -monet-on-surface;
 }
 
 .subtitle-label {
-    -fx-text-fill: rgba(0, 0, 0, 0.5);
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.hyperlink {
+    -fx-text-fill: -monet-primary;
+}
+
+.hyperlink:focused {
+    -fx-border-color: -monet-primary;
 }
 
 .hint {
@@ -49,46 +43,41 @@
     -fx-padding: 6;
 }
 
-/*
-  Colors are picked from bootstrap
-
-  https://getbootstrap.com/docs/4.1/components/alerts/
- */
+.hint .hyperlink {
+    -fx-fill: -monet-primary;
+    -fx-text-fill: -monet-primary;
+}
 
 .hint.info {
-    -fx-background-color: #cce5ff;
-    -fx-border-color: #b8daff;
+    -fx-background-color: -monet-primary-fixed-dim;
+    -fx-border-color: -monet-outline;
 }
 
 .hint.info Text, .hint.info .svg {
-    -fx-fill: #004085;
-}
-
-.hint.success {
-    -fx-background-color: #d4edda;
-    -fx-border-color: #c3e6cb;
-}
-
-.hint.success Text, .hint.success .svg {
-    -fx-fill: #155724;
+    -fx-fill: -monet-on-primary-fixed;
 }
 
 .hint.error {
-    -fx-background-color: #f8d7da;
-    -fx-border-color: #f5c6cb;
+    -fx-background-color: -monet-error-container;
+    -fx-border-color: -monet-outline;
 }
 
 .hint.error Text, .hint.error .svg {
-    -fx-fill: #721c24;
+    -fx-fill: -monet-on-error-container;
 }
 
 .hint.warning {
-    -fx-background-color: #fff3cd;
-    -fx-border-color: #ffeeba;
+    -fx-background-color: -monet-tertiary-fixed-dim;
+    -fx-border-color: -monet-outline;
 }
 
 .hint.warning Text, .hint.warning .svg {
-    -fx-fill: #856404;
+    -fx-fill: -monet-on-tertiary-fixed;
+}
+
+.hint.warning .hyperlink {
+    -fx-fill: -fx-hyperlink-fill;
+    -fx-text-fill: -fx-hyperlink-fill;
 }
 
 .skin-pane .jfx-text-field {
@@ -102,20 +91,30 @@
 .memory-label {
 }
 
-.memory-used {
-    -fx-background-color: -fx-base-darker-color;
+.memory-status-bar {
+    -fx-opacity: 1;
 }
 
-.memory-allocate {
-    -fx-background-color: derive(-fx-base-color, 100%);
+.memory-status-bar:disabled {
+    -fx-opacity: 0.4;
 }
 
-.memory-total {
-    -fx-background-color: -fx-base-rippler-color;
+.memory-status-bar .track {
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
+    -fx-background-insets: 0;
+}
+
+.memory-status-bar .memory-used {
+    -fx-fill: -monet-primary;
+}
+
+.memory-status-bar .memory-allocate {
+    -fx-fill: -monet-primary-transparent-50;
 }
 
 .update-label {
-    -fx-text-fill: red;
+    -fx-text-fill: -monet-tertiary;
 }
 
 .radio-button-title-label {
@@ -129,20 +128,42 @@
 }
 
 .announcement .title {
+    -fx-text-fill: -monet-on-surface;
     -fx-font-size: 14px;
     -fx-font-weight: BOLD;
 }
 
-.announcement JFXHyperlink, .announcement Text {
+.announcement Text {
+    -fx-fill: -monet-on-surface;
+    -fx-font-size: 13px;
+}
+
+.announcement .hyperlink {
+    -fx-fill: -monet-primary;
     -fx-font-size: 13px;
 }
 
 .rippler-container {
-    -jfx-rippler-fill: #a2a2a2;
+    -jfx-feedback-fill: -monet-on-surface;
 }
 
-.rippler-container:selected .label {
-    -fx-text-fill: -fx-base-text-fill;
+.rippler-container:press-feedback-enabled {
+    -fx-cursor: hand;
+}
+
+.advanced-list-item:action-disabled > .rippler-container > .container > .title,
+.advanced-list-item:action-disabled > .rippler-container > .container > .subtitle,
+.advanced-list-item:action-disabled > .rippler-container > .container > :action-disabled {
+    -fx-opacity: 0.4;
+}
+
+.advanced-list-item:selected .rippler-container {
+    -jfx-feedback-fill: -monet-on-secondary-container;
+}
+
+.advanced-list-item:action-disabled > .rippler-container {
+    -jfx-feedback-fill: transparent;
+    -fx-cursor: default;
 }
 
 .advanced-list-item > .rippler-container > .container {
@@ -150,65 +171,58 @@
     -fx-background-color: null;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item {
-    -fx-alignment: center-left;
+.advanced-list-item > .rippler-container > .container > .title {
     -fx-padding: 0 0 0 10;
-}
-
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > .first-line > .title {
     -fx-font-size: 13;
     -fx-text-alignment: justify;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > HBox > .subtitle {
+.advanced-list-item > .rippler-container > .container > .subtitle {
+    -fx-padding: 0 0 0 10;
     -fx-font-size: 10;
     -fx-text-alignment: justify;
 }
 
-.advanced-list-item:selected > .rippler-container > .container {
-    -fx-background-color: -fx-base-rippler-color;
+.advanced-list-item {
+    -jfx-selected-background-fill: -monet-secondary-container;
 }
 
-.advanced-list-item:selected > .rippler-container > .container > .two-line-list-item > .first-line > .title {
-    -fx-text-fill: -fx-base-color;
+.advanced-list-item:selected > .rippler-container > .container > .title {
+    -fx-text-fill: -monet-on-secondary-container;
     -fx-font-weight: bold;
 }
 
 .advanced-list-item:selected .svg {
-    -fx-fill: -fx-base-color;
+    -fx-fill: -monet-on-secondary-container;
 }
 
-.navigation-drawer-item > .rippler-container > .container > VBox {
-    -fx-padding: 0 0 0 0;
-}
-
-.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
+.game-directory-list-item > .rippler-container > .two-line-list-item > .title {
     -fx-font-size: 13;
 }
 
-.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > HBox > .subtitle {
+.game-directory-list-item > .rippler-container > .two-line-list-item > .subtitle {
     -fx-font-size: 10;
 }
 
-.profile-list-item > .rippler-container > BorderPane {
+.game-directory-list-item > .rippler-container > .two-line-list-item {
     -fx-padding: 8 0 8 16;
 }
 
-.profile-list-item:selected > .rippler-container > BorderPane {
-    -fx-background-color: -fx-base-rippler-color;
+.game-directory-list-item:selected > .rippler-container > .two-line-list-item {
+    -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
-.profile-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
-    -fx-text-fill: -fx-base-color;
+.game-directory-list-item:selected > .rippler-container > .two-line-list-item > .title {
+    -fx-text-fill: -monet-on-secondary-container;
     -fx-font-weight: bold;
 }
 
-.profile-list-item:selected .svg {
-    -fx-fill: -fx-base-color;
+.game-directory-list-item:selected .svg {
+    -fx-fill: -monet-on-secondary-container;
 }
 
 .notice-pane > .label {
-    -fx-text-fill: #0079FF;
+    -fx-text-fill: -monet-on-surface;
     -fx-font-size: 20;
     -fx-wrap-text: true;
     -fx-text-alignment: CENTER;
@@ -216,7 +230,15 @@
 
 .class-title {
     -fx-font-size: 12px;
-    -fx-padding: 16 16 8 16;
+    -fx-padding: 8 16 8 16;
+}
+
+.class-title Text {
+    -fx-fill: -monet-on-surface;
+}
+
+.class-title Rectangle {
+    -fx-fill: -monet-on-surface-variant;
 }
 
 .advanced-list-box-item {
@@ -227,8 +249,12 @@
     -fx-spacing: 0;
 }
 
+.no-padding .advanced-list-box-content {
+    -fx-padding: 0 0 0 0;
+}
+
 .iconed-item {
-    -jfx-rippler-fill: -fx-base-color;
+    -jfx-feedback-fill: -monet-on-surface;
 }
 
 .iconed-item .iconed-item-container {
@@ -239,7 +265,12 @@
 }
 
 .iconed-menu-item {
-    -jfx-rippler-fill: -fx-base-color;
+    -jfx-feedback-fill: -monet-on-surface;
+    -fx-cursor: hand;
+}
+
+.iconed-menu-item:disabled {
+    -fx-cursor: default;
 }
 
 .iconed-menu-item .iconed-item-container {
@@ -254,92 +285,141 @@
 }
 
 .popup-menu .scroll-bar .thumb {
-    -fx-fill: rgba(0, 0, 0, 0.5);
+    -fx-fill: -monet-surface-tint;
+}
+
+.popup-menu .scroll-pane > .scroll-bar:vertical,
+.popup-menu .scroll-pane > .scroll-bar:horizontal {
+    -fx-opacity: 0;
 }
 
 .popup-menu-content {
     -fx-padding: 4 0 4 0;
 }
 
-.two-line-list-item > .first-line > .title {
-	-fx-text-fill: #292929;
-	-fx-font-size: 15px;
+.two-line-list-item > .title {
+    -fx-text-fill: -monet-on-surface;
+    -fx-font-size: 15px;
     -fx-padding: 0 8 0 0;
 }
 
-.two-line-list-item > HBox > .subtitle {
-	-fx-text-fill: rgba(0, 0, 0, 0.5);
+.two-line-list-item > .title > Text {
+    -fx-fill: -monet-on-surface;
+}
+
+.two-line-list-item > .subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > .first-line > .tag {
-    -fx-text-fill: -fx-base-color;
-    -fx-background-color: -fx-base-rippler-color;
-    -fx-padding: 2;
+.two-line-list-item > .subtitle Text {
+    -fx-fill: -monet-on-surface-variant;
+}
+
+.tag {
+    -fx-alignment: center;
+    -fx-text-fill: -monet-on-secondary-container;
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 999px;
+    -fx-padding: 0 5px;
     -fx-font-weight: normal;
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
+}
+
+.tag:warning {
+    -fx-text-fill: -monet-on-error-container;
+    -fx-background-color: -fixed-warning-tag-background;
+}
+
+.tag > .text {
+    -fx-bounds-type: logical_vertical_center;
 }
 
 .two-line-item-second-large {
 
 }
 
-.two-line-item-second-large > .first-line > .title, .two-line-item-second-large-title {
-    -fx-text-fill: rgba(0, 0, 0, 0.5);
+.two-line-item-second-large > .title, .two-line-item-second-large-title {
+    -fx-text-fill: -monet-on-surface-variant;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-item-second-large > HBox > .subtitle {
-    -fx-text-fill: #292929;
+.two-line-item-second-large > .subtitle {
+    -fx-text-fill: -monet-on-surface;
     -fx-font-size: 15px;
 }
 
-.wrap-text > HBox > .subtitle {
+.terracotta-hint Text {
+    -fx-fill: -monet-on-surface;
+}
+
+.game-crash-window {
+    -fx-background-color: -monet-surface-container;
+}
+
+.game-crash-window .crash-reason-text-flow Text {
+    -fx-fill: -monet-on-surface;
+}
+
+.game-crash-window .crash-reason-text-flow .hyperlink {
+    -fx-fill: -monet-primary;
+}
+
+.wrap-text > .subtitle {
     -fx-wrap-text: true;
 }
 
 .bubble {
-    -fx-background-color: rgba(0, 0, 0, 0.5);
+    -fx-background-color: -monet-inverse-surface-transparent-80;
     -fx-background-radius: 2px;
-    -fx-text-fill: white;
 }
 
-.bubble > HBox > .two-line-list-item > .first-line > .title,
-.bubble > HBox > .two-line-list-item > HBox > .subtitle {
-	-fx-text-fill: white;
+.bubble > RipplerContainer > HBox > .two-line-list-item > .title,
+.bubble > RipplerContainer > HBox > .two-line-list-item > .subtitle {
+    -fx-text-fill: -monet-inverse-on-surface;
+}
+
+.bubble .svg {
+    -fx-fill: -monet-inverse-on-surface;
 }
 
 .sponsor-pane {
     -fx-cursor: hand;
 }
 
-.installer-item {
-    -fx-padding: 8px;
+.installer-item-status:incompatible {
+    -fx-opacity: 0.6;
 }
 
-.installer-item:list-item {
-    -fx-border-color: #e0e0e0;
+.installer-item-wrapper {
+    -fx-background-color: -monet-surface;
+    -fx-background-radius: 4;
+    -fx-pref-width: 180px;
+}
+
+.installer-item-wrapper:card {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
+.installer-item-wrapper .installer-item:list-item {
+    -fx-padding: 8px;
+    -fx-border-color: -monet-outline-variant;
     -fx-border-width: 0 0 1 0;
     -fx-alignment: center-left;
 }
 
-.installer-item:list-item > .installer-item-name {
-    -fx-pref-width: 80px;
+.installer-item-wrapper .installer-item:list-item > .installer-item-name {
+    -fx-pref-width: 100px;
 }
 
-.installer-item:list-item > .installer-item-status {
+.installer-item-wrapper .installer-item:list-item > .installer-item-status {
     -fx-max-width: infinity;
 }
 
-.installer-item:card {
-    -fx-background-color: white;
-    -fx-background-radius: 4;
+.installer-item-wrapper .installer-item:card {
     -fx-alignment: center;
-    -fx-pref-width: 180px;
-
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
 /*******************************************************************************
@@ -348,34 +428,58 @@
  *                                                                             *
  ******************************************************************************/
 
+.launch-pane {
+    -fx-max-height: 57px;
+    -fx-min-height: 57px;
+    -fx-max-width: 230px;
+    -fx-min-width: 230px;
+}
+
 .launch-pane > .jfx-button {
-    -fx-background-color: -fx-base-color;
+    -fx-translate-y: 1px;
+    -fx-max-height: 55px;
+    -fx-min-height: 55px;
+    -fx-background-color: -monet-primary-container;
+    -fx-opacity: 1; /* Override the opacity of disabled button */
     -fx-cursor: hand;
 }
 
-.launch-pane > .jfx-button > StackPane > .jfx-rippler {
-    -jfx-rippler-fill: white;
-    -jfx-mask-type: CIRCLE;
-    -fx-padding: 0.0;
+.launch-pane > .jfx-button.launch-button {
+    -fx-max-width: 200px;
+    -fx-min-width: 200px;
+    -fx-border-width: 0 3px 0 0;
+    -fx-border-color: linear-gradient(
+        to bottom, 
+        transparent 0%, 
+        transparent 20%, 
+        -monet-on-surface-variant 20%,
+        -monet-on-surface-variant 80%,
+        transparent 80%, 
+        transparent 100%
+    );
+    -fx-background-radius: 4px 0 0 4px;
 }
 
-.launch-pane > .jfx-button, .jfx-button * {
-    -fx-text-fill: -fx-base-text-fill;
+.launch-pane > .jfx-button.menu-button {
+    -fx-max-width: 27px;
+    -fx-min-width: 27px;
+    -fx-font-size: 15px;
+    -fx-background-radius: 0 4px 4px 0;
+}
+
+.launch-pane > .jfx-button > StackPane > .jfx-rippler {
+    -jfx-rippler-fill: -monet-on-primary-container;
+    -jfx-mask-type: CIRCLE;
+    -fx-padding: 0;
+}
+
+.launch-pane > .launch-button .label {
+    -fx-text-fill: -monet-on-primary-container;
     -fx-font-size: 14px;
 }
 
-.launch-pane > Rectangle {
-    -fx-fill: -fx-base-darker-color;
-}
-
-/*******************************************************************************
- *                                                                             *
- * Tooltip                                                                     *
- *                                                                             *
- ******************************************************************************/
-
-.tooltip {
-    -fx-text-fill: WHITE;
+.launch-pane .svg {
+    -fx-fill: -monet-on-primary-container;
 }
 
 /*******************************************************************************
@@ -385,15 +489,20 @@
  ******************************************************************************/
 
 .tab-header-background {
-    -fx-background-color: -fx-base-check-color;
+    -fx-background-color: -monet-surface;
 }
 
 .tab-selected-line {
-    -fx-background-color: derive(-fx-base-color, -30%);
+    -fx-background-color: derive(-monet-primary-container, -30%);
 }
 
+.tab-header > .rippler-container {
+    -jfx-feedback-fill: -monet-primary;
+}
+
+/* TODO: It seems not actually used */
 .tab-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-rippler-fill: derive(-monet-primary-container, 30%);
 }
 
 .jfx-tab-pane .jfx-rippler {
@@ -425,11 +534,14 @@
 }
 
 .jfx-dialog-layout {
-    -fx-padding: 24.0px 24.0px 16.0px 24.0px;
-    -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
+    -fx-background-radius: 4px;
+    -fx-padding: 24px 24px 16px 24px;
+    -fx-background-color: -monet-surface-container-high;
+    -fx-text-fill: -monet-on-surface;
 }
 
 .jfx-layout-heading {
+    -fx-font-weight: BOLD;
     -fx-font-size: 20.0px;
     -fx-alignment: center-left;
     -fx-padding: 5.0 0.0 5.0 0.0;
@@ -440,6 +552,10 @@
     -fx-wrap-text: true;
 }
 
+.jfx-layout-body Text {
+    -fx-fill: -monet-on-surface;
+}
+
 .jfx-layout-actions {
     -fx-pref-width: 400;
     -fx-padding: 10.0px 0.0 0.0 0.0;
@@ -447,17 +563,60 @@
 }
 
 .dialog-error {
-    -fx-text-fill: #d32f2f;
+    -fx-text-fill: -monet-error;
     -fx-padding: 0.7em 0.8em;
 }
 
 .dialog-accept {
-    -fx-text-fill: #03A9F4;
+    -fx-text-fill: -monet-primary;
     -fx-padding: 0.7em 0.8em;
 }
 
 .dialog-cancel {
+    -fx-text-fill: -monet-on-surface-variant;
     -fx-padding: 0.7em 0.8em;
+}
+
+.task-executor-dialog-layout {
+    -fx-background-radius: 4px;
+    -fx-background-color: -monet-surface-container-high;
+    -fx-text-fill: -monet-on-surface;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Microsoft Login Dialog                                                      *
+ *                                                                             *
+ ******************************************************************************/
+
+.microsoft-login-dialog:bodyonly {
+    -fx-padding: 0px 0px 0px 0px;
+}
+
+.method-title {
+    -fx-text-fill: -monet-on-surface;
+    -fx-font-weight: bold;
+}
+
+.method-desc {
+    -fx-text-fill: -monet-outline;
+    -fx-font-size: 0.9em;
+    -fx-line-spacing: 2;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.code-box {
+    -fx-background-color: -monet-surface-variant;
+    -fx-background-radius: 6;
+    -fx-padding: 0 10 0 10;
+    -fx-alignment: center;
+}
+
+.code-box .code-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -monet-primary;
 }
 
 /*******************************************************************************
@@ -471,7 +630,7 @@
 }
 
 .jfx-popup-container {
-    -fx-background-color: WHITE;
+    -fx-background-color: -monet-surface;
     -fx-background-radius: 4;
 }
 
@@ -479,16 +638,24 @@
     -fx-pref-width: 150.0px;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * JFX Snack Bar                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
 .jfx-snackbar-content {
-    -fx-background-color: #323232;
+    -fx-background-color: -monet-inverse-surface;
+    -fx-padding: 5;
+    -fx-spacing: 5;
 }
 
 .jfx-snackbar-toast {
-    -fx-text-fill: WHITE;
+    -fx-text-fill: -monet-inverse-on-surface;
 }
 
 .jfx-snackbar-action {
-    -fx-text-fill: #ff4081;
+    -fx-text-fill: -monet-inverse-primary;
 }
 
 /*******************************************************************************
@@ -522,7 +689,7 @@
 }
 
 .jfx-tool-bar.background {
-    -fx-background-color: -fx-base-color;
+    -fx-background-color: -monet-primary-container;
 }
 
 /*.jfx-tool-bar HBox {*/
@@ -541,15 +708,23 @@
 }
 
 .jfx-tool-bar .jfx-decorator-button .svg {
-    -fx-fill: -fx-base-text-fill;
+    -fx-fill: -monet-on-primary-container;
+}
+
+.jfx-decorator-button .jfx-spinner .arc {
+    -fx-stroke: -monet-on-primary-container;
 }
 
 .jfx-tool-bar Label {
-    -fx-text-fill: WHITE;
+    -fx-text-fill: -monet-on-surface;
 }
 
 .jfx-tool-bar.gray-background Label {
-    /* -fx-text-fill: BLACK; */
+    -fx-text-fill: BLACK;
+}
+
+.jfx-tool-bar Text {
+
 }
 
 .jfx-tool-bar .jfx-options-burger {
@@ -561,35 +736,37 @@
 }
 
 .jfx-tool-bar .jfx-rippler {
-    -jfx-rippler-fill: WHITE;
+    -fx-text-fill: -monet-on-surface;
 }
 
 .jfx-tool-bar-second {
     -fx-pref-height: 42;
     -fx-padding: 2 2 2 2;
-    -fx-background-color: -fx-base-check-color;
+    -fx-background-color: -monet-primary-container;
     -fx-alignment: CENTER-LEFT;
     -fx-spacing: 8;
 }
 
 .jfx-tool-bar-second .label {
-    -fx-text-fill: -fx-base-text-fill;
+    -fx-text-fill: -monet-on-primary-container;
     -fx-font-size: 16;
     -fx-font-weight: bold;
 }
 
 .jfx-tool-bar-second .jfx-rippler {
-    -jfx-rippler-fill: WHITE;
+    -jfx-rippler-fill: -monet-on-surface;
 }
 
 .jfx-tool-bar-button {
+    -fx-text-fill: -monet-on-surface;
+    -fx-font-size: 14px;
     -fx-toggle-icon4-size: 37px;
     -fx-pref-height: -fx-toggle-icon4-size;
     -fx-max-height: -fx-toggle-icon4-size;
     -fx-min-height: -fx-toggle-icon4-size;
     -fx-background-radius: 5px;
     -fx-background-color: transparent;
-    -jfx-toggle-color: white;
+    -jfx-toggle-color: -monet-on-surface;
     -jfx-untoggle-color: transparent;
 }
 
@@ -598,9 +775,9 @@
     -fx-padding: 10.0;
 }
 
-.jfx-tool-bar-button .jfx-rippler {
-    -jfx-rippler-fill: white;
-    -jfx-mask-type: CIRCLE;
+.jfx-tool-bar-tip Text {
+    -fx-font-size: 13;
+    -fx-fill: -monet-on-surface;
 }
 
 .jfx-decorator-button {
@@ -608,8 +785,6 @@
     -fx-background-radius: 5px;
     -fx-max-height: 40px;
     -fx-background-color: transparent;
-    -jfx-toggle-color: rgba(128, 128, 255, 0.2);
-    -jfx-untoggle-color: transparent;
 }
 
 .jfx-decorator-button .icon {
@@ -618,7 +793,6 @@
 }
 
 .jfx-decorator-button .jfx-rippler {
-    -jfx-rippler-fill: white;
     -jfx-mask-type: CIRCLE;
     -fx-padding: 0.0;
 }
@@ -629,17 +803,10 @@
  *                                                                             *
  ******************************************************************************/
 
- .jfx-radio-button {
-    -jfx-selected-color: -fx-base-check-color;
- }
-
-.jfx-radio-button .radio {
-    -fx-stroke-width: 2.0px;
-    -fx-fill: transparent;
-}
-
-.jfx-radio-button .dot {
-    -fx-fill: -fx-base-check-color;
+.jfx-radio-button {
+    -jfx-selected-color: -monet-primary;
+    -jfx-unselected-color: -monet-on-surface-variant;
+    -fx-text-fill: -monet-on-surface;
 }
 
 /*******************************************************************************
@@ -648,27 +815,39 @@
  *                                                                             *
  ******************************************************************************/
 
-.svg-slider .thumb {
-    -fx-stroke: black;
-    -fx-fill: black;
+.jfx-slider .track,
+.jfx-slider:vertical .track {
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 5;
+    -fx-background-insets: 0;
+    -fx-pref-width: 2px;
+    -fx-pref-height: 2px;
 }
 
-.jfx-slider:disabled {
-    -fx-opacity: 0.4;
+.jfx-slider .thumb,
+.jfx-slider:focused .thumb {
+    -fx-background-color: -monet-primary;
+    -fx-background-radius: 20;
+    -fx-background-insets: 0;
 }
 
-/*******************************************************
-*                           						   *
-* For the main demo sliders 						   *
-*                          							   *
-*******************************************************/
-
-.jfx-slider {
-    -jfx-indicator-position: right;
+.jfx-slider .colored-track {
+    -fx-background-color: -monet-primary;
+    -fx-background-radius: 5 0 0 5;
+    -fx-background-insets: 0;
 }
 
-.jfx-slider .thumb {
-    -fx-background-color: -fx-base-color;
+.jfx-slider .slider-value {
+    -fx-stroke: -monet-inverse-on-surface;
+    -fx-font-size: 10;
+}
+
+.jfx-slider .animated-thumb {
+    -fx-pref-width: 30px;
+    -fx-pref-height: 30px;
+    -fx-background-color: -monet-inverse-surface;
+    -fx-background-radius: 50% 50% 50% 0%;
+    -fx-background-insets: 0;
 }
 
 /*******************************************************************************
@@ -693,40 +872,45 @@
 }
 
 .jfx-button .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-rippler-fill: -monet-on-surface;
     -jfx-mask-type: CIRCLE;
     -fx-padding: 0.0;
 }
 
 .jfx-button-raised {
-    -fx-background-color: -fx-base-color;
+    -fx-background-color: -monet-primary;
 }
 
 .jfx-button-raised .jfx-rippler {
-    -jfx-rippler-fill: white;
+    -jfx-rippler-fill: -monet-on-primary;
     -jfx-mask-type: CIRCLE;
     -fx-padding: 0.0;
 }
 
 .jfx-button-raised, .jfx-button-raised * {
-    -fx-text-fill: -fx-base-text-fill;
+    -fx-text-fill: -monet-on-primary;
     -fx-font-size: 14px;
 }
 
 .jfx-button-border {
-    -fx-border-color: gray;
+    -fx-background-color: transparent;
+    -fx-border-color: -monet-outline;
     -fx-border-radius: 5px;
     -fx-border-width: 0.2px;
     -fx-padding: 8px;
 }
 
 .jfx-button-border, .jfx-button-border * {
-    -fx-text-fill: -fx-base-darker-color;
+    -fx-text-fill: -monet-primary;
 }
 
 .jfx-button-raised-round {
-    -fx-background-color: -fx-base-color;
+    -fx-background-color: -monet-primary-container;
     -fx-background-radius: 50px;
+}
+
+.menu-up-down-button .label {
+    -fx-text-fill: -monet-on-surface;
 }
 
 /*******************************************************************************
@@ -737,7 +921,13 @@
 
 .jfx-check-box {
     -fx-font-weight: BOLD;
-    -jfx-checked-color: -fx-base-check-color;
+    -fx-text-fill: -monet-on-surface;
+    -jfx-checked-color: -monet-primary;
+    -jfx-unchecked-color: transparent;
+}
+
+.table-view .jfx-check-box .jfx-rippler {
+    -jfx-rippler-disabled: true;
 }
 
 /*******************************************************************************
@@ -746,21 +936,20 @@
 *                                                                              *
 *******************************************************************************/
 
-.jfx-progress-bar {
-    -fx-pref-width: 500.0;
-}
-
-.jfx-progress-bar > .track, .jfx-progress-bar > .bar {
-    -fx-background-radius: 0;
-    -fx-background-insets: 0;
-}
 
 .jfx-progress-bar > .track {
-    -fx-background-color: #E0E0E0;
+    -fx-background-color: -monet-secondary-container;
 }
 
 .jfx-progress-bar > .bar {
-    -fx-background-color: -fx-base-check-color;
+    -fx-background-color: -monet-primary;
+    -fx-padding: 2;
+}
+
+.jfx-progress-bar > .track,
+.jfx-progress-bar > .bar {
+    -fx-background-radius: 2;
+    -fx-background-insets: 0;
 }
 
 /*******************************************************************************
@@ -770,18 +959,26 @@
 *******************************************************************************/
 
 .jfx-text-field, .jfx-password-field, .jfx-text-area {
-    -fx-background-color: #f1f3f4;
+    -fx-background-color: -monet-surface-container-highest;
+    -fx-highlight-fill: -monet-primary;
+    -fx-text-fill: -monet-on-surface;
     -fx-font-weight: BOLD;
-    -fx-prompt-text-fill: #808080;
+    -fx-prompt-text-fill: -monet-on-surface-variant;
     -fx-alignment: top-left;
     -fx-max-width: 1000000000;
-    -jfx-focus-color: -fx-base-check-color;
+    -jfx-focus-color: -monet-primary;
     -fx-padding: 8;
     -jfx-unfocus-color: transparent;
 }
 
-.jfx-text-area .viewport {
-    -fx-background-color: #ffffff;
+.jfx-text-field .context-menu {
+    -fx-background-color: -monet-surface-container;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.jfx-text-field .context-menu .menu-item:focused {
+    -fx-background-color: -monet-secondary-container;
+    -fx-text-fill: -monet-on-secondary-container;
 }
 
 /*******************************************************************************
@@ -794,8 +991,11 @@
     -fx-padding: 0;
 }
 
+.no-padding .combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-padding: 4 0 4 5;
+}
+
 .jfx-list-cell, .list-cell {
-    /*-fx-background-color: WHITE;*/
     -fx-background-color: transparent;
 }
 
@@ -805,13 +1005,13 @@
 }
 
 .jfx-list-cell .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-color;
+    -jfx-rippler-fill: -monet-primary-container;
 }
 
-.list-cell:odd:selected > .jfx-rippler > StackPane,
-.list-cell:even:selected > .jfx-rippler > StackPane {
-    -fx-background-color: derive(-fx-base-check-color, 30%);
-}
+/*.list-cell:odd:selected > .jfx-rippler > StackPane,*/
+/*.list-cell:even:selected > .jfx-rippler > StackPane {*/
+/*    -fx-background-color: derive(-monet-primary, 30%);*/
+/*}*/
 
 .jfx-list-view {
     -fx-background-insets: 0.0;
@@ -837,6 +1037,13 @@
     -jfx-vertical-gap: 10.0;
     -jfx-expanded: false;
     -fx-background-color: transparent;
+}
+
+.no-horizontal-scrollbar .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
 }
 
 .options-list {
@@ -873,23 +1080,26 @@
 }
 
 .card {
-    -fx-background-color: rgba(255, 255, 255, 0.8);
+    -fx-background-color: -monet-surface-container-low-transparent-80;
     -fx-background-radius: 4;
     -fx-padding: 8px;
 
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
+.card-no-padding {
+    -fx-background-color: -monet-surface-container-low-transparent-80;
+    -fx-background-radius: 4;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
 .card-non-transparent {
-    -fx-background-color: white;
+    -fx-background-color: -monet-surface-container-low;
     -fx-background-radius: 4;
     -fx-padding: 8px;
 
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
-}
-
-.card:selected {
-    -fx-background-color: derive(-fx-base-color, 60%);
 }
 
 .card-list {
@@ -898,24 +1108,61 @@
 }
 
 .md-list-cell {
-    -fx-border-color: #e0e0e0;
+    -fx-border-color: -monet-outline-variant;
     -fx-border-width: 0 0 1 0;
 }
 
+.md-list-cell:last {
+    -fx-border-width: 0;
+}
+
 .md-list-cell:selected {
-    -fx-background-color: derive(-fx-base-color, 60%);
+    -fx-background-color: -monet-secondary-container;
+}
+
+.mod-info-list-cell:warning {
+    -fx-background-color: -monet-error-container;
+}
+
+.resource-pack-list-cell:warning {
+    -fx-background-color: -monet-error-container;
+}
+
+.multi-file-item {
+    -fx-padding: 10 0 10 0;
 }
 
 .options-sublist {
-    -fx-background-color: white;
+    -fx-background-color: -monet-surface-container;
 }
 
 .options-list-item {
-    -fx-background-color: white;
-    -fx-border-color: #e0e0e0;
+    -fx-background-color: -monet-surface;
+    -fx-border-color: -monet-outline-variant;
     -fx-border-width: 1 0 0 0;
     -fx-padding: 10 16 10 16;
     -fx-font-size: 12;
+}
+
+.options-sublist .options-list-item {
+    -fx-background-color: -monet-surface-container;
+}
+
+.options-sublist .multi-file-item {
+    -fx-padding: 10 10 10 10;
+}
+
+.options-list-item .svg {
+    -fx-fill: -monet-on-surface;
+    -fx-border-color: -monet-outline-variant;
+}
+
+.options-list-item .label {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.options-list-item .label.subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
 }
 
 .options-list-item.no-padding {
@@ -940,97 +1187,156 @@
     -fx-border-width: 0;
 }
 
-.options-list-item-expand-button {
-    -fx-toggle-icon4-size: 20px;
-    -fx-pref-width: -fx-toggle-icon4-size;
-    -fx-max-width: -fx-toggle-icon4-size;
-    -fx-min-width: -fx-toggle-icon4-size;
-    -fx-pref-height: -fx-toggle-icon4-size;
-    -fx-max-height: -fx-toggle-icon4-size;
-    -fx-min-height: -fx-toggle-icon4-size;
-    -fx-background-radius: 50px;
-    -fx-background-color: transparent;
-    -jfx-toggle-color: rgba(128, 128, 255, 0.2);
-    -jfx-untoggle-color: transparent;
+.options-sublist-wrapper > .container {
+    -fx-background-color: -monet-surface-container;
 }
 
-.options-list-item-expand-button .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
-    -jfx-mask-type: CIRCLE;
+.options-sublist-wrapper .expand-icon .svg {
+    -fx-fill: -monet-on-surface-variant;
+}
+
+.options-sublist-wrapper .expand-icon .svg:disabled {
+    -fx-opacity: 0.4;
 }
 
 /*******************************************************************************
-*                                                                              *
-* JFX Toggle Button                                                            *
-*                                                                              *
-*******************************************************************************/
+ *                                                                             *
+ * JFX Switch                                                                  *
+ *                                                                             *
+ ******************************************************************************/
 
-.jfx-toggle-button {
-    -jfx-toggle-color: -fx-base-check-color;
+.jfx-switch {
+    -jfx-switch-primary: -monet-primary;
+    -jfx-switch-on-primary: -monet-on-primary;
+    -jfx-switch-primary-container: -monet-primary-container;
+    -jfx-switch-on-primary-container: -monet-on-primary-container;
+    -jfx-switch-surface: -monet-surface;
+    -jfx-switch-surface-container-highest: -monet-surface-container-highest;
+    -jfx-switch-on-surface: -monet-on-surface;
+    -jfx-switch-on-surface-variant: -monet-on-surface-variant;
+    -jfx-switch-outline: -monet-outline;
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.jfx-switch > .switch-artwork > .switch-track {
+    -fx-fill: -jfx-switch-surface-container-highest;
+    -fx-stroke: -jfx-switch-outline;
+    -fx-stroke-width: 2;
+    -fx-stroke-type: inside;
+}
+
+.jfx-switch:selected > .switch-artwork > .switch-track {
+    -fx-fill: -jfx-switch-primary;
+    -fx-stroke: transparent;
+}
+
+.jfx-switch > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-outline;
+}
+
+.jfx-switch:selected > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-on-primary;
+}
+
+.jfx-switch:hover > .switch-artwork > .switch-handle,
+.jfx-switch:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:armed > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-on-surface-variant;
+}
+
+.jfx-switch:selected:hover > .switch-artwork > .switch-handle,
+.jfx-switch:selected:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:selected:armed > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-primary-container;
+}
+
+.jfx-switch > .switch-artwork > .switch-state-layer {
+    -fx-fill: -jfx-switch-on-surface;
+    -fx-opacity: 0;
+}
+
+.jfx-switch:selected > .switch-artwork > .switch-state-layer {
+    -fx-fill: -jfx-switch-primary;
+}
+
+.jfx-switch:hover > .switch-artwork > .switch-state-layer {
+    -fx-opacity: 0.08;
+}
+
+.jfx-switch:visual-focused > .switch-artwork > .switch-state-layer,
+.jfx-switch:armed > .switch-artwork > .switch-state-layer {
+    -fx-opacity: 0.12;
+}
+
+.jfx-switch > .switch-artwork > .switch-icon {
+    -fx-fill: -jfx-switch-surface-container-highest;
+}
+
+.jfx-switch:selected > .switch-artwork > .switch-icon {
+    -fx-fill: -jfx-switch-on-primary-container;
+}
+
+/* Disabled opacity belongs to individual parts, never to the entire control. */
+.jfx-switch:disabled {
+    -fx-opacity: 1;
+    -fx-cursor: default;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-track {
+    -fx-fill: -jfx-switch-surface-container-highest;
+    -fx-stroke: -jfx-switch-on-surface;
+    -fx-opacity: 0.12;
+}
+
+.jfx-switch:selected:disabled > .switch-artwork > .switch-track {
+    -fx-fill: -jfx-switch-on-surface;
+    -fx-stroke: transparent;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:hover > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:armed > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-on-surface;
+    -fx-opacity: 0.38;
+}
+
+.jfx-switch:selected:disabled > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:hover > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:armed > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-surface;
+    -fx-opacity: 1;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-icon {
+    -fx-opacity: 0.38;
+}
+
+.jfx-switch:selected:disabled > .switch-artwork > .switch-icon {
+    -fx-fill: -jfx-switch-on-surface;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:hover > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:visual-focused > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:armed > .switch-artwork > .switch-state-layer {
+    -fx-opacity: 0;
 }
 
 .toggle-label {
     -fx-font-size: 14.0px;
 }
 
-.toggle-icon1 .icon {
-    -fx-fill: #4285F4;
-    -fx-padding: 20.0;
-}
-
-.toggle-icon1 {
-    -fx-pref-width: 80px;
-    -fx-background-radius: 80px;
-    -fx-pref-height: 80px;
-    -fx-background-color: transparent;
-    -jfx-toggle-color: rgba(66.0, 133.0, 244.0, 0.29885056614875793);
-    -jfx-untoggle-color: transparent;
-}
-
-.toggle-icon1 .jfx-rippler {
-    -jfx-rippler-fill: rgba(66.0, 133.0, 244.0, 0.29885056614875793);
-    -jfx-mask-type: CIRCLE;
-}
-
-.toggle-icon2, .toggle-icon3, .jfx-decorator-button {
+.jfx-decorator-button {
     -fx-pref-width: 50px;
     -fx-background-radius: 50px;
     -fx-pref-height: 50px;
     -fx-background-color: transparent;
 }
 
-.toggle-icon2 .icon {
-    -fx-fill: RED;
-}
-
-.toggle-icon2 .jfx-rippler {
-    -jfx-rippler-fill: RED;
-    -jfx-mask-type: CIRCLE;
-}
-
-.toggle-icon3 {
-    -fx-toggle-icon4-size: 35px;
-    -fx-pref-width: -fx-toggle-icon4-size;
-    -fx-max-width: -fx-toggle-icon4-size;
-    -fx-min-width: -fx-toggle-icon4-size;
-    -fx-pref-height: -fx-toggle-icon4-size;
-    -fx-max-height: -fx-toggle-icon4-size;
-    -fx-min-height: -fx-toggle-icon4-size;
-    -fx-background-radius: 50px;
-    -fx-background-color: transparent;
-    -jfx-toggle-color: white;
-    -jfx-untoggle-color: transparent;
-}
-
-.toggle-icon3 .icon {
-    -fx-fill: rgb(204.0, 204.0, 51.0);
-    -fx-padding: 10.0;
-}
-
-.toggle-icon3 .jfx-rippler {
-    -jfx-rippler-fill: white;
-    -jfx-mask-type: CIRCLE;
-}
 
 .toggle-icon4 {
     -fx-toggle-icon4-size: 30px;
@@ -1042,7 +1348,7 @@
     -fx-min-height: -fx-toggle-icon4-size;
     -fx-background-radius: 50px;
     -fx-background-color: transparent;
-    -jfx-toggle-color: -fx-base-check-color;
+    -jfx-toggle-color: -monet-primary;
     -jfx-untoggle-color: transparent;
 }
 
@@ -1052,7 +1358,7 @@
 }
 
 .toggle-icon4 .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-rippler-fill: -monet-primary;
     -jfx-mask-type: CIRCLE;
 }
 
@@ -1064,19 +1370,41 @@
     -fx-pref-height: -fx-toggle-icon-tiny-size;
     -fx-max-height: -fx-toggle-icon-tiny-size;
     -fx-min-height: -fx-toggle-icon-tiny-size;
+    -fx-padding: 0;
     -fx-background-radius: 25px;
     -fx-background-color: transparent;
-    -jfx-toggle-color: -fx-base-check-color;
+    -jfx-toggle-color: -monet-primary;
     -jfx-untoggle-color: transparent;
 }
 
 .toggle-icon-tiny .icon {
     -fx-fill: rgb(204.0, 204.0, 51.0);
-    -fx-padding: 5.0;
+    -fx-padding: 0;
+}
+
+.toggle-icon-tiny:overridden .svg {
+    -fx-fill: -monet-primary;
 }
 
 .toggle-icon-tiny .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-rippler-fill: -monet-primary;
+    -jfx-mask-type: CIRCLE;
+}
+
+.announcement-close-button {
+    -fx-announcement-close-button-size: 20px;
+    -fx-pref-width: -fx-announcement-close-button-size;
+    -fx-max-width: -fx-announcement-close-button-size;
+    -fx-min-width: -fx-announcement-close-button-size;
+    -fx-pref-height: -fx-announcement-close-button-size;
+    -fx-max-height: -fx-announcement-close-button-size;
+    -fx-min-height: -fx-announcement-close-button-size;
+    -fx-background-radius: 50px;
+    -fx-background-color: transparent;
+}
+
+.announcement-close-button .jfx-rippler {
+    -jfx-rippler-fill: -monet-primary;
     -jfx-mask-type: CIRCLE;
 }
 
@@ -1090,28 +1418,63 @@
 *                                                                              *
 *******************************************************************************/
 
-.log-toggle:selected {
-    -fx-background-color: transparent;
+.log-toggle {
     -fx-border: 1px;
-    -fx-border-color: black;
-    -fx-text-fill: black;
+    -fx-background-insets: 0;
+    -fx-border-color: -fixed-log-toggle-unselected;
+    -fx-text-fill: -fixed-log-toggle-unselected;
 }
 
-.log-toggle {
-    -fx-background-color: transparent;
+.log-toggle:selected {
     -fx-border: 1px;
-    -fx-border-color: gray;
-    -fx-text-fill: gray;
+    -fx-border-color: -fixed-log-toggle-selected;
+    -fx-text-fill: -fixed-log-toggle-selected;
+}
+
+.log-toggle.fatal {
+    -fx-background-color: -fixed-log-fatal-background;
+}
+
+.log-toggle.error {
+    -fx-background-color: -fixed-log-error-background;
+}
+
+.log-toggle.warn {
+    -fx-background-color: -fixed-log-warn-background;
+}
+
+.log-toggle.info {
+    -fx-background-color: -fixed-log-info-background;
+}
+
+.log-toggle.debug {
+    -fx-background-color: -fixed-log-debug-background;
+}
+
+.log-toggle.trace {
+    -fx-background-color: -fixed-log-trace-background;
+}
+
+.log-window-list-cell:selected {
+    -fx-background-color: -fixed-log-selected;
+}
+
+.log-window {
+    -fx-background-color: -fixed-log-background;
 }
 
 .log-window .scroll-bar .thumb {
-    -fx-fill: rgba(0, 0, 0, 0.5);
+    -fx-fill: -monet-surface-tint;
+}
+
+.log-window .jfx-button {
+    -fx-text-fill: -monet-on-surface;
 }
 
 .log-window-list-cell {
-    -fx-text-fill: black;
+    -fx-text-fill: -fixed-log-text-fill;
     -fx-border-width: 0 0 1 0;
-    -fx-border-color: #dddddd;
+    -fx-border-color: -monet-outline-variant;
 }
 
 .log-window-list-cell:empty {
@@ -1119,32 +1482,53 @@
 }
 
 .log-window-list-cell:fatal {
-    -fx-background-color: #F7A699;
+    -fx-text-fill: -fixed-log-text-fill;
+    -fx-background-color: -fixed-log-fatal-background;
 }
 
 .log-window-list-cell:error {
-    -fx-background-color: #FFCCBB;
+    -fx-text-fill: -fixed-log-error-text-fill;
+    -fx-background-color: -fixed-log-error-background;
 }
 
 .log-window-list-cell:warn {
-    -fx-background-color: #FFEECC;
+    -fx-text-fill: -fixed-log-warn-text-fill;
+    -fx-background-color: -fixed-log-warn-background;
 }
 
 .log-window-list-cell:info {
-    -fx-background-color: #FFFFFF;
+    -fx-text-fill: -fixed-log-text-fill;
+    -fx-background-color: -fixed-log-info-background;
+}
+
+.log-window-list-cell {
+    -fx-background-color: -fixed-log-info-background;
 }
 
 .log-window-list-cell:debug {
-    -fx-background-color: #EEE9E0;
+    -fx-text-fill: -fixed-log-text-fill;
+    -fx-background-color: -fixed-log-debug-background;
 }
 
 .log-window-list-cell:trace {
-    -fx-background-color: #EEE9E0;
+    -fx-text-fill: -fixed-log-text-fill;
+    -fx-background-color: -fixed-log-trace-background;
 }
 
 .log-window-list-cell:selected {
-    -fx-background-color: #C4C4C4;
+    -fx-text-fill: -fixed-log-text-fill;
+    -fx-background-color: -fixed-log-selected;
 }
+
+.log-window .always-on-top-button {
+    -fx-rotate: 0.0;
+}
+
+.log-window .always-on-top-button:selected {
+    -fx-background-color: -monet-secondary-container-transparent-80;
+    -fx-rotate: 45.0;
+}
+
 
 /*******************************************************************************
 *                                                                              *
@@ -1152,90 +1536,25 @@
 *                                                                              *
 *******************************************************************************/
 
-.jfx-spinner > .arc {
-    -fx-stroke-width: 3.0;
-    -fx-fill: transparent;
-    -fx-stroke: -fx-base-color;
-}
-
-.first-spinner {
-    -jfx-radius: 20;
-}
-
-.first-spinner > .arc {
-    -fx-stroke-width: 5.0;
+.jfx-spinner .arc {
+    -fx-stroke: -monet-primary-container;
 }
 
 .small-spinner {
-    -jfx-radius: 10;
+    -jfx-radius: 9;
 }
 
-.small-spinner > .arc {
+.small-spinner .arc {
     -fx-stroke-width: 3.0;
 }
 
 .small-spinner-pane .jfx-spinner {
-    -jfx-radius: 10;
+    -jfx-radius: 9;
 }
 
-.small-spinner-pane .jfx-spinner > .arc {
-    -fx-stroke-width: 3.0;
-}
-
-.large-spinner-pane .jfx-spinner {
-    -jfx-radius: 20;
-}
-
-.large-spinner-pane .jfx-spinner {
-    -fx-stroke-width: 5.0;
-}
-
-.second-spinner {
-    -jfx-radius: 30;
-}
-
-.second-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.third-spinner {
-    -jfx-radius: 40;
-}
-
-.third-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fourth-spinner {
-    -jfx-radius: 50;
-}
-
-.fourth-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fifth-spinner {
-    -jfx-radius: 60;
-}
-
-.fifth-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.sixth-spinner {
-    -jfx-radius: 70;
-}
-
-.sixth-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.seventh-spinner {
-    -jfx-radius: 80;
-}
-
-.seventh-spinner > .arc {
-    -fx-stroke-width: 5.0;
+.spinner-pane .spinner-pane-content {
+    -fx-padding: 10px;
+    -fx-spacing: 10px;
 }
 
 /*******************************************************************************
@@ -1247,9 +1566,43 @@
 .jfx-combo-box {
     -jfx-focus-color: transparent;
     -jfx-unfocus-color: transparent;
-    -fx-background-color: #f1f3f4;
+    -fx-background-color: -monet-surface-container-highest;
     -fx-padding: 4;
     -fx-max-width: 1000000000;
+}
+
+.jfx-combo-box .arrow {
+    -fx-background-color: -monet-on-surface-variant;
+    -fx-shape: "M12 15 7 10H17L12 15Z";
+}
+
+.jfx-combo-box .text {
+    -fx-fill: -monet-on-surface;
+}
+
+.jfx-combo-box .text-field {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: -monet-surface-container;
+}
+
+.combo-box-popup .list-view .jfx-list-cell {
+    -fx-background-color: -monet-surface-container;
+    -fx-text-fill: -monet-on-surface;
+    -fx-cursor: hand;
+    -fx-background-insets: 0.0;
+}
+
+.combo-box-popup .list-view .list-cell:odd:selected > .jfx-rippler > StackPane,
+.combo-box-popup .list-view .list-cell:even:selected > .jfx-rippler > StackPane {
+    -fx-background-color: -monet-secondary-container;
+    -fx-text-fill: -monet-on-secondary-container;
+}
+
+.combo-box-popup .list-view .list-cell:hover > .jfx-rippler > StackPane {
+    -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
 .jfx-combo-box-warning {
@@ -1261,12 +1614,172 @@
     -fx-fill: #D34336;
 }
 
-.combo-box-popup .list-view .jfx-list-cell {
-    -fx-background-insets: 0.0;
+/*.combo-box-popup .list-view .jfx-list-cell .jfx-rippler {*/
+/*    -jfx-rippler-fill: -monet-primary-container;*/
+/*}*/
+
+/*******************************************************************************
+*                                                                              *
+* JFX Color Picker                                                             *
+*                                                                              *
+*******************************************************************************/
+
+.jfx-color-picker:armed,
+.jfx-color-picker:hover,
+.jfx-color-picker:focused,
+.jfx-color-picker {
+    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
+    -fx-background-radius: 3px;
+    -fx-background-insets: 0px;
+    -fx-min-height: 36px;
 }
 
-.combo-box-popup .list-view .jfx-list-cell .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-color;
+.color-palette-region {
+}
+
+.color-palette-region .jfx-button {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.color-palette {
+    -fx-background-color: -monet-surface;
+}
+
+.custom-color-dialog .jfx-tab-pane {
+    -fx-background-color: -monet-surface;
+}
+
+.custom-color-dialog .custom-color-field {
+    -jfx-unfocus-color: -monet-on-surface;
+    -fx-background-color: TRANSPARENT;
+    -fx-font-weight: BOLD;
+    -fx-alignment: top-left;
+    -fx-max-width: 300;
+}
+
+.custom-color-dialog .tab .tab-label {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.custom-color-dialog .tab .jfx-rippler {
+    -jfx-rippler-fill: -monet-on-surface;
+}
+
+.custom-color-dialog .tab-selected-line {
+    -fx-background-color: -monet-on-surface;
+}
+
+.custom-color-dialog .jfx-color-dialog-actions {
+    -fx-background-color: -monet-surface;
+    -fx-padding: 0.0 10.0 5.0 0.0;
+    -fx-alignment: center-right;
+}
+
+.custom-color-dialog .jfx-color-dialog-accept {
+    -fx-padding: 0.7em 0.8em;
+}
+
+.custom-color-dialog .jfx-color-dialog-cancel {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-padding: 0.7em 0.8em;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Table View                                                                  *
+ *                                                                             *
+ ******************************************************************************/
+
+/* WE DEFINITELY NEED JFX TABLE-VIEW */
+
+.table-view {
+    -fx-padding: 3;
+    -fx-background-color: -monet-surface-container-low;
+}
+
+.table-view,
+.table-view .column-header,
+.table-view .filler,
+.table-view .column-header-background,
+.table-row-cell {
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: transparent;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -monet-surface-container-highest;
+}
+
+.table-row-cell {
+    -fx-background-color: -monet-surface-container;
+    -fx-table-cell-border-color: -monet-surface-container-lowest;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: -monet-surface-container-high;
+}
+
+.table-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:selected {
+    -fx-background-color: -monet-secondary-container;
+}
+
+.table-view > .virtual-flow > .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.table-view > .virtual-flow > .scroll-bar .track {
+    -fx-fill: transparent;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * JFX Tree View                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
+.tree-view {
+    -fx-padding: 5;
+    -fx-background-radius: 6;
+    -fx-background-color: -monet-surface-container-low;
+    -fx-border-radius: 6;
+}
+
+.tree-cell {
+    -fx-padding: 5;
+    -fx-background-radius: 6;
+    -fx-background-color: transparent;
+    -fx-text-fill: -monet-on-surface;
+    -fx-border-radius: 6;
+}
+
+.tree-cell:focused {
+    -fx-background-color: -monet-secondary-container;
+}
+
+.tree-cell .arrow {
+    -fx-background-color: -monet-on-surface;
+}
+
+.tree-cell .jfx-rippler {
+    -jfx-rippler-disabled: true;
+}
+
+.tree-view > .virtual-flow > .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.tree-view > .virtual-flow > .scroll-bar .track {
+    -fx-fill: transparent;
 }
 
 /*******************************************************************************
@@ -1276,7 +1789,7 @@
 *******************************************************************************/
 
 .jfx-decorator {
-    -fx-decorator-color: -fx-base-color;
+    -fx-decorator-color: -monet-primary-container;
 }
 
 .jfx-decorator-drawer {
@@ -1284,27 +1797,7 @@
 }
 
 .jfx-decorator-title {
-    -fx-text-fill: -fx-base-text-fill;
     -fx-font-size: 14;
-}
-
-.jfx-decorator-title:transparent {
-    -fx-text-fill: black;
-}
-
-.jfx-decorator-tab .tab-container .tab-label {
-    -fx-text-fill: -fx-base-disabled-text-fill;
-    -fx-font-size: 14;
-}
-
-.jfx-decorator-tab .tab-container:selected .tab-label {
-    -fx-text-fill: -fx-base-text-fill;
-    -fx-font-weight: BOLD;
-}
-
-.window {
-    -fx-background-color: transparent;
-    -fx-padding: 8;
 }
 
 .debug-border {
@@ -1313,15 +1806,11 @@
 }
 
 .content-background {
-    -fx-background-color: rgba(244, 244, 244, 0.5);
+    -fx-background-color: -monet-surface-transparent-50;
 }
 
 .gray-background {
-    -fx-background-color: rgba(244, 244, 244, 0.5);
-}
-
-.white-background {
-    -fx-background-color: rgb(255, 255, 255);
+    -fx-background-color: -monet-surface-transparent-50;
 }
 
 /*******************************************************************************
@@ -1361,6 +1850,14 @@
     -fx-shape: "M298 598l214-214 214 214h-428z";
 }
 
+.jfx-combo-box .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.jfx-combo-box .scroll-bar .track {
+    -fx-fill: transparent;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Scroll Pane			                                                       *
@@ -1384,7 +1881,7 @@
 
 .scroll-pane > .viewport {
     -fx-background-color: null;
- }
+}
 
 .scroll-pane .scroll-bar {
     -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
@@ -1401,28 +1898,28 @@
 *******************************************************************************/
 
 .error-label {
-    -fx-text-fill: #D34336;
+    -fx-text-fill: -monet-error;
     -fx-font-size: 0.75em;
     -fx-font-weight: bold;
 }
 
 .error-icon {
-    -fx-fill: #D34336;
+    -fx-fill: -monet-error;
     -fx-font-size: 1.0em;
 }
 
 .jfx-text-field:error, .jfx-password-field:error, .jfx-text-area:error, .jfx-combo-box:error {
-    -jfx-focus-color: #D34336;
-    -jfx-unfocus-color: #D34336;
+    -jfx-focus-color: -monet-error;
+    -jfx-unfocus-color: -monet-error;
 }
 
 .jfx-text-field .error-label, .jfx-password-field .error-label, .jfx-text-area .error-label {
-    -fx-text-fill: #D34336;
+    -fx-text-fill: -monet-error;
     -fx-font-size: 0.75em;
 }
 
 .jfx-text-field .error-icon, .jfx-password-field .error-icon, .jfx-text-area .error-icon {
-    -fx-fill: #D34336;
+    -fx-fill: -monet-error;
     -fx-font-size: 1.0em;
 }
 
@@ -1441,7 +1938,7 @@
 }
 
 .html-hyperlink {
-    -fx-fill: blue;
+    -fx-fill: -monet-primary;
 }
 
 .html-h1 {
@@ -1462,4 +1959,223 @@
 
 .html-italic {
     -fx-font-style: italic;
+}
+
+.html-code {
+    -fx-font-size: 15;
+}
+
+.html .separator > .line {
+    -fx-border-color: -monet-outline-variant;
+    -fx-border-width: 0.5;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Tooltip                                                                     *
+ *                                                                             *
+ ******************************************************************************/
+
+.tooltip {
+    -fx-text-fill: -monet-inverse-on-surface;
+    -fx-background-color: -monet-inverse-surface;
+}
+
+.tooltip .text {
+    -fx-fill: -monet-inverse-on-surface;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Line Component                                                              *
+ *                                                                             *
+ ******************************************************************************/
+
+.line-component .line-component-container {
+    -fx-padding: 10 16 10 16;
+}
+
+.line-component .subtitle-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-component.no-padding .line-component-container {
+    -fx-padding: 0;
+}
+
+.line-component:large-title .title-label {
+    -fx-font-size: 15px;
+}
+
+.line-button .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
+.line-button .trailing-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-button .trailing-icon .svg {
+    -fx-fill: -monet-on-surface-variant;
+    -fx-opacity: 1;
+}
+
+.line-button .trailing-icon .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
+.line-select-button .menu-container .title-label {
+    -fx-font-size: 13px;
+}
+
+.line-select-button .menu-container .title-label {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.line-select-button .menu-container .subtitle-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-select-button .menu-container:selected .title-label {
+    -fx-text-fill: -monet-primary;
+}
+
+.line-select-button .menu-container:selected .subtitle-label {
+    -fx-text-fill: -monet-primary-transparent-80;
+}
+
+.line-switch .jfx-switch {
+    -jfx-size: 24;
+    -fx-min-height: 30;
+    -fx-pref-height: 30;
+    -fx-max-height: 30;
+}
+
+.update-pane:active .subtitle-label {
+    -fx-text-fill: -monet-tertiary;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Mod Changelog                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
+.addon-changelog {
+    -fx-background-color: -monet-surface;
+    -fx-background-radius: 4;
+    -fx-padding: 10;
+    -fx-font-size: 12;
+    -fx-text-fill: -monet-on-surface;
+    -fx-line-spacing: 2;
+}
+
+.addon-changelog .html {
+    -fx-font-size: 12;
+}
+
+.addon-changelog .html-h1 {
+    -fx-font-size: 16.5;
+}
+
+.addon-changelog .html-h2 {
+    -fx-font-size: 15;
+}
+
+.addon-changelog .html-h3 {
+    -fx-font-size: 13.5;
+}
+
+.addon-changelog .html-code {
+    -fx-font-size: 11.25;
+}
+
+.addon-changelog .html-code-block {
+    -fx-padding: 0 3 0 3;
+    -fx-background-radius: 5;
+    /* Should be -monet-surface-bright in dark mode and -dim in light mode, however that's not supported */
+    -fx-background-color: -monet-surface-container;
+}
+
+.addon-changelog-table-cell {
+    -fx-text-fill: -monet-primary;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * JFX Date Picker                                                             *
+ *                                                                             *
+ ******************************************************************************/
+
+.jfx-date-picker {
+    -jfx-default-color: -monet-primary;
+}
+
+.date-picker-popup {
+    -fx-padding: 5;
+    -fx-background-color: -monet-surface-container-high;
+    -fx-background-radius: 4;
+}
+
+.date-picker-popup .spinner .spinner-label {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.date-picker-popup .month-year-pane,
+.date-picker-popup .content {
+    -fx-background-color: transparent;
+}
+
+.date-picker-popup .separator .line {
+    -fx-border-width: 1;
+    -fx-border-color: -monet-outline-variant;
+}
+
+.date-picker-popup .content .spinner-label,
+.date-picker-popup .data-picker-list-cell .spinner-label {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.date-picker-popup .data-picker-list-cell:selected {
+    -fx-background-color: -monet-secondary-container;
+}
+
+.date-picker-popup .date-cell {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.date-picker-popup .day-cell {
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-background-color: transparent;
+}
+
+.date-picker-popup .day-cell.today {
+    -fx-border-color: -monet-primary;
+    -fx-text-fill: -monet-primary;
+}
+
+.date-picker-popup .day-cell.previous-month,
+.date-picker-popup .day-cell.next-month {
+    -fx-background-color: transparent;
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.date-picker-popup .day-cell.hovered {
+    -fx-background-color: -monet-surface-container-highest;
+}
+
+.date-picker-popup .day-cell.selected,
+.date-picker-popup .day-cell.selected.hovered{
+    -fx-background-color: -monet-primary;
+    -fx-text-fill: -monet-on-primary;
+}
+
+.date-picker-popup .left-button .jfx-svg-glyph,
+.date-picker-popup .right-button .jfx-svg-glyph {
+    -fx-fill: -monet-on-surface-variant;
+}
+
+.date-picker-popup .title {
+    -fx-text-fill: -monet-on-surface-variant;
 }

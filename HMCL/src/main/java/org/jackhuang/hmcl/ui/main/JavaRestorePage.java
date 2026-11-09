@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2024 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
@@ -32,10 +17,10 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.java.JavaManager;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
@@ -81,6 +66,10 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
                 return a.path.compareTo(b.path);
             });
             this.setItems(FXCollections.observableList(result));
+
+            if (result.isEmpty()) {
+                fireEvent(new PageCloseEvent());
+            }
         };
         disabledJava.addListener(new WeakInvalidationListener(listener));
         listener.invalidated(disabledJava);
@@ -152,32 +141,27 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
             BorderPane root = new BorderPane();
 
             Label label = new Label(skinnable.path);
+            label.setMouseTransparent(true);
             BorderPane.setAlignment(label, Pos.CENTER_LEFT);
             root.setCenter(label);
 
             HBox right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
             {
-                JFXButton revealButton = new JFXButton();
-                revealButton.getStyleClass().add("toggle-icon4");
-                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), 24), 24, 24));
+                JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 revealButton.setOnAction(e -> skinnable.onReveal());
                 FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
                 if (skinnable.realPath == null) {
                     revealButton.setDisable(true);
 
-                    JFXButton removeButton = new JFXButton();
-                    removeButton.getStyleClass().add("toggle-icon4");
-                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE.createIcon(Theme.blackFill(), 24), 24, 24));
+                    JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                     removeButton.setOnAction(e -> skinnable.onRemove());
                     FXUtils.installFastTooltip(removeButton, i18n("java.disabled.management.remove"));
 
                     right.getChildren().setAll(revealButton, removeButton);
                 } else {
-                    JFXButton restoreButton = new JFXButton();
-                    restoreButton.getStyleClass().add("toggle-icon4");
-                    restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24), 24, 24));
+                    JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
                     restoreButton.setOnAction(e -> skinnable.onRestore());
                     FXUtils.installFastTooltip(restoreButton, i18n("java.disabled.management.restore"));
 
@@ -193,7 +177,7 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
         }
     }
 
-    private static final class JavaRestorePageSkin extends ToolbarListPageSkin<JavaRestorePage> {
+    private static final class JavaRestorePageSkin extends ToolbarListPageSkin<DisabledJavaItem, JavaRestorePage> {
         JavaRestorePageSkin(JavaRestorePage skinnable) {
             super(skinnable);
         }

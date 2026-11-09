@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.glavo.site/hmcl/user-settings/1.0.0",
+  "title": "HMCL User Settings",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "$schema"
+  ],
+  "patternProperties": {
+    "^\\$schema$": {
+      "enum": [
+        "https://schemas.glavo.site/hmcl/user-settings/1.0.0"
+      ]
+    }
+  },
+  "properties": {
+    "logRetention": {
+      "type": "integer"
+    },
+    "enableOfflineAccount": {
+      "type": "boolean"
+    },
+    "fontAntiAliasing": {
+      "type": "string"
+    },
+    "userJava": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "disabledJava": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    }
+  }
+}
