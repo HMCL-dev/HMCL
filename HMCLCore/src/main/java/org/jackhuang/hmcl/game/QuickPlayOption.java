@@ -8,6 +8,10 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 ///
 /// @see <a href="https://minecraft.wiki/w/Quick_Play">Quick Play - Minecraft Wiki</a>
 public sealed interface QuickPlayOption {
+    static boolean supportQueryArgServerAddress(GameVersionNumber gameVersionNumber) {
+        return gameVersionNumber.compareTo("26.4-snapshot-1") >= 0;
+    }
+
     static boolean isSupportedVersion(GameVersionNumber gameVersionNumber) {
         return gameVersionNumber.isAtLeast("1.20", "23w14a");
     }

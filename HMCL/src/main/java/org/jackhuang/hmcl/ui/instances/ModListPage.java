@@ -8,7 +8,6 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -26,20 +25,25 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
-import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
-import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
@@ -50,7 +54,10 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -89,6 +96,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
+    private long modLoadRequestId;
+
     /// Creates a mod list that reloads when `instanceContext` changes.
     ///
     /// @param instanceContext the parent page's instance property
@@ -118,6 +127,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     public void refresh() {
+        if (isLoading()) return;
+
         loadMods(modManager);
     }
 
@@ -131,12 +142,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     private void loadMods(ModManager modManager) {
+        long requestId = ++modLoadRequestId;
+
         setLoading(true);
 
         if (this.modManager != modManager) {
             getItems().clear();
         }
         this.modManager = modManager;
+
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
             try {
@@ -148,20 +162,23 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
-            if (this.modManager != modManager) {
+            if (this.modManager != modManager || requestId != modLoadRequestId) {
                 return;
             }
 
-            supportedLoaders.clear();
-            supportedLoaders.addAll(modManager.getSupportedLoaders());
+            try {
+                supportedLoaders.clear();
+                supportedLoaders.addAll(modManager.getSupportedLoaders());
 
-            if (exception == null) {
-                getItems().setAll(list);
-            } else {
-                LOG.warning("Failed to load mods", exception);
-                getItems().clear();
+                if (exception == null) {
+                    getItems().setAll(list);
+                } else {
+                    LOG.warning("Failed to load mods", exception);
+                    getItems().clear();
+                }
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         }, Schedulers.javafx());
     }
 
@@ -385,9 +402,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
                 searchBar.getChildren().setAll(searchField, closeSearchBar);
 
+                JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh);
+                refreshButton.disableProperty().bind(skinnable.loadingProperty());
+
                 // Toolbar Normal
                 toolbarNormal.getChildren().setAll(
-                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                        refreshButton,
                         createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
@@ -609,27 +629,30 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
     }
 
+    /// Displays mod metadata with a scrollable description.
     private static final class ModInfoDialog extends JFXDialogLayout {
 
+        /// Creates a dialog whose description viewport follows its content and the window height.
         ModInfoDialog(ModInfoObject modInfo) {
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
             titleContainer.setPadding(new Insets(0, 0, 12, 0));
 
-            DoubleBinding widthBinding = Controllers.getDecorator().contentWidthProperty().multiply(0.7);
-            prefWidthProperty().bind(widthBinding);
-            maxWidthProperty().bind(widthBinding);
-
             var imageContainer = new ImageContainer(40);
             titleContainer.setAlignment(Pos.CENTER_LEFT);
             modInfo.iconCache.attachValue(imageContainer.imageProperty(), null);
 
-            TwoLineListItem title = new TwoLineListItem();
-            title.getTitleLabel().setWrapText(true);
-            if (modInfo.getProjectInfo() != null && I18n.isUseChinese())
-                title.setTitle(modInfo.getProjectInfo().displayName());
-            else
-                title.setTitle(modInfo.getModInfo().getName());
+            String displayName = modInfo.getModInfo().getName();
+            if (modInfo.getProjectInfo() != null && I18n.isUseChinese()) {
+                String chineseName = modInfo.getProjectInfo().mainName();
+                if (StringUtils.containsChinese(chineseName)) {
+                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName))
+                        displayName = chineseName + " (" + displayName + ")";
+                }
+            }
+            Text titleText = new Text(displayName);
+            TextFlow title = new TextFlow(titleText);
+            title.getStyleClass().add("title");
 
             StringJoiner subtitle = new StringJoiner("\n");
             subtitle.add(i18n("archive.file.name") + ": " + FileUtils.getName(modInfo.getModInfo().getFile()));
@@ -642,9 +665,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
                 subtitle.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
             }
-            title.setSubtitle(subtitle.toString());
+            Label subtitleLabel = new Label(subtitle.toString());
+            subtitleLabel.getStyleClass().add("subtitle");
+            subtitleLabel.setWrapText(true);
 
-            titleContainer.getChildren().setAll(imageContainer, title);
+            VBox details = new VBox(title, subtitleLabel);
+            details.getStyleClass().add("two-line-list-item");
+            details.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(details, Priority.ALWAYS);
+            titleContainer.getChildren().setAll(imageContainer, details);
             setHeading(titleContainer);
 
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
@@ -656,14 +685,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
-            description.heightProperty().addListener((obs, oldVal, newVal) -> {
-                double maxHeight = Controllers.getDecorator().contentHeightProperty().get() * 0.5;
-                double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
-                descriptionPane.setPrefViewportHeight(targetHeight);
-            });
+            // Use the wrapped content height to request a readable viewport within the dialog size limit.
+            descriptionPane.prefViewportHeightProperty().bind(Bindings.min(
+                    description.heightProperty(),
+                    Controllers.getDecorator().contentHeightProperty().multiply(0.5)));
 
             setBody(descriptionPane);
 
+            Set<String> displayedLoaders = new LinkedHashSet<>();
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
                 for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
                         pair("addon.curseforge", CurseForgeRemoteAddonRepository.getInstance()),
@@ -681,7 +710,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                                     String tag = I18n.translateLoaderName(loader);
                                     if (tag != null) tags.add(tag);
                                 }
-                                title.addTagsIfNotExist(tags);
+                                for (String tag : tags) {
+                                    if (displayedLoaders.add(tag)) {
+                                        Label label = new Label(tag);
+                                        label.getStyleClass().add("tag");
+                                        title.getChildren().addAll(new Text(" "), label);
+                                    }
+                                }
 
                                 button.setExternalLink(remoteAddon.pageUrl());
                                 button.setDisable(false);
@@ -763,15 +798,18 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
+            // free up space when not visible
+            restoreButton.managedProperty().bind(restoreButton.visibleProperty());
+
             HBox actions = new HBox();
             actions.setAlignment(Pos.CENTER);
             actions.getChildren().setAll(restoreButton, revealButton, infoButton, activeSwitch);
 
-            activeSwitch.setSize(24);
+            activeSwitch.setSize(20);
             activeSwitch.setMinSize(30, 30);
             activeSwitch.setPrefSize(30, 30);
             activeSwitch.setMaxSize(30, 30);
-            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 8));
+            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             container.getChildren().setAll(imageContainer, content, actions);
 
@@ -808,20 +846,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (projectInfo != null && I18n.isUseChinese()) {
                 String chineseName = projectInfo.mainName();
                 if (StringUtils.containsChinese(chineseName)) {
-                    if (StringUtils.containsEmoji(chineseName)) {
-                        StringBuilder builder = new StringBuilder();
-
-                        chineseName.codePoints().forEach(ch -> {
-                            if (ch < 0x1F300 || ch > 0x1FAFF)
-                                builder.appendCodePoint(ch);
-                        });
-
-                        chineseName = builder.toString().trim();
-                    }
-
-                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName)) {
-                        displayName = displayName + " (" + chineseName + ")";
-                    }
+                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName))
+                        displayName = chineseName + " (" + displayName + ")";
                 }
             }
             content.setTitle(displayName);
