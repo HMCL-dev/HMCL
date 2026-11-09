@@ -266,7 +266,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         }
 
         String getSubtitle() {
-            return packInfo.getDescription().toString();
+            return packInfo.getDescription().toStringSingleLine();
         }
 
         DataPack.Pack getPackInfo() {
