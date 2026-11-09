@@ -238,8 +238,8 @@ public final class CurseCompletionTask extends Task<Void> {
             mod = CurseForgeRemoteAddonRepository.getInstance().getAddonById(downloadProvider, Integer.toString(file.projectID()));
         int classID = ((CurseForgeRemoteAddonRepository.CurseAddon) mod.data()).classId();
         return switch (classID) {
-            case 12, 6945 -> resourcePacksRoot.resolve(fileName);
-            case 6552 -> shaderPacksRoot.resolve(fileName);
+            case 12, 6945 -> resourcePacksRoot.resolve(fileName); // 12: Resource pack, 6945: Data pack
+            case 6552 -> shaderPacksRoot.resolve(fileName); // 6552: Shader pack
             default -> modsRoot.resolve(fileName);
         };
     }
