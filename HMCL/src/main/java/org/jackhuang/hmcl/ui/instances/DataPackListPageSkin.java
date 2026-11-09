@@ -28,7 +28,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.addon.datapack.DataPack;
+import org.jackhuang.hmcl.addon.datapack.DataPackFile;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -233,7 +233,8 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             }
 
             for (DataPackInfoObject item : getSkinnable().getItems()) {
-                if (predicate.test(item.getTitle()) || predicate.test(item.getSubtitle())) {
+                DataPackFile datapack = item.getFile();
+                if (predicate.test(datapack.getFileName()) || predicate.test(datapack.getDescription().toString())) {
                     listView.getItems().add(item);
                 }
             }
@@ -253,24 +254,15 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     }
 
     static class DataPackInfoObject {
-        private final DataPack.Pack packInfo;
-        private final ItemPropertyAsyncCache<Image, DataPackInfoObject> iconCache;
+        private final DataPackFile file;
+        private final ItemPropertyAsyncCache<Image, DataPackInfoObject> iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
 
-        DataPackInfoObject(DataPack.Pack packInfo) {
-            this.packInfo = packInfo;
-            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
+        DataPackInfoObject(DataPackFile file) {
+            this.file = file;
         }
 
-        String getTitle() {
-            return packInfo.getId();
-        }
-
-        String getSubtitle() {
-            return packInfo.getDescription().toString();
-        }
-
-        DataPack.Pack getPackInfo() {
-            return packInfo;
+        DataPackFile getFile() {
+            return file;
         }
 
         private Image getDefaultIcon() {
@@ -280,21 +272,21 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         private Image loadIcon() {
             Image image = null;
             Path imagePath;
-            if (this.getPackInfo().isDirectory()) {
-                imagePath = getPackInfo().getPath().resolve("pack.png");
+            if (file.isDirectory()) {
+                imagePath = file.getFile().resolve("pack.png");
                 try {
                     image = FXUtils.loadImage(imagePath, 64, 64, true, true);
                 } catch (Exception e) {
-                    LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
+                    LOG.warning("fail to load image, datapack path: " + file.getFile(), e);
                 }
             } else {
-                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(getPackInfo().getPath())) {
+                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file.getFile())) {
                     imagePath = fs.getPath("/pack.png");
                     if (Files.exists(imagePath)) {
                         image = FXUtils.loadImage(imagePath, 64, 64, true, true);
                     }
                 } catch (Exception e) {
-                    LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
+                    LOG.warning("fail to load image, datapack path: " + file.getFile(), e);
                 }
             }
 
@@ -312,7 +304,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
 
-        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getPackInfo().isActive());
+        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getFile().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
@@ -346,21 +338,21 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             if (observedActiveProperty != null)
                 observedActiveProperty.removeListener(weakActiveListener);
             if (empty || dataItem == null) return;
-            content.setTitle(dataItem.getTitle());
-            content.setSubtitle(dataItem.getSubtitle());
+            content.setTitle(dataItem.file.getFileName());
+            content.setSubtitle(dataItem.file.getDescription().toStringSingleLine());
 
-            DataPack.Pack packInfo = dataItem.getPackInfo();
-            (observedActiveProperty = packInfo.activeProperty()).addListener(weakActiveListener);
+            DataPackFile dataPackInfo = dataItem.getFile();
+            (observedActiveProperty = dataPackInfo.activeProperty()).addListener(weakActiveListener);
             activeSwitch.setDisableAnimation(true);
-            activeSwitch.setSelected(packInfo.isActive());
+            activeSwitch.setSelected(dataPackInfo.isActive());
             activeSwitch.setOnAction(event -> {
                 try {
-                    packInfo.setActive(activeSwitch.isSelected());
+                    dataPackInfo.setActive(activeSwitch.isSelected());
                 } catch (IOException e) {
-                    LOG.warning("Unable to change state of datapack " + packInfo.getPath(), e);
+                    LOG.warning("Unable to change state of datapack " + dataPackInfo.getFile(), e);
                     Controllers.showToast(i18n("datapack.toggle.failed"));
                 } finally {
-                    activeSwitch.setSelected(packInfo.isActive());
+                    activeSwitch.setSelected(dataPackInfo.isActive());
                 }
             });
             activeSwitch.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
