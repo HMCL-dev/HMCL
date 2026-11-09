@@ -18,8 +18,6 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,6 +25,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /// Modrinth modpack index (`modrinth.index.json`).
 @NotNullByDefault
@@ -231,13 +231,7 @@ public class ModrinthManifest implements ModpackManifest.SupportOptional, Valida
 
             // If the sha512 hashes match, or the download URLs intersect
             // They are exactly the same file.
-            String aSha512 = hashes.get("sha512");
-            String bSha512 = file.hashes.get("sha512");
-            if (aSha512 != null && aSha512.equals(bSha512))
-                return true;
-            HashSet<String> aDownloadUrls = new HashSet<>(downloads);
-            HashSet<String> bDownloadUrls = new HashSet<>(file.downloads);
-            if (!Collections.disjoint(aDownloadUrls, bDownloadUrls))
+            if (Objects.equals(hashes.get("sha512"), file.hashes.get("sha512")) || !Collections.disjoint(downloads, file.downloads))
                 return true;
 
             // Otherwise, we are going to consider heuristics based on file name and urls
@@ -248,76 +242,39 @@ public class ModrinthManifest implements ModpackManifest.SupportOptional, Valida
 
             // If the two files are in same mod project on Modrinth, Github, or Gitlab
             // with the base file name matching and only version differing, we consider them similar
-            Set<HashMap<String, String>> descriptions = downloads.stream()
+            Set<Object> descriptions = downloads.stream()
                 .map(File::describeUrl)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
-            if (file.downloads.stream().map(File::describeUrl).anyMatch(descriptions::contains)) {
+            if (file.downloads.stream().map(File::describeUrl).anyMatch(descriptions::contains))
                 return true;
-            }
 
             return false;
         }
 
-        private static final Map<String, Pattern> URL_PATTERNS = Map.of(
-            "MODRINTH_CDN", Pattern.compile(
-                "^https://cdn\\.modrinth\\.com/data/(?<project>[a-zA-Z0-9]+)/versions/"
-                + "([a-zA-Z0-9]+)/(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
-            ),
-            "GITHUB_RELEASES", Pattern.compile(
-                "^https://github\\.com/(?<owner>[a-zA-Z0-9_-]+)/(?<repo>[a-zA-Z0-9_-]+)/releases/download/"
-                + "([^/?#]+)/(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
-            ),
-            "GITHUB_LATEST_RELEASES", Pattern.compile(
-                "^https://github\\.com/(?<owner>[a-zA-Z0-9_-]+)/(?<repo>[a-zA-Z0-9_-]+)/releases/latest/download/"
-                + "(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
-            ),
-            "GITHUB_RAW_CONTENT", Pattern.compile(
-                "^https://raw\\.githubusercontent\\.com/(?<owner>[a-zA-Z0-9_-]+)/(?<repo>[a-zA-Z0-9_-]+)"
-                + "/([^/?#]+)/(?<path>[^?#]+?)/(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
-            ),
-            "GITLAB_RELEASES", Pattern.compile(
-                "^https://gitlab\\.com/(?<owner>[a-zA-Z0-9_-]+)/(?<repo>[a-zA-Z0-9_-]+)/-/releases/"
-                + "([^/?#]+)/downloads/(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
-            ),
-            "GITLAB_LATEST_RELEASES", Pattern.compile(
-                "^https://gitlab\\.com/(?<owner>[a-zA-Z0-9_-]+)/(?<repo>[a-zA-Z0-9_-]+)/-/releases/permalink/latest/downloads/"
-                + "(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
-            ),
-            "GITLAB_RAW_CONTENT", Pattern.compile(
-                "^https://gitlab\\.com/(?<owner>[a-zA-Z0-9_-]+)/(?<repo>[a-zA-Z0-9_-]+)/-/raw/"
-                + "([^/?#]+)/(?<path>[^?#]+?)/(?<name>[^/?#-]+)-([^/?#]+)(\\?.*)?$"
-            )
-        );
+        /// Matches `<name>-<version>.<extension>`, retaining the first name segment and final extension.
+        /// Optional query strings and fragments are ignored.
+        private static final @Unmodifiable List<Pattern> URL_PATTERNS = Stream.of(
+            "^https://cdn\\.modrinth\\.com/data/([a-zA-Z0-9]+)/versions/[a-zA-Z0-9]+/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$",
+            "^https://github\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/releases/download/[^/?#]+/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$",
+            "^https://github\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/releases/latest/download/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$",
+            "^https://raw\\.githubusercontent\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/[^/?#]+/([^?#]+?)/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$",
+            "^https://gitlab\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/-/releases/[^/?#]+/downloads/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$",
+            "^https://gitlab\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/-/releases/permalink/latest/downloads/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$",
+            "^https://gitlab\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/-/raw/[^/?#]+/([^?#]+?)/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$"
+        ).map(Pattern::compile).toList();
 
         // Strip the version infomation and describe the URL components
-        private static HashMap<String, String> describeUrl(String url) {
-            if (url == null || url.isEmpty()) {
-                return null;
-            }
-            for (Map.Entry<String, Pattern> entry : URL_PATTERNS.entrySet()) {
-                Matcher matcher = entry.getValue().matcher(url);
-                if (matcher.matches()) {
-                    HashMap<String, String> result = new HashMap<>();
-                    result.put("_type", entry.getKey());
-                    result.put("name", matcher.group("name"));
-                    switch (entry.getKey()) {
-                        case "MODRINTH_CDN" -> result.put("project", matcher.group("project"));
-                        case "GITHUB_RELEASES", "GITHUB_LATEST_RELEASES", "GITLAB_RELEASES", "GITLAB_LATEST_RELEASES" -> {
-                            result.put("owner", matcher.group("owner"));
-                            result.put("repo", matcher.group("repo"));
-                        }
-                        case "GITHUB_RAW_CONTENT", "GITLAB_RAW_CONTENT" -> {
-                            result.put("owner", matcher.group("owner"));
-                            result.put("repo", matcher.group("repo"));
-                            result.put("path", matcher.group("path"));
-                        }
-                        default -> throw new IllegalStateException("Unknown URL pattern: " + entry.getKey());
-                    }
-                    return result;
-                }
-            }
-            return null;
+        private static Object describeUrl(String url) {
+            // Format: [matched_url_pattern, captured_group_1, captured_group_2, ...]
+            return url == null ? null : URL_PATTERNS.stream()
+                .map(p -> p.matcher(url))
+                .filter(Matcher::matches)
+                .findFirst()
+                .map(m -> Stream.concat(
+                    Stream.of(m.pattern()),
+                    IntStream.rangeClosed(1, m.groupCount()).mapToObj(m::group)
+                ).toList()).orElse(null);
         }
     }
 }
