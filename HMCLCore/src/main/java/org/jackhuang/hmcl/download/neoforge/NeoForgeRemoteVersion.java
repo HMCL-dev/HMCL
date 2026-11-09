@@ -31,6 +31,10 @@ public final class NeoForgeRemoteVersion extends ComponentRemoteVersion {
     public static final WebURL OLD_URL = WebURL.parse("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/forge");
     public static final WebURL META_URL = WebURL.parse("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge");
 
+    // https://neoforged.forgecdn.net
+    public static final WebURL MIRROR_OLD_URL = WebURL.parse("https://neoforged.forgecdn.net/api/maven/versions/releases/net/neoforged/forge");
+    public static final WebURL MIRROR_META_URL = WebURL.parse("https://neoforged.forgecdn.net/api/maven/versions/releases/net/neoforged/neoforge");
+
     private static Type getType(String version) {
         return version.contains("beta") || version.contains("alpha") ? Type.SNAPSHOT : Type.RELEASE;
     }

@@ -8,7 +8,9 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -26,13 +28,114 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 final class WindowsGPUDetector {
 
-    private static GraphicsCard.Type fromDacType(String adapterDACType) {
-        if (StringUtils.isBlank(adapterDACType)
-                || "Internal".equalsIgnoreCase(adapterDACType)
-                || "InternalDAC".equalsIgnoreCase(adapterDACType)) {
-            return GraphicsCard.Type.Integrated;
+    /// Matching device IDs of known display-only adapters.
+    private static final @Unmodifiable List<String> DISPLAY_ONLY_ADAPTER_MATCHING_DEVICE_IDS = List.of(
+            // Microsoft Remote Display Adapter
+            "RdpIdd_IndirectDisplay",
+
+            // NetEase UU Remote Display Adapter
+            "Root\\GameViewerIddDriver",
+
+            // MuMu Virtual Display Adapter
+            "Root\\MuMuIddDriver",
+
+            // Honor Virtual Display Device
+            "IndirectDSP\\VirtualDisplayDriver",
+
+            // Huawei Virtual Display Device and virtual-display-rs
+            "ROOT\\VIRTUALDISPLAYDRIVER",
+
+            // Parsec Virtual Display Adapter
+            "Root\\Parsec\\VDA",
+
+            // MikeTheTech / VirtualDrivers Virtual Display Driver
+            "Root\\MttVDD",
+            "MttVDD",
+
+            // Apollo / SudoMaker Virtual Display Adapter
+            "Root\\SudoMaker\\SudoVDA",
+            "SudoVDA",
+
+            // RustDesk Indirect Display Driver
+            "Root\\RustDeskIddDriver",
+            "RustDeskIddDriver",
+
+            // Microsoft Indirect Display Driver sample and derivatives
+            "Root\\IddSampleDriver",
+            "IddSampleDriver",
+
+            // Oray Sunlogin virtual display adapter
+            "Root\\OrayIddDriver",
+
+            // spacedesk Graphics Adapter
+            "VID_DATRONICSOFT_PID_SPACEDESK_VIRTUAL_DISPLAY_0003",
+
+            // Looking Glass Indirect Display Device
+            "Root\\LGIdd",
+            "LGIdd",
+
+            // Intel indirect display component, not its System-class KMD device
+            "SWC\\IntelVirtDisplay",
+
+            // Amyuni USB Mobile Monitor Virtual Display
+            "usbmmidd"
+    );
+
+    /// Identifies display-only and virtual adapters before applying AMD name rules and the DAC heuristic.
+    /// Recognized AMD names are heuristic evidence, not a hardware guarantee. Unmatched names and
+    /// other vendors retain the DAC result, or `UNKNOWN` when the DAC value is absent.
+    ///
+    /// @param name the adapter name or driver description normalized by [GraphicsCard#cleanName(String)], or `null`
+    /// @param vendor the resolved hardware vendor, or `null`
+    /// @param dacType the decoded DAC description, or `null` if absent
+    /// @param matchingDeviceId the matched device ID, or `null` if absent
+    /// @return the detected or estimated type, or `UNKNOWN` if no rule applies
+    static GraphicsCard.@NotNull Type inferType(@Nullable String name,
+                                                 @Nullable HardwareVendor vendor,
+                                                 @Nullable String dacType,
+                                                 @Nullable String matchingDeviceId) {
+        if (matchingDeviceId != null) {
+            for (String id : DISPLAY_ONLY_ADAPTER_MATCHING_DEVICE_IDS) {
+                if (matchingDeviceId.equalsIgnoreCase(id)) {
+                    return GraphicsCard.Type.DISPLAY_ONLY;
+                }
+            }
+
+            // VMware drivers may report Broadcom as their provider.
+            if (StringUtils.startsWithIgnoreCase(matchingDeviceId, "PCI\\VEN_15AD&"))
+                return GraphicsCard.Type.VIRTUAL;
+        }
+
+        if (HardwareVendor.VMWARE.equals(vendor) || HardwareVendor.PARALLEL.equals(vendor))
+            return GraphicsCard.Type.VIRTUAL;
+
+        if (HardwareVendor.AMD.equals(vendor) && name != null) {
+            String model = name.replaceFirst("(?i)^(AMD |ATI )?Radeon ", "");
+            if (!model.equals(name)) {
+                // RX Vega 11 is integrated, whereas RX Vega 56 and 64 are discrete.
+                if (model.equalsIgnoreCase("Graphics")
+                        || model.matches("(?i)[0-9]{3}M( Graphics)?")
+                        || model.matches("(?i)80[456]0S( Graphics)?") // Strix Halo
+                        || model.matches("(?i)(RX )?Vega ([2-9]|10|11)( Graphics)?"))
+                    return GraphicsCard.Type.INTEGRATED;
+
+                if (model.matches("(?i)RX [0-9]{3,4}[A-Z]*( .*)?")
+                        || model.matches("(?i)(RX )?Vega (56|64)( .*)?")
+                        || model.matches("(?i)VII( .*)?"))
+                    return GraphicsCard.Type.DISCRETE;
+            }
+        }
+
+        if (dacType != null) {
+            if (StringUtils.isBlank(dacType)
+                    || "Internal".equalsIgnoreCase(dacType)
+                    || "InternalDAC".equalsIgnoreCase(dacType)) {
+                return GraphicsCard.Type.INTEGRATED;
+            } else {
+                return GraphicsCard.Type.DISCRETE;
+            }
         } else {
-            return GraphicsCard.Type.Discrete;
+            return GraphicsCard.Type.UNKNOWN;
         }
     }
 
@@ -55,6 +158,23 @@ final class WindowsGPUDetector {
             return null;
     }
 
+    /// Builds a video-controller query with matching IDs when PnP property lookup is available.
+    static String buildCimQuery(String cmdlet) {
+        return String.join(" | ",
+                cmdlet + " -Class Win32_VideoController",
+                """
+                        Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType,@{Name='MatchingDeviceId';Expression={
+                            if ($_.PNPDeviceID -and (Get-Command Get-PnpDeviceProperty -ErrorAction SilentlyContinue)) {
+                                (Get-PnpDeviceProperty -InstanceId $_.PNPDeviceID -KeyName DEVPKEY_Device_MatchingDeviceId -ErrorAction SilentlyContinue).Data
+                            }
+                        }}
+                        """.stripTrailing(),
+                "Format-List",
+                "Out-String -Width 4096");
+    }
+
+    /// Reads CIM video controllers and applies the shared device ID, name and DAC type heuristics.
+    /// Returns an empty list if the query or its processing fails.
     private static List<GraphicsCard> detectByCim() {
         try {
             String getCimInstance = OperatingSystem.SYSTEM_VERSION.getVersion().startsWith("6.1")
@@ -65,25 +185,22 @@ final class WindowsGPUDetector {
                             "powershell.exe",
                             "-NoProfile",
                             "-Command",
-                            String.join(" | ",
-                                    getCimInstance + " -Class Win32_VideoController",
-                                    "Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType",
-                                    "Format-List"
-                            )),
+                            buildCimQuery(getCimInstance)),
                     inputStream -> KeyValuePairUtils.loadList(new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))));
 
             ArrayList<GraphicsCard> cards = new ArrayList<>(videoControllers.size());
             for (Map<String, String> videoController : videoControllers) {
-                String name = videoController.get("Name");
-                String adapterCompatibility = videoController.get("AdapterCompatibility");
-                String driverVersion = videoController.get("DriverVersion");
-                String adapterDACType = videoController.get("AdapterDACType");
+                @Nullable String name = GraphicsCard.cleanName(videoController.get("Name"));
+                @Nullable HardwareVendor vendor = HardwareVendor.of(videoController.get("AdapterCompatibility"));
+                @Nullable String driverVersion = videoController.get("DriverVersion");
+                @Nullable String adapterDACType = videoController.get("AdapterDACType");
+                @Nullable String matchingDeviceId = videoController.get("MatchingDeviceId");
 
                 if (StringUtils.isNotBlank(name)) {
-                    cards.add(GraphicsCard.builder().setName(GraphicsCard.cleanName(name))
-                            .setVendor(HardwareVendor.of(adapterCompatibility))
+                    cards.add(GraphicsCard.builder().setName(name)
+                            .setVendor(vendor)
                             .setDriverVersion(driverVersion)
-                            .setType(fromDacType(adapterDACType))
+                            .setType(inferType(name, vendor, adapterDACType, matchingDeviceId))
                             .build()
                     );
                 }
@@ -127,22 +244,21 @@ final class WindowsGPUDetector {
             @Nullable String name = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.AdapterString"));
             if (StringUtils.isBlank(name))
                 name = regValueToString(reg.queryValue(hkey, subkey, "DriverDesc"));
-            @Nullable String vendor = regValueToString(reg.queryValue(hkey, subkey, "ProviderName"));
+            name = GraphicsCard.cleanName(name);
+            @Nullable HardwareVendor vendor = HardwareVendor.of(regValueToString(reg.queryValue(hkey, subkey, "ProviderName")));
             @Nullable String driverVersion = regValueToString(reg.queryValue(hkey, subkey, "DriverVersion"));
             @Nullable String dacType = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.DacType"));
             @Nullable Object vulkanDriverName = reg.queryValue(hkey, subkey, "VulkanDriverName");
             @Nullable String matchingDeviceId = regValueToString(reg.queryValue(hkey, subkey, "MatchingDeviceId"));
 
             GraphicsCard.Builder builder = GraphicsCard.builder();
-            builder.setVirtualDisplayAdapter("Root\\GameViewerIddDriver".equalsIgnoreCase(matchingDeviceId));
             if (StringUtils.isNotBlank(name))
-                builder.setName(GraphicsCard.cleanName(name));
+                builder.setName(name);
             if (vendor != null)
-                builder.setVendor(HardwareVendor.of(vendor));
+                builder.setVendor(vendor);
             if (driverVersion != null)
                 builder.setDriverVersion(driverVersion);
-            if (dacType != null)
-                builder.setType(fromDacType(dacType));
+            builder.setType(inferType(name, vendor, dacType, matchingDeviceId));
             if (vulkanDriverName != null)
                 builder.setVulkanDriverFiles(parseVulkanDriverFiles(vulkanDriverName));
             result.add(builder.build());
@@ -150,18 +266,19 @@ final class WindowsGPUDetector {
         return result;
     }
 
-    static @Nullable List<GraphicsCard> detect() {
+    /// Returns an immutable adapter list, empty if detection fails.
+    static @NotNull @Unmodifiable List<GraphicsCard> detect() {
         try {
-            WinReg reg = WinReg.INSTANCE;
+            @Nullable WinReg reg = WinReg.INSTANCE;
             if (reg != null) {
                 List<GraphicsCard> res = detectByRegistry(reg);
                 if (!res.isEmpty())
-                    return res;
+                    return List.copyOf(res);
             }
-            return detectByCim();
+            return List.copyOf(detectByCim());
         } catch (Throwable e) {
             LOG.warning("Failed to get graphics cards", e);
-            return null;
+            return List.of();
         }
     }
 

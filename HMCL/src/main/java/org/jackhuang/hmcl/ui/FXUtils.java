@@ -20,7 +20,6 @@ import javafx.beans.value.WeakChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.event.EventDispatcher;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
@@ -1063,27 +1062,28 @@ public final class FXUtils {
 
     private static final String LABEL_FULL_TEXT_PROP_KEY = FXUtils.class.getName() + ".LABEL_FULL_TEXT";
 
+    private static final ChangeListener<Boolean> TEXT_TRUNCATED_LISTENER = (observable, oldValue, newValue) -> {
+        var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
+        var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
+
+        if (newValue) {
+            if (tooltip == null) {
+                tooltip = new Tooltip();
+                tooltip.textProperty().bind(label.textProperty());
+                label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
+            }
+
+            FXUtils.installFastTooltip(label, tooltip);
+        } else if (tooltip != null) {
+            Tooltip.uninstall(label, tooltip);
+        }
+    };
+
     public static void showTooltipWhenTruncated(Labeled labeled) {
         ReadOnlyBooleanProperty textTruncatedProperty = textTruncatedProperty(labeled);
         if (textTruncatedProperty != null) {
-            ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
-                var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
-                var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
-
-                if (newValue) {
-                    if (tooltip == null) {
-                        tooltip = new Tooltip();
-                        tooltip.textProperty().bind(label.textProperty());
-                        label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
-                    }
-
-                    FXUtils.installFastTooltip(label, tooltip);
-                } else if (tooltip != null) {
-                    Tooltip.uninstall(label, tooltip);
-                }
-            };
-            listener.changed(textTruncatedProperty, false, textTruncatedProperty.get());
-            textTruncatedProperty.addListener(listener);
+            TEXT_TRUNCATED_LISTENER.changed(textTruncatedProperty, false, textTruncatedProperty.get());
+            textTruncatedProperty.addListener(TEXT_TRUNCATED_LISTENER);
         }
     }
 
@@ -1199,18 +1199,6 @@ public final class FXUtils {
                     && (restriction == null || restriction.get())) {
                 window.fireEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSE_REQUEST));
                 event.consume();
-            }
-        });
-    }
-
-    /// Runs an action synchronously on the first mouse entry, removing the listener before execution.
-    public static void prepareOnMouseEnter(Node node, Runnable action) {
-        node.addEventFilter(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent>() {
-            /// Removes this listener and invokes the preparation action.
-            @Override
-            public void handle(MouseEvent event) {
-                node.removeEventFilter(MouseEvent.MOUSE_ENTERED, this);
-                action.run();
             }
         });
     }

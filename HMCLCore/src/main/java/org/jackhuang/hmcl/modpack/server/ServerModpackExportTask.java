@@ -70,7 +70,7 @@ public class ServerModpackExportTask extends Task<Void> {
         try (Zipper zip = new Zipper(modpackFile)) {
             Path runDirectory = instance.getRunDirectory();
             List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
-            zip.putDirectory(runDirectory, "overrides", path -> {
+            zip.putDirectoryProgressed(runDirectory, "overrides", path -> {
                 if (Modpack.acceptFile(path, blackList, exportInfo.getWhitelist())) {
                     Path file = runDirectory.resolve(path);
                     if (Files.isRegularFile(file)) {
@@ -81,7 +81,7 @@ public class ServerModpackExportTask extends Task<Void> {
                 } else {
                     return false;
                 }
-            });
+            }, this::updateProgress);
 
             GameVersionNumber version = instance.getVersion();
             if (version == GameVersionNumber.unknown()) {

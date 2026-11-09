@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
@@ -42,8 +43,8 @@ public final class ExportWizardProvider implements WizardProvider {
     @Override
     public Object finish(SettingsMap settings) {
         List<String> whitelist = settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
-        Path modpackFile = settings.get(ModpackInfoPage.MODPACK_FILE);
-        ModpackExportInfo exportInfo = settings.get(ModpackInfoPage.MODPACK_INFO);
+        Path modpackFile = settings.get(ModpackFileSelectionPage.MODPACK_FILE);
+        ModpackExportInfo exportInfo = Objects.requireNonNull(settings.get(ModpackInfoPage.MODPACK_INFO));
         exportInfo.setWhitelist(whitelist);
         String modpackType = settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
 

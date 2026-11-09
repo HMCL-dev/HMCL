@@ -15,14 +15,18 @@ public abstract class LineButtonBase extends LineComponent {
 
     protected final RipplerContainer ripplerContainer;
 
+    /// Creates a row whose feedback background routes primary clicks to [#fire()].
     public LineButtonBase() {
         this.getStyleClass().addAll(LineButtonBase.DEFAULT_STYLE_CLASS);
 
         this.ripplerContainer = new RipplerContainer(container);
-        container.getChildren().addListener((ListChangeListener<Node>) change -> updateCursor());
+        container.getChildrenUnmodifiable().addListener((ListChangeListener<Node>) change -> updateCursor());
         disabledProperty().addListener(observable -> updateCursor());
         FXUtils.setOverflowHidden(this);
-        FXUtils.onClicked(this, this::fire);
+        ripplerContainer.setOnAction(event -> {
+            event.consume();
+            fire();
+        });
 
         this.getChildren().setAll(ripplerContainer);
         updateCursor();
