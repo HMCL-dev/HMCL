@@ -78,10 +78,6 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
     private Runnable retrySearch;
 
-    public DownloadListPage(@NotNull RemoteAddon.Type type, RemoteAddonRepository repository) {
-        this(type, repository, null, false);
-    }
-
     public DownloadListPage(@NotNull RemoteAddon.Type type, RemoteAddonRepository repository, DownloadPage.DownloadCallback callback, boolean instanceSelection) {
         this.type = Objects.requireNonNull(type);
         this.repository = repository;
