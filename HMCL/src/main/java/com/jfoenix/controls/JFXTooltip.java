@@ -10,6 +10,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.control.skin.TooltipSkin;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.InputEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.text.Text;
 import javafx.stage.Screen;
@@ -23,6 +24,7 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import java.lang.ref.WeakReference;
 
 public class JFXTooltip extends Tooltip {
+    private static final String TOOLTIP_KEY = "javafx.scene.control.Tooltip";
     private final Timeline animation = new Timeline();
     private final PauseTransition timeout = new PauseTransition();
     private WeakReference<Node> anchor = new WeakReference<>(null);
@@ -40,6 +42,7 @@ public class JFXTooltip extends Tooltip {
         setShowDuration(Duration.millis(5000));
         setHideDelay(Duration.ZERO);
         setHideOnEscape(true);
+        timeout.setOnFinished(event -> hide());
         addEventHandler(WindowEvent.WINDOW_HIDDEN, event -> {
             animation.stop();
             timeout.stop();
@@ -48,7 +51,7 @@ public class JFXTooltip extends Tooltip {
     }
 
     public static void install(Node node, Tooltip tooltip) {
-        Object previous = node.getProperties().get("javafx.scene.control.Tooltip");
+        Object previous = node.getProperties().get(TOOLTIP_KEY);
         if (previous != tooltip) {
             if (previous instanceof Tooltip oldTooltip)
                 Tooltip.uninstall(node, oldTooltip);
@@ -76,27 +79,24 @@ public class JFXTooltip extends Tooltip {
                 installed.hide();
             }
         });
-        node.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
+        node.addEventFilter(InputEvent.ANY, event -> {
             var installed = installedTooltip(node);
-            if (installed != null)
+            if (installed == null)
+                return;
+            if (event.getEventType() == MouseEvent.MOUSE_ENTERED)
                 installed.anchor = new WeakReference<>(node);
-        });
-        node.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            var installed = installedTooltip(node);
-            if (installed != null && event.getCode() == KeyCode.ESCAPE && installed.isShowing()) {
+            else if (event.getEventType() == MouseEvent.MOUSE_PRESSED)
+                installed.hide();
+            else if (event.getEventType() == KeyEvent.KEY_PRESSED
+                    && ((KeyEvent) event).getCode() == KeyCode.ESCAPE && installed.isShowing()) {
                 installed.hide();
                 event.consume();
             }
         });
-        node.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
-            var installed = installedTooltip(node);
-            if (installed != null)
-                installed.hide();
-        });
     }
 
     private static JFXTooltip installedTooltip(Node node) {
-        Object value = node.getProperties().get("javafx.scene.control.Tooltip");
+        Object value = node.getProperties().get(TOOLTIP_KEY);
         return value instanceof JFXTooltip tooltip ? tooltip : null;
     }
 
@@ -117,7 +117,6 @@ public class JFXTooltip extends Tooltip {
     @Override
     public void show(Window owner, double x, double y) {
         boolean visible = isShowing();
-        animation.stop();
         hiding = false;
         super.show(owner, x, y);
         if (!isShowing())
@@ -130,21 +129,14 @@ public class JFXTooltip extends Tooltip {
         if (getShowDuration() != null && !getShowDuration().isIndefinite()
                 && getShowDuration().greaterThan(Duration.ZERO)) {
             timeout.setDuration(getShowDuration());
-            timeout.setOnFinished(event -> hide());
             timeout.playFromStart();
         }
-        if (!AnimationUtils.isAnimationEnabled()) {
-            root.setOpacity(1);
-            root.setScaleX(1);
-            root.setScaleY(1);
-            return;
-        }
-        if (!visible) {
+        if (!visible && AnimationUtils.isAnimationEnabled()) {
             root.setOpacity(0);
             root.setScaleX(0.8);
             root.setScaleY(0.8);
         }
-        animate(1, 1, Duration.millis(150), Motion.STANDARD_DECELERATE);
+        animate(true);
     }
 
     private void position() {
@@ -166,27 +158,29 @@ public class JFXTooltip extends Tooltip {
 
     @Override
     public void hide() {
-        if (!isShowing() || !AnimationUtils.isAnimationEnabled()
-                || getOwnerWindow() == null || !getOwnerWindow().isShowing()) {
-            animation.stop();
-            super.hide();
-            return;
+        if (isShowing() && !hiding) {
+            hiding = true;
+            timeout.stop();
+            animate(false);
         }
-        if (hiding)
-            return;
-        hiding = true;
-        animation.stop();
-        animate(0, 0.8, Duration.millis(100), Motion.STANDARD_ACCELERATE);
-        animation.setOnFinished(event -> {
-            animation.setOnFinished(null);
-            super.hide();
-        });
     }
 
-    private void animate(double opacity, double scale, Duration duration, Interpolator interpolator) {
+    private void animate(boolean visible) {
+        animation.stop();
         var root = getScene().getRoot();
-        animation.setOnFinished(null);
-        animation.getKeyFrames().setAll(new KeyFrame(duration,
+        double opacity = visible ? 1 : 0;
+        double scale = visible ? 1 : 0.8;
+        if (!AnimationUtils.isAnimationEnabled() || getOwnerWindow() == null || !getOwnerWindow().isShowing()) {
+            root.setOpacity(opacity);
+            root.setScaleX(scale);
+            root.setScaleY(scale);
+            if (!visible)
+                super.hide();
+            return;
+        }
+        Interpolator interpolator = visible ? Motion.STANDARD_DECELERATE : Motion.STANDARD_ACCELERATE;
+        animation.setOnFinished(visible ? null : event -> super.hide());
+        animation.getKeyFrames().setAll(new KeyFrame(Duration.millis(visible ? 150 : 100),
                 new KeyValue(root.opacityProperty(), opacity, interpolator),
                 new KeyValue(root.scaleXProperty(), scale, interpolator),
                 new KeyValue(root.scaleYProperty(), scale, interpolator)));
