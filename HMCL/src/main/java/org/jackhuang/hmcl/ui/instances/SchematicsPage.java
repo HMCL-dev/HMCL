@@ -680,9 +680,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                     onEscPressed(this, okButton::fire);
                 }
 
-                this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.6));
-                this.maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.8));
-
                 updateContent(file);
             }
         }

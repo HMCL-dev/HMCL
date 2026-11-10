@@ -188,7 +188,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 } else {
                     Controllers.showToast(i18n("install.success"));
                 }
-            }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+            }), i18n("message.downloading.file", result), TaskCancellationAction.NORMAL);
             handler.resolve();
         }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("game_directory.already_exists"), existingPaths::notContains));
 
@@ -386,7 +386,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         @Override
         public Object finish(SettingsMap settings) {
-            settings.put("title", i18n("install.new_game.installation"));
+            settings.put("title", i18n("install.new_game.installation", ((ComponentRemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion()));
             settings.put("success_message", i18n("install.success"));
             settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
