@@ -170,7 +170,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     task.setName(file.name());
                     return task;
                 }),
-                i18n("message.downloading"),
+                i18n("message.downloading.file", file.file().filename()),
                 TaskCancellationAction.NORMAL);
     }
 
