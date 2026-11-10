@@ -1979,6 +1979,14 @@
 .tooltip {
     -fx-text-fill: -monet-inverse-on-surface;
     -fx-background-color: -monet-inverse-surface;
+    -fx-background-radius: 4;
+    -fx-padding: 4 8;
+    -fx-min-height: 24;
+    -fx-min-width: 40;
+    -fx-font-size: 12px;
+    -fx-font-weight: normal;
+    -fx-font-style: normal;
+    -fx-effect: null;
 }
 
 .tooltip .text {

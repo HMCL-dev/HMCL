@@ -29,7 +29,6 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
@@ -237,9 +236,11 @@ public class JFXListCell<T> extends ListCell<T> {
             // show cell tooltip if it's toggled in JFXListView
             if (getListView() instanceof JFXListView<?> listView && listView.isShowTooltip()) {
                 if (item instanceof Label label) {
-                    setTooltip(new Tooltip(label.getText()));
+                    setTooltip(new JFXTooltip(label.getText()));
+                    JFXTooltip.install(this, getTooltip());
                 } else if (getText() != null) {
-                    setTooltip(new Tooltip(getText()));
+                    setTooltip(new JFXTooltip(getText()));
+                    JFXTooltip.install(this, getTooltip());
                 }
             }
         }

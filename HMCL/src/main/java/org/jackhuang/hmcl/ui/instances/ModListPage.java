@@ -907,8 +907,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
                 //noinspection ConstantValue
                 this.warningTooltip = warning.size() == 1
-                        ? new Tooltip(warning.get(0))
-                        : new Tooltip(String.join("\n", warning));
+                        ? new JFXTooltip(warning.get(0))
+                        : new JFXTooltip(String.join("\n", warning));
                 FXUtils.installFastTooltip(this, warningTooltip);
             }
         }

@@ -22,6 +22,7 @@ package com.jfoenix.skins;
 import com.jfoenix.controls.JFXRippler;
 import com.jfoenix.controls.JFXRippler.RipplerMask;
 import com.jfoenix.controls.JFXRippler.RipplerPos;
+import com.jfoenix.controls.JFXTooltip;
 import com.jfoenix.effects.JFXDepthManager;
 import com.jfoenix.event.MultiplePropertyChangeListenerHandler;
 import com.jfoenix.svg.SVGGlyph;
@@ -871,7 +872,7 @@ public class JFXTabPaneSkin extends TabPaneSkin {
 
             tooltip = tab.getTooltip();
             if (tooltip != null) {
-                Tooltip.install(this, tooltip);
+                JFXTooltip.install(this, tooltip);
                 oldTooltip = tooltip;
             }
 
@@ -961,7 +962,7 @@ public class JFXTabPaneSkin extends TabPaneSkin {
                 }
                 tooltip = tab.getTooltip();
                 if (tooltip != null) {
-                    Tooltip.install(this, tooltip);
+                    JFXTooltip.install(this, tooltip);
                     oldTooltip = tooltip;
                 }
             } else if ("DISABLE".equals(p)) {

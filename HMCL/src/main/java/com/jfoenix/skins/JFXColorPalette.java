@@ -21,6 +21,7 @@ package com.jfoenix.skins;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXColorPicker;
+import com.jfoenix.controls.JFXTooltip;
 import com.jfoenix.utils.JFXNodeUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener.Change;
@@ -276,7 +277,7 @@ final class JFXColorPalette extends Region {
             rectangle.setStrokeType(StrokeType.INSIDE);
 
             String tooltipStr = JFXNodeUtils.colorToHex(color);
-            Tooltip.install(this, new Tooltip((tooltipStr == null) ? "" : tooltipStr));
+            JFXTooltip.install(this, new JFXTooltip((tooltipStr == null) ? "" : tooltipStr));
 
             rectangle.getStyleClass().add("color-rect");
             getChildren().add(rectangle);

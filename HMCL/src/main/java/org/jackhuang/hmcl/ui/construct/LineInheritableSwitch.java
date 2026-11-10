@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.controls.JFXTooltip;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXSwitch;
 import javafx.beans.InvalidationListener;
@@ -49,7 +50,7 @@ public final class LineInheritableSwitch extends LineButtonBase {
         inheritButton.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
         inheritButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         inheritButton.setGraphic(SVG.PUBLIC.createIcon(INHERIT_BUTTON_ICON_SIZE));
-        this.inheritTooltip = new Tooltip();
+        this.inheritTooltip = new JFXTooltip();
         FXUtils.installFastTooltip(inheritButton, inheritTooltip);
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
             if (!isInheritAvailable()) {

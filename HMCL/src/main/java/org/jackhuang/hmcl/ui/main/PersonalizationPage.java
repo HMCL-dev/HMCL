@@ -97,7 +97,7 @@ public class PersonalizationPage extends StackPane {
         var button = new JFXButton();
         button.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-        Tooltip tooltip = new Tooltip();
+        Tooltip tooltip = new JFXTooltip();
         button.getProperties().put(INHERIT_BUTTON_TOOLTIP_KEY, tooltip);
         FXUtils.installFastTooltip(button, tooltip);
         updateThemeAppearanceOverrideButton(button, true);

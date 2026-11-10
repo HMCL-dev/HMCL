@@ -458,7 +458,7 @@ public final class FXUtils {
         tooltip.setShowDelay(showDelay);
         tooltip.setShowDuration(showDuration);
         tooltip.setHideDelay(hideDelay);
-        Tooltip.install(node, tooltip);
+        JFXTooltip.install(node, tooltip);
     }
 
     @FXThread
@@ -468,7 +468,7 @@ public final class FXUtils {
 
     @FXThread
     public static void installFastTooltip(Node node, String tooltip) {
-        installFastTooltip(node, new Tooltip(tooltip));
+        installFastTooltip(node, new JFXTooltip(tooltip));
     }
 
     @FXThread
@@ -478,7 +478,7 @@ public final class FXUtils {
 
     @FXThread
     public static void installSlowTooltip(Node node, String tooltip) {
-        installSlowTooltip(node, new Tooltip(tooltip));
+        installSlowTooltip(node, new JFXTooltip(tooltip));
     }
 
     public static void playAnimation(Node node, String animationKey, Animation animation) {
@@ -1068,7 +1068,7 @@ public final class FXUtils {
 
         if (newValue) {
             if (tooltip == null) {
-                tooltip = new Tooltip();
+                tooltip = new JFXTooltip();
                 tooltip.textProperty().bind(label.textProperty());
                 label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
             }
