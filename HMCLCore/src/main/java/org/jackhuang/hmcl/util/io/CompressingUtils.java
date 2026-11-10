@@ -4,12 +4,13 @@ package org.jackhuang.hmcl.util.io;
 
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
+import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -26,6 +27,35 @@ import java.util.zip.ZipException;
 @NotNullByDefault
 public final class CompressingUtils {
 
+    /// Maximum combined size of complete sampled names and their separators.
+    private static final int ENCODING_SAMPLE_BYTES = 64 * 1024;
+
+    /// Maximum number of evenly spaced entries considered for statistical sampling.
+    private static final int ENCODING_SAMPLE_NAMES = 256;
+
+    /// Detector restricted to legacy filename encodings with ASCII-compatible syntax.
+    private static final EncodingDetector FILENAME_ENCODING_DETECTOR = EncodingDetector.DEFAULT
+            .withMaxBytes(ENCODING_SAMPLE_BYTES)
+            .withMinimumConfidence(0.0)
+            .withEncodings(
+                    EncodingDetector.Encoding.GB18030, EncodingDetector.Encoding.BIG5_HKSCS,
+                    EncodingDetector.Encoding.CP932, EncodingDetector.Encoding.EUC_JIS_2004,
+                    EncodingDetector.Encoding.CP949, EncodingDetector.Encoding.EUC_KR,
+                    EncodingDetector.Encoding.CP1250, EncodingDetector.Encoding.CP1251,
+                    EncodingDetector.Encoding.CP1252, EncodingDetector.Encoding.CP1253,
+                    EncodingDetector.Encoding.CP1254, EncodingDetector.Encoding.CP1255,
+                    EncodingDetector.Encoding.CP1256, EncodingDetector.Encoding.CP1257,
+                    EncodingDetector.Encoding.CP1258, EncodingDetector.Encoding.KOI8_R,
+                    EncodingDetector.Encoding.KOI8_U, EncodingDetector.Encoding.MAC_CYRILLIC,
+                    EncodingDetector.Encoding.CP437, EncodingDetector.Encoding.CP850,
+                    EncodingDetector.Encoding.CP855, EncodingDetector.Encoding.CP866,
+                    EncodingDetector.Encoding.ISO_8859_1, EncodingDetector.Encoding.ISO_8859_5,
+                    EncodingDetector.Encoding.ISO_8859_7, EncodingDetector.Encoding.ISO_8859_8);
+
+    /// Deterministic compatibility choices used only after statistical candidates fail.
+    private static final @Unmodifiable List<String> FALLBACK_ENCODINGS = List.of(
+            "GB18030", "Big5", "Shift_JIS", "EUC-JP", "EUC-KR", "IBM437", "ISO-8859-1");
+
     /// ZIP filesystem provider, or `null` when the runtime does not include one.
     private static final @Nullable FileSystemProvider ZIPFS_PROVIDER = FileSystemProvider.installedProviders().stream()
             .filter(it -> "jar".equalsIgnoreCase(it.getScheme()))
@@ -36,32 +66,44 @@ public final class CompressingUtils {
     private CompressingUtils() {
     }
 
-    /// Guesses a charset for the archive's unmarked entry names, defaulting to UTF-8.
+    /// Guesses a charset for opening the archive with the ZIP filesystem provider.
     ///
-    /// Names marked as UTF-8 or supplied by a Unicode extra field are excluded.
-    /// UTF-8 is preferred when it can decode every remaining name, including when
-    /// there are no remaining names. Otherwise, statistical candidates are tried
-    /// in descending score order, including low-scoring candidates when necessary.
-    /// Candidates must strictly decode every unmarked name. If none qualifies,
-    /// UTF-8 is returned even if some names cannot be decoded with it.
-    /// Successful decoding does not guarantee that the original charset was identified.
+    /// Names marked as UTF-8 are excluded. Raw names backed by Unicode extra
+    /// fields still participate because the provider may not use those fields.
+    /// Selection otherwise follows [#findSuitableEncoding(ZipArchiveReader)].
     ///
     /// @param zipFile archive to inspect
-    /// @return guessed filename charset, or UTF-8 when no candidate qualifies
+    /// @return guessed filename charset
     /// @throws IOException if the archive cannot be read or its reader cannot be closed
     static Charset findSuitableEncoding(Path zipFile) throws IOException {
         try (ZipArchiveReader zf = openZipFile(zipFile, StandardCharsets.UTF_8)) {
-            return findSuitableEncoding(zf);
+            return findSuitableEncoding(zf, false);
         }
     }
 
-    /// Guesses a filename charset without closing the supplied reader,
-    /// defaulting to UTF-8 when no candidate qualifies.
+    /// Guesses a filename charset without closing the supplied reader.
     ///
-    /// Statistical sampling is bounded, but charset validation covers every
-    /// unmarked entry and resets decoder state between filenames.
+    /// Names marked as UTF-8 or already supplied by Unicode extra fields are
+    /// excluded from statistical sampling and UTF-8 selection. UTF-8 is preferred
+    /// if it strictly decodes all remaining names,
+    /// including when there are none. Otherwise, bounded statistical samples
+    /// rank candidates, including low-confidence candidates. Exact Java charset
+    /// mappings are preferred; EUC-JP is tried for EUC-JIS-2004 evidence when an
+    /// exact mapping is unavailable. Candidates must strictly decode every unmarked raw name,
+    /// including names backed by Unicode extra fields: the reader decodes these
+    /// raw bytes before applying the fields when opened with a legacy charset.
+    /// Decoder state is reset between names. Fixed compatibility encodings are
+    /// tried if statistical candidates fail; ISO-8859-1 is the final fallback.
+    /// Selection does not depend on the system charset. Successful decoding
+    /// does not guarantee correct names, particularly for mixed encodings.
     static Charset findSuitableEncoding(ZipArchiveReader zipFile) {
-        @Nullable List<byte[]> rawNames = null;
+        return findSuitableEncoding(zipFile, true);
+    }
+
+    /// Selects an encoding, optionally trusting names resolved from Unicode metadata.
+    private static Charset findSuitableEncoding(ZipArchiveReader zipFile, boolean useUnicodeNames) {
+        List<byte[]> rawNames = new ArrayList<>();
+        List<byte[]> unresolvedNames = new ArrayList<>();
 
         for (ZipArchiveEntry entry : zipFile.getEntries()) {
             if (entry.getNameSource() == ZipArchiveEntry.NameSource.NAME_WITH_EFS_FLAG)
@@ -71,72 +113,80 @@ public final class CompressingUtils {
             if (rawName == null || StringUtils.isASCII(rawName))
                 continue;
 
-            if (rawNames == null)
-                rawNames = new ArrayList<>();
-
             rawNames.add(rawName);
+            if (!useUnicodeNames || entry.getNameSource() != ZipArchiveEntry.NameSource.UNICODE_EXTRA_FIELD)
+                unresolvedNames.add(rawName);
         }
 
-        if (rawNames == null)
+        if (canDecodeNames(StandardCharsets.UTF_8, unresolvedNames))
             return StandardCharsets.UTF_8;
 
-        String[] candidates = {
-                "UTF-8",
-                OperatingSystem.NATIVE_CHARSET.name(),
-                "GB18030",
-                "Big5",
-                "Shift_JIS",
-                "EUC-JP",
-                "ISO-2022-JP",
-                "EUC-KR",
-                "ISO-2022-KR",
-                "KOI8-R",
-                "windows-1251",
-                "x-MacCyrillic",
-                "IBM855",
-                "IBM866",
-                "windows-1252",
-                "ISO-8859-1",
-                "ISO-8859-5",
-                "ISO-8859-7",
-                "ISO-8859-8"
-        };
-
-        CharBuffer cb = CharBuffer.allocate(128);
-
-        loop:
-        for (String candidate : candidates) {
-            Charset charset;
-
-            try {
-                charset = Charset.forName(candidate);
-            } catch (Exception ignored) {
-                continue;
-            }
-
-            CharsetDecoder decoder = charset.newDecoder()
-                    .onMalformedInput(CodingErrorAction.REPORT)
-                    .onUnmappableCharacter(CodingErrorAction.REPORT);
-
-            for (byte[] ba : rawNames) {
-                decoder.reset();
-                int clen = (int) (ba.length * decoder.maxCharsPerByte());
-                if (clen == 0) continue;
-                if (clen <= cb.capacity())
-                    cb.clear();
-                else
-                    cb = CharBuffer.allocate(clen);
-
-                ByteBuffer bb = ByteBuffer.wrap(ba, 0, ba.length);
-                CoderResult cr = decoder.decode(bb, cb, true);
-                if (!cr.isUnderflow()) continue loop;
-                cr = decoder.flush(cb);
-                if (!cr.isUnderflow()) continue loop;
-            }
-            return charset;
+        Set<Charset> attempted = new HashSet<>();
+        attempted.add(StandardCharsets.UTF_8);
+        for (EncodingDetector.Candidate candidate : FILENAME_ENCODING_DETECTOR.detect(sampleNames(unresolvedNames)).candidates()) {
+            EncodingDetector.@Nullable Encoding encoding = candidate.encoding();
+            @Nullable Charset charset = encoding == null ? null : encoding.charset();
+            // The detector groups ordinary EUC-JP input under its EUC-JIS-2004 target.
+            // Treat EUC-JP as another hypothesis, subject to full strict validation.
+            if (charset == null && encoding == EncodingDetector.Encoding.EUC_JIS_2004)
+                charset = encoding.approximateCharset();
+            if (charset != null && attempted.add(charset) && canDecodeNames(charset, rawNames))
+                return charset;
         }
 
-        return StandardCharsets.UTF_8;
+        for (String name : FALLBACK_ENCODINGS) {
+            try {
+                Charset charset = Charset.forName(name);
+                if (attempted.add(charset) && canDecodeNames(charset, rawNames))
+                    return charset;
+            } catch (UnsupportedCharsetException ignored) {
+                // Optional charset providers may be absent in a reduced runtime.
+            }
+        }
+        return StandardCharsets.ISO_8859_1;
+    }
+
+    /// Samples complete, distinct names across the entry list within a fixed byte budget.
+    private static ByteBuffer sampleNames(List<byte[]> rawNames) {
+        ByteBuffer sample = ByteBuffer.allocate(ENCODING_SAMPLE_BYTES);
+        Set<ByteBuffer> seen = new HashSet<>();
+        int count = Math.min(rawNames.size(), ENCODING_SAMPLE_NAMES);
+        for (int i = 0; i < count; i++) {
+            int index = count == 1 ? 0 : (int) ((long) i * (rawNames.size() - 1) / (count - 1));
+            byte[] name = rawNames.get(index);
+            if (name.length >= sample.remaining() || !seen.add(ByteBuffer.wrap(name)))
+                continue;
+            sample.put(name);
+            // Separate independent names without creating cross-name multibyte sequences.
+            sample.put((byte) '\n');
+        }
+        return sample.flip();
+    }
+
+    /// Tests all names with a strict decoder, discarding output in bounded chunks.
+    private static boolean canDecodeNames(Charset charset, List<byte[]> rawNames) {
+        CharsetDecoder decoder = charset.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
+        CharBuffer output = CharBuffer.allocate(1024);
+        for (byte[] name : rawNames) {
+            decoder.reset();
+            ByteBuffer input = ByteBuffer.wrap(name);
+            CoderResult result;
+            do {
+                output.clear();
+                result = decoder.decode(input, output, true);
+            } while (result.isOverflow());
+            if (result.isError())
+                return false;
+            do {
+                output.clear();
+                result = decoder.flush(output);
+            } while (result.isOverflow());
+            if (result.isError())
+                return false;
+        }
+        return true;
     }
 
     /// Opens an owning ZIP tree using detected filename encoding.
@@ -169,8 +219,18 @@ public final class CompressingUtils {
         return openZipFile(zipFile, suitableEncoding);
     }
 
-    /// Opens a reader using the supplied charset for names without Unicode metadata.
-    private static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
+    /// Opens an owning reader using the supplied charset for names without Unicode metadata.
+    ///
+    /// No encoding detection is performed. UTF-8 flags and valid Unicode extra
+    /// fields take precedence over the supplied charset. With a non-UTF-8
+    /// charset, raw names and comments must be decodable even when a Unicode
+    /// extra field supplies the final value. The caller must close the reader.
+    ///
+    /// @param zipFile archive to open
+    /// @param charset encoding for names without Unicode metadata
+    /// @return newly opened reader
+    /// @throws IOException if opening or reading the archive fails
+    public static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
         return new ZipArchiveReader(zipFile, charset, true, true);
     }
 
