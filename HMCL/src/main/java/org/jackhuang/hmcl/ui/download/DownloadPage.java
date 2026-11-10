@@ -363,7 +363,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         @Override
         public Object finish(SettingsMap settings) {
-            settings.put("title", i18n("install.new_game.installation"));
+            settings.put("title", i18n("install.new_game.installation", ((ComponentRemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion()));
             settings.put("success_message", i18n("install.success"));
             settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
