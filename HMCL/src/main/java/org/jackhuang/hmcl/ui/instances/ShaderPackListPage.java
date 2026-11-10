@@ -443,6 +443,7 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
 
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
+            titleContainer.setPadding(new Insets(0, 0, 12, 0));
 
             maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
@@ -472,11 +473,10 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
-            FXUtils.onChange(description.heightProperty(), newVal -> {
-                double maxHeight = Controllers.getDecorator().contentHeightProperty().get() * 0.5;
-                double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
-                descriptionPane.setPrefViewportHeight(targetHeight);
-            });
+            // Use the wrapped content height to request a readable viewport within the dialog size limit.
+            descriptionPane.prefViewportHeightProperty().bind(Bindings.min(
+                    description.heightProperty(),
+                    Controllers.getDecorator().contentHeightProperty().multiply(0.5)));
 
             setBody(descriptionPane);
 
