@@ -122,12 +122,12 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         }));
 
         getSidebar()
-                .addNavigationDrawerTab(tabController, gameSettingsTab, i18n("settings.game"), SVG.SETTINGS, SVG.SETTINGS_FILL)
-                .addNavigationDrawerTab(tabController, installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL)
-                .addNavigationDrawerTab(tabController, modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
-                .addNavigationDrawerTab(tabController, resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
-                .addNavigationDrawerTab(tabController, worldListTab, i18n("world.manage"), SVG.PUBLIC)
-                .addNavigationDrawerTab(tabController, schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
+                .addNavigationDrawerTab(tabController, gameSettingsTab, i18n("settings.game"), SVG.SETTINGS, SVG.SETTINGS_FILL, true)
+                .addNavigationDrawerTab(tabController, installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL, true)
+                .addNavigationDrawerTab(tabController, modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL, true)
+                .addNavigationDrawerTab(tabController, resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE, true)
+                .addNavigationDrawerTab(tabController, worldListTab, i18n("world.manage"), SVG.PUBLIC, true)
+                .addNavigationDrawerTab(tabController, schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL, true);
 
         PopupMenu browseList = new PopupMenu();
         JFXPopup browsePopup = new JFXPopup(browseList);
