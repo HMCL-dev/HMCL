@@ -56,7 +56,7 @@ import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.image.ImageLoader;
-import org.jackhuang.hmcl.image.ImageUtils;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
@@ -900,15 +900,15 @@ public final class FXUtils {
                                   boolean preserveRatio, boolean smooth) throws Exception {
         try (var bufferedInput = new BufferedInputStream(input)) {
             String ext = FileUtils.getExtension(fileName).toLowerCase(Locale.ROOT);
-            ImageLoader<Image> loader = ImageUtils.EXT_TO_LOADER.get(ext);
-            if (loader == null && !ImageUtils.DEFAULT_EXTS.contains(ext)) {
-                bufferedInput.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = bufferedInput.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
+            ImageLoader<Image> loader = ImageLoaders.EXT_TO_LOADER.get(ext);
+            if (loader == null && !ImageLoaders.DEFAULT_EXTS.contains(ext)) {
+                bufferedInput.mark(ImageLoaders.HEADER_BUFFER_SIZE);
+                byte[] headerBuffer = bufferedInput.readNBytes(ImageLoaders.HEADER_BUFFER_SIZE);
                 bufferedInput.reset();
-                loader = ImageUtils.guessLoader(headerBuffer);
+                loader = ImageLoaders.guessLoader(headerBuffer);
             }
             if (loader == null)
-                loader = ImageUtils.DEFAULT;
+                loader = ImageLoaders.DEFAULT;
             return loader.load(bufferedInput, requestedWidth, requestedHeight, preserveRatio, smooth);
         }
     }
@@ -920,20 +920,20 @@ public final class FXUtils {
 
         try (BufferedInputStream input = new BufferedInputStream(connection.getInputStream())) {
             String contentType = Objects.requireNonNull(connection.getContentType(), "");
-            Matcher matcher = ImageUtils.CONTENT_TYPE_PATTERN.matcher(contentType);
+            Matcher matcher = ImageLoaders.CONTENT_TYPE_PATTERN.matcher(contentType);
             if (matcher.find())
                 contentType = matcher.group("type");
 
-            ImageLoader<Image> loader = ImageUtils.CONTENT_TYPE_TO_LOADER.get(contentType);
-            if (loader == null && !ImageUtils.DEFAULT_CONTENT_TYPES.contains(contentType)) {
-                input.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
+            ImageLoader<Image> loader = ImageLoaders.CONTENT_TYPE_TO_LOADER.get(contentType);
+            if (loader == null && !ImageLoaders.DEFAULT_CONTENT_TYPES.contains(contentType)) {
+                input.mark(ImageLoaders.HEADER_BUFFER_SIZE);
+                byte[] headerBuffer = input.readNBytes(ImageLoaders.HEADER_BUFFER_SIZE);
                 input.reset();
-                loader = ImageUtils.guessLoader(headerBuffer);
+                loader = ImageLoaders.guessLoader(headerBuffer);
             }
 
             if (loader == null)
-                loader = ImageUtils.DEFAULT;
+                loader = ImageLoaders.DEFAULT;
 
             return loader.load(input, 0, 0, false, false);
         }

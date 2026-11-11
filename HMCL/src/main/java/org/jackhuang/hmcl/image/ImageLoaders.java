@@ -46,7 +46,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 ///
 /// @author Glavo
 @NotNullByDefault
-public final class ImageUtils {
+public final class ImageLoaders {
 
     // ImageLoaders
 
@@ -715,6 +715,6 @@ public final class ImageUtils {
     }
 
     /// Prevents instantiation.
-    private ImageUtils() {
+    private ImageLoaders() {
     }
 }
