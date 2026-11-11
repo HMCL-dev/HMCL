@@ -908,7 +908,7 @@ public final class FXUtils {
                 loader = ImageLoaders.guessLoader(headerBuffer);
             }
             if (loader == null)
-                loader = ImageLoaders.DEFAULT;
+                loader = ImageLoaders.JAVAFX;
             return loader.load(bufferedInput, requestedWidth, requestedHeight, preserveRatio, smooth);
         }
     }
@@ -933,7 +933,7 @@ public final class FXUtils {
             }
 
             if (loader == null)
-                loader = ImageLoaders.DEFAULT;
+                loader = ImageLoaders.JAVAFX;
 
             return loader.load(input, 0, 0, false, false);
         }

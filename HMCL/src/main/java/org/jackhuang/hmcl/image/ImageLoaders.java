@@ -50,7 +50,7 @@ public final class ImageLoaders {
 
     // ImageLoaders
 
-    public static final ImageLoader<Image> DEFAULT = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+    public static final ImageLoader<Image> JAVAFX = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         Image image = new Image(input,
                 requestedWidth, requestedHeight,
                 preserveRatio, smooth);
@@ -105,7 +105,7 @@ public final class ImageLoaders {
 
     public static final ImageLoader<Image> APNG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         if (!"true".equals(System.getProperty("hmcl.experimental.apng", "true")))
-            return DEFAULT.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
+            return JAVAFX.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
 
         try {
             var sequence = Png.readArgb8888BitmapSequence(input);
