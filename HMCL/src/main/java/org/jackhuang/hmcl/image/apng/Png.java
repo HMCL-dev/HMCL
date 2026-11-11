@@ -7,7 +7,7 @@
 package org.jackhuang.hmcl.image.apng;
 
 import org.jackhuang.hmcl.image.apng.argb8888.*;
-import org.jackhuang.hmcl.ui.image.apng.argb8888.*;
+import org.jackhuang.hmcl.image.apng.argb8888.*;
 import org.jackhuang.hmcl.image.apng.error.PngException;
 import org.jackhuang.hmcl.image.apng.map.PngMap;
 import org.jackhuang.hmcl.image.apng.map.PngMapReader;

@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.addon.update.AddonUpdateTask;
@@ -305,7 +306,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                         Path iconPath = fs.getPath(path);
 
                         if (Files.exists(iconPath)) {
-                            Image image = FXUtils.loadImage(
+                            Image image = ImageLoaders.DEFAULT.load(
                                 iconPath,
                                 80,
                                 80,

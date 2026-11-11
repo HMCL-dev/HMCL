@@ -7,7 +7,7 @@
 package org.jackhuang.hmcl.image.apng.util;
 
 import org.jackhuang.hmcl.image.apng.chunks.*;
-import org.jackhuang.hmcl.ui.image.apng.chunks.*;
+import org.jackhuang.hmcl.image.apng.chunks.*;
 import org.jackhuang.hmcl.image.apng.map.PngChunkMap;
 
 import java.util.ArrayList;

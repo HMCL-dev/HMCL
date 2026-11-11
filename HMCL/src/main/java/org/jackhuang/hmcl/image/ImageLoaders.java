@@ -13,6 +13,7 @@ import org.girod.javafx.svgimage.LoaderParameters;
 import org.girod.javafx.svgimage.SVGImage;
 import org.girod.javafx.svgimage.SVGLoader;
 import org.girod.javafx.svgimage.ScaleQuality;
+import org.glavo.url.WebURL;
 import org.glavo.webp.WebPImage;
 import org.glavo.webp.WebPImageLoadOptions;
 import org.glavo.webp.javafx.WebPFXImage;
@@ -25,24 +26,30 @@ import org.jackhuang.hmcl.image.apng.chunks.PngFrameControl;
 import org.jackhuang.hmcl.image.apng.error.PngException;
 import org.jackhuang.hmcl.image.apng.error.PngIntegrityException;
 import org.jackhuang.hmcl.image.internal.AnimationImageImpl;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Provides image-format detection and loaders for image formats not handled
-/// directly by JavaFX.
+/// Provides automatic image-format detection and JavaFX image decoders.
 ///
 /// @author Glavo
 @NotNullByDefault
@@ -106,7 +113,7 @@ public final class ImageLoaders {
         return image;
     };
 
-    /// Decodes PNG animations, delegating to [#JAVAFX] when experimental APNG support is disabled.
+    /// Decodes PNG images and animations.
     public static final ImageLoader<Image> APNG = (input, fileName, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         try {
             var sequence = Png.readArgb8888BitmapSequence(input);
@@ -165,23 +172,39 @@ public final class ImageLoaders {
         }
     };
 
-    public static final Map<String, ImageLoader<Image>> EXT_TO_LOADER = Map.of(
+    /// Loads images by file extension or URL response media type, then by data signature.
+    ///
+    /// Known extensions and media types take precedence over the encoded data.
+    /// Unrecognized hints trigger inspection of up to [#HEADER_BUFFER_SIZE] leading
+    /// bytes; if no specialized decoder is identified, [#JAVAFX] is used. URL
+    /// loading uses the response media type rather than the URL's file extension.
+    /// Media types are matched without regard to case or parameters.
+    ///
+    /// All loading methods close their input streams on both success and failure.
+    /// Scaling options are passed unchanged to the selected decoder.
+    public static final ImageLoader<Image> DEFAULT = new DefaultImageLoader();
+
+    /// Specialized decoders indexed by lowercase file extension, without the leading dot.
+    public static final @Unmodifiable Map<String, ImageLoader<Image>> EXT_TO_LOADER = Map.of(
             "webp", WEBP,
             "svg", SVG,
             "apng", APNG
     );
 
-    public static final Map<String, ImageLoader<Image>> CONTENT_TYPE_TO_LOADER = Map.of(
+    /// Specialized decoders indexed by lowercase media type, without parameters.
+    public static final @Unmodifiable Map<String, ImageLoader<Image>> CONTENT_TYPE_TO_LOADER = Map.of(
             "image/webp", WEBP,
             "image/svg+xml", SVG,
             "image/apng", APNG
     );
 
-    public static final Set<String> DEFAULT_EXTS = Set.of(
+    /// File extensions that select [#JAVAFX] without inspecting the data signature.
+    public static final @Unmodifiable Set<String> DEFAULT_EXTS = Set.of(
             "jpg", "jpeg", "bmp", "gif"
     );
 
-    public static final Set<String> DEFAULT_CONTENT_TYPES = Set.of(
+    /// Media types that select [#JAVAFX] without inspecting the data signature.
+    public static final @Unmodifiable Set<String> DEFAULT_CONTENT_TYPES = Set.of(
             "image/jpeg", "image/bmp", "image/gif"
     );
 
@@ -189,6 +212,72 @@ public final class ImageLoaders {
 
     /// Maximum number of leading bytes inspected when selecting an image loader.
     public static final int HEADER_BUFFER_SIZE = 1024;
+
+    /// Selects a decoder from source metadata or a buffered data prefix.
+    @NotNullByDefault
+    private static final class DefaultImageLoader implements ImageLoader<Image> {
+
+        /// Creates the shared automatic loader.
+        private DefaultImageLoader() {
+        }
+
+        /// Selects a decoder by case-insensitive file extension, then by signature,
+        /// and closes the supplied stream on both success and failure.
+        @Override
+        public Image load(InputStream input, String fileName,
+                          int requestedWidth, int requestedHeight,
+                          boolean preserveRatio, boolean smooth) throws Exception {
+            try (var bufferedInput = new BufferedInputStream(input)) {
+                String ext = FileUtils.getExtension(fileName).toLowerCase(Locale.ROOT);
+                @Nullable ImageLoader<Image> loader = EXT_TO_LOADER.get(ext);
+                if (loader == null)
+                    loader = DEFAULT_EXTS.contains(ext) ? JAVAFX : detectLoader(bufferedInput);
+                return loader.load(bufferedInput, fileName,
+                        requestedWidth, requestedHeight, preserveRatio, smooth);
+            }
+        }
+
+        /// Follows HTTP redirects and selects a decoder by response media type,
+        /// then by signature. Missing or unknown media types trigger signature
+        /// detection; the response stream is closed on both success and failure.
+        @Override
+        public Image load(WebURL url,
+                          int requestedWidth, int requestedHeight,
+                          boolean preserveRatio, boolean smooth) throws Exception {
+            URLConnection connection = NetworkUtils.createConnection(url);
+            if (connection instanceof HttpURLConnection httpConnection)
+                connection = NetworkUtils.resolveConnection(httpConnection);
+
+            try (var input = new BufferedInputStream(connection.getInputStream())) {
+                @Nullable String contentType = connection.getContentType();
+                String mediaType = contentType == null ? ""
+                        : contentType.split(";", 2)[0].strip().toLowerCase(Locale.ROOT);
+                @Nullable ImageLoader<Image> loader = CONTENT_TYPE_TO_LOADER.get(mediaType);
+                if (loader == null)
+                    loader = DEFAULT_CONTENT_TYPES.contains(mediaType) ? JAVAFX : detectLoader(input);
+
+                String path = connection.getURL().getPath();
+                String fileName = path.substring(path.lastIndexOf('/') + 1);
+                return loader.load(input, fileName,
+                        requestedWidth, requestedHeight, preserveRatio, smooth);
+            }
+        }
+    }
+
+    /// Selects a specialized decoder from a stream prefix, falling back to [#JAVAFX].
+    ///
+    /// On success the buffered stream is reset so the decoder receives the prefix too.
+    ///
+    /// @param input the buffered stream at the start of the image data
+    /// @return the selected decoder
+    /// @throws IOException if reading or resetting the stream fails
+    private static ImageLoader<Image> detectLoader(BufferedInputStream input) throws IOException {
+        input.mark(HEADER_BUFFER_SIZE);
+        byte[] headerBuffer = input.readNBytes(HEADER_BUFFER_SIZE);
+        input.reset();
+        @Nullable ImageLoader<Image> loader = guessLoader(headerBuffer);
+        return loader == null ? JAVAFX : loader;
+    }
 
     private static final byte[] RIFF_HEADER = {'R', 'I', 'F', 'F'};
     private static final byte[] WEBP_HEADER = {'W', 'E', 'B', 'P'};
@@ -530,8 +619,6 @@ public final class ImageLoaders {
             return SVG;
         return null;
     }
-
-    public static final Pattern CONTENT_TYPE_PATTERN = Pattern.compile("^\\s(?<type>image/[\\w-])");
 
     // APNG
 

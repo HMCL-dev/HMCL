@@ -8,7 +8,7 @@ package org.jackhuang.hmcl.image.apng.util;
 
 import org.jackhuang.hmcl.image.apng.PngChunkCode;
 import org.jackhuang.hmcl.image.apng.chunks.*;
-import org.jackhuang.hmcl.ui.image.apng.chunks.*;
+import org.jackhuang.hmcl.image.apng.chunks.*;
 import org.jackhuang.hmcl.image.apng.reader.PngChunkProcessor;
 import org.jackhuang.hmcl.image.apng.error.PngException;
 import org.jackhuang.hmcl.image.apng.map.PngChunkMap;
