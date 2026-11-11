@@ -446,12 +446,12 @@ public class JFXDatePickerContent extends VBox {
     }
 
     private void updateDayNameCells() {
-        int weekFirstDay = WeekFields.of(JFXDatePickerContent.getLocale()).getFirstDayOfWeek().getValue();
+        int weekFirstDay = WeekFields.of(this.getLocale()).getFirstDayOfWeek().getValue();
         LocalDate date = LocalDate.of(2009, 7, 12 + weekFirstDay);
 
         for (int i = 0; i < this.daysPerWeek; ++i) {
-            String name = this.weekDayNameFormatter.withLocale(JFXDatePickerContent.getLocale()).format(date.plusDays(i));
-            if (!LocaleUtils.isChinese(JFXDatePickerContent.getLocale())) {
+            String name = this.weekDayNameFormatter.withLocale(this.getLocale()).format(date.plusDays(i));
+            if (!LocaleUtils.isChinese(this.getLocale())) {
                 name = name.substring(0, 1).toUpperCase(Locale.ROOT);
             }
 
@@ -468,7 +468,7 @@ public class JFXDatePickerContent extends VBox {
 
     void updateWeekNumberDateCells() {
         if (this.datePicker.isShowWeekNumbers()) {
-            Locale locale = JFXDatePickerContent.getLocale();
+            Locale locale = this.getLocale();
             LocalDate firstDayOfMonth = this.selectedYearMonth.get().atDay(1);
 
             for (int i = 0; i < 6; ++i) {
@@ -481,9 +481,9 @@ public class JFXDatePickerContent extends VBox {
     }
 
     private void updateDayCells() {
-        Locale locale = JFXDatePickerContent.getLocale();
+        Locale locale = this.getLocale();
         Chronology chrono = this.getPrimaryChronology();
-        int firstDayOfWeek = WeekFields.of(JFXDatePickerContent.getLocale()).getFirstDayOfWeek().getValue();
+        int firstDayOfWeek = WeekFields.of(this.getLocale()).getFirstDayOfWeek().getValue();
         int firstOfMonthIndex = this.selectedYearMonth.get().atDay(1).getDayOfWeek().getValue() - firstDayOfWeek;
         firstOfMonthIndex += firstOfMonthIndex < 0 ? this.daysPerWeek : 0;
         YearMonth currentYearMonth = this.selectedYearMonth.get();
@@ -550,8 +550,8 @@ public class JFXDatePickerContent extends VBox {
         YearMonth yearMonth = this.selectedYearMonth.get();
         LocalDate date = Objects.requireNonNullElseGet(valueProperty.get(), LocalDate::now);
         this.selectedDateLabel.setText(I18n.getTranslator() instanceof Translator_lzh
-                ? weekDayNameFormatter.withLocale(getLocale()).format(date) + ", " + formatMonth(YearMonth.from(date)) + " " + formatYear(YearMonth.from(date))
-                : fullFormatter.withLocale(getLocale()).format(date));
+                ? weekDayNameFormatter.withLocale(this.getLocale()).format(date) + ", " + formatMonth(YearMonth.from(date)) + " " + formatYear(YearMonth.from(date))
+                : fullFormatter.withLocale(this.getLocale()).format(date));
 
         this.selectedYearLabel.setText(this.formatYear(yearMonth));
         this.monthYearLabel.setText(this.formatMonth(yearMonth) + " " + this.formatYear(yearMonth));
@@ -567,7 +567,7 @@ public class JFXDatePickerContent extends VBox {
         try {
             Chronology chrono = this.getPrimaryChronology();
             ChronoLocalDate cDate = chrono.date(yearMonth.atDay(1));
-            return this.monthFormatter.withLocale(JFXDatePickerContent.getLocale()).withChronology(chrono).format(cDate);
+            return this.monthFormatter.withLocale(this.getLocale()).withChronology(chrono).format(cDate);
         } catch (DateTimeException var4) {
             return "";
         }
@@ -579,7 +579,7 @@ public class JFXDatePickerContent extends VBox {
         try {
             Chronology chrono = this.getPrimaryChronology();
             ChronoLocalDate cDate = chrono.date(yearMonth.atDay(1));
-            return this.yearFormatter.withLocale(JFXDatePickerContent.getLocale()).withChronology(chrono).withDecimalStyle(DecimalStyle.of(JFXDatePickerContent.getLocale())).format(cDate);
+            return this.yearFormatter.withLocale(this.getLocale()).withChronology(chrono).withDecimalStyle(DecimalStyle.of(this.getLocale())).format(cDate);
         } catch (DateTimeException var4) {
             return "";
         }
@@ -716,7 +716,7 @@ public class JFXDatePickerContent extends VBox {
         return this.datePicker.getChronology();
     }
 
-    protected static Locale getLocale() {
+    protected Locale getLocale() {
         return I18n.getTranslator() instanceof Translator_lzh ? Locale.TRADITIONAL_CHINESE : I18n.getLocale().getLocale();
     }
 
