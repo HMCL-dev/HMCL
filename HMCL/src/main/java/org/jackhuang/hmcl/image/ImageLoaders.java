@@ -182,43 +182,21 @@ public final class ImageLoaders {
     ///
     /// All loading methods close their input streams on both success and failure.
     /// Scaling options are passed unchanged to the selected decoder.
-    public static final ImageLoader<Image> DEFAULT = new DefaultImageLoader();
+    public static final ImageLoader<Image> DEFAULT = new ImageLoader<>() {
 
-    /// Specialized decoders indexed by lowercase file extension, without the leading dot.
-    public static final @Unmodifiable Map<String, ImageLoader<Image>> EXT_TO_LOADER = Map.of(
-            "webp", WEBP,
-            "svg", SVG,
-            "apng", APNG
-    );
-
-    /// Specialized decoders indexed by lowercase media type, without parameters.
-    public static final @Unmodifiable Map<String, ImageLoader<Image>> CONTENT_TYPE_TO_LOADER = Map.of(
-            "image/webp", WEBP,
-            "image/svg+xml", SVG,
-            "image/apng", APNG
-    );
-
-    /// File extensions that select [#JAVAFX] without inspecting the data signature.
-    public static final @Unmodifiable Set<String> DEFAULT_EXTS = Set.of(
-            "jpg", "jpeg", "bmp", "gif"
-    );
-
-    /// Media types that select [#JAVAFX] without inspecting the data signature.
-    public static final @Unmodifiable Set<String> DEFAULT_CONTENT_TYPES = Set.of(
-            "image/jpeg", "image/bmp", "image/gif"
-    );
-
-    // ------
-
-    /// Maximum number of leading bytes inspected when selecting an image loader.
-    public static final int HEADER_BUFFER_SIZE = 1024;
-
-    /// Selects a decoder from source metadata or a buffered data prefix.
-    @NotNullByDefault
-    private static final class DefaultImageLoader implements ImageLoader<Image> {
-
-        /// Creates the shared automatic loader.
-        private DefaultImageLoader() {
+        /// Selects a specialized decoder from a stream prefix, falling back to [ImageLoaders#JAVAFX].
+        ///
+        /// On success the buffered stream is reset so the decoder receives the prefix too.
+        ///
+        /// @param input the buffered stream at the start of the image data
+        /// @return the selected decoder
+        /// @throws IOException if reading or resetting the stream fails
+        private static ImageLoader<Image> detectLoader(BufferedInputStream input) throws IOException {
+            input.mark(HEADER_BUFFER_SIZE);
+            byte[] headerBuffer = input.readNBytes(HEADER_BUFFER_SIZE);
+            input.reset();
+            @Nullable ImageLoader<Image> loader = guessLoader(headerBuffer);
+            return loader == null ? JAVAFX : loader;
         }
 
         /// Selects a decoder by case-insensitive file extension, then by signature,
@@ -262,22 +240,36 @@ public final class ImageLoaders {
                         requestedWidth, requestedHeight, preserveRatio, smooth);
             }
         }
-    }
+    };
 
-    /// Selects a specialized decoder from a stream prefix, falling back to [#JAVAFX].
-    ///
-    /// On success the buffered stream is reset so the decoder receives the prefix too.
-    ///
-    /// @param input the buffered stream at the start of the image data
-    /// @return the selected decoder
-    /// @throws IOException if reading or resetting the stream fails
-    private static ImageLoader<Image> detectLoader(BufferedInputStream input) throws IOException {
-        input.mark(HEADER_BUFFER_SIZE);
-        byte[] headerBuffer = input.readNBytes(HEADER_BUFFER_SIZE);
-        input.reset();
-        @Nullable ImageLoader<Image> loader = guessLoader(headerBuffer);
-        return loader == null ? JAVAFX : loader;
-    }
+    /// Specialized decoders indexed by lowercase file extension, without the leading dot.
+    public static final @Unmodifiable Map<String, ImageLoader<Image>> EXT_TO_LOADER = Map.of(
+            "webp", WEBP,
+            "svg", SVG,
+            "apng", APNG
+    );
+
+    /// Specialized decoders indexed by lowercase media type, without parameters.
+    public static final @Unmodifiable Map<String, ImageLoader<Image>> CONTENT_TYPE_TO_LOADER = Map.of(
+            "image/webp", WEBP,
+            "image/svg+xml", SVG,
+            "image/apng", APNG
+    );
+
+    /// File extensions that select [#JAVAFX] without inspecting the data signature.
+    public static final @Unmodifiable Set<String> DEFAULT_EXTS = Set.of(
+            "jpg", "jpeg", "bmp", "gif"
+    );
+
+    /// Media types that select [#JAVAFX] without inspecting the data signature.
+    public static final @Unmodifiable Set<String> DEFAULT_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/bmp", "image/gif"
+    );
+
+    // ------
+
+    /// Maximum number of leading bytes inspected when selecting an image loader.
+    public static final int HEADER_BUFFER_SIZE = 1024;
 
     private static final byte[] RIFF_HEADER = {'R', 'I', 'F', 'F'};
     private static final byte[] WEBP_HEADER = {'W', 'E', 'B', 'P'};
