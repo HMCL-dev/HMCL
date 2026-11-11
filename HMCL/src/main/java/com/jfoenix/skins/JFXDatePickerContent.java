@@ -13,6 +13,7 @@ import com.jfoenix.transitions.CachedTransition;
 import javafx.animation.*;
 import javafx.animation.Animation.Status;
 import javafx.beans.InvalidationListener;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.PseudoClass;
@@ -31,7 +32,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
+import org.jackhuang.hmcl.util.i18n.translator.Translator_lzh;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -93,7 +94,7 @@ public class JFXDatePickerContent extends VBox {
                 {
                     label.getStyleClass().add(SPINNER_LABEL);
                     label.setMaxWidth(Double.MAX_VALUE);
-                    label.textProperty().bind(itemProperty());
+                    label.textProperty().bind(Bindings.createStringBinding(() -> getItem() == null ? "" : formatYear(YearMonth.of(Integer.parseInt(getItem()), 1)), itemProperty()));
                     StackPane pane = new StackPane(label);
                     pane.setPadding(new Insets(7));
                     ripplerContainer = new RipplerContainer(pane);
@@ -102,8 +103,7 @@ public class JFXDatePickerContent extends VBox {
                     this.setGraphic(root);
 
                     var selectedListenerWeak = holder.weak((InvalidationListener) observable -> {
-                        String newVal = JFXDatePickerContent.this.selectedYearLabel.getText();
-                        if (newVal != null && getItem() != null && getItem().equals(newVal))
+                        if (getItem() != null && getItem().equals(Integer.toString(selectedYearMonth.get().getYear())))
                             updateSelected(true);
                     });
                     JFXDatePickerContent.this.selectedYearLabel.textProperty().addListener(selectedListenerWeak);
@@ -119,7 +119,7 @@ public class JFXDatePickerContent extends VBox {
                         }
                         root.pseudoClassStateChanged(SELECTED, selected);
                         if (selected) {
-                            int offset = Integer.parseInt(getItem()) - Integer.parseInt(JFXDatePickerContent.this.selectedYearLabel.getText());
+                            int offset = Integer.parseInt(getItem()) - JFXDatePickerContent.this.selectedYearMonth.get().getYear();
                             JFXDatePickerContent.this.forward(offset, ChronoUnit.YEARS, false, false);
                         }
                     });
@@ -310,7 +310,7 @@ public class JFXDatePickerContent extends VBox {
         yearLabelContainer.setFillHeight(false);
         yearLabelContainer.setOnMouseClicked((click) -> {
             if (!this.yearsListView.isVisible()) {
-                int yearIndex = Integer.parseInt(this.selectedYearLabel.getText()) - 1900 - 2;
+                int yearIndex = this.selectedYearMonth.get().getYear() - 1900 - 2;
                 this.yearsListView.scrollTo(yearIndex >= 0 ? yearIndex : yearIndex + 2);
                 this.hideTransition.stop();
                 this.showTransition.play();
@@ -376,7 +376,7 @@ public class JFXDatePickerContent extends VBox {
         FXUtils.onChangeAndOperate(this.yearsListView.visibleProperty(), b -> svgContainer.setIcon(b ? SVG.ARROW_DROP_UP : SVG.ARROW_DROP_DOWN));
         FXUtils.onClicked(box, () -> {
             if (!this.yearsListView.isVisible()) {
-                int yearIndex = Integer.parseInt(this.selectedYearLabel.getText()) - 1900 - 2;
+                int yearIndex = this.selectedYearMonth.get().getYear() - 1900 - 2;
                 this.yearsListView.scrollTo(yearIndex >= 0 ? yearIndex : yearIndex + 2);
                 this.hideTransition.stop();
                 this.showTransition.play();
@@ -446,12 +446,12 @@ public class JFXDatePickerContent extends VBox {
     }
 
     private void updateDayNameCells() {
-        int weekFirstDay = WeekFields.of(this.getLocale()).getFirstDayOfWeek().getValue();
+        int weekFirstDay = WeekFields.of(JFXDatePickerContent.getLocale()).getFirstDayOfWeek().getValue();
         LocalDate date = LocalDate.of(2009, 7, 12 + weekFirstDay);
 
         for (int i = 0; i < this.daysPerWeek; ++i) {
-            String name = this.weekDayNameFormatter.withLocale(this.getLocale()).format(date.plusDays(i));
-            if (!LocaleUtils.isChinese(this.weekNumberFormatter.getLocale())) {
+            String name = this.weekDayNameFormatter.withLocale(JFXDatePickerContent.getLocale()).format(date.plusDays(i));
+            if (!LocaleUtils.isChinese(JFXDatePickerContent.getLocale())) {
                 name = name.substring(0, 1).toUpperCase(Locale.ROOT);
             }
 
@@ -468,22 +468,22 @@ public class JFXDatePickerContent extends VBox {
 
     void updateWeekNumberDateCells() {
         if (this.datePicker.isShowWeekNumbers()) {
-            Locale locale = this.getLocale();
+            Locale locale = JFXDatePickerContent.getLocale();
             LocalDate firstDayOfMonth = this.selectedYearMonth.get().atDay(1);
 
             for (int i = 0; i < 6; ++i) {
                 LocalDate date = firstDayOfMonth.plusWeeks(i);
                 String weekNumber = this.weekNumberFormatter.withLocale(locale).withDecimalStyle(DecimalStyle.of(locale)).format(date);
-                this.weekNumberCells.get(i).setText(weekNumber);
+                this.weekNumberCells.get(i).setText(localizeNumber(weekNumber));
             }
         }
 
     }
 
     private void updateDayCells() {
-        Locale locale = this.getLocale();
+        Locale locale = JFXDatePickerContent.getLocale();
         Chronology chrono = this.getPrimaryChronology();
-        int firstDayOfWeek = WeekFields.of(this.getLocale()).getFirstDayOfWeek().getValue();
+        int firstDayOfWeek = WeekFields.of(JFXDatePickerContent.getLocale()).getFirstDayOfWeek().getValue();
         int firstOfMonthIndex = this.selectedYearMonth.get().atDay(1).getDayOfWeek().getValue() - firstDayOfWeek;
         firstOfMonthIndex += firstOfMonthIndex < 0 ? this.daysPerWeek : 0;
         YearMonth currentYearMonth = this.selectedYearMonth.get();
@@ -523,7 +523,7 @@ public class JFXDatePickerContent extends VBox {
 
                 ChronoLocalDate cDate = chrono.date(date);
                 String cellText = this.dayCellFormatter.withLocale(locale).withChronology(chrono).withDecimalStyle(DecimalStyle.of(locale)).format(cDate);
-                dayCell.setText(cellText);
+                dayCell.setText(localizeNumber(cellText));
                 if (i < firstOfMonthIndex) {
                     dayCell.getStyleClass().add("previous-month");
                     dayCell.getStyleClass().removeAll("next-month");
@@ -548,7 +548,10 @@ public class JFXDatePickerContent extends VBox {
 
     protected void updateMonthYearPane() {
         YearMonth yearMonth = this.selectedYearMonth.get();
-        this.selectedDateLabel.setText(fullFormatter.withLocale(this.getLocale()).format(Objects.requireNonNullElseGet(valueProperty.get(), LocalDate::now)));
+        LocalDate date = Objects.requireNonNullElseGet(valueProperty.get(), LocalDate::now);
+        this.selectedDateLabel.setText(I18n.getTranslator() instanceof Translator_lzh
+                ? weekDayNameFormatter.withLocale(getLocale()).format(date) + ", " + formatMonth(YearMonth.from(date)) + " " + formatYear(YearMonth.from(date))
+                : fullFormatter.withLocale(getLocale()).format(date));
 
         this.selectedYearLabel.setText(this.formatYear(yearMonth));
         this.monthYearLabel.setText(this.formatMonth(yearMonth) + " " + this.formatYear(yearMonth));
@@ -559,20 +562,24 @@ public class JFXDatePickerContent extends VBox {
     }
 
     private String formatMonth(YearMonth yearMonth) {
+        if (I18n.getTranslator() instanceof Translator_lzh)
+            return Translator_lzh.numberToString(yearMonth.getMonthValue()) + "月";
         try {
             Chronology chrono = this.getPrimaryChronology();
             ChronoLocalDate cDate = chrono.date(yearMonth.atDay(1));
-            return this.monthFormatter.withLocale(this.getLocale()).withChronology(chrono).format(cDate);
+            return this.monthFormatter.withLocale(JFXDatePickerContent.getLocale()).withChronology(chrono).format(cDate);
         } catch (DateTimeException var4) {
             return "";
         }
     }
 
     private String formatYear(YearMonth yearMonth) {
+        if (I18n.getTranslator() instanceof Translator_lzh)
+            return Translator_lzh.translateGenericVersion(Integer.toString(yearMonth.getYear()));
         try {
             Chronology chrono = this.getPrimaryChronology();
             ChronoLocalDate cDate = chrono.date(yearMonth.atDay(1));
-            return this.yearFormatter.withLocale(this.getLocale()).withChronology(chrono).withDecimalStyle(DecimalStyle.of(this.getLocale())).format(cDate);
+            return this.yearFormatter.withLocale(JFXDatePickerContent.getLocale()).withChronology(chrono).withDecimalStyle(DecimalStyle.of(JFXDatePickerContent.getLocale())).format(cDate);
         } catch (DateTimeException var4) {
             return "";
         }
@@ -709,8 +716,13 @@ public class JFXDatePickerContent extends VBox {
         return this.datePicker.getChronology();
     }
 
-    protected Locale getLocale() {
-        return SettingsManager.settings().languageProperty().get().getLocale();
+    protected static Locale getLocale() {
+        return I18n.getTranslator() instanceof Translator_lzh ? Locale.TRADITIONAL_CHINESE : I18n.getLocale().getLocale();
+    }
+
+    private static String localizeNumber(String text) {
+        return I18n.getTranslator() instanceof Translator_lzh
+                ? Translator_lzh.numberToString(Integer.parseInt(text)) : text;
     }
 
     protected boolean isValidDate(Chronology chrono, LocalDate date, int offset, ChronoUnit unit) {
