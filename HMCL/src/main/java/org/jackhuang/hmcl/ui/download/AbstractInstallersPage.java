@@ -150,10 +150,14 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                 InstallerItem[] components = control.group.getComponents();
 
                 VBox libraryPane = new VBox(components);
-                ScrollPane scrollPane = new ScrollPane(libraryPane);
+                libraryPane.getStyleClass().add("options-list");
+                VBox listContainer = new VBox(libraryPane);
+                listContainer.setPadding(new Insets(8));
+                ScrollPane scrollPane = new ScrollPane(listContainer);
                 scrollPane.setFitToWidth(true);
                 scrollPane.setFitToHeight(true);
-                BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
+                // Reserve shadow space inside the viewport without shifting the list surface.
+                BorderPane.setMargin(scrollPane, new Insets(8, -8, 8, -8));
                 root.setCenter(scrollPane);
             }
 
