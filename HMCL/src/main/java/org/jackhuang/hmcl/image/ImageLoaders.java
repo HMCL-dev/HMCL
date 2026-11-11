@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -50,7 +51,8 @@ public final class ImageLoaders {
 
     // ImageLoaders
 
-    public static final ImageLoader<Image> JAVAFX = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+    /// Loads JavaFX-supported image formats, ignoring the file-name hint.
+    public static final ImageLoader<Image> JAVAFX = (input, fileName, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         Image image = new Image(input,
                 requestedWidth, requestedHeight,
                 preserveRatio, smooth);
@@ -59,12 +61,14 @@ public final class ImageLoaders {
         return image;
     };
 
-    public static final ImageLoader<Image> WEBP = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+    /// Decodes WebP images, ignoring the file-name hint.
+    public static final ImageLoader<Image> WEBP = (input, fileName, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         var options = new WebPImageLoadOptions(requestedWidth, requestedHeight, preserveRatio, smooth);
         return new WebPFXImage(WebPImage.read(input, options));
     };
 
-    public static final ImageLoader<Image> SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+    /// Renders SVG images, ignoring the file-name hint.
+    public static final ImageLoader<Image> SVG = (input, fileName, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         String content = new String(input.readAllBytes(), StandardCharsets.UTF_8);
 
         LoaderParameters parameters = new LoaderParameters();
@@ -103,9 +107,10 @@ public final class ImageLoaders {
         return image;
     };
 
-    public static final ImageLoader<Image> APNG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+    /// Decodes PNG animations, delegating to [#JAVAFX] when experimental APNG support is disabled.
+    public static final ImageLoader<Image> APNG = (input, fileName, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         if (!"true".equals(System.getProperty("hmcl.experimental.apng", "true")))
-            return JAVAFX.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
+            return JAVAFX.load(input, fileName, requestedWidth, requestedHeight, preserveRatio, smooth);
 
         try {
             var sequence = Png.readArgb8888BitmapSequence(input);
