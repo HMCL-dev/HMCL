@@ -101,7 +101,7 @@ public final class ImageLoaders {
             }
         };
 
-        @Nullable Image image;
+        Image image;
 
         if (Platform.isFxApplicationThread()) {
             image = supplier.get();
