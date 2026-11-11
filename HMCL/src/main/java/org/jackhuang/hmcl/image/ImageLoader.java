@@ -22,7 +22,7 @@ import java.nio.file.Path;
 /// and close the streams they open.
 @FunctionalInterface
 @NotNullByDefault
-public interface ImageLoader {
+public interface ImageLoader<I> {
 
     /// Loads an image file at its intrinsic size.
     ///
@@ -31,7 +31,7 @@ public interface ImageLoader {
     /// @param path the image file
     /// @return the loaded image, never `null`
     /// @throws Exception if opening, loading, or closing the file fails
-    default Image load(Path path) throws Exception {
+    default I load(Path path) throws Exception {
         return load(path, 0, 0, false, false);
     }
 
@@ -50,7 +50,7 @@ public interface ImageLoader {
     /// @param smooth whether to request higher-quality filtering when scaling
     /// @return the loaded image, never `null`
     /// @throws Exception if opening, loading, or closing the file fails
-    default Image load(Path path,
+    default I load(Path path,
                        int requestedWidth, int requestedHeight,
                        boolean preserveRatio, boolean smooth) throws Exception {
         @Nullable Path fileName = path.getFileName();
@@ -68,7 +68,7 @@ public interface ImageLoader {
     /// @param fileName a file-name hint for implementations that use it to select a decoder
     /// @return the loaded image, never `null`
     /// @throws Exception if loading the image or closing the stream fails
-    default Image load(InputStream input, String fileName) throws Exception {
+    default I load(InputStream input, String fileName) throws Exception {
         return load(input, fileName, 0, 0, false, false);
     }
 
@@ -89,7 +89,7 @@ public interface ImageLoader {
     /// @param smooth whether to request higher-quality filtering when scaling
     /// @return the loaded image, never `null`
     /// @throws Exception if loading the image or closing the stream fails
-    default Image load(InputStream input, String fileName,
+    default I load(InputStream input, String fileName,
                        int requestedWidth, int requestedHeight,
                        boolean preserveRatio, boolean smooth) throws Exception {
         try (var bufferedInput = new BufferedInputStream(input)) {
@@ -104,7 +104,7 @@ public interface ImageLoader {
     /// @param url the image location
     /// @return the loaded image, never `null`
     /// @throws Exception if connecting, loading the image, or closing the response stream fails
-    default Image load(WebURL url) throws Exception {
+    default I load(WebURL url) throws Exception {
         return load(url, 0, 0, false, false);
     }
 
@@ -126,7 +126,7 @@ public interface ImageLoader {
     /// @param smooth whether to request higher-quality filtering when scaling
     /// @return the loaded image, never `null`
     /// @throws Exception if connecting, loading the image, or closing the response stream fails
-    default Image load(WebURL url,
+    default I load(WebURL url,
                        int requestedWidth, int requestedHeight,
                        boolean preserveRatio, boolean smooth) throws Exception {
         URLConnection connection = NetworkUtils.createConnection(url);
@@ -159,7 +159,7 @@ public interface ImageLoader {
     /// @param smooth whether to request higher-quality filtering when scaling
     /// @return the loaded image, never `null`
     /// @throws Exception if reading, decoding, or rendering the image fails
-    Image load(InputStream input,
+    I load(InputStream input,
                int requestedWidth, int requestedHeight,
                boolean preserveRatio, boolean smooth) throws Exception;
 }

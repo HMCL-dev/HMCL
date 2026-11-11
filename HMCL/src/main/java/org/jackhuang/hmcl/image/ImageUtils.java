@@ -50,7 +50,7 @@ public final class ImageUtils {
 
     // ImageLoaders
 
-    public static final ImageLoader DEFAULT = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+    public static final ImageLoader<Image> DEFAULT = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         Image image = new Image(input,
                 requestedWidth, requestedHeight,
                 preserveRatio, smooth);
@@ -59,12 +59,12 @@ public final class ImageUtils {
         return image;
     };
 
-    public static final ImageLoader WEBP = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+    public static final ImageLoader<Image> WEBP = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         var options = new WebPImageLoadOptions(requestedWidth, requestedHeight, preserveRatio, smooth);
         return new WebPFXImage(WebPImage.read(input, options));
     };
 
-    public static final ImageLoader SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+    public static final ImageLoader<Image> SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         String content = new String(input.readAllBytes(), StandardCharsets.UTF_8);
 
         LoaderParameters parameters = new LoaderParameters();
@@ -103,7 +103,7 @@ public final class ImageUtils {
         return image;
     };
 
-    public static final ImageLoader APNG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+    public static final ImageLoader<Image> APNG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         if (!"true".equals(System.getProperty("hmcl.experimental.apng", "true")))
             return DEFAULT.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
 
@@ -164,13 +164,13 @@ public final class ImageUtils {
         }
     };
 
-    public static final Map<String, ImageLoader> EXT_TO_LOADER = Map.of(
+    public static final Map<String, ImageLoader<Image>> EXT_TO_LOADER = Map.of(
             "webp", WEBP,
             "svg", SVG,
             "apng", APNG
     );
 
-    public static final Map<String, ImageLoader> CONTENT_TYPE_TO_LOADER = Map.of(
+    public static final Map<String, ImageLoader<Image>> CONTENT_TYPE_TO_LOADER = Map.of(
             "image/webp", WEBP,
             "image/svg+xml", SVG,
             "image/apng", APNG
@@ -520,7 +520,7 @@ public final class ImageUtils {
         return false;
     }
 
-    public static @Nullable ImageLoader guessLoader(byte[] headerBuffer) {
+    public static @Nullable ImageLoader<Image> guessLoader(byte[] headerBuffer) {
         if (isWebP(headerBuffer))
             return WEBP;
         if (isApng(headerBuffer))

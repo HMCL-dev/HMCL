@@ -900,7 +900,7 @@ public final class FXUtils {
                                   boolean preserveRatio, boolean smooth) throws Exception {
         try (var bufferedInput = new BufferedInputStream(input)) {
             String ext = FileUtils.getExtension(fileName).toLowerCase(Locale.ROOT);
-            ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
+            ImageLoader<Image> loader = ImageUtils.EXT_TO_LOADER.get(ext);
             if (loader == null && !ImageUtils.DEFAULT_EXTS.contains(ext)) {
                 bufferedInput.mark(ImageUtils.HEADER_BUFFER_SIZE);
                 byte[] headerBuffer = bufferedInput.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
@@ -924,7 +924,7 @@ public final class FXUtils {
             if (matcher.find())
                 contentType = matcher.group("type");
 
-            ImageLoader loader = ImageUtils.CONTENT_TYPE_TO_LOADER.get(contentType);
+            ImageLoader<Image> loader = ImageUtils.CONTENT_TYPE_TO_LOADER.get(contentType);
             if (loader == null && !ImageUtils.DEFAULT_CONTENT_TYPES.contains(contentType)) {
                 input.mark(ImageUtils.HEADER_BUFFER_SIZE);
                 byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
