@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -109,9 +108,6 @@ public final class ImageLoaders {
 
     /// Decodes PNG animations, delegating to [#JAVAFX] when experimental APNG support is disabled.
     public static final ImageLoader<Image> APNG = (input, fileName, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
-        if (!"true".equals(System.getProperty("hmcl.experimental.apng", "true")))
-            return JAVAFX.load(input, fileName, requestedWidth, requestedHeight, preserveRatio, smooth);
-
         try {
             var sequence = Png.readArgb8888BitmapSequence(input);
 
