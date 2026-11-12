@@ -19,6 +19,7 @@ import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.FXThread;
@@ -45,7 +46,7 @@ public class DownloadSettingsPage extends StackPane {
         content.setPadding(new Insets(10));
         content.setFillWidth(true);
         ScrollPane scrollPane = new ScrollPane(content);
-        FXUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 

@@ -460,7 +460,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             }
 
             ScrollPane scrollPane = new ScrollPane(themes);
-            FXUtils.smoothScrolling(scrollPane);
+            ScrollUtils.installSmoothScrolling(scrollPane);
             scrollPane.setFitToWidth(true);
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);

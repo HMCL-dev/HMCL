@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -74,7 +75,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         VBox rootPane = new VBox();
         rootPane.setFillWidth(true);
         scrollPane.setContent(rootPane);
-        FXUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         rootPane.getStyleClass().add("card-list");
 
         ComponentList worldInfo = new ComponentList();
