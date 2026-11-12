@@ -5,10 +5,12 @@ package org.jackhuang.hmcl.game;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.jackhuang.hmcl.setting.GameDirectoryID;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.util.FXThread;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +27,7 @@ public final class GameProcessManager {
     }
 
     @FXThread
-    private static final Map<String, Integer> idToLaunchedCount = new HashMap<>();
+    private static final Map<Pair<GameDirectoryID, GameInstanceID>, Integer> idToLaunchedCount = new HashMap<>();
 
     public static final ObservableList<GameProcessHolder> processHolders = FXCollections.observableArrayList();
 
@@ -66,10 +68,11 @@ public final class GameProcessManager {
             this.logsHolder = processListener.getLogsHolder();
             this.instanceOptional = HMCLGameInstance.Optional.of(processListener.getGameInstance());
             {
-                String id = processListener.getGameInstance().getId().id();
-                int i = idToLaunchedCount.computeIfAbsent(id, k -> 0) + 1;
-                idToLaunchedCount.put(id, i);
-                this.id = id + " #" + i;
+                var instanceID = processListener.getGameInstance().getId();
+                var key = Pair.pair(processListener.getGameInstance().getRepository().getGameDirectory().getId(), instanceID);
+                int i = idToLaunchedCount.computeIfAbsent(key, k -> 0) + 1;
+                idToLaunchedCount.put(key, i);
+                this.id = instanceID.id() + " #" + i;
             }
             holder.onWeakChangeAndOperate(processListener.exitedProperty(), b -> {
                 if (b) {
