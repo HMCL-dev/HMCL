@@ -5,26 +5,28 @@ package org.jackhuang.hmcl.ui;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.skin.VirtualFlow;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /// Installs smooth wheel scrolling while preserving native gesture and skin behavior.
 @NotNullByDefault
-final class ScrollUtils {
+public final class ScrollUtils {
     /// Identifies the controller installed on a node, making installation idempotent.
     private static final Object CONTROLLER_KEY = new Object();
 
-    /// Prevents construction of this utility class.
-    private ScrollUtils() {
-    }
+
 
     /// Installs smooth wheel scrolling and direct pixel-based gestures on the FX thread.
+    @VisibleForTesting
     public static void addSmoothScrolling(ScrollPane scrollPane) {
         if (controller(scrollPane) == null)
             scrollPane.getProperties().put(CONTROLLER_KEY, new ScrollPaneAdapter(scrollPane).controller);
     }
 
     /// Installs scrolling on either flow orientation, preserving native cross-axis scrolling.
+    @VisibleForTesting
     public static void addSmoothScrolling(VirtualFlow<?> virtualFlow) {
         if (controller(virtualFlow) == null)
             virtualFlow.getProperties().put(CONTROLLER_KEY, new VirtualFlowAdapter(virtualFlow).controller);
@@ -34,5 +36,19 @@ final class ScrollUtils {
     static @Nullable ScrollController controller(Node node) {
         return node.hasProperties() && node.getProperties().get(CONTROLLER_KEY) instanceof ScrollController controller
                 ? controller : null;
+    }
+
+    /// Prevents construction of this utility class.
+    private ScrollUtils() {
+    }
+
+    public static void smoothScrolling(ScrollPane scrollPane) {
+        if (AnimationUtils.isAnimationEnabled())
+            addSmoothScrolling(scrollPane);
+    }
+
+    public static void smoothScrolling(VirtualFlow<?> virtualFlow) {
+        if (AnimationUtils.isAnimationEnabled())
+            addSmoothScrolling(virtualFlow);
     }
 }

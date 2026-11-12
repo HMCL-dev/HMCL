@@ -29,7 +29,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 
 import java.util.List;
 
@@ -182,7 +182,7 @@ public class JFXComboBoxListViewSkin<T> extends ComboBoxListViewSkin<T> {
                 });
                 Platform.runLater(() -> {
                     if (listView.lookup(".virtual-flow") instanceof VirtualFlow<?> virtualFlow) {
-                        FXUtils.smoothScrolling(virtualFlow);
+                        ScrollUtils.smoothScrolling(virtualFlow);
                     }
                 });
             }

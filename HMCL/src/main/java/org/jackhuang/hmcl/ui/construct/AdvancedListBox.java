@@ -12,6 +12,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ public class AdvancedListBox extends ScrollPane {
     {
         setContent(container);
 
-        FXUtils.smoothScrolling(this);
+        ScrollUtils.smoothScrolling(this);
 
         setFitToHeight(true);
         setFitToWidth(true);

@@ -17,10 +17,7 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -186,7 +183,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
         Bindings.bindContent(list.getChildren(), items);
 
         scrollPane.setContent(list);
-        FXUtils.smoothScrolling(scrollPane);
+        ScrollUtils.smoothScrolling(scrollPane);
 
         setContent(scrollPane);
     }

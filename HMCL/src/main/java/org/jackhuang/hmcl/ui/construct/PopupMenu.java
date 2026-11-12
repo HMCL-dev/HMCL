@@ -15,7 +15,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 
 public class PopupMenu extends Control {
 
@@ -74,7 +74,7 @@ public class PopupMenu extends Control {
             Bindings.bindContent(content.getChildren(), PopupMenu.this.getContent());
             scrollPane.setContent(content);
 
-            FXUtils.smoothScrolling(scrollPane);
+            ScrollUtils.smoothScrolling(scrollPane);
 
             getChildren().setAll(scrollPane);
         }

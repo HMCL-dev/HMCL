@@ -49,7 +49,6 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
@@ -402,16 +401,6 @@ public final class FXUtils {
         cell.maxWidthProperty().bind(widthProperty);
         cell.prefWidthProperty().bind(widthProperty);
         cell.minWidthProperty().bind(widthProperty);
-    }
-
-    public static void smoothScrolling(ScrollPane scrollPane) {
-        if (AnimationUtils.isAnimationEnabled())
-            ScrollUtils.addSmoothScrolling(scrollPane);
-    }
-
-    public static void smoothScrolling(VirtualFlow<?> virtualFlow) {
-        if (AnimationUtils.isAnimationEnabled())
-            ScrollUtils.addSmoothScrolling(virtualFlow);
     }
 
     /// If the current environment is JavaFX 23 or higher, this method returns [Labeled#textTruncatedProperty()];

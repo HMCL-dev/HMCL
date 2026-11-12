@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -345,7 +346,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                 }
             }
 
-            FXUtils.smoothScrolling(scroll);
+            ScrollUtils.smoothScrolling(scroll);
         }
 
         private LinePane createTextFieldLinePane(String title, StringProperty property, ValidatorBase... validators) {

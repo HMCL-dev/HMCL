@@ -137,7 +137,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         this.rootPane = new VBox();
         rootPane.setFillWidth(true);
         scrollPane.setContent(rootPane);
-        FXUtils.smoothScrolling(scrollPane);
+        ScrollUtils.smoothScrolling(scrollPane);
         rootPane.getStyleClass().add("card-list");
         scrollPane.setContent(rootPane);
 
