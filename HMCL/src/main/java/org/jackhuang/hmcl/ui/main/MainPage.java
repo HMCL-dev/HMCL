@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
@@ -197,7 +198,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             StackPane.setMargin(closeUpdateButton, new Insets(5));
             closeUpdateButton.setOnAction(e -> closeUpdateBubble());
 
-            updatePane.getChildren().setAll(hBox, closeUpdateButton);
+            updatePane.getChildren().setAll(new RipplerContainer(hBox), closeUpdateButton);
         }
 
         HBox launchPane = new HBox();

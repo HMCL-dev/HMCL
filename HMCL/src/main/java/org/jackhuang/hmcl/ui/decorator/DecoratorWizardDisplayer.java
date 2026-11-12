@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.ui.decorator;
 import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.wizard.*;
@@ -57,10 +56,11 @@ public class DecoratorWizardDisplayer extends DecoratorTransitionPage implements
         displayer.onEnd();
     }
 
+    /// Shows the wizard page with the directional transition and updates its navigation state.
     @Override
     public void navigateTo(Node page, Navigation.NavigationDirection nav) {
         displayer.navigateTo(page, nav);
-        navigate(page, nav.getAnimation(), Motion.SHORT4, Motion.EASE);
+        navigate(page, nav.getAnimation());
 
         String prefix = category == null ? "" : category + " - ";
 

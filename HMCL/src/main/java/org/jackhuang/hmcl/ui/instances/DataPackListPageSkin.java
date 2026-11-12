@@ -3,10 +3,9 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXSwitch;
 import com.jfoenix.controls.JFXTextField;
-import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -16,7 +15,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
-import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -26,7 +24,6 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -35,6 +32,7 @@ import org.jackhuang.hmcl.addon.datapack.DataPack;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -49,9 +47,8 @@ import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.stream.IntStream;
+import java.util.function.Predicate;
+import java.util.regex.PatternSyntaxException;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -64,22 +61,16 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     private final HBox searchBar;
     private final HBox normalToolbar;
     private final HBox selectingToolbar;
-    InvalidationListener updateBarByStateWeakListener;
 
     private final JFXListView<DataPackInfoObject> listView;
-    private final FilteredList<DataPackInfoObject> filteredList;
 
     /// Whether the search mechanism is currently active.
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
 
-    private final BooleanProperty isSelecting = new SimpleBooleanProperty(false);
     private final JFXTextField searchField;
 
     /// Timer for debouncing search input to avoid executing search on every keystroke.
     private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
-
-    private static final AtomicInteger lastShiftClickIndex = new AtomicInteger(-1);
-    final Consumer<Integer> toggleSelect;
 
     DataPackListPageSkin(DataPackListPage skinnable) {
         super(skinnable);
@@ -91,15 +82,13 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
-        filteredList = new FilteredList<>(skinnable.getItems());
+        listView.getStyleClass().add("no-horizontal-scrollbar");
 
         // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
         var selectAllButton = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
 
-        ListChangeListener<Object> listener = change -> {
-            selectAllButton.setDisable(!listView.getItems().isEmpty()
+        ListChangeListener<Object> listener = change -> selectAllButton.setDisable(!listView.getItems().isEmpty()
                     && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
-        };
 
         {
             toolbarPane = new TransitionPane();
@@ -111,14 +100,12 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("datapack.add"), SVG.ADD, skinnable::add),
                     createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openDataPackFolder),
-                    createToolbarButton2(i18n("search"), SVG.SEARCH, () -> isSearching.set(true))
+                    createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
 
-            JFXButton removeButton = createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                    skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
-                }, null);
-            });
+            JFXButton removeButton = createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () ->
+                    Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
+                            skinnable.removeSelected(listView.getSelectionModel().getSelectedItems()), null));
             JFXButton enableButton = createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
                     skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true));
             JFXButton disableButton = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
@@ -143,7 +130,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             searchField = new JFXTextField();
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
-            searchPause.setOnFinished(e -> filteredList.setPredicate(skinnable.updateSearchPredicate(searchField.getText())));
+            searchPause.setOnFinished(e -> search());
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
                 if (isSearching.get() || !StringUtils.isBlank(newValue)) {
                     searchPause.setRate(1);
@@ -152,12 +139,13 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             });
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     () -> {
+                        changeToolbar(normalToolbar);
+
                         searchField.clear();
                         searchPause.stop();
 
-                        filteredList.setPredicate(null);
-
                         isSearching.set(false);
+                        Bindings.bindContent(listView.getItems(), skinnable.getItems());
                     });
             FXUtils.onEscPressed(searchField, closeSearchBar::fire);
             searchBar.getChildren().addAll(searchField, closeSearchBar);
@@ -172,18 +160,14 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             });
 
             FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
-                    selectedItem -> isSelecting.set(selectedItem != null));
+                    selectedItem -> {
+                        if (selectedItem == null)
+                            changeToolbar(isSearching.get() ? searchBar : normalToolbar);
+                        else
+                            changeToolbar(selectingToolbar);
+                    });
+            FXUtils.setOverflowHidden(toolbarPane, 8);
             root.getContent().add(toolbarPane);
-
-            updateBarByStateWeakListener = FXUtils.observeWeak(() -> {
-                if (isSelecting.get()) {
-                    changeToolbar(selectingToolbar);
-                } else if (!isSelecting.get() && !isSearching.get()) {
-                    changeToolbar(normalToolbar);
-                } else {
-                    changeToolbar(searchBar);
-                }
-            }, isSearching, isSelecting);
         }
 
         {
@@ -210,7 +194,12 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             placeholderContainer.getChildren().add(placeholderLabel);
             listView.setPlaceholder(placeholderContainer);
 
-            this.listView.setItems(filteredList);
+            Bindings.bindContent(listView.getItems(), skinnable.getItems());
+            skinnable.getItems().addListener((ListChangeListener<? super DataPackInfoObject>) change -> {
+                if (isSearching.get()) {
+                    search();
+                }
+            });
             listView.getItems().addListener(listener);
 
             // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
@@ -220,20 +209,39 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             root.getContent().add(center);
         }
 
-        toggleSelect = i -> {
-            if (listView.getSelectionModel().isSelected(i)) {
-                listView.getSelectionModel().clearSelection(i);
-            } else {
-                listView.getSelectionModel().select(i);
-            }
-        };
-
         pane.getChildren().setAll(root);
         getChildren().setAll(pane);
     }
 
+    /// Filters pack IDs and descriptions using the shared query syntax; invalid regular expressions leave the list empty.
+    private void search() {
+        isSearching.set(true);
+        Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
+
+        String queryString = searchField.getText();
+        if (StringUtils.isBlank(queryString)) {
+            listView.getItems().setAll(getSkinnable().getItems());
+        } else {
+            listView.getItems().clear();
+
+            Predicate<@Nullable String> predicate;
+            try {
+                predicate = StringUtils.compileQuery(queryString);
+            } catch (PatternSyntaxException e) {
+                LOG.warning("Illegal regular expression", e);
+                return;
+            }
+
+            for (DataPackInfoObject item : getSkinnable().getItems()) {
+                if (predicate.test(item.getTitle()) || predicate.test(item.getSubtitle())) {
+                    listView.getItems().add(item);
+                }
+            }
+        }
+    }
+
     private void changeToolbar(HBox newToolbar) {
-        Node oldToolbar = toolbarPane.getCurrentNode();
+        @Nullable Node oldToolbar = toolbarPane.getCurrentNode();
         if (newToolbar != oldToolbar) {
             toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
             if (newToolbar == searchBar) {
@@ -244,7 +252,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         }
     }
 
-    static class DataPackInfoObject extends RecursiveTreeObject<DataPackInfoObject> {
+    static class DataPackInfoObject {
         private final DataPack.Pack packInfo;
         private final ItemPropertyAsyncCache<Image, DataPackInfoObject> iconCache;
 
@@ -258,7 +266,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         }
 
         String getSubtitle() {
-            return packInfo.getDescription().toString();
+            return packInfo.getDescription().toStringSingleLine();
         }
 
         DataPack.Pack getPackInfo() {
@@ -299,91 +307,64 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         }
     }
 
-    private final class DataPackInfoListCell extends MDListCell<DataPackInfoObject> {
-        final JFXCheckBox checkBox = new JFXCheckBox();
+    private static final class DataPackInfoListCell extends MDListCell<DataPackInfoObject> {
+        private final JFXSwitch activeSwitch = new JFXSwitch();
         ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
 
-        private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getPackInfo().isActive());
+        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getPackInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
-        /// Creates a selectable data pack row whose checkbox follows the read-only state.
+        /// Creates a selectable data pack row whose switch follows the read-only state.
         DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
             super(listView);
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
+            container.setPadding(new Insets(0, 8, 0, 8));
             HBox.setHgrow(content, Priority.ALWAYS);
             setSelectable();
 
-            checkBox.disableProperty().bind(isReadOnlyProperty);
+            activeSwitch.disableProperty().bind(isReadOnlyProperty);
+            activeSwitch.setSize(20);
+            activeSwitch.setMinSize(30, 30);
+            activeSwitch.setPrefSize(30, 30);
+            activeSwitch.setMaxSize(30, 30);
+            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             imageContainer.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
 
             StackPane.setMargin(container, new Insets(8));
-            container.getChildren().setAll(checkBox, imageContainer, content);
+            container.getChildren().setAll(imageContainer, content, activeSwitch);
             getContainer().getChildren().setAll(container);
-
-            getContainer().getParent().addEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleSelect(this, mouseEvent));
         }
 
         @Override
-        protected void updateControl(DataPackInfoObject dataItem, boolean empty) {
+        protected void updateControl(@Nullable DataPackInfoObject dataItem, boolean empty) {
             if (observedActiveProperty != null)
                 observedActiveProperty.removeListener(weakActiveListener);
-            if (empty) return;
+            if (empty || dataItem == null) return;
             content.setTitle(dataItem.getTitle());
             content.setSubtitle(dataItem.getSubtitle());
 
             DataPack.Pack packInfo = dataItem.getPackInfo();
             (observedActiveProperty = packInfo.activeProperty()).addListener(weakActiveListener);
-            checkBox.setSelected(packInfo.isActive());
-            checkBox.setOnAction(event -> {
+            activeSwitch.setDisableAnimation(true);
+            activeSwitch.setSelected(packInfo.isActive());
+            activeSwitch.setOnAction(event -> {
                 try {
-                    packInfo.setActive(checkBox.isSelected());
+                    packInfo.setActive(activeSwitch.isSelected());
                 } catch (IOException e) {
                     LOG.warning("Unable to change state of datapack " + packInfo.getPath(), e);
                     Controllers.showToast(i18n("datapack.toggle.failed"));
                 } finally {
-                    checkBox.setSelected(packInfo.isActive());
+                    activeSwitch.setSelected(packInfo.isActive());
                 }
             });
+            activeSwitch.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
             dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
         }
-    }
-
-    public void handleSelect(DataPackInfoListCell cell, MouseEvent mouseEvent) {
-        if (cell.isEmpty()) {
-            mouseEvent.consume();
-            return;
-        }
-
-        if (mouseEvent.isShiftDown()) {
-            int currentIndex = cell.getIndex();
-            if (lastShiftClickIndex.get() == -1) {
-                lastShiftClickIndex.set(currentIndex);
-                toggleSelect.accept(cell.getIndex());
-            } else if (listView.getItems().size() >= lastShiftClickIndex.get() && !(lastShiftClickIndex.get() < -1)) {
-                if (cell.isSelected()) {
-                    IntStream.rangeClosed(
-                                    Math.min(lastShiftClickIndex.get(), currentIndex),
-                                    Math.max(lastShiftClickIndex.get(), currentIndex))
-                            .forEach(listView.getSelectionModel()::clearSelection);
-                } else {
-                    listView.getSelectionModel().selectRange(lastShiftClickIndex.get(), currentIndex);
-                    listView.getSelectionModel().select(currentIndex);
-                }
-                lastShiftClickIndex.set(-1);
-            } else {
-                lastShiftClickIndex.set(currentIndex);
-                listView.getSelectionModel().select(currentIndex);
-            }
-        } else {
-            toggleSelect.accept(cell.getIndex());
-        }
-        cell.requestFocus();
-        mouseEvent.consume();
     }
 }
