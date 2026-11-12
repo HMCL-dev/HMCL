@@ -405,10 +405,6 @@ tasks.register<JavaExec>("run") {
     }
 }
 
-tasks.withType<Test> {
-    jvmArgs(addOpens.map { "--add-opens=$it=ALL-UNNAMED" })
-}
-
 // terracotta
 
 val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
