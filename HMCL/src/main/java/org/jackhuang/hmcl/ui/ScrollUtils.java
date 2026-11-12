@@ -16,7 +16,15 @@ public final class ScrollUtils {
     /// Identifies the controller installed on a node, making installation idempotent.
     private static final Object CONTROLLER_KEY = new Object();
 
+    public static void smoothScrolling(ScrollPane scrollPane) {
+        if (AnimationUtils.isAnimationEnabled())
+            addSmoothScrolling(scrollPane);
+    }
 
+    public static void smoothScrolling(VirtualFlow<?> virtualFlow) {
+        if (AnimationUtils.isAnimationEnabled())
+            addSmoothScrolling(virtualFlow);
+    }
 
     /// Installs smooth wheel scrolling and direct pixel-based gestures on the FX thread.
     @VisibleForTesting
@@ -42,13 +50,4 @@ public final class ScrollUtils {
     private ScrollUtils() {
     }
 
-    public static void smoothScrolling(ScrollPane scrollPane) {
-        if (AnimationUtils.isAnimationEnabled())
-            addSmoothScrolling(scrollPane);
-    }
-
-    public static void smoothScrolling(VirtualFlow<?> virtualFlow) {
-        if (AnimationUtils.isAnimationEnabled())
-            addSmoothScrolling(virtualFlow);
-    }
 }
