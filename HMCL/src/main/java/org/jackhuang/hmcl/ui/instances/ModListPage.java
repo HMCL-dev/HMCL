@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
@@ -614,7 +615,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 for (String path : iconPaths) {
                     Path iconPath = fs.getPath(path);
                     if (Files.exists(iconPath)) {
-                        Image image = FXUtils.loadImage(iconPath, 80, 80, true, true);
+                        Image image = ImageLoaders.DEFAULT.load(iconPath, 80, 80, true, true);
                         if (!image.isError() && image.getWidth() > 0 && image.getHeight() > 0 &&
                                 Math.abs(image.getWidth() - image.getHeight()) < 1) {
                             return image;
@@ -681,7 +682,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             FXUtils.copyOnDoubleClick(description);
 
             ScrollPane descriptionPane = new ScrollPane(description);
-            FXUtils.smoothScrolling(descriptionPane);
+            ScrollUtils.installSmoothScrolling(descriptionPane);
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);

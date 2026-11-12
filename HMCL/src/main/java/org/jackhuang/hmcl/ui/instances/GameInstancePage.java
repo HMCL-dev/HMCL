@@ -53,6 +53,8 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final TabItem<ResourcePackListPage> resourcePackTab;
     /// The screenshots tab bound to the current game instance.
     private final TabItem<ScreenshotsPage> screenshotsTab;
+    /// The servers tab bound to the current game instance.
+    private final TabItem<ServersPage> serversTab;
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =
@@ -87,6 +89,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         this.worldListTab = new TabItem<>(() -> new WorldListPage(instance));
         this.schematicsTab = new TabItem<>(() -> new SchematicsPage(instance));
         this.screenshotsTab = new TabItem<>(() -> new ScreenshotsPage(instance));
+        this.serversTab = new TabItem<>(() -> new ServersPage(instance));
 
         tabController = new TabController(transitionPane,
                 gameSettingsTab,
@@ -95,7 +98,9 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 resourcePackTab,
                 worldListTab,
                 schematicsTab,
-                screenshotsTab);
+                screenshotsTab,
+                serversTab
+        );
         tabController.selectTab(gameSettingsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -160,6 +165,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 // Due to the sidebar height limit, we temporarily place the entries for these tabs
                 // in the management menu; they will be moved back to the sidebar after a future UI refactor.
                 new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> tabController.selectTab(screenshotsTab), managementPopup),
+                new IconedMenuItem(SVG.DRESSER, i18n("server.manage"), () -> tabController.selectTab(serversTab), managementPopup),
                 new MenuSeparator(),
                 new IconedMenuItem(null, i18n("instance.manage.redownload_assets_index"), this::redownloadAssetIndex, managementPopup),
                 new IconedMenuItem(null, i18n("instance.manage.remove_assets"), this::clearAssets, managementPopup),

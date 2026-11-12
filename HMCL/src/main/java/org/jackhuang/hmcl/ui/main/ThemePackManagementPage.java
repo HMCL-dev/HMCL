@@ -31,6 +31,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -381,7 +382,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private Optional<Image> loadThemePackIcon(IconCacheKey key) {
             try {
                 ThemePackResource resource = ThemePackManager.resolveInstalledAsset(key.location(), key.icon());
-                return Optional.of(FXUtils.loadImage(
+                return Optional.of(ImageLoaders.DEFAULT.load(
                         resource.openStream(),
                         resource.name(),
                         ICON_IMAGE_SIZE,
@@ -459,7 +460,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             }
 
             ScrollPane scrollPane = new ScrollPane(themes);
-            FXUtils.smoothScrolling(scrollPane);
+            ScrollUtils.installSmoothScrolling(scrollPane);
             scrollPane.setFitToWidth(true);
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
