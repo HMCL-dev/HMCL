@@ -14,6 +14,7 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URLConnection;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -67,6 +68,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
         return getContext(null, false, null);
     }
 
+    /// Creates a sink that uses the BMCLAPI hash unless an explicit integrity check takes precedence.
     protected abstract Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException;
 
     @Override
@@ -126,15 +128,13 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
         }
     }
 
+    /// Retains byte ranges and file validators independently of the download sink.
     private static final class HttpResumeContext {
         private static final Pattern CONTENT_RANGE_PATTERN = Pattern.compile("bytes ([0-9]+)-([0-9]+)/([0-9]+)");
 
-        static @Nullable FetchTask.HttpResumeContext of(UrlResponseInfo response) throws IOException {
+        /// Creates resume state for an uncompressed response with a known length and a file validator.
+        static @Nullable FetchTask.HttpResumeContext of(UrlResponseInfo response, @Nullable String bmclapiHash) throws IOException {
             if (response.responseCode() != HttpURLConnection.HTTP_OK)
-                return null;
-
-            boolean acceptRanges = response.headers().firstValue("accept-ranges").orElse("").equalsIgnoreCase("bytes");
-            if (!acceptRanges)
                 return null;
 
             var contentEncoding = ContentEncoding.fromHeaders(response.headers());
@@ -145,13 +145,13 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
             if (contentLength < 0)
                 return null;
 
-            String eTag = response.headers().firstValue("etag").orElse(null);
-            String strongETag = isStrongETag(eTag) ? eTag : null;
-            String lastModified = response.headers().firstValue("last-modified").orElse(null);
-            if (strongETag == null && StringUtils.isBlank(lastModified))
+            @Nullable String eTag = response.headers().firstValue("etag").orElse(null);
+            @Nullable String strongETag = isStrongETag(eTag) ? eTag : null;
+            @Nullable String lastModified = response.headers().firstValue("last-modified").orElse(null);
+            if (bmclapiHash == null && strongETag == null && StringUtils.isBlank(lastModified))
                 return null;
 
-            return new HttpResumeContext(response.url(), contentLength, strongETag, lastModified);
+            return new HttpResumeContext(response.url(), contentLength, strongETag, lastModified, bmclapiHash);
         }
 
         /// Final response URL whose partial content is retained for resumption.
@@ -160,25 +160,34 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
         private final @Nullable String strongETag;
         private final @Nullable String lastModified;
 
+        /// SHA-1 supplied by the redirect chain, which must match when resuming from another node.
+        private final @Nullable String bmclapiHash;
+
         long countUncompressed;
 
-        /// Records the response URL, total byte length, and available validators for resumption.
-        private HttpResumeContext(WebURL url, long contentLength, @Nullable String strongETag, @Nullable String lastModified) {
+        /// Records the response URL, total length, and validators for resumption.
+        private HttpResumeContext(WebURL url, long contentLength, @Nullable String strongETag, @Nullable String lastModified,
+                                  @Nullable String bmclapiHash) {
             this.url = url;
             this.contentLength = contentLength;
             this.strongETag = strongETag;
             this.lastModified = lastModified;
+            this.bmclapiHash = bmclapiHash;
         }
 
         private static boolean isStrongETag(@Nullable String eTag) {
             return StringUtils.isNotBlank(eTag) && !eTag.regionMatches(true, 0, "W/", 0, 2);
         }
 
-        String ifRange() {
+        /// Uses content hashes for BMCLAPI resumption instead of sending another node's HTTP validator.
+        @Nullable String ifRange() {
+            if (bmclapiHash != null)
+                return null;
             return strongETag != null ? strongETag : Objects.requireNonNull(lastModified);
         }
 
-        boolean canResume(int statusCode, UrlResponseInfo response) throws IOException {
+        /// Validates the response range, total length, and file identity before retaining partial content.
+        boolean canResume(int statusCode, UrlResponseInfo response, @Nullable String bmclapiHash) throws IOException {
             if (statusCode != HttpURLConnection.HTTP_PARTIAL)
                 return false;
 
@@ -187,11 +196,14 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                 return false;
 
             long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
-            if (this.contentLength != contentLength + this.countUncompressed)
+            if (contentLength >= 0 && this.contentLength - this.countUncompressed != contentLength)
                 return false;
 
-            if (strongETag != null) {
-                String eTag = response.headers().firstValue("etag").orElse(null);
+            if (this.bmclapiHash != null) {
+                if (!this.bmclapiHash.equalsIgnoreCase(bmclapiHash))
+                    return false;
+            } else if (strongETag != null) {
+                @Nullable String eTag = response.headers().firstValue("etag").orElse(null);
                 if (!strongETag.equals(eTag))
                     return false;
             } else {
@@ -213,10 +225,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                 long end = Long.parseLong(matcher.group(2));
                 long total = Long.parseLong(matcher.group(3));
 
-                if (start != countUncompressed || end < start || total != this.contentLength)
-                    return false;
-
-                return end - start + 1 == contentLength;
+                return start == countUncompressed && total == this.contentLength && end == total - 1;
             } catch (NumberFormatException e) {
                 return false;
             }
@@ -227,14 +236,17 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
         }
     }
 
+    /// Reads the response body, retaining resumable fragments and applying the optional node retry policy.
     private void download(Context context,
                           @Nullable FetchTask.HttpResumeContext resume, InputStream inputStream,
                           long contentLength,
-                          ContentEncoding contentEncoding) throws IOException, InterruptedException {
+                          ContentEncoding contentEncoding, @Nullable BMCLAPIRetryPolicy retryPolicy) throws IOException, InterruptedException {
         boolean success;
         try (var counter = new CounterInputStream(inputStream);
              var input = contentEncoding.wrap(counter)) {
             long lastDownloaded = 0L;
+            if (retryPolicy != null)
+                retryPolicy.startAttempt(System.nanoTime());
             byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
             while (true) {
                 if (isCancelled()) break;
@@ -252,13 +264,18 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                 if (resume != null)
                     resume.countUncompressed += len;
 
-                if (contentLength >= 0) {
+                if (resume != null) {
+                    updateProgress(resume.countUncompressed, resume.contentLength);
+                } else if (contentLength >= 0) {
                     // Update progress information per second
                     updateProgress(counter.downloaded, contentLength);
                 }
 
                 updateDownloadSpeed(counter.downloaded - lastDownloaded);
                 lastDownloaded = counter.downloaded;
+
+                if (retryPolicy != null && retryPolicy.shouldRetry(counter.downloaded, contentLength, System.nanoTime()))
+                    throw new SocketTimeoutException("BMCLAPI node is too slow to complete the remaining download promptly");
             }
 
             if (isCancelled())
@@ -292,6 +309,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
 
         @Nullable Context context = null;
         @Nullable HttpResumeContext resumeContext = null;
+        BMCLAPIRetryPolicy retryPolicy = new BMCLAPIRetryPolicy();
 
         @Nullable ArrayList<Exception> exceptions = null;
 
@@ -306,11 +324,12 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                 @Nullable List<WebURL> redirects = null;
                 try {
                     beforeDownload(url);
-                    updateProgress(0);
+                    if (resumeContext == null || !resumeContext.hasPartialContent())
+                        updateProgress(0);
 
                     @Nullable HttpURLConnection connection;
                     UrlResponseInfo responseInfo;
-                    @Nullable String bmclapiHash;
+                    @Nullable String bmclapiHash = null;
                     int responseCode;
 
                     WebURL currentURI = url;
@@ -322,8 +341,11 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                     if (useCachedResult && checkETag && !resumeRequested)
                         headers.putAll(repository.injectConnection(url));
                     if (resumeRequested) {
+                        headers.put("accept-encoding", "identity");
                         headers.put("range", "bytes=" + resumeContext.countUncompressed + "-");
-                        headers.put("if-range", resumeContext.ifRange());
+                        @Nullable String ifRange = resumeContext.ifRange();
+                        if (ifRange != null)
+                            headers.put("if-range", ifRange);
                     }
 
                     do {
@@ -336,8 +358,12 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                             responseCode = connection.getResponseCode();
                             responseInfo = UrlResponseInfo.of(connection);
 
-                            bmclapiHash = responseInfo.headers().firstValue("x-bmclapi-hash").orElse(null);
-                            if (DigestUtils.isSha1Digest(bmclapiHash)) {
+                            @Nullable String responseHash = responseInfo.headers().firstValue("x-bmclapi-hash").orElse(null);
+                            if (DigestUtils.isSha1Digest(responseHash)) {
+                                if (bmclapiHash != null && !bmclapiHash.equalsIgnoreCase(responseHash))
+                                    throw new IOException("Conflicting BMCLAPI hashes in redirect chain");
+                                bmclapiHash = responseHash;
+                                headers.put("accept-encoding", "identity");
                                 Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
                                 if (cache.isPresent()) {
                                     useCachedResult(cache.get());
@@ -416,11 +442,12 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
 
                         if (context == null) {
                             context = getContext(responseInfo, checkETag, bmclapiHash);
-                            resumeContext = HttpResumeContext.of(responseInfo);
+                            resumeContext = HttpResumeContext.of(responseInfo, bmclapiHash);
                         } else if (resumeRequested) {
-                            if (resumeContext.canResume(responseCode, responseInfo)) {
+                            if (resumeContext.canResume(responseCode, responseInfo, bmclapiHash)) {
                                 // Resume download
                                 LOG.info("Resuming " + resumeContext.url + " from " + resumeContext.countUncompressed);
+                                contentLength = resumeContext.contentLength - resumeContext.countUncompressed;
                             } else {
                                 // Failed to resume download, so we will retry from the beginning
                                 resumeContext = null;
@@ -432,7 +459,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                         } else {
                             discardContext(context);
                             context = getContext(responseInfo, checkETag, bmclapiHash);
-                            resumeContext = HttpResumeContext.of(responseInfo);
+                            resumeContext = HttpResumeContext.of(responseInfo, bmclapiHash);
                         }
 
                         try {
@@ -440,7 +467,8 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                             download(context,
                                     resumeContext, inputStream,
                                     contentLength,
-                                    contentEncoding);
+                                    contentEncoding, bmclapiHash != null && redirects != null && attempts < attemptsLimit - 1
+                                            ? retryPolicy : null);
                             inputStream = null;
                             responseBodyConsumed = true;
                         } catch (IOException | InterruptedException | RuntimeException | Error e) {
@@ -531,7 +559,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                     download(context,
                             null, conn.getInputStream(),
                             conn.getContentLengthLong(),
-                            ContentEncoding.fromConnection(conn));
+                            ContentEncoding.fromConnection(conn), null);
                 }
                 return;
             } catch (InterruptedException e) {
@@ -584,6 +612,49 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
 
     private static void updateDownloadSpeed(long speed) {
         downloadSpeed.addAndGet(speed);
+    }
+
+    /// Retries persistently slow BMCLAPI nodes without exhausting downloads on bandwidth-limited connections.
+    static final class BMCLAPIRetryPolicy {
+        /// Maximum slow-node retries within one candidate's existing retry budget.
+        private static final int MAX_SLOW_RETRIES = 2;
+        /// Observation window for each connection.
+        private static final long WINDOW_NANOS = TimeUnit.SECONDS.toNanos(10);
+        /// Minimum transfer rate in bytes per second before retrying a slow node.
+        private static final long MIN_BYTES_PER_SECOND = 128 * 1024;
+        /// Monotonic time at the beginning of the current window.
+        private long started;
+        /// Total bytes received before the current window.
+        private long downloaded;
+        /// Number of node reselections requested by this policy across all attempts.
+        private int retries;
+
+        /// Starts a fresh observation window while retaining the candidate's slow-node retry count.
+        void startAttempt(long now) {
+            this.started = now;
+            this.downloaded = 0;
+        }
+
+        /// Retries a slow window only when finishing at the current rate would take another full window.
+        /// Unknown-length responses cannot provide a useful estimate and retain normal timeout handling.
+        boolean shouldRetry(long downloaded, long contentLength, long now) {
+            if (retries >= MAX_SLOW_RETRIES || contentLength <= downloaded)
+                return false;
+
+            long elapsed = now - started;
+            if (elapsed < WINDOW_NANOS)
+                return false;
+
+            double bytesPerSecond = (downloaded - this.downloaded) * (double) TimeUnit.SECONDS.toNanos(1) / elapsed;
+            this.started = now;
+            this.downloaded = downloaded;
+            if (bytesPerSecond >= MIN_BYTES_PER_SECOND
+                    || contentLength - downloaded <= bytesPerSecond * WINDOW_NANOS / TimeUnit.SECONDS.toNanos(1))
+                return false;
+
+            retries++;
+            return true;
+        }
     }
 
     private static final class CounterInputStream extends FilterInputStream {
