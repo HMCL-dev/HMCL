@@ -94,7 +94,7 @@ public final class CompressingUtils {
     /// Selection does not depend on the system charset. Successful decoding
     /// does not guarantee correct names, particularly for mixed encodings.
     static Charset findSuitableEncoding(ZipArchiveReader zipFile) {
-        List<byte[]> rawNames = new ArrayList<>();
+        @Nullable List<byte[]> rawNames = null;
 
         for (ZipArchiveEntry entry : zipFile.getEntries()) {
             if (entry.getNameSource() != ZipArchiveEntry.NameSource.NAME)
@@ -104,10 +104,13 @@ public final class CompressingUtils {
             if (rawName == null || StringUtils.isASCII(rawName))
                 continue;
 
+            if (rawNames == null)
+                rawNames = new ArrayList<>();
+
             rawNames.add(rawName);
         }
 
-        if (canDecodeNames(StandardCharsets.UTF_8, rawNames))
+        if (rawNames == null || canDecodeNames(StandardCharsets.UTF_8, rawNames))
             return StandardCharsets.UTF_8;
 
         Set<Charset> attempted = new HashSet<>();
