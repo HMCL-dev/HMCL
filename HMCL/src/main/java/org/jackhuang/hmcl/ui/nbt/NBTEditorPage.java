@@ -19,6 +19,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
@@ -89,7 +90,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                             protected Skin<?> createDefaultSkin() {
                                 return new TreeViewSkin<>(this) {
                                     {
-                                        FXUtils.smoothScrolling(getVirtualFlow());
+                                        ScrollUtils.installSmoothScrolling(getVirtualFlow());
                                     }
                                 };
                             }

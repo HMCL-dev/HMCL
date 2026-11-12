@@ -31,15 +31,12 @@ import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -513,8 +510,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
         }
 
+        /// Loads the resource-pack icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            return FXUtils.ensureValidIcon(file.loadIcon((input, name) -> FXUtils.loadImage(input, name, 64, 64, true, true)), this::getDefaultIcon);
+            return FXUtils.ensureValidIcon(file.loadIcon((input, name) -> ImageLoaders.DEFAULT.load(input, name, 64, 64, true, true)), this::getDefaultIcon);
         }
     }
 
@@ -650,7 +648,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             FXUtils.copyOnDoubleClick(description);
 
             ScrollPane descriptionPane = new ScrollPane(description);
-            FXUtils.smoothScrolling(descriptionPane);
+            ScrollUtils.installSmoothScrolling(descriptionPane);
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);

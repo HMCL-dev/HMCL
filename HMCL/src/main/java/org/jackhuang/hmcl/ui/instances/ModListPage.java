@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
@@ -600,8 +601,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
         }
 
+        /// Loads the icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            return FXUtils.ensureValidIcon(localModFile.loadIcon((input, name) -> FXUtils.loadImage(input, name, 80, 80, true, true)), this::getDefaultIcon);
+            return FXUtils.ensureValidIcon(localModFile.loadIcon((input, name) -> ImageLoaders.DEFAULT.load(input, name, 80, 80, true, true)), this::getDefaultIcon);
         }
     }
 
@@ -657,7 +659,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             FXUtils.copyOnDoubleClick(description);
 
             ScrollPane descriptionPane = new ScrollPane(description);
-            FXUtils.smoothScrolling(descriptionPane);
+            ScrollUtils.installSmoothScrolling(descriptionPane);
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);

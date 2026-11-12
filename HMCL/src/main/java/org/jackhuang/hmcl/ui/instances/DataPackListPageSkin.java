@@ -29,6 +29,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.datapack.DataPack;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -262,7 +263,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         }
 
         String getSubtitle() {
-            return packInfo.getDescription().toString();
+            return packInfo.getDescription().toStringSingleLine();
         }
 
         DataPack.Pack getPackInfo() {
@@ -273,8 +274,9 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
         }
 
+        /// Loads the icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            return FXUtils.ensureValidIcon(packInfo.loadIcon((input, name) -> FXUtils.loadImage(input, name, 64, 64, true, true)), this::getDefaultIcon);
+            return FXUtils.ensureValidIcon(packInfo.loadIcon((input, name) -> ImageLoaders.DEFAULT.load(input, name, 64, 64, true, true)), this::getDefaultIcon);
         }
     }
 
