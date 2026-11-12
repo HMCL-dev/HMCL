@@ -19,6 +19,7 @@ import javafx.stage.FileChooser;
 import org.glavo.nbt.tag.*;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -632,7 +633,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
         Image image;
         try {
-            image = FXUtils.loadImage(iconPath);
+            image = ImageLoaders.DEFAULT.load(iconPath);
         } catch (Exception e) {
             LOG.warning("Failed to load image", e);
             Controllers.dialog(i18n("world.icon.change.fail.load.text"), i18n("world.icon.change.fail.load.title"), MessageDialogPane.MessageType.ERROR);

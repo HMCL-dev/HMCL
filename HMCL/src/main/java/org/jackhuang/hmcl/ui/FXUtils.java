@@ -43,8 +43,8 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -55,8 +55,6 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
-import org.jackhuang.hmcl.ui.image.ImageLoader;
-import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
@@ -84,10 +82,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLConnection;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -874,71 +870,6 @@ public final class FXUtils {
         stage.getIcons().add(newBuiltinImage(icon));
     }
 
-    public static Image loadImage(Path path) throws Exception {
-        return loadImage(path, 0, 0, false, false);
-    }
-
-    public static Image loadImage(Path path,
-                                  int requestedWidth, int requestedHeight,
-                                  boolean preserveRatio, boolean smooth) throws Exception {
-        String fileName = path.getFileName().toString();
-        return loadImage(
-                Files.newInputStream(path),
-                fileName,
-                requestedWidth,
-                requestedHeight,
-                preserveRatio,
-                smooth);
-    }
-
-    public static Image loadImage(InputStream input, String fileName) throws Exception {
-        return loadImage(input, fileName, 0, 0, false, false);
-    }
-
-    public static Image loadImage(InputStream input, String fileName,
-                                  int requestedWidth, int requestedHeight,
-                                  boolean preserveRatio, boolean smooth) throws Exception {
-        try (var bufferedInput = new BufferedInputStream(input)) {
-            String ext = FileUtils.getExtension(fileName).toLowerCase(Locale.ROOT);
-            ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
-            if (loader == null && !ImageUtils.DEFAULT_EXTS.contains(ext)) {
-                bufferedInput.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = bufferedInput.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
-                bufferedInput.reset();
-                loader = ImageUtils.guessLoader(headerBuffer);
-            }
-            if (loader == null)
-                loader = ImageUtils.DEFAULT;
-            return loader.load(bufferedInput, requestedWidth, requestedHeight, preserveRatio, smooth);
-        }
-    }
-
-    public static Image loadImage(WebURL url) throws Exception {
-        URLConnection connection = NetworkUtils.createConnection(url);
-        if (connection instanceof HttpURLConnection httpConnection)
-            connection = NetworkUtils.resolveConnection(httpConnection);
-
-        try (BufferedInputStream input = new BufferedInputStream(connection.getInputStream())) {
-            String contentType = Objects.requireNonNull(connection.getContentType(), "");
-            Matcher matcher = ImageUtils.CONTENT_TYPE_PATTERN.matcher(contentType);
-            if (matcher.find())
-                contentType = matcher.group("type");
-
-            ImageLoader loader = ImageUtils.CONTENT_TYPE_TO_LOADER.get(contentType);
-            if (loader == null && !ImageUtils.DEFAULT_CONTENT_TYPES.contains(contentType)) {
-                input.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
-                input.reset();
-                loader = ImageUtils.guessLoader(headerBuffer);
-            }
-
-            if (loader == null)
-                loader = ImageUtils.DEFAULT;
-
-            return loader.load(input, 0, 0, false, false);
-        }
-    }
-
     /**
      * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
      *
@@ -982,7 +913,7 @@ public final class FXUtils {
     public static Task<Image> getRemoteImageTask(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(url)
                 .setSignificance(Task.TaskSignificance.MINOR)
-                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .thenApplyAsync(file -> ImageLoaders.DEFAULT.load(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
@@ -990,7 +921,7 @@ public final class FXUtils {
     public static Task<Image> getRemoteImageTask(DownloadCandidates candidates, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(candidates)
                 .setSignificance(Task.TaskSignificance.MINOR)
-                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .thenApplyAsync(file -> ImageLoaders.DEFAULT.load(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
