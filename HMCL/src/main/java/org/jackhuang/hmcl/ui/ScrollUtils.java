@@ -16,11 +16,15 @@ public final class ScrollUtils {
     /// Identifies the controller installed on a node, making installation idempotent.
     private static final Object CONTROLLER_KEY = new Object();
 
+    /// Installs smooth wheel scrolling if animations are enabled at call time.
+    /// Does nothing if already installed. Must be called on the FX thread.
     public static void installSmoothScrolling(ScrollPane scrollPane) {
         if (AnimationUtils.isAnimationEnabled())
             addSmoothScrolling(scrollPane);
     }
 
+    /// Installs smooth wheel scrolling for either flow orientation if animations are enabled at call time.
+    /// Does nothing if already installed. Must be called on the FX thread.
     public static void installSmoothScrolling(VirtualFlow<?> virtualFlow) {
         if (AnimationUtils.isAnimationEnabled())
             addSmoothScrolling(virtualFlow);
