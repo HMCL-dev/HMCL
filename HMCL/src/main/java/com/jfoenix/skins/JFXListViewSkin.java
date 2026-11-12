@@ -26,6 +26,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.skin.ListViewSkin;
 import javafx.scene.control.skin.VirtualFlow;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 
 public class JFXListViewSkin<T> extends ListViewSkin<T> {
 
@@ -35,7 +36,7 @@ public class JFXListViewSkin<T> extends ListViewSkin<T> {
         FXUtils.onChangeAndOperate(listView.depthProperty(), depth -> JFXDepthManager.setDepth(flow, depth.intValue()));
 
         if (!Boolean.TRUE.equals(listView.getProperties().get("no-smooth-scrolling"))) {
-            FXUtils.smoothScrolling(flow);
+            ScrollUtils.installSmoothScrolling(flow);
         }
     }
 

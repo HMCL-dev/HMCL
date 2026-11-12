@@ -254,7 +254,7 @@
 }
 
 .iconed-item {
-    -jfx-feedback-fill: -monet-secondary-container;
+    -jfx-feedback-fill: -monet-on-surface;
 }
 
 .iconed-item .iconed-item-container {
@@ -265,7 +265,7 @@
 }
 
 .iconed-menu-item {
-    -jfx-feedback-fill: -monet-secondary-container;
+    -jfx-feedback-fill: -monet-on-surface;
     -fx-cursor: hand;
 }
 
@@ -301,6 +301,10 @@
     -fx-text-fill: -monet-on-surface;
     -fx-font-size: 15px;
     -fx-padding: 0 8 0 0;
+}
+
+.two-line-list-item > .title > Text {
+    -fx-fill: -monet-on-surface;
 }
 
 .two-line-list-item > .subtitle {
@@ -372,8 +376,8 @@
     -fx-background-radius: 2px;
 }
 
-.bubble > HBox > .two-line-list-item > .title,
-.bubble > HBox > .two-line-list-item > .subtitle {
+.bubble > RipplerContainer > HBox > .two-line-list-item > .title,
+.bubble > RipplerContainer > HBox > .two-line-list-item > .subtitle {
     -fx-text-fill: -monet-inverse-on-surface;
 }
 
@@ -1747,6 +1751,7 @@
     -fx-padding: 5;
     -fx-background-radius: 6;
     -fx-background-color: -monet-surface-container-low;
+    -fx-background-insets: 0.0;
     -fx-border-radius: 6;
 }
 
