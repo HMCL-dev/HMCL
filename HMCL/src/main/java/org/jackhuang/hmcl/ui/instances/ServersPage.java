@@ -25,6 +25,7 @@ import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.server.Server;
 import org.jackhuang.hmcl.server.ServersDatFile;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -82,7 +83,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         if (imageBase64String != null && !imageBase64String.isEmpty()) {
             try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(imageBase64String))) {
                 // png format.
-                return FXUtils.loadImage(bais, "icon.png", 0, 0, true, true);
+                return ImageLoaders.DEFAULT.load(bais, "icon.png", 0, 0, true, true);
             } catch (Exception e) {
                 LOG.warning("Failed to decode server icon", e);
             }
