@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
-// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
-
 // Copy from https://github.com/aellerton/japng
 // Licensed under the Apache License, Version 2.0.
 
