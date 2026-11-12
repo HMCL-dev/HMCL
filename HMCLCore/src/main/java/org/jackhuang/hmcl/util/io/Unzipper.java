@@ -6,6 +6,7 @@ import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -122,7 +123,7 @@ public final class Unzipper {
                                 throw e;
                         }
 
-                        if (entry.getUnixMode() != 0 && OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+                        if (entry.getUnixMode() != 0 && SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS) {
                             Files.setPosixFilePermissions(destFile, FileUtils.parsePosixFilePermission(entry.getUnixMode()));
                         }
                     }

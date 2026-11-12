@@ -6,7 +6,10 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
+import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.OperatingSystemInfo;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
@@ -22,7 +25,7 @@ import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Detects Windows hardware information.
+/// Detects Windows system and hardware information.
 ///
 /// @author Glavo
 @NotNullByDefault
@@ -34,17 +37,39 @@ public final class WindowsHardwareDetector extends HardwareDetector {
     /// An absolute drive path, including the wildcard drive used by automatic management.
     private static final Pattern PAGE_FILE_PATH = Pattern.compile("(?i)^[a-z?]:\\\\[^\\r\\n]+$");
 
+    /// Returns the Windows name and version, correcting Windows 11 names and including the display release when available.
+    @Override
+    public OperatingSystemInfo detectOperatingSystemInfo() {
+        if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS)
+            return super.detectOperatingSystemInfo();
+
+        String systemName = System.getProperty("os.name", "Unknown");
+        OSVersion version = SystemInfo.SYSTEM_VERSION;
+        // Older Java releases identify Windows 11 as Windows 10.
+        if (systemName.equals("Windows 10") && version.isAtLeast(OSVersion.WINDOWS_11))
+            systemName = "Windows 11";
+
+        @Nullable WinReg reg = WinReg.INSTANCE;
+        if (version.isAtLeast(OSVersion.WINDOWS_10) && reg != null) {
+            @Nullable Object displayVersion = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                    "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "DisplayVersion");
+            if (displayVersion instanceof String displayVersionStr && displayVersionStr.matches("[0-9]{2}H[0-9]"))
+                systemName += " " + displayVersionStr;
+        }
+        return new OperatingSystemInfo(systemName, systemName + ' ' + version.getVersion());
+    }
+
     /// Detects Windows processors, using the default detector when native information is unavailable.
     @Override
     public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
-        @Unmodifiable List<CentralProcessor> processors = OperatingSystem.isWindows7OrLater() ? WindowsCPUDetector.detect() : List.of();
+        @Unmodifiable List<CentralProcessor> processors = SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7) ? WindowsCPUDetector.detect() : List.of();
         return processors.isEmpty() ? super.detectCentralProcessors() : processors;
     }
 
     /// Returns an immutable graphics card list, empty if detection is unsupported or fails.
     @Override
     public @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
-        if (!OperatingSystem.isWindows7OrLater())
+        if (!SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7))
             return List.of();
         return WindowsGPUDetector.detect();
     }
@@ -56,7 +81,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
     /// is missing, not a string, invalid, or cannot be read.
     @Override
     public @Nullable DeviceInfo detectDeviceInfo() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS || !NativeUtils.USE_JNA)
+        if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS || !NativeUtils.USE_JNA)
             return null;
 
         try {

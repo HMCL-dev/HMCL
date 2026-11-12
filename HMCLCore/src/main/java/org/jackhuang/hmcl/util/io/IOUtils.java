@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 
 import static java.nio.charset.StandardCharsets.*;
-import static org.jackhuang.hmcl.util.platform.OperatingSystem.NATIVE_CHARSET;
+import static org.jackhuang.hmcl.util.platform.SystemInfo.NATIVE_CHARSET;
 
 /**
  * This utility class consists of some util methods operating on InputStream/OutputStream.

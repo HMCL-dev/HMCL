@@ -5,8 +5,8 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -57,9 +57,9 @@ public record GameJavaVersion(String component, int majorVersion) {
         };
     }
 
-    public static List<GameJavaVersion> getSupportedVersions(Platform platform) {
-        OperatingSystem operatingSystem = platform.getOperatingSystem();
-        Architecture architecture = platform.getArchitecture();
+    public static List<GameJavaVersion> getSupportedVersions(NativePlatform platform) {
+        OperatingSystem operatingSystem = platform.os();
+        Architecture architecture = platform.arch();
         if (architecture == Architecture.X86) {
             switch (operatingSystem) {
                 case WINDOWS:

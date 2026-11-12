@@ -64,6 +64,7 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -855,7 +856,7 @@ public final class Decorator {
         }
 
         if (stage != newStage) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
                 Themes.applyNativeDarkMode(newStage);
             }
             playRestoreMinimizeAnimation = false;
@@ -1000,7 +1001,7 @@ public final class Decorator {
             return;
         }
 
-        if (!nativeDecorationEnabled && AnimationUtils.playWindowAnimation() && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
+        if (!nativeDecorationEnabled && AnimationUtils.playWindowAnimation() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS) {
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(root.opacityProperty(), 1, Motion.EASE),
@@ -1106,7 +1107,7 @@ public final class Decorator {
                 return;
             }
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+            if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS
                     && event.getEventType() == KeyEvent.KEY_PRESSED
                     && event.isMetaDown()
                     && event.getCode() == KeyCode.Q) {
@@ -1145,7 +1146,7 @@ public final class Decorator {
 
         onEscPressed(navigator, this::back);
 
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
+        if (SystemInfo.CURRENT_OS != OperatingSystem.MACOS) {
             navigator.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
                 @Nullable Stage currentStage = getStage();
                 if (currentStage != null && event.getCode() == KeyCode.F11) {

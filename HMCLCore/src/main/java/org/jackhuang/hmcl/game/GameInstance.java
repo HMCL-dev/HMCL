@@ -6,7 +6,7 @@ import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.schematic.LitematicaConfig;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -176,7 +176,7 @@ public interface GameInstance {
     ///
     /// @param platform the target platform
     /// @return the platform-specific native directory below the instance root
-    default Path getNativeDirectory(Platform platform) {
+    default Path getNativeDirectory(NativePlatform platform) {
         return getInstanceRoot().resolve("natives-" + platform);
     }
 }

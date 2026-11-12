@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.animation;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
@@ -23,7 +24,10 @@ public final class AnimationUtils {
     }
 
     private static final boolean ENABLED = !settings().isAnimationDisabled();
-    private static final boolean PLAY_WINDOW_ANIMATION = ENABLED && !OperatingSystem.CURRENT_OS.isLinuxOrBSD();
+
+    /// Enables window animations except on Unix-like desktops other than macOS.
+    private static final boolean PLAY_WINDOW_ANIMATION = ENABLED
+            && (SystemInfo.CURRENT_OS == OperatingSystem.MACOS || !SystemInfo.CURRENT_OS.isUnixLike());
 
     public static boolean isAnimationEnabled() {
         return ENABLED;

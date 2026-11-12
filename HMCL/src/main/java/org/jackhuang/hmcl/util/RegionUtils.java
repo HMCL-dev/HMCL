@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.util;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -53,7 +54,7 @@ public final class RegionUtils {
             localeRegion = null;
         }
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
             @Nullable Kernel32 kernel32 = Kernel32.INSTANCE;
 
             if (kernel32 != null) {

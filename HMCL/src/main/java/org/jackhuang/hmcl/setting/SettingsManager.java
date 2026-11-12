@@ -17,6 +17,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
@@ -1619,7 +1620,7 @@ public final class SettingsManager {
         }
 
         try {
-            if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
+            if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS
                     && "root".equals(System.getProperty("user.name"))
                     && !"root".equals(Files.getOwner(location).getName())) {
                 ownerChanged = true;
@@ -1632,7 +1633,7 @@ public final class SettingsManager {
     /// Checks that the given config path is writable.
     private static void checkWritable(Path location) throws IOException {
         if (!Files.isWritable(location)) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+            if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS
                     && location.getFileSystem() == FileSystems.getDefault()
                     && location.toFile().canWrite()) {
                 LOG.warning("Launcher config path " + location + " is not writable, but it seems to be a Samba share or OpenJDK bug");

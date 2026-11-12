@@ -54,8 +54,7 @@ import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
@@ -352,7 +351,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Task<?> task = downloadProvider.getVersionsAsync(GameComponentType.GAME, null, false)
                 .thenApplyAsync(versions -> versions.stream()
                         .filter(it -> it.getVersionType() == RELEASE)
-                        .filter(it -> NativePatcher.checkSupportedStatus(it.getGameVersion(), Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION) != NativePatcher.SupportStatus.UNSUPPORTED)
+                        .filter(it -> NativePatcher.checkSupportedStatus(it.getGameVersion(), SystemInfo.SYSTEM_PLATFORM, SystemInfo.SYSTEM_VERSION) != NativePatcher.SupportStatus.UNSUPPORTED)
                         .sorted()
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))

@@ -3,7 +3,7 @@
 package org.jackhuang.hmcl.util.platform.macos;
 
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
@@ -30,7 +30,7 @@ final class MacOSCPUDetector {
     static @Unmodifiable List<CentralProcessor> detect() {
         try {
             Map<String, String> values = SystemUtils.run(List.of("/usr/sbin/sysctl", "-i", "hw", "machdep.cpu"),
-                    input -> KeyValuePairUtils.loadPairs(new BufferedReader(new InputStreamReader(input, OperatingSystem.NATIVE_CHARSET))));
+                    input -> KeyValuePairUtils.loadPairs(new BufferedReader(new InputStreamReader(input, SystemInfo.NATIVE_CHARSET))));
 
             CentralProcessor.Builder builder = new CentralProcessor.Builder();
             @Nullable String name = CentralProcessor.cleanName(values.get("machdep.cpu.brand_string"));
