@@ -112,9 +112,9 @@ public final class CompressingUtilsTest {
         }
     }
 
-    /// Uses Unicode metadata in readers while retaining raw-name validation for zipfs.
+    /// Excludes Unicode-resolved names from both detection entry points.
     @Test
-    void distinguishesUnicodeMetadataFromRawNames() throws IOException {
+    void excludesUnicodeMetadataFromDetection() throws IOException {
         String rawName = "\u4e2d\u6587.txt";
         String unicodeName = "resolved-name.txt";
         byte[] bytes = rawName.getBytes(Charset.forName("GB18030"));
@@ -124,22 +124,21 @@ public final class CompressingUtilsTest {
             assertEquals(unicodeName, reader.getEntries().iterator().next().getName());
             assertEquals(ZipArchiveEntry.NameSource.UNICODE_EXTRA_FIELD, reader.getEntries().iterator().next().getNameSource());
         }
-        try (var fileSystem = CompressingUtils.readonly(archive).build()) {
-            assertTrue(Files.exists(fileSystem.getPath(rawName)));
-        }
+        assertEquals(StandardCharsets.UTF_8, CompressingUtils.findSuitableEncoding(archive));
     }
 
-    /// Keeps UTF-8 selection independent of raw names already resolved by Unicode metadata.
+    /// Excludes Unicode-resolved raw bytes even when validating a legacy candidate.
     @Test
-    void excludesUnicodeNamesFromReaderDetection() throws IOException {
+    void excludesUnicodeNamesFromLegacyValidation() throws IOException {
         String name = "\u4e2d\u6587.txt";
+        Charset charset = Charset.forName("GB18030");
         byte[] invalidName = {(byte) 0xff};
-        Path archive = writeArchive(entry(name, StandardCharsets.UTF_8),
+        Path archive = writeArchive(entry(name, charset),
                 new RawEntry(invalidName, 0, unicodeExtra(invalidName, "resolved.txt", true)));
-        try (var reader = CompressingUtils.openZipFile(archive)) {
-            assertEquals(List.of(name, "resolved.txt"), StreamSupport.stream(reader.getEntries().spliterator(), false)
-                    .map(ZipArchiveEntry::getName).toList());
+        try (var reader = CompressingUtils.openZipFile(archive, StandardCharsets.UTF_8)) {
+            assertEquals(charset, CompressingUtils.findSuitableEncoding(reader));
         }
+        assertEquals(charset, CompressingUtils.findSuitableEncoding(archive));
     }
 
     /// Ignores a Unicode extra field whose CRC does not match the original name.

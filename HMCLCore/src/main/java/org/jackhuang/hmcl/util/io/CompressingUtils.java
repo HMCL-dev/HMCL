@@ -66,47 +66,38 @@ public final class CompressingUtils {
     private CompressingUtils() {
     }
 
-    /// Guesses a charset for opening the archive with the ZIP filesystem provider.
+    /// Guesses a filename charset using [#findSuitableEncoding(ZipArchiveReader)].
     ///
-    /// Names marked as UTF-8 are excluded. Raw names backed by Unicode extra
-    /// fields still participate because the provider may not use those fields.
-    /// Selection otherwise follows [#findSuitableEncoding(ZipArchiveReader)].
+    /// Names supplied by Unicode metadata are excluded even if the ZIP filesystem
+    /// provider does not support that metadata.
     ///
     /// @param zipFile archive to inspect
     /// @return guessed filename charset
     /// @throws IOException if the archive cannot be read or its reader cannot be closed
     static Charset findSuitableEncoding(Path zipFile) throws IOException {
         try (ZipArchiveReader zf = openZipFile(zipFile, StandardCharsets.UTF_8)) {
-            return findSuitableEncoding(zf, false);
+            return findSuitableEncoding(zf);
         }
     }
 
     /// Guesses a filename charset without closing the supplied reader.
     ///
-    /// Names marked as UTF-8 or already supplied by Unicode extra fields are
-    /// excluded from statistical sampling and UTF-8 selection. UTF-8 is preferred
-    /// if it strictly decodes all remaining names,
+    /// Only entries whose name source is [ZipArchiveEntry.NameSource#NAME]
+    /// participate. UTF-8 is preferred if it strictly decodes all remaining names,
     /// including when there are none. Otherwise, bounded statistical samples
     /// rank candidates, including low-confidence candidates. Exact Java charset
     /// mappings are preferred; EUC-JP is tried for EUC-JIS-2004 evidence when an
-    /// exact mapping is unavailable. Candidates must strictly decode every unmarked raw name,
-    /// including names backed by Unicode extra fields: the reader decodes these
-    /// raw bytes before applying the fields when opened with a legacy charset.
+    /// exact mapping is unavailable. Candidates must strictly decode every
+    /// participating name.
     /// Decoder state is reset between names. Fixed compatibility encodings are
     /// tried if statistical candidates fail; ISO-8859-1 is the final fallback.
     /// Selection does not depend on the system charset. Successful decoding
     /// does not guarantee correct names, particularly for mixed encodings.
     static Charset findSuitableEncoding(ZipArchiveReader zipFile) {
-        return findSuitableEncoding(zipFile, true);
-    }
-
-    /// Selects an encoding, optionally trusting names resolved from Unicode metadata.
-    private static Charset findSuitableEncoding(ZipArchiveReader zipFile, boolean useUnicodeNames) {
         List<byte[]> rawNames = new ArrayList<>();
-        List<byte[]> unresolvedNames = new ArrayList<>();
 
         for (ZipArchiveEntry entry : zipFile.getEntries()) {
-            if (entry.getNameSource() == ZipArchiveEntry.NameSource.NAME_WITH_EFS_FLAG)
+            if (entry.getNameSource() != ZipArchiveEntry.NameSource.NAME)
                 continue;
 
             byte @Nullable [] rawName = entry.getRawName();
@@ -114,16 +105,14 @@ public final class CompressingUtils {
                 continue;
 
             rawNames.add(rawName);
-            if (!useUnicodeNames || entry.getNameSource() != ZipArchiveEntry.NameSource.UNICODE_EXTRA_FIELD)
-                unresolvedNames.add(rawName);
         }
 
-        if (canDecodeNames(StandardCharsets.UTF_8, unresolvedNames))
+        if (canDecodeNames(StandardCharsets.UTF_8, rawNames))
             return StandardCharsets.UTF_8;
 
         Set<Charset> attempted = new HashSet<>();
         attempted.add(StandardCharsets.UTF_8);
-        for (EncodingDetector.Candidate candidate : FILENAME_ENCODING_DETECTOR.detect(sampleNames(unresolvedNames)).candidates()) {
+        for (EncodingDetector.Candidate candidate : FILENAME_ENCODING_DETECTOR.detect(sampleNames(rawNames)).candidates()) {
             EncodingDetector.@Nullable Encoding encoding = candidate.encoding();
             @Nullable Charset charset = encoding == null ? null : encoding.charset();
             // The detector groups ordinary EUC-JP input under its EUC-JIS-2004 target.
