@@ -19,9 +19,11 @@ import javafx.stage.FileChooser;
 import org.glavo.nbt.tag.*;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -73,7 +75,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         VBox rootPane = new VBox();
         rootPane.setFillWidth(true);
         scrollPane.setContent(rootPane);
-        FXUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         rootPane.getStyleClass().add("card-list");
 
         ComponentList worldInfo = new ComponentList();
@@ -632,7 +634,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
         Image image;
         try {
-            image = FXUtils.loadImage(iconPath);
+            image = ImageLoaders.DEFAULT.load(iconPath);
         } catch (Exception e) {
             LOG.warning("Failed to load image", e);
             Controllers.dialog(i18n("world.icon.change.fail.load.text"), i18n("world.icon.change.fail.load.title"), MessageDialogPane.MessageType.ERROR);

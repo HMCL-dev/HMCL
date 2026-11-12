@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.Holder;
@@ -389,7 +390,7 @@ public class PersonalizationPage extends StackPane {
         content.setPadding(new Insets(10));
         content.setFillWidth(true);
         ScrollPane scrollPane = new ScrollPane(content);
-        FXUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 

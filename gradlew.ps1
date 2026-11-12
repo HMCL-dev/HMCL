@@ -313,7 +313,13 @@ function Invoke-GradleWrapper {
         throw "Wrapper source file '$sourceFile' was not found."
     }
 
-    $workDirectory = Join-Path $appHome '.gradle\wrapper-neo'
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+        $sourceHash = [BitConverter]::ToString($sha256.ComputeHash([IO.File]::ReadAllBytes($sourceFile))).Replace('-', '').ToLowerInvariant()
+    } finally {
+        $sha256.Dispose()
+    }
+    $workDirectory = Join-Path (Join-Path $appHome '.gradle\wrapper-neo') $sourceHash
     $jarFile = Join-Path $workDirectory 'gradle-wrapper-neo.jar'
     $bootstrapDirectory = Join-Path (Join-Path $workDirectory 'bootstrap') ([Guid]::NewGuid().ToString('N'))
     $classesDirectory = Join-Path $bootstrapDirectory 'classes'

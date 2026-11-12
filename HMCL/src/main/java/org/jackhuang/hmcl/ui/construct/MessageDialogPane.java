@@ -16,6 +16,7 @@ import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +79,7 @@ public final class MessageDialogPane extends HBox {
                 content.getChildren().setAll(textFlow);
             else {
                 ScrollPane scrollPane = new ScrollPane(textFlow);
-                FXUtils.smoothScrolling(scrollPane);
+                ScrollUtils.installSmoothScrolling(scrollPane);
                 scrollPane.setPrefHeight(350);
                 VBox.setVgrow(scrollPane, Priority.ALWAYS);
                 scrollPane.setFitToWidth(true);

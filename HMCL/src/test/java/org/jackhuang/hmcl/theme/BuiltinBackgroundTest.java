@@ -3,7 +3,7 @@
 package org.jackhuang.hmcl.theme;
 
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -39,6 +39,6 @@ public final class BuiltinBackgroundTest {
         if (input == null) {
             throw new AssertionError("Missing built-in wallpaper: " + fileName);
         }
-        return FXUtils.loadImage(input, fileName);
+        return ImageLoaders.DEFAULT.load(input, fileName);
     }
 }

@@ -234,7 +234,18 @@ else
     NEO_SOURCE=$LAUNCHER_WRAPPER_DIR/GradleWrapperNeo.java
 fi
 
-NEO_WORK_DIR=$APP_HOME/.gradle/wrapper-neo
+if [ ! -f "$NEO_SOURCE" ] ; then
+    die "ERROR: $NEO_SOURCE was not found."
+fi
+if command -v sha256sum >/dev/null 2>&1 ; then
+    NEO_SOURCE_HASH=$(sha256sum < "$NEO_SOURCE") || exit
+elif command -v shasum >/dev/null 2>&1 ; then
+    NEO_SOURCE_HASH=$(shasum -a 256 < "$NEO_SOURCE") || exit
+else
+    die "ERROR: sha256sum or shasum is required to locate the Wrapper cache."
+fi
+NEO_SOURCE_HASH=${NEO_SOURCE_HASH%% *}
+NEO_WORK_DIR=$APP_HOME/.gradle/wrapper-neo/$NEO_SOURCE_HASH
 NEO_JAR=$NEO_WORK_DIR/gradle-wrapper-neo.jar
 NEO_BOOTSTRAP_DIR=$NEO_WORK_DIR/bootstrap/$$
 NEO_CLASSES_DIR=$NEO_BOOTSTRAP_DIR/classes
@@ -250,54 +261,50 @@ if "$cygwin" || "$msys" ; then
     NEO_JAVA_CLASSES_DIR=$( cygpath --mixed "$NEO_CLASSES_DIR" )
 fi
 
-if [ -f "$NEO_SOURCE" ] ; then
-    if [ -n "$NEO_JAR" ] && [ -f "$NEO_JAR" ] ; then
-        set -- \
-                "-Dorg.gradle.appname=$APP_BASE_NAME" \
-                "-Dorg.gradle.wrapper.neo.app-home=$NEO_JAVA_APP_HOME" \
-                "-Dorg.gradle.wrapper.neo.source-file=$NEO_JAVA_SOURCE" \
-                "-Dorg.gradle.wrapper.neo.jar-file=$NEO_JAVA_JAR" \
-                -jar "$NEO_JAVA_JAR" \
-                "$@"
+if [ -s "$NEO_JAR" ] ; then
+    set -- \
+            "-Dorg.gradle.appname=$APP_BASE_NAME" \
+            "-Dorg.gradle.wrapper.neo.app-home=$NEO_JAVA_APP_HOME" \
+            "-Dorg.gradle.wrapper.neo.source-file=$NEO_JAVA_SOURCE" \
+            "-Dorg.gradle.wrapper.neo.jar-file=$NEO_JAVA_JAR" \
+            -jar "$NEO_JAVA_JAR" \
+            "$@"
+else
+    if [ -n "$JAVA_HOME" ] ; then
+        JAVACMD_COMPILER=$JAVA_HOME/bin/javac
     else
-        if [ -n "$JAVA_HOME" ] ; then
-            JAVACMD_COMPILER=$JAVA_HOME/bin/javac
-        else
-            JAVACMD_COMPILER=javac
-        fi
-        if ! command -v "$JAVACMD_COMPILER" >/dev/null 2>&1
-        then
-            die "ERROR: GradleWrapperNeo.java exists, but javac could not be found.
+        JAVACMD_COMPILER=javac
+    fi
+    if ! command -v "$JAVACMD_COMPILER" >/dev/null 2>&1
+    then
+        die "ERROR: GradleWrapperNeo.java exists, but javac could not be found.
 
 Please run this wrapper with a JDK so GradleWrapperNeo.java can be compiled."
-        fi
-
-        rm -rf "$NEO_CLASSES_DIR"
-        mkdir -p "$NEO_CLASSES_DIR" || exit
-        JAVAC_VERSION=$("$JAVACMD_COMPILER" -version 2>&1)
-        case "$JAVAC_VERSION" in
-          javac\ 1.*) JAVAC_TARGET_ARGS="-source 8 -target 8" ;;
-          *)          JAVAC_TARGET_ARGS="--release 8" ;;
-        esac
-        # shellcheck disable=SC2086
-        if ! "$JAVACMD_COMPILER" $JAVAC_TARGET_ARGS -Xlint:-options -encoding UTF-8 -d "$NEO_CLASSES_DIR" "$NEO_SOURCE"
-        then
-            rm -rf "$NEO_CLASSES_DIR"
-            die "ERROR: Could not compile $NEO_SOURCE"
-        fi
-
-        set -- \
-                "-Dorg.gradle.appname=$APP_BASE_NAME" \
-                "-Dorg.gradle.wrapper.neo.app-home=$NEO_JAVA_APP_HOME" \
-                "-Dorg.gradle.wrapper.neo.source-file=$NEO_JAVA_SOURCE" \
-                "-Dorg.gradle.wrapper.neo.jar-file=$NEO_JAVA_JAR" \
-                "-Dgradle.wrapper.neo.bootstrap=true" \
-                -cp "$NEO_JAVA_CLASSES_DIR" \
-                GradleWrapperNeo \
-                "$@"
     fi
-else
-    die "ERROR: $NEO_SOURCE was not found."
+
+    rm -rf "$NEO_CLASSES_DIR"
+    mkdir -p "$NEO_CLASSES_DIR" || exit
+    JAVAC_VERSION=$("$JAVACMD_COMPILER" -version 2>&1)
+    case "$JAVAC_VERSION" in
+      javac\ 1.*) JAVAC_TARGET_ARGS="-source 8 -target 8" ;;
+      *)          JAVAC_TARGET_ARGS="--release 8" ;;
+    esac
+    # shellcheck disable=SC2086
+    if ! "$JAVACMD_COMPILER" $JAVAC_TARGET_ARGS -Xlint:-options -encoding UTF-8 -d "$NEO_CLASSES_DIR" "$NEO_SOURCE"
+    then
+        rm -rf "$NEO_CLASSES_DIR"
+        die "ERROR: Could not compile $NEO_SOURCE"
+    fi
+
+    set -- \
+            "-Dorg.gradle.appname=$APP_BASE_NAME" \
+            "-Dorg.gradle.wrapper.neo.app-home=$NEO_JAVA_APP_HOME" \
+            "-Dorg.gradle.wrapper.neo.source-file=$NEO_JAVA_SOURCE" \
+            "-Dorg.gradle.wrapper.neo.jar-file=$NEO_JAVA_JAR" \
+            "-Dgradle.wrapper.neo.bootstrap=true" \
+            -cp "$NEO_JAVA_CLASSES_DIR" \
+            GradleWrapperNeo \
+            "$@"
 fi
 
 # Collect all arguments for the java command:
