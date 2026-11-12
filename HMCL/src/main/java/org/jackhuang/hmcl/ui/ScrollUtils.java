@@ -16,12 +16,12 @@ public final class ScrollUtils {
     /// Identifies the controller installed on a node, making installation idempotent.
     private static final Object CONTROLLER_KEY = new Object();
 
-    public static void smoothScrolling(ScrollPane scrollPane) {
+    public static void installSmoothScrolling(ScrollPane scrollPane) {
         if (AnimationUtils.isAnimationEnabled())
             addSmoothScrolling(scrollPane);
     }
 
-    public static void smoothScrolling(VirtualFlow<?> virtualFlow) {
+    public static void installSmoothScrolling(VirtualFlow<?> virtualFlow) {
         if (AnimationUtils.isAnimationEnabled())
             addSmoothScrolling(virtualFlow);
     }

@@ -244,7 +244,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 ComponentList list = new ComponentList();
                 ScrollPane scrollPane = new ScrollPane(list);
-                ScrollUtils.smoothScrolling(scrollPane);
+                ScrollUtils.installSmoothScrolling(scrollPane);
                 scrollPane.setFitToWidth(true);
                 scrollPane.setFitToHeight(true);
                 FXUtils.setOverflowHidden(scrollPane, 8);
@@ -533,7 +533,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
             FXUtils.onChangeAndOperate(scrollPane.widthProperty(), d -> FXUtils.setLimitWidth(dependenciesList, d.doubleValue()));
-            ScrollUtils.smoothScrolling(scrollPane);
+            ScrollUtils.installSmoothScrolling(scrollPane);
             FXUtils.setOverflowHidden(scrollPane, 8);
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);
@@ -703,7 +703,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 if (exception == null) {
                     String changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));
-                    ScrollUtils.smoothScrolling(scrollPane);
+                    ScrollUtils.installSmoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
                 } else {
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));

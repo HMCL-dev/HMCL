@@ -531,7 +531,7 @@ public class TerracottaControllerPage extends StackPane {
         content.setFillWidth(true);
 
         ScrollPane scrollPane = new ScrollPane(content);
-        ScrollUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         scrollPane.setFitToWidth(true);
 
         getChildren().setAll(scrollPane);

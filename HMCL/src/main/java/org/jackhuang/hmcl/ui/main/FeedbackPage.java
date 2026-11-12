@@ -25,7 +25,7 @@ public class FeedbackPage extends SpinnerPane {
         content.getStyleClass().add("spinner-pane-content");
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
-        ScrollUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         setContent(scrollPane);
 
         ComponentList groups = new ComponentList();

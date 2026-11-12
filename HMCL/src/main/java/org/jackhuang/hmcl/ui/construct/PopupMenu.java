@@ -74,7 +74,7 @@ public class PopupMenu extends Control {
             Bindings.bindContent(content.getChildren(), PopupMenu.this.getContent());
             scrollPane.setContent(content);
 
-            ScrollUtils.smoothScrolling(scrollPane);
+            ScrollUtils.installSmoothScrolling(scrollPane);
 
             getChildren().setAll(scrollPane);
         }

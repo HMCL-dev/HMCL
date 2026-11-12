@@ -664,7 +664,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                     ScrollPane scrollPane = new ScrollPane(detailsContainer);
                     scrollPane.setFitToWidth(true);
                     FXUtils.setOverflowHidden(scrollPane, 8);
-                    ScrollUtils.smoothScrolling(scrollPane);
+                    ScrollUtils.installSmoothScrolling(scrollPane);
                     StackPane.setMargin(scrollPane, new Insets(10, 0, 0, 0));
                     setBody(scrollPane);
                 }

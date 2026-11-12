@@ -75,7 +75,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         VBox rootPane = new VBox();
         rootPane.setFillWidth(true);
         scrollPane.setContent(rootPane);
-        ScrollUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         rootPane.getStyleClass().add("card-list");
 
         ComponentList worldInfo = new ComponentList();

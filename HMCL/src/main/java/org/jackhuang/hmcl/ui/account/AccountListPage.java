@@ -183,7 +183,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
         Bindings.bindContent(list.getChildren(), items);
 
         scrollPane.setContent(list);
-        ScrollUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
 
         setContent(scrollPane);
     }

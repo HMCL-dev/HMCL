@@ -24,7 +24,7 @@ public class AdvancedListBox extends ScrollPane {
     {
         setContent(container);
 
-        ScrollUtils.smoothScrolling(this);
+        ScrollUtils.installSmoothScrolling(this);
 
         setFitToHeight(true);
         setFitToWidth(true);

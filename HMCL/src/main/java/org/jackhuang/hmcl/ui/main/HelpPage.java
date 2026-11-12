@@ -33,7 +33,7 @@ public class HelpPage extends SpinnerPane {
         content.getStyleClass().add("spinner-pane-content");
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
-        ScrollUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         setContent(scrollPane);
 
         var docPane = LineButton.createExternalLinkButton(Metadata.DOCS_URL);

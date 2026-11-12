@@ -90,7 +90,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                             protected Skin<?> createDefaultSkin() {
                                 return new TreeViewSkin<>(this) {
                                     {
-                                        ScrollUtils.smoothScrolling(getVirtualFlow());
+                                        ScrollUtils.installSmoothScrolling(getVirtualFlow());
                                     }
                                 };
                             }

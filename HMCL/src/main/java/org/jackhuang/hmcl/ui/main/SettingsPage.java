@@ -64,7 +64,7 @@ public final class SettingsPage extends ScrollPane {
         VBox rootPane = new VBox(10);
         rootPane.setPadding(new Insets(10));
         this.setContent(rootPane);
-        ScrollUtils.smoothScrolling(this);
+        ScrollUtils.installSmoothScrolling(this);
 
         {
             ComponentList updatePaneList = new ComponentList();

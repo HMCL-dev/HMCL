@@ -346,7 +346,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                 }
             }
 
-            ScrollUtils.smoothScrolling(scroll);
+            ScrollUtils.installSmoothScrolling(scroll);
         }
 
         private LinePane createTextFieldLinePane(String title, StringProperty property, ValidatorBase... validators) {

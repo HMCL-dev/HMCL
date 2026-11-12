@@ -182,7 +182,7 @@ public class JFXComboBoxListViewSkin<T> extends ComboBoxListViewSkin<T> {
                 });
                 Platform.runLater(() -> {
                     if (listView.lookup(".virtual-flow") instanceof VirtualFlow<?> virtualFlow) {
-                        ScrollUtils.smoothScrolling(virtualFlow);
+                        ScrollUtils.installSmoothScrolling(virtualFlow);
                     }
                 });
             }
