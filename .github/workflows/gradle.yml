@@ -15,6 +15,9 @@ jobs:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
         java: ['17', '25', '27']
         include:
+          - os: ubuntu-latest
+            build-prefix: xvfb-run --auto-servernum
+            java-tool-options: -Djava.awt.headless=true
           - java: '17'
             cache-write: true
           - os: ubuntu-latest
@@ -39,23 +42,11 @@ jobs:
       with:
         cache-cleanup: never
         cache-read-only: ${{ !matrix.cache-write || github.ref_name != github.event.repository.default_branch }}
-    - name: Build with Gradle on Ubuntu
-      if: runner.os == 'Linux'
-      run: xvfb-run --auto-servernum ./gradlew build --no-daemon --parallel --stacktrace
+    - name: Build with Gradle
+      shell: bash
+      run: ${{ matrix.build-prefix }} ./gradlew build --no-daemon --parallel --stacktrace
       env:
-        JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
-        MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
-        CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
-    - name: Build with Gradle on Windows
-      if: runner.os == 'Windows'
-      run: .\gradlew.bat build --no-daemon --parallel --stacktrace
-      env:
-        MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
-        CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
-    - name: Build with Gradle on macOS
-      if: runner.os == 'macOS'
-      run: ./gradlew build --no-daemon --parallel --stacktrace
-      env:
+        JAVA_TOOL_OPTIONS: ${{ matrix.java-tool-options }}
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
     - if: always()
