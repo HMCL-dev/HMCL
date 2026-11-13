@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.zip.ZipException;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -98,6 +99,18 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
+    public @Unmodifiable List<LocalModFile> getModFilesForLoaderType(ModLoaderType modLoaderType) {
+        lock.lock();
+        try {
+            return localMods.values().stream()
+                    .filter(mod -> mod.getModLoaderType() == modLoaderType)
+                    .flatMap(mod -> mod.getFiles().stream())
+                    .toList();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public String getGameVersion() {
         lock.lock();
         try {
@@ -139,6 +152,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
         }
 
+        String fileNameWithoutExtension = FileUtils.getNameWithoutExtension(file);
+
         LocalModFile modInfo = null;
 
         List<Exception> exceptions = new ArrayList<>();
@@ -161,8 +176,22 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     }
                 }
             }
+
+            // We assume that if we can read the metadata, then the mod file should be okay to launch with.
+            // Therefore, we do the full verification here so that most mods won't be affected.
+            if (modInfo == null && CompressingUtils.isCorrupt(tree.getReader())) throw new ZipException();
         } catch (Exception e) {
-            LOG.warning("Failed to open mod file " + file, e);
+            if (e instanceof ZipException || e.getCause() instanceof ZipException) {
+                LOG.warning("Found corrupt mod file " + file, e);
+                modInfo = new LocalModFile(this,
+                        getLocalMod(fileNameWithoutExtension, ModLoaderType.CORRUPT),
+                        file,
+                        fileNameWithoutExtension,
+                        new LocalAddonFile.Description("litemod".equals(extension) ? "Corrupt LiteLoader Mod" : "Corrupt Mod")
+                );
+            } else {
+                LOG.warning("Failed to open mod file " + file, e);
+            }
         }
 
         if (modInfo == null) {
@@ -171,8 +200,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                 exception.addSuppressed(e);
             }
             LOG.warning("Failed to read mod metadata", exception);
-
-            String fileNameWithoutExtension = FileUtils.getNameWithoutExtension(file);
 
             modInfo = new LocalModFile(this,
                     getLocalMod(fileNameWithoutExtension, ModLoaderType.UNKNOWN),
