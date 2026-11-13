@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCard;
 import com.jfoenix.controls.JFXPopup;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -22,7 +23,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -129,12 +129,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 content = i18n("update.channel.dev.hint");
             }
 
-            VBox announcementCard = new VBox();
-
-            BorderPane titleBar = new BorderPane();
-            titleBar.getStyleClass().add("title");
-            titleBar.setLeft(new Label(title));
-
             JFXButton btnHide = new JFXButton();
             btnHide.setOnAction(e -> {
                 announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
@@ -144,14 +138,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
             });
             btnHide.getStyleClass().add("announcement-close-button");
             btnHide.setGraphic(SVG.CLOSE.createIcon(20));
-            titleBar.setRight(btnHide);
 
             TextFlow body = FXUtils.segmentToTextFlow(content, Controllers::onHyperlinkAction);
             body.setLineSpacing(4);
 
-            announcementCard.getChildren().setAll(titleBar, body);
-            announcementCard.setSpacing(16);
-            announcementCard.getStyleClass().addAll("card", "announcement");
+            JFXCard announcementCard = new JFXCard(body);
+            announcementCard.setHeadline(title);
+            announcementCard.setHeaderAction(btnHide);
+            announcementCard.setCardType(JFXCard.CardType.OUTLINED);
 
             VBox announcementBox = new VBox(16);
             announcementBox.setPadding(new Insets(15));

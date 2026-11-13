@@ -123,26 +123,6 @@
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
 }
 
-.announcement {
-    -fx-padding: 16;
-}
-
-.announcement .title {
-    -fx-text-fill: -monet-on-surface;
-    -fx-font-size: 14px;
-    -fx-font-weight: BOLD;
-}
-
-.announcement Text {
-    -fx-fill: -monet-on-surface;
-    -fx-font-size: 13px;
-}
-
-.announcement .hyperlink {
-    -fx-fill: -monet-primary;
-    -fx-font-size: 13px;
-}
-
 .rippler-container {
     -jfx-feedback-fill: -monet-on-surface;
 }
@@ -396,30 +376,21 @@
 .installer-item-wrapper {
     -fx-background-color: -monet-surface;
     -fx-background-radius: 4;
-    -fx-pref-width: 180px;
 }
 
-.installer-item-wrapper:card {
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
-}
-
-.installer-item-wrapper .installer-item:list-item {
+.installer-item-wrapper .installer-item {
     -fx-padding: 8px;
     -fx-border-color: -monet-outline-variant;
     -fx-border-width: 0 0 1 0;
     -fx-alignment: center-left;
 }
 
-.installer-item-wrapper .installer-item:list-item > .installer-item-name {
+.installer-item-wrapper .installer-item > .installer-item-name {
     -fx-pref-width: 100px;
 }
 
-.installer-item-wrapper .installer-item:list-item > .installer-item-status {
+.installer-item-wrapper .installer-item > .installer-item-status {
     -fx-max-width: infinity;
-}
-
-.installer-item-wrapper .installer-item:card {
-    -fx-alignment: center;
 }
 
 /*******************************************************************************
@@ -1077,6 +1048,121 @@
 
 .padding-8 {
     -fx-padding: 8px;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * JFX Card			                                                           *
+ *                                                                             *
+ ******************************************************************************/
+
+.jfx-card {
+    -fx-background-color: -monet-surface-container-low;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+    -fx-cursor: default;
+    -jfx-feedback-fill: transparent;
+}
+
+.jfx-card .card-header,
+.jfx-card .card-body,
+.jfx-card .card-actions,
+.jfx-card .card-side-row {
+    -fx-padding: 16;
+}
+
+.jfx-card .card-header,
+.jfx-card .card-body,
+.jfx-card .card-side-row {
+    -fx-spacing: 16;
+}
+
+.jfx-card .card-titles {
+    -fx-spacing: 8;
+}
+
+.jfx-card .card-body:continuation,
+.jfx-card .card-actions:continuation {
+    -fx-padding: 0 16 16 16;
+}
+
+.jfx-card .card-header:embedded,
+.jfx-card .card-body:embedded {
+    -fx-padding: 0;
+}
+
+.jfx-card .card-body:embedded:continuation {
+    -fx-padding: 16 0 0 0;
+}
+
+.jfx-card .card-actions {
+    -fx-hgap: 8;
+    -fx-vgap: 8;
+}
+
+.jfx-card .card-headline {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.jfx-card .card-subhead,
+.jfx-card .card-supporting-text {
+    -fx-font-size: 14px;
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.jfx-card .card-body > Text,
+.jfx-card .card-body > TextFlow > Text {
+    -fx-font-size: 14px;
+    -fx-fill: -monet-on-surface-variant;
+}
+
+.jfx-card .card-body > Text.hyperlink,
+.jfx-card .card-body > TextFlow > Text.hyperlink {
+    -fx-fill: -monet-primary;
+}
+
+.jfx-card:elevated {
+    -fx-background-color: -monet-surface-container-low;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.20), 3, 0, 0, 1);
+}
+
+.jfx-card:filled {
+    -fx-background-color: -monet-surface-container-highest;
+    -fx-effect: null;
+}
+
+.jfx-card:outlined {
+    -fx-background-color: -monet-surface;
+    -fx-border-color: -monet-outline-variant;
+    -fx-border-width: 1;
+    /* Align the inside stroke's centerline with the 12px background corner. */
+    -fx-border-radius: 11.5;
+    -fx-effect: null;
+}
+
+.jfx-card:interactive {
+    -fx-cursor: hand;
+    -jfx-feedback-fill: -monet-on-surface;
+}
+
+.jfx-card:elevated:interactive:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.20), 6, 0, 0, 2);
+}
+
+.jfx-card:filled:interactive:hover,
+.jfx-card:outlined:interactive:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.20), 3, 0, 0, 1);
+}
+
+.jfx-card:disabled,
+.jfx-card:interactive:disabled:hover {
+    -fx-cursor: default;
+    -jfx-feedback-fill: transparent;
+    -fx-effect: null;
 }
 
 .card {

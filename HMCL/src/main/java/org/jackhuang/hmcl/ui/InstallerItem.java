@@ -5,9 +5,9 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -24,6 +24,8 @@ import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -35,7 +37,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class InstallerItem extends Control {
     private final GameComponentType type;
     private final GameInstanceIconType iconType;
-    private final Style style;
     private final ObjectProperty<InstalledState> versionProperty = new SimpleObjectProperty<>(this, "version", null);
     private final ObjectProperty<State> resolvedStateProperty = new SimpleObjectProperty<>(this, "resolvedState", InstallableState.INSTANCE);
 
@@ -58,14 +59,9 @@ public class InstallerItem extends Control {
     public record InstalledState(String version, boolean external, boolean incompatibleWithGame) implements State {
     }
 
-    public enum Style {
-        LIST_ITEM,
-        CARD,
-    }
-
-    public InstallerItem(GameComponentType type, Style style) {
+    /// Creates a list row for the given game component.
+    public InstallerItem(GameComponentType type) {
         this.type = type;
-        this.style = style;
         this.iconType = GameInstanceIconType.getIconType(type);
     }
 
@@ -139,19 +135,21 @@ public class InstallerItem extends Control {
             }
         }
 
-        public InstallerItemGroup(GameVersionNumber gameVersion, Style style) {
-            game = new InstallerItem(GameComponentType.GAME, style);
-            InstallerItem fabric = new InstallerItem(GameComponentType.FABRIC, style);
-            InstallerItem fabricApi = new InstallerItem(GameComponentType.FABRIC_API, style);
-            InstallerItem forge = new InstallerItem(GameComponentType.FORGE, style);
-            InstallerItem cleanroom = new InstallerItem(GameComponentType.CLEANROOM, style);
-            InstallerItem legacyfabric = new InstallerItem(GameComponentType.LEGACY_FABRIC, style);
-            InstallerItem legacyfabricApi = new InstallerItem(GameComponentType.LEGACY_FABRIC_API, style);
-            InstallerItem neoForge = new InstallerItem(GameComponentType.NEO_FORGE, style);
-            InstallerItem liteLoader = new InstallerItem(GameComponentType.LITELOADER, style);
-            InstallerItem optiFine = new InstallerItem(GameComponentType.OPTIFINE, style);
-            InstallerItem quilt = new InstallerItem(GameComponentType.QUILT, style);
-            InstallerItem quiltApi = new InstallerItem(GameComponentType.QUILT_API, style);
+        /// Creates component rows and their compatibility bindings for the game version.
+        /// A null version includes all supported components without marking the game as installed.
+        public InstallerItemGroup(@Nullable GameVersionNumber gameVersion) {
+            game = new InstallerItem(GameComponentType.GAME);
+            InstallerItem fabric = new InstallerItem(GameComponentType.FABRIC);
+            InstallerItem fabricApi = new InstallerItem(GameComponentType.FABRIC_API);
+            InstallerItem forge = new InstallerItem(GameComponentType.FORGE);
+            InstallerItem cleanroom = new InstallerItem(GameComponentType.CLEANROOM);
+            InstallerItem legacyfabric = new InstallerItem(GameComponentType.LEGACY_FABRIC);
+            InstallerItem legacyfabricApi = new InstallerItem(GameComponentType.LEGACY_FABRIC_API);
+            InstallerItem neoForge = new InstallerItem(GameComponentType.NEO_FORGE);
+            InstallerItem liteLoader = new InstallerItem(GameComponentType.LITELOADER);
+            InstallerItem optiFine = new InstallerItem(GameComponentType.OPTIFINE);
+            InstallerItem quilt = new InstallerItem(GameComponentType.QUILT);
+            InstallerItem quiltApi = new InstallerItem(GameComponentType.QUILT_API);
 
             Map<InstallerItem, Set<InstallerItem>> incompatibleMap = new HashMap<>();
             mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom, legacyfabric);
@@ -224,111 +222,31 @@ public class InstallerItem extends Control {
         }
     }
 
+    /// Presents an installer as a compact list row with state-bound actions.
+    @NotNullByDefault
     private static final class InstallerItemSkin extends SkinBase<InstallerItem> {
-        private static final PseudoClass LIST_ITEM = PseudoClass.getPseudoClass("list-item");
-        private static final PseudoClass CARD = PseudoClass.getPseudoClass("card");
+        /// Dims the description of an incompatible component.
+        private static final PseudoClass INCOMPATIBLE = PseudoClass.getPseudoClass("incompatible");
 
-        @SuppressWarnings({"FieldCanBeLocal", "unused"})
-        private final ChangeListener<Number> holder;
-
-        /// Creates an installer row with its surface and feedback in the same rounded container.
+        /// Creates the row and binds its actions to the installation state.
         InstallerItemSkin(InstallerItem control) {
             super(control);
-
-            Pane pane;
-            if (control.style == Style.CARD) {
-                pane = new VBox();
-                holder = FXUtils.onWeakChangeAndOperate(pane.widthProperty(), v -> FXUtils.setLimitHeight(pane, v.doubleValue() * 0.7));
-            } else {
-                pane = new HBox();
-                holder = null;
-            }
-            pane.getStyleClass().add("installer-item");
-            RipplerContainer container = new RipplerContainer(pane);
-            container.getStyleClass().add("installer-item-wrapper");
-            getChildren().setAll(container);
-
-            pane.pseudoClassStateChanged(LIST_ITEM, control.style == Style.LIST_ITEM);
-            pane.pseudoClassStateChanged(CARD, control.style == Style.CARD);
-            container.pseudoClassStateChanged(CARD, control.style == Style.CARD);
-
-            if (control.iconType != null) {
-                var imageContainer = new ImageContainer(32);
-                imageContainer.setImage(control.iconType.getIcon());
-                imageContainer.setMouseTransparent(true);
-                imageContainer.getStyleClass().add("installer-item-image");
-                pane.getChildren().add(imageContainer);
-
-                if (control.style == Style.CARD) {
-                    VBox.setMargin(imageContainer, new Insets(8, 0, 8, 0));
-                }
-            }
-
-            Label nameLabel = new Label();
-            nameLabel.getStyleClass().add("installer-item-name");
-            nameLabel.setMouseTransparent(true);
-            pane.getChildren().add(nameLabel);
-            nameLabel.textProperty().set(I18n.hasKey("install.installer." + control.type.getPatchId()) ? i18n("install.installer." + control.type.getPatchId()) : control.type.getPatchId());
-            HBox.setMargin(nameLabel, new Insets(0, 4, 0, 4));
-
-            Label statusLabel = new Label();
-            statusLabel.getStyleClass().add("installer-item-status");
-            statusLabel.setMouseTransparent(true);
-            pane.getChildren().add(statusLabel);
-            HBox.setHgrow(statusLabel, Priority.ALWAYS);
-            statusLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                State state = control.resolvedStateProperty.get();
-
-                if (state instanceof InstalledState installedState) {
-                    if (installedState.incompatibleWithGame) {
-                        return i18n("install.installer.change_version", installedState.version);
-                    }
-                    if (installedState.external) {
-                        return i18n("install.installer.external_version", installedState.version);
-                    }
-                    return i18n("install.installer.version", installedState.version);
-                } else if (state instanceof InstallableState) {
-                    return control.style == Style.CARD
-                            ? i18n("install.installer.do_not_install")
-                            : i18n("install.installer.not_installed");
-                } else if (state instanceof IncompatibleState incompatibleState) {
-                    return i18n("install.installer.incompatible", i18n("install.installer." + incompatibleState.incompatibleItemName));
-                } else {
-                    throw new AssertionError("Unknown state type: " + state.getClass());
-                }
-            }, control.resolvedStateProperty));
-            FXUtils.onChangeAndOperate(
-                control.resolvedStateProperty,
-                state -> statusLabel.pseudoClassStateChanged(
-                    PseudoClass.getPseudoClass("incompatible"),
-                    state instanceof IncompatibleState
-                )
-            );
-            BorderPane.setMargin(statusLabel, new Insets(0, 0, 0, 8));
-            BorderPane.setAlignment(statusLabel, Pos.CENTER_LEFT);
-
-            HBox buttonsContainer = new HBox();
-            buttonsContainer.setPickOnBounds(false);
-            buttonsContainer.setSpacing(8);
-            buttonsContainer.setAlignment(Pos.CENTER);
-            pane.getChildren().add(buttonsContainer);
 
             JFXButton removeButton = FXUtils.newToggleButton4(SVG.CLOSE);
             if (control.type == GameComponentType.GAME) {
                 removeButton.setVisible(false);
             } else {
                 removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
-                    State state = control.resolvedStateProperty.get();
+                    @Nullable State state = control.resolvedStateProperty.get();
                     return state instanceof InstalledState installedState && !installedState.external;
                 }, control.resolvedStateProperty));
             }
             removeButton.managedProperty().bind(removeButton.visibleProperty());
             removeButton.setOnAction(e -> {
-                Runnable onRemove = control.getOnRemove();
+                @Nullable Runnable onRemove = control.getOnRemove();
                 if (onRemove != null)
                     onRemove.run();
             });
-            buttonsContainer.getChildren().add(removeButton);
 
             JFXButton installButton = new JFXButton();
             installButton.graphicProperty().bind(Bindings.createObjectBinding(() ->
@@ -343,7 +261,7 @@ public class InstallerItem extends Control {
                     return false;
                 }
 
-                State state = control.resolvedStateProperty.get();
+                @Nullable State state = control.resolvedStateProperty.get();
                 if (state instanceof InstallableState) {
                     return true;
                 }
@@ -355,16 +273,76 @@ public class InstallerItem extends Control {
             }, control.resolvedStateProperty, control.onInstall));
             installButton.managedProperty().bind(installButton.visibleProperty());
             installButton.setOnAction(e -> {
-                Runnable onInstall = control.getOnInstall();
+                @Nullable Runnable onInstall = control.getOnInstall();
                 if (onInstall != null)
                     onInstall.run();
             });
-            buttonsContainer.getChildren().add(installButton);
+
+            @Nullable ImageContainer image = null;
+            if (control.iconType != null) {
+                image = new ImageContainer(32);
+                image.setImage(control.iconType.getIcon());
+                image.setMouseTransparent(true);
+                image.getStyleClass().add("installer-item-image");
+            }
+            String name = I18n.hasKey("install.installer." + control.type.getPatchId())
+                    ? i18n("install.installer." + control.type.getPatchId()) : control.type.getPatchId();
+            StringBinding status = createStatusText(control);
+            getChildren().setAll(createListItem(control, image, name, status, removeButton, installButton));
+        }
+
+        /// Formats the resolved installation state for the row.
+        private static StringBinding createStatusText(InstallerItem control) {
+            return Bindings.createStringBinding(() -> {
+                State state = Objects.requireNonNull(control.resolvedStateProperty.get());
+                if (state instanceof InstalledState installedState) {
+                    if (installedState.incompatibleWithGame)
+                        return i18n("install.installer.change_version", installedState.version);
+                    if (installedState.external)
+                        return i18n("install.installer.external_version", installedState.version);
+                    return i18n("install.installer.version", installedState.version);
+                } else if (state instanceof InstallableState) {
+                    return i18n("install.installer.not_installed");
+                } else if (state instanceof IncompatibleState incompatibleState) {
+                    return i18n("install.installer.incompatible", i18n("install.installer." + incompatibleState.incompatibleItemName));
+                } else {
+                    throw new AssertionError("Unknown state type: " + state.getClass());
+                }
+            }, control.resolvedStateProperty);
+        }
+
+        /// Creates the compact row with its existing horizontal layout and mouse activation.
+        private static RipplerContainer createListItem(InstallerItem control, @Nullable ImageContainer image, String name,
+                                                       StringBinding status, JFXButton removeButton, JFXButton installButton) {
+            HBox pane = new HBox();
+            pane.getStyleClass().add("installer-item");
+            RipplerContainer container = new RipplerContainer(pane);
+            container.getStyleClass().add("installer-item-wrapper");
+            if (image != null)
+                pane.getChildren().add(image);
+
+            Label nameLabel = new Label(name);
+            nameLabel.getStyleClass().add("installer-item-name");
+            nameLabel.setMouseTransparent(true);
+            HBox.setMargin(nameLabel, new Insets(0, 4, 0, 4));
+
+            Label statusLabel = new Label();
+            statusLabel.getStyleClass().add("installer-item-status");
+            statusLabel.setMouseTransparent(true);
+            statusLabel.textProperty().bind(status);
+            HBox.setHgrow(statusLabel, Priority.ALWAYS);
+            FXUtils.onChangeAndOperate(control.resolvedStateProperty,
+                    state -> statusLabel.pseudoClassStateChanged(INCOMPATIBLE, state instanceof IncompatibleState));
+
+            HBox buttonsContainer = new HBox(8, removeButton, installButton);
+            buttonsContainer.setPickOnBounds(false);
+            buttonsContainer.setAlignment(Pos.CENTER);
+            pane.getChildren().addAll(nameLabel, statusLabel, buttonsContainer);
 
             FXUtils.onChangeAndOperate(installButton.visibleProperty(), clickable -> {
                 if (clickable) {
                     container.setOnMouseClicked(event -> {
-                        Runnable onInstall = control.getOnInstall();
+                        @Nullable Runnable onInstall = control.getOnInstall();
                         if (onInstall != null && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
                             onInstall.run();
                             event.consume();
@@ -376,6 +354,7 @@ public class InstallerItem extends Control {
                     pane.setCursor(Cursor.DEFAULT);
                 }
             });
+            return container;
         }
     }
 }
