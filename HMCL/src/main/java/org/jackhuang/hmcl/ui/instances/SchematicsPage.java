@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
+import com.jfoenix.controls.JFXTooltip;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
@@ -696,7 +697,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
         private final BooleanProperty isFileProperty = new SimpleBooleanProperty(this, "isFile", false);
         private final BooleanProperty isDirectoryProperty = new SimpleBooleanProperty(this, "isDirectory", false);
 
-        private final Tooltip tooltip = new Tooltip();
+        private final Tooltip tooltip = new JFXTooltip();
 
         public Cell(JFXListView<Item> listView) {
             super(listView);
@@ -726,7 +727,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                     var f = SVG.FOLDER.createIcon();
                     btnReveal.graphicProperty().bind(Bindings.when(isDirectoryProperty).then(fo).otherwise(f));
 
-                    var tooltip = new Tooltip();
+                    var tooltip = new JFXTooltip();
                     tooltip.textProperty().bind(Bindings.when(isDirectoryProperty).then(i18n("button.reveal_dir")).otherwise(i18n("reveal.in_file_manager")));
                     FXUtils.installFastTooltip(btnReveal, tooltip);
                 }

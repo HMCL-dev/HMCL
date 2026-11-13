@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.controls.JFXTooltip;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
@@ -782,11 +783,12 @@ public class TwoLineListItem extends Region {
         private void initializeCollapsedTooltip() {
             if (collapsedTag.getTooltip() != null)
                 return;
-            Tooltip tooltip = new Tooltip();
+            Tooltip tooltip = new JFXTooltip();
             tooltip.setShowDelay(TAG_TOOLTIP_SHOW_DELAY);
             tooltip.setHideDelay(Duration.ZERO);
             tooltip.setOnShowing(event -> updateCollapsedTooltip(tooltip));
             collapsedTag.setTooltip(tooltip);
+            JFXTooltip.install(collapsedTag, tooltip);
         }
 
         /// Rebuilds the hidden-tag description only after its values or visible prefix change.

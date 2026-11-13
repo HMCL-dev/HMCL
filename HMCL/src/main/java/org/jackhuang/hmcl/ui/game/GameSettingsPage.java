@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.game;
 
+import com.jfoenix.controls.JFXTooltip;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
@@ -1348,7 +1349,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         var button = new JFXButton();
         button.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-        Tooltip tooltip = new Tooltip();
+        Tooltip tooltip = new JFXTooltip();
         button.getProperties().put(INHERIT_BUTTON_TOOLTIP_KEY, tooltip);
         FXUtils.installFastTooltip(button, tooltip);
         updateInheritanceButton(button, true);

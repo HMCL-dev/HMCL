@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
+import com.jfoenix.controls.JFXTooltip;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
@@ -273,7 +274,7 @@ public final class WorldListPage extends ListPageBase<World> {
 
             {
                 StackPane left = new StackPane();
-                this.leftTooltip = new Tooltip();
+                this.leftTooltip = new JFXTooltip();
                 FXUtils.installSlowTooltip(left, leftTooltip);
                 root.setLeft(left);
                 left.setPadding(new Insets(0, 8, 0, 0));

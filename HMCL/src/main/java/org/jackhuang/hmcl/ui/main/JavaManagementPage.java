@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
+import com.jfoenix.controls.JFXTooltip;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
@@ -228,7 +229,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         private SVG removeIcon;
         private final JFXButton removeButton;
         private final StackPane removeIconPane;
-        private final Tooltip removeTooltip = new Tooltip();
+        private final Tooltip removeTooltip = new JFXTooltip();
 
         /// Creates a Java runtime cell with interactive tags and independent removal controls.
         JavaItemCell(JFXListView<JavaRuntime> listView) {

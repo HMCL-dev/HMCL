@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
+import com.jfoenix.controls.JFXTooltip;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -131,7 +132,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 item.titleProperty().bind(title);
                 item.setSubtitle(server.getDisplayHostUrl());
 
-                Tooltip tooltip = new Tooltip();
+                Tooltip tooltip = new JFXTooltip();
                 if (restricted) {
                     tooltip.setText(i18n("account.login.restricted"));
                     item.setActionDisabled(true);

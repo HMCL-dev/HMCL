@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
+import com.jfoenix.controls.JFXTooltip;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
@@ -62,7 +63,7 @@ public class AccountAdvancedListItem extends AdvancedListItem {
 
     /// Creates an account item; null enables scrolling through the configured accounts.
     public AccountAdvancedListItem(@Nullable Account account) {
-        tooltip = new Tooltip();
+        tooltip = new JFXTooltip();
 
         canvas = new Canvas(32, 32);
         canvas.setMouseTransparent(true);

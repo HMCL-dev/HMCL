@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
+import com.jfoenix.controls.JFXTooltip;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
@@ -62,7 +63,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         subtitle.getStyleClass().add("subtitle");
         subtitle.textProperty().bind(skinnable.subtitleProperty());
         if (skinnable.getAccount() instanceof AuthlibInjectorAccount) {
-            Tooltip tooltip = new Tooltip();
+            Tooltip tooltip = new JFXTooltip();
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) skinnable.getAccount()).getServer();
             tooltip.textProperty().bind(BindingMapping.of(server, AuthlibInjectorServer::toString));
             FXUtils.installSlowTooltip(subtitle, tooltip);

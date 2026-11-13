@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.controls.JFXTooltip;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSpinner;
@@ -101,7 +102,7 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
         private final JFXButton actionButton = FXUtils.newToggleButton4(SVG.ARROW_FORWARD);
 
         /// Describes the current row action.
-        private final Tooltip actionTooltip = new Tooltip();
+        private final Tooltip actionTooltip = new JFXTooltip();
 
         /// Creates a row that activates the current task through its body or trailing action.
         private TaskCell() {
