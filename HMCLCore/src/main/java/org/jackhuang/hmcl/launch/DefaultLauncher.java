@@ -17,6 +17,8 @@ import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jackhuang.hmcl.util.platform.macos.HomebrewUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -39,11 +41,21 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @author huangyuhui
 public class DefaultLauncher extends Launcher {
 
+    /// the native library directory selected by the launch options
+    private final @NotNull Path nativeFolder;
+
     public DefaultLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         super(instance, manifest, authInfo, options, listener, daemon);
+
+        if (StringUtils.isBlank(options.getNativesDir())) {
+            nativeFolder = instance.getNativeDirectory(options.getJava().getPlatform());
+        } else {
+            nativeFolder = Path.of(options.getNativesDir());
+        }
     }
 
-    private Command generateCommandLine(Path nativeFolder) throws IOException {
+    @Contract(value = " -> new", pure = true)
+    private @NotNull Command generateCommandLine() throws IOException {
         CommandBuilder res = new CommandBuilder();
 
         switch (options.getProcessPriority()) {
@@ -82,7 +94,7 @@ public class DefaultLauncher extends Launcher {
 
         // Executable
         if (StringUtils.isNotBlank(options.getWrapper()))
-            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars(nativeFolder)));
+            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), generateEnvVars()));
 
         res.add(options.getJavaExecutable().toString());
 
@@ -359,13 +371,32 @@ public class DefaultLauncher extends Launcher {
             try {
                 ServerAddress parsed = ServerAddress.parse(address);
                 if (World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
-                    res.add("--quickPlayMultiplayer");
-                    res.add(parsed.port() >= 0 ? address : parsed.host() + ":25565");
+
+                    String quickPlayMultiplayerArg;
+                    if (World.supportQueryArgServerAddress(GameVersionNumber.asGameVersion(gameVersion))) {
+                        // keep original address.
+                        quickPlayMultiplayerArg = parsed.getRawAddress();
+                    } else {
+                        if (parsed.isIncludeParameterContent()) {
+                            LOG.warning("Ignore the query parameters in the server address.");
+                            // Before support for parameter addresses was introduced, the host did not permit the use of the '@' and '?'.
+                            quickPlayMultiplayerArg = parsed.getHostAndPort().toString();
+                        } else {
+                            quickPlayMultiplayerArg = parsed.getRawAddress();
+                        }
+                    }
+
+                    res.add("--quickPlayMultiplayer").add(quickPlayMultiplayerArg.trim());
                 } else {
-                    res.add("--server");
-                    res.add(parsed.host());
-                    res.add("--port");
-                    res.add(parsed.port() >= 0 ? String.valueOf(parsed.port()) : "25565");
+                    String serverArg = parsed.getHostAndPort().host();
+                    String portArg = String.valueOf(parsed.getHostAndPort().port());
+
+                    res.add("--server").add(serverArg.trim());
+                    res.add("--port").add(portArg.trim());
+
+                    if (parsed.isIncludeParameterContent()) {
+                        LOG.warning("Ignore the query parameters in the server address.");
+                    }
                 }
             } catch (IllegalArgumentException e) {
                 LOG.warning("Invalid server address: " + address, e);
@@ -644,20 +675,10 @@ public class DefaultLauncher extends Launcher {
         );
     }
 
-    /// Returns the native library directory selected by the launch options.
-    private Path getNativeFolder() {
-        if (StringUtils.isBlank(options.getNativesDir())) {
-            return instance.getNativeDirectory(options.getJava().getPlatform());
-        }
-
-        return Path.of(options.getNativesDir());
-    }
-
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        Path nativeFolder = getNativeFolder();
-
-        final Command command = generateCommandLine(nativeFolder);
+        final Command command = generateCommandLine();
+        final Map<String, String> envVars = generateEnvVars();
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
@@ -681,8 +702,8 @@ public class DefaultLauncher extends Launcher {
         Path runDirectory = instance.getRunDirectory();
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars(nativeFolder))).directory(runDirectory.toFile());
-            builder.environment().putAll(getEnvVars(nativeFolder));
+            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), envVars)).directory(runDirectory.toFile());
+            builder.environment().putAll(envVars);
             SystemUtils.callExternalProcess(builder);
         }
 
@@ -695,7 +716,7 @@ public class DefaultLauncher extends Launcher {
             Path appdata = options.getGameDir().toAbsolutePath().getParent();
             if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
 
-            builder.environment().putAll(getEnvVars(nativeFolder));
+            builder.environment().putAll(envVars);
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
@@ -703,11 +724,12 @@ public class DefaultLauncher extends Launcher {
 
         ManagedProcess p = new ManagedProcess(process, rawCommandLine);
         if (listener != null)
-            startMonitors(p, nativeFolder, listener, command.encoding, daemon);
+            startMonitors(p, envVars, listener, command.encoding, daemon);
         return p;
     }
 
-    private Map<String, String> getEnvVars(Path nativeFolder) {
+    @Contract(value = " -> new", pure = true)
+    private @NotNull Map<String, String> generateEnvVars() {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(manifest.id().toString());
 
         Map<String, String> env = new LinkedHashMap<>();
@@ -859,8 +881,6 @@ public class DefaultLauncher extends Launcher {
     public void makeLaunchScript(Path scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
-        Path nativeFolder = getNativeFolder();
-
         String scriptExtension = FileUtils.getExtension(scriptFile);
         boolean usePowerShell = "ps1".equals(scriptExtension);
 
@@ -871,9 +891,9 @@ public class DefaultLauncher extends Launcher {
                 throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh', 'bash', 'ps1' or 'command' in macOS/Linux");
         }
 
-        final Command commandLine = generateCommandLine(nativeFolder);
+        final Command commandLine = generateCommandLine();
         final String command = usePowerShell ? null : commandLine.commandLine.toString();
-        Map<String, String> envVars = getEnvVars(nativeFolder);
+        final Map<String, String> envVars = generateEnvVars();
 
         if (isWindows && !usePowerShell) {
             // https://stackoverflow.com/a/28452546
@@ -1016,7 +1036,7 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, Path nativeFolder, ProcessListener processListener, Charset encoding, boolean isDaemon) {
+    private void startMonitors(ManagedProcess managedProcess, Map<String, String> envVars, ProcessListener processListener, Charset encoding, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, false);
@@ -1033,8 +1053,8 @@ public class DefaultLauncher extends Launcher {
 
             if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars(nativeFolder))).directory(options.getGameDir().toFile());
-                    builder.environment().putAll(getEnvVars(nativeFolder));
+                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), envVars)).directory(options.getGameDir().toFile());
+                    builder.environment().putAll(envVars);
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
                     LOG.warning("An Exception happened while running exit command.", e);
