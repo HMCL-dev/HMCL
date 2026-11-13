@@ -9,6 +9,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -308,12 +309,19 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             {
 
                 // Toolbar Selecting
+                // selectAll() clears the selection first, causing the toolbar to flicker.
+                var selectAllButton = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
+                        listView.getSelectionModel().selectRange(0, listView.getItems().size()));
+
+                ListChangeListener<Object> selectionListener = change -> selectAllButton.setDisable(!listView.getItems().isEmpty()
+                        && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+                listView.getSelectionModel().getSelectedItems().addListener(selectionListener);
+                listView.getItems().addListener(selectionListener);
+
                 toolbarSelecting.getChildren().setAll(
-                        createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                                control.removeSelected(listView.getSelectionModel().getSelectedItems());
-                            }, null);
-                        }),
+                        createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () ->
+                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
+                                control.removeSelected(listView.getSelectionModel().getSelectedItems()), null)),
                         createToolbarButton2(i18n("button.enable"), SVG.CHECK, () ->
                                 control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
                         createToolbarButton2(i18n("button.disable"), SVG.CLOSE, () ->
@@ -323,8 +331,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                         listView.getSelectionModel().getSelectedItems().stream().map(ResourcePackInfoObject::getFile).toList()
                                 )
                         ),
-                        createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
-                                listView.getSelectionModel().selectAll()),
+                        selectAllButton,
                         createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
                                 listView.getSelectionModel().clearSelection())
                 );
