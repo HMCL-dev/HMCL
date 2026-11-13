@@ -3,7 +3,7 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
-import javafx.animation.Interpolator;
+import com.jfoenix.controls.JFXSpinner;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -24,26 +24,32 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorScheme;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
+import org.jackhuang.hmcl.util.TaskManager;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_DURATION;
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_INTERPOLATOR;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Renders the clipped background, title bar, and navigation content owned by a [Decorator].
 @NotNullByDefault
 final class MainWindowPane extends StackPane {
     /// The diameter, in pixels, of the rounded window corners.
-    private static final double ARC = 8.0;
+    private static final double ARC = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+            ? 8.0
+            : 32.0;
 
     /// The decorator whose state and actions are represented by this pane.
     private final Decorator decorator;
@@ -168,7 +174,7 @@ final class MainWindowPane extends StackPane {
         return backgroundNode;
     }
 
-    /// Creates the help, minimize, and application-close buttons.
+    /// Creates the task, help, minimize, and application-close buttons.
     ///
     /// @return a size-limited top-right button row
     private HBox createWindowButtons() {
@@ -176,6 +182,34 @@ final class MainWindowPane extends StackPane {
         buttons.setAlignment(Pos.TOP_RIGHT);
         decorator.capableDraggingWindow(buttons);
         buttons.setMaxSize(Region.USE_PREF_SIZE, 40);
+
+        JFXButton tasksButton = new JFXButton();
+        tasksButton.setFocusTraversable(false);
+        tasksButton.setAccessibleText(i18n("task.list"));
+        tasksButton.getStyleClass().add("jfx-decorator-button");
+        tasksButton.setOnAction(event -> {
+            if (!(decorator.getNavigator().getCurrentPage() instanceof TaskManagerPage))
+                Controllers.navigate(new TaskManagerPage());
+        });
+        decorator.forbidDraggingWindow(tasksButton);
+
+        SVGPath tasksEmptyIcon = SVG.LIST_ALT.createIcon(Themes.titleFillProperty());
+
+        holder.onWeakChangeAndOperate(TaskManager.getInstance().statusProperty(), status -> {
+            switch (status) {
+                case IDLE -> tasksButton.setGraphic(tasksEmptyIcon);
+                case PENDING -> tasksButton.setGraphic(SVG.PENDING.createIcon(Themes.titleFillProperty()));
+                case RUNNING -> {
+                    JFXSpinner tasksSpinner = new JFXSpinner();
+                    tasksSpinner.getStyleClass().add("small-spinner");
+                    tasksSpinner.setRadius(9);
+                    tasksSpinner.setMouseTransparent(true);
+                    FXUtils.setLimitWidth(tasksSpinner, 20);
+                    FXUtils.setLimitHeight(tasksSpinner, 20);
+                    tasksButton.setGraphic(tasksSpinner);
+                }
+            }
+        });
 
         JFXButton helpButton = new JFXButton();
         helpButton.setFocusTraversable(false);
@@ -198,7 +232,7 @@ final class MainWindowPane extends StackPane {
         closeButton.setOnAction(event -> decorator.closeWindow());
         decorator.forbidDraggingWindow(closeButton);
 
-        buttons.getChildren().setAll(helpButton, minimizeButton, closeButton);
+        buttons.getChildren().setAll(tasksButton, helpButton, minimizeButton, closeButton);
         return buttons;
     }
 
@@ -238,7 +272,7 @@ final class MainWindowPane extends StackPane {
                 default -> ContainerAnimations.FADE;
             };
             decorator.setNavigationDirection(Navigation.NavigationDirection.START);
-            navBarPane.setContent(navBar, animation, Motion.SHORT4);
+            navBarPane.setContent(navBar, animation);
         } else {
             navBarPane.getChildren().setAll(navBar);
         }
@@ -328,17 +362,14 @@ final class MainWindowPane extends StackPane {
             public void init(TransitionPane container, Node previousNode, Node nextNode) {
                 super.init(container, previousNode, nextNode);
                 nextNode.setTranslateX(container.getWidth());
+                // Clipping hides the title; nonzero opacity skips offscreen rendering preparation.
+                nextNode.setOpacity(1);
             }
 
             /// {@inheritDoc}
             @Override
-            public Timeline animate(
-                    Pane container,
-                    Node previousNode,
-                    Node nextNode,
-                    Duration duration,
-                    Interpolator interpolator) {
-                return createTimeline(previousNode, nextNode, 50, -50, duration, interpolator);
+            public Timeline animate(Pane container, Node previousNode, Node nextNode) {
+                return createTimeline(previousNode, nextNode, 50, -50);
             }
 
             /// {@inheritDoc}
@@ -355,17 +386,14 @@ final class MainWindowPane extends StackPane {
             public void init(TransitionPane container, Node previousNode, Node nextNode) {
                 super.init(container, previousNode, nextNode);
                 nextNode.setTranslateX(-container.getWidth());
+                // Clipping hides the title; nonzero opacity skips offscreen rendering preparation.
+                nextNode.setOpacity(1);
             }
 
             /// {@inheritDoc}
             @Override
-            public Timeline animate(
-                    Pane container,
-                    Node previousNode,
-                    Node nextNode,
-                    Duration duration,
-                    Interpolator interpolator) {
-                return createTimeline(previousNode, nextNode, -50, 50, duration, interpolator);
+            public Timeline animate(Pane container, Node previousNode, Node nextNode) {
+                return createTimeline(previousNode, nextNode, -50, 50);
             }
 
             /// {@inheritDoc}
@@ -381,27 +409,23 @@ final class MainWindowPane extends StackPane {
         /// @param nextNode       the title being shown
         /// @param nextOffset     the initial offset of the next title
         /// @param previousOffset the final offset of the previous title
-        /// @param duration       the transition duration
-        /// @param interpolator   the transition interpolator
         /// @return the unstarted transition timeline
         private static Timeline createTimeline(
                 Node previousNode,
                 Node nextNode,
                 double nextOffset,
-                double previousOffset,
-                Duration duration,
-                Interpolator interpolator) {
+                double previousOffset) {
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
-                            new KeyValue(nextNode.translateXProperty(), nextOffset, interpolator),
-                            new KeyValue(previousNode.translateXProperty(), 0, interpolator),
-                            new KeyValue(nextNode.opacityProperty(), 0, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 1, interpolator)),
-                    new KeyFrame(duration,
-                            new KeyValue(nextNode.translateXProperty(), 0, interpolator),
-                            new KeyValue(previousNode.translateXProperty(), previousOffset, interpolator),
-                            new KeyValue(nextNode.opacityProperty(), 1, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 0, interpolator)));
+                            new KeyValue(nextNode.translateXProperty(), nextOffset, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR)),
+                    new KeyFrame(DEFAULT_DURATION,
+                            new KeyValue(nextNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.translateXProperty(), previousOffset, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR)));
         }
     }
 }

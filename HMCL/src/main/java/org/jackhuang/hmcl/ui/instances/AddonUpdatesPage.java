@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.addon.update.AddonUpdateTask;
@@ -36,6 +37,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lazy;
@@ -44,6 +46,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
@@ -96,12 +99,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             listView = new JFXListView<>();
             listView.setItems(objects);
             listView.getStyleClass().add("jfx-list-view-float");
+            listView.getStyleClass().add("no-horizontal-scrollbar");
             listView.setPlaceholder(placeholderContainer);
 
             setMargin(listView, new Insets(0, 10, 0, 10));
             VBox.setVgrow(listView, Priority.ALWAYS);
 
-            listView.setCellFactory(listView -> new AddonUpdateListCell());
+            listView.setCellFactory(AddonUpdateListCell::new);
 
             ComponentList.setVgrow(listView, Priority.ALWAYS);
 
@@ -303,7 +307,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                         Path iconPath = fs.getPath(path);
 
                         if (Files.exists(iconPath)) {
-                            Image image = FXUtils.loadImage(
+                            Image image = ImageLoaders.DEFAULT.load(
                                 iconPath,
                                 80,
                                 80,
@@ -324,7 +328,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     LOG.warning("Failed to load addon icons", e);
                 }
             }
-            
+
             if (data.localAddonFile() instanceof ResourcePackFile resourcePackFile) {
                 Image image = resourcePackFile.loadIcon();
 
@@ -351,10 +355,9 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton changelogButton = FXUtils.newToggleButton4(SVG.INFO);
 
-        AddonUpdateListCell() {
+        AddonUpdateListCell(ListView<AddonUpdatesPage.AddonUpdateObject> listView) {
             HBox hbox = new HBox(16);
             HBox.setHgrow(content, Priority.ALWAYS);
-            content.setAlignment(Pos.CENTER);
             hbox.setAlignment(Pos.CENTER);
 
             hbox.getChildren().setAll(enabledBox, imageContainer, content, changelogButton);
@@ -382,11 +385,14 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     item.enabled.set(!item.isEnabled());
                 }
             });
+
+            FXUtils.limitCellWidth(listView, this);
         }
 
+        /// Updates addon version information and replaces tags together, reusing their labels.
         @Override
-        public void updateItem(AddonUpdateObject item, boolean empty) {
-            AddonUpdateObject oldItem = getItem();
+        public void updateItem(@Nullable AddonUpdateObject item, boolean empty) {
+            @Nullable AddonUpdateObject oldItem = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(item, empty);
@@ -412,11 +418,12 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             LocalAddonFile<?> addonFile = item.getLocalAddonFile();
 
-            content.getTags().clear();
+            var tags = new ArrayList<Tag>(3);
             if (addonFile instanceof LocalModFile modFile)
-                content.addTag(modFile.getId());
-            content.addTag(item.getSource());
-            content.addTag(item.getTargetVersionType());
+                tags.add(new Tag(modFile.getId()));
+            tags.add(new Tag(item.getSource()));
+            tags.add(new Tag(item.getTargetVersionType()));
+            content.getTags().setAll(tags);
 
             if (addonFile instanceof LocalModFile modFile) {
                 content.setTitle(modFile.getName());
@@ -430,9 +437,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         }
     }
 
+    /// Displays the target add-on version's changelog in a scrollable dialog.
     private static final class AddonChangelog extends JFXDialogLayout {
 
+        /// Creates a changelog dialog with a preferred height that follows the window height.
         public AddonChangelog(AddonUpdateObject object) {
+            prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
+
             RemoteAddon.Version targetVersion = object.data.targetVersion();
 
             this.setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + targetVersion.name())));
@@ -465,9 +476,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             setActions(versionPageBtn, closeButton);
 
-            this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
-
             onEscPressed(this, closeButton::fire);
         }
 
@@ -485,7 +493,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 if (exception == null) {
                     object.changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, repo.getBaseUrl()));
-                    FXUtils.smoothScrolling(scrollPane);
+                    ScrollUtils.installSmoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
                 } else {
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));

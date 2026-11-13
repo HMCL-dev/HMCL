@@ -664,7 +664,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                     ScrollPane scrollPane = new ScrollPane(detailsContainer);
                     scrollPane.setFitToWidth(true);
                     FXUtils.setOverflowHidden(scrollPane, 8);
-                    FXUtils.smoothScrolling(scrollPane);
+                    ScrollUtils.installSmoothScrolling(scrollPane);
                     StackPane.setMargin(scrollPane, new Insets(10, 0, 0, 0));
                     setBody(scrollPane);
                 }
@@ -678,9 +678,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
                     onEscPressed(this, okButton::fire);
                 }
-
-                this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.6));
-                this.maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.8));
 
                 updateContent(file);
             }

@@ -19,6 +19,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -215,7 +216,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         @Nullable
         private Image loadThumbnail() {
             try {
-                return FXUtils.loadImage(path, 72, 72, true, false);
+                return ImageLoaders.DEFAULT.load(path, 72, 72, true, false);
             } catch (Exception e) {
                 LOG.warning("Failed to load screenshot thumbnail at: " + path, e);
                 return null;
@@ -226,7 +227,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         public Image getFullImage() {
             if (fullImage == null) {
                 try {
-                    fullImage = FXUtils.loadImage(path);
+                    fullImage = ImageLoaders.DEFAULT.load(path);
                 } catch (Exception e) {
                     LOG.warning("Failed to load screenshot content at: " + path, e);
                 }
@@ -274,7 +275,6 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
 
-            content.setMouseTransparent(true);
             HBox.setHgrow(content, Priority.ALWAYS);
 
             JFXButton copyButton = FXUtils.newToggleButton4(SVG.CONTENT_COPY);

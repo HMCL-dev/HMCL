@@ -7,12 +7,11 @@ import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.*;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstallerListPage extends ListPageBase<InstallerItem> {
@@ -52,6 +50,8 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     }
 
     /// Rebuilds the component controls for the selected instance, or clears them if none is selected.
+    /// Minecraft editing follows the stored manifest's modifiability; other installed components
+    /// require a recognized patch to expose editing controls.
     public void loadInstance(HMCLGameInstance.Optional instance) {
         @Nullable HMCLGameInstance gameInstance = instance.instance();
         this.gameInstance = gameInstance;
@@ -78,7 +78,9 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             if (libraryVersion != null) {
                 component.versionProperty().set(new InstallerItem.InstalledState(
                         libraryVersion,
-                        !gameInstance.getAnalyzer().isClear(component.getComponentType()),
+                        component.getComponentType() == GameComponentType.GAME
+                                ? !gameInstance.getManifest().isModifiable()
+                                : !gameInstance.getAnalyzer().isClear(component.getComponentType()),
                         false
                 ));
             } else {
@@ -145,23 +147,14 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                 gameInstance.getId(),
                 publishedInstance -> repository.getDependency().installComponentLocalAsync(publishedInstance, file));
         task.setName(i18n("install.installer.install_offline"));
-        TaskExecutor executor = task.executor(new TaskListener() {
-            @Override
-            public void onStop(boolean success, TaskExecutor executor) {
-                runInFX(() -> {
-                    if (success) {
-                        reloadCurrentInstance();
-                        Controllers.dialog(i18n("install.success"));
-                    } else {
-                        if (executor.getException() == null)
-                            return;
-                        UpdateInstallerWizardProvider.alertFailureMessage(executor.getException(), null);
-                    }
-                });
+        Controllers.taskDialog(task.whenComplete(Schedulers.javafx(), (@Nullable Exception exception) -> {
+            if (exception == null) {
+                reloadCurrentInstance();
+                Controllers.dialog(i18n("install.success"));
+            } else {
+                UpdateInstallerWizardProvider.alertFailureMessage(exception, null);
             }
-        });
-        Controllers.taskDialog(executor, i18n("install.installer.install_offline"), TaskCancellationAction.NO_CANCEL);
-        executor.start();
+        }), i18n("install.installer.install_offline"), TaskCancellationAction.NO_CANCEL);
     }
 
     private class InstallerListPageSkin extends ToolbarListPageSkin<InstallerItem, InstallerListPage> {
