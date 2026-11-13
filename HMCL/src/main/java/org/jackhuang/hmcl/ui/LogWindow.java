@@ -18,6 +18,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
+import org.jackhuang.hmcl.game.GameLogsHolder;
 import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -37,7 +38,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.Lang.thread;
@@ -52,98 +52,32 @@ public final class LogWindow extends Stage {
 
     private static final Log4jLevel[] LEVELS = {Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
 
-    private final CircularArrayList<Log> logs;
-    private final Map<Log4jLevel, SimpleIntegerProperty> levelCountMap = new EnumMap<>(Log4jLevel.class);
-    private final Map<Log4jLevel, SimpleBooleanProperty> levelShownMap = new EnumMap<>(Log4jLevel.class);
+    private final Map<Log4jLevel, SimpleIntegerProperty> levelCountMap;
+    private final Map<Log4jLevel, SimpleBooleanProperty> levelShownMap;
 
-    {
-        for (Log4jLevel level : Log4jLevel.values()) {
-            levelCountMap.put(level, new SimpleIntegerProperty());
-            levelShownMap.put(level, new SimpleBooleanProperty(true));
-        }
-    }
+    private final ObservableList<Log> items;
 
-    private final LogWindowImpl impl;
     private final ManagedProcess gameProcess;
 
-    public LogWindow(ManagedProcess gameProcess) {
-        this(gameProcess, new CircularArrayList<>());
-    }
+    private final GameLogsHolder logsHolder;
 
-    public LogWindow(ManagedProcess gameProcess, CircularArrayList<Log> logs) {
+    public LogWindow(GameLogsHolder logsHolder) {
+        this.logsHolder = logsHolder;
+        this.gameProcess = logsHolder.getGameProcess();
+        this.levelCountMap = logsHolder.getLevelCountMap();
+        this.levelShownMap = logsHolder.getLevelShownMap();
+        this.items = logsHolder.getItems();
+
         Themes.applyNativeDarkMode(this);
-
-        this.logs = logs;
-        this.impl = new LogWindowImpl();
-        setScene(new Scene(impl, 800, 480));
+        LogWindowContent content = new LogWindowContent();
+        setScene(new Scene(content, 800, 480));
         StyleSheets.init(getScene());
         setTitle(i18n("logwindow.title"));
         FXUtils.setIcon(this);
-
-        for (SimpleBooleanProperty property : levelShownMap.values()) {
-            property.addListener(o -> shakeLogs());
-        }
-
-        this.gameProcess = gameProcess;
-
         FXUtils.addMacOSCloseWindowHandler(this, () -> !gameProcess.isRunning());
     }
 
-    public void logLine(Log log) {
-        Log4jLevel level = log.getLevel();
-        logs.add(log);
-        if (levelShownMap.get(level).get())
-            impl.listView.getItems().add(log);
-
-        SimpleIntegerProperty property = levelCountMap.get(log.getLevel());
-        property.set(property.get() + 1);
-        checkLogCount();
-        autoScroll();
-    }
-
-    public void logLines(List<Log> logs) {
-        for (Log log : logs) {
-            Log4jLevel level = log.getLevel();
-            this.logs.add(log);
-            if (levelShownMap.get(level).get())
-                impl.listView.getItems().add(log);
-
-            SimpleIntegerProperty property = levelCountMap.get(log.getLevel());
-            property.set(property.get() + 1);
-        }
-        checkLogCount();
-        autoScroll();
-    }
-
-    private void shakeLogs() {
-        impl.listView.getItems().setAll(logs.stream().filter(log -> levelShownMap.get(log.getLevel()).get()).collect(Collectors.toList()));
-        autoScroll();
-    }
-
-    private void checkLogCount() {
-        int nRemove = logs.size() - Log.getLogLines();
-        if (nRemove <= 0)
-            return;
-
-        ObservableList<Log> items = impl.listView.getItems();
-        int itemsSize = items.size();
-        int count = 0;
-
-        for (int i = 0; i < nRemove; i++) {
-            Log removedLog = logs.removeFirst();
-            if (itemsSize > count && items.get(count) == removedLog)
-                count++;
-        }
-
-        items.remove(0, count);
-    }
-
-    private void autoScroll() {
-        if (!impl.listView.getItems().isEmpty() && impl.autoScroll.get())
-            impl.listView.scrollTo(impl.listView.getItems().size() - 1);
-    }
-
-    private final class LogWindowImpl extends Control {
+    private final class LogWindowContent extends Control {
 
         private final ListView<Log> listView = new JFXListView<>();
         private final BooleanProperty autoScroll = new SimpleBooleanProperty();
@@ -151,26 +85,30 @@ public final class LogWindow extends Stage {
         private final StringProperty[] buttonText = new StringProperty[LEVELS.length];
         private final BooleanProperty[] showLevel = new BooleanProperty[LEVELS.length];
         private final JFXButton btnAlwaysOnTop = FXUtils.newToggleButton4(SVG.KEEP, 20);
-        private final Stage stage = LogWindow.this;
         private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
         private final StackPane stackPane = new StackPane();
 
-        LogWindowImpl() {
+        LogWindowContent() {
             getStyleClass().add("log-window");
 
             listView.getProperties().put("no-smooth-scrolling", true);
-            listView.setItems(FXCollections.observableList(new CircularArrayList<>(logs.size())));
+            listView.setItems(FXCollections.observableList(new CircularArrayList<>(items.size())));
+            Bindings.bindContent(listView.getItems(), items);
+            listView.getItems().addListener((InvalidationListener) observable -> {
+                if (!items.isEmpty() && autoScroll.get())
+                    listView.scrollTo(items.size() - 1);
+            });
 
             for (int i = 0; i < LEVELS.length; i++) {
                 buttonText[i] = new SimpleStringProperty();
                 showLevel[i] = new SimpleBooleanProperty(true);
             }
 
-            btnAlwaysOnTop.setOnAction(e -> stage.setAlwaysOnTop(!stage.isAlwaysOnTop()));
+            btnAlwaysOnTop.setOnAction(e -> setAlwaysOnTop(!isAlwaysOnTop()));
             btnAlwaysOnTop.getStyleClass().add("always-on-top-button");
-            stage.alwaysOnTopProperty().addListener((observable, oldValue, newValue) -> {
-                btnAlwaysOnTop.pseudoClassStateChanged(SELECTED, newValue);
-            });
+            FXUtils.onChange(alwaysOnTopProperty(), alwaysOnTop ->
+                    btnAlwaysOnTop.pseudoClassStateChanged(SELECTED, alwaysOnTop)
+            );
 
             cboLines.getItems().setAll(500, 2000, 5000, 10000);
             cboLines.setValue(Log.getLogLines());
@@ -183,21 +121,26 @@ public final class LogWindow extends Stage {
         }
 
         private void onTerminateGame() {
-            LogWindow.this.gameProcess.stop();
+            gameProcess.stop();
         }
 
         private void onClear() {
-            impl.listView.getItems().clear();
-            logs.clear();
+            logsHolder.clear();
         }
 
         private void onExportLogs() {
             thread(() -> {
                 Path logFile = Paths.get("minecraft-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
-                try {
-                    Files.write(logFile, logs.stream().map(Log::getLog).collect(Collectors.toList()));
-                } catch (IOException e) {
-                    LOG.warning("Failed to export logs", e);
+                Path tempLogFile = logsHolder.getLogFile();
+                if (tempLogFile != null) {
+                    try {
+                        Files.copy(tempLogFile, logFile);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to export logs", e);
+                        return;
+                    }
+                } else {
+                    LOG.warning("No log file available");
                     return;
                 }
 
@@ -246,7 +189,7 @@ public final class LogWindow extends Stage {
         }
     }
 
-    private static final class LogWindowSkin extends SkinBase<LogWindowImpl> {
+    private static final class LogWindowSkin extends SkinBase<LogWindowContent> {
         private static final PseudoClass EMPTY = PseudoClass.getPseudoClass("empty");
         private static final PseudoClass FATAL = PseudoClass.getPseudoClass("fatal");
         private static final PseudoClass ERROR = PseudoClass.getPseudoClass("error");
@@ -256,7 +199,7 @@ public final class LogWindow extends Stage {
         private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
         private final JFXSnackbar snackbar = new JFXSnackbar();
 
-        LogWindowSkin(LogWindowImpl control) {
+        LogWindowSkin(LogWindowContent control) {
             super(control);
 
             VBox vbox = new VBox(3);
