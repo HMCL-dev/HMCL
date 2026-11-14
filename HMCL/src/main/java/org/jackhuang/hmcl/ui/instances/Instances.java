@@ -89,7 +89,7 @@ public final class Instances {
             return;
         }
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
-        pane.setTitle(i18n("modpack.download.title", file.name()));
+        pane.setTitle(i18n("modpack.download.title", file.file().filename()));
         TaskExecutor executor = new FileDownloadTask(downloadURLs, modpack)
                 .setName(file.name())
                 .whenComplete(Schedulers.javafx(), (@Nullable Exception e) -> {
