@@ -72,10 +72,10 @@ public final class Instances {
     /// Downloads completed in the background retain an installation action in the task list.
     ///
     /// @param downloadProvider the provider used to download the archive
-    /// @param repository the installation target, retained if the selected directory changes
-    /// @param instanceId the instance to update, or `null` to install a new instance
-    /// @param mod the modpack metadata
-    /// @param file the archive version to download
+    /// @param repository       the installation target, retained if the selected directory changes
+    /// @param instanceId       the instance to update, or `null` to install a new instance
+    /// @param mod              the modpack metadata
+    /// @param file             the archive version to download
     public static void downloadModpackImpl(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon mod, RemoteAddon.Version file) {
         Path modpack;
         DownloadCandidates downloadURLs;
@@ -96,7 +96,7 @@ public final class Instances {
                     if (e == null) {
                         ModpackInstallWizardProvider installWizardProvider;
                         if (instanceId != null)
-                            installWizardProvider = new ModpackInstallWizardProvider(repository, modpack, instanceId);
+                            installWizardProvider = new ModpackInstallWizardProvider(repository, modpack, instanceId, null);
                         else
                             installWizardProvider = new ModpackInstallWizardProvider(repository, modpack);
                         if (StringUtils.isNotBlank(mod.iconUrl()))
@@ -142,26 +142,26 @@ public final class Instances {
         HMCLGameRepository repository = gameInstance.getRepository();
         GameInstanceID instanceId = gameInstance.getId();
         return Controllers.prompt(i18n("instance.manage.rename.message"), (newName, handler) -> {
-            if (newName.equals(instanceId.toString())) {
-                handler.resolve();
-                return;
-            }
-            GameInstanceID oldInstanceId = instanceId;
-            GameInstanceID newInstanceId = new GameInstanceID(newName);
-            if (repository.renameInstance(oldInstanceId, newInstanceId)) {
-                handler.resolve();
-                repository.refreshAsync()
-                        .thenRunAsync(Schedulers.javafx(), () -> {
-                            if (repository.hasInstance(newInstanceId)) {
-                                repository.setSelectedInstance(repository.getInstance(newInstanceId));
-                            }
-                        }).start();
-            } else {
-                handler.reject(i18n("instance.manage.rename.fail"));
-            }
-        }, instanceId.toString(),
-            new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId),
-            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName) || newVersionName.equals(instanceId.toString())));
+                    if (newName.equals(instanceId.toString())) {
+                        handler.resolve();
+                        return;
+                    }
+                    GameInstanceID oldInstanceId = instanceId;
+                    GameInstanceID newInstanceId = new GameInstanceID(newName);
+                    if (repository.renameInstance(oldInstanceId, newInstanceId)) {
+                        handler.resolve();
+                        repository.refreshAsync()
+                                .thenRunAsync(Schedulers.javafx(), () -> {
+                                    if (repository.hasInstance(newInstanceId)) {
+                                        repository.setSelectedInstance(repository.getInstance(newInstanceId));
+                                    }
+                                }).start();
+                    } else {
+                        handler.reject(i18n("instance.manage.rename.fail"));
+                    }
+                }, instanceId.toString(),
+                new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId),
+                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName) || newVersionName.equals(instanceId.toString())));
     }
 
     public static void exportInstance(HMCLGameInstance gameInstance) {
@@ -207,12 +207,12 @@ public final class Instances {
                             .thenComposeAsync(draft -> Task.allOf(
                                     gameDownloadTask,
                                     Task.allOf(
-                                            new GameAssetDownloadTask(
-                                                    dependencyManager,
-                                                    newManifest,
-                                                    GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY,
-                                                    true),
-                                            new GameLibrariesTask(dependencyManager, newManifest, true))
+                                                    new GameAssetDownloadTask(
+                                                            dependencyManager,
+                                                            newManifest,
+                                                            GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY,
+                                                            true),
+                                                    new GameLibrariesTask(dependencyManager, newManifest, true))
                                             .withRunAsync(() -> {
                                                 // ignore failure
                                             })))
@@ -271,7 +271,16 @@ public final class Instances {
     }
 
     public static void updateInstance(HMCLGameInstance gameInstance) {
-        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(gameInstance.getRepository(), gameInstance.getId()));
+        String modpackName = gameInstance.getId().id();
+        try {
+            var config = gameInstance.readModpackConfiguration();
+            if (config != null && config.getName() != null) {
+                modpackName = config.getName();
+            }
+        } catch (IOException e) {
+            LOG.warning("Failed to read modpack configuration", e);
+        }
+        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(gameInstance.getRepository(), gameInstance.getId(), modpackName));
     }
 
     /// Queues an asset check with a fresh asset index for the supplied instance.
@@ -347,7 +356,7 @@ public final class Instances {
     /// attempted.
     ///
     /// @param gameInstance the instance to launch, or `null` when no instance is available
-    /// @param injecters callbacks that configure the launcher before launch
+    /// @param injecters    callbacks that configure the launcher before launch
     @SafeVarargs
     public static void launch(@Nullable HMCLGameInstance gameInstance, Consumer<LauncherHelper>... injecters) {
         if (gameInstance == null) {
