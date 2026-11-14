@@ -9,6 +9,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -115,7 +116,7 @@ final class MainWindowPane extends StackPane {
         Themes.colorSchemeProperty().addListener(holder.weak(titleBarBackgroundListener));
         Themes.titleBarTransparentProperty().addListener(holder.weak(titleBarBackgroundListener));
 
-        InvalidationListener navBarListener = observable -> updateNavBar();
+        ChangeListener<DecoratorPage.@Nullable State> navBarListener = (observable, oldValue, newValue) -> updateNavBar();
         decorator.stateProperty().addListener(holder.weak(navBarListener));
         updateNavBar();
 
@@ -249,13 +250,9 @@ final class MainWindowPane extends StackPane {
         }
     }
 
-    private DecoratorPage.@Nullable State periousState = null;
-
     /// Rebuilds the navigation bar from the current page state.
     private void updateNavBar() {
         DecoratorPage.@Nullable State state = decorator.getState();
-        if (Objects.equals(periousState, state)) return;
-        periousState = state;
 
         if (state == null) {
             navBarPane.getChildren().clear();
