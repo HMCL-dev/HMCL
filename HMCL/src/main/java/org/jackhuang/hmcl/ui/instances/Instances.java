@@ -68,6 +68,61 @@ public final class Instances {
         }
     }
 
+    /// Deletes the shared assets of the selected game directory that no instance uses.
+    ///
+    /// The directory is scanned in the background first, so the confirmation reports what is really
+    /// reclaimable. The repository snapshot is not refreshed: publishing a new snapshot makes the
+    /// instance list rebuild, which the user sees as a flash and which has nothing to do with the
+    /// asset directory. A snapshot that no longer matches the directory makes the scan fail
+    /// instead of deleting the wrong files.
+    public static void cleanAssets() {
+        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
+
+        Task.supplyAsync(() -> AssetCleaner.scan(repository))
+                .whenComplete(Schedulers.javafx(), (summary, exception) -> {
+                    if (exception != null) {
+                        if (!(exception instanceof CancellationException)) {
+                            showAssetCleanupFailure(exception);
+                        }
+                        return;
+                    }
+
+                    if (summary.isClean()) {
+                        Controllers.dialog(i18n("assets.cleanup.nothing"),
+                                i18n("assets.cleanup"), MessageDialogPane.MessageType.INFO);
+                        return;
+                    }
+
+                    Controllers.confirm(
+                            i18n("assets.cleanup.confirm",
+                                    summary.files(), FileUtils.parseFileSize(summary.bytes())),
+                            i18n("assets.cleanup"),
+                            MessageDialogPane.MessageType.QUESTION,
+                            () -> Controllers.taskDialog(
+                                    AssetCleaner.cleanTask(repository)
+                                            .whenComplete(Schedulers.javafx(), (reclaimed, failure) -> {
+                                                if (failure == null) {
+                                                    Controllers.showToast(i18n("assets.cleanup.done",
+                                                            summary.files(), FileUtils.parseFileSize(reclaimed)));
+                                                } else if (!(failure instanceof CancellationException)) {
+                                                    showAssetCleanupFailure(failure);
+                                                }
+                                            }),
+                                    i18n("assets.cleanup"),
+                                    TaskCancellationAction.NORMAL),
+                            null);
+                })
+                .start();
+    }
+
+    /// Reports why the shared asset directory cannot be cleaned up.
+    ///
+    /// @param exception the failure reported by the scan or the deletion
+    private static void showAssetCleanupFailure(Exception exception) {
+        Controllers.dialog(i18n("assets.cleanup.failed", String.valueOf(exception.getMessage())),
+                i18n("assets.cleanup"), MessageDialogPane.MessageType.ERROR);
+    }
+
     /// Downloads a modpack and opens its installation wizard for the supplied repository.
     /// Downloads completed in the background retain an installation action in the task list.
     ///
