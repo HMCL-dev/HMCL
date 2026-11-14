@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.download.AddonLinkHandler;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.instances.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
@@ -182,7 +183,9 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
                             Instances.installFromJson(GameDirectoryManager.getSelectedRepository(), file);
                         }
-                    });
+                    },
+                    AddonLinkHandler::handle,
+                    null);
 
             FXUtils.onChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), mainPage::setCurrentGame);
             mainPage.latestVersionProperty().bind(UpdateChecker.latestVersionProperty());

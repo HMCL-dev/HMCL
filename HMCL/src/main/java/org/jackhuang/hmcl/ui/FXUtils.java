@@ -1012,27 +1012,94 @@ public final class FXUtils {
     }
 
     public static void applyDragListener(Node node, PathMatcher filter, Consumer<List<Path>> callback, Runnable dragDropped) {
+        applyDragListener(node, filter, callback, null, dragDropped);
+    }
+
+    /// Installs drag-and-drop handling that accepts dropped addresses only.
+    ///
+    /// @param node     the node receiving the drop
+    /// @param callback the consumer receiving the dropped text
+    public static void applyUrlDragListener(Node node, Consumer<String> callback) {
+        applyDragListener(node, path -> false, paths -> {
+        }, callback, null);
+    }
+
+    /// Installs drag-and-drop handling for files and optionally for dropped addresses.
+    ///
+    /// A drop is completed when at least one matching file or a text containing an
+    /// HTTP(S) address is accepted. The address callback takes precedence only when
+    /// no file is accepted.
+    ///
+    /// @param node        the node receiving the drop
+    /// @param filter      the file filter
+    /// @param callback    the consumer receiving accepted files
+    /// @param urlCallback the consumer receiving dropped text, or `null` to reject addresses
+    /// @param dragDropped an action run after every drop, or `null`
+    public static void applyDragListener(Node node, PathMatcher filter, Consumer<List<Path>> callback,
+                                         @Nullable Consumer<String> urlCallback, @Nullable Runnable dragDropped) {
         node.setOnDragOver(event -> {
-            if (event.getGestureSource() != node && event.getDragboard().hasFiles()) {
-                if (event.getDragboard().getFiles().stream().map(File::toPath).anyMatch(filter::matches))
-                    event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+            Dragboard dragboard = event.getDragboard();
+            if (event.getGestureSource() != node) {
+                if (dragboard.hasFiles()) {
+                    if (dragboard.getFiles().stream().map(File::toPath).anyMatch(filter::matches))
+                        event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+                } else if (urlCallback != null && containsHttpUrl(getDragboardText(dragboard))) {
+                    event.acceptTransferModes(TransferMode.COPY);
+                }
             }
             event.consume();
         });
 
         node.setOnDragDropped(event -> {
-            List<File> files = event.getDragboard().getFiles();
+            Dragboard dragboard = event.getDragboard();
+            boolean completed = false;
+
+            List<File> files = dragboard.getFiles();
             if (files != null) {
                 List<Path> acceptFiles = files.stream().map(File::toPath).filter(filter::matches).toList();
                 if (!acceptFiles.isEmpty()) {
                     callback.accept(acceptFiles);
-                    event.setDropCompleted(true);
+                    completed = true;
                 }
             }
+
+            if (!completed && urlCallback != null) {
+                @Nullable String text = getDragboardText(dragboard);
+                if (containsHttpUrl(text)) {
+                    urlCallback.accept(text);
+                    completed = true;
+                }
+            }
+
+            event.setDropCompleted(completed);
             if (dragDropped != null)
                 dragDropped.run();
             event.consume();
         });
+    }
+
+    /// Returns the address carried by the dragboard, preferring the URL payload.
+    ///
+    /// @param dragboard the dragboard
+    /// @return the address or dropped string, or `null` if neither is present
+    private static @Nullable String getDragboardText(Dragboard dragboard) {
+        if (dragboard.hasUrl()) {
+            String url = dragboard.getUrl();
+            if (url != null && !url.isBlank())
+                return url;
+        }
+        return dragboard.hasString() ? dragboard.getString() : null;
+    }
+
+    /// Returns whether the text contains an HTTP(S) address.
+    ///
+    /// @param text the dropped text, possibly `null`
+    /// @return whether the text contains an HTTP(S) address
+    private static boolean containsHttpUrl(@Nullable String text) {
+        if (text == null)
+            return false;
+        String lowerCase = text.toLowerCase(Locale.ROOT);
+        return lowerCase.contains("http://") || lowerCase.contains("https://");
     }
 
     public static <T> StringConverter<T> stringConverter(Function<T, String> func) {

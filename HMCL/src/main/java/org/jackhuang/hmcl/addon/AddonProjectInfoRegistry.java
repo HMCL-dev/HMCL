@@ -97,6 +97,9 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     /// Softly caches projects indexed by CurseForge identifier.
     private volatile @Nullable SoftReference<@Unmodifiable Map<String, I>> curseForgeMapRef;
 
+    /// Softly caches projects indexed by mcmod identifier.
+    private volatile @Nullable SoftReference<@Unmodifiable Map<Integer, I>> mcmodIdMapRef;
+
     /// Softly caches searchable names in resource and field order.
     private volatile @Nullable SoftReference<@Unmodifiable List<Pair<String, I>>> keywordsRef;
 
@@ -338,6 +341,61 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     /// identifier is null, blank or unknown.
     public @Nullable I getInfoByCurseForgeId(@Nullable String id) {
         return StringUtils.isBlank(id) ? null : getCurseForgeMap().get(id);
+    }
+
+    /// Returns an unmodifiable index, rebuilding it after its soft reference is cleared.
+    /// Duplicate keys retain the first project in resource order.
+    private @Unmodifiable Map<Integer, I> getMcmodIdMap() {
+        @Nullable SoftReference<@Unmodifiable Map<Integer, I>> reference = this.mcmodIdMapRef;
+        @Unmodifiable Map<Integer, I> cached = reference != null ? reference.get() : null;
+        if (cached != null)
+            return cached;
+        lock.lock();
+        try {
+            reference = this.mcmodIdMapRef;
+            cached = reference != null ? reference.get() : null;
+            if (cached != null)
+                return cached;
+            Map<Integer, I> map = new HashMap<>();
+            for (I info : getInfos()) {
+                int id = parseMcmodId(info);
+                if (id > 0)
+                    map.putIfAbsent(id, info);
+            }
+            cached = Collections.unmodifiableMap(map);
+            this.mcmodIdMapRef = new SoftReference<>(cached);
+            return cached;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// Extracts the numeric identifier from the mcmod URL of a project.
+    ///
+    /// The URL is produced by [#AddonProjectInfo.mcmodUrl()] and ends with `/{id}.html`.
+    ///
+    /// @param info the project
+    /// @return the identifier, or `0` when the project has no mcmod page
+    private static int parseMcmodId(AddonProjectInfo info) {
+        @Nullable String url = info.mcmodUrl();
+        if (url == null)
+            return 0;
+
+        int slash = url.lastIndexOf('/');
+        int dot = url.lastIndexOf(".html");
+        if (slash < 0 || dot <= slash + 1)
+            return 0;
+        try {
+            return Integer.parseInt(url.substring(slash + 1, dot));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    /// Returns the first project with the exact mcmod identifier, or `null` if the identifier
+    /// is not positive or unknown.
+    public @Nullable I getInfoByMcmodId(int id) {
+        return id > 0 ? getMcmodIdMap().get(id) : null;
     }
 
     /// Finds a project by its cleaned secondary name, falling back to its exact mod ID.

@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TabController;
 import org.jackhuang.hmcl.ui.construct.TabItem;
@@ -140,6 +141,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .addNavigationDrawerTab(tabController, worldTab, i18n("world"), SVG.PUBLIC);
 
         setContent(transitionPane);
+
+        FXUtils.applyUrlDragListener(this, AddonLinkHandler::handle);
+        setSidebarBottom(new AdvancedListBox()
+                .addNavigationDrawerItem(i18n("download.link"), SVG.OPEN_IN_NEW, AddonLinkHandler::promptInput));
     }
 
     private static TabItem<DownloadListPage> newDownloadListTab(Supplier<DownloadListPage> pageSupplier) {
