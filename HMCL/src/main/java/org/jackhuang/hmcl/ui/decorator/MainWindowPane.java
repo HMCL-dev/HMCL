@@ -32,8 +32,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_DURATION;
 import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_INTERPOLATOR;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -253,7 +251,6 @@ final class MainWindowPane extends StackPane {
     /// Rebuilds the navigation bar from the current page state.
     private void updateNavBar() {
         DecoratorPage.@Nullable State state = decorator.getState();
-
         if (state == null) {
             navBarPane.getChildren().clear();
             return;
