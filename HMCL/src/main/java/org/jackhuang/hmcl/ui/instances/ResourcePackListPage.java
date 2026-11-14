@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -516,12 +517,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
         }
 
+        /// Loads the resource-pack icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            Image icon = file.loadIcon();
-            if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1) {
-                return icon;
-            }
-            return getDefaultIcon();
+            return FXUtils.ensureValidIcon(file.loadIcon(ImageLoaders.DEFAULT), this::getDefaultIcon);
         }
     }
 

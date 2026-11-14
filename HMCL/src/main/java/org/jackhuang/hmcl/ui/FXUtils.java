@@ -859,6 +859,21 @@ public final class FXUtils {
         stage.getIcons().add(newBuiltinImage(icon));
     }
 
+    /// Returns the icon if it has no loading error, positive dimensions, and
+    /// a width and height that differ by less than one pixel.
+    /// Otherwise, invokes the fallback once and returns its result without validation.
+    ///
+    /// @param <I> the image type, which may be nullable if the fallback can return null
+    /// @param icon the icon to validate, or null
+    /// @param fallback the supplier invoked only when the icon is absent or invalid
+    /// @return the valid icon, or the fallback result, which may be null
+    public static <I extends @Nullable Image> I ensureValidIcon(@Nullable I icon, Supplier<I> fallback) {
+        if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1)
+            return icon;
+
+        return fallback.get();
+    }
+
     /**
      * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
      *

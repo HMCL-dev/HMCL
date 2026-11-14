@@ -38,16 +38,12 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.function.Predicate;
 import java.util.regex.PatternSyntaxException;
 
@@ -278,33 +274,9 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
         }
 
+        /// Loads the icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            Image image = null;
-            Path imagePath;
-            if (this.getPackInfo().isDirectory()) {
-                imagePath = getPackInfo().getPath().resolve("pack.png");
-                try {
-                    image = ImageLoaders.DEFAULT.load(imagePath, 64, 64, true, true);
-                } catch (Exception e) {
-                    LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
-                }
-            } else {
-                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(getPackInfo().getPath())) {
-                    imagePath = fs.getPath("/pack.png");
-                    if (Files.exists(imagePath)) {
-                        image = ImageLoaders.DEFAULT.load(imagePath, 64, 64, true, true);
-                    }
-                } catch (Exception e) {
-                    LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
-                }
-            }
-
-            if (image != null && !image.isError() && image.getWidth() > 0 && image.getHeight() > 0 &&
-                    Math.abs(image.getWidth() - image.getHeight()) < 1) {
-                return image;
-            } else {
-                return getDefaultIcon();
-            }
+            return FXUtils.ensureValidIcon(packInfo.loadIcon(ImageLoaders.DEFAULT), this::getDefaultIcon);
         }
     }
 
@@ -313,7 +285,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
 
-        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getPackInfo().isActive());
+        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().packInfo.isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
@@ -350,7 +322,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             content.setTitle(dataItem.getTitle());
             content.setSubtitle(dataItem.getSubtitle());
 
-            DataPack.Pack packInfo = dataItem.getPackInfo();
+            DataPack.Pack packInfo = dataItem.packInfo;
             (observedActiveProperty = packInfo.activeProperty()).addListener(weakActiveListener);
             activeSwitch.setDisableAnimation(true);
             activeSwitch.setSelected(packInfo.isActive());

@@ -44,13 +44,10 @@ import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import org.jackhuang.hmcl.util.javafx.Subscription;
 
 import java.nio.file.Path;
@@ -283,7 +280,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             return source;
         }
 
-        private Image getDefaultIcon() {
+        private @Nullable Image getDefaultIcon() {
             if (data.localAddonFile() instanceof LocalModFile localModFile) {
                 return GameInstanceIconType
                     .getIconType(localModFile.getModLoaderType())
@@ -293,56 +290,18 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             return null;
         }
 
-        private Image loadIcon() {
+        /// Loads the addon icon, falling back to the mod loader icon or null for other addons.
+        private @Nullable Image loadIcon() {
+            @Nullable Image image;
             if (data.localAddonFile() instanceof LocalModFile localModFile) {
-                List<String> iconPaths = new ArrayList<>();
-
-                if (StringUtils.isNotBlank(localModFile.getLogoPath())) {
-                    iconPaths.add(localModFile.getLogoPath());
-                }
-
-                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(localModFile.getFile())) {
-
-                    for (String path : iconPaths) {
-                        Path iconPath = fs.getPath(path);
-
-                        if (Files.exists(iconPath)) {
-                            Image image = ImageLoaders.DEFAULT.load(
-                                iconPath,
-                                80,
-                                80,
-                                true,
-                                true
-                            );
-
-                            if (!image.isError()
-                                && image.getWidth() > 0
-                                && image.getHeight() > 0
-                                && Math.abs(image.getWidth() - image.getHeight()) < 1
-                            ) {
-                                return image;
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    LOG.warning("Failed to load addon icons", e);
-                }
+                image = localModFile.loadIcon(ImageLoaders.DEFAULT);
+            } else if (data.localAddonFile() instanceof ResourcePackFile resourcePackFile) {
+                image = resourcePackFile.loadIcon(ImageLoaders.DEFAULT);
+            } else {
+                return getDefaultIcon();
             }
 
-            if (data.localAddonFile() instanceof ResourcePackFile resourcePackFile) {
-                Image image = resourcePackFile.loadIcon();
-
-                if (image != null
-                    && !image.isError()
-                    && image.getWidth() > 0
-                    && image.getHeight() > 0
-                    && Math.abs(image.getWidth() - image.getHeight()) < 1
-                ) {
-                    return image;
-                }
-            }
-
-            return getDefaultIcon();
+            return FXUtils.ensureValidIcon(image, this::getDefaultIcon);
         }
     }
 
