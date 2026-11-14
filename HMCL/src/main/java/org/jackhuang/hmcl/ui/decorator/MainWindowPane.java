@@ -13,15 +13,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
@@ -38,6 +30,8 @@ import org.jackhuang.hmcl.util.TaskManager;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_DURATION;
 import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_INTERPOLATOR;
@@ -255,9 +249,14 @@ final class MainWindowPane extends StackPane {
         }
     }
 
+    private DecoratorPage.@Nullable State periousState = null;
+
     /// Rebuilds the navigation bar from the current page state.
     private void updateNavBar() {
         DecoratorPage.@Nullable State state = decorator.getState();
+        if (Objects.equals(periousState, state)) return;
+        periousState = state;
+
         if (state == null) {
             navBarPane.getChildren().clear();
             return;
