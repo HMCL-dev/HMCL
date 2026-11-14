@@ -250,17 +250,10 @@ public final class AddonLinkHandler {
         }
 
         boolean modpack = "modpack".equals(matcher.group("type"));
-        int mcmodId;
-        try {
-            mcmodId = Integer.parseInt(matcher.group("id"));
-        } catch (NumberFormatException e) {
-            handler.reject(i18n("download.link.invalid"));
-            return;
-        }
-
         AddonProjectInfoRegistry<?> registry = modpack
                 ? AddonProjectInfoRegistry.MODPACK
                 : AddonProjectInfoRegistry.MOD;
+        int mcmodId = Integer.parseInt(matcher.group("id"));
         @Nullable AddonProjectInfo info = registry.getInfoByMcmodId(mcmodId);
         if (info == null) {
             handler.reject(i18n("download.link.resolve.failed", url));
