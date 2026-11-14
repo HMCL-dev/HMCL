@@ -195,7 +195,15 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         protected List<Node> initializeToolbar(JavaManagementPage skinnable) {
             ArrayList<Node> res = new ArrayList<>(4);
 
-            res.add(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, JavaManager::refresh));
+            JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, () -> {
+                if (skinnable.isLoading()) return;
+
+                skinnable.setLoading(true);
+                JavaManager.refresh(() -> skinnable.setLoading(false));
+            });
+            refreshButton.disableProperty().bind(skinnable.loadingProperty());
+            res.add(refreshButton);
+
             if (skinnable.onInstallJava != null) {
                 res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD, skinnable.onInstallJava));
             }
