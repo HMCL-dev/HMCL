@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.instances.DownloadListPage;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.util.FutureCallback;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -58,6 +57,9 @@ public final class AddonLinkHandler {
 
     /// Matches the first HTTP(S) address inside arbitrary dropped text.
     private static final Pattern URL_PATTERN = Pattern.compile("https?://\\S+", Pattern.CASE_INSENSITIVE);
+
+    /// Punctuation stripped from the end of an address matched inside dropped text.
+    private static final String TRAILING_URL_PUNCTUATION = ")\"'>,，。；;";
 
     /// Matches a mcmod project page such as `/class/123.html` or `/modpack/456.html`.
     private static final Pattern MCMOD_PATH_PATTERN = Pattern.compile("^/(?<type>class|modpack)/(?<id>\\d+)\\.html$");
@@ -144,7 +146,7 @@ public final class AddonLinkHandler {
 
         String url = matcher.group();
         int end = url.length();
-        while (end > 0 && ")\"'>,，。；;".indexOf(url.charAt(end - 1)) >= 0) {
+        while (end > 0 && TRAILING_URL_PUNCTUATION.indexOf(url.charAt(end - 1)) >= 0) {
             end--;
         }
         resolve(url.substring(0, end), handler);
@@ -180,7 +182,7 @@ public final class AddonLinkHandler {
             case "curseforge.com", "www.curseforge.com", "legacy.curseforge.com", "beta.curseforge.com" ->
                 handler.reject(i18n("download.link.curseforge.unsupported"));
             case "modrinth.com", "www.modrinth.com" -> resolveModrinthProject(path, handler);
-            default -> probeDownload(webUrl.toString(), handler);
+            default -> probeDownload(webUrl, handler);
         }
     }
 
@@ -249,11 +251,19 @@ public final class AddonLinkHandler {
             return;
         }
 
-        boolean modpack = "modpack".equals(matcher.group("type"));
-        AddonProjectInfoRegistry<?> registry = modpack
+        AddonProjectInfoRegistry<?> registry = "modpack".equals(matcher.group("type"))
                 ? AddonProjectInfoRegistry.MODPACK
                 : AddonProjectInfoRegistry.MOD;
-        int mcmodId = Integer.parseInt(matcher.group("id"));
+
+        int mcmodId;
+        try {
+            mcmodId = Integer.parseInt(matcher.group("id"));
+        } catch (NumberFormatException e) {
+            // The matched digits exceed the integer range.
+            handler.reject(i18n("download.link.invalid"));
+            return;
+        }
+
         @Nullable AddonProjectInfo info = registry.getInfoByMcmodId(mcmodId);
         if (info == null) {
             handler.reject(i18n("download.link.resolve.failed", url));
@@ -340,8 +350,6 @@ public final class AddonLinkHandler {
 
         HMCLGameRepository gameRepository = GameDirectoryManager.getSelectedRepository();
         @Nullable HMCLGameInstance selectedInstance = gameRepository.getSelectedInstance();
-        // Modpacks are installed as new instances, so they follow the same unbound path as
-        // the regular download list, which shows the latest recommended version.
         HMCLGameInstance.Optional instanceReference = type != RemoteAddon.Type.MODPACK && selectedInstance != null
                 ? HMCLGameInstance.Optional.of(selectedInstance)
                 : HMCLGameInstance.Optional.empty(gameRepository);
@@ -371,12 +379,12 @@ public final class AddonLinkHandler {
     ///
     /// @param url     the link to probe
     /// @param handler the handler accepting or rejecting the resolution
-    private static void probeDownload(String url, FutureCallback.ResultHandler handler) {
+    private static void probeDownload(WebURL url, FutureCallback.ResultHandler handler) {
         Task.supplyAsync(() -> probe(url))
                 .whenComplete(Schedulers.javafx(), (@Nullable ProbeResult result, @Nullable Exception exception) -> {
                     if (result == null) {
                         LOG.warning("Failed to probe url: " + url, exception);
-                        handler.reject(i18n("download.link.resolve.failed", url));
+                        handler.reject(i18n("download.link.resolve.failed", url.toString()));
                         return;
                     }
                     showProbeActions(result, handler);
@@ -388,12 +396,8 @@ public final class AddonLinkHandler {
     /// @param url the link to probe
     /// @return the probed file information
     /// @throws IOException if the link cannot be inspected or does not point to a downloadable file
-    private static ProbeResult probe(String url) throws IOException {
-        @Nullable WebURL webUrl = WebURL.tryParse(url);
-        if (webUrl == null)
-            throw new IOException("Invalid link: " + url);
-
-        @Nullable NetworkUtils.RemoteFile file = NetworkUtils.detectFile(webUrl);
+    private static ProbeResult probe(WebURL url) throws IOException {
+        @Nullable NetworkUtils.RemoteFile file = NetworkUtils.detectFile(url);
         if (file == null)
             throw new IOException("Not a downloadable file: " + url);
 
@@ -406,9 +410,8 @@ public final class AddonLinkHandler {
     /// @param fileName    the detected filename
     /// @param contentType the response content type, possibly `null`
     /// @return the probe result
-    private static ProbeResult createProbeResult(
-            String url, String fileName, @Nullable String contentType) {
-        String extension = StringUtils.substringAfterLast(fileName, '.').toLowerCase(Locale.ROOT);
+    private static ProbeResult createProbeResult(String url, String fileName, @Nullable String contentType) {
+        String extension = FileUtils.getExtension(fileName).toLowerCase(Locale.ROOT);
         String mime = contentType != null ? contentType.toLowerCase(Locale.ROOT) : "";
 
         if ("mrpack".equals(extension))
@@ -529,10 +532,12 @@ public final class AddonLinkHandler {
                         new ModpackInstallWizardProvider(repository, temporaryFile),
                         i18n("install.modpack")
                 );
-            } else if (!(exception instanceof CancellationException)) {
-                LOG.warning("Failed to download modpack: " + result.url(), exception);
+            } else {
                 deleteQuietly(temporaryFile);
-                showError(I18n.localizeErrorMessage(exception));
+                if (!(exception instanceof CancellationException)) {
+                    LOG.warning("Failed to download modpack: " + result.url(), exception);
+                    showError(I18n.localizeErrorMessage(exception));
+                }
             }
         }), i18n("modpack.download.title", result.fileName()), TaskCancellationAction.NORMAL);
     }
@@ -574,8 +579,8 @@ public final class AddonLinkHandler {
 
     /// Creates a temporary file named after the probed download.
     ///
-    /// The file is placed in a new temporary directory so that the probed name, which may come
-    /// from `Content-Disposition` or the final URL, can be kept verbatim.
+    /// The file is placed in a new temporary directory so that the sanitized probed name, which may
+    /// come from `Content-Disposition` or the final URL, does not collide with existing files.
     ///
     /// @param fileName          the probed file name
     /// @param fallbackExtension the extension appended when the name has none, without a leading dot
@@ -589,21 +594,17 @@ public final class AddonLinkHandler {
     /// Returns a filename containing only portable characters.
     ///
     /// Characters outside `[A-Za-z0-9._+-]` are replaced with `_`. A base name without any letter
-    /// or digit becomes `mod`. A missing extension falls back to the given one.
+    /// or digit becomes `mod`. A missing or non-portable extension falls back to the given one.
     ///
     /// @param fileName          the desired file name
     /// @param fallbackExtension the extension appended when the name has none, without a leading dot
     /// @return the sanitized file name
     private static String sanitizeFileName(String fileName, String fallbackExtension) {
-        String extension = FileUtils.getExtension(fileName).replaceAll("[^A-Za-z0-9]", "");
-        if (extension.isEmpty())
-            extension = fallbackExtension;
-
         String baseName = FileUtils.getNameWithoutExtension(fileName).replaceAll("[^A-Za-z0-9._+-]", "");
         if (!baseName.matches(".*[A-Za-z0-9].*"))
             baseName = "mod";
 
-        return baseName + "." + extension;
+        return baseName + "." + extensionOr(fileName, fallbackExtension);
     }
 
     /// Returns the given file renamed so that it does not collide with a file in the directory.
@@ -627,14 +628,14 @@ public final class AddonLinkHandler {
         return candidateName.equals(fileName) ? file : Files.move(file, file.resolveSibling(candidateName));
     }
 
-    /// Returns the extension of a filename, or the fallback when there is none.
+    /// Returns the sanitized extension of a filename, or the fallback when there is none.
     ///
     /// @param fileName the filename
     /// @param fallback the fallback extension without a leading dot
     /// @return the extension without a leading dot
     private static String extensionOr(String fileName, String fallback) {
-        String extension = StringUtils.substringAfterLast(fileName, '.');
-        return StringUtils.isBlank(extension) ? fallback : extension;
+        String extension = FileUtils.getExtension(fileName).replaceAll("[^A-Za-z0-9]", "");
+        return extension.isEmpty() ? fallback : extension;
     }
 
     /// Deletes a temporary file or directory, logging but ignoring failures.
