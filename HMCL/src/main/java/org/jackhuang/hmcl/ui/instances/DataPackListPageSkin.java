@@ -276,7 +276,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
         /// Loads the icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            return FXUtils.ensureValidIcon(packInfo.loadIcon((input, name) -> ImageLoaders.DEFAULT.load(input, name, 64, 64, true, true)), this::getDefaultIcon);
+            return FXUtils.ensureValidIcon(packInfo.loadIcon(ImageLoaders.DEFAULT), this::getDefaultIcon);
         }
     }
 
