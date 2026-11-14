@@ -303,6 +303,7 @@ public final class LauncherHelper {
                     } else {
                         return Task.supplyAsync(() -> {
                             launcher.makeLaunchScript(scriptFile);
+                            launchingLatch.countDown();
                             return null;
                         });
                     }
