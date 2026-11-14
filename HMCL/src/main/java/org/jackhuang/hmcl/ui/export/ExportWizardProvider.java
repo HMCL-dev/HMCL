@@ -10,8 +10,12 @@ import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
-import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.setting.AuthlibInjectorServerList;
+import org.jackhuang.hmcl.setting.FontManager;
+import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.download.LocalModpackPage;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
@@ -28,6 +32,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ExportWizardProvider implements WizardProvider {
     private final HMCLGameInstance gameInstance;
@@ -48,6 +53,7 @@ public final class ExportWizardProvider implements WizardProvider {
         exportInfo.setWhitelist(whitelist);
         String modpackType = settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
 
+        settings.put("title", i18n("install.modpack.export", exportInfo.getName()));
         return exportWithLauncher(modpackType, exportInfo, modpackFile);
     }
 
