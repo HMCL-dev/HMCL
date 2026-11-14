@@ -93,6 +93,11 @@ public final class ProcessorReuse {
     /// and the sanitized mappings file, which HMCL replaces with Mojang's raw download. Those two
     /// only need to exist.
     ///
+    /// The checksum of an artifact is the value its processor declares in `outputs`, which is
+    /// either a variable reference or a literal SHA-1; the `<ARTIFACT>_SHA` variable is used only
+    /// when the processor declares no output for it. A chain whose declarations cannot be resolved
+    /// is never skipped.
+    ///
     /// Only a chain made exclusively of artifact-only processors qualifies, and the chain is only
     /// skipped when at least one other artifact was actually verified.
     ///
@@ -105,7 +110,8 @@ public final class ProcessorReuse {
             return false;
         }
         @Nullable Set<String> artifacts = outputArtifacts(processors, vars);
-        if (artifacts == null || writesExtractedLibraries(processors, vars)) {
+        @Nullable Map<String, String> declared = declaredChecksums(processors, vars);
+        if (artifacts == null || declared == null || writesExtractedLibraries(processors, vars)) {
             return false;
         }
 
@@ -117,7 +123,10 @@ public final class ProcessorReuse {
                 return false;
             }
             Path file = Paths.get(path);
-            @Nullable String expected = vars.get(artifact + "_SHA");
+            @Nullable String expected = declared.get(artifact);
+            if (expected == null) {
+                expected = vars.get(artifact + "_SHA");
+            }
             if (expected == null || sanitizedMojmaps && "MOJMAPS".equals(artifact)) {
                 // Only the patched jar may lack a declared checksum in a profile that declares some,
                 // and the sanitized mappings can never match the raw file HMCL downloads. Both must
@@ -397,6 +406,58 @@ public final class ProcessorReuse {
             artifacts.add("PATCHED");
         }
         return artifacts;
+    }
+
+    /// Returns the checksums the processors declare for their outputs, keyed by artifact variable.
+    ///
+    /// The install tasks resolve an `outputs` value through the install-profile variables, and
+    /// accept a literal checksum as well. A declaration whose value does not resolve to a checksum,
+    /// or two processors declaring different checksums for the same artifact, make the chain
+    /// unverifiable, so no checksum is returned.
+    ///
+    /// @param processors the client-side processors
+    /// @param vars       the resolved install-profile variables
+    /// @return the declared checksums, or `null` when a declaration cannot be resolved
+    private static @Nullable Map<String, String> declaredChecksums(List<Processor> processors, Map<String, String> vars) {
+        Map<String, String> declared = new LinkedHashMap<>();
+        for (Processor processor : processors) {
+            for (Map.Entry<String, String> output : processor.getOutputs().entrySet()) {
+                if (!StringUtils.isSurrounded(output.getKey(), "{", "}")) {
+                    // `outputArtifacts` already refuses a chain whose outputs name a plain path.
+                    continue;
+                }
+                String artifact = StringUtils.removeSurrounding(output.getKey(), "{", "}");
+                @Nullable String checksum = resolveChecksum(output.getValue(), vars);
+                if (checksum == null) {
+                    return null;
+                }
+                @Nullable String previous = declared.putIfAbsent(artifact, checksum);
+                if (previous != null && !previous.equalsIgnoreCase(checksum)) {
+                    return null;
+                }
+            }
+        }
+        return declared;
+    }
+
+    /// Resolves an `outputs` value to the checksum it names.
+    ///
+    /// A value is either a variable reference such as `{PATCHED_SHA}`, a quoted literal, or the
+    /// literal checksum itself. Anything else is rejected instead of being trusted as a checksum.
+    ///
+    /// @param expression the declared value
+    /// @param vars       the resolved install-profile variables
+    /// @return the checksum, or `null` when the value does not name one
+    private static @Nullable String resolveChecksum(String expression, Map<String, String> vars) {
+        if (StringUtils.isSurrounded(expression, "{", "}")) {
+            return vars.get(StringUtils.removeSurrounding(expression, "{", "}"));
+        }
+        if (StringUtils.isSurrounded(expression, "'", "'")) {
+            return StringUtils.removeSurrounding(expression, "'");
+        }
+        // A plain value is a literal checksum, unless it still contains a token the install tasks
+        // would substitute, in which case its real value cannot be determined here.
+        return expression.indexOf('{') < 0 ? expression : null;
     }
 
     /// Returns the path arguments a processor writes, judging by the option names of the tools seen

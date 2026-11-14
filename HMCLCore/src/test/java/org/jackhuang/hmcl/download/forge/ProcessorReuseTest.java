@@ -130,6 +130,65 @@ public class ProcessorReuseTest {
         assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, mismatching));
     }
 
+    /// Verifies an artifact against a checksum the profile writes into `outputs` as a literal,
+    /// which names no `_SHA` variable.
+    @Test
+    public void testDeclaredChecksumFromOutputLiteral(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        List<Processor> processors = List.of(binaryPatcher(Map.of(
+                "{PATCHED}", DigestUtils.digestToString("SHA-1", patched))));
+
+        Map<String, String> vars = Map.of("PATCHED", patched.toString());
+        assertTrue(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
+
+        writeFile(patched, "changed");
+        assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
+    }
+
+    /// Verifies an artifact against a checksum the profile names through another variable, when
+    /// there is no `PATCHED_SHA`.
+    @Test
+    public void testDeclaredChecksumFromOutputVariable(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        List<Processor> processors = List.of(binaryPatcher(Map.of("{PATCHED}", "{EXPECTED_PATCHED}")));
+
+        assertTrue(ProcessorReuse.canReuseDeclaredArtifacts(processors, Map.of(
+                "PATCHED", patched.toString(),
+                "EXPECTED_PATCHED", DigestUtils.digestToString("SHA-1", patched))));
+
+        assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, Map.of(
+                "PATCHED", patched.toString(),
+                "EXPECTED_PATCHED", "0000000000000000000000000000000000000000")));
+    }
+
+    /// Refuses to skip the chain when a declared output checksum does not match, even though
+    /// another declared artifact does.
+    @Test
+    public void testDeclaredOutputMismatchPreventsSkip(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        Path slim = writeFile(tempDirectory.resolve("slim.jar"), "slim");
+        Path extra = writeFile(tempDirectory.resolve("extra.jar"), "extra");
+        List<Processor> processors = List.of(jarsplitter(), binaryPatcher(Map.of(
+                "{PATCHED}", "0000000000000000000000000000000000000000")));
+
+        assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, Map.of(
+                "PATCHED", patched.toString(),
+                "MC_SLIM", slim.toString(),
+                "MC_SLIM_SHA", DigestUtils.digestToString("SHA-1", slim),
+                "MC_EXTRA", extra.toString(),
+                "MC_EXTRA_SHA", DigestUtils.digestToString("SHA-1", extra))));
+    }
+
+    /// Refuses to skip the chain when an `outputs` value does not resolve to a checksum.
+    @Test
+    public void testDeclaredChecksumRejectsUnresolvableOutput(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        List<Processor> processors = List.of(binaryPatcher(Map.of("{PATCHED}", "{UNDEFINED_SHA}")));
+
+        assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, Map.of(
+                "PATCHED", patched.toString())));
+    }
+
     /// Records the slim, srg and patched jars even though the profile declares no outputs.
     @Test
     public void testSidecarRecordsUndeclaredArtifacts(@TempDir Path tempDirectory) throws IOException {
@@ -515,12 +574,20 @@ public class ProcessorReuseTest {
     ///
     /// @return the processor
     private static Processor binaryPatcher() {
+        return binaryPatcher(Map.of());
+    }
+
+    /// Creates a client processor whose only output is the patched jar, with declared outputs.
+    ///
+    /// @param outputs the declared checksums by output path
+    /// @return the processor
+    private static Processor binaryPatcher(Map<String, String> outputs) {
         return new Processor(
                 List.of("client"),
                 Artifact.fromDescriptor("net.minecraftforge:binarypatcher:1.1.1"),
                 List.of(),
                 List.of("--clean", "{MC_SRG}", "--output", "{PATCHED}"),
-                Map.of());
+                outputs);
     }
 
     /// Writes the client jar a sidecar records as the chain input.
