@@ -17,10 +17,12 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Set;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -66,14 +68,15 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         hasSource = settings.containsKey(LocalModpackPage.MODPACK_FILE) || settings.containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
     }
 
-    private Task<?> finishModpackInstallingAsync(SettingsMap settings) {
-        Path selected = settings.get(LocalModpackPage.MODPACK_FILE);
-        ServerModpackManifest serverModpackManifest = settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
-        Modpack modpack = settings.get(LocalModpackPage.MODPACK_MANIFEST);
-        String name = settings.get(LocalModpackPage.MODPACK_NAME);
-        String iconUrl = settings.get(LocalModpackPage.MODPACK_ICON_URL);
+    /// Prepares normal installation/update or the original pack's optional-only update.
+    private @Nullable Task<?> finishModpackInstallingAsync(SettingsMap settings) {
+        @Nullable Path selected = settings.get(LocalModpackPage.MODPACK_FILE);
+        @Nullable ServerModpackManifest serverModpackManifest = settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
+        @Nullable Modpack modpack = settings.get(LocalModpackPage.MODPACK_MANIFEST);
+        @Nullable String name = settings.get(LocalModpackPage.MODPACK_NAME);
+        @Nullable String iconUrl = settings.get(LocalModpackPage.MODPACK_ICON_URL);
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
-        var excludedFiles = settings.get(LocalModpackPage.MODPACK_EXCLUDED_FILES);
+        @Nullable Set<String> excludedFiles = settings.get(LocalModpackPage.MODPACK_EXCLUDED_FILES);
 
         if (isManuallyCreated) {
             return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name);
@@ -89,7 +92,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
                 return null;
             }
             try {
-                if (serverModpackManifest != null) {
+                if (settings.getOrDefault(ModpackSelectionPage.CHANGE_OPTIONAL_FILES, false)) {
+                    return modpack.getInstallTask(repository.getDependency(), selected, instanceId, null, excludedFiles);
+                } else if (serverModpackManifest != null) {
                     return ModpackHelper.getUpdateTask(repository, serverModpackManifest, instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)));
                 } else {
                     return ModpackHelper.getUpdateTask(repository, selected, instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)), excludedFiles);

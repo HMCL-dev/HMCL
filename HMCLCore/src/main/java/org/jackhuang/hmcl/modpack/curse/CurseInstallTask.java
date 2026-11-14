@@ -17,6 +17,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,8 +33,10 @@ public final class CurseInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
-    private final Path zipFile;
-    private final Modpack modpack;
+    /// Source archive, absent when only changing installed optional files.
+    private final @Nullable Path zipFile;
+    /// Source metadata, absent when only changing installed optional files.
+    private final @Nullable Modpack modpack;
     private final CurseManifest manifest;
     private final GameInstanceID instanceId;
 
@@ -49,6 +52,9 @@ public final class CurseInstallTask extends Task<Void> {
 
     /// Keys of optional files the user chose not to install; `null` or empty means install all.
     private final @Nullable Set<String> excludedFiles;
+
+    /// Previous exclusions limit downloads and skip archive/component installation; `null` means normal install/update.
+    private final @Nullable @Unmodifiable Set<String> previousExcludedFiles;
 
     /// Validated extension of the scheduled icon download, or `null` when no icon is scheduled.
     private @Nullable String iconExt;
@@ -78,7 +84,7 @@ public final class CurseInstallTask extends Task<Void> {
             GameInstanceID instanceId,
             @Nullable String iconUrl,
             @Nullable Set<String> excludedFiles) {
-        this(dependencyManager, zipFile, modpack, manifest, instanceId, null, iconUrl, excludedFiles);
+        this(dependencyManager, zipFile, modpack, manifest, instanceId, null, iconUrl, excludedFiles, null);
     }
 
     /// Creates a task that updates an existing CurseForge modpack instance.
@@ -103,7 +109,13 @@ public final class CurseInstallTask extends Task<Void> {
             DefaultGameInstance instance,
             @Nullable String iconUrl,
             @Nullable Set<String> excludedFiles) {
-        this(dependencyManager, zipFile, modpack, manifest, instance.getId(), instance, iconUrl, excludedFiles);
+        this(dependencyManager, zipFile, modpack, manifest, instance.getId(), instance, iconUrl, excludedFiles, null);
+    }
+
+    /// Changes optional files using the existing update/removal rules, without installing components or overrides.
+    public CurseInstallTask(DefaultDependencyManager dependencyManager, CurseManifest manifest,
+                            DefaultGameInstance instance, Set<String> excludedFiles, Set<String> previousExcludedFiles) {
+        this(dependencyManager, null, null, manifest, instance.getId(), instance, null, excludedFiles, previousExcludedFiles);
     }
 
     /// Creates a CurseForge installation task in the mode selected by `updateTarget`.
@@ -117,18 +129,20 @@ public final class CurseInstallTask extends Task<Void> {
     /// @param iconUrl           the optional icon URL, or `null`
     /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
     ///                          install all files. When non-null, must not contain `null` elements.
+    /// @param previousExcludedFiles previous exclusions for optional-only updates, or `null` for normal installation
     /// @throws IllegalArgumentException if an update target has no compatible configuration
     /// @throws IllegalStateException    if the target cannot be reserved, an update target is not
     ///                                  the exact published object, or another draft is open
     private CurseInstallTask(
             DefaultDependencyManager dependencyManager,
-            Path zipFile,
-            Modpack modpack,
+            @Nullable Path zipFile,
+            @Nullable Modpack modpack,
             CurseManifest manifest,
             GameInstanceID instanceId,
             @Nullable DefaultGameInstance updateTarget,
             @Nullable String iconUrl,
-            @Nullable Set<String> excludedFiles) {
+            @Nullable Set<String> excludedFiles,
+            @Nullable Set<String> previousExcludedFiles) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -137,6 +151,7 @@ public final class CurseInstallTask extends Task<Void> {
         this.updateTarget = updateTarget;
         this.iconUrl = iconUrl;
         this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
+        this.previousExcludedFiles = previousExcludedFiles == null ? null : Set.copyOf(previousExcludedFiles);
         this.repository = dependencyManager.getGameRepository();
 
         this.run = repository.getLayout().getInstanceRoot(instanceId);
@@ -156,6 +171,14 @@ public final class CurseInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         this.config = config;
+
+        if (previousExcludedFiles != null) {
+            dependencyManager.validateGameInstance(Objects.requireNonNull(updateTarget));
+            if (config == null)
+                throw new IllegalArgumentException("Cannot read installed CurseForge modpack configuration");
+            return;
+        }
+        Objects.requireNonNull(zipFile);
 
         onDone().register(event -> {
             @Nullable Exception ex = event.getTask().getException();
@@ -207,8 +230,16 @@ public final class CurseInstallTask extends Task<Void> {
         return dependencies;
     }
 
+    /// Finds archive override mods, or the original override paths when changing only optional files.
     private Set<String> getNewOverridesMods() throws IOException {
         Set<String> result = new HashSet<>();
+        if (previousExcludedFiles != null) {
+            for (var file : config.getOverrides()) {
+                if (file.getPath().startsWith("mods/"))
+                    result.add(file.getPath());
+            }
+            return result;
+        }
         String overridesDir = manifest.overrides();
         if (StringUtils.isBlank(overridesDir)) {
             return result;
@@ -260,7 +291,7 @@ public final class CurseInstallTask extends Task<Void> {
                 String relativePath = "mods/" + oldCurseManifestFile.fileName();
                 Path oldFile = run.resolve(relativePath);
                 if (Files.notExists(oldFile)) continue;
-                if (!newManifestFiles.contains(oldCurseManifestFile) && !newOverridesMods.contains(relativePath))
+                if (newManifestFiles.stream().filter(f -> (excludedFiles == null || !excludedFiles.contains(f.key()))).noneMatch(oldCurseManifestFile::equals) && !newOverridesMods.contains(relativePath))
                     Files.deleteIfExists(oldFile);
             }
         }
@@ -282,6 +313,6 @@ public final class CurseInstallTask extends Task<Void> {
         }
 
         // The game builder runs as a dependent and registers the instance before this phase.
-        dependencies.add(new CurseCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest, excludedFiles));
+        dependencies.add(new CurseCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest, excludedFiles, previousExcludedFiles));
     }
 }

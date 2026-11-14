@@ -166,4 +166,14 @@ public record CurseManifestFile(
     public int hashCode() {
         return Objects.hash(projectID, fileID);
     }
+
+    @Override
+    public boolean looksLike(ModpackFile other) {
+        if (!(other instanceof CurseManifestFile that))
+            return false;
+        if (other == this)
+            return true;
+
+        return this.projectID == that.projectID;
+    }
 }
