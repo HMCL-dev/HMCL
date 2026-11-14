@@ -630,7 +630,7 @@
 }
 
 .jfx-popup-container {
-    -fx-background-color: -monet-surface;
+    -fx-background-color: -monet-surface-container;
     -fx-background-radius: 4;
 }
 
