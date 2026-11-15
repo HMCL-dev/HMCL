@@ -10,6 +10,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -173,7 +174,7 @@ public class GameInstanceIconDialog extends JFXDialogLayout {
     private Node createIcon(Path path) {
         ImageContainer imageContainer;
         try {
-            imageContainer = new ImageContainer(FXUtils.loadImage(path, 64, 64, true, true), 32D, 32D);
+            imageContainer = new ImageContainer(ImageLoaders.DEFAULT.load(path, 64, 64, true, true), 32D, 32D);
         } catch (Exception e) {
             LOG.warning("Failed to load custom instance icon at " + path, e);
             return null;
