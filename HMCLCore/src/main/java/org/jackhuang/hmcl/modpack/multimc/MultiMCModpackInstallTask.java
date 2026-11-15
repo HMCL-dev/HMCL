@@ -7,6 +7,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
+import org.jackhuang.hmcl.download.game.LibraryDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -58,6 +59,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     private final List<Task<?>> dependents = new ArrayList<>();
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final DefaultDependencyManager dependencyManager;
+
+    private final Map<Library, Path> downloadedJarMods = new LinkedHashMap<>();
 
     /// Previous modpack configuration when updating, or `null` for a new installation.
     private final @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config;
@@ -316,14 +319,14 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             if (Files.exists(libraries))
                 FileUtils.copyDirectory(libraries, repository.getLayout().getInstanceRoot(instanceId).resolve("libraries"));
 
-            for (Library library : artifact.getManifest().getLibraries()) {
+            for (Library library : artifact.manifest().getLibraries()) {
                 if ("local".equals(library.hint())) {
                     /* TODO: Determine whether we should erase community fields, like 'hint' and 'filename' from version json.
                         Retain them will facilitate compatibility, as some embedded libraries may check where their JAR is.
                         Meanwhile, potential compatibility issue with other launcher which never supports these fields might occur.
                         Here, we make the file stored twice, to keep maximum compatibility. */
-                    Path from = repository.getLayout().getLibraryFile(artifact.getManifest().id(), library);
-                    Path target = repository.getLayout().getLibraryFile(artifact.getManifest().id(), library.withoutCommunityFields());
+                    Path from = repository.getLayout().getLibraryFile(artifact.manifest().id(), library);
+                    Path target = repository.getLayout().getLibraryFile(artifact.manifest().id(), library.withoutCommunityFields());
                     Files.createDirectories(target.getParent());
                     Files.copy(from, target, StandardCopyOption.REPLACE_EXISTING);
                 }
@@ -333,7 +336,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                     MultiMCModpackInstallTask.class.getResourceAsStream(
                             "/assets/game/HMCLMultiMCBootstrap-1.0.jar"),
                     "Bundled HMCLMultiMCBootstrap is missing.")) {
-                Path libraryPath = repository.getLayout().getLibraryFile(artifact.getManifest().id(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY);
+                Path libraryPath = repository.getLayout().getLibraryFile(artifact.manifest().id(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY);
 
                 Files.createDirectories(libraryPath.getParent());
                 Files.copy(input, libraryPath, StandardCopyOption.REPLACE_EXISTING);
@@ -350,16 +353,24 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
         // Stage #5: Assemble game files.
         {
-            GameInstanceManifest instanceManifest = artifact.getManifest();
+            GameInstanceManifest instanceManifest = artifact.manifest();
             requireDraft().put(instanceManifest);
 
             dependencies.add(new GameAssetDownloadTask(dependencyManager, instanceManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true));
             dependencies.add(new GameLibrariesTask(
                     dependencyManager,
                     // TODO: check integrity of maven-only files when launching games?
-                    instanceManifest.withLibraries(Lang.merge(instanceManifest.getLibraries(), artifact.getMavenOnlyFiles())),
+                    instanceManifest.withLibraries(Lang.merge(instanceManifest.getLibraries(), artifact.mavenOnlyFiles())),
                     true
             ));
+
+            for (var jarModFile : artifact.jarModFiles()) {
+                if (jarModFile.filename() == null) {
+                    Path tempPath = Files.createTempFile("hmcl-mmc-jarmod-", ".zip");
+                    downloadedJarMods.put(jarModFile, tempPath);
+                    dependencies.add(new LibraryDownloadTask(dependencyManager, tempPath, jarModFile));
+                }
+            }
 
             Path instanceJar = getPrimaryJarFile();
             dependencies.add(new GameDownloadTask(dependencyManager, instanceManifest)
@@ -384,29 +395,37 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     /// Applies JAR mods after downloads succeed and then publishes the completed manifest.
     @Override
     public void postExecute() throws Exception {
-        MultiMCInstancePatch.ResolvedInstance artifact = Objects.requireNonNull(getResult(), "ResolvedInstance");
+        try {
+            MultiMCInstancePatch.ResolvedInstance artifact = Objects.requireNonNull(getResult(), "ResolvedInstance");
 
-        List<String> files = artifact.getJarModFileNames();
-        if (!isDependenciesSucceeded()) {
-            return;
-        }
+            if (!isDependenciesSucceeded()) {
+                return;
+            }
 
-        if (!files.isEmpty()) {
-            // Stage #7: Apply jar mods.
-            try (FileSystem fs = openModpack()) {
-                Path root = getRootPath(fs).resolve("jarmods");
+            List<Library> files = artifact.jarModFiles();
+            if (!files.isEmpty()) {
+                // Stage #7: Apply jar mods.
+                try (FileSystem fs = openModpack()) {
+                    Path root = getRootPath(fs).resolve("jarmods");
 
-                try (FileSystem mc = CompressingUtils.writable(getPrimaryJarFile()).build()) {
-                    for (String fileName : files) {
-                        try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).build()) {
-                            FileUtils.copyDirectory(jm.getPath("/"), mc.getPath("/"));
+                    try (FileSystem mc = CompressingUtils.writable(getPrimaryJarFile()).build()) {
+                        for (Library file : files) {
+                            @Nullable Path path = file.filename() != null
+                                    ? root.resolve(file.filename())
+                                    : downloadedJarMods.get(file);
+                            if (path == null || !Files.isRegularFile(path)) continue;
+                            try (FileSystem jm = CompressingUtils.readonly(path).build()) {
+                                FileUtils.copyDirectory(jm.getPath("/"), mc.getPath("/"));
+                            }
                         }
                     }
                 }
             }
-        }
 
-        requireDraft().commit();
+            requireDraft().commit();
+        } finally {
+            cleanup();
+        }
     }
 
     /// Returns the primary JAR path retained by the current draft.
@@ -451,6 +470,17 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
     private FileSystem openModpack() throws IOException {
         return CompressingUtils.readonly(zipFile).build();
+    }
+
+    private void cleanup() {
+        for (Path path : downloadedJarMods.values()) {
+            if (Files.isRegularFile(path)) {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (IOException ignored) {
+                }
+            }
+        }
     }
 
     private static boolean testPath(Path root) {
