@@ -5,7 +5,7 @@ package org.jackhuang.hmcl.theme;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import org.glavo.monetfx.ColorScheme;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ public final class WallpaperColorExtractor {
 
         Image image;
         try {
-            image = FXUtils.loadImage(imageFile);
+            image = ImageLoaders.DEFAULT.load(imageFile);
         } catch (Exception e) {
             if (e instanceof IOException ioException) {
                 throw ioException;
@@ -54,7 +54,7 @@ public final class WallpaperColorExtractor {
 
         Image image;
         try {
-            image = FXUtils.loadImage(resource.openStream(), resource.name());
+            image = ImageLoaders.DEFAULT.load(resource.openStream(), resource.name());
         } catch (Exception e) {
             if (e instanceof IOException ioException) {
                 throw ioException;

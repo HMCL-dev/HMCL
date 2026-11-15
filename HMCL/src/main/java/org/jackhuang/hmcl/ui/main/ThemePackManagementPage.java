@@ -31,6 +31,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -381,7 +382,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private Optional<Image> loadThemePackIcon(IconCacheKey key) {
             try {
                 ThemePackResource resource = ThemePackManager.resolveInstalledAsset(key.location(), key.icon());
-                return Optional.of(FXUtils.loadImage(
+                return Optional.of(ImageLoaders.DEFAULT.load(
                         resource.openStream(),
                         resource.name(),
                         ICON_IMAGE_SIZE,
@@ -403,7 +404,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// @param themePack the installed theme pack to display
         private ThemePackInfoDialog(ThemePackManagementPage page, ThemePackManager.InstalledThemePack themePack) {
             ThemePackManifest manifest = themePack.manifest();
-            maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
             Node icon = page.createIconNode(themePack, manifest.icon(), SVG.PACKAGE2);
             TwoLineListItem title = new TwoLineListItem();
@@ -460,13 +460,12 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             }
 
             ScrollPane scrollPane = new ScrollPane(themes);
-            FXUtils.smoothScrolling(scrollPane);
+            ScrollUtils.installSmoothScrolling(scrollPane);
             scrollPane.setFitToWidth(true);
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             scrollPane.setPrefViewportWidth(520);
             scrollPane.setPrefViewportHeight(Math.min(360, manifest.themes().size() * 86));
-            scrollPane.maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.55));
 
             StackPane body = new StackPane(scrollPane);
             body.setPadding(new Insets(10, 0, 0, 0));

@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.upgrade.*;
@@ -63,7 +64,7 @@ public final class SettingsPage extends ScrollPane {
         VBox rootPane = new VBox(10);
         rootPane.setPadding(new Insets(10));
         this.setContent(rootPane);
-        FXUtils.smoothScrolling(this);
+        ScrollUtils.installSmoothScrolling(this);
 
         {
             ComponentList updatePaneList = new ComponentList();

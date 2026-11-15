@@ -9,19 +9,12 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
@@ -35,6 +28,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.TaskManager;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +40,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 @NotNullByDefault
 final class MainWindowPane extends StackPane {
     /// The diameter, in pixels, of the rounded window corners.
-    private static final double ARC = 8.0;
+    private static final double ARC = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+            ? 8.0
+            : 32.0;
 
     /// The decorator whose state and actions are represented by this pane.
     private final Decorator decorator;
@@ -118,7 +114,7 @@ final class MainWindowPane extends StackPane {
         Themes.colorSchemeProperty().addListener(holder.weak(titleBarBackgroundListener));
         Themes.titleBarTransparentProperty().addListener(holder.weak(titleBarBackgroundListener));
 
-        InvalidationListener navBarListener = observable -> updateNavBar();
+        ChangeListener<DecoratorPage.@Nullable State> navBarListener = (observable, oldValue, newValue) -> updateNavBar();
         decorator.stateProperty().addListener(holder.weak(navBarListener));
         updateNavBar();
 
