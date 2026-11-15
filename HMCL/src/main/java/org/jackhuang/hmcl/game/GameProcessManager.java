@@ -7,6 +7,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.setting.GameDirectoryID;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.util.FXThread;
@@ -33,21 +34,28 @@ public final class GameProcessManager {
 
     public static final ReadOnlyIntegerWrapper aliveProcessCount = new ReadOnlyIntegerWrapper(0);
 
+    public static final BooleanProperty autoCleanup = SettingsManager.settings().autoCleanupGameProcessesProperty();
+
+    static {
+        autoCleanup.addListener(autoCleanup -> updateProcesses(false));
+    }
+
     @FXThread
-    private static void countAliveProcesses() {
+    private static void updateProcesses(boolean forceCleanup) {
+        if (forceCleanup || autoCleanup.get()) processHolders.removeIf(holder -> holder.exitedProperty().get());
         aliveProcessCount.set((int) processHolders.stream().filter(holder -> !holder.exitedProperty().get()).count());
     }
 
     @FXThread
     public static void add(LauncherHelper.HMCLProcessListener processListener) {
         processHolders.add(0, new GameProcessHolder(processListener));
-        countAliveProcesses();
+        updateProcesses(false);
     }
 
     @FXThread
     public static void cleanup() {
         processHolders.removeIf(holder -> holder.exitedProperty().get());
-        countAliveProcesses();
+        updateProcesses(true);
     }
 
     public static final class GameProcessHolder {
@@ -77,7 +85,7 @@ public final class GameProcessManager {
             holder.onWeakChangeAndOperate(processListener.exitedProperty(), b -> {
                 if (b) {
                     this.exited.set(true);
-                    countAliveProcesses();
+                    updateProcesses(false);
                 }
             });
         }

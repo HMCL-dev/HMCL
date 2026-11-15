@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXSwitch;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.*;
@@ -84,10 +85,25 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
 
         @Override
         protected List<Node> initializeToolbar(GameProcessPage skinnable) {
+            var cleanupBtn = ToolbarListPageSkin.createToolbarButton2(i18n("button.cleanup"), SVG.MOP, skinnable::cleanup);
+            cleanupBtn.disableProperty().bind(GameProcessManager.autoCleanup);
+
+            var autoCleanupLabel = new Label(i18n("game.process.auto_cleanup"));
+            autoCleanupLabel.getStyleClass().add("jfx-tool-bar-button");
+
+            var autoCleanupSwitch = new JFXSwitch();
+            autoCleanupSwitch.selectedProperty().bindBidirectional(GameProcessManager.autoCleanup);
+            autoCleanupSwitch.setAccessibleText(i18n("game.process.auto_cleanup"));
+            autoCleanupSwitch.setSize(24D);
+            FXUtils.setLimitHeight(autoCleanupSwitch, 30D);
+            HBox.setMargin(autoCleanupSwitch, new Insets(0D, 0D, 0D, 10D));
+
             return List.of(
-                    ToolbarListPageSkin.createToolbarButton2(i18n("button.cleanup"), SVG.MOP, skinnable::cleanup),
+                    cleanupBtn,
                     ToolbarListPageSkin.createToolbarButton2(i18n("instance.launch"), SVG.ROCKET_LAUNCH, skinnable::launch),
-                    ToolbarListPageSkin.createToolbarButton2(i18n("game.process.terminate_all"), SVG.SHUTDOWN, () -> skinnable.terminateSelected(skinnable.getItems()))
+                    ToolbarListPageSkin.createToolbarButton2(i18n("game.process.terminate_all"), SVG.SHUTDOWN, () -> skinnable.terminateSelected(skinnable.getItems())),
+                    autoCleanupLabel,
+                    autoCleanupSwitch
             );
         }
 
