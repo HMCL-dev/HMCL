@@ -470,7 +470,7 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
             FXUtils.copyOnDoubleClick(description);
 
             ScrollPane descriptionPane = new ScrollPane(description);
-            ScrollUtils.addSmoothScrolling(descriptionPane);
+            ScrollUtils.installSmoothScrolling(descriptionPane);
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
