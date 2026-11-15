@@ -44,6 +44,9 @@ final class MainWindowPane extends StackPane {
             ? 8.0
             : 32.0;
 
+    /// The style class marking a transparent title bar, allowing stylesheets to adapt the title-bar controls.
+    private static final String TRANSPARENT_TITLE_BAR_STYLE_CLASS = "transparent-title-bar";
+
     /// The decorator whose state and actions are represented by this pane.
     private final Decorator decorator;
 
@@ -110,9 +113,13 @@ final class MainWindowPane extends StackPane {
         frame.setTop(titleBar);
 
         updateTitleBarBackground();
-        InvalidationListener titleBarBackgroundListener = observable -> updateTitleBarBackground();
-        Themes.colorSchemeProperty().addListener(holder.weak(titleBarBackgroundListener));
-        Themes.titleBarTransparentProperty().addListener(holder.weak(titleBarBackgroundListener));
+        updateTitleBarTransparencyStyleClass(titleBar, Themes.titleBarTransparentProperty().get());
+        InvalidationListener titleBarStyleListener = observable -> {
+            updateTitleBarBackground();
+            updateTitleBarTransparencyStyleClass(titleBar, Themes.titleBarTransparentProperty().get());
+        };
+        Themes.colorSchemeProperty().addListener(holder.weak(titleBarStyleListener));
+        Themes.titleBarTransparentProperty().addListener(holder.weak(titleBarStyleListener));
 
         ChangeListener<DecoratorPage.@Nullable State> navBarListener = (observable, oldValue, newValue) -> updateNavBar();
         decorator.stateProperty().addListener(holder.weak(navBarListener));
@@ -245,6 +252,21 @@ final class MainWindowPane extends StackPane {
                     colorScheme.getPrimaryContainer(),
                     CornerRadii.EMPTY,
                     Insets.EMPTY)));
+        }
+    }
+
+    /// Marks the title bar as transparent so that stylesheets can keep the title-bar controls consistent.
+    ///
+    /// The transparent title bar is drawn over the launcher background instead of the primary container,
+    /// so its controls have to use the same foreground color as the other transparent-title-bar content.
+    ///
+    /// @param titleBar    the title bar to update
+    /// @param transparent whether the title bar background is currently transparent
+    static void updateTitleBarTransparencyStyleClass(BorderPane titleBar, boolean transparent) {
+        if (transparent) {
+            titleBar.getStyleClass().add(TRANSPARENT_TITLE_BAR_STYLE_CLASS);
+        } else {
+            titleBar.getStyleClass().remove(TRANSPARENT_TITLE_BAR_STYLE_CLASS);
         }
     }
 

@@ -711,8 +711,16 @@
     -fx-fill: -monet-on-primary-container;
 }
 
+.jfx-tool-bar.transparent-title-bar .jfx-decorator-button .svg {
+    -fx-fill: -monet-on-surface;
+}
+
 .jfx-decorator-button .jfx-spinner .arc {
     -fx-stroke: -monet-on-primary-container;
+}
+
+.jfx-tool-bar.transparent-title-bar .jfx-decorator-button .jfx-spinner .arc {
+    -fx-stroke: -monet-on-surface;
 }
 
 .jfx-tool-bar Label {
