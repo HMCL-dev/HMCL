@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.addon.pack.resourcepack;
 
-import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.pack.PackMcMeta;
 import org.jackhuang.hmcl.addon.update.AddonUpdateConditions;
 import org.jackhuang.hmcl.image.ImageLoader;

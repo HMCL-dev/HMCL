@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.image.ImageLoader;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.SettingsManager;

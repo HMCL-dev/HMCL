@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.addon.update.AddonUpdateTask;
@@ -298,7 +299,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         }
 
         private Image loadIcon() {
-            Image icon = data.localAddonFile().loadIcon(80D, 80D, true, true);
+            Image icon = data.localAddonFile().loadIcon(ImageLoaders.DEFAULT, 80, 80, true, true);
             if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1) {
                 return icon;
             }
