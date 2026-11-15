@@ -66,11 +66,17 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             FXUtils.onSecondaryButtonClicked(item, () -> {
                 PopupMenu menu = new PopupMenu();
                 JFXPopup popup = new JFXPopup(menu);
-                menu.getContent().add(new IconedMenuItem(
-                        SVG.EDIT,
-                        i18n("button.edit"),
-                        () -> Controllers.navigate(new GameDirectoryPage(gameDirectory)),
-                        popup));
+                menu.getContent().addAll(
+                        new IconedMenuItem(
+                                SVG.EDIT,
+                                i18n("button.edit"),
+                                () -> Controllers.navigate(new GameDirectoryPage(gameDirectory)),
+                                popup),
+                        new IconedMenuItem(
+                                SVG.FOLDER,
+                                i18n("button.reveal_dir"),
+                                () -> FXUtils.openFolder(gameDirectory.getPath().toPath()),
+                                popup));
                 popup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, item.getWidth(), 0);
             });
             return item;

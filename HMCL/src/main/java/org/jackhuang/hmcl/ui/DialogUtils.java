@@ -91,6 +91,9 @@ public final class DialogUtils {
 
         if (dialog == null) {
             dialogPane = new JFXDialogPane();
+            dialogPane.maxWidthProperty().bind(container.widthProperty().multiply(0.7));
+            dialogPane.maxHeightProperty().bind(container.heightProperty().multiply(0.7));
+
             dialog = new JFXDialog(
                     container,
                     dialogPane,

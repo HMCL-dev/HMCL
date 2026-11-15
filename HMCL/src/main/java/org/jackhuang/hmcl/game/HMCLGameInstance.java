@@ -10,6 +10,7 @@ import javafx.beans.property.ReadOnlyObjectPropertyBase;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
@@ -441,7 +442,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
             @Nullable Path iconFile = getIconFile();
             if (iconFile != null) {
                 try {
-                    return FXUtils.loadImage(iconFile, 64, 64, true, true);
+                    return ImageLoaders.DEFAULT.load(iconFile, 64, 64, true, true);
                 } catch (Exception e) {
                     LOG.warning("Failed to load instance icon for " + getId(), e);
                 }

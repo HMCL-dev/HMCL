@@ -29,7 +29,7 @@ public class ModpackExportInfo {
 
     private String authlibInjectorServer;
 
-    private List<McbbsModpackManifest.Origin> origins = new ArrayList<>();
+    private final List<McbbsModpackManifest.Origin> origins = new ArrayList<>();
 
     private boolean noCreateRemoteFiles;
     private boolean skipCurseForgeRemoteFiles;
@@ -84,7 +84,7 @@ public class ModpackExportInfo {
 
     /**
      * Description of this modpack.
-     *
+     * <p>
      * Supports plain HTML text.
      */
     public String getDescription() {
@@ -195,16 +195,18 @@ public class ModpackExportInfo {
         return noCreateRemoteFiles;
     }
 
-    public void setNoCreateRemoteFiles(boolean noCreateRemoteFiles) {
+    public ModpackExportInfo setNoCreateRemoteFiles(boolean noCreateRemoteFiles) {
         this.noCreateRemoteFiles = noCreateRemoteFiles;
+        return this;
     }
 
     public boolean isSkipCurseForgeRemoteFiles() {
         return skipCurseForgeRemoteFiles;
     }
 
-    public void setSkipCurseForgeRemoteFiles(boolean skipCurseForgeRemoteFiles) {
+    public ModpackExportInfo setSkipCurseForgeRemoteFiles(boolean skipCurseForgeRemoteFiles) {
         this.skipCurseForgeRemoteFiles = skipCurseForgeRemoteFiles;
+        return this;
     }
 
     public ModpackExportInfo validate() throws NullPointerException {
