@@ -2,14 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.modpack.modrinth;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-
 import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
@@ -23,10 +19,15 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
-import org.jackhuang.hmcl.addon.RemoteAddon;
-import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -114,10 +115,8 @@ public class ModrinthModpackExportTask extends Task<Void> {
         }
 
         List<String> downloads = new ArrayList<>();
-        if (modrinthVersion.isPresent())
-            downloads.add(modrinthVersion.get().file().url());
-        if (curseForgeVersion.isPresent())
-            downloads.add(curseForgeVersion.get().file().url());
+        modrinthVersion.ifPresent(version -> downloads.add(version.file().url()));
+        curseForgeVersion.ifPresent(version -> downloads.add(version.file().url()));
 
         long fileSize = Files.size(file);
         if (fileSize > Integer.MAX_VALUE) {
@@ -145,39 +144,42 @@ public class ModrinthModpackExportTask extends Task<Void> {
             List<ModrinthManifest.File> files = new ArrayList<>();
             Set<String> filesInManifest = new HashSet<>();
 
-            String[] resourceDirs = {"resourcepacks", "shaderpacks", "mods"};
-            for (String dir : resourceDirs) {
-                Path dirPath = runDirectory.resolve(dir);
-                if (Files.exists(dirPath)) {
-                    Files.walk(dirPath)
-                            .filter(Files::isRegularFile)
-                            .forEach(file -> {
-                                try {
-                                    String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+            List<Path> resourceDirs = Stream.of("resourcepacks", "shaderpacks", "mods").map(runDirectory::resolve).filter(Files::exists).toList();
 
-                                    if (!info.getWhitelist().contains(relativePath)) {
-                                        return;
-                                    }
-
-                                    ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
-                                    if (fileEntry != null) {
-                                        files.add(fileEntry);
-                                        filesInManifest.add(relativePath);
-                                    }
-                                } catch (IOException e) {
-                                    LOG.warning("Failed to process file: " + file, e);
-                                }
-                            });
+            List<Path> paths = new ArrayList<>();
+            for (Path dir : resourceDirs) {
+                try (var stream = Files.walk(dir)) {
+                    paths.addAll(stream.filter(Files::isRegularFile).toList());
                 }
             }
 
-            zip.putDirectory(runDirectory, "client-overrides", path -> {
+            long current = 0;
+            for (var file : paths) {
+                updateProgress(0.5 * ++current / paths.size());
+                String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+
+                if (!info.getWhitelist().contains(relativePath)) {
+                    continue;
+                }
+
+                try {
+                    ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
+                    if (fileEntry != null) {
+                        files.add(fileEntry);
+                        filesInManifest.add(relativePath);
+                    }
+                } catch (IOException e) {
+                    LOG.warning("Failed to process file: " + file, e);
+                }
+            }
+
+            zip.putDirectoryProgressed(runDirectory, "client-overrides", path -> {
                 String relativePath = path.replace(File.separatorChar, '/');
                 if (filesInManifest.contains(relativePath)) {
                     return false;
                 }
                 return Modpack.acceptFile(path, blackList, info.getWhitelist());
-            });
+            }, progress -> updateProgress(0.5 + 0.5 * progress));
 
             GameVersionNumber version = instance.getVersion();
             if (version == GameVersionNumber.unknown()) {

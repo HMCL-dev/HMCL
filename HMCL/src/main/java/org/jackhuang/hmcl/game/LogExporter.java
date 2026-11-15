@@ -33,7 +33,7 @@ public final class LogExporter {
             Path zipFile, DefaultGameInstance instance, LaunchOptions options, String logs, String launchScript,
             PathMatcher logMatcher) {
         DefaultGameRepositorySnapshot repositorySnapshot = instance.getSnapshot();
-        Path runDirectory = options.getGameDir();
+        Path runDirectory = instance.getRunDirectory();
         List<GameInstanceID> instances = new ArrayList<>();
 
         GameInstanceID currentInstanceId = instance.id;

@@ -9,6 +9,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -35,11 +36,7 @@ import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -53,7 +50,6 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -313,12 +309,19 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             {
 
                 // Toolbar Selecting
+                // selectAll() clears the selection first, causing the toolbar to flicker.
+                var selectAllButton = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
+                        listView.getSelectionModel().selectRange(0, listView.getItems().size()));
+
+                ListChangeListener<Object> selectionListener = change -> selectAllButton.setDisable(!listView.getItems().isEmpty()
+                        && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+                listView.getSelectionModel().getSelectedItems().addListener(selectionListener);
+                listView.getItems().addListener(selectionListener);
+
                 toolbarSelecting.getChildren().setAll(
-                        createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                                control.removeSelected(listView.getSelectionModel().getSelectedItems());
-                            }, null);
-                        }),
+                        createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () ->
+                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
+                                control.removeSelected(listView.getSelectionModel().getSelectedItems()), null)),
                         createToolbarButton2(i18n("button.enable"), SVG.CHECK, () ->
                                 control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
                         createToolbarButton2(i18n("button.disable"), SVG.CLOSE, () ->
@@ -328,8 +331,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                         listView.getSelectionModel().getSelectedItems().stream().map(ResourcePackInfoObject::getFile).toList()
                                 )
                         ),
-                        createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
-                                listView.getSelectionModel().selectAll()),
+                        selectAllButton,
                         createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
                                 listView.getSelectionModel().clearSelection())
                 );
@@ -528,11 +530,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private final ResourcePackListPage page;
 
-        private final JFXCheckBox checkBox;
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
+        private final JFXSwitch activeSwitch;
 
         private BooleanProperty booleanProperty = null;
 
@@ -546,8 +548,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             HBox root = new HBox(8);
             root.setPickOnBounds(false);
             root.setAlignment(Pos.CENTER_LEFT);
+            root.setPadding(new Insets(0, 8, 0, 8));
 
-            checkBox = new JFXCheckBox() {
+            activeSwitch = new JFXSwitch() {
                 @Override
                 public void fire() {
                     if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !isSelected() && getItem() != null && !getItem().getFile().isCompatible()) {
@@ -564,13 +567,22 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     }
                 }
             };
-            checkBox.setOnAction(e -> {
-                if (getItem() != null) getItem().getFile().setEnabled(checkBox.isSelected());
+            activeSwitch.setOnAction(e -> {
+                if (getItem() != null) getItem().getFile().setEnabled(activeSwitch.isSelected());
             });
+            activeSwitch.setSize(20);
+            activeSwitch.setMinSize(30, 30);
+            activeSwitch.setPrefSize(30, 30);
+            activeSwitch.setMaxSize(30, 30);
+            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             HBox.setHgrow(content, Priority.ALWAYS);
 
-            root.getChildren().setAll(checkBox, imageContainer, content, btnReveal, btnInfo);
+            HBox actions = new HBox();
+            actions.setAlignment(Pos.CENTER);
+            actions.getChildren().setAll(btnReveal, btnInfo, activeSwitch);
+
+            root.getChildren().setAll(imageContainer, content, actions);
 
             setSelectable();
 
@@ -600,9 +612,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(item)));
 
             if (booleanProperty != null) {
-                checkBox.selectedProperty().unbindBidirectional(booleanProperty);
+                activeSwitch.selectedProperty().unbindBidirectional(booleanProperty);
             }
-            checkBox.selectedProperty().bindBidirectional(booleanProperty = item.enabledProperty());
+            activeSwitch.selectedProperty().bindBidirectional(booleanProperty = item.enabledProperty());
 
             {
                 var compatibility = file.getCompatibility();
@@ -616,15 +628,15 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
+    /// Displays resource pack metadata with a scrollable description.
     private static final class ResourcePackInfoDialog extends JFXDialogLayout {
 
+        /// Creates a dialog whose description viewport follows its content and the window height.
         ResourcePackInfoDialog(ResourcePackInfoObject packInfoObject) {
             ResourcePackFile pack = packInfoObject.getFile();
 
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
-
-            maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
             packInfoObject.iconCache.attachValue(imageContainer.imageProperty(), null);
@@ -645,15 +657,14 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             FXUtils.copyOnDoubleClick(description);
 
             ScrollPane descriptionPane = new ScrollPane(description);
-            FXUtils.smoothScrolling(descriptionPane);
+            ScrollUtils.installSmoothScrolling(descriptionPane);
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
-            FXUtils.onChange(description.heightProperty(), newVal -> {
-                double maxHeight = Controllers.getDecorator().contentHeightProperty().get() * 0.5;
-                double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
-                descriptionPane.setPrefViewportHeight(targetHeight);
-            });
+            // Use the wrapped content height to request a readable viewport within the dialog size limit.
+            descriptionPane.prefViewportHeightProperty().bind(Bindings.min(
+                    description.heightProperty(),
+                    Controllers.getDecorator().contentHeightProperty().multiply(0.5)));
 
             setBody(descriptionPane);
 
