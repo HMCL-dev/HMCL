@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.addon.update.AddonUpdateTask;
@@ -36,6 +37,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lazy;
@@ -305,7 +307,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                         Path iconPath = fs.getPath(path);
 
                         if (Files.exists(iconPath)) {
-                            Image image = FXUtils.loadImage(
+                            Image image = ImageLoaders.DEFAULT.load(
                                 iconPath,
                                 80,
                                 80,
@@ -491,7 +493,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 if (exception == null) {
                     object.changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, repo.getBaseUrl()));
-                    FXUtils.smoothScrolling(scrollPane);
+                    ScrollUtils.installSmoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
                 } else {
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));

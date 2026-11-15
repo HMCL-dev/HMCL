@@ -1751,6 +1751,7 @@
     -fx-padding: 5;
     -fx-background-radius: 6;
     -fx-background-color: -monet-surface-container-low;
+    -fx-background-insets: 0.0;
     -fx-border-radius: 6;
 }
 

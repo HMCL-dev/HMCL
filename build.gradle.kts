@@ -5,7 +5,7 @@ import org.jackhuang.hmcl.gradle.l10n.UpdateTimeZoneRegions
 
 plugins {
     id("checkstyle")
-    id("org.glavo.gradle-wrapper-neo") version "0.2.0"
+    id("org.glavo.gradle-wrapper-neo") version "0.4.0"
 }
 
 group = "org.jackhuang"

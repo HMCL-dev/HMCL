@@ -25,8 +25,8 @@ import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
@@ -82,7 +82,7 @@ public final class LauncherHelper {
         this.setting = gameInstance.getEffectiveSettings();
         this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
         this.showLogs = setting.getInheritable(GameSettings::showLogsProperty);
-        this.launchingStepsPane.setTitle(i18n("instance.launch"));
+        this.launchingStepsPane.setTitle(i18n("instance.launch.title", this.gameInstance.id.id()));
     }
 
     public HMCLGameInstance getGameInstance() {
@@ -338,6 +338,7 @@ public final class LauncherHelper {
                     } else {
                         return Task.supplyAsync(() -> {
                             launcher.makeLaunchScript(scriptFile);
+                            launchingLatch.countDown();
                             return null;
                         });
                     }
