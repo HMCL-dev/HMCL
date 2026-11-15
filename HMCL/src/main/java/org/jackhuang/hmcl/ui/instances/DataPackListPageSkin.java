@@ -29,6 +29,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.datapack.DataPack;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -266,7 +267,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         }
 
         String getSubtitle() {
-            return packInfo.getDescription().toString();
+            return packInfo.getDescription().toStringSingleLine();
         }
 
         DataPack.Pack getPackInfo() {
@@ -283,7 +284,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             if (this.getPackInfo().isDirectory()) {
                 imagePath = getPackInfo().getPath().resolve("pack.png");
                 try {
-                    image = FXUtils.loadImage(imagePath, 64, 64, true, true);
+                    image = ImageLoaders.DEFAULT.load(imagePath, 64, 64, true, true);
                 } catch (Exception e) {
                     LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
                 }
@@ -291,7 +292,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(getPackInfo().getPath())) {
                     imagePath = fs.getPath("/pack.png");
                     if (Files.exists(imagePath)) {
-                        image = FXUtils.loadImage(imagePath, 64, 64, true, true);
+                        image = ImageLoaders.DEFAULT.load(imagePath, 64, 64, true, true);
                     }
                 } catch (Exception e) {
                     LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
