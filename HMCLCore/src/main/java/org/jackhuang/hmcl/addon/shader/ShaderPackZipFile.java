@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.addon.shader;
 
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.update.AddonUpdateConditions;
+import org.jackhuang.hmcl.image.ImageLoader;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -78,12 +79,11 @@ final class ShaderPackZipFile extends ShaderPackFile {
     }
 
     @Override
-    public @Nullable Image loadIcon(double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+    public @Nullable <I> I loadIcon(ImageLoader<I> imageLoader, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         try (var fs = CompressingUtils.createReadOnlyZipFileSystem(getFile())) {
             Path path = fs.getPath(this.iconPath);
-            if (!Files.isRegularFile(path)) return null;
-            try (var inputStream = Files.newInputStream(path)) {
-                return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
+            if (Files.isRegularFile(path)) {
+                return imageLoader.load(path, requestedWidth, requestedHeight, preserveRatio, smooth);
             }
         } catch (Exception e) {
             LOG.warning("Failed to load shader pack icon at %s!/%s".formatted(getFile(), iconPath), e);

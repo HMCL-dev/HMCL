@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.addon.shader;
 
 import javafx.scene.image.Image;
+import org.jackhuang.hmcl.image.ImageLoader;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
@@ -54,14 +55,14 @@ final class ShaderPackFolder extends ShaderPackFile {
     }
 
     @Override
-    public @Nullable Image loadIcon(double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+    public @Nullable <I> I loadIcon(ImageLoader<I> imageLoader, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         Path iconPath = switch (getShaderLoaderType()) {
             case APERTURE -> getFile().resolve("pack.png");
             case OPTIFINE_IRIS -> getFile().resolve("shaders").resolve("pack.png");
         };
         if (!Files.isRegularFile(iconPath)) return null;
-        try (var inputStream = Files.newInputStream(iconPath)) {
-            return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
+        try {
+            return imageLoader.load(iconPath, requestedWidth, requestedHeight, preserveRatio, smooth);
         } catch (Exception e) {
             LOG.warning("Failed to load shader pack icon at " + iconPath, e);
         }

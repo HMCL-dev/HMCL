@@ -577,7 +577,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         private Image loadIcon() {
-            Image icon = localModFile.loadIcon();
+            Image icon = localModFile.loadIcon(ImageLoaders.DEFAULT);
             if (icon != null) return icon;
             return getDefaultIcon();
         }

@@ -32,6 +32,8 @@ import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.image.ImageLoader;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -495,7 +497,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
 
         private Image loadIcon() {
-            Image icon = file.loadIcon();
+            Image icon = file.loadIcon(ImageLoaders.DEFAULT);
             if (icon != null) return icon;
             return getDefaultIcon();
         }

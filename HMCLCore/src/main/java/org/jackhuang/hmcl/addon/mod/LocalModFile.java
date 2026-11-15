@@ -9,6 +9,7 @@ import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.update.AddonUpdateConditions;
+import org.jackhuang.hmcl.image.ImageLoader;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -171,7 +172,7 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
     }
 
     @Override
-    public @Nullable Image loadIcon(double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+    public @Nullable <I> I loadIcon(ImageLoader<I> imageLoader, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         List<String> iconPaths = new ArrayList<>();
 
         if (StringUtils.isNotBlank(getLogoPath())) {
@@ -181,10 +182,8 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file)) {
             for (String path : iconPaths) {
                 Path iconPath = fs.getPath(path);
-                if (Files.exists(iconPath)) {
-                    try (var inputStream = Files.newInputStream(iconPath)) {
-                        return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
-                    }
+                if (Files.isRegularFile(iconPath)) {
+                    return imageLoader.load(iconPath, requestedWidth, requestedHeight, preserveRatio, smooth);
                 }
             }
         } catch (Exception e) {

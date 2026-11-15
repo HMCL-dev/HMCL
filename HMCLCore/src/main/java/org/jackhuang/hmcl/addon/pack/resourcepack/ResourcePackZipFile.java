@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.addon.pack.resourcepack;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.pack.PackMcMeta;
 import org.jackhuang.hmcl.addon.update.AddonUpdateConditions;
+import org.jackhuang.hmcl.image.ImageLoader;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,12 +32,11 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
-    public @Nullable Image loadIcon(double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+    public @Nullable <I> I loadIcon(ImageLoader<I> imageLoader, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         try (var fs = CompressingUtils.createReadOnlyZipFileSystem(getFile())) {
             Path iconPath = fs.getPath("pack.png");
-            if (!Files.isRegularFile(iconPath)) return null;
-            try (var inputStream = Files.newInputStream(iconPath)) {
-                return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
+            if (Files.isRegularFile(iconPath)) {
+                return imageLoader.load(iconPath, requestedWidth, requestedHeight, preserveRatio, smooth);
             }
         } catch (Exception e) {
             LOG.warning("Failed to load resource pack icon", e);

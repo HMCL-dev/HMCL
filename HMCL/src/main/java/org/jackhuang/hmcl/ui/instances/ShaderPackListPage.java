@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.addon.shader.ShaderPackFile;
 import org.jackhuang.hmcl.addon.shader.ShaderPackManager;
 import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -207,7 +208,7 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
         }
 
         private Image loadIcon() {
-            Image icon = file.loadIcon();
+            Image icon = file.loadIcon(ImageLoaders.DEFAULT);
             if (icon != null) return icon;
             return getDefaultIcon();
         }
@@ -463,13 +464,13 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
             setHeading(titleContainer);
 
             Label description = new Label();
-            if (shaderPackFile.getMeta() != null && shaderPackFile.getMeta().description() != null)
+            if (shaderPackFile.getMeta().description() != null)
                 description.setText(shaderPackFile.getMeta().description());
             description.setWrapText(true);
             FXUtils.copyOnDoubleClick(description);
 
             ScrollPane descriptionPane = new ScrollPane(description);
-            FXUtils.smoothScrolling(descriptionPane);
+            ScrollUtils.addSmoothScrolling(descriptionPane);
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
