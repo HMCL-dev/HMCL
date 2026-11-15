@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandles;
@@ -962,6 +963,19 @@ public abstract class Task<T> {
 
     public static <V> Task<V> completed(V value) {
         return fromCompletableFuture(CompletableFuture.completedFuture(value));
+    }
+
+    /// Creates a task backed by a future that has already completed exceptionally.
+    ///
+    /// The failure is processed by the task executor when the task is submitted;
+    /// this method does not start execution or notify task listeners.
+    ///
+    /// @param <V> the task's result type
+    /// @param failure the exception completing the backing future
+    /// @return a new task backed by the failed future
+    /// @throws NullPointerException if failure is null
+    public static <V> @NotNull Task<V> failed(@NotNull Exception failure) {
+        return fromCompletableFuture(CompletableFuture.failedFuture(failure));
     }
 
     /**

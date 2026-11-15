@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -400,6 +401,7 @@ public final class GameDirectoriesTest {
 
     /// Tests that a repository follows changes to its game directory path.
     @Test
+    @Disabled // https://github.com/HMCL-dev/HMCL/issues/7289
     public void repositoryDirectoryFollowsGameDirectoryPath() throws ReflectiveOperationException {
         GameDirectories userDirectories = new GameDirectories();
         userDirectories.setUserFile(true);

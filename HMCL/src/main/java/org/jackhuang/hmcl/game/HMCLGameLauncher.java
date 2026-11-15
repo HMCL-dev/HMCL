@@ -91,6 +91,12 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (gameVersion == GameVersionNumber.unknown() || gameVersion.compareTo("1.1") < 0)
             return;
 
+        // These snapshots lack the external language resources needed for non-English locales.
+        // Selecting an unavailable language causes a NullPointerException during startup.
+        if (gameVersion instanceof GameVersionNumber.LegacySnapshot
+                && gameVersion.compareTo("13w16a") >= 0 && gameVersion.compareTo("13w23b") <= 0)
+            return;
+
         String lang = normalizedLanguageTag(locale, gameVersion);
         if (lang.isEmpty())
             return;

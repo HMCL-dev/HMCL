@@ -133,14 +133,19 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
 
         if (showMethodSwitcher) {
-            TabControl.Tab<?>[] tabs = new TabControl.Tab[Accounts.FACTORIES.size()];
-            TabControl.Tab<?> selected = null;
+            TabItem<?>[] tabs = new TabItem<?>[Accounts.FACTORIES.size()];
+            var tabToFactory = new IdentityHashMap<TabItem<?>, AccountFactory<?>>();
+
+            @Nullable TabItem<?> selected = null;
             for (int i = 0; i < tabs.length; i++) {
                 AccountFactory<?> f = Accounts.FACTORIES.get(i);
-                tabs[i] = new TabControl.Tab<>(Accounts.getLoginType(f), Accounts.getLocalizedLoginTypeName(f));
-                tabs[i].setUserData(f);
+                TabItem<Node> tab = new TabItem<>();
+                tabs[i] = tab;
+
+                tab.setText(Accounts.getLocalizedLoginTypeName(f));
+                tabToFactory.put(tab, f);
                 if (factory == f) {
-                    selected = tabs[i];
+                    selected = tab;
                 }
             }
 
@@ -148,12 +153,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             tabHeader.getStyleClass().add("add-account-tab-header");
             tabHeader.setMinWidth(USE_PREF_SIZE);
             tabHeader.setMaxWidth(USE_PREF_SIZE);
-            tabHeader.getSelectionModel().select(selected);
-            onChange(tabHeader.getSelectionModel().selectedItemProperty(),
+            if (selected != null)
+                tabHeader.getController().selectTab(selected);
+            onChange(tabHeader.getController().selectedTabProperty(),
                     newItem -> {
                         if (newItem == null)
                             return;
-                        AccountFactory<?> newMethod = (AccountFactory<?>) newItem.getUserData();
+                        AccountFactory<?> newMethod = tabToFactory.get(newItem);
                         settings().preferredLoginTypeProperty().set(Accounts.getLoginType(newMethod));
                         this.factory = newMethod;
                         initDetailsPane();

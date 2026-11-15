@@ -250,6 +250,9 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         if (currentStep instanceof Step.Init || currentStep instanceof Step.StartAuthorizationCodeLogin || currentStep instanceof Step.WaitForOpenBrowser) {
             JFXHyperlink useQrCode = new JFXHyperlink(i18n("account.methods.microsoft.methods.device"));
             useQrCode.setOnAction(e -> this.step.set(new Step.StartDeviceCodeLogin()));
+
+            if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) useQrCode.setDisable(true);
+
             linkBox.getChildren().add(useQrCode);
         } else if (currentStep instanceof Step.StartDeviceCodeLogin || currentStep instanceof Step.WaitForScanQrCode) {
             JFXHyperlink userBrowser = new JFXHyperlink(i18n("account.methods.microsoft.methods.browser"));

@@ -9,7 +9,6 @@ import javafx.geometry.Insets;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Paint;
@@ -38,24 +37,20 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
     public AdvancedListItemSkin(AdvancedListItem skinnable) {
         super(skinnable);
 
-        BorderPane root = new BorderPane();
-        root.getStyleClass().add("container");
-        root.setPickOnBounds(false);
+        TwoLineListItem item = new TwoLineListItem();
+        item.getStyleClass().add("container");
 
-        container = new RipplerContainer(root);
+        container = new RipplerContainer(item);
         container.setOnAction(event -> {
             event.consume();
             skinnable.fire();
         });
 
-        TwoLineListItem item = new TwoLineListItem();
-        root.setCenter(item);
-        item.setMouseTransparent(true);
         item.titleProperty().bind(skinnable.titleProperty());
         item.subtitleProperty().bind(skinnable.subtitleProperty());
 
-        root.leftProperty().bind(skinnable.leftGraphicProperty());
-        root.rightProperty().bind(skinnable.rightGraphicProperty());
+        item.leadingProperty().bind(skinnable.leftGraphicProperty());
+        item.trailingProperty().bind(skinnable.rightGraphicProperty());
 
         selectionBackground.setMouseTransparent(true);
         getChildren().setAll(selectionBackground, container);
@@ -65,7 +60,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         registerChangeListener(skinnable.activeProperty(), observable -> updateSelection(true));
         registerChangeListener(skinnable.sceneProperty(), observable -> updateSelection(false));
         registerChangeListener(JFXNodeUtils.treeVisibleProperty(skinnable), observable -> updateSelection(false));
-        setPrepareAction(skinnable.getPrepareAction());
+        updateActionDisabled();
     }
 
     /// Applies the control's selected background paint without changing animation progress.
@@ -102,10 +97,17 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         selectionTransition.playFromStart();
     }
 
-    /// Forwards a registration while consuming the control's reference before user code executes.
+    /// Updates main-action feedback and preparation without allocating the control's property.
+    void updateActionDisabled() {
+        AdvancedListItem item = getSkinnable();
+        container.setPressFeedbackEnabled(!item.isActionDisabled());
+        setPrepareAction(item.getPrepareAction());
+    }
+
+    /// Suspends preparation while the main action is disabled and consumes it before execution.
     void setPrepareAction(@Nullable Runnable action) {
         AdvancedListItem item = getSkinnable();
-        container.setPrepareAction(action == null ? null : () -> {
+        container.setPrepareAction(action == null || item.isActionDisabled() ? null : () -> {
             if (item.getPrepareAction() == action) {
                 item.setPrepareAction(null);
                 action.run();
@@ -121,11 +123,11 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
             selectionTransition.stop();
         container.setOnAction(null);
         container.setPrepareAction(null);
-        BorderPane root = (BorderPane) container.getContainer();
-        root.leftProperty().unbind();
-        root.rightProperty().unbind();
-        root.setLeft(null);
-        root.setRight(null);
+        TwoLineListItem item = (TwoLineListItem) container.getContainer();
+        item.leadingProperty().unbind();
+        item.trailingProperty().unbind();
+        item.setLeading(null);
+        item.setTrailing(null);
         super.dispose();
     }
 }

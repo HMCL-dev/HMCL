@@ -954,3 +954,10 @@
 26.3-rc-2
 26.3-rc-3
 26.3
+26.4-snapshot-1
+26.4-snapshot-2
+26.4-snapshot-3
+26.4-snapshot-4
+26.4-snapshot-5
+26.4-snapshot-6
+26.4-snapshot-7

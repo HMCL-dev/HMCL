@@ -4,11 +4,19 @@ package org.jackhuang.hmcl.util.i18n.translator;
 
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
+import org.jackhuang.hmcl.util.platform.macos.MacDeviceInfo;
+import org.jackhuang.hmcl.util.platform.macos.MacModel;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /// @author Glavo
@@ -35,6 +43,32 @@ public class Translator {
 
     public String getDisplayVersion(GameVersionNumber versionNumber) {
         return versionNumber.toNormalizedString();
+    }
+
+    /// Localizes known Mac model sizes and release dates; other identities retain their names.
+    /// Chip names from the model table are preserved verbatim.
+    /// Diagnostic names and cached device information are not modified.
+    public @NotNull String formatDeviceName(@NotNull DeviceInfo device) {
+        if (!(device instanceof MacDeviceInfo mac))
+            return device.name();
+        @Nullable MacModel model = MacModel.find(mac.modelIdentifier());
+        if (model == null)
+            return device.name();
+
+        List<String> details = new ArrayList<>();
+        for (MacModel.Detail detail : model.details()) {
+            if (detail.type().equals("chip")) {
+                details.add(detail.arguments().get(0));
+            } else if (detail.type().equals("month")) {
+                YearMonth month = YearMonth.of(Integer.parseInt(detail.arguments().get(0)), Integer.parseInt(detail.arguments().get(1)));
+                details.add(month.format(DateTimeFormatter.ofPattern(supportedLocale.i18n("about.device.mac.month"), displayLocale)));
+            } else {
+                details.add(supportedLocale.i18n("about.device.mac." + detail.type(), detail.arguments().toArray()));
+            }
+        }
+        return details.isEmpty() ? model.productName()
+                : supportedLocale.i18n("about.device.mac.name", model.productName(),
+                String.join(supportedLocale.i18n("about.device.mac.separator"), details));
     }
 
     /// @see [#formatDateTime(TemporalAccessor)]

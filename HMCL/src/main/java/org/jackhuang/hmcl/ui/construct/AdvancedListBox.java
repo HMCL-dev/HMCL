@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.collections.ObservableList;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
@@ -13,7 +12,9 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -23,7 +24,7 @@ public class AdvancedListBox extends ScrollPane {
     {
         setContent(container);
 
-        FXUtils.smoothScrolling(this);
+        ScrollUtils.installSmoothScrolling(this);
 
         setFitToHeight(true);
         setFitToWidth(true);
@@ -77,22 +78,28 @@ public class AdvancedListBox extends ScrollPane {
         return add(item);
     }
 
-    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabControl.Tab<?> tab, String title, SVG leftGraphic) {
+    /// Adds an item that activates the tab through the controller and tracks its selection state.
+    ///
+    /// @param leftGraphic the item icon, or null for no icon
+    /// @return this list box
+    public AdvancedListBox addNavigationDrawerTab(TabController controller, TabItem<?> tab, String title, @Nullable SVG leftGraphic) {
         AdvancedListItem item = createNavigationDrawerItem(title, leftGraphic);
-        item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
-        item.setOnAction(e -> tabHeader.select(tab));
+        item.activeProperty().bind(controller.selectedTabProperty().isEqualTo(tab));
+        item.setOnAction(e -> controller.selectTab(tab));
         return add(item);
     }
 
-    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabControl.Tab<?> tab, String title,
+    /// Adds an item that activates the tab through the controller and switches icons with its selection state.
+    ///
+    /// @return this list box
+    public AdvancedListBox addNavigationDrawerTab(TabController controller, TabItem<?> tab, String title,
                                                   SVG unselectedGraphic, SVG selectedGraphic) {
         AdvancedListItem item = createNavigationDrawerItem(title, null);
-        item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
-        item.setOnAction(e -> tabHeader.select(tab));
+        item.activeProperty().bind(controller.selectedTabProperty().isEqualTo(tab));
+        item.setOnAction(e -> controller.selectTab(tab));
 
         var leftGraphic = new SVGContainer(item.isActive() ? selectedGraphic : unselectedGraphic, AdvancedListItem.LEFT_ICON_SIZE);
         leftGraphic.setMouseTransparent(true);
-        AdvancedListItem.setAlignment(leftGraphic, Pos.CENTER);
         AdvancedListItem.setMargin(leftGraphic, AdvancedListItem.LEFT_ICON_MARGIN);
         FXUtils.onChange(item.activeProperty(), active -> leftGraphic.setIcon(active ? selectedGraphic : unselectedGraphic, Motion.SHORT4));
         item.setLeftGraphic(leftGraphic);

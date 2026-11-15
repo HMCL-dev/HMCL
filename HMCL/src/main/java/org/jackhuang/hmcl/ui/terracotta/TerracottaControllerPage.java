@@ -30,11 +30,7 @@ import org.jackhuang.hmcl.terracotta.TerracottaManager;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.terracotta.TerracottaState;
 import org.jackhuang.hmcl.terracotta.profile.TerracottaProfile;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.instances.Instances;
@@ -517,7 +513,7 @@ public class TerracottaControllerPage extends StackPane {
             }
             // Prevent the shadow of components from being clipped
             StackPane.setMargin(components, new Insets(0, 0, 5, 0));
-            transition.setContent(components, ContainerAnimations.SLIDE_UP_FADE_IN);
+            transition.setContent(components, TabController.TabAnimation.TAB_UP);
         };
         listener.changed(UI_STATE, null, UI_STATE.get());
         holder.add(listener);
@@ -535,7 +531,7 @@ public class TerracottaControllerPage extends StackPane {
         content.setFillWidth(true);
 
         ScrollPane scrollPane = new ScrollPane(content);
-        FXUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         scrollPane.setFitToWidth(true);
 
         getChildren().setAll(scrollPane);
@@ -605,7 +601,7 @@ public class TerracottaControllerPage extends StackPane {
                 pane.getChildren().add(item);
             }
 
-            this.transition.setContent(pane, ContainerAnimations.SLIDE_UP_FADE_IN);
+            this.transition.setContent(pane, TabController.TabAnimation.TAB_UP);
         }
     }
 }

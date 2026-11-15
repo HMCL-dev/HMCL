@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.construct.TaskListPane;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.TaskManager;
 
 import java.util.Queue;
 
@@ -18,6 +19,7 @@ public abstract class AbstractWizardDisplayer implements WizardDisplayer {
         this.cancelQueue = cancelQueue;
     }
 
+    /// Displays task progress and submits the wizard's execution to the serial business-task queue.
     @Override
     public void handleTask(SettingsMap settings, Task<?> task) {
         TaskExecutor executor = task.withRunAsync(Schedulers.javafx(), this::navigateToSuccess).executor();
@@ -25,7 +27,7 @@ public abstract class AbstractWizardDisplayer implements WizardDisplayer {
         pane.setExecutor(executor);
         navigateTo(pane, Navigation.NavigationDirection.FINISH);
         cancelQueue.add(executor);
-        executor.start();
+        TaskManager.getInstance().submit(executor, null);
     }
 
     @Override
