@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.nio.file.Path;
@@ -25,6 +26,8 @@ public final class CleanroomRemoteVersion extends ComponentRemoteVersion {
     private static final GameVersionNumber GAME_VERSION_1_12_2 = GameVersionNumber.asGameVersion("1.12.2");
 
     public static final WebURL LOADER_LIST_URL = WebURL.parse("https://hmcl.glavo.site/metadata/cleanroom/index.json");
+
+    private static final VersionNumber CLEANROOM_VERSION_0_7 = VersionNumber.asVersion("0.7-alpha");
 
     public static Task<ComponentRemoteVersionList<CleanroomRemoteVersion>> fetchAsync(
             DownloadProvider downloadProvider, GameVersionNumber gameVersion) {
@@ -41,6 +44,12 @@ public final class CleanroomRemoteVersion extends ComponentRemoteVersion {
 
             var versions = new TreeSet<CleanroomRemoteVersion>();
             for (ReleaseResult version : results) {
+                // Cleanroom 0.7-alpha switched its license; given the controversy surrounding it,
+                // we do not provide support for it for now.
+                if (VersionNumber.asVersion(version.name).compareTo(CLEANROOM_VERSION_0_7) >= 0) {
+                    continue;
+                }
+
                 versions.add(new CleanroomRemoteVersion(
                         GAME_VERSION_1_12_2, version.name, Instant.parse(version.createdAt),
                         List.of("https://hmcl.glavo.site/metadata/cleanroom/files/cleanroom-%s-installer.jar".formatted(version.name))

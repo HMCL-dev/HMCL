@@ -14,7 +14,7 @@ public final class MathUtils {
     }
 
     /// Clamp value to fit between min and max.
-    public static int clamp(int value, int min, int max) {
+    public static long clamp(long value, long min, long max) {
         assert min <= max;
         return Math.min(max, Math.max(value, min));
     }

@@ -8,15 +8,17 @@ import com.jfoenix.controls.JFXTextArea;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
-import javafx.collections.ObservableList;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.FileChooser;
-
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -25,25 +27,24 @@ import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 
-import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
-import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE;
-import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH;
-import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_SERVER;
+import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.*;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -91,34 +92,20 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     }
 
     private void onNext() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("modpack.wizard.step.initialization.save"));
-        if (!packWithLauncher.get() && controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_MODRINTH) {
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.mrpack"));
-            fileChooser.setInitialFileName(name.get() + (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ? "" : ".mrpack"));
-        } else {
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
-            fileChooser.setInitialFileName(name.get() + ".zip");
-        }
-        Path file = Controllers.showSaveDialog(fileChooser);
-        if (file == null) {
-            return;
-        }
-
-        exportInfo.setName(name.get());
-        exportInfo.setFileApi(fileApi.get());
-        exportInfo.setVersion(version.get());
-        exportInfo.setAuthor(author.get());
-        exportInfo.setDescription(description.get());
-        exportInfo.setUrl(url.get());
-        exportInfo.setForceUpdate(forceUpdate.get());
-        exportInfo.setPackWithLauncher(packWithLauncher.get());
-        exportInfo.setMinMemory(minMemory.get());
-        exportInfo.setLaunchArguments(launchArguments.get());
-        exportInfo.setJavaArguments(javaArguments.get());
-        exportInfo.setAuthlibInjectorServer(authlibInjectorServer.get());
-        exportInfo.setNoCreateRemoteFiles(noCreateRemoteFiles.get());
-        exportInfo.setSkipCurseForgeRemoteFiles(skipCurseForgeRemoteFiles.get());
+        exportInfo.setName(name.get())
+                .setFileApi(fileApi.get())
+                .setVersion(version.get())
+                .setAuthor(author.get())
+                .setDescription(description.get())
+                .setUrl(url.get())
+                .setForceUpdate(forceUpdate.get())
+                .setPackWithLauncher(packWithLauncher.get())
+                .setMinMemory(minMemory.get())
+                .setLaunchArguments(launchArguments.get())
+                .setJavaArguments(javaArguments.get())
+                .setAuthlibInjectorServer(authlibInjectorServer.get())
+                .setNoCreateRemoteFiles(noCreateRemoteFiles.get())
+                .setSkipCurseForgeRemoteFiles(skipCurseForgeRemoteFiles.get());
 
         if (StringUtils.isNotBlank(mcbbsThreadId.get())) {
             exportInfo.setOrigins(Collections.singletonList(new McbbsModpackManifest.Origin(
@@ -127,7 +114,6 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         }
 
         controller.getSettings().put(MODPACK_INFO, exportInfo);
-        controller.getSettings().put(MODPACK_FILE, file);
         controller.onNext();
     }
 
@@ -147,12 +133,9 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     }
 
     public static final SettingsMap.Key<ModpackExportInfo> MODPACK_INFO = new SettingsMap.Key<>("modpack.info");
-    public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("modpack.file");
     public static final SettingsMap.Key<ModpackExportInfo.Options> MODPACK_INFO_OPTION = new SettingsMap.Key<>("modpack.info.option");
 
     public static class ModpackInfoPageSkin extends SkinBase<ModpackInfoPage> {
-        private ObservableList<Node> originList;
-
         private final List<JFXTextField> validatingFields = new ArrayList<>();
 
         public ModpackInfoPageSkin(ModpackInfoPage skinnable) {
@@ -171,12 +154,12 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                 borderPane.setStyle("-fx-padding: 16;");
                 scroll.setContent(borderPane);
 
-                if (skinnable.controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_SERVER) {
+                if (MODPACK_TYPE_SERVER.equals(skinnable.controller.getSettings().get(MODPACK_TYPE))) {
                     Hyperlink hyperlink = new Hyperlink(i18n("modpack.wizard.step.initialization.server"));
                     hyperlink.setOnAction(e -> FXUtils.openLink(Metadata.DOCS_URL + "/modpack/serverpack.html"));
                     borderPane.setTop(hyperlink);
                 }
-                if (skinnable.controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_MODRINTH) {
+                if (MODPACK_TYPE_MODRINTH.equals(skinnable.controller.getSettings().get(MODPACK_TYPE))) {
                     HintPane pane = new HintPane(MessageDialogPane.MessageType.INFO);
                     pane.setText(i18n("modpack.wizard.step.initialization.modrinth.info"));
                     borderPane.setTop(pane);
@@ -310,7 +293,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireForceUpdate()) {
-                        var requireForceUpdateButton = new LineToggleButton();
+                        var requireForceUpdateButton = new LineSwitch();
                         requireForceUpdateButton.setTitle(i18n("modpack.wizard.step.initialization.force_update"));
                         requireForceUpdateButton.selectedProperty().bindBidirectional(skinnable.forceUpdate);
 
@@ -318,7 +301,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     {
-                        var canIncludeLauncherButton = new LineToggleButton();
+                        var canIncludeLauncherButton = new LineSwitch();
                         canIncludeLauncherButton.setTitle(i18n("modpack.wizard.step.initialization.include_launcher"));
                         canIncludeLauncherButton.setDisable(!skinnable.canIncludeLauncher);
                         canIncludeLauncherButton.selectedProperty().bindBidirectional(skinnable.packWithLauncher);
@@ -327,7 +310,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireNoCreateRemoteFiles()) {
-                        var requireNoCreateRemoteFilesButton = new LineToggleButton();
+                        var requireNoCreateRemoteFilesButton = new LineSwitch();
                         requireNoCreateRemoteFilesButton.setTitle(i18n("modpack.wizard.step.initialization.no_create_remote_files"));
                         requireNoCreateRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.noCreateRemoteFiles);
 
@@ -335,7 +318,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireSkipCurseForgeRemoteFiles()) {
-                        var skipCurseForgeRemoteFilesButton = new LineToggleButton();
+                        var skipCurseForgeRemoteFilesButton = new LineSwitch();
                         skipCurseForgeRemoteFilesButton.setTitle(i18n("modpack.wizard.step.initialization.skip_curseforge_remote_files"));
                         skipCurseForgeRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.skipCurseForgeRemoteFiles);
 
@@ -363,7 +346,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                 }
             }
 
-            FXUtils.smoothScrolling(scroll);
+            ScrollUtils.installSmoothScrolling(scroll);
         }
 
         private LinePane createTextFieldLinePane(String title, StringProperty property, ValidatorBase... validators) {

@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.collections.ObservableList;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
@@ -13,6 +12,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,7 @@ public class AdvancedListBox extends ScrollPane {
     {
         setContent(container);
 
-        FXUtils.smoothScrolling(this);
+        ScrollUtils.installSmoothScrolling(this);
 
         setFitToHeight(true);
         setFitToWidth(true);
@@ -100,7 +100,6 @@ public class AdvancedListBox extends ScrollPane {
 
         var leftGraphic = new SVGContainer(item.isActive() ? selectedGraphic : unselectedGraphic, AdvancedListItem.LEFT_ICON_SIZE);
         leftGraphic.setMouseTransparent(true);
-        AdvancedListItem.setAlignment(leftGraphic, Pos.CENTER);
         AdvancedListItem.setMargin(leftGraphic, AdvancedListItem.LEFT_ICON_MARGIN);
         FXUtils.onChange(item.activeProperty(), active -> leftGraphic.setIcon(active ? selectedGraphic : unselectedGraphic, Motion.SHORT4));
         item.setLeftGraphic(leftGraphic);

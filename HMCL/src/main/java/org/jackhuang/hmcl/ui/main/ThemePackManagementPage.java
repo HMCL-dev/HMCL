@@ -31,6 +31,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -381,7 +382,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private Optional<Image> loadThemePackIcon(IconCacheKey key) {
             try {
                 ThemePackResource resource = ThemePackManager.resolveInstalledAsset(key.location(), key.icon());
-                return Optional.of(FXUtils.loadImage(
+                return Optional.of(ImageLoaders.DEFAULT.load(
                         resource.openStream(),
                         resource.name(),
                         ICON_IMAGE_SIZE,
@@ -403,10 +404,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// @param themePack the installed theme pack to display
         private ThemePackInfoDialog(ThemePackManagementPage page, ThemePackManager.InstalledThemePack themePack) {
             ThemePackManifest manifest = themePack.manifest();
-            maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-
-            HBox heading = new HBox(8);
-            heading.setAlignment(Pos.CENTER_LEFT);
 
             Node icon = page.createIconNode(themePack, manifest.icon(), SVG.PACKAGE2);
             TwoLineListItem title = new TwoLineListItem();
@@ -418,8 +415,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             if (!StringUtils.isBlank(authors)) {
                 title.addTag(i18n("archive.author") + ": " + authors);
             }
-            heading.getChildren().setAll(icon, title);
-            setHeading(heading);
+            TwoLineListItem.setMargin(icon, new Insets(0, 8, 0, 0));
+            title.setLeading(icon);
+            setHeading(title);
 
             ComponentList themes = new ComponentList();
             themes.getStyleClass().add("no-padding");
@@ -462,13 +460,12 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             }
 
             ScrollPane scrollPane = new ScrollPane(themes);
-            FXUtils.smoothScrolling(scrollPane);
+            ScrollUtils.installSmoothScrolling(scrollPane);
             scrollPane.setFitToWidth(true);
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             scrollPane.setPrefViewportWidth(520);
             scrollPane.setPrefViewportHeight(Math.min(360, manifest.themes().size() * 86));
-            scrollPane.maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.55));
 
             StackPane body = new StackPane(scrollPane);
             body.setPadding(new Insets(10, 0, 0, 0));
@@ -646,39 +643,31 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private ThemePackItemCell(ThemePackManagementPage page) {
             this.page = page;
 
-            BorderPane root = new BorderPane();
-            root.getStyleClass().add("md-list-cell");
-            root.setPadding(new Insets(8));
+            content.getStyleClass().add("md-list-cell");
+            content.setPadding(new Insets(8));
+            content.setCursor(Cursor.HAND);
 
-            var ripplerContainer = new RipplerContainer(root);
+            var ripplerContainer = new RipplerContainer(content);
             this.graphic = ripplerContainer;
-
-            HBox center = new HBox();
-            center.setSpacing(8);
-            center.setAlignment(Pos.CENTER_LEFT);
-            center.setMouseTransparent(true);
-            root.setCenter(center);
 
             icon.setMouseTransparent(true);
             icon.getChildren().setAll(iconImage, iconFallback);
-            BorderPane.setAlignment(content, Pos.CENTER);
-            content.setMouseTransparent(true);
-            center.getChildren().setAll(icon, content);
-            HBox.setHgrow(content, Priority.ALWAYS);
-            center.setCursor(Cursor.HAND);
+            TwoLineListItem.setMargin(icon, new Insets(0, 8, 0, 0));
+            content.setLeading(icon);
             FXUtils.onClicked(ripplerContainer, () -> {
-                ThemePackManager.InstalledThemePack themePack = getItem();
+                ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {
                     page.selectThemePack(themePack);
                 }
             });
 
             right.setAlignment(Pos.CENTER_RIGHT);
-            root.setRight(right);
+            right.setPickOnBounds(false);
+            content.setTrailing(right);
 
             revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
             revealButton.setOnAction(event -> {
-                ThemePackManager.InstalledThemePack themePack = getItem();
+                ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {
                     revealThemePack(themePack);
                 }
@@ -687,7 +676,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             deleteButton = FXUtils.newToggleButton4(SVG.DELETE);
             deleteButton.setOnAction(event -> {
-                ThemePackManager.InstalledThemePack themePack = getItem();
+                ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {
                     page.deleteThemePack(themePack);
                 }
@@ -698,7 +687,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Updates this cell for one installed theme pack.
         @Override
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
-            var currentItem = getItem();
+            ThemePackManager.@Nullable InstalledThemePack currentItem = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(themePack, empty);
@@ -706,11 +695,11 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             if (Objects.equals(getItem(), currentItem) && oldEmpty == empty) return;
 
             this.graphic.resetFeedback();
-            content.getTags().clear();
             iconImage.setImage(null);
             iconFallback.setVisible(false);
 
             if (empty || themePack == null) {
+                content.getTags().clear();
                 setGraphic(null);
                 return;
             }
@@ -721,11 +710,13 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             content.setTitle(manifest.displayName());
             @Nullable String description = manifest.displayDescription();
             content.setSubtitle(StringUtils.isBlank(description) ? manifest.id() : description);
+            var tags = new ArrayList<Tag>(3);
             if (themePack.builtin()) {
-                content.addTag(i18n("theme_pack.builtin"));
+                tags.add(new Tag(i18n("theme_pack.builtin")));
             }
-            content.addTag(i18n("theme_pack.version", manifest.version()));
-            content.addTag(i18n("theme_pack.themes", manifest.themes().size()));
+            tags.add(new Tag(i18n("theme_pack.version", manifest.version())));
+            tags.add(new Tag(i18n("theme_pack.themes", manifest.themes().size())));
+            content.getTags().setAll(tags);
 
             if (themePack.builtin()) {
                 right.getChildren().clear();

@@ -173,11 +173,6 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
     }
 
     @Override
-    public int compareTo(LocalModFile o) {
-        return getFileName().compareToIgnoreCase(o.getFileName());
-    }
-
-    @Override
     public boolean equals(Object obj) {
         return obj instanceof LocalModFile && Objects.equals(getFileName(), ((LocalModFile) obj).getFileName());
     }

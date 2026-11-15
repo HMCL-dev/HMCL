@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/// Wraps content with hover, focus, press, and ripple feedback behind it.
+/// Wraps content with uniform selection, hover, focus, and press color transitions behind it.
 /// Feedback covers padding without replacing the background. Corners follow the first background
 /// fill of this pane, then the wrapped [Region], otherwise remaining square. Fill insets are ignored;
 /// percentage radii use this pane's dimensions.
@@ -49,6 +49,15 @@ public class RipplerContainer extends StackPane {
 
     /// The fallback paint before a stylesheet supplies a theme color.
     private static final Color DEFAULT_FEEDBACK_FILL = Color.BLACK;
+
+    /// Marks tooltip-bearing decorations whose mouse events still activate the surrounding row.
+    private static final Object BACKGROUND_MOUSE_EVENTS = new Object();
+
+    /// Treats presses and clicks on this decoration as background input in its nearest rippler.
+    /// Hover events remain available for tooltips, and the original mouse event bubbles normally.
+    static void enableBackgroundMouseEvents(Node node) {
+        node.getProperties().put(BACKGROUND_MOUSE_EVENTS, Boolean.TRUE);
+    }
 
     /// The content supplied by the caller.
     private final Node container;
@@ -96,15 +105,16 @@ public class RipplerContainer extends StackPane {
             region.backgroundProperty().addListener(backgroundListener);
         updateCornerRadii();
 
-        interactionLayer.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
-            if (event.getButton() == MouseButton.PRIMARY && isFeedbackAvailable() && isPressFeedbackEnabled())
-                interactionLayer.press(event.getX(), event.getY());
+        addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
+            if (isBackgroundEvent(event) && event.getButton() == MouseButton.PRIMARY
+                    && isFeedbackAvailable() && isPressFeedbackEnabled())
+                interactionLayer.press();
         });
-        interactionLayer.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
-            if (event.getButton() == MouseButton.PRIMARY)
+        addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
+            if (isBackgroundEvent(event) && event.getButton() == MouseButton.PRIMARY)
                 interactionLayer.release();
         });
-        interactionLayer.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleBackgroundClick);
+        addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleBackgroundClick);
         addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
             pointerInside = true;
             updateVisualState();
@@ -171,7 +181,7 @@ public class RipplerContainer extends StackPane {
         updateVisualState(false);
     }
 
-    /// Updates persistent states and cancels presses when requested or feedback is unavailable.
+    /// Updates hover and focus and cancels unavailable presses, preserving selection.
     private void updateVisualState(boolean cancelPress) {
         boolean available = isFeedbackAvailable();
         interactionLayer.setHovered(available && pointerInside);
@@ -231,9 +241,24 @@ public class RipplerContainer extends StackPane {
             fireEvent(new ActionEvent(this, this));
     }
 
+    /// Returns whether the event targets the feedback layer or an opted-in decoration in this wrapper.
+    private boolean isBackgroundEvent(MouseEvent event) {
+        if (event.getTarget() == interactionLayer)
+            return true;
+        if (!(event.getTarget() instanceof Node target))
+            return false;
+        boolean background = false;
+        for (@Nullable Node node = target; node != this; node = node.getParent()) {
+            if (node == null || node instanceof RipplerContainer)
+                return false;
+            background |= node.hasProperties() && Boolean.TRUE.equals(node.getProperties().get(BACKGROUND_MOUSE_EVENTS));
+        }
+        return background;
+    }
+
     /// Dispatches primary background actions without consuming the original mouse event.
     private void handleBackgroundClick(MouseEvent event) {
-        if (event.getTarget() == interactionLayer && event.getButton() == MouseButton.PRIMARY && !isDisabled()) {
+        if (isBackgroundEvent(event) && event.getButton() == MouseButton.PRIMARY && !isDisabled()) {
             fire();
         }
     }
@@ -259,19 +284,14 @@ public class RipplerContainer extends StackPane {
     /// The registration is cleared before invocation.
     ///
     /// Leaving before settlement postpones scheduling until another entry. Once queued, only replacement
-    /// or cancellation prevents invocation. Scheduling does not wait for waveforms or display presentation.
+    /// or cancellation prevents invocation. Scheduling does not wait for display presentation.
     public void setPrepareAction(@Nullable Runnable action) {
         if (action == getPrepareAction())
             return;
-        if (preparation != null) {
-            interactionLayer.setOnStateSettled(null);
-            preparation = null;
-        }
-        if (action != null) {
-            preparation = new HoverPreparation(action);
-            interactionLayer.setOnStateSettled(preparation);
+        preparation = action == null ? null : new HoverPreparation(action);
+        interactionLayer.setOnStateSettled(preparation);
+        if (preparation != null)
             preparation.run();
-        }
     }
 
     /// The CSS-configurable paint shared by all visual feedback states.
@@ -294,7 +314,7 @@ public class RipplerContainer extends StackPane {
             return StyleableProperties.FEEDBACK_FILL;
         }
 
-        /// Repaints existing states and waveforms with the new paint.
+        /// Repaints the feedback background with the new paint.
         @Override
         protected void invalidated() {
             interactionLayer.setFill(get());
@@ -319,7 +339,7 @@ public class RipplerContainer extends StackPane {
 
     /// Whether background presses produce visual feedback.
     private final BooleanProperty pressFeedbackEnabled = new SimpleBooleanProperty(this, "pressFeedbackEnabled", true) {
-        /// Updates the CSS state and cancels existing feedback when disabled.
+        /// Updates the CSS state and clears press feedback when disabled.
         @Override
         protected void invalidated() {
             pseudoClassStateChanged(PRESS_FEEDBACK_ENABLED, get());
@@ -329,8 +349,8 @@ public class RipplerContainer extends StackPane {
         }
     };
 
-    /// Returns the press feedback switch, initially true. Disabling it clears all waveforms
-    /// and the held press, preserving hover and focus feedback and normal event delivery.
+    /// Returns the press feedback switch, initially true. Disabling it clears the held press
+    /// and settles selection, hover, and focus feedback, preserving normal event delivery.
     /// The default stylesheet applies a hand cursor only while this property is true.
     /// Enabling it does not replay an existing press.
     public BooleanProperty pressFeedbackEnabledProperty() {
@@ -347,7 +367,15 @@ public class RipplerContainer extends StackPane {
         pressFeedbackEnabled.set(value);
     }
 
-    /// Clears all held and fading waveforms and immediately restores the current hover/focus state.
+    /// Sets persistent selection feedback for compound controls such as tab headers.
+    /// Hidden or disabled containers settle immediately; selection survives transient resets.
+    final void setSelectedFeedback(boolean selected) {
+        interactionLayer.setSelected(selected);
+        if (!isFeedbackAvailable())
+            interactionLayer.reset();
+    }
+
+    /// Clears press feedback and immediately restores the current selection, hover, and focus.
     /// Suitable for clearing transient feedback when a virtualized cell is reused.
     public void resetFeedback() {
         interactionLayer.reset();
@@ -404,7 +432,7 @@ public class RipplerContainer extends StackPane {
             /// Reports whether CSS can assign this paint property.
             @Override
             public boolean isSettable(RipplerContainer styleable) {
-                return styleable.feedbackFill == null || !styleable.feedbackFill.isBound();
+                return !styleable.feedbackFill.isBound();
             }
 
             /// Returns the paint property receiving stylesheet values.

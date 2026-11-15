@@ -6,7 +6,6 @@ import com.jfoenix.controls.JFXSnackbar;
 import com.jfoenix.controls.JFXSnackbarLayout;
 import com.jfoenix.skins.JFXDatePickerContent;
 import com.jfoenix.skins.JFXDatePickerSkin;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -337,14 +336,10 @@ public final class Decorator {
     ///
     /// @param node              the page to push
     /// @param animationProducer the transition used to reveal the page
-    /// @param duration          the transition duration
-    /// @param interpolator      the transition interpolator
     public void navigate(
             Node node,
-            TransitionPane.AnimationProducer animationProducer,
-            Duration duration,
-            Interpolator interpolator) {
-        navigator.navigate(node, animationProducer, duration, interpolator);
+            TransitionPane.AnimationProducer animationProducer) {
+        navigator.navigate(node, animationProducer);
     }
 
     /// Returns whether the navigation stack contains a page before the current page.
@@ -392,9 +387,7 @@ public final class Decorator {
         FXUtils.checkFxUserThread();
         navigator.navigate(
                 new DecoratorWizardDisplayer(wizardProvider, category),
-                ContainerAnimations.FORWARD,
-                Motion.SHORT4,
-                Motion.EASE);
+                ContainerAnimations.FORWARD);
     }
 
     /// Marks `node` as an area from which a primary-button drag may move the stage.
@@ -740,12 +733,11 @@ public final class Decorator {
     ///
     /// @return the system style when available and permitted by the policy; otherwise the custom transparent style
     private StageStyle preferredStageStyle() {
-        return nativeDecoration != null && nativeDecoration.isPreferred(
-                Themes.windowTransparentProperty().get(), Themes.darkModeProperty().get())
+        return nativeDecoration != null && !Themes.windowTransparentProperty().get()
                 ? nativeDecoration.style : StageStyle.TRANSPARENT;
     }
 
-    /// Replaces the attached stage when transparency or theme brightness requires a different decoration style.
+    /// Replaces the attached stage when transparency requires a different decoration style.
     ///
     /// Preserves the scene, navigation, dialogs, normal bounds, supported window states, and focus owner.
     /// Copies the previous title before the replacement-stage initializer may override or bind it.
@@ -795,8 +787,7 @@ public final class Decorator {
     /// from that stage before being installed on `newStage`. A newly attached stage receives the persisted normal
     /// content bounds. Native frame offsets and minimum size are resolved when the stage is shown.
     /// The native-decoration policy selects the system or custom transparent decoration. Automatic mode uses
-    /// system decoration for supported opaque windows, except for dark windows on Windows; explicit enablement
-    /// bypasses the brightness exclusion. Transparent windows always use custom decoration.
+    /// system decoration for supported opaque windows. Transparent windows always use custom decoration.
     /// Any active window animation is cancelled and reset. Custom window
     /// animations run only with custom decoration. Window-style listeners remain active until [#detachStage()].
     /// On macOS, native application appearance updates are installed once per stage and retained across detachment.
@@ -881,9 +872,6 @@ public final class Decorator {
             contentHeight.bind(windowBounds.contentHeightProperty());
             updateWindowDecoration(WindowState.isMaximized(newStage) || newStage.isFullScreen());
             Themes.windowTransparentProperty().addListener(windowStyleListener);
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                Themes.darkModeProperty().addListener(windowStyleListener);
-            }
         }
         root.setCursor(Cursor.DEFAULT);
         dragging = false;
@@ -909,9 +897,6 @@ public final class Decorator {
         }
         if (stage != null) {
             Themes.windowTransparentProperty().removeListener(windowStyleListener);
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                Themes.darkModeProperty().removeListener(windowStyleListener);
-            }
             stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
             stage.removeEventHandler(WindowEvent.WINDOW_HIDDEN, windowHiddenHandler);
             stage.iconifiedProperty().removeListener(iconifiedListener);

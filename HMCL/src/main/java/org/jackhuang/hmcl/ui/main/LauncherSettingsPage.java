@@ -8,7 +8,6 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -42,6 +41,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
     private final TabItem<FeedbackPage> feedbackTab;
     private final TransitionPane transitionPane = new TransitionPane();
 
+    /// Creates the settings tabs and fills the shared navigation sidebar.
     public LauncherSettingsPage() {
         gameTab = new TabItem<>(() -> new GameSettingsPage<>(GameSettings.Preset.class, null));
         javaManagementTab = new TabItem<>(JavaManagementPage::new);
@@ -64,7 +64,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         tabController.selectTab(gameTab);
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository())));
 
-        AdvancedListBox sideBar = new AdvancedListBox()
+        getSidebar()
                 .addNavigationDrawerTab(tabController, gameTab, i18n("settings.type.global.manage"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
                 .addNavigationDrawerTab(tabController, javaManagementTab, i18n("java.management"), SVG.LOCAL_CAFE, SVG.LOCAL_CAFE_FILL)
                 .startCategory(i18n("launcher").toUpperCase(Locale.ROOT))
@@ -75,10 +75,8 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                 .addNavigationDrawerTab(tabController, helpTab, i18n("help"), SVG.HELP, SVG.HELP_FILL)
                 .addNavigationDrawerTab(tabController, feedbackTab, i18n("contact"), SVG.FEEDBACK, SVG.FEEDBACK_FILL)
                 .addNavigationDrawerTab(tabController, aboutTab, i18n("about"), SVG.INFO, SVG.INFO_FILL);
-        FXUtils.setLimitWidth(sideBar, 200);
-        setLeft(sideBar);
 
-        setCenter(transitionPane);
+        setContent(transitionPane);
     }
 
     @Override
