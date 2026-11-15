@@ -25,10 +25,7 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.SVGContainer;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
@@ -249,7 +246,7 @@ public class AddonDownloadPage extends Control implements DecoratorPage {
 
                 ComponentList list = new ComponentList();
                 ScrollPane scrollPane = new ScrollPane(list);
-                FXUtils.smoothScrolling(scrollPane);
+                ScrollUtils.installSmoothScrolling(scrollPane);
                 scrollPane.setFitToWidth(true);
                 scrollPane.setFitToHeight(true);
                 FXUtils.setOverflowHidden(scrollPane, 8);
@@ -531,7 +528,7 @@ public class AddonDownloadPage extends Control implements DecoratorPage {
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
             FXUtils.onChangeAndOperate(scrollPane.widthProperty(), d -> FXUtils.setLimitWidth(dependenciesList, d.doubleValue()));
-            FXUtils.smoothScrolling(scrollPane);
+            ScrollUtils.installSmoothScrolling(scrollPane);
             FXUtils.setOverflowHidden(scrollPane, 8);
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);
@@ -701,7 +698,7 @@ public class AddonDownloadPage extends Control implements DecoratorPage {
                 if (exception == null) {
                     String changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));
-                    FXUtils.smoothScrolling(scrollPane);
+                    ScrollUtils.installSmoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
                 } else {
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));
