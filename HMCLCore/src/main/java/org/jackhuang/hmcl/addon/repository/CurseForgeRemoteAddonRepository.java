@@ -41,7 +41,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
     private static final String PREFIX = "https://api.curseforge.com";
     private static final String BASE = "https://www.curseforge.com";
-    private static final Semaphore SEMAPHORE = new Semaphore(16);
+    private static final Semaphore SEMAPHORE = new Semaphore(32);
     private static final int DEFAULT_RETRY_COUNT = 3;
 
     public static final String API_KEY = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));

@@ -104,7 +104,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         };
     }
 
-    private static final Semaphore SEMAPHORE = new Semaphore(16);
+    private static final Semaphore SEMAPHORE = new Semaphore(32);
 
     private static final String PREFIX = "https://api.modrinth.com";
 
