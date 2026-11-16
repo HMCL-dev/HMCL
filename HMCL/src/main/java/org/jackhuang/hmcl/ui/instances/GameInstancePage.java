@@ -9,6 +9,7 @@ import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.event.Event;
 import javafx.event.EventType;
+import javafx.scene.Node;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -421,4 +422,20 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         return state.getReadOnlyProperty();
     }
 
+    public void showServerList() {
+        tabController.selectTab(serversTab, false);
+    }
+
+    public @Nullable Node getSelectedTab() {
+        TabItem<?> selectedTab = tabController.getSelectedTab();
+        if (selectedTab == null) {
+            return null;
+        }
+
+        return selectedTab.getNode();
+    }
+
+    public TabItem<ServersPage> getServersTab() {
+        return serversTab;
+    }
 }
