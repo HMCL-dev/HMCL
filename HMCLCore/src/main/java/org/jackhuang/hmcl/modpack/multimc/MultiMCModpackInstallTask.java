@@ -410,10 +410,12 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
                     try (FileSystem mc = CompressingUtils.writable(getPrimaryJarFile()).build()) {
                         for (Library file : files) {
-                            @Nullable Path path = file.filename() != null
+                            Path path = file.filename() != null
                                     ? root.resolve(file.filename())
                                     : downloadedJarMods.get(file);
-                            if (path == null || !Files.isRegularFile(path)) continue;
+                            Objects.requireNonNull(path, "Jar mod file not found");
+                            if (!Files.isRegularFile(path))
+                                throw new IOException("Jar mod file does not exist or is not a regular file: " + path);
                             try (FileSystem jm = CompressingUtils.readonly(path).build()) {
                                 FileUtils.copyDirectory(jm.getPath("/"), mc.getPath("/"));
                             }
