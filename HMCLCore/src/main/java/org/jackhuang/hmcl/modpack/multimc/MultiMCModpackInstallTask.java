@@ -60,7 +60,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final DefaultDependencyManager dependencyManager;
 
-    private final Map<Library, Path> downloadedJarMods = new LinkedHashMap<>();
+    private final Map<Library, Path> downloadedJarMods = new HashMap<>();
 
     /// Previous modpack configuration when updating, or `null` for a new installation.
     private final @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config;
