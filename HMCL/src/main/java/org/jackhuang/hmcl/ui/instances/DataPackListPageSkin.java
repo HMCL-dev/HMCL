@@ -286,7 +286,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
 
-        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().packInfo.isActive());
+        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getPackInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
@@ -323,7 +323,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             content.setTitle(dataItem.getTitle());
             content.setSubtitle(dataItem.getSubtitle());
 
-            DataPack.Pack packInfo = dataItem.packInfo;
+            DataPack.Pack packInfo = dataItem.getPackInfo();
             (observedActiveProperty = packInfo.activeProperty()).addListener(weakActiveListener);
             activeSwitch.setDisableAnimation(true);
             activeSwitch.setSelected(packInfo.isActive());
