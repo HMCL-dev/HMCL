@@ -108,7 +108,7 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile<ResourcePac
     }
 
     // 64*64
-    public abstract @Nullable Image loadIcon(ImageLoader<Image> loader);
+    public abstract <I> @Nullable I loadIcon(ImageLoader<I> loader);
 
     public enum Compatibility {
         COMPATIBLE,

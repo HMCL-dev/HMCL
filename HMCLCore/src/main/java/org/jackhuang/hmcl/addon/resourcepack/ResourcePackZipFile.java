@@ -39,7 +39,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
-    public @Nullable Image loadIcon(ImageLoader<Image> loader) {
+    public <I> @Nullable I loadIcon(ImageLoader<I> loader) {
         try (var zipFileTree = CompressingUtils.openZipTree(getFile())) {
             @Nullable var iconEntry = zipFileTree.getEntry("/pack.png");
             if (iconEntry == null) {

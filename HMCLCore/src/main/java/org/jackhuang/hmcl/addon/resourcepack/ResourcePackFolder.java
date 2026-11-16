@@ -35,7 +35,7 @@ final class ResourcePackFolder extends ResourcePackFile {
     }
 
     @Override
-    public @Nullable Image loadIcon(ImageLoader<Image> loader) {
+    public <I> @Nullable I loadIcon(ImageLoader<I> loader) {
         try (var inputStream = Files.newInputStream(getFile().resolve("pack.png"))) {
             return loader.load(inputStream, "pack.png", 64, 64, true, true);
         } catch (Exception e) {
