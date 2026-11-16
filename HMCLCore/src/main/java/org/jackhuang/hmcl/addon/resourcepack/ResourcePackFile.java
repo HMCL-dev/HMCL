@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.addon.resourcepack;
 
-import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
+import org.jackhuang.hmcl.image.ImageLoader;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Contract;
@@ -107,7 +107,7 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile<ResourcePac
     }
 
     // 64*64
-    public abstract @Nullable Image loadIcon();
+    public abstract <I> @Nullable I loadIcon(ImageLoader<I> loader);
 
     public enum Compatibility {
         COMPATIBLE,
