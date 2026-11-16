@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.upgrade;
 
 import org.jackhuang.hmcl.Metadata;
@@ -22,6 +7,7 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -105,18 +91,25 @@ public final class IntegrityChecker {
         }
     }
 
-    private static volatile Boolean selfVerified = null;
+    private static volatile @Nullable Boolean selfVerified = null;
+
+    public static @Nullable Boolean getSelfVerified() {
+        return selfVerified;
+    }
 
     /**
      * Checks whether the current application is verified.
      * This method is blocking.
      */
     public static boolean isSelfVerified() {
+        @Nullable Boolean selfVerified = IntegrityChecker.selfVerified;
+
         if (selfVerified != null) {
             return selfVerified;
         }
 
         synchronized (IntegrityChecker.class) {
+            selfVerified = IntegrityChecker.selfVerified;
             if (selfVerified != null) {
                 return selfVerified;
             }
@@ -134,7 +127,7 @@ public final class IntegrityChecker {
                 LOG.warning("Failed to verify myself, is the JAR corrupt?", e);
                 selfVerified = false;
             }
-
+            IntegrityChecker.selfVerified = selfVerified;
             return selfVerified;
         }
     }

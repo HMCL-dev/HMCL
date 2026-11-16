@@ -12,7 +12,7 @@ tasks.compileJava {
 tasks.jar {
     manifest {
         attributes(
-            "Created-By" to "Copyright(c) 2013-2020 huangyuhui.",
+            "Created-By" to "Copyright(c) 2013-2020 The HMCL Authors",
             "Implementation-Version" to project.version
         )
     }

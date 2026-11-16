@@ -1,58 +1,104 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
+/// Identifies a hardware vendor by its display name.
+///
+/// @param name the vendor display name
+@NotNullByDefault
 public record HardwareVendor(String name) {
+
+    /// The Intel vendor.
     public static final HardwareVendor INTEL = new HardwareVendor("Intel");
+
+    /// The NVIDIA vendor.
     public static final HardwareVendor NVIDIA = new HardwareVendor("NVIDIA");
+
+    /// The AMD vendor.
     public static final HardwareVendor AMD = new HardwareVendor("AMD");
+
+    /// The Apple vendor.
     public static final HardwareVendor APPLE = new HardwareVendor("Apple");
+
+    /// The ARM vendor.
     public static final HardwareVendor ARM = new HardwareVendor("ARM");
+
+    /// The Xiaomi vendor.
+    public static final HardwareVendor XIAOMI = new HardwareVendor("Xiaomi");
+
+    /// The Qualcomm vendor.
     public static final HardwareVendor QUALCOMM = new HardwareVendor("Qualcomm");
+
+    /// The MTK vendor.
     public static final HardwareVendor MTK = new HardwareVendor("MTK");
+
+    /// The VMware vendor.
     public static final HardwareVendor VMWARE = new HardwareVendor("VMware");
+
+    /// The Parallel vendor.
     public static final HardwareVendor PARALLEL = new HardwareVendor("Parallel");
+
+    /// The Red Hat vendor.
+    public static final HardwareVendor RED_HAT = new HardwareVendor("Red Hat");
+
+    /// The Microsoft vendor.
     public static final HardwareVendor MICROSOFT = new HardwareVendor("Microsoft");
+
+    /// The Moore Threads vendor.
     public static final HardwareVendor MOORE_THREADS = new HardwareVendor("Moore Threads");
+
+    /// The Broadcom vendor.
     public static final HardwareVendor BROADCOM = new HardwareVendor("Broadcom");
+
+    /// The Imagination vendor.
     public static final HardwareVendor IMG = new HardwareVendor("Imagination");
+
+    /// The Loongson vendor.
     public static final HardwareVendor LOONGSON = new HardwareVendor("Loongson");
+
+    /// The Jingjia Micro vendor.
     public static final HardwareVendor JINGJIA_MICRO = new HardwareVendor("Jingjia Micro");
+
+    /// The Huawei vendor.
     public static final HardwareVendor HUAWEI = new HardwareVendor("Huawei");
+
+    /// The Zhaoxin vendor.
     public static final HardwareVendor ZHAOXIN = new HardwareVendor("Zhaoxin");
+
+    /// The Samsung vendor.
     public static final HardwareVendor SAMSUNG = new HardwareVendor("Samsung");
+
+    /// The Marvell vendor.
     public static final HardwareVendor MARVELL = new HardwareVendor("Marvell");
+
+    /// The Ampere vendor.
     public static final HardwareVendor AMPERE = new HardwareVendor("Ampere");
+
+    /// The Rockchip vendor.
     public static final HardwareVendor ROCKCHIP = new HardwareVendor("Rockchip");
 
     // RISC-V
+
+    /// The T-Head vendor.
     public static final HardwareVendor THEAD = new HardwareVendor("T-Head");
+
+    /// The StarFive vendor.
     public static final HardwareVendor STARFIVE = new HardwareVendor("StarFive");
+
+    /// The ESWIN vendor.
     public static final HardwareVendor ESWIN = new HardwareVendor("ESWIN");
+
+    /// The SpacemiT vendor.
     public static final HardwareVendor SPACEMIT = new HardwareVendor("SpacemiT");
 
-    public static @Nullable HardwareVendor getKnown(String name) {
+    /// Returns a recognized vendor using case-insensitive name matching, or `null` for an unknown or `null` name.
+    public static @Nullable HardwareVendor getKnown(@Nullable String name) {
         if (name == null)
             return null;
 
@@ -67,6 +113,10 @@ public record HardwareVendor(String name) {
         if (lower.startsWith("mediatek")) return MTK;
         if (lower.equals("qcom") || lower.startsWith("qualcomm")) return QUALCOMM;
         if (lower.startsWith("apple")) return APPLE;
+        if (lower.equals("xiaomi") || lower.equals("xring")) return XIAOMI;
+        if (lower.startsWith("vmware")) return VMWARE;
+        if (lower.startsWith("red hat") || lower.equals("redhat")) return RED_HAT;
+        if (lower.equals("parallel") || lower.equals("parallels") || lower.startsWith("parallels ")) return PARALLEL;
         if (lower.startsWith("microsoft")) return MICROSOFT;
         if (lower.startsWith("imagination") || lower.equals("img")) return IMG;
         if (lower.startsWith("loongson")) return LOONGSON;
@@ -86,17 +136,19 @@ public record HardwareVendor(String name) {
         return null;
     }
 
+    /// Returns a recognized vendor or preserves the supplied name in a new vendor; returns `null` for `null`.
     @Contract("null -> null; !null -> !null")
-    public static HardwareVendor of(String name) {
+    public static @Nullable HardwareVendor of(@Nullable String name) {
         if (name == null)
             return null;
 
-        HardwareVendor known = getKnown(name);
+        @Nullable HardwareVendor known = getKnown(name);
         return known != null ? known : new HardwareVendor(name);
     }
 
+    /// Returns the vendor mapped to a PCI vendor ID, or `null` if unmapped.
     public static @Nullable HardwareVendor ofPciVendorId(int vendorId) {
-        // https://devicehunt.com/all-pci-vendors
+        // https://devicehunt.com/vendors/pci
         return switch (vendorId) {
             case 0x106b -> APPLE; // AMD Pensando Systems
             case 0x1002, 0x1022, 0x1dd8, 0x1924 -> AMD; // AMD Solarflare
@@ -107,6 +159,7 @@ public record HardwareVendor(String name) {
             case 0x14c3 -> MTK;
             case 0x15ad -> VMWARE;
             case 0x1ab8 -> PARALLEL;
+            case 0x1af4 -> RED_HAT;
             case 0x1414 -> MICROSOFT;
             case 0x182f, 0x14e4 -> BROADCOM;
             case 0x0014 -> LOONGSON;
@@ -117,6 +170,7 @@ public record HardwareVendor(String name) {
         };
     }
 
+    /// Returns the vendor mapped to an ARM implementer ID, or `null` if unmapped.
     public static @Nullable HardwareVendor ofArmImplementerId(int implementerId) {
         // https://github.com/util-linux/util-linux/blob/0a21358af3e50fcb13a9bf3702779f11a4739667/sys-utils/lscpu-arm.c#L301
         return switch (implementerId) {
@@ -135,8 +189,9 @@ public record HardwareVendor(String name) {
         };
     }
 
+    /// Returns the vendor display name.
     @Override
-    public @NotNull String toString() {
+    public String toString() {
         return name;
     }
 }

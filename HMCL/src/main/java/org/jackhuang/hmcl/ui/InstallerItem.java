@@ -1,24 +1,8 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXRippler;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
@@ -247,6 +231,7 @@ public class InstallerItem extends Control {
         @SuppressWarnings({"FieldCanBeLocal", "unused"})
         private final ChangeListener<Number> holder;
 
+        /// Creates an installer row with its surface and feedback in the same rounded container.
         InstallerItemSkin(InstallerItem control) {
             super(control);
 
@@ -260,15 +245,12 @@ public class InstallerItem extends Control {
             }
             pane.getStyleClass().add("installer-item");
             RipplerContainer container = new RipplerContainer(pane);
-            container.setPosition(JFXRippler.RipplerPos.BACK);
-            StackPane paneWrapper = new StackPane();
-            paneWrapper.getStyleClass().add("installer-item-wrapper");
-            paneWrapper.getChildren().setAll(container);
-            getChildren().setAll(paneWrapper);
+            container.getStyleClass().add("installer-item-wrapper");
+            getChildren().setAll(container);
 
             pane.pseudoClassStateChanged(LIST_ITEM, control.style == Style.LIST_ITEM);
             pane.pseudoClassStateChanged(CARD, control.style == Style.CARD);
-            paneWrapper.pseudoClassStateChanged(CARD, control.style == Style.CARD);
+            container.pseudoClassStateChanged(CARD, control.style == Style.CARD);
 
             if (control.iconType != null) {
                 var imageContainer = new ImageContainer(32);

@@ -1,60 +1,68 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
+import javafx.geometry.NodeOrientation;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+/// Displays a game instance with selection, update, settings, and management controls.
 public final class GameListCell extends ListCell<GameListItem> {
 
+    /// Provides ripple feedback around the cell content.
     private final RipplerContainer graphic;
 
+    /// Displays the current instance's icon.
     private final ImageContainer imageView;
+    /// Displays the instance title, subtitle, tag, and controls.
     private final TwoLineListItem content;
 
+    /// Reflects and changes the repository's selected instance.
     private final JFXRadioButton chkSelected;
+    /// Starts an update for an instance that supports updates.
     private final JFXButton btnUpgrade;
-    private final JFXButton btnLaunch;
+    /// Opens the settings for this cell's game instance.
+    private final JFXButton btnEditInstance;
+    /// Toggles the current instance's management menu.
     private final JFXButton btnManage;
 
+    /// Contains the actions available for the current instance.
     private final HBox right;
 
+    /// Holds the tag text bound to the current instance.
     private final StringProperty tag = new SimpleStringProperty();
 
-    public GameListCell() {
-        BorderPane root = new BorderPane();
+    /// Caches the management popup until the cell item or empty state changes.
+    private @Nullable JFXPopup managementPopup;
+
+    /// Identifies the item whose actions are captured by the cached popup, or is null if none is cached.
+    private @Nullable GameListItem managementPopupItem;
+
+    /// Creates a game instance cell constrained to the supplied list's viewport width.
+    public GameListCell(ListView<GameListItem> listView) {
+        FXUtils.limitCellWidth(listView, this);
+
+        TwoLineListItem root = this.content = new TwoLineListItem();
         root.getStyleClass().add("md-list-cell");
         root.setPadding(new Insets(8, 8, 8, 0));
 
@@ -63,112 +71,124 @@ public final class GameListCell extends ListCell<GameListItem> {
 
         {
             this.chkSelected = new JFXRadioButton() {
+                /// Selects this cell's game instance when the radio button is enabled and unselected.
                 @Override
                 public void fire() {
                     if (!isDisable() && !isSelected()) {
                         fireEvent(new ActionEvent());
-                        GameListItem item = GameListCell.this.getItem();
+                        @Nullable GameListItem item = GameListCell.this.getItem();
                         if (item != null) {
                             item.getRepository().setSelectedInstance(item.getGameInstance());
                         }
                     }
                 }
             };
-            root.setLeft(chkSelected);
-            BorderPane.setAlignment(chkSelected, Pos.CENTER);
         }
 
         {
-            HBox center = new HBox();
-            BorderPane.setMargin(center, new Insets(0, 0, 0, 8));
-            center.setMouseTransparent(true);
-            root.setCenter(center);
-            center.setPrefWidth(Region.USE_PREF_SIZE);
-            center.setSpacing(8);
-            center.setAlignment(Pos.CENTER_LEFT);
-
             this.imageView = new ImageContainer(32);
-
-            this.content = new TwoLineListItem();
-            BorderPane.setAlignment(content, Pos.CENTER);
+            imageView.setMouseTransparent(true);
+            HBox leading = new HBox(8, chkSelected, imageView);
+            leading.setAlignment(Pos.CENTER_LEFT);
+            leading.setPickOnBounds(false);
+            TwoLineListItem.setMargin(leading, new Insets(0, 8, 0, 0));
+            content.setLeading(leading);
 
             FXUtils.onChangeAndOperate(tag, tag -> {
-                content.getTags().clear();
                 if (StringUtils.isNotBlank(tag))
-                    content.addTag(tag);
+                    content.getTags().setAll(new Tag(tag));
+                else
+                    content.getTags().clear();
             });
-
-            center.getChildren().setAll(imageView, content);
         }
 
         {
             this.right = new HBox();
-            root.setRight(right);
-
+            content.setTrailing(right);
             right.setAlignment(Pos.CENTER_RIGHT);
+            right.setPickOnBounds(false);
 
             this.btnUpgrade = FXUtils.newToggleButton4(SVG.UPDATE);
             btnUpgrade.setOnAction(e -> {
-                GameListItem item = this.getItem();
+                @Nullable GameListItem item = this.getItem();
                 if (item != null)
                     item.update();
             });
             FXUtils.installFastTooltip(btnUpgrade, i18n("instance.update"));
             right.getChildren().add(btnUpgrade);
 
-            this.btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
-            btnLaunch.setOnAction(e -> {
-                GameListItem item = this.getItem();
+            this.btnEditInstance = FXUtils.newToggleButton4(SVG.SETTINGS);
+            btnEditInstance.setOnAction(e -> {
+                @Nullable GameListItem item = this.getItem();
                 if (item != null)
-                    item.testGame();
+                    item.modifyGameSettings();
             });
-            BorderPane.setAlignment(btnLaunch, Pos.CENTER);
-            FXUtils.installFastTooltip(btnLaunch, i18n("instance.launch.test"));
-            right.getChildren().add(btnLaunch);
+            FXUtils.installFastTooltip(btnEditInstance, i18n("instance.manage.manage"));
+            right.getChildren().add(btnEditInstance);
 
             this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
             btnManage.setOnAction(e -> {
-                GameListItem item = this.getItem();
+                @Nullable GameListItem item = this.getItem();
                 if (item == null)
                     return;
 
-                JFXPopup popup = getPopup(item);
+                JFXPopup popup = getManagementPopup(item);
+                if (popup.isShowing()) {
+                    popup.hide();
+                    return;
+                }
+
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
-                popup.show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
+                boolean below = vPosition == JFXPopup.PopupVPosition.TOP;
+                Point2D offset = root.localToScene(0, 0).subtract(btnManage.localToScene(0, 0));
+                double offsetX = offset.getX() + root.getWidth() - btnManage.getWidth();
+                double offsetY = offset.getY() + (below ? root.getHeight() : -btnManage.getHeight());
+                if (btnManage.getEffectiveNodeOrientation() == NodeOrientation.RIGHT_TO_LEFT)
+                    offsetX = -offsetX;
+                // Only this button bypasses auto-hide, so its action can toggle the menu.
+                // Keep the popup aligned to the cell while making the button its owner.
+                popup.show(btnManage, vPosition, JFXPopup.PopupHPosition.RIGHT, offsetX, offsetY, true);
             });
-            BorderPane.setAlignment(btnManage, Pos.CENTER);
             FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
             right.getChildren().add(btnManage);
         }
 
         root.setCursor(Cursor.HAND);
         container.setOnMouseClicked(e -> {
-            GameListItem item = getItem();
+            @Nullable GameListItem item = getItem();
             if (item == null)
                 return;
 
             if (e.getButton() == MouseButton.PRIMARY) {
                 if (e.getClickCount() == 1) {
-                    item.modifyGameSettings();
+                    item.getRepository().setSelectedInstance(item.getGameInstance());
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
-                JFXPopup popup = getPopup(item);
+                JFXPopup popup = getManagementPopup(item);
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
+                // Repeated right-clicks reopen and reposition even during the closing animation
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - root.getHeight());
             }
         });
     }
 
+    /// Rebinds the displayed instance and hides the cached menu when the item or empty state changes.
     @Override
-    public void updateItem(GameListItem item, boolean empty) {
-        GameListItem oldItem = getItem();
+    public void updateItem(@Nullable GameListItem item, boolean empty) {
+        @Nullable GameListItem oldItem = getItem();
         boolean oldEmpty = isEmpty();
 
         super.updateItem(item, empty);
 
         if (oldItem == item && oldEmpty == empty) return;
 
-        this.graphic.releaseRippleImmediately();
+        if (managementPopup != null) {
+            managementPopup.hide();
+            managementPopup = null;
+            managementPopupItem = null;
+        }
+
+        this.graphic.resetFeedback();
 
         this.imageView.imageProperty().unbind();
         this.content.titleProperty().unbind();
@@ -189,19 +209,30 @@ public final class GameListCell extends ListCell<GameListItem> {
             this.tag.bind(item.tagProperty());
             if (item.canUpdate())
                 this.right.getChildren().add(btnUpgrade);
-            this.right.getChildren().addAll(btnLaunch, btnManage);
+            this.right.getChildren().addAll(btnEditInstance, btnManage);
         }
     }
 
-    private static JFXPopup getPopup(GameListItem item) {
+    /// Returns the cached menu for the item, hiding and replacing a menu for a different item.
+    private JFXPopup getManagementPopup(GameListItem item) {
+        if (managementPopup == null || managementPopupItem != item) {
+            if (managementPopup != null) {
+                managementPopup.hide();
+            }
+            managementPopup = createPopup(item);
+            managementPopupItem = item;
+        }
+        return managementPopup;
+    }
+
+    /// Creates a management popup whose actions operate on the supplied instance item.
+    private static JFXPopup createPopup(GameListItem item) {
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
 
         menu.getContent().setAll(
                 new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), item::testGame, popup),
                 new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), item::generateLaunchScript, popup),
-                new MenuSeparator(),
-                new IconedMenuItem(SVG.SETTINGS, i18n("instance.manage.manage"), item::modifyGameSettings, popup),
                 new MenuSeparator(),
                 new IconedMenuItem(SVG.EDIT, i18n("instance.manage.rename"), item::rename, popup),
                 new IconedMenuItem(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), item::duplicate, popup),

@@ -25,7 +25,7 @@ nayuki-qrcodegen = "1.8.0"
 jwebp = "0.2.0"
 weburl = "0.2.0"
 uuid-tools = "0.2.0"
-commonmark = "0.30.0"
+commonmark = "0.31.0"
 
 # testing
 junit = "6.1.3"
@@ -33,6 +33,9 @@ jimfs = "1.3.0"
 
 # plugins
 shadow = "9.6.1"
+
+# build scripts
+icu4j = "78.3"
 
 [libraries]
 hmclauncher = { module = "org.glavo.hmcl:HMCLauncher", version.ref = "hmclauncher" }
@@ -72,6 +75,9 @@ commonmark-table = { module = "org.commonmark:commonmark-ext-gfm-tables", versio
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 jimfs = { module = "com.google.jimfs:jimfs", version.ref = "jimfs" }
+
+# build scripts
+icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

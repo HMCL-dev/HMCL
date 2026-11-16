@@ -1,30 +1,17 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.util.ByteArrayKey;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -219,15 +206,30 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// @return the detected version, or [GameVersionNumber#unknown()] when detection fails
     private GameVersionNumber detectVersion() {
         try {
+            GameInstanceManifest resolvedManifest = getResolvedManifest();
+            @Nullable DownloadInfo clientDownloadInfo = resolvedManifest.getDownloads()
+                    .get(DownloadType.CLIENT);
+
+            if (clientDownloadInfo != null && clientDownloadInfo.getSha1() != null) {
+                @Unmodifiable Map<ByteArrayKey, GameVersionNumber> knownVersions = GameVersionNumber.getKnownVersions();
+
+                try {
+                    @Nullable GameVersionNumber knownVersion = knownVersions.get(ByteArrayKey.fromHexString(clientDownloadInfo.getSha1()));
+                    if (knownVersion != null)
+                        return knownVersion;
+                } catch (Exception ignored) {
+                }
+            }
+
             Path jar = getInstanceJarFile();
-            Optional<String> detected = GameVersion.minecraftVersion(jar);
-            if (detected.isEmpty()) {
+            @Nullable GameVersionNumber detected = GameVersionNumber.detectFromJar(jar);
+            if (detected == null) {
                 LOG.warning("Cannot find out game version of " + id
                         + ", primary jar: " + jar
                         + ", jar exists: " + Files.exists(jar));
                 return GameVersionNumber.unknown();
             }
-            return GameVersionNumber.asGameVersion(detected.get());
+            return detected;
         } catch (NoSuchGameInstanceException e) {
             LOG.warning("Cannot resolve game version of " + id, e);
             return GameVersionNumber.unknown();

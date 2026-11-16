@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
@@ -36,7 +21,6 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
-import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
@@ -50,9 +34,7 @@ import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
@@ -61,27 +43,28 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
-import org.jackhuang.hmcl.ui.image.ImageLoader;
-import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.w3c.dom.Document;
@@ -98,14 +81,13 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLConnection;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.*;
@@ -419,16 +401,6 @@ public final class FXUtils {
         cell.maxWidthProperty().bind(widthProperty);
         cell.prefWidthProperty().bind(widthProperty);
         cell.minWidthProperty().bind(widthProperty);
-    }
-
-    public static void smoothScrolling(ScrollPane scrollPane) {
-        if (AnimationUtils.isAnimationEnabled())
-            ScrollUtils.addSmoothScrolling(scrollPane);
-    }
-
-    public static void smoothScrolling(VirtualFlow<?> virtualFlow) {
-        if (AnimationUtils.isAnimationEnabled())
-            ScrollUtils.addSmoothScrolling(virtualFlow);
     }
 
     /// If the current environment is JavaFX 23 or higher, this method returns [Labeled#textTruncatedProperty()];
@@ -823,7 +795,7 @@ public final class FXUtils {
         property.addListener(binding);
     }
 
-    public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
+    public static List<Subscription> bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
         int itemCount = children.length;
         int childSelectedCount = 0;
         for (BooleanProperty child : children) {
@@ -833,49 +805,46 @@ public final class FXUtils {
 
         allEnabled.set(childSelectedCount == itemCount);
 
-        class Listener implements InvalidationListener {
+        class AllListener {
             private int childSelectedCount;
             private boolean updating = false;
+            private final List<Subscription> subscriptions = new ArrayList<>(children.length + 1);
 
-            public Listener(int childSelectedCount) {
+            public AllListener(int childSelectedCount) {
                 this.childSelectedCount = childSelectedCount;
             }
 
-            @Override
-            public void invalidated(Observable observable) {
-                if (updating)
-                    return;
-
-                updating = true;
-                try {
-                    boolean value = ((BooleanProperty) observable).get();
-
-                    if (observable == allEnabled) {
+            {
+                subscriptions.add(Subscription.subscribe(allEnabled, () -> {
+                    if (updating) return;
+                    updating = true;
+                    try {
+                        boolean value = allEnabled.get();
                         for (BooleanProperty child : children) {
-                            child.setValue(value);
+                            child.set(value);
                         }
                         childSelectedCount = value ? itemCount : 0;
-                    } else {
-                        if (value)
-                            childSelectedCount++;
-                        else
-                            childSelectedCount--;
-
-                        allEnabled.set(childSelectedCount == itemCount);
+                    } finally {
+                        updating = false;
                     }
-                } finally {
-                    updating = false;
+                }));
+                for (var child : children) {
+                    subscriptions.add(Subscription.subscribe(child, () -> {
+                        if (updating) return;
+                        updating = true;
+                        try {
+                            if (child.get()) childSelectedCount++;
+                            else childSelectedCount--;
+                            allEnabled.set(childSelectedCount == itemCount);
+                        } finally {
+                            updating = false;
+                        }
+                    }));
                 }
             }
         }
 
-        InvalidationListener listener = new Listener(childSelectedCount);
-
-        WeakInvalidationListener weakListener = new WeakInvalidationListener(listener);
-        allEnabled.addListener(listener);
-        for (BooleanProperty child : children) {
-            child.addListener(weakListener);
-        }
+        return new AllListener(childSelectedCount).subscriptions;
     }
 
     public static void setIcon(Stage stage) {
@@ -888,71 +857,6 @@ public final class FXUtils {
             icon = "/assets/img/icon@4x.png";
         }
         stage.getIcons().add(newBuiltinImage(icon));
-    }
-
-    public static Image loadImage(Path path) throws Exception {
-        return loadImage(path, 0, 0, false, false);
-    }
-
-    public static Image loadImage(Path path,
-                                  int requestedWidth, int requestedHeight,
-                                  boolean preserveRatio, boolean smooth) throws Exception {
-        String fileName = path.getFileName().toString();
-        return loadImage(
-                Files.newInputStream(path),
-                fileName,
-                requestedWidth,
-                requestedHeight,
-                preserveRatio,
-                smooth);
-    }
-
-    public static Image loadImage(InputStream input, String fileName) throws Exception {
-        return loadImage(input, fileName, 0, 0, false, false);
-    }
-
-    public static Image loadImage(InputStream input, String fileName,
-                                  int requestedWidth, int requestedHeight,
-                                  boolean preserveRatio, boolean smooth) throws Exception {
-        try (var bufferedInput = new BufferedInputStream(input)) {
-            String ext = FileUtils.getExtension(fileName).toLowerCase(Locale.ROOT);
-            ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
-            if (loader == null && !ImageUtils.DEFAULT_EXTS.contains(ext)) {
-                bufferedInput.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = bufferedInput.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
-                bufferedInput.reset();
-                loader = ImageUtils.guessLoader(headerBuffer);
-            }
-            if (loader == null)
-                loader = ImageUtils.DEFAULT;
-            return loader.load(bufferedInput, requestedWidth, requestedHeight, preserveRatio, smooth);
-        }
-    }
-
-    public static Image loadImage(WebURL url) throws Exception {
-        URLConnection connection = NetworkUtils.createConnection(url);
-        if (connection instanceof HttpURLConnection httpConnection)
-            connection = NetworkUtils.resolveConnection(httpConnection);
-
-        try (BufferedInputStream input = new BufferedInputStream(connection.getInputStream())) {
-            String contentType = Objects.requireNonNull(connection.getContentType(), "");
-            Matcher matcher = ImageUtils.CONTENT_TYPE_PATTERN.matcher(contentType);
-            if (matcher.find())
-                contentType = matcher.group("type");
-
-            ImageLoader loader = ImageUtils.CONTENT_TYPE_TO_LOADER.get(contentType);
-            if (loader == null && !ImageUtils.DEFAULT_CONTENT_TYPES.contains(contentType)) {
-                input.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
-                input.reset();
-                loader = ImageUtils.guessLoader(headerBuffer);
-            }
-
-            if (loader == null)
-                loader = ImageUtils.DEFAULT;
-
-            return loader.load(input, 0, 0, false, false);
-        }
     }
 
     /**
@@ -998,7 +902,7 @@ public final class FXUtils {
     public static Task<Image> getRemoteImageTask(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(url)
                 .setSignificance(Task.TaskSignificance.MINOR)
-                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .thenApplyAsync(file -> ImageLoaders.DEFAULT.load(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
@@ -1006,7 +910,7 @@ public final class FXUtils {
     public static Task<Image> getRemoteImageTask(DownloadCandidates candidates, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(candidates)
                 .setSignificance(Task.TaskSignificance.MINOR)
-                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .thenApplyAsync(file -> ImageLoaders.DEFAULT.load(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
@@ -1078,27 +982,28 @@ public final class FXUtils {
 
     private static final String LABEL_FULL_TEXT_PROP_KEY = FXUtils.class.getName() + ".LABEL_FULL_TEXT";
 
+    private static final ChangeListener<Boolean> TEXT_TRUNCATED_LISTENER = (observable, oldValue, newValue) -> {
+        var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
+        var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
+
+        if (newValue) {
+            if (tooltip == null) {
+                tooltip = new Tooltip();
+                tooltip.textProperty().bind(label.textProperty());
+                label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
+            }
+
+            FXUtils.installFastTooltip(label, tooltip);
+        } else if (tooltip != null) {
+            Tooltip.uninstall(label, tooltip);
+        }
+    };
+
     public static void showTooltipWhenTruncated(Labeled labeled) {
         ReadOnlyBooleanProperty textTruncatedProperty = textTruncatedProperty(labeled);
         if (textTruncatedProperty != null) {
-            ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
-                var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
-                var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
-
-                if (newValue) {
-                    if (tooltip == null) {
-                        tooltip = new Tooltip();
-                        tooltip.textProperty().bind(label.textProperty());
-                        label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
-                    }
-
-                    FXUtils.installFastTooltip(label, tooltip);
-                } else if (tooltip != null) {
-                    Tooltip.uninstall(label, tooltip);
-                }
-            };
-            listener.changed(textTruncatedProperty, false, textTruncatedProperty.get());
-            textTruncatedProperty.addListener(listener);
+            TEXT_TRUNCATED_LISTENER.changed(textTruncatedProperty, false, textTruncatedProperty.get());
+            textTruncatedProperty.addListener(TEXT_TRUNCATED_LISTENER);
         }
     }
 
@@ -1197,6 +1102,15 @@ public final class FXUtils {
         });
     }
 
+    public static void onDoubleClicked(Node node, Runnable action) {
+        node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                action.run();
+                e.consume();
+            }
+        });
+    }
+
     public static void addMacOSCloseWindowHandler(Window window, @Nullable Supplier<Boolean> restriction) {
         window.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
@@ -1215,16 +1129,6 @@ public final class FXUtils {
         node.applyCss();
         node.layout();
         return node;
-    }
-
-    public static void prepareOnMouseEnter(Node node, Runnable action) {
-        node.addEventFilter(MouseEvent.MOUSE_ENTERED, new EventHandler<>() {
-            @Override
-            public void handle(MouseEvent e) {
-                node.removeEventFilter(MouseEvent.MOUSE_ENTERED, this);
-                action.run();
-            }
-        });
     }
 
     public static <T> void onScroll(Node node, List<T> list,
@@ -1267,6 +1171,34 @@ public final class FXUtils {
     public static void copyText(String text, @Nullable String toastMessage) {
         ClipboardContent content = new ClipboardContent();
         content.putString(text);
+        Clipboard.getSystemClipboard().setContent(content);
+
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
+        }
+    }
+
+    public static void copyFiles(List<Path> paths) {
+        copyFiles(paths.stream().map(Path::toFile).toList(), i18n("message.copied"));
+    }
+
+    public static void copyFiles(List<File> files, @Nullable String toastMessage) {
+        ClipboardContent content = new ClipboardContent();
+        content.putFiles(files);
+        Clipboard.getSystemClipboard().setContent(content);
+
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
+        }
+    }
+
+    public static void copyImage(Image image) {
+        copyImage(image, i18n("message.copied"));
+    }
+
+    public static void copyImage(Image image, @Nullable String toastMessage) {
+        ClipboardContent content = new ClipboardContent();
+        content.putImage(image);
         Clipboard.getSystemClipboard().setContent(content);
 
         if (toastMessage != null && !Controllers.isStopped()) {
@@ -1524,4 +1456,54 @@ public final class FXUtils {
 
     }
 
+    public static void chooseDateRange(Consumer<@NotNull Pair<@Nullable LocalDate, @Nullable LocalDate>> onConfirm) {
+        Controllers.dialog(new DateRangeDialog(onConfirm));
+    }
+
+    private static class DateRangeDialog extends JFXDialogLayout {
+
+        private final JFXDatePicker fromPicker, toPicker;
+
+        public DateRangeDialog(Consumer<Pair<LocalDate, LocalDate>> onConfirm) {
+            super();
+
+            setHeading(new Label(i18n("button.select_date")));
+
+            GridPane body = new GridPane();
+            body.setHgap(4);
+            body.setVgap(8);
+            {
+                Label fromLabel = new Label(i18n("button.select_date.from"));
+                this.fromPicker = new JFXDatePicker(LocalDate.now());
+                fromPicker.setOverLay(true);
+                fromPicker.setDialogParent(Controllers.getDecorator().getDialogContainer());
+                body.add(fromLabel, 0, 0);
+                body.add(fromPicker, 1, 0);
+            }
+            {
+                Label toLabel = new Label(i18n("button.select_date.to"));
+                this.toPicker = new JFXDatePicker(LocalDate.now());
+                toPicker.setOverLay(true);
+                toPicker.setDialogParent(Controllers.getDecorator().getDialogContainer());
+                body.add(toLabel, 0, 1);
+                body.add(toPicker, 1, 1);
+            }
+            setBody(body);
+
+            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+            cancelButton.getStyleClass().add("dialog-cancel");
+            cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            JFXButton okButton = new JFXButton(i18n("button.ok"));
+            okButton.getStyleClass().add("dialog-accept");
+            okButton.setOnAction(e -> {
+                if (onConfirm != null) onConfirm.accept(Pair.pair(fromPicker.getValue(), toPicker.getValue()));
+                fireEvent(new DialogCloseEvent());
+            });
+
+            setActions(cancelButton, okButton);
+            onEscPressed(this, cancelButton::fire);
+        }
+
+    }
 }

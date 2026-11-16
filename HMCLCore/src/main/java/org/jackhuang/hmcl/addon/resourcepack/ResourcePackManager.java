@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.addon.resourcepack;
 
 import com.google.gson.annotations.SerializedName;
@@ -504,6 +489,39 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             List<String> optPacks = deserializePackList(options.get("resourcePacks"));
             List<String> optIncompatiblePacks = deserializePackList(options.get("incompatibleResourcePacks"));
             return isEnabled(resourcePack, optPacks, optIncompatiblePacks);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean rename(String oldName, String newName) {
+        if (newName.equals(oldName)) return false;
+
+        String oldNameNewFormat = "file/" + oldName;
+        String newNameNewFormat = "file/" + newName;
+        boolean modified = false;
+
+        lock.lock();
+        try {
+            Map<String, String> options = loadOptions();
+            List<String> optPacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
+            List<String> optIncompatiblePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
+            for (var l : List.of(optPacks, optIncompatiblePacks)) {
+                var it = l.listIterator();
+                while (it.hasNext()) {
+                    var next = it.next();
+                    if (oldName.equals(next) || oldNameNewFormat.equals(next)) {
+                        it.set(supportsNewOptionsFormat ? newNameNewFormat : newName);
+                        modified = true;
+                    }
+                }
+            }
+            if (modified) {
+                options.put("resourcePacks", serializePackList(optPacks));
+                options.put("incompatibleResourcePacks", serializePackList(optIncompatiblePacks));
+                saveOptions(options);
+            }
+            return modified;
         } finally {
             lock.unlock();
         }

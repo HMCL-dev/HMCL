@@ -3,3 +3,6 @@ contact_links:
   - name: QQ 群
     url: https://docs.hmcl.net/groups.html
     about: Hello Minecraft! Launcher 的官方 QQ 交流群。
+  - name: GitHub Issue
+    url: https://github.com/HMCL-dev/HMCL/issues/new/choose
+    about: 本仓库为镜像仓库，Bug 报告与功能请求请在 GitHub 上提交。

@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.auth.microsoft;
 
 import com.google.gson.JsonObject;
@@ -24,7 +9,11 @@ import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.OAuth;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 
+import java.util.Map;
 import java.util.Objects;
 
 public class MicrosoftAccountFactory extends AccountFactory<MicrosoftAccount> {
@@ -51,6 +40,17 @@ public class MicrosoftAccountFactory extends AccountFactory<MicrosoftAccount> {
         Objects.requireNonNull(privateData);
         AccountID accountID = Account.readAccountID(metadata);
         MicrosoftSession session = MicrosoftSession.fromStorage(metadata, privateData);
+
+        if (privateData.get("profileProperties") instanceof JsonObject profilePropertiesObject) {
+            Map<String, String> properties = JsonUtils.GSON.fromJson(
+                    profilePropertiesObject,
+                    JsonUtils.mapTypeOf(String.class, String.class));
+            MicrosoftSession.GameProfile profile = session.profile();
+            var profileRepository = service.getProfileRepository();
+            profileRepository.put(profile.id(), new CompleteGameProfile(new GameProfile(profile.id(), profile.name()), properties));
+            profileRepository.invalidate(profile.id());
+        }
+
         return new MicrosoftAccount(accountID, service, session);
     }
 }

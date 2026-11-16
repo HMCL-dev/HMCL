@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonDeserializationContext;
@@ -82,7 +67,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
     public static final class Instance extends GameSettings implements JsonSchemaSetting {
         /// The JSON schema supported by instance-specific game settings.
         public static final JsonSchema CURRENT_SCHEMA =
-                new JsonSchema("instance-game-settings", new JsonSchema.Version(1, 0, 0));
+                new JsonSchema("instance-game-settings", new JsonSchema.Version(1, 0, 1));
 
         /// Creates an empty instance setting.
         public Instance() {
@@ -386,6 +371,19 @@ public sealed abstract class GameSettings extends ObservableSetting {
     /// Returns the detected Java runtime reference property.
     public InheritableProperty<DetectedJava> detectedJavaProperty() {
         return detectedJava;
+    }
+
+    /// Property name for disabling automatic replacement with `javaw.exe` on Windows.
+    public static final String PROPERTY_NOT_USE_JAVAW = "notUseJavaw";
+
+    /// Whether to keep the selected Java executable instead of replacing it with `javaw.exe`; defaults to `false`.
+    @SerializedName(PROPERTY_NOT_USE_JAVAW)
+    private final InheritableProperty<Boolean> notUseJavaw = newInheritableProperty(PROPERTY_NOT_USE_JAVAW, false);
+
+    /// Returns the property disabling automatic replacement of a Windows Java executable with a sibling `javaw.exe` file.
+    /// If `true`, the selected executable is used unchanged. This property has no effect on other runtime platforms.
+    public InheritableProperty<Boolean> notUseJavawProperty() {
+        return notUseJavaw;
     }
 
     /// Property name for customized JVM options.

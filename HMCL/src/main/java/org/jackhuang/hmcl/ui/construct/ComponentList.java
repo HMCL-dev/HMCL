@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.InvalidationListener;
@@ -29,6 +14,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -169,7 +155,25 @@ public class ComponentList extends Control implements NoPaddingComponent {
         node.getProperties().put("ComponentList.noPadding", true);
     }
 
-    /// Wrapper for a component list row.
+    /// Clips ordinary and expandable rows to their first background fill's radii and insets.
+    /// Removes the clip for square or absent fills; the list's external shadow is unaffected.
+    static void updateRowClip(Region row) {
+        @Nullable Background background = row.getBackground();
+        if (background == null || background.getFills().isEmpty()
+                || background.getFills().get(0).getRadii().equals(CornerRadii.EMPTY)) {
+            row.setClip(null);
+            return;
+        }
+
+        BackgroundFill fill = background.getFills().get(0);
+        Region clip = row.getClip() instanceof Region region ? region : new Region();
+        clip.setPickOnBounds(false);
+        clip.setBackground(new Background(new BackgroundFill(Color.BLACK, fill.getRadii(), fill.getInsets())));
+        clip.resize(row.getWidth(), row.getHeight());
+        row.setClip(clip);
+    }
+
+    /// Wraps a component list row and clips its contents to rounded background corners.
     private static final class ItemWrapper extends StackPane {
         /// The row content displayed by this wrapper.
         private final Node content;
@@ -178,6 +182,15 @@ public class ComponentList extends Control implements NoPaddingComponent {
         private ItemWrapper(Node content) {
             super(content);
             this.content = content;
+            backgroundProperty().addListener(observable -> updateRowClip(this));
+        }
+
+        /// Keeps the clip aligned with the row without adding a managed layout child.
+        @Override
+        public void resize(double width, double height) {
+            super.resize(width, height);
+            if (getClip() instanceof Region clip)
+                clip.resize(width, height);
         }
 
         /// Propagates the child content bias so wrapped text can compute height from row width.

@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
@@ -320,6 +305,10 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// Installs a component into an unpublished working manifest without constructing a
     /// [GameInstance].
     ///
+    /// Installing a game patch selects this instance's own client JAR so that
+    /// [#updateInstanceAsync] can materialize the new client when publishing the update.
+    /// Other component installations retain the existing JAR reference.
+    ///
     /// @param baseManifest     the working manifest for this step
     /// @param modsDirectory    the mods directory to use during installation
     /// @param componentVersion the remote component to install
@@ -332,10 +321,18 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     GameInstanceManifest manifest = baseManifest.removeComponent(componentVersion.getComponentType());
                     return componentVersion
                             .getInstallTask(this, manifest, modsDirectory)
-                            .thenApplyAsync(patch -> patch == null
-                                    ? manifest
-                                    : manifest.addPatch(patch).reconstructByPatches()
-                            );
+                            .thenApplyAsync(patch -> {
+                                if (patch == null) {
+                                    return manifest;
+                                }
+
+                                GameInstanceManifest updated = manifest
+                                        .withBaseGamePatch(componentVersion.getGameVersion().toString())
+                                        .addPatch(patch).reconstructByPatches();
+                                return componentVersion.getComponentType() == GameComponentType.GAME
+                                        ? updated.withJar(updated.id())
+                                        : updated;
+                            });
                 })
                 .withStage("hmcl.install.%s:%s".formatted(
                         componentVersion.getComponentType().getPatchId(),
@@ -462,7 +459,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 })
                 .thenApplyAsync(patch -> patch == null
                         ? baseManifest
-                        : baseManifest.addPatch(patch).reconstructByPatches());
+                        : baseManifest.withBaseGamePatch(gameVersion).addPatch(patch).reconstructByPatches());
     }
 
     /// Indicates that a local library installer is not recognized by any supported installer.

@@ -1,25 +1,11 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
 import javafx.scene.Node;
+import org.jetbrains.annotations.Nullable;
 
 /// @author Glavo
 public class LinePane extends LineComponent {
@@ -29,35 +15,42 @@ public class LinePane extends LineComponent {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
-    private ObjectProperty<Node> right;
+    /// The optional right-side node, forwarded directly to the row.
+    private @Nullable ObjectProperty<@Nullable Node> right;
 
-    public ObjectProperty<Node> rightProperty() {
+    /// Returns the right-side node property; null removes the node.
+    public ObjectProperty<@Nullable Node> rightProperty() {
         if (right == null) {
             right = new ObjectPropertyBase<>() {
+                /// Returns the pane owning this property.
                 @Override
                 public Object getBean() {
                     return LinePane.this;
                 }
 
+                /// Returns the property name.
                 @Override
                 public String getName() {
                     return "right";
                 }
 
+                /// Replaces the row's trailing node without introducing a container.
                 @Override
                 protected void invalidated() {
-                    setNode(IDX_TRAILING, get());
+                    setTrailing(get());
                 }
             };
         }
         return right;
     }
 
-    public Node getRight() {
+    /// Returns the right-side node, or null if none is assigned.
+    public @Nullable Node getRight() {
         return rightProperty().get();
     }
 
-    public void setRight(Node right) {
+    /// Sets the right-side node; null removes it.
+    public void setRight(@Nullable Node right) {
         rightProperty().set(right);
     }
 }

@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import javafx.beans.binding.Bindings;
@@ -34,11 +19,13 @@ import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -511,23 +498,43 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public static long getAutoAllocatedMemory(long available, Platform platform) {
-        long usable = available - 512 * 1024 * 1024; // Reserve 512 MiB memory for off-heap memory and HMCL itself
-        if (usable <= 0) {
-            return available;
+    public static long getAutoAllocatedMemory(PhysicalMemoryStatus memoryStatus, Platform platform) {
+        final long minHeapSize;
+        final long maxHeapSize;
+
+        if (platform.getBits() == Bits.BIT_32) {
+            // https://github.com/HMCL-dev/HMCL/issues/6638
+            maxHeapSize = 768 * 1024 * 1024;        // 768 MiB
+            minHeapSize = 256 * 1024 * 1024;        // 128 MiB
+        } else {
+            maxHeapSize = 24L * 1024 * 1024 * 1024; //  24 GiB
+            minHeapSize = 512 * 1024 * 1024;        // 512 MiB
         }
 
-        final long threshold = 8L * 1024 * 1024 * 1024; // 8 GiB
-        final long suggested;
-        if (usable <= threshold)
+        // Reserve memory for off-heap memory and HMCL itself
+        final long reserved = 256 * 1024 * 1024; // 256 MiB
+
+        final long threshold1 = 8L * 1024 * 1024 * 1024;  //  8 GiB
+        final long threshold2 = 16L * 1024 * 1024 * 1024; // 16 GiB
+
+        if (memoryStatus.total() <= minHeapSize || memoryStatus.available() < 0) {
+            return -1L;
+        }
+
+        final long usable = Math.max(
+                Math.max(memoryStatus.available(), memoryStatus.total() / 16) - reserved,
+                0
+        );
+
+        long suggested;
+        if (usable <= threshold1)
             suggested = (long) (usable * 0.8);
+        else if (usable <= threshold2)
+            suggested = (long) (threshold1 * 0.8 + (usable - threshold1) * 0.4);
         else
-            suggested = Math.min(
-                    (long) (threshold * 0.8 + (usable - threshold) * 0.2),
-                    16L * 1024 * 1024 * 1024);
-        return platform.getBits() == Bits.BIT_32
-                ? Math.min(suggested, 768 * 1024 * 1024) // https://github.com/HMCL-dev/HMCL/issues/6638
-                : suggested;
+            suggested = (long) (threshold1 * 0.8 + (threshold2 - threshold1) * 0.4 + (usable - threshold2) * 0.2);
+
+        return MathUtils.clamp(suggested & ~0xFFFFFL, minHeapSize, maxHeapSize);
     }
 
 }

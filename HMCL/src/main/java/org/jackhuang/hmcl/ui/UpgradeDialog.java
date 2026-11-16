@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
@@ -46,9 +31,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class UpgradeDialog extends JFXDialogLayout {
 
     public UpgradeDialog(RemoteVersion remoteVersion, Runnable updateRunnable) {
-        maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-        maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
-
         Label heading = new Label(i18n("update.changelog"));
         heading.setPadding(new Insets(0, 0, 8, 0));
         setHeading(heading);
@@ -96,7 +78,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
                 if (result != null) {
                     ScrollPane scrollPane = new ScrollPane(result);
                     scrollPane.setFitToWidth(true);
-                    FXUtils.smoothScrolling(scrollPane);
+                    ScrollUtils.installSmoothScrolling(scrollPane);
                     setBody(scrollPane);
                 } else {
                     setBody();

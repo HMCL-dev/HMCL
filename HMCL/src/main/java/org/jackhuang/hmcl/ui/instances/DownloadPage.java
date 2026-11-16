@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
@@ -30,6 +15,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.AddonLoader;
+import org.jackhuang.hmcl.addon.AddonProjectInfo;
+import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -38,10 +25,7 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.SVGContainer;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
@@ -65,9 +49,9 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final RemoteAddonRepository repository;
-    private final ModTranslations translations;
     private final RemoteAddon addon;
-    private final ModTranslations.Mod mod;
+    /// Localized project metadata, or null when no registry or matching project is available.
+    private final @Nullable AddonProjectInfo mod;
     private final HMCLGameInstance.Optional instanceReference;
     private final DownloadCallback callback;
     private final DownloadListPage page;
@@ -80,8 +64,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.repository = page.repository;
         this.addon = addon;
         this.type = Objects.requireNonNullElse(addon.type(), page.type);
-        this.translations = ModTranslations.getTranslationsByAddonType(this.type);
-        this.mod = translations.getModByCurseForgeId(addon.slug());
+        @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(this.type);
+        this.mod = registry != null ? registry.getInfoByCurseForgeId(addon.slug()) : null;
         this.instanceReference = instanceReference;
         this.callback = callback;
         loadAddonVersions();
@@ -183,7 +167,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     task.setName(file.name());
                     return task;
                 }),
-                i18n("message.downloading"),
+                i18n("message.downloading.file", file.file().filename()),
                 TaskCancellationAction.NORMAL);
     }
 
@@ -220,20 +204,20 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 TwoLineListItem content = new TwoLineListItem();
                 HBox.setHgrow(content, Priority.ALWAYS);
-                ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.slug());
-                content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : getSkinnable().addon.title());
+                @Nullable AddonProjectInfo mod = getSkinnable().mod;
+                content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : getSkinnable().addon.title());
                 content.setSubtitle(getSkinnable().addon.description());
                 content.getSubtitleLabel().setWrapText(true);
                 getSkinnable().addon.categories().stream()
                         .filter(category -> getSkinnable().page.shouldDisplayCategory(category))
                         .map(category -> getSkinnable().page.getLocalizedCategory(category, null))
                         .forEach(content::addTag);
-                content.getFirstLine().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
 
-                if (getSkinnable().mod != null) {
+                @Nullable String mcmodUrl = mod != null ? mod.mcmodUrl() : null;
+                if (mcmodUrl != null) {
                     JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
-                    openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
+                    openMcmodButton.setExternalLink(mcmodUrl);
                     descriptionPane.getChildren().add(openMcmodButton);
                     openMcmodButton.setMinWidth(Region.USE_PREF_SIZE);
                 }
@@ -260,7 +244,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 ComponentList list = new ComponentList();
                 ScrollPane scrollPane = new ScrollPane(list);
-                FXUtils.smoothScrolling(scrollPane);
+                ScrollUtils.installSmoothScrolling(scrollPane);
                 scrollPane.setFitToWidth(true);
                 scrollPane.setFitToHeight(true);
                 FXUtils.setOverflowHidden(scrollPane, 8);
@@ -376,7 +360,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
+    /// Displays an addon dependency and opens its download page when activated.
     private static final class DependencyAddonItem extends LineButton {
+        /// Returns the localized dependency type, or its lowercase enum name for other types.
         public static String translateDependencyType(RemoteAddon.DependencyType dependencyType) {
             return switch (dependencyType) {
                 case EMBEDDED -> i18n("addon.dependency.embedded");
@@ -386,23 +372,24 @@ public class DownloadPage extends Control implements DecoratorPage {
             };
         }
 
+        /// The dependency represented by this row.
         public final RemoteAddon addon;
 
+        /// Creates a dependency row that opens the addon's download page.
         DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference) {
             this.addon = addon;
 
-            HBox pane = new HBox(8);
-            pane.setPadding(new Insets(0, 8, 0, 8));
-            pane.setAlignment(Pos.CENTER_LEFT);
-            TwoLineListItem content = new TwoLineListItem();
-            pane.setMouseTransparent(true);
-            HBox.setHgrow(content, Priority.ALWAYS);
+            container.setPadding(new Insets(10, 24, 10, 24));
+            container.getTitleLabel().setMinWidth(0);
+            setLargeTitle(true);
             var imageView = new ImageContainer(40);
-            pane.getChildren().setAll(imageView, content);
+            imageView.setMouseTransparent(true);
+            setMargin(imageView, new Insets(0, 8, 0, 0));
+            setLeading(imageView);
             FXUtils.setLimitHeight(this, 60);
 
-            RemoteAddon.Type type = addon.type();
-            DownloadCallback callback = type == null ? null : switch (type) {
+            RemoteAddon.@Nullable Type type = addon.type();
+            @Nullable DownloadCallback callback = type == null ? null : switch (type) {
                 case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
                 case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
                 case SHADER_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;
@@ -412,14 +399,14 @@ public class DownloadPage extends Control implements DecoratorPage {
                 fireEvent(new DialogCloseEvent());
                 Controllers.navigate(new DownloadPage(page, addon, instanceReference, callback));
             });
-            setNode(IDX_LEADING, pane);
-
-            ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(type).getModByCurseForgeId(addon.slug());
-            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
-            content.setSubtitle(addon.description());
+            @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(type);
+            @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(addon.slug()) : null;
+            setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : addon.title());
+            setSubtitle(addon.description());
+            container.getSubtitleLabel().setWrapText(false);
             for (String category : addon.categories()) {
                 if (page.shouldDisplayCategory(category))
-                    content.addTag(page.getLocalizedCategory(category, null));
+                    getTags().add(new Tag(page.getLocalizedCategory(category, null), Tag.Type.NORMAL));
             }
             if (StringUtils.isNotBlank(addon.iconUrl())) {
                 imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.iconUrl(), 80, 80, true, true));
@@ -429,7 +416,13 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class AddonItem extends StackPane {
 
+        /// Creates a version summary that opens its details when clicked.
         AddonItem(RemoteAddon mod, RemoteAddon.Version dataItem, DownloadPage selfPage) {
+            this(mod, dataItem, selfPage, true);
+        }
+
+        /// Creates a version summary, optionally enabling navigation to its details.
+        AddonItem(RemoteAddon mod, RemoteAddon.Version dataItem, DownloadPage selfPage, boolean interactive) {
             VBox pane = new VBox(8);
             pane.setPadding(new Insets(8, 0, 8, 0));
 
@@ -437,10 +430,11 @@ public class DownloadPage extends Control implements DecoratorPage {
                 HBox descPane = new HBox(8);
                 descPane.setPadding(new Insets(0, 8, 0, 8));
                 descPane.setAlignment(Pos.CENTER_LEFT);
-                descPane.setMouseTransparent(true);
+                descPane.setPickOnBounds(false);
 
                 {
                     StackPane graphicPane = new StackPane();
+                    graphicPane.setMouseTransparent(true);
                     TwoLineListItem content = new TwoLineListItem();
                     HBox.setHgrow(content, Priority.ALWAYS);
                     content.setTitle(dataItem.name());
@@ -489,7 +483,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             }
 
             RipplerContainer container = new RipplerContainer(pane);
-            FXUtils.onClicked(container, () -> Controllers.dialog(new AddonVersion(mod, dataItem, selfPage)));
+            container.setPressFeedbackEnabled(interactive);
+            if (interactive)
+                FXUtils.onClicked(container, () -> Controllers.dialog(new AddonVersion(mod, dataItem, selfPage)));
             getChildren().setAll(container);
 
             // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
@@ -498,6 +494,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class AddonVersion extends JFXDialogLayout {
+        /// Creates version details with dependency downloads and a non-navigating summary.
         public AddonVersion(RemoteAddon mod, RemoteAddon.Version version, DownloadPage selfPage) {
             RemoteAddon.Type type = selfPage.type;
 
@@ -512,8 +509,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            var addonItem = new AddonItem(mod, version, selfPage);
-            addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
+            var addonItem = new AddonItem(mod, version, selfPage, false);
             box.getChildren().setAll(addonItem);
 
             JFXHyperlink changelogButton = new JFXHyperlink(i18n("addon.changelog"));
@@ -537,7 +533,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
             FXUtils.onChangeAndOperate(scrollPane.widthProperty(), d -> FXUtils.setLimitWidth(dependenciesList, d.doubleValue()));
-            FXUtils.smoothScrolling(scrollPane);
+            ScrollUtils.installSmoothScrolling(scrollPane);
             FXUtils.setOverflowHidden(scrollPane, 8);
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);
@@ -575,9 +571,6 @@ public class DownloadPage extends Control implements DecoratorPage {
             } else {
                 this.setActions(downloadButton, saveAsButton, cancelButton);
             }
-
-            this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.8));
 
             onEscPressed(this, cancelButton::fire);
         }
@@ -663,9 +656,13 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
+    /// Displays an add-on version's changelog in a scrollable dialog.
     private static final class AddonChangelog extends JFXDialogLayout {
 
+        /// Creates a changelog dialog with a preferred height that follows the window height.
         public AddonChangelog(RemoteAddon.Version version, RemoteAddonRepository repo, DownloadProvider provider) {
+            prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
+
             setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + version.name())));
 
             VBox box = new VBox(8);
@@ -692,24 +689,21 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             setActions(closeButton);
 
-            this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.8));
-
             onEscPressed(this, closeButton::fire);
         }
 
         private void loadChangelog(RemoteAddon.Version version, RemoteAddonRepository repo, DownloadProvider provider, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
-            Task.supplyAsync(() ->
-                    StringUtils.convertToHtml(
-                            repo.getAddonChangelog(provider, version.projectId(), version.versionId()),
-                            "238222".equals(version.projectId()) // https://github.com/HMCL-dev/HMCL/pull/4828#issuecomment-3791068569 FUCK YOU JEI, FUCK YOU CURSEFORGE
-                    )
-            ).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            Task.supplyAsync(() -> {
+                String raw = repo.getAddonChangelog(provider, version.projectId(), version.versionId());
+                if ("238222".equals(version.projectId())) // https://github.com/HMCL-dev/HMCL/pull/4828#issuecomment-3791068569 FUCK YOU JEI, FUCK YOU CURSEFORGE
+                    return raw;
+                return StringUtils.convertToHtml(raw);
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     String changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));
-                    FXUtils.smoothScrolling(scrollPane);
+                    ScrollUtils.installSmoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
                 } else {
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));
