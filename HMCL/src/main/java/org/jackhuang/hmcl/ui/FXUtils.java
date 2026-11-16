@@ -64,6 +64,7 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
@@ -857,6 +858,16 @@ public final class FXUtils {
             icon = "/assets/img/icon@4x.png";
         }
         stage.getIcons().add(newBuiltinImage(icon));
+    }
+
+    @Contract("null -> false")
+    public static boolean isValidImage(@Nullable Image image) {
+        return image != null && !image.isError() && image.getWidth() > 0 && image.getHeight() > 0 && Math.abs(image.getWidth() - image.getHeight()) < 1;
+    }
+
+    @Contract("null -> false")
+    public static boolean isValidIcon(@Nullable Image image) {
+        return isValidImage(image) && Math.abs(image.getWidth() - image.getHeight()) < 1;
     }
 
     /**
