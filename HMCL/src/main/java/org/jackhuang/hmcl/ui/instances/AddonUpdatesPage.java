@@ -519,7 +519,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             JFXButton closeButton = new JFXButton(i18n("button.ok"));
             closeButton.getStyleClass().add("dialog-accept");
-            closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+            closeButton.setOnAction(e -> {
+                object.selectedVersion.unbind();
+                fireEvent(new DialogCloseEvent());
+            });
 
             setActions(versionPageBtn, closeButton);
 
