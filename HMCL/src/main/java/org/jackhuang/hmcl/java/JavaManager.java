@@ -182,11 +182,19 @@ public final class JavaManager {
     }
 
     public static void refresh() {
+        refresh(() -> {});
+    }
+
+    public static void refresh(Runnable onFinished) {
         Task.supplyAsync(() -> searchPotentialJavaExecutables(false)).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            if (result != null) {
-                LATCH.await();
-                allJava = result;
-                updateAllJavaProperty(result);
+            try {
+                if (result != null) {
+                    LATCH.await();
+                    allJava = result;
+                    updateAllJavaProperty(result);
+                }
+            } finally {
+                onFinished.run();
             }
         }).start();
     }

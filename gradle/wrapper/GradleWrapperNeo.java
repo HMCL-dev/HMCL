@@ -1,7 +1,7 @@
 /*
  * Gradle Wrapper Neo single-file source distribution.
  *
- * This source file is part of Gradle Wrapper Neo 0.2.0.
+ * This source file is part of Gradle Wrapper Neo 0.4.0.
  * Documentation and updates: https://github.com/Glavo/gradle-wrapper-neo
  *
  * Place this file at gradle/wrapper/GradleWrapperNeo.java in a Gradle project.
@@ -64,11 +64,9 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
-import javax.lang.model.SourceVersion;
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 
 /*
  * Copyright 2007 the original author or authors.
@@ -1517,8 +1515,10 @@ class ExclusiveFileAccessManager {
     public <T> T access(File exclusiveFile, Callable<T> task) throws Exception {
         final File lockFile = new File(exclusiveFile.getParentFile(), exclusiveFile.getName() + LOCK_FILE_SUFFIX);
         File lockFileDirectory = lockFile.getParentFile();
-        if (!lockFileDirectory.mkdirs() && (!lockFileDirectory.exists() || !lockFileDirectory.isDirectory())) {
-            throw new RuntimeException("Could not create parent directory for lock file " + lockFile.getAbsolutePath());
+        try {
+            Files.createDirectories(lockFileDirectory.toPath());
+        } catch (IOException e) {
+            throw new RuntimeException("Could not create parent directory for lock file " + lockFile.getAbsolutePath() + ": " + e, e);
         }
         RandomAccessFile randomAccessFile = null;
         FileChannel channel = null;
@@ -1557,7 +1557,7 @@ class ExclusiveFileAccessManager {
         return System.nanoTime() / (1000L * 1000L);
     }
 
-    private static void maybeCloseQuietly(Closeable closeable) {
+    private static void maybeCloseQuietly(/* // @Nullable */ Closeable closeable) {
         if (closeable != null) {
             try {
                 closeable.close();
@@ -1800,13 +1800,37 @@ class WrapperDistributionUrlConverter {
      * @throws URISyntaxException If the url is not a valid URI.
      */
     public static URI convertDistributionUrl(String distributionUrl, File fileRoot) throws URISyntaxException {
-        URI source = new URI(distributionUrl);
+        URI source = parse(distributionUrl);
         if (source.getScheme() == null) {
             //  No scheme means someone passed a relative url.
             //  In our context only file relative urls make sense.
             return new File(fileRoot, source.getSchemeSpecificPart()).toURI();
         } else {
             return source;
+        }
+    }
+
+    private static URI parse(String distributionUrl) throws URISyntaxException {
+        try {
+            return new URI(distributionUrl);
+        } catch (URISyntaxException e) {
+            throw new URISyntaxException("<distribution url>", e.getReason());
+        }
+    }
+
+    public static String safeUriDisplay(URI uri) {
+        // host may be unparsable
+        String authority = uri.getAuthority();
+        if (authority != null) {
+            int userInfoEnd = authority.lastIndexOf('@');
+            if (userInfoEnd >= 0) {
+                authority = "***" + authority.substring(userInfoEnd);
+            }
+        }
+        try {
+            return new URI(uri.getScheme(), authority, uri.getPath(), uri.getQuery(), uri.getFragment()).toASCIIString();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("Failed to parse wrapper URI", e);
         }
     }
 }
@@ -1845,6 +1869,7 @@ class BootstrapMainStarter {
         ((Closeable) contextClassLoader).close();
     }
 
+    // @Nullable
     static File findLauncherJar(File gradleHome) {
         File libDirectory = new File(gradleHome, "lib");
         if (libDirectory.exists() && libDirectory.isDirectory()) {
@@ -1918,11 +1943,11 @@ class Download implements IDownload {
         return result;
     }
 
-    public Download(Logger logger, DownloadProgressListener progressListener, String appName, String appVersion, Map<String, String> systemProperties) {
+    public Download(Logger logger, /* // @Nullable */ DownloadProgressListener progressListener, String appName, String appVersion, Map<String, String> systemProperties) {
         this(logger, progressListener, appName, appVersion, systemProperties, DEFAULT_NETWORK_TIMEOUT_MILLISECONDS);
     }
 
-    public Download(Logger logger, DownloadProgressListener progressListener, String appName, String appVersion, Map<String, String> systemProperties, int networkTimeout) {
+    public Download(Logger logger, /* // @Nullable */ DownloadProgressListener progressListener, String appName, String appVersion, Map<String, String> systemProperties, int networkTimeout) {
         this.logger = logger;
         this.appName = appName;
         this.appVersion = appVersion;
@@ -2028,7 +2053,7 @@ class Download implements IDownload {
         try {
             return new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), uri.getPath(), uri.getQuery(), uri.getFragment());
         } catch (URISyntaxException e) {
-            throw new RuntimeException("Failed to parse URI", e);
+            throw new RuntimeException("Failed to parse wrapper URI", e);
         }
     }
 
@@ -2084,11 +2109,12 @@ class Download implements IDownload {
 
         private final Logger logger;
 
+        // @Nullable
         private final DownloadProgressListener delegate;
 
         private int previousDownloadPercent;
 
-        public DefaultDownloadProgressListener(Logger logger, DownloadProgressListener delegate) {
+        public DefaultDownloadProgressListener(Logger logger, /* // @Nullable */ DownloadProgressListener delegate) {
             this.logger = logger;
             this.delegate = delegate;
             this.previousDownloadPercent = 0;
@@ -2258,7 +2284,7 @@ class Install {
     }
 
     public File createDist(final WrapperConfiguration configuration) throws Exception {
-        final URI distributionUrl = configuration.getDistribution();
+        final URI distributionUrl = requireNonNull(configuration.getDistribution(), "No distribution URL specified in wrapper configuration");
         final PathAssembler.LocalDistribution localDistribution = pathAssembler.getDistribution(configuration);
         final File distDir = localDistribution.getDistributionDir();
         final File localZipFile = localDistribution.getZipFile();
@@ -2267,19 +2293,19 @@ class Install {
             if (distDir.isDirectory() && markerFile.isFile()) {
                 InstallCheck installCheck = verifyDistributionRoot(distDir, distDir.getAbsolutePath());
                 if (installCheck.isVerified()) {
-                    return installCheck.gradleHome;
+                    return requireNonNull(installCheck.gradleHome);
                 }
                 // Distribution is invalid. Try to reinstall.
                 System.err.println(installCheck.failureMessage);
                 markerFile.delete();
             }
             fetchDistribution(localZipFile, distributionUrl, distDir, configuration);
-            InstallCheck installCheck = verifyDistributionRoot(distDir, Download.safeUri(distributionUrl).toASCIIString());
+            InstallCheck installCheck = verifyDistributionRoot(distDir, WrapperDistributionUrlConverter.safeUriDisplay(distributionUrl));
             if (installCheck.isVerified()) {
-                setExecutablePermissions(installCheck.gradleHome);
+                setExecutablePermissions(requireNonNull(installCheck.gradleHome));
                 markerFile.createNewFile();
                 localZipFile.delete();
-                return installCheck.gradleHome;
+                return requireNonNull(installCheck.gradleHome);
             }
             // Distribution couldn't be installed.
             throw new RuntimeException(installCheck.failureMessage);
@@ -2302,7 +2328,7 @@ class Install {
                 }
                 localZipFile.delete();
                 deleteLocalTopLevelDirs(distDir);
-                logger.log("Download from " + Download.safeUri(currentUrl) + " failed. Trying the next download location.");
+                logger.log("Download from " + WrapperDistributionUrlConverter.safeUriDisplay(currentUrl) + " failed. Trying the next download location.");
                 logger.log("Reason: " + e.getMessage());
             }
         }
@@ -2321,9 +2347,9 @@ class Install {
                     forceFetch(localZipFile, distributionUrl, originalLocation ? configuration.getRetries() : 0, configuration.getRetryBackOffMs());
                 }
                 deleteLocalTopLevelDirs(distDir);
-                verifyDownloadChecksum(Download.safeUri(distributionUrl).toASCIIString(), localZipFile, distributionSha256Sum);
+                verifyDownloadChecksum(WrapperDistributionUrlConverter.safeUriDisplay(distributionUrl), localZipFile, distributionSha256Sum);
                 unzipLocal(localZipFile, distDir);
-                InstallCheck installCheck = verifyDistributionRoot(distDir, Download.safeUri(distributionUrl).toASCIIString());
+                InstallCheck installCheck = verifyDistributionRoot(distDir, WrapperDistributionUrlConverter.safeUriDisplay(distributionUrl));
                 if (!installCheck.isVerified()) {
                     throw new RuntimeException(installCheck.failureMessage);
                 }
@@ -2341,8 +2367,9 @@ class Install {
         } while (failed);
     }
 
+    // @Nullable
     private String fetchDistributionSha256Sum(WrapperConfiguration configuration, File localZipFile) {
-        URI distribution = configuration.getDistribution();
+        URI distribution = requireNonNull(configuration.getDistribution());
         try {
             URI distributionUrl = distribution.resolve(distribution.getPath() + SHA_256);
             File tmpZipFile = new File(localZipFile.getParentFile(), localZipFile.getName() + SHA_256);
@@ -2351,7 +2378,7 @@ class Install {
                 return reader.readLine();
             }
         } catch (Exception e) {
-            logger.log("Could not fetch hash for " + Download.safeUri(distribution) + ".");
+            logger.log("Could not fetch hash for " + WrapperDistributionUrlConverter.safeUriDisplay(distribution) + ".");
             logger.log("Reason: " + e.getMessage());
             return null;
         }
@@ -2387,7 +2414,7 @@ class Install {
             try {
                 File tempDownloadFile = new File(localTargetFile.getParentFile(), localTargetFile.getName() + ".part");
                 Files.deleteIfExists(tempDownloadFile.toPath());
-                logger.log("Downloading " + Download.safeUri(distributionUrl));
+                logger.log("Downloading " + WrapperDistributionUrlConverter.safeUriDisplay(distributionUrl));
                 download.download(distributionUrl, tempDownloadFile);
                 Files.move(tempDownloadFile.toPath(), localTargetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 return;
@@ -2442,7 +2469,7 @@ class Install {
         return InstallCheck.success(gradleHome);
     }
 
-    private void verifyDownloadChecksum(String sourceUrl, File localZipFile, String expectedSum) throws Exception {
+    private void verifyDownloadChecksum(String sourceUrl, File localZipFile, /* // @Nullable */ String expectedSum) throws Exception {
         if (expectedSum == null) {
             return;
         }
@@ -2553,8 +2580,10 @@ class Install {
 
     private static class InstallCheck {
 
+        // @Nullable
         private final File gradleHome;
 
+        // @Nullable
         private final String failureMessage;
 
         private static InstallCheck failure(String message) {
@@ -2565,7 +2594,7 @@ class Install {
             return new InstallCheck(gradleHome, null);
         }
 
-        private InstallCheck(File gradleHome, String failureMessage) {
+        private InstallCheck(/* // @Nullable */ File gradleHome, /* // @Nullable */ String failureMessage) {
             this.gradleHome = gradleHome;
             this.failureMessage = failureMessage;
         }
@@ -3092,7 +3121,7 @@ final class MirrorConfiguration {
         }
         String replacement = string(required(mirror, "replacement", path), path + ".replacement");
         boolean requireChecksum = optionalBoolean(mirror, "requireChecksum", true, path);
-        return new Mirror(pattern, replacement, requireChecksum);
+        return new Mirror(path + ".replacement", pattern, replacement, requireChecksum);
     }
 
     private static Object required(Map<String, Object> object, String field, String path) {
@@ -3159,13 +3188,16 @@ final class MirrorConfiguration {
 
     private static final class Mirror {
 
+        private final String replacementPath;
+
         private final Pattern pattern;
 
         private final String replacement;
 
         private final boolean requireChecksum;
 
-        private Mirror(Pattern pattern, String replacement, boolean requireChecksum) {
+        private Mirror(String replacementPath, Pattern pattern, String replacement, boolean requireChecksum) {
+            this.replacementPath = replacementPath;
             this.pattern = pattern;
             this.replacement = replacement;
             this.requireChecksum = requireChecksum;
@@ -3183,16 +3215,17 @@ final class MirrorConfiguration {
             try {
                 resolvedText = matcher.replaceFirst(replacement);
             } catch (IllegalArgumentException | IndexOutOfBoundsException e) {
-                throw new IllegalArgumentException("Invalid mirror replacement '" + replacement + "'.", e);
+                throw new IllegalArgumentException("Invalid mirror replacement at " + replacementPath + ".");
             }
             URI resolved;
             try {
-                resolved = URI.create(resolvedText);
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Mirror replacement produced an invalid URI: " + resolvedText, e);
+                resolved = new URI(resolvedText);
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException("Mirror replacement at " + replacementPath + " produced an invalid URI.", new URISyntaxException("<mirror url>", e.getReason()));
             }
             if (!resolved.isAbsolute() || !"https".equalsIgnoreCase(resolved.getScheme()) || resolved.getHost() == null || resolved.getFragment() != null) {
-                throw new IllegalArgumentException("Mirror replacement must produce an absolute HTTPS URI without a fragment: " + resolvedText);
+                String displayUrl = resolved.isOpaque() ? "<mirror url>" : WrapperDistributionUrlConverter.safeUriDisplay(resolved);
+                throw new IllegalArgumentException("Mirror replacement at " + replacementPath + " must produce an absolute HTTPS URI without a fragment: " + displayUrl);
             }
             return resolved;
         }
@@ -3235,16 +3268,17 @@ class PathAssembler {
      * Determines the local locations for the distribution to use given the supplied configuration.
      */
     public LocalDistribution getDistribution(WrapperConfiguration configuration) {
-        String baseName = getDistName(configuration.getDistribution());
+        URI distribution = requireNonNull(configuration.getDistribution(), "No distribution URL specified in wrapper configuration");
+        String baseName = getDistName(distribution);
         String distName = removeExtension(baseName);
-        String rootDirName = rootDirName(distName, configuration);
+        String rootDirName = rootDirName(distName, distribution);
         File distDir = new File(getBaseDir(configuration.getDistributionBase()), configuration.getDistributionPath() + "/" + rootDirName);
         File distZip = new File(getBaseDir(configuration.getZipBase()), configuration.getZipPath() + "/" + rootDirName + "/" + baseName);
         return new LocalDistribution(distDir, distZip);
     }
 
-    private String rootDirName(String distName, WrapperConfiguration configuration) {
-        String urlHash = getHash(Download.safeUri(configuration.getDistribution()).toASCIIString());
+    private String rootDirName(String distName, URI distribution) {
+        String urlHash = getHash(Download.safeUri(distribution).toASCIIString());
         return distName + "/" + urlHash;
     }
 
@@ -3422,12 +3456,14 @@ class PropertiesFileHandler {
 
 class WrapperConfiguration {
 
+    // @Nullable
     private URI distribution;
 
     private String distributionBase = PathAssembler.GRADLE_USER_HOME_STRING;
 
     private String distributionPath = Install.DEFAULT_DISTRIBUTION_PATH;
 
+    // @Nullable
     private String distributionSha256Sum;
 
     private String zipBase = PathAssembler.GRADLE_USER_HOME_STRING;
@@ -3444,11 +3480,15 @@ class WrapperConfiguration {
 
     private MirrorConfiguration mirrorConfiguration = MirrorConfiguration.empty();
 
+    /**
+     * Returns the distribution URL, or null if it has not been configured, e.g. because no wrapper properties file was found.
+     */
+    // @Nullable
     public URI getDistribution() {
         return distribution;
     }
 
-    public void setDistribution(URI distribution) {
+    public void setDistribution(/* // @Nullable */ URI distribution) {
         this.distribution = distribution;
     }
 
@@ -3492,11 +3532,12 @@ class WrapperConfiguration {
         return retryBackOffMs;
     }
 
+    // @Nullable
     public String getDistributionSha256Sum() {
         return distributionSha256Sum;
     }
 
-    public void setDistributionSha256Sum(String distributionSha256Sum) {
+    public void setDistributionSha256Sum(/* // @Nullable */ String distributionSha256Sum) {
         this.distributionSha256Sum = distributionSha256Sum;
     }
 
@@ -3634,6 +3675,7 @@ class WrapperExecutor {
     /**
      * Returns the distribution which this wrapper will use. Returns null if no wrapper meta-data was found in the specified project directory.
      */
+    // @Nullable
     public URI getDistribution() {
         return config.getDistribution();
     }
@@ -3666,7 +3708,9 @@ class WrapperExecutor {
         return Boolean.parseBoolean(getProperty(propertyName, String.valueOf(defaultValue)));
     }
 
-    private String getProperty(String propertyName, String defaultValue, boolean required) {
+    // Returns null only in the !required branch; callers passing required=true rely on a non-null result.
+    @SuppressWarnings("NullAway")
+    private String getProperty(String propertyName, /* // @Nullable */ String defaultValue, boolean required) {
         String value = properties.getProperty(propertyName);
         if (value != null) {
             return value;
@@ -3704,7 +3748,7 @@ class WrapperExecutor {
 // package org.gradle.wrapper.neo;
 
 /**
- * Compiles the source-based Wrapper into a cached JAR and relaunches it when the source changes.
+ * Packages the compiled Wrapper into a source-specific cached JAR and launches it.
  *
  * <p>The launcher supplies the project home, source file, and target JAR as absolute system
  * properties. A file lock serializes cache updates across concurrent Wrapper processes.</p>
@@ -3712,10 +3756,6 @@ class WrapperExecutor {
 final class Bootstrap {
 
     private static final String MAIN_CLASS_NAME = "GradleWrapperNeo";
-
-    private static final String TEMPORARY_JAR_PREFIX = "gradle-wrapper-neo-";
-
-    private static final String CLASSES_DIR_NAME = "classes";
 
     private static final String LOCK_FILE_NAME = "lock";
 
@@ -3742,12 +3782,12 @@ final class Bootstrap {
     }
 
     /**
-     * Ensures the cached Wrapper JAR matches the configured source and relaunches it when needed.
+     * Creates the cached Wrapper JAR on first launch and validates it on subsequent launches.
      *
      * @param args the command-line arguments forwarded to the Wrapper
      * @param mainClass the class used to locate the currently running code
      * @return {@code true} when the caller must stop because another Wrapper process was launched
-     * @throws Exception if the source cannot be compiled, cached, or launched
+     * @throws Exception if the cache cannot be validated, created, or launched
      */
     public static boolean handle(String[] args, Class<?> mainClass) throws Exception {
         Path appHome = appHome();
@@ -3759,6 +3799,10 @@ final class Bootstrap {
         if (!Files.isRegularFile(sourceFile)) {
             throw new RuntimeException("Wrapper source file '" + sourceFile + "' does not exist.");
         }
+        String sourceHash = sha256(sourceFile);
+        if (!sourceHash.equals(targetJar.getParent().getFileName().toString())) {
+            throw new RuntimeException("Wrapper source changed during startup. Please run the Wrapper again.");
+        }
         if (Boolean.getBoolean(BOOTSTRAP_PROPERTY)) {
             Path stagingClassesDir = codeSource(mainClass);
             if (!Files.isDirectory(stagingClassesDir)) {
@@ -3767,15 +3811,12 @@ final class Bootstrap {
             int exitCode;
             try {
                 withLock(targetJar.getParent(), () -> {
-                    if (!isCurrent(targetJar, sourceFile)) {
-                        Path classesDir = classesDir(targetJar);
-                        recreateDirectory(classesDir);
-                        copyDirectory(stagingClassesDir, classesDir);
-                        writeJar(sourceFile, classesDir, targetJar);
+                    if (!isCurrent(targetJar, sourceHash)) {
+                        writeJar(sourceHash, stagingClassesDir, targetJar);
                     }
                     return null;
                 });
-                exitCode = launchJar(targetJar, appHome, sourceFile, targetJar, args);
+                exitCode = launchJar(targetJar, appHome, sourceFile, args);
             } finally {
                 deleteRecursively(stagingClassesDir);
                 deleteIfEmpty(stagingClassesDir.getParent());
@@ -3787,37 +3828,13 @@ final class Bootstrap {
         if (!Files.isRegularFile(currentJar)) {
             throw new RuntimeException("Cached wrapper JAR '" + currentJar + "' does not exist.");
         }
-        if (!isExpectedJar(currentJar, targetJar, sourceFile)) {
+        if (!Files.isSameFile(currentJar, targetJar)) {
             throw new RuntimeException("Running wrapper JAR '" + currentJar + "' does not match configured JAR '" + targetJar + "'.");
         }
-        if (isCurrent(currentJar, sourceFile)) {
-            return false;
+        if (!isCurrent(currentJar, sourceHash)) {
+            throw new RuntimeException("Invalid wrapper cache. Delete '" + targetJar + "' and run the Wrapper again.");
         }
-        Path classesDir = classesDir(targetJar);
-        Files.createDirectories(targetJar.getParent());
-        Path nextJar = Files.createTempFile(targetJar.getParent(), TEMPORARY_JAR_PREFIX, ".jar");
-        Path launchJar;
-        try {
-            launchJar = withLock(targetJar.getParent(), () -> {
-                if (isCurrent(targetJar, sourceFile)) {
-                    return targetJar;
-                }
-                compileSource(sourceFile, classesDir);
-                writeJar(sourceFile, classesDir, nextJar);
-                return installReplacement(nextJar, targetJar);
-            });
-        } catch (Exception e) {
-            Files.deleteIfExists(nextJar);
-            throw e;
-        }
-        int exitCode;
-        try {
-            exitCode = launchJar(launchJar, appHome, sourceFile, targetJar, args);
-        } finally {
-            Files.deleteIfExists(nextJar);
-        }
-        System.exit(exitCode);
-        return true;
+        return false;
     }
 
     private static Path codeSource(Class<?> mainClass) {
@@ -3866,10 +3883,6 @@ final class Bootstrap {
         return requireAbsolutePath(JAR_FILE_PROPERTY);
     }
 
-    private static Path classesDir(Path targetJar) {
-        return targetJar.getParent().resolve(CLASSES_DIR_NAME);
-    }
-
     private static <T> T withLock(Path cacheDirectory, LockedAction<T> action) throws Exception {
         Files.createDirectories(cacheDirectory);
         try (FileChannel channel = FileChannel.open(cacheDirectory.resolve(LOCK_FILE_NAME), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
@@ -3878,65 +3891,20 @@ final class Bootstrap {
         }
     }
 
-    private static boolean isExpectedJar(Path currentJar, Path targetJar, Path sourceFile) throws Exception {
-        Path normalizedCurrentJar = currentJar.toAbsolutePath().normalize();
-        Path normalizedTargetJar = targetJar.toAbsolutePath().normalize();
-        if (normalizedCurrentJar.equals(normalizedTargetJar)) {
-            return true;
-        }
-        Path currentParent = normalizedCurrentJar.getParent();
-        Path targetParent = normalizedTargetJar.getParent();
-        String currentName = normalizedCurrentJar.getFileName().toString();
-        return currentParent != null && currentParent.equals(targetParent) && currentName.startsWith(TEMPORARY_JAR_PREFIX) && currentName.endsWith(".jar") && isCurrent(currentJar, sourceFile);
-    }
-
-    private static boolean isCurrent(Path jarFile, Path sourceFile) throws Exception {
+    private static boolean isCurrent(Path jarFile, String sourceHash) {
         try (JarFile jar = new JarFile(jarFile.toFile())) {
             Manifest manifest = jar.getManifest();
             if (manifest == null) {
                 return false;
             }
             Attributes attributes = manifest.getMainAttributes();
-            return sha256(sourceFile).equals(attributes.getValue(MANIFEST_SOURCE_SHA256));
+            return sourceHash.equals(attributes.getValue(MANIFEST_SOURCE_SHA256)) && "ALL-UNNAMED".equals(attributes.getValue("Enable-Native-Access"));
         } catch (IOException e) {
             return false;
         }
     }
 
-    private static void compileSource(Path sourceFile, Path classesDir) throws Exception {
-        recreateDirectory(classesDir);
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        if (compiler == null) {
-            throw new RuntimeException("Could not compile " + sourceFile + ". A JDK with the system Java compiler is required.");
-        }
-        List<String> options = new ArrayList<>();
-        if (SourceVersion.latestSupported().compareTo(SourceVersion.RELEASE_8) > 0) {
-            options.add("--release");
-            options.add("8");
-        } else {
-            options.add("-source");
-            options.add("8");
-            options.add("-target");
-            options.add("8");
-        }
-        options.add("-Xlint:-options");
-        options.add("-encoding");
-        options.add("UTF-8");
-        options.add("-d");
-        options.add(classesDir.toString());
-        options.add(sourceFile.toString());
-        int result = compiler.run(null, null, null, options.toArray(new String[0]));
-        if (result != 0) {
-            throw new RuntimeException("Could not compile " + sourceFile + " with the system Java compiler.");
-        }
-    }
-
-    private static void recreateDirectory(Path directory) throws IOException {
-        deleteRecursively(directory);
-        Files.createDirectories(directory);
-    }
-
-    private static void writeJar(Path sourceFile, Path classesDir, Path targetJar) throws Exception {
+    private static void writeJar(String sourceHash, Path classesDir, Path targetJar) throws Exception {
         Files.createDirectories(targetJar.getParent());
         Path tempJar = Files.createTempFile(targetJar.getParent(), targetJar.getFileName().toString() + ".", ".tmp");
         try {
@@ -3944,7 +3912,8 @@ final class Bootstrap {
             Attributes attributes = manifest.getMainAttributes();
             attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
             attributes.put(Attributes.Name.MAIN_CLASS, MAIN_CLASS_NAME);
-            attributes.putValue(MANIFEST_SOURCE_SHA256, sha256(sourceFile));
+            attributes.putValue("Enable-Native-Access", "ALL-UNNAMED");
+            attributes.putValue(MANIFEST_SOURCE_SHA256, sourceHash);
             try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(tempJar), manifest)) {
                 addClasses(output, classesDir);
             }
@@ -3968,32 +3937,6 @@ final class Bootstrap {
         });
     }
 
-    private static void copyDirectory(Path sourceDirectory, Path targetDirectory) throws IOException {
-        Files.walkFileTree(sourceDirectory, new SimpleFileVisitor<Path>() {
-
-            @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                Files.createDirectories(targetDirectory.resolve(sourceDirectory.relativize(dir)));
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.copy(file, targetDirectory.resolve(sourceDirectory.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
-                return FileVisitResult.CONTINUE;
-            }
-        });
-    }
-
-    private static Path installReplacement(Path sourceJar, Path targetJar) {
-        try {
-            moveReplacing(sourceJar, targetJar);
-            return targetJar;
-        } catch (IOException e) {
-            return sourceJar;
-        }
-    }
-
     private static void moveReplacing(Path source, Path target) throws IOException {
         try {
             Files.move(source, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
@@ -4002,12 +3945,12 @@ final class Bootstrap {
         }
     }
 
-    private static int launchJar(Path launchJar, Path appHome, Path sourceFile, Path targetJar, String[] args) throws Exception {
+    private static int launchJar(Path targetJar, Path appHome, Path sourceFile, String[] args) throws Exception {
         List<String> command = new ArrayList<>();
         command.add(javaExecutable());
         command.addAll(forwardedJvmArguments(ManagementFactory.getRuntimeMXBean().getInputArguments(), appHome, sourceFile, targetJar));
         command.add("-jar");
-        command.add(launchJar.toString());
+        command.add(targetJar.toString());
         for (String arg : args) {
             command.add(arg);
         }

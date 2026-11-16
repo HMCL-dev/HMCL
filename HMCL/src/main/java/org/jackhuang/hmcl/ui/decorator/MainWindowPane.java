@@ -9,19 +9,12 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
@@ -121,7 +114,7 @@ final class MainWindowPane extends StackPane {
         Themes.colorSchemeProperty().addListener(holder.weak(titleBarBackgroundListener));
         Themes.titleBarTransparentProperty().addListener(holder.weak(titleBarBackgroundListener));
 
-        InvalidationListener navBarListener = observable -> updateNavBar();
+        ChangeListener<DecoratorPage.@Nullable State> navBarListener = (observable, oldValue, newValue) -> updateNavBar();
         decorator.stateProperty().addListener(holder.weak(navBarListener));
         updateNavBar();
 

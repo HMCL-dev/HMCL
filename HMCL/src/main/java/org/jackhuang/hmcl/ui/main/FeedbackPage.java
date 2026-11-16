@@ -6,6 +6,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LineButton;
@@ -24,7 +25,7 @@ public class FeedbackPage extends SpinnerPane {
         content.getStyleClass().add("spinner-pane-content");
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
-        FXUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         setContent(scrollPane);
 
         ComponentList groups = new ComponentList();

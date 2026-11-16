@@ -78,7 +78,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
                 if (result != null) {
                     ScrollPane scrollPane = new ScrollPane(result);
                     scrollPane.setFitToWidth(true);
-                    FXUtils.smoothScrolling(scrollPane);
+                    ScrollUtils.installSmoothScrolling(scrollPane);
                     setBody(scrollPane);
                 } else {
                     setBody();
