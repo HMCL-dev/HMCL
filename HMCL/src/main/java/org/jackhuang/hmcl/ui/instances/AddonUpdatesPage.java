@@ -444,10 +444,9 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             Task.supplyAsync(() -> {
                 if (object.changelog != null) return object.changelog;
                 RemoteAddon.Version version = object.data.targetVersion();
-                return StringUtils.convertToHtml(
-                        repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.projectId(), version.versionId()),
-                        "238222".equals(object.data.targetVersion().projectId())
-                );
+                String raw = repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.projectId(), version.versionId());
+                if ("238222".equals(object.data.targetVersion().projectId())) return raw;
+                return StringUtils.convertToHtml(raw);
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     object.changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
