@@ -8,13 +8,20 @@ import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.update.AddonUpdateConditions;
+import org.jackhuang.hmcl.image.ImageLoader;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  *
@@ -84,6 +91,7 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
         return mod.getId();
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -163,8 +171,25 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
     }
 
     @Override
-    public void delete() throws IOException {
-        Files.deleteIfExists(file);
+    public @Nullable <I> I loadIcon(ImageLoader<I> imageLoader, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+        List<String> iconPaths = new ArrayList<>();
+
+        if (StringUtils.isNotBlank(getLogoPath())) {
+            iconPaths.add(getLogoPath());
+        }
+
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file)) {
+            for (String path : iconPaths) {
+                Path iconPath = fs.getPath(path);
+                if (Files.isRegularFile(iconPath)) {
+                    return imageLoader.load(iconPath, requestedWidth, requestedHeight, preserveRatio, smooth);
+                }
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to load mod icons", e);
+        }
+
+        return null;
     }
 
     @Override

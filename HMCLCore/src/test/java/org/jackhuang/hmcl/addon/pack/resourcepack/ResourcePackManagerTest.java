@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
-package org.jackhuang.hmcl.resourcepack;
+package org.jackhuang.hmcl.addon.pack.resourcepack;
 
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.junit.jupiter.api.Test;
 
-import static org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager.isMcVersionSupported;
-import static org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager.isMcVersionSupportsNewOptionsFormat;
+import static org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackManager.isMcVersionSupported;
+import static org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackManager.isMcVersionSupportsNewOptionsFormat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

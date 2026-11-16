@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
-package org.jackhuang.hmcl.addon.resourcepack;
+package org.jackhuang.hmcl.addon.pack.resourcepack;
 
 import com.google.gson.annotations.SerializedName;
 import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.addon.pack.PackMcMeta;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
-import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -349,11 +349,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
                 Files.createDirectories(resourcePackDirectory);
 
                 Path newFile = resourcePackDirectory.resolve(file.getFileName());
-                if (Files.isDirectory(file)) {
-                    FileUtils.copyDirectory(file, newFile);
-                } else {
-                    FileUtils.copyFile(file, newFile);
-                }
+                FileUtils.copyTo(file, resourcePackDirectory);
 
                 addResourcePackInfo(newFile);
             } else {
@@ -494,11 +490,23 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         }
     }
 
-    public boolean rename(String oldName, String newName) {
-        if (newName.equals(oldName)) return false;
+    public Stream<Pair<ResourcePackFile, Boolean>> arePacksEnabled(Stream<ResourcePackFile> resourcePacks) {
+        lock.lock();
+        try {
+            Map<String, String> options = loadOptions();
+            List<String> optPacks = deserializePackList(options.get("resourcePacks"));
+            List<String> optIncompatiblePacks = deserializePackList(options.get("incompatibleResourcePacks"));
+            return resourcePacks.map(pack -> Pair.pair(pack, isEnabled(pack, optPacks, optIncompatiblePacks)));
+        } finally {
+            lock.unlock();
+        }
+    }
 
-        String oldNameNewFormat = "file/" + oldName;
-        String newNameNewFormat = "file/" + newName;
+    public boolean updateOptions(String oldNameWithExt, String newNameWithExt) {
+        if (newNameWithExt.equals(oldNameWithExt)) return false;
+
+        String oldNameNewFormat = "file/" + oldNameWithExt;
+        String newNameNewFormat = "file/" + newNameWithExt;
         boolean modified = false;
 
         lock.lock();
@@ -510,8 +518,8 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
                 var it = l.listIterator();
                 while (it.hasNext()) {
                     var next = it.next();
-                    if (oldName.equals(next) || oldNameNewFormat.equals(next)) {
-                        it.set(supportsNewOptionsFormat ? newNameNewFormat : newName);
+                    if (oldNameWithExt.equals(next) || oldNameNewFormat.equals(next)) {
+                        it.set(supportsNewOptionsFormat ? newNameNewFormat : newNameWithExt);
                         modified = true;
                     }
                 }
@@ -522,18 +530,6 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
                 saveOptions(options);
             }
             return modified;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public Stream<Pair<ResourcePackFile, Boolean>> arePacksEnabled(Stream<ResourcePackFile> resourcePacks) {
-        lock.lock();
-        try {
-            Map<String, String> options = loadOptions();
-            List<String> optPacks = deserializePackList(options.get("resourcePacks"));
-            List<String> optIncompatiblePacks = deserializePackList(options.get("incompatibleResourcePacks"));
-            return resourcePacks.map(pack -> Pair.pair(pack, isEnabled(pack, optPacks, optIncompatiblePacks)));
         } finally {
             lock.unlock();
         }
