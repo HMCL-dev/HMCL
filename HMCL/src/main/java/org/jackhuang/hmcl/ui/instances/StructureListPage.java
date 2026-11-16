@@ -96,9 +96,9 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
     }
 
     private static boolean isValid(String id, boolean flattened) {
-        if (Identifier.isValid(id)) {
+        if (StringUtils.isNotBlank(id) && Identifier.isValid(id)) {
             if (flattened)
-                return Arrays.stream(Identifier.of(id).path().split("/")).allMatch(s -> switch (s) {
+                return Arrays.stream(Identifier.of(id).path().split("/", -1)).allMatch(s -> switch (s) {
                     case ".", "..", "" -> false;
                     default -> true;
                 });
@@ -199,11 +199,8 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
     private Path getPathFor(String id) {
         if (directory == null) throw new IllegalStateException("Unsupported world game version");
         if (flattened) {
-            var structureDirName = dataVersion >= 3946
-                    ? "structure"
-                    : "structures";
             var identifier = Identifier.of(id);
-            return directory.resolve(identifier.namespace()).resolve(structureDirName).resolve(identifier.path() + ".nbt");
+            return directory.resolve(identifier.namespace()).resolve("structures").resolve(identifier.path() + ".nbt");
         } else {
             return directory.resolve(id + ".nbt");
         }
@@ -259,7 +256,7 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         }
 
         public String getIdString() {
-            if (namespace == null) return "";
+            if (namespace == null) return getName();
             return namespace + ":" + getName();
         }
     }
@@ -352,6 +349,8 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         @Override
         protected void updateControl(NBTStructureInfoObject item, boolean empty) {
             if (item == null || empty) return;
+
+            content.getTags().clear();
 
             content.setTitle(item.getName());
             content.setSubtitle(item.getIdString());

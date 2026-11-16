@@ -70,7 +70,7 @@ public final class NBTStructureFile extends Schematic {
     @Override
     public @NotNull String getName() {
         if (relPath == null) return super.getName();
-        return relPath.resolveSibling(super.getName()).toString();
+        return relPath.resolveSibling(super.getName()).toString().replace('\\', '/');
     }
 
     @Override

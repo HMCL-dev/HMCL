@@ -17,6 +17,7 @@ import org.commonmark.renderer.html.HtmlWriter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
