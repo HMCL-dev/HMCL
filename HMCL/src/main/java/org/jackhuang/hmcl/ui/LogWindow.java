@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.ProcessInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.io.IOException;
@@ -64,13 +64,13 @@ public final class LogWindow extends Stage {
     }
 
     private final LogWindowImpl impl;
-    private final ManagedProcess gameProcess;
+    private final ProcessInfo gameProcess;
 
-    public LogWindow(ManagedProcess gameProcess) {
+    public LogWindow(ProcessInfo gameProcess) {
         this(gameProcess, new CircularArrayList<>());
     }
 
-    public LogWindow(ManagedProcess gameProcess, CircularArrayList<Log> logs) {
+    public LogWindow(ProcessInfo gameProcess, CircularArrayList<Log> logs) {
         Themes.applyNativeDarkMode(this);
 
         this.logs = logs;
@@ -220,7 +220,7 @@ public final class LogWindow extends Stage {
 
                 try {
                     if (gameProcess.isRunning()) {
-                        GameDumpGenerator.writeDumpTo(gameProcess.getProcess().pid(), dumpFile);
+                        GameDumpGenerator.writeDumpTo(gameProcess.pid(), dumpFile);
                         FXUtils.showFileInExplorer(dumpFile);
                     }
                 } catch (Throwable e) {
@@ -236,7 +236,7 @@ public final class LogWindow extends Stage {
             });
         }
 
-        private ManagedProcess getGameProcess() {
+        private ProcessInfo getGameProcess() {
             return gameProcess;
         }
 
@@ -418,12 +418,16 @@ public final class LogWindow extends Stage {
                 clearButton.setOnAction(e -> getSkinnable().onClear());
                 hBox.getChildren().setAll(autoScrollCheckBox, wrapTextCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
 
-                control.getGameProcess().getProcess()
-                        .onExit()
-                        .thenRunAsync(() -> {
-                            terminateButton.setDisable(true);
-                            exportDumpButton.setDisable(true);
-                        }, Schedulers.javafx());
+                var handle = control.getGameProcess().handle();
+                if (handle != null) {
+                    handle.onExit().thenRunAsync(() -> {
+                        terminateButton.setDisable(true);
+                        exportDumpButton.setDisable(true);
+                    }, Schedulers.javafx());
+                } else {
+                    terminateButton.setDisable(true);
+                    exportDumpButton.setDisable(true);
+                }
 
                 vbox.getChildren().add(bottom);
             }

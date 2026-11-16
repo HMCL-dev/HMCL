@@ -19,7 +19,9 @@ import javafx.scene.control.ButtonType;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.monitor.MonitorCrashReporter;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
+import org.jackhuang.hmcl.monitor.Monitor;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -130,6 +132,10 @@ public final class Launcher extends Application {
                 UpdateChecker.init();
 
                 primaryStage.show();
+
+                // check whether to show log from HMCL monitor
+                if (Monitor.wasCrashed() && Monitor.getResult() != null)
+                    MonitorCrashReporter.show(Monitor.getResult());
             });
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
