@@ -115,7 +115,7 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
         return url;
     }
 
-    public @Nullable Image loadIcon(ImageLoader<Image> loader) {
+    public <I> @Nullable I loadIcon(ImageLoader<I> loader) {
         if (StringUtils.isBlank(logoPath))
             return null;
 
