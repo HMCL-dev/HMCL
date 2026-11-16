@@ -474,11 +474,9 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
     private void cleanup() {
         for (Path path : downloadedJarMods.values()) {
-            if (Files.isRegularFile(path)) {
-                try {
-                    Files.deleteIfExists(path);
-                } catch (IOException ignored) {
-                }
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException ignored) {
             }
         }
     }
