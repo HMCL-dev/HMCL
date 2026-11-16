@@ -11,7 +11,6 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.SetChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -1102,20 +1101,6 @@ public final class Themes {
             settings().themeBrightnessModeProperty(),
             FXUtils.DARK_MODE != null ? FXUtils.DARK_MODE : settings().themeBrightnessModeProperty()
     );
-
-    /// The title text fill derived from the current color scheme.
-    private static final ObjectBinding<Color> titleFill = Bindings.createObjectBinding(
-            () -> titleBarTransparent.get()
-                    ? getColorScheme().getOnSurface()
-                    : getColorScheme().getOnPrimaryContainer(),
-            colorSchemeProperty(),
-            titleBarTransparent
-    );
-
-    /// Returns the title text fill property derived from the current color scheme.
-    public static ObservableValue<Color> titleFillProperty() {
-        return titleFill;
-    }
 
     /// Returns whether the title area should be transparent after applying launcher and theme settings.
     public static BooleanBinding titleBarTransparentProperty() {

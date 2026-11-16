@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -111,7 +110,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             titleLabel.setRotate(180);
         }
         titleLabel.getStyleClass().add("jfx-decorator-title");
-        titleLabel.textFillProperty().bind(Themes.titleFillProperty());
         titleNode.getChildren().setAll(titleIcon, titleLabel);
 
         state.setValue(new State(null, titleNode, false, false, true));
