@@ -25,10 +25,14 @@ public sealed abstract class ShaderPackFile extends LocalAddonFile<ShaderPackFil
     }
 
     public static boolean isFileShaderPack(Path file) {
-        if (Files.isDirectory(file)) return Files.isDirectory(file.resolve("shaders"));
+        if (Files.isDirectory(file))
+            return Files.isDirectory(file.resolve("shaders")) ||
+                    (Files.isDirectory(file.resolve("src")) && Files.isRegularFile(file.resolve("pack.json")));
         if (Files.isRegularFile(file)) {
             try (var zipSystem = CompressingUtils.createReadOnlyZipFileSystem(file)) {
                 Path root = zipSystem.getRootDirectories().iterator().next();
+                if (Files.isDirectory(file.resolve("src")) && Files.isRegularFile(file.resolve("pack.json")))
+                    return true;
                 try (Stream<Path> stream = Files.walk(root)) {
                     return stream.filter(path -> path.endsWith("shaders")).anyMatch(Files::isDirectory);
                 }

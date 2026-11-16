@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.addon.shader;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.image.ImageLoader;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -26,7 +27,7 @@ final class ShaderPackFolder extends ShaderPackFile {
             ShaderPackMeta meta = null;
             try {
                 meta = JsonUtils.fromJsonFile(JsonUtils.LENIENT_GSON, metaPath, ShaderPackMeta.class);
-            } catch (IOException e) {
+            } catch (IOException | JsonParseException e) {
                 LOG.warning("Failed to load shader metadata", e);
             }
             if (meta == null || StringUtils.isBlank(meta.apertureApiVersion())) break aperture;

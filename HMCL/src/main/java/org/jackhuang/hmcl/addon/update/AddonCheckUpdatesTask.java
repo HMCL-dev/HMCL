@@ -25,7 +25,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
@@ -41,15 +43,17 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
                         return null;
                     }
                 }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception instanceof CancellationException) return;
                     if (exception != null || result == null) {
-                        Controllers.dialog(I18n.i18n("addon.check_update.failed_check"), I18n.i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                        Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                        if (exception != null) LOG.warning("Failed to check for updates", exception);
                     } else if (result.commonUpdates().isEmpty()) {
-                        Controllers.dialog(I18n.i18n("addon.check_update.empty"));
+                        Controllers.dialog(i18n("addon.check_update.empty"));
                     } else {
                         Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), addonsDirectory, result));
                     }
                 }).withStagesHints("update.checking"),
-                I18n.i18n("addon.check_update"), TaskCancellationAction.NORMAL);
+                i18n("addon.check_update"), TaskCancellationAction.NORMAL);
     }
 
     private final List<Task<Pair<AddonUpdate, @Nullable AddonUpdate>>> dependents;
