@@ -113,6 +113,6 @@ public sealed abstract class ShaderPackFile extends LocalAddonFile<ShaderPackFil
     @Override
     public void onUpdated(String newFileNameWithExt) {
         super.onUpdated(newFileNameWithExt);
-        manager.updateConfigFileName(this, newFileNameWithExt);
+        manager.updateConfig(this, newFileNameWithExt);
     }
 }

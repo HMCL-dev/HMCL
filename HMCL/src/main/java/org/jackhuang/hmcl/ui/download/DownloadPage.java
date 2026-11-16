@@ -154,7 +154,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public static boolean canDownload(RemoteAddon addon) {
-        return SUPPORTED_TYPES.contains(addon.type());
+        return addon.type() != null && SUPPORTED_TYPES.contains(addon.type());
     }
 
     public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
