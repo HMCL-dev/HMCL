@@ -33,6 +33,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Window;
+import org.jetbrains.annotations.Nullable;
 
 /// JFXPopup is the material design implementation of a popup.
 ///
@@ -131,7 +132,8 @@ public class JFXPopup extends PopupControl {
     }
 
     public void show(Node node, PopupVPosition vAlign, PopupHPosition hAlign, double initOffsetX, double initOffsetY, boolean attachToNode) {
-        if (!isShowing()) {
+        boolean relocate = cancelCloseAnimation();
+        if (!isShowing() || relocate) {
             Scene scene = node.getScene();
             if (scene == null || scene.getWindow() == null) {
                 throw new IllegalStateException("Can not show popup. The node must be attached to a scene/window.");
@@ -144,7 +146,13 @@ public class JFXPopup extends PopupControl {
             double anchorX = parent.getX() + scene.getX() + origin.getX() + (hAlign == PopupHPosition.RIGHT ? ((Region) node).getWidth() : 0);
             double anchorY = parent.getY() + origin.getY() + scene.getY() + (vAlign == PopupVPosition.BOTTOM ? ((Region) node).getHeight() : 0);
 
-            if (attachToNode) {
+            if (relocate) {
+                // Reopening skips normal show layout; alignment needs the current content size.
+                getScene().getRoot().applyCss();
+                getScene().getRoot().layout();
+                setAnchorX(anchorX);
+                setAnchorY(anchorY);
+            } else if (attachToNode) {
                 this.show(node, anchorX, anchorY);
             } else {
                 this.show(parent, anchorX, anchorY);
@@ -156,7 +164,8 @@ public class JFXPopup extends PopupControl {
     }
 
     public void show(Window window, double x, double y, PopupVPosition vAlign, PopupHPosition hAlign, double initOffsetX, double initOffsetY) {
-        if (!isShowing()) {
+        boolean relocate = cancelCloseAnimation();
+        if (!isShowing() || relocate) {
             if (window == null) {
                 throw new IllegalStateException("Can not show popup. The node must be attached to a scene/window.");
             }
