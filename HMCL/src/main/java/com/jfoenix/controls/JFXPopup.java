@@ -33,7 +33,6 @@ import javafx.scene.control.Skin;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Window;
-import org.jetbrains.annotations.Nullable;
 
 /// JFXPopup is the material design implementation of a popup.
 ///
@@ -147,7 +146,7 @@ public class JFXPopup extends PopupControl {
             double anchorY = parent.getY() + origin.getY() + scene.getY() + (vAlign == PopupVPosition.BOTTOM ? ((Region) node).getHeight() : 0);
 
             if (relocate) {
-                // Reopening skips normal show layout; alignment needs the current content size.
+                // Reopening skips the normal show layout; alignment needs the updated content size.
                 getScene().getRoot().applyCss();
                 getScene().getRoot().layout();
                 setAnchorX(anchorX);
