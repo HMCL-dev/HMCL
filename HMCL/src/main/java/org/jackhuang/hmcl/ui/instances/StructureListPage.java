@@ -256,8 +256,11 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         }
 
         public String getIdString() {
-            if (namespace == null) return getName();
-            return namespace + ":" + getName();
+            return namespace != null ? namespace + ":" + getName() : getName();
+        }
+
+        public String getSubtitle() {
+            return namespace != null ? namespace + ":" + getName() : "";
         }
     }
 
@@ -353,7 +356,7 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
             content.getTags().clear();
 
             content.setTitle(item.getName());
-            content.setSubtitle(item.getIdString());
+            content.setSubtitle(item.getSubtitle());
 
             int nbtDataVersion = item.structureFile.getMinecraftDataVersion().orElse(500);
             if (nbtDataVersion > dataVersion)
@@ -371,7 +374,7 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
             {
                 TwoLineListItem title = new TwoLineListItem();
                 title.setTitle(object.getName());
-                title.setSubtitle(object.getIdString());
+                title.setSubtitle(object.getSubtitle());
 
                 titleBox.getChildren().setAll(title);
                 setHeading(titleBox);
