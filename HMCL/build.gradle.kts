@@ -127,7 +127,7 @@ tasks.withType<JavaCompile> {
 
 tasks.checkstyleMain {
     // Third-party code is not checked
-    exclude("**/org/jackhuang/hmcl/ui/image/apng/**")
+    exclude("**/org/jackhuang/hmcl/image/apng/**")
 }
 
 val addOpens = listOf(
@@ -362,6 +362,11 @@ fun parseToolOptions(options: String?): MutableList<String> {
     }
 
     return result
+}
+
+// Tests use the same JavaFX reflective access as the packaged application.
+tasks.withType<Test> {
+    jvmArgs(addOpens.map { "--add-opens=$it=ALL-UNNAMED" })
 }
 
 // For IntelliJ IDEA

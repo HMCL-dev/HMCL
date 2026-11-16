@@ -41,6 +41,11 @@ public interface Kernel32 extends StdCallLibrary {
      */
     boolean GlobalMemoryStatusEx(WinTypes.MEMORYSTATUSEX lpBuffer);
 
+    /// Retrieves system information, including the memory page size.
+    ///
+    /// @see <a href="https://learn.microsoft.com/windows/win32/api/sysinfoapi/nf-sysinfoapi-getsysteminfo">GetSystemInfo function</a>
+    void GetSystemInfo(WinTypes.SYSTEM_INFO systemInfo);
+
     /**
      * @see <a href="https://learn.microsoft.com/windows/win32/api/sysinfoapi/nf-sysinfoapi-getlogicalprocessorinformationex">GetLogicalProcessorInformationEx function</a>
      */

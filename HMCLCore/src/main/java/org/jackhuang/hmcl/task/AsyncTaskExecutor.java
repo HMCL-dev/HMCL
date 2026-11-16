@@ -74,12 +74,11 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         return false;
     }
 
+    /// Requests cancellation, including before execution starts. Cancellation before start prevents
+    /// task bodies from executing, but the executor must still be started to deliver stop notifications.
+    /// Already running task bodies may finish before execution observes the request.
     @Override
     public synchronized void cancel() {
-        if (future == null) {
-            throw new IllegalStateException("Cannot cancel a not started TaskExecutor");
-        }
-
         cancelled = true;
     }
 

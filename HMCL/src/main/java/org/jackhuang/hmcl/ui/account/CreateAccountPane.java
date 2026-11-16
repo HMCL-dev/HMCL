@@ -133,14 +133,19 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
 
         if (showMethodSwitcher) {
-            TabControl.Tab<?>[] tabs = new TabControl.Tab[Accounts.FACTORIES.size()];
-            TabControl.Tab<?> selected = null;
+            TabItem<?>[] tabs = new TabItem<?>[Accounts.FACTORIES.size()];
+            var tabToFactory = new IdentityHashMap<TabItem<?>, AccountFactory<?>>();
+
+            @Nullable TabItem<?> selected = null;
             for (int i = 0; i < tabs.length; i++) {
                 AccountFactory<?> f = Accounts.FACTORIES.get(i);
-                tabs[i] = new TabControl.Tab<>(Accounts.getLoginType(f), Accounts.getLocalizedLoginTypeName(f));
-                tabs[i].setUserData(f);
+                TabItem<Node> tab = new TabItem<>();
+                tabs[i] = tab;
+
+                tab.setText(Accounts.getLocalizedLoginTypeName(f));
+                tabToFactory.put(tab, f);
                 if (factory == f) {
-                    selected = tabs[i];
+                    selected = tab;
                 }
             }
 
@@ -148,12 +153,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             tabHeader.getStyleClass().add("add-account-tab-header");
             tabHeader.setMinWidth(USE_PREF_SIZE);
             tabHeader.setMaxWidth(USE_PREF_SIZE);
-            tabHeader.getSelectionModel().select(selected);
-            onChange(tabHeader.getSelectionModel().selectedItemProperty(),
+            if (selected != null)
+                tabHeader.getController().selectTab(selected);
+            onChange(tabHeader.getController().selectedTabProperty(),
                     newItem -> {
                         if (newItem == null)
                             return;
-                        AccountFactory<?> newMethod = (AccountFactory<?>) newItem.getUserData();
+                        AccountFactory<?> newMethod = tabToFactory.get(newItem);
                         settings().preferredLoginTypeProperty().set(Accounts.getLoginType(newMethod));
                         this.factory = newMethod;
                         initDetailsPane();
@@ -466,38 +472,33 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 rowIndex++;
 
                 HBox box = new HBox();
-                MenuUpDownButton advancedButton = new MenuUpDownButton();
-                box.getChildren().setAll(advancedButton);
-                advancedButton.setText(i18n("settings.advanced"));
+                ExpandablePane advancedPane = new ExpandablePane();
+                box.getChildren().setAll(advancedPane);
+                advancedPane.setText(i18n("settings.advanced"));
                 GridPane.setColumnSpan(box, 2);
                 add(box, 0, rowIndex);
 
-                rowIndex++;
+                GridPane advancedMenu = new GridPane();
+                advancedMenu.setPadding(new Insets(8, 0, 0, 0));
+                advancedMenu.setHgap(8);
+                advancedMenu.setVgap(8);
 
                 Label lblUUID = new Label(i18n("account.methods.offline.uuid"));
-                lblUUID.managedProperty().bind(advancedButton.selectedProperty());
-                lblUUID.visibleProperty().bind(advancedButton.selectedProperty());
                 setHalignment(lblUUID, HPos.LEFT);
-                add(lblUUID, 0, rowIndex);
+                advancedMenu.add(lblUUID, 0, 0);
 
                 txtUUID = new JFXTextField();
-                txtUUID.managedProperty().bind(advancedButton.selectedProperty());
-                txtUUID.visibleProperty().bind(advancedButton.selectedProperty());
                 txtUUID.setValidators(new UUIDValidator());
                 txtUUID.promptTextProperty().bind(BindingMapping.of(txtUsername.textProperty()).map(name -> OfflineAccountFactory.getUUIDFromUserName(name).toString()));
                 txtUUID.setOnAction(e -> onAction.run());
-                add(txtUUID, 1, rowIndex);
-
-                rowIndex++;
+                advancedMenu.add(txtUUID, 1, 0);
 
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-                hintPane.managedProperty().bind(advancedButton.selectedProperty());
-                hintPane.visibleProperty().bind(advancedButton.selectedProperty());
                 hintPane.setText(i18n("account.methods.offline.uuid.hint"));
                 GridPane.setColumnSpan(hintPane, 2);
-                add(hintPane, 0, rowIndex);
+                advancedMenu.add(hintPane, 0, 1);
 
-                rowIndex++;
+                advancedPane.getContent().add(advancedMenu);
             }
 
             valid = new BooleanBinding() {

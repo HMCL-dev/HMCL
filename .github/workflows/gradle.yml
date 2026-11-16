@@ -9,47 +9,79 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        java: ['17', '25', '27']
+        include:
+          - os: ubuntu-latest
+            build-prefix: xvfb-run --auto-servernum
+            java-tool-options: -Djava.awt.headless=true
+          - java: '17'
+            cache-write: true
+          - os: ubuntu-latest
+            java: '17'
+            upload-artifacts: true
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      ADDITIONAL_CLASSIFIER: ${{ matrix.os }}-JDK${{ matrix.java }}
 
     steps:
     - uses: actions/checkout@v6
-    - name: Set up JDK 17
+    - name: Set up JDK
       uses: actions/setup-java@v6
       with:
         distribution: 'liberica'
-        java-version: '17'
+        java-version: ${{ matrix.java }}
         java-package: 'jdk+fx'
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v5
       with:
         cache-cleanup: never
+        cache-read-only: ${{ !matrix.cache-write || github.ref_name != github.event.repository.default_branch }}
     - name: Build with Gradle
-      run: xvfb-run --auto-servernum ./gradlew build --no-daemon --parallel
+      shell: bash
+      run: ${{ matrix.build-prefix }} ./gradlew build --no-daemon --parallel --stacktrace
       env:
-        JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+        JAVA_TOOL_OPTIONS: ${{ matrix.java-tool-options }}
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
-    - name: Get short SHA
+    - if: always()
+      name: Get short SHA
+      shell: bash
       run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+    - if: failure()
+      name: Upload test report
+      uses: actions/upload-artifact@v7
+      with:
+        name: HMCL-test-report-html-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}
+        path: "**/build/reports/tests/test/"
     - name: Upload JAR
+      if: matrix.upload-artifacts
       uses: actions/upload-artifact@v7
       with:
         name: HMCL-${{ env.SHORT_SHA }}-jar
         path: HMCL/build/libs/HMCL-*.jar
         archive: false
     - name: Upload EXE
+      if: matrix.upload-artifacts
       uses: actions/upload-artifact@v7
       with:
         name: HMCL-${{ env.SHORT_SHA }}-exe
         path: HMCL/build/libs/HMCL-*.exe
         archive: false
     - name: Upload SH
+      if: matrix.upload-artifacts
       uses: actions/upload-artifact@v7
       with:
         name: HMCL-${{ env.SHORT_SHA }}-sh
         path: HMCL/build/libs/HMCL-*.sh
         archive: false
     - name: Upload DEB
+      if: matrix.upload-artifacts
       uses: actions/upload-artifact@v7
       with:
         name: HMCL-${{ env.SHORT_SHA }}-deb

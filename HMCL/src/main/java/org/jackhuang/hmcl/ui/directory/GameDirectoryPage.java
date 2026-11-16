@@ -61,8 +61,8 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
     /// Directory chooser bound to [#location].
     private final LineFileChooserButton gameDir;
 
-    /// Toggle that controls whether a saved path is converted to a relative path when possible.
-    private final LineToggleButton toggleUseRelativePath;
+    /// Switch that controls whether a saved path is converted to a relative path when possible.
+    private final LineSwitch switchUseRelativePath;
 
     /// Creates a page for adding a new game directory or editing an existing game directory.
     ///
@@ -124,15 +124,15 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                     gameDir.setType(LineFileChooserButton.Type.OPEN_DIRECTORY);
                     gameDir.locationProperty().bindBidirectional(location);
 
-                    toggleUseRelativePath = new LineToggleButton();
-                    toggleUseRelativePath.setTitle(i18n("game_directory.use_relative_path"));
+                    switchUseRelativePath = new LineSwitch();
+                    switchUseRelativePath.setTitle(i18n("game_directory.use_relative_path"));
 
-                    gameDir.convertToRelativePathProperty().bind(toggleUseRelativePath.selectedProperty());
+                    gameDir.convertToRelativePathProperty().bind(switchUseRelativePath.selectedProperty());
                     if (gameDirectory != null) {
-                        toggleUseRelativePath.setSelected(!gameDirectory.getPath().isAbsolute());
+                        switchUseRelativePath.setSelected(!gameDirectory.getPath().isAbsolute());
                     }
 
-                    componentList.getContent().setAll(gameDirectoryNamePane, gameDir, toggleUseRelativePath);
+                    componentList.getContent().setAll(gameDirectoryNamePane, gameDir, switchUseRelativePath);
                 }
 
                 rootPane.getChildren().setAll(componentList);
@@ -154,14 +154,14 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
             saveButton.setPrefSize(100, 40);
             saveButton.setOnAction(e -> onSave());
             String initialLocation = getLocation();
-            boolean initialUseRelativePath = toggleUseRelativePath.isSelected();
+            boolean initialUseRelativePath = switchUseRelativePath.isSelected();
             saveButton.disableProperty().bind(Bindings.createBooleanBinding(
                     () -> !txtGameDirectoryName.validate() || StringUtils.isBlank(getLocation())
                             || (gameDirectory != null
                             && Objects.equals(txtGameDirectoryName.getText(), gameDirectoryDisplayName)
                             && Objects.equals(getLocation(), initialLocation)
-                            && toggleUseRelativePath.isSelected() == initialUseRelativePath),
-                    txtGameDirectoryName.textProperty(), location, toggleUseRelativePath.selectedProperty()));
+                            && switchUseRelativePath.isSelected() == initialUseRelativePath),
+                    txtGameDirectoryName.textProperty(), location, switchUseRelativePath.selectedProperty()));
         }
 
         if (gameDirectory == null) {
@@ -262,9 +262,9 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
         } else doSave();
     }
 
-    /// Creates the portable path for the current location according to the relative-path toggle.
+    /// Creates the portable path for the current location according to the relative-path switch.
     private PortablePath createPortableLocation() {
-        if (toggleUseRelativePath.isSelected()) {
+        if (switchUseRelativePath.isSelected()) {
             Path path = Path.of(getLocation());
             Path absolutePath = FileUtils.toAbsolute(path);
             try {

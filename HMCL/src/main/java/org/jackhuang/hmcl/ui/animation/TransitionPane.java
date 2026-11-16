@@ -6,7 +6,6 @@ import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
 import javafx.animation.Interpolator;
 import javafx.application.Platform;
-import javafx.scene.CacheHint;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
@@ -14,6 +13,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Window;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.IdentityPropertyKey;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +22,42 @@ import org.jetbrains.annotations.Nullable;
 @NotNullByDefault
 public class TransitionPane extends StackPane {
 
-    /// The requested page, or `null` before content is assigned.
+    /// The default easing curve for page transitions.
+    public static final Interpolator DEFAULT_INTERPOLATOR = Motion.EASE;
+
+    /// The default duration for page transitions.
+    public static final Duration DEFAULT_DURATION = Motion.SHORT4;
+
+    /// Half the default duration for transitions with two phases.
+    public static final Duration DEFAULT_DURATION_HALF = DEFAULT_DURATION.divide(2);
+
+    /// Stores an explicit opt-out from bitmap caching during transitions.
+    private static final IdentityPropertyKey<Boolean> CACHE_ALLOWED_KEY = new IdentityPropertyKey<>(TransitionPane.class, "CACHE_ALLOWED_KEY");
+
+    /// Returns this node's transition cache preference, defaulting to true without allocating properties.
+    public static boolean isCacheAllowed(Node node) {
+        return !node.hasProperties() || !Boolean.FALSE.equals(node.getProperties().get(CACHE_ALLOWED_KEY));
+    }
+
+    /// Sets this node's transition cache preference without changing its cache property.
+    /// Passing true removes the override without allocating properties. Animations read the preference
+    /// when constructed; it is not inherited by ancestors or descendants.
+    public static void setCacheAllowed(Node node, boolean allowed) {
+        if (allowed) {
+            if (node.hasProperties())
+                node.getProperties().remove(CACHE_ALLOWED_KEY);
+        } else {
+            node.getProperties().put(CACHE_ALLOWED_KEY, Boolean.FALSE);
+        }
+    }
+
+    /// Marks pages that have completed a rendering preparation or entered their displayed state.
+    private static final IdentityPropertyKey<Boolean> RENDER_INITIALIZED_KEY = new IdentityPropertyKey<>(TransitionPane.class, "RENDER_INITIALIZED_KEY");
+
+    /// Keeps the first page render active while contributing negligible visible opacity.
+    private static final double PREPARATION_OPACITY = 0.00001;
+
+    /// The requested page, or `null` when content is absent.
     private @Nullable Node currentNode;
 
     /// The pending or running transition, or `null` when content is settled.
@@ -31,7 +66,7 @@ public class TransitionPane extends StackPane {
     /// The hidden preparation container, or `null` when no candidate is retained.
     private @Nullable StackPane preloadPane;
 
-    /// Whether the candidate must survive the next content layout pass.
+    /// Whether the candidate is waiting for its first content layout pass.
     private boolean preloadLayoutPending;
 
     /// Creates an empty container that clips content to its bounds.
@@ -44,12 +79,26 @@ public class TransitionPane extends StackPane {
         return currentNode;
     }
 
-    /// Attaches unowned content for hidden CSS and layout prewarming during scene pulses.
+    /// Stops any transition and removes displayed and prewarmed content without animation.
+    /// Resets [#getCurrentNode()] to null. Repeated calls on an empty pane have no effect.
+    /// Nodes are detached even if settling the transition throws an exception.
+    public final void clearContent() {
+        try {
+            if (activeTransition != null)
+                activeTransition.stop();
+        } finally {
+            disposePreloadPane();
+            currentNode = null;
+            getChildren().clear();
+        }
+    }
+
+    /// Attaches unowned content for hidden CSS and layout prewarming.
     /// Replaces any previous candidate without changing the current content. The hidden
     /// container uses a snapshot of this pane's content-area size and does not affect
-    /// its size requirements. It is retained through the next content layout pass
-    /// and released on a later pass. Any call to [#setContent(Node, AnimationProducer)]
-    /// cancels pending prewarming and releases the hidden container.
+    /// its size requirements. The content is detached after the layout pass.
+    /// Any call to [#setContent(Node, AnimationProducer)] cancels pending prewarming
+    /// and releases the hidden container.
     /// The caller must retain the content for subsequent use. This method does not wait
     /// for prewarming to finish and must be called on the JavaFX Application Thread.
     ///
@@ -60,14 +109,12 @@ public class TransitionPane extends StackPane {
         if (content.getParent() != null || content.getScene() != null) {
             throw new IllegalArgumentException("Content already belongs to a parent or scene");
         }
-        if (preloadPane == null) {
-            preloadPane = new StackPane();
-            preloadPane.setVisible(false);
-            preloadPane.setManaged(false);
-            preloadPane.setMouseTransparent(true);
-            getChildren().add(0, preloadPane);
-        }
-        preloadPane.getChildren().setAll(content);
+        disposePreloadPane();
+        preloadPane = new StackPane(content);
+        preloadPane.setVisible(false);
+        preloadPane.setManaged(false);
+        preloadPane.setMouseTransparent(true);
+        getChildren().add(0, preloadPane);
         preloadPane.resizeRelocate(snappedLeftInset(), snappedTopInset(),
                 Math.max(0, getWidth() - snappedLeftInset() - snappedRightInset()),
                 Math.max(0, getHeight() - snappedTopInset() - snappedBottomInset()));
@@ -76,18 +123,29 @@ public class TransitionPane extends StackPane {
         return content;
     }
 
-    /// Lays out displayed pages and releases a candidate retained from an earlier pass.
+    /// Releases the preparation container after its descendants have been laid out.
     @Override
     protected void layoutChildren() {
         super.layoutChildren();
-        if (preloadPane != null && getScene() != null) {
-            // Descendant layout follows this method; keep a new candidate attached
-            // through that traversal instead of treating this callback as completion.
-            if (preloadLayoutPending) {
-                preloadLayoutPending = false;
-            } else {
-                disposePreloadPane();
-            }
+        @Nullable Scene scene = getScene();
+        if (preloadPane != null && scene != null && preloadLayoutPending) {
+            preloadLayoutPending = false;
+            StackPane candidate = preloadPane;
+            Platform.runLater(() -> {
+                if (preloadPane == candidate) {
+                    disposePreloadPane();
+                }
+            });
+        }
+    }
+
+    /// Suppresses future prewarming after a page enters its displayed state in a showing window.
+    private static void markDisplayed(Node content) {
+        @Nullable Scene scene = content.getScene();
+        @Nullable Window window = scene == null ? null : scene.getWindow();
+        if (window != null && window.isShowing()
+                && content.isVisible() && content.getOpacity() > 0) {
+            content.getProperties().put(RENDER_INITIALIZED_KEY, Boolean.TRUE);
         }
     }
 
@@ -111,24 +169,16 @@ public class TransitionPane extends StackPane {
         }
     }
 
-    /// Replaces the content using [Motion#SHORT4] and [Motion#EASE].
-    public final void setContent(Node newView, AnimationProducer transition) {
-        setContent(newView, transition, Motion.SHORT4);
-    }
-
-    /// Replaces the content using the given duration and [Motion#EASE].
-    public final void setContent(Node newView, AnimationProducer transition, Duration duration) {
-        setContent(newView, transition, duration, Motion.EASE);
-    }
-
     /// Replaces the current page, cancelling any preceding transition.
-    /// Animated changes wait for a scene CSS and layout pass; mouse input is
+    /// Animated changes wait for CSS, layout, and first-display rendering preparation; mouse input is
     /// suppressed while pending or running. Detaching the container or hiding
     /// its window cancels the transition. Cancellation applies the end state
     /// of a started animation with a finite duration and restores the target page
     /// through [AnimationProducer#finish(Node)], even if playback has not started.
-    public void setContent(Node newView, AnimationProducer transition,
-                           Duration duration, Interpolator interpolator) {
+    /// Previously undisplayed pages initialized at zero opacity render almost transparently
+    /// before playback, provided they are visible and their opacity is not bound. Preparation
+    /// preserves initialized transforms, so offscreen content may still be culled.
+    public void setContent(Node newView, AnimationProducer transition) {
         if (activeTransition != null) {
             activeTransition.stop();
         }
@@ -142,26 +192,34 @@ public class TransitionPane extends StackPane {
                 || window == null || !window.isShowing()) {
             transition.finish(newView);
             replaceContentNodes(null, newView);
+            markDisplayed(newView);
             return;
         }
 
         replaceContentNodes(previousNode, newView);
 
-        boolean originalCache = newView.isCache();
-        CacheHint originalCacheHint = newView.getCacheHint();
         boolean originalMouseTransparent = isMouseTransparent();
-        @Nullable CacheHint cacheHint = newView instanceof Cacheable cacheable
-                ? cacheable.getCacheHint(transition) : null;
 
         AnimationTimer timer = new AnimationTimer() {
             /// Queues playback after the scene has completed CSS and layout.
             private final Runnable layoutListener = this::layoutCompleted;
             /// The animation created after preparation, or `null` before playback.
             private @Nullable Animation animation;
+            /// Whether the near-transparent render still needs a subsequent scene synchronization.
+            private boolean renderingPending;
 
             /// Arms a one-shot layout notification after navigation handlers return.
             @Override
             public void start() {
+                renderingPending = !newView.getProperties().containsKey(RENDER_INITIALIZED_KEY)
+                        && newView.isVisible() && !newView.opacityProperty().isBound()
+                        && newView.getOpacity() == 0;
+                if (renderingPending) {
+                    newView.setOpacity(PREPARATION_OPACITY);
+                }
+                if (!canContinue()) {
+                    return;
+                }
                 super.start();
                 Platform.runLater(() -> {
                     if (canContinue()) {
@@ -179,7 +237,18 @@ public class TransitionPane extends StackPane {
                         return;
                     }
                     try {
-                        animation = transition.animate(TransitionPane.this, previousNode, newView, duration, interpolator);
+                        if (renderingPending) {
+                            renderingPending = false;
+                            // This dirty state forces the next scene synchronization to wait for
+                            // the preceding render. Only its following runLater starts the clock.
+                            newView.setOpacity(0);
+                            if (canContinue()) {
+                                scene.addPostLayoutPulseListener(layoutListener);
+                                Platform.requestNextPulse();
+                            }
+                            return;
+                        }
+                        animation = transition.animate(TransitionPane.this, previousNode, newView);
                         if (activeTransition != this) {
                             return;
                         }
@@ -227,11 +296,10 @@ public class TransitionPane extends StackPane {
                     }
                     animation.stop();
                 }
-                if (cacheHint != null) {
-                    newView.setCache(originalCache);
-                    newView.setCacheHint(originalCacheHint);
-                }
                 transition.finish(newView);
+                if (animation != null) {
+                    markDisplayed(newView);
+                }
                 getChildren().removeIf(node -> node != newView && node != preloadPane);
                 setMouseTransparent(originalMouseTransparent);
             }
@@ -242,10 +310,6 @@ public class TransitionPane extends StackPane {
             transition.init(this, previousNode, newView);
             if (activeTransition != timer) {
                 return;
-            }
-            if (cacheHint != null) {
-                newView.setCache(true);
-                newView.setCacheHint(cacheHint);
             }
             timer.start();
         } catch (RuntimeException | Error e) {
@@ -262,9 +326,10 @@ public class TransitionPane extends StackPane {
             AnimationUtils.reset(nextNode, false);
         }
 
-        /// Creates the transition between the prepared pages using the given timing.
-        Animation animate(Pane container, Node previousNode, Node nextNode,
-                          Duration duration, Interpolator interpolator);
+        /// Creates the transition between the prepared pages using implementation-selected timing and interpolators.
+        /// Temporary settings such as caching belong in the animation's key values, with their
+        /// original values restored at its finite end so cancellation can apply them by jumping there.
+        Animation animate(Pane container, Node previousNode, Node nextNode);
 
         /// Restores the target page to its settled state after completion or cancellation,
         /// or when animation is skipped. May be called without [#init] or [#animate]
@@ -282,16 +347,6 @@ public class TransitionPane extends StackPane {
         /// Returns the reverse transition, or `null` if none is specified.
         default @Nullable TransitionPane.AnimationProducer opposite() {
             return null;
-        }
-    }
-
-    /// Marks a node as cacheable as a bitmap during animation.
-    public interface Cacheable {
-        /// @return the [cache hint][CacheHint] to use when caching this node during the given animation,
-        ///         or `null` to not cache it.
-        default @Nullable CacheHint getCacheHint(AnimationProducer animationProducer) {
-            // https://github.com/HMCL-dev/HMCL/issues/4789
-            return animationProducer == ContainerAnimations.SLIDE_UP_FADE_IN ? CacheHint.SPEED : null;
         }
     }
 }

@@ -10,6 +10,7 @@ import com.jfoenix.adapters.skins.DatePickerSkin;
 import com.jfoenix.controls.JFXDatePicker;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialog.DialogTransition;
+import javafx.beans.property.ReadOnlyBooleanPropertyBase;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -41,7 +42,7 @@ public class JFXDatePickerSkin extends DatePickerSkin {
         this.jfxDatePicker = datePicker;
 
         try {
-            Object expressionHelper = ReflectionHelper.getFieldContent(datePicker.focusedProperty().getClass().getSuperclass(), datePicker.focusedProperty(), "helper");
+            Object expressionHelper = ReflectionHelper.getFieldContent(ReadOnlyBooleanPropertyBase.class, datePicker.focusedProperty(), "helper");
             ChangeListener<Boolean>[] changeListeners = ReflectionHelper.getFieldContent(expressionHelper, "changeListeners");
 
             int i = changeListeners.length - 1;

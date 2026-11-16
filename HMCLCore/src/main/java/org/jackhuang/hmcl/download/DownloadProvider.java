@@ -267,11 +267,17 @@ public class DownloadProvider {
     }
 
     public DownloadCandidates getNeoForgeVersionListCandidates() {
-        return DownloadCandidates.of(NeoForgeRemoteVersion.META_URL);
+        return DownloadCandidates.of(
+                NeoForgeRemoteVersion.META_URL,
+                NeoForgeRemoteVersion.MIRROR_META_URL
+        );
     }
 
     public DownloadCandidates getNeoForgeOldVersionListCandidates() {
-        return DownloadCandidates.of(NeoForgeRemoteVersion.OLD_URL);
+        return DownloadCandidates.of(
+                NeoForgeRemoteVersion.OLD_URL,
+                NeoForgeRemoteVersion.MIRROR_OLD_URL
+        );
     }
 
     public DownloadCandidates getCleanroomVersionListCandidates() {

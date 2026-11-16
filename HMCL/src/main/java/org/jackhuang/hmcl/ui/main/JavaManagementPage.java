@@ -13,9 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.java.JavaInfo;
@@ -28,6 +26,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.Tag;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.FXThread;
@@ -196,7 +195,15 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         protected List<Node> initializeToolbar(JavaManagementPage skinnable) {
             ArrayList<Node> res = new ArrayList<>(4);
 
-            res.add(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, JavaManager::refresh));
+            JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, () -> {
+                if (skinnable.isLoading()) return;
+
+                skinnable.setLoading(true);
+                JavaManager.refresh(() -> skinnable.setLoading(false));
+            });
+            refreshButton.disableProperty().bind(skinnable.loadingProperty());
+            res.add(refreshButton);
+
             if (skinnable.onInstallJava != null) {
                 res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD, skinnable.onInstallJava));
             }
@@ -231,33 +238,25 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         private final StackPane removeIconPane;
         private final Tooltip removeTooltip = new Tooltip();
 
+        /// Creates a Java runtime cell with interactive tags and independent removal controls.
         JavaItemCell(JFXListView<JavaRuntime> listView) {
-            BorderPane root = new BorderPane();
-
-            HBox center = new HBox();
-            center.setMouseTransparent(true);
-            center.setSpacing(8);
-            center.setAlignment(Pos.CENTER_LEFT);
-
             label.setAlignment(Pos.CENTER);
+            label.setMouseTransparent(true);
             FXUtils.setLimitWidth(label, 32);
             FXUtils.setLimitHeight(label, 32);
 
             label.setStyle("-fx-background-color: -monet-secondary-container; -fx-background-radius: 2; -fx-padding: 2; -fx-font-weight: normal; -fx-font-size: 16px;");
 
             this.content = new TwoLineListItem();
-            HBox.setHgrow(content, Priority.ALWAYS);
-
-            BorderPane.setAlignment(content, Pos.CENTER);
-            center.getChildren().setAll(label, content);
-            root.setCenter(center);
+            content.setLeading(label);
+            TwoLineListItem.setMargin(label, new Insets(0, 8, 0, 0));
 
             HBox right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
             {
                 JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 revealButton.setOnAction(e -> {
-                    JavaRuntime java = getItem();
+                    @Nullable JavaRuntime java = getItem();
                     if (java != null)
                         onReveal(java);
                 });
@@ -266,7 +265,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 removeButton = new JFXButton();
                 removeButton.getStyleClass().add("toggle-icon4");
                 removeButton.setOnAction(e -> {
-                    JavaRuntime java = getItem();
+                    @Nullable JavaRuntime java = getItem();
                     if (java != null)
                         onRemove(java);
                 });
@@ -280,26 +279,28 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
                 right.getChildren().setAll(revealButton, removeButton);
             }
-            root.setRight(right);
+            right.setPickOnBounds(false);
+            content.setTrailing(right);
+            content.getStyleClass().add("md-list-cell");
+            content.setPadding(new Insets(8));
 
-            root.getStyleClass().add("md-list-cell");
-            root.setPadding(new Insets(8));
-
-            this.graphic = new RipplerContainer(root);
+            this.graphic = new RipplerContainer(content);
+            graphic.setPressFeedbackEnabled(false);
 
             FXUtils.limitCellWidth(listView, this);
         }
 
+        /// Updates the runtime details and reuses the architecture tag when the item changes.
         @Override
-        protected void updateItem(JavaRuntime item, boolean empty) {
-            JavaRuntime oldItem = getItem();
+        protected void updateItem(@Nullable JavaRuntime item, boolean empty) {
+            @Nullable JavaRuntime oldItem = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(item, empty);
 
             if (oldItem == item && oldEmpty == empty) return;
 
-            this.graphic.releaseRippleImmediately();
+            this.graphic.resetFeedback();
 
             if (empty || item == null) {
                 setGraphic(null);
@@ -313,8 +314,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 content.setSubtitle(item.getBinary().toString());
 
                 if (oldItem != item) {
-                    content.getTags().clear();
-                    content.addTag(item.getArchitecture().getDisplayName());                    
+                    content.getTags().setAll(new Tag(item.getArchitecture().getDisplayName()));
                 }
 
                 SVG newRemoveIcon = item.isManaged() ? SVG.DELETE_FOREVER : SVG.DELETE;

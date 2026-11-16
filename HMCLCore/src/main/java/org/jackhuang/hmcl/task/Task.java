@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandles;
@@ -641,8 +642,8 @@ public abstract class Task<T> {
     }
 
     /**
-     * Returns a new Task that, when this task completes
-     * normally, executes the given action using the default Executor.
+     * Returns a new Task that executes the given action when this task completes,
+     * regardless of whether this task succeeds or fails, using the default Executor.
      *
      * @param action the action to perform before completing the
      *               returned Task
@@ -653,8 +654,8 @@ public abstract class Task<T> {
     }
 
     /**
-     * Returns a new Task that, when this task completes
-     * normally, executes the given action using the supplied Executor.
+     * Returns a new Task that executes the given action when this task completes,
+     * regardless of whether this task succeeds or fails, using the supplied Executor.
      *
      * @param action   the action to perform before completing the
      *                 returned Task
@@ -666,8 +667,8 @@ public abstract class Task<T> {
     }
 
     /**
-     * Returns a new Task that, when this task completes
-     * normally, executes the given action using the supplied Executor.
+     * Returns a new Task that executes the given action when this task completes,
+     * regardless of whether this task succeeds or fails, using the supplied Executor.
      *
      * @param name     the name of this new Task for displaying
      * @param action   the action to perform before completing the
@@ -962,6 +963,19 @@ public abstract class Task<T> {
 
     public static <V> Task<V> completed(V value) {
         return fromCompletableFuture(CompletableFuture.completedFuture(value));
+    }
+
+    /// Creates a task backed by a future that has already completed exceptionally.
+    ///
+    /// The failure is processed by the task executor when the task is submitted;
+    /// this method does not start execution or notify task listeners.
+    ///
+    /// @param <V> the task's result type
+    /// @param failure the exception completing the backing future
+    /// @return a new task backed by the failed future
+    /// @throws NullPointerException if failure is null
+    public static <V> @NotNull Task<V> failed(@NotNull Exception failure) {
+        return fromCompletableFuture(CompletableFuture.failedFuture(failure));
     }
 
     /**
