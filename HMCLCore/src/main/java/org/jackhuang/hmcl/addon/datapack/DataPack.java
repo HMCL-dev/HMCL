@@ -302,7 +302,7 @@ public class DataPack {
             return isDirectory;
         }
 
-        public @Nullable Image loadIcon(ImageLoader<Image> loader) {
+        public <I> @Nullable I loadIcon(ImageLoader<I> loader) {
             try {
                 if (isDirectory) {
                     try (var inputStream = Files.newInputStream(path.resolve("pack.png"))) {
