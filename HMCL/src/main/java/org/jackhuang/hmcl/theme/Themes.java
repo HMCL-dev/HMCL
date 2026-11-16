@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.theme;
 
 import com.sun.jna.Pointer;
@@ -52,6 +37,7 @@ import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.ThemeColorType;
@@ -723,7 +709,7 @@ public final class Themes {
                 @Nullable ThemePackResource imageResource = resolvedBackground.imageResource();
                 if (imageResource != null) {
                     try {
-                        image = FXUtils.loadImage(imageResource.openStream(), imageResource.name());
+                        image = ImageLoaders.DEFAULT.load(imageResource.openStream(), imageResource.name());
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -958,9 +944,9 @@ public final class Themes {
             String url,
             @Nullable NetworkBackgroundImageCachePolicy cachePolicy) throws Exception {
         if (cachePolicy == NetworkBackgroundImageCachePolicy.DISABLED) {
-            return FXUtils.loadImage(WebURL.parseBrowserInput(url));
+            return ImageLoaders.DEFAULT.load(WebURL.parseBrowserInput(url));
         }
-        return FXUtils.loadImage(new CacheFileTask(url).run());
+        return ImageLoaders.DEFAULT.load(new CacheFileTask(url).run());
     }
 
     /// Creates a JavaFX paint background with a separately stored node opacity.
@@ -1068,7 +1054,7 @@ public final class Themes {
         }
 
         try {
-            return FXUtils.loadImage(path);
+            return ImageLoaders.DEFAULT.load(path);
         } catch (Exception e) {
             LOG.warning("Couldn't load background image", e);
             return null;

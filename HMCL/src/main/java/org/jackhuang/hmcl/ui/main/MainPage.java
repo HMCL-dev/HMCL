@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
@@ -58,6 +43,7 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
@@ -118,7 +104,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         titleNode.setAlignment(Pos.CENTER_LEFT);
 
         ImageView titleIcon = new ImageView(FXUtils.newBuiltinImage("/assets/img/icon-title.png"));
-        Label titleLabel = new Label(Metadata.FULL_TITLE);
+        Label titleLabel = new Label();
+        titleLabel.textProperty().bind(Controllers.launcherTitleProperty());
         if (I18n.isUpsideDown()) {
             titleIcon.setRotate(180);
             titleLabel.setRotate(180);
@@ -211,7 +198,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             StackPane.setMargin(closeUpdateButton, new Insets(5));
             closeUpdateButton.setOnAction(e -> closeUpdateBubble());
 
-            updatePane.getChildren().setAll(hBox, closeUpdateButton);
+            updatePane.getChildren().setAll(new RipplerContainer(hBox), closeUpdateButton);
         }
 
         HBox launchPane = new HBox();
@@ -356,10 +343,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Instances.launch(repository.getSelectedInstance());
     }
 
+    /// Installs the latest supported release in the currently selected repository, then launches
+    /// that instance even if the selected repository or instance changes during installation.
     private void launchNoGame() {
+        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
         DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
 
-        Holder<GameInstanceID> instanceHolder = new Holder<>();
         Task<?> task = downloadProvider.getVersionsAsync(GameComponentType.GAME, null, false)
                 .thenApplyAsync(versions -> versions.stream()
                         .filter(it -> it.getVersionType() == RELEASE)
@@ -368,25 +357,22 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))
                 .thenComposeAsync(version -> {
-                    HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
                     HMCLDependencyManager dependency = repository.getDependency();
 
                     String gameVersion = version.getGameVersion().toString();
                     GameInstanceID instanceId = new GameInstanceID(gameVersion);
 
-                    instanceHolder.value = instanceId;
-
                     try (HMCLGameBuilder builder = dependency.newGameBuilder(instanceId)) {
                         return builder
                                 .component(GameComponentType.GAME, gameVersion)
-                                .buildAsync();
+                                .buildAsync()
+                                .thenApplyAsync(ignored -> repository.getInstance(instanceId));
                     }
                 })
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
-                        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-                        repository.setSelectedInstance(repository.getInstance(instanceHolder.value));
-                        launch();
+                        repository.setSelectedInstance(result);
+                        Instances.launch(result);
                     } else if (!(exception instanceof CancellationException)) {
                         LOG.warning("Failed to install game", exception);
                         Controllers.dialog(StringUtils.getStackTrace(exception),

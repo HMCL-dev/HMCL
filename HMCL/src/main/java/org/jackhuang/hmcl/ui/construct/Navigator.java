@@ -1,23 +1,7 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.animation.Interpolator;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -27,10 +11,8 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
-import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 
@@ -58,11 +40,8 @@ public class Navigator extends TransitionPane {
         initialized = true;
     }
 
+    /// Pushes the page using the supplied transition.
     public void navigate(Node node, AnimationProducer animationProducer) {
-        navigate(node, animationProducer, Motion.SHORT4, Motion.EASE);
-    }
-
-    public void navigate(Node node, AnimationProducer animationProducer, Duration duration, Interpolator interpolator) {
         FXUtils.checkFxUserThread();
 
         if (!initialized)
@@ -82,7 +61,7 @@ public class Navigator extends TransitionPane {
         node.fireEvent(navigating);
 
         node.getProperties().put("hmcl.navigator.animation", animationProducer);
-        setContent(node, animationProducer, duration, interpolator);
+        setContent(node, animationProducer);
 
         NavigationEvent navigated = new NavigationEvent(this, node, Navigation.NavigationDirection.NEXT, NavigationEvent.NAVIGATED);
         node.fireEvent(navigated);
@@ -167,9 +146,10 @@ public class Navigator extends TransitionPane {
         return stack.size();
     }
 
+    /// Replaces the page and allows region content to shrink within the clipped viewport.
     @Override
-    public void setContent(Node newView, AnimationProducer transition, Duration duration, Interpolator interpolator) {
-        super.setContent(newView, transition, duration, interpolator);
+    public void setContent(Node newView, AnimationProducer transition) {
+        super.setContent(newView, transition);
 
         if (newView instanceof Region region) {
             region.setMinSize(0, 0);

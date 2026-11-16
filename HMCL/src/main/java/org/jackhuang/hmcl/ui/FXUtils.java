@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
@@ -36,7 +21,6 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
-import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
@@ -59,20 +43,17 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
-import org.jackhuang.hmcl.ui.image.ImageLoader;
-import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
@@ -100,10 +81,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLConnection;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -422,16 +401,6 @@ public final class FXUtils {
         cell.maxWidthProperty().bind(widthProperty);
         cell.prefWidthProperty().bind(widthProperty);
         cell.minWidthProperty().bind(widthProperty);
-    }
-
-    public static void smoothScrolling(ScrollPane scrollPane) {
-        if (AnimationUtils.isAnimationEnabled())
-            ScrollUtils.addSmoothScrolling(scrollPane);
-    }
-
-    public static void smoothScrolling(VirtualFlow<?> virtualFlow) {
-        if (AnimationUtils.isAnimationEnabled())
-            ScrollUtils.addSmoothScrolling(virtualFlow);
     }
 
     /// If the current environment is JavaFX 23 or higher, this method returns [Labeled#textTruncatedProperty()];
@@ -890,71 +859,6 @@ public final class FXUtils {
         stage.getIcons().add(newBuiltinImage(icon));
     }
 
-    public static Image loadImage(Path path) throws Exception {
-        return loadImage(path, 0, 0, false, false);
-    }
-
-    public static Image loadImage(Path path,
-                                  int requestedWidth, int requestedHeight,
-                                  boolean preserveRatio, boolean smooth) throws Exception {
-        String fileName = path.getFileName().toString();
-        return loadImage(
-                Files.newInputStream(path),
-                fileName,
-                requestedWidth,
-                requestedHeight,
-                preserveRatio,
-                smooth);
-    }
-
-    public static Image loadImage(InputStream input, String fileName) throws Exception {
-        return loadImage(input, fileName, 0, 0, false, false);
-    }
-
-    public static Image loadImage(InputStream input, String fileName,
-                                  int requestedWidth, int requestedHeight,
-                                  boolean preserveRatio, boolean smooth) throws Exception {
-        try (var bufferedInput = new BufferedInputStream(input)) {
-            String ext = FileUtils.getExtension(fileName).toLowerCase(Locale.ROOT);
-            ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
-            if (loader == null && !ImageUtils.DEFAULT_EXTS.contains(ext)) {
-                bufferedInput.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = bufferedInput.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
-                bufferedInput.reset();
-                loader = ImageUtils.guessLoader(headerBuffer);
-            }
-            if (loader == null)
-                loader = ImageUtils.DEFAULT;
-            return loader.load(bufferedInput, requestedWidth, requestedHeight, preserveRatio, smooth);
-        }
-    }
-
-    public static Image loadImage(WebURL url) throws Exception {
-        URLConnection connection = NetworkUtils.createConnection(url);
-        if (connection instanceof HttpURLConnection httpConnection)
-            connection = NetworkUtils.resolveConnection(httpConnection);
-
-        try (BufferedInputStream input = new BufferedInputStream(connection.getInputStream())) {
-            String contentType = Objects.requireNonNull(connection.getContentType(), "");
-            Matcher matcher = ImageUtils.CONTENT_TYPE_PATTERN.matcher(contentType);
-            if (matcher.find())
-                contentType = matcher.group("type");
-
-            ImageLoader loader = ImageUtils.CONTENT_TYPE_TO_LOADER.get(contentType);
-            if (loader == null && !ImageUtils.DEFAULT_CONTENT_TYPES.contains(contentType)) {
-                input.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
-                input.reset();
-                loader = ImageUtils.guessLoader(headerBuffer);
-            }
-
-            if (loader == null)
-                loader = ImageUtils.DEFAULT;
-
-            return loader.load(input, 0, 0, false, false);
-        }
-    }
-
     /**
      * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
      *
@@ -998,7 +902,7 @@ public final class FXUtils {
     public static Task<Image> getRemoteImageTask(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(url)
                 .setSignificance(Task.TaskSignificance.MINOR)
-                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .thenApplyAsync(file -> ImageLoaders.DEFAULT.load(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
@@ -1006,7 +910,7 @@ public final class FXUtils {
     public static Task<Image> getRemoteImageTask(DownloadCandidates candidates, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(candidates)
                 .setSignificance(Task.TaskSignificance.MINOR)
-                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .thenApplyAsync(file -> ImageLoaders.DEFAULT.load(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
@@ -1078,27 +982,28 @@ public final class FXUtils {
 
     private static final String LABEL_FULL_TEXT_PROP_KEY = FXUtils.class.getName() + ".LABEL_FULL_TEXT";
 
+    private static final ChangeListener<Boolean> TEXT_TRUNCATED_LISTENER = (observable, oldValue, newValue) -> {
+        var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
+        var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
+
+        if (newValue) {
+            if (tooltip == null) {
+                tooltip = new Tooltip();
+                tooltip.textProperty().bind(label.textProperty());
+                label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
+            }
+
+            FXUtils.installFastTooltip(label, tooltip);
+        } else if (tooltip != null) {
+            Tooltip.uninstall(label, tooltip);
+        }
+    };
+
     public static void showTooltipWhenTruncated(Labeled labeled) {
         ReadOnlyBooleanProperty textTruncatedProperty = textTruncatedProperty(labeled);
         if (textTruncatedProperty != null) {
-            ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
-                var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
-                var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
-
-                if (newValue) {
-                    if (tooltip == null) {
-                        tooltip = new Tooltip();
-                        tooltip.textProperty().bind(label.textProperty());
-                        label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
-                    }
-
-                    FXUtils.installFastTooltip(label, tooltip);
-                } else if (tooltip != null) {
-                    Tooltip.uninstall(label, tooltip);
-                }
-            };
-            listener.changed(textTruncatedProperty, false, textTruncatedProperty.get());
-            textTruncatedProperty.addListener(listener);
+            TEXT_TRUNCATED_LISTENER.changed(textTruncatedProperty, false, textTruncatedProperty.get());
+            textTruncatedProperty.addListener(TEXT_TRUNCATED_LISTENER);
         }
     }
 
@@ -1224,16 +1129,6 @@ public final class FXUtils {
         node.applyCss();
         node.layout();
         return node;
-    }
-
-    public static void prepareOnMouseEnter(Node node, Runnable action) {
-        node.addEventFilter(MouseEvent.MOUSE_ENTERED, new EventHandler<>() {
-            @Override
-            public void handle(MouseEvent e) {
-                node.removeEventFilter(MouseEvent.MOUSE_ENTERED, this);
-                action.run();
-            }
-        });
     }
 
     public static <T> void onScroll(Node node, List<T> list,

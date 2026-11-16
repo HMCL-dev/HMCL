@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
@@ -43,6 +28,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.addon.update.AddonUpdateTask;
@@ -53,6 +39,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.FXThread;
@@ -62,6 +49,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
@@ -116,12 +104,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             listView = new JFXListView<>();
             listView.setItems(objects);
             listView.getStyleClass().add("jfx-list-view-float");
+            listView.getStyleClass().add("no-horizontal-scrollbar");
             listView.setPlaceholder(placeholderContainer);
 
             setMargin(listView, new Insets(0, 10, 0, 10));
             VBox.setVgrow(listView, Priority.ALWAYS);
 
-            listView.setCellFactory(listView -> new AddonUpdateListCell());
+            listView.setCellFactory(AddonUpdateListCell::new);
 
             ComponentList.setVgrow(listView, Priority.ALWAYS);
 
@@ -323,7 +312,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                         Path iconPath = fs.getPath(path);
 
                         if (Files.exists(iconPath)) {
-                            Image image = FXUtils.loadImage(
+                            Image image = ImageLoaders.DEFAULT.load(
                                 iconPath,
                                 80,
                                 80,
@@ -344,7 +333,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     LOG.warning("Failed to load addon icons", e);
                 }
             }
-            
+
             if (data.localAddonFile() instanceof ResourcePackFile resourcePackFile) {
                 Image image = resourcePackFile.loadIcon();
 
@@ -380,10 +369,9 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     }
                 };
 
-        AddonUpdateListCell() {
+        AddonUpdateListCell(ListView<AddonUpdatesPage.AddonUpdateObject> listView) {
             HBox hbox = new HBox(16);
             HBox.setHgrow(content, Priority.ALWAYS);
-            content.setAlignment(Pos.CENTER);
             hbox.setAlignment(Pos.CENTER);
 
             hbox.getChildren().setAll(enabledBox, imageContainer, content, editButton);
@@ -411,25 +399,26 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     item.enabled.set(!item.isEnabled());
                 }
             });
+
+            FXUtils.limitCellWidth(listView, this);
         }
 
         /// Rebuilds the tags of `item`, including the channel of the currently selected target version.
         private void updateTags(AddonUpdateObject item) {
-            content.getTags().clear();
-
             LocalAddonFile<?> addonFile = item.getLocalAddonFile();
-            if (addonFile instanceof LocalModFile modFile) {
-                content.addTag(modFile.getId());
-            }
-            content.addTag(item.getSource());
-            content.addTag(item.getTargetVersionType());
+            var tags = new ArrayList<Tag>(3);
+            if (addonFile instanceof LocalModFile modFile)
+                tags.add(new Tag(modFile.getId()));
+            tags.add(new Tag(item.getSource()));
+            tags.add(new Tag(item.getTargetVersionType()));
+            content.getTags().setAll(tags);
 
             content.setSubtitle(item.getCurrentVersion() + " → " + item.getTargetVersion());
         }
 
         @Override
-        public void updateItem(AddonUpdateObject item, boolean empty) {
-            AddonUpdateObject oldItem = getItem();
+        public void updateItem(@Nullable AddonUpdateObject item, boolean empty) {
+            @Nullable AddonUpdateObject oldItem = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(item, empty);
@@ -438,7 +427,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 return;
             }
 
-            ripplerContainer.releaseRippleImmediately();
+            ripplerContainer.resetFeedback();
 
             if (oldItem != null) {
                 enabledBox.selectedProperty().unbindBidirectional(oldItem.enabledProperty());
@@ -471,6 +460,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         }
     }
 
+    /// Displays the target add-on version's changelog in a scrollable dialog.
     private static final class AddonChangelog extends JFXDialogLayout {
         /// Maintained in this page instead of [AddonUpdateObject] to allow freeing cached changelogs after closing
         /// this page.
@@ -482,7 +472,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         @FXThread
         private int versionPageRequestId = 0;
 
+        /// Creates a changelog dialog with a preferred height that follows the window height.
         public AddonChangelog(AddonUpdateObject object) {
+            prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
+
             this.setHeading(new Label(i18n("addon.select_target_version")));
 
             VBox box = new VBox(8);
@@ -530,9 +523,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             setActions(versionPageBtn, closeButton);
 
-            this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
-
             onEscPressed(this, closeButton::fire);
         }
 
@@ -549,10 +539,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 String cached = changelogCache.get(version.versionId());
                 if (cached != null) return cached;
 
-                String html = StringUtils.convertToHtml(
-                        repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.projectId(), version.versionId()),
-                        "238222".equals(version.projectId()));
-                String text = html != null ? html : "";
+                String raw = repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.projectId(), version.versionId());
+                // CurseForge already returns HTML, while the other repositories return Markdown.
+                String text = "238222".equals(version.projectId()) ? raw : StringUtils.convertToHtml(raw);
+                if (text == null) text = "";
                 changelogCache.put(version.versionId(), text);
                 return text;
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -563,7 +553,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 if (exception == null) {
                     String html = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(html, repo.getBaseUrl()));
-                    FXUtils.smoothScrolling(scrollPane);
+                    ScrollUtils.installSmoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
                 } else {
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));

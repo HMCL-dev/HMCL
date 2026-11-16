@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
@@ -34,6 +19,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -230,7 +216,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         @Nullable
         private Image loadThumbnail() {
             try {
-                return FXUtils.loadImage(path, 72, 72, true, false);
+                return ImageLoaders.DEFAULT.load(path, 72, 72, true, false);
             } catch (Exception e) {
                 LOG.warning("Failed to load screenshot thumbnail at: " + path, e);
                 return null;
@@ -241,7 +227,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         public Image getFullImage() {
             if (fullImage == null) {
                 try {
-                    fullImage = FXUtils.loadImage(path);
+                    fullImage = ImageLoaders.DEFAULT.load(path);
                 } catch (Exception e) {
                     LOG.warning("Failed to load screenshot content at: " + path, e);
                 }
@@ -289,7 +275,6 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
 
-            content.setMouseTransparent(true);
             HBox.setHgrow(content, Priority.ALWAYS);
 
             JFXButton copyButton = FXUtils.newToggleButton4(SVG.CONTENT_COPY);

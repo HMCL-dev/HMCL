@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.task.Schedulers;
@@ -157,38 +142,40 @@ public class TaskTest {
         assertTrue(flag.get(), "ThenAccept has not been executed");
     }
 
+    /// Verifies that cancellation lets a running task finish but prevents its continuation from running.
     @Test
-    public void testCancellation() throws InterruptedException {
-        AtomicBoolean flag = new AtomicBoolean(false);
-        CountDownLatch latch = new CountDownLatch(1);
+    public void testCancellation() throws InterruptedException, ExecutionException, TimeoutException {
+        AtomicBoolean taskCompleted = new AtomicBoolean();
+        AtomicBoolean continuationExecuted = new AtomicBoolean();
+        CountDownLatch taskStarted = new CountDownLatch(1);
+        CountDownLatch releaseTask = new CountDownLatch(1);
+        CompletableFuture<Boolean> stopped = new CompletableFuture<>();
         Task<?> task = Task.runAsync(() -> {
-            latch.countDown();
-            Thread.sleep(200);
-            // default executor cannot interrupt task.
-            flag.getAndSet(true);
-        }).thenRunAsync(() -> {
-            System.out.println("No way!");
-            Thread.sleep(200);
-            fail("Cannot reach here");
-        });
-        TaskExecutor executor = task.executor();
-        Lang.thread(() -> {
-            try {
-                latch.await();
-                System.out.println("Main thread start waiting");
-                Thread.sleep(100);
-                System.out.println("Cancel");
-                executor.cancel();
-            } catch (InterruptedException e) {
-                fail(e);
+            taskStarted.countDown();
+            releaseTask.await();
+            taskCompleted.set(true);
+        }).thenRunAsync(() -> continuationExecuted.set(true));
+        TaskExecutor executor = task.executor(new TaskListener() {
+            /// Publishes the execution result to the waiting test thread.
+            @Override
+            public void onStop(boolean success, TaskExecutor taskExecutor) {
+                stopped.complete(success);
             }
         });
-        assertFalse(executor.test(), "Task should fail because we have cancelled it");
-        Thread.sleep(3000);
+        try {
+            executor.start();
+            assertTrue(taskStarted.await(30, TimeUnit.SECONDS), "Task should start before cancellation");
+            executor.cancel();
+        } finally {
+            // Keep the task running until cancellation is requested, and release it even if setup fails.
+            releaseTask.countDown();
+        }
 
-        assertInstanceOf(CancellationException.class, executor.getException(), "CancellationException should not be recorded.");
-        assertInstanceOf(CancellationException.class, task.getException(), "CancellationException should not be recorded.");
-        assertTrue(flag.get(), "Thread.sleep cannot be interrupted");
+        assertFalse(stopped.get(30, TimeUnit.SECONDS), "Task should fail because we have cancelled it");
+        assertInstanceOf(CancellationException.class, executor.getException(), "CancellationException should be recorded");
+        assertInstanceOf(CancellationException.class, task.getException(), "CancellationException should be recorded");
+        assertTrue(taskCompleted.get(), "Cancellation should not interrupt the running task");
+        assertFalse(continuationExecuted.get(), "Continuation should not run after cancellation");
     }
 
     @Test

@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2022 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.*;
@@ -25,55 +10,222 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.ImageContainer;
-import org.jackhuang.hmcl.ui.construct.LineButton;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
+import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
+import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Comparator;
+import java.util.List;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.getTranslator;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Displays launcher, system, device, runtime, and project information.
+@NotNullByDefault
 public final class AboutPage extends SpinnerPane {
 
+    /// Keeps theme listeners alive while the page is visible.
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
+    /// Builds the page from cached hardware information and bundled project lists.
     public AboutPage() {
         VBox content = new VBox();
         content.getStyleClass().add("spinner-pane-content");
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
-        FXUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         setContent(scrollPane);
 
         ComponentList about = new ComponentList();
         {
-            var launcher = LineButton.createExternalLinkButton(Metadata.PUBLISH_URL);
+            var launcher = LineButton.createExternalLinkButton(Metadata.REPOSITORY_URL);
             launcher.setLargeTitle(true);
             launcher.setLeading(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             launcher.setTitle("Hello Minecraft! Launcher");
             launcher.setSubtitle(Metadata.VERSION);
 
-            var author = LineButton.createExternalLinkButton("https://space.bilibili.com/1445341");
-            author.setLargeTitle(true);
-            author.setLeading(FXUtils.newBuiltinImage("/assets/img/yellow_fish.png"));
-            author.setTitle("huanghongxun");
-            author.setSubtitle(i18n("about.author.statement"));
-
-            about.getContent().setAll(launcher, author);
+            about.getContent().setAll(launcher);
         }
 
-        ComponentList thanks = loadIconedTwoLineList("/assets/about/thanks.json");
+        ComponentList systemInfo = new ComponentList();
+        {
+            var system = new LinePane();
+            system.setLargeTitle(true);
+            system.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
+            system.setTitle(i18n("about.system.os"));
+            system.setSubtitle((OperatingSystem.OS_RELEASE_PRETTY_NAME == null
+                    ? "%s %s".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion())
+                    : "%s (%s %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion())));
+            systemInfo.getContent().add(system);
+
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemInfo.getDesktopEnvironment() != null) {
+                var desktop = new LinePane();
+                desktop.setLargeTitle(true);
+                desktop.setLeading(SVG.LUCIDE_PANELS_TOP_LEFT.createIcon(32));
+                desktop.setTitle(i18n("about.system.desktop"));
+                desktop.setSubtitle(SystemInfo.getDesktopEnvironment());
+                systemInfo.getContent().add(desktop);
+            }
+        }
+
+        ComponentList deviceInfo = new ComponentList();
+        {
+            @Nullable DeviceInfo deviceIdentity = SystemInfo.getDeviceInfo();
+            if (deviceIdentity != null
+                    && !"Virtual Machine".equals(deviceIdentity.name())
+                    && OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
+                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS || !Architecture.SYSTEM_ARCH.isX86())) {
+                var device = new LinePane();
+                device.setLargeTitle(true);
+                device.setLeading(SVG.HOST.createIcon(32));
+                device.setTitle(i18n("about.device.model"));
+                device.setSubtitle(getTranslator().formatDeviceName(deviceIdentity));
+                deviceInfo.getContent().add(device);
+            }
+
+            @Unmodifiable List<CentralProcessor> processors = SystemInfo.getCentralProcessors();
+            for (int i = 0; i < processors.size(); i++) {
+                String title = processors.size() == 1
+                        ? i18n("about.device.cpu")
+                        : i18n("about.device.cpu.n", i + 1);
+                CentralProcessor processor = processors.get(i);
+                String name = processor.getName();
+                @Nullable CentralProcessor.Cores cores = processor.getCores();
+                String subtitle;
+                if (cores == null)
+                    subtitle = i18n("about.device.cpu.name", name);
+                else if (cores.efficiency() > 0) {
+                    subtitle = cores.logical() == cores.physical()
+                            ? i18n("about.device.cpu.name.cores.hybrid", name, cores.performance(), cores.efficiency())
+                            : i18n("about.device.cpu.name.cores.hybrid.threads", name, cores.performance(), cores.efficiency(), cores.logical());
+                } else {
+                    subtitle = cores.logical() == cores.physical()
+                            ? i18n("about.device.cpu.name.cores", name, cores.physical())
+                            : i18n("about.device.cpu.name.cores.threads", name, cores.physical(), cores.logical());
+                }
+
+                var pane = new LinePane();
+                pane.setLargeTitle(true);
+                pane.setTitle(title);
+                pane.setSubtitle(subtitle);
+                pane.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+                pane.getTags().add(new Tag(Architecture.SYSTEM_ARCH.getDisplayName()));
+                deviceInfo.getContent().add(pane);
+            }
+
+            @Unmodifiable List<GraphicsCard> visibleGraphicsCards = SystemInfo.getGraphicsCards().stream()
+                    .filter(card -> card.getType() != GraphicsCard.Type.DISPLAY_ONLY && !"Unknown".equals(card.getName()))
+                    .sorted(Comparator.comparing(GraphicsCard::getType))
+                    .toList();
+
+            for (int i = 0; i < visibleGraphicsCards.size(); i++) {
+                GraphicsCard graphicsCard = visibleGraphicsCards.get(i);
+
+                String title = visibleGraphicsCards.size() == 1
+                        ? i18n("about.device.gpu")
+                        : i18n("about.device.gpu.n", i + 1);
+
+                var button = new LinePane();
+                button.setLargeTitle(true);
+                button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
+                button.setTitle(title);
+
+                StringBuilder subtitle = new StringBuilder(graphicsCard.getName());
+
+                if (graphicsCard.getDriver() != null || graphicsCard.getDriverVersion() != null) {
+                    subtitle.append(" (");
+                    if (graphicsCard.getDriver() != null) {
+                        subtitle.append(graphicsCard.getDriver());
+                        if (graphicsCard.getDriverVersion() != null) {
+                            subtitle.append(' ');
+                        }
+                    }
+                    if (graphicsCard.getDriverVersion() != null) {
+                        subtitle.append(graphicsCard.getDriverVersion());
+                    }
+                    subtitle.append(')');
+                }
+
+                button.setSubtitle(subtitle.toString());
+
+                switch (graphicsCard.getType()) {
+                    case INTEGRATED -> button.getTags().add(new Tag(i18n("about.device.gpu.type.integrated")));
+                    case DISCRETE -> button.getTags().add(new Tag(i18n("about.device.gpu.type.discrete")));
+                    case VIRTUAL -> button.getTags().add(new Tag(i18n("about.device.gpu.type.virtual")));
+                }
+
+                deviceInfo.getContent().add(button);
+            }
+
+            if (SystemInfo.getTotalMemorySize() > 0) {
+                String subtitle = i18n("about.device.memory.system",
+                        "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    long pageFileSize = SystemInfo.getTotalPageFileSize();
+                    if (pageFileSize < 0) {
+                        subtitle = i18n("about.device.memory.page_files.unknown", subtitle);
+                    } else {
+                        String pageFileCapacity = "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(pageFileSize));
+                        PageFileConfiguration configuration = SystemInfo.getPageFileConfiguration();
+                        subtitle = switch (configuration.mode()) {
+                            case MANUAL -> i18n("about.device.memory.page_files.maximum",
+                                    subtitle,
+                                    pageFileCapacity,
+                                    "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(configuration.maximumSize())));
+                            case SYSTEM_MANAGED, MIXED, UNKNOWN -> i18n("about.device.memory.page_files", subtitle, pageFileCapacity);
+                        };
+                    }
+                }
+
+                var memory = new LinePane();
+                memory.setLargeTitle(true);
+                memory.setLeading(SVG.LUCIDE_MEMORY_STICK.createIcon(32));
+                memory.setTitle(i18n("about.device.memory"));
+                memory.setSubtitle(subtitle);
+                deviceInfo.getContent().add(memory);
+            }
+        }
+
+        ComponentList runtimeInfo = new ComponentList();
+        {
+            var java = new LinePane();
+            java.setLargeTitle(true);
+            java.setLeading(SVG.LOCAL_CAFE.createIcon(32));
+            java.setTitle("Java");
+            java.setSubtitle("%s, %s, %s".formatted(
+                    Runtime.version().toString(),
+                    System.getProperty("java.vm.name"),
+                    System.getProperty("java.vendor")));
+            runtimeInfo.getContent().add(java);
+
+            var javaFX = new LinePane();
+            javaFX.setLargeTitle(true);
+            javaFX.setLeading(SVG.LOCAL_CAFE.createIcon(32));
+            javaFX.setTitle("JavaFX");
+            javaFX.setSubtitle(System.getProperty("javafx.runtime.version"));
+            runtimeInfo.getContent().add(javaFX);
+        }
 
         ComponentList deps = loadIconedTwoLineList("/assets/about/deps.json");
 
         ComponentList legal = new ComponentList();
         {
-            var copyright = new LineButton();
+            var copyright = new LinePane();
             copyright.setLargeTitle(true);
             copyright.setTitle(i18n("about.copyright"));
             copyright.setSubtitle(i18n("about.copyright.statement"));
@@ -94,8 +246,12 @@ public final class AboutPage extends SpinnerPane {
         content.getChildren().setAll(
                 ComponentList.createComponentListTitle(i18n("about")),
                 about,
-                ComponentList.createComponentListTitle(i18n("about.thanks_to")),
-                thanks,
+                ComponentList.createComponentListTitle(i18n("about.system")),
+                systemInfo,
+                ComponentList.createComponentListTitle(i18n("about.device")),
+                deviceInfo,
+                ComponentList.createComponentListTitle(i18n("about.runtime")),
+                runtimeInfo,
                 ComponentList.createComponentListTitle(i18n("about.dependency")),
                 deps,
                 ComponentList.createComponentListTitle(i18n("about.legal")),
@@ -141,7 +297,6 @@ public final class AboutPage extends SpinnerPane {
                         imageView.setImage(loadImage(image.getAsString()));
                         imageView.setMouseTransparent(true);
 
-
                         button.setLeading(imageView);
                     } else if (image.isJsonObject()) {
                         holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> button.setLeading(darkMode
@@ -169,4 +324,5 @@ public final class AboutPage extends SpinnerPane {
 
         return componentList;
     }
+
 }

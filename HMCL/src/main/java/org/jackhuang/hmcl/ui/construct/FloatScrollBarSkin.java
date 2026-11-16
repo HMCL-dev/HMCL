@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.utils.JFXNodeUtils;
@@ -25,11 +10,13 @@ import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.NumberBinding;
+import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.Skin;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
@@ -37,28 +24,48 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.util.MathUtils;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
-// Referenced in root.css
+/// Floating scrollbar skin selected by root.css, supporting pointer drags and direct touch positioning.
+@NotNullByDefault
 @SuppressWarnings("unused")
 public class FloatScrollBarSkin implements Skin<ScrollBar> {
-    private ScrollBar scrollBar;
-    private Region group;
+    /// Owning scrollbar, cleared on disposal.
+    private @Nullable ScrollBar scrollBar;
+    /// Skin root, cleared on disposal.
+    private @Nullable Region group;
+    /// Available scrollbar track excluding its end padding.
     private final Rectangle track = new Rectangle();
+    /// Thumb whose position follows the scrollbar value.
     private final Rectangle thumb = new Rectangle();
 
-    private BooleanBinding hoverOrPressed;
-    private Animation thumbHoverAnimation;
+    /// Combined pointer feedback state, retained until disposal.
+    private @Nullable BooleanBinding hoverOrPressed;
+    /// Current feedback transition, or null when no transition is retained.
+    private @Nullable Animation thumbHoverAnimation;
 
+    /// Removable touch handler installed on the control so thumb, track, and background targets work.
+    private final EventHandler<ScrollEvent> directScrollHandler = this::handleDirectScroll;
+
+    /// Finger distance from the thumb's leading edge, or NaN outside a touch grab.
+    private double touchGrabOffset = Double.NaN;
+
+    /// Creates track geometry, pointer handlers, and hover feedback for the scrollbar.
     public FloatScrollBarSkin(final ScrollBar scrollBar) {
         this.scrollBar = scrollBar;
         scrollBar.setPrefHeight(1e-18);
         scrollBar.setPrefWidth(1e-18);
 
         this.group = new Region() {
-            Point2D dragStart;
+            /// Pointer position at the start of a mouse drag, or null before pressing.
+            @Nullable Point2D dragStart;
+            /// Normalized thumb position captured when a mouse drag begins.
             double preDragThumbPos;
 
+            /// Width of the scrollbar's value range.
             final NumberBinding range = Bindings.subtract(scrollBar.maxProperty(), scrollBar.minProperty());
+            /// Current normalized scrollbar value.
             final NumberBinding position = Bindings.divide(Bindings.subtract(scrollBar.valueProperty(), scrollBar.minProperty()), range);
 
             {
@@ -78,10 +85,11 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
 
                 thumb.setOnMousePressed(me -> {
                     if (me.isSynthesized()) {
-                        // touch-screen events handled by Scroll handler
+                        captureTouchGrab(me.getSceneX(), me.getSceneY());
                         me.consume();
                         return;
                     }
+                    touchGrabOffset = Double.NaN;
                     /*
                      ** if max isn't greater than min then there is nothing to do here
                      */
@@ -92,6 +100,10 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                         me.consume();
                     }
                 });
+
+                thumb.setOnTouchPressed(event -> captureTouchGrab(event.getTouchPoint().getSceneX(), event.getTouchPoint().getSceneY()));
+                thumb.setOnTouchReleased(event -> touchGrabOffset = Double.NaN);
+                thumb.setOnMouseReleased(event -> touchGrabOffset = Double.NaN);
 
 
                 thumb.setOnMouseDragged(me -> {
@@ -128,15 +140,19 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 });
             }
 
+            /// Returns track length along the scrolling axis.
             private double trackLength() {
                 return getSkinnable().getOrientation() == Orientation.VERTICAL ? track.getHeight() : track.getWidth();
             }
 
+            /// Returns thumb length along the scrolling axis.
             private double thumbLength() {
                 return getSkinnable().getOrientation() == Orientation.VERTICAL ? thumb.getHeight() : thumb.getWidth();
             }
 
+            /// Rebinds track and thumb geometry after an orientation change.
             private void setup() {
+                touchGrabOffset = Double.NaN;
                 track.widthProperty().unbind();
                 track.heightProperty().unbind();
 
@@ -194,6 +210,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 }
             }
 
+            /// Allows horizontal tracks to fill their owner while keeping vertical tracks narrow.
             @Override
             protected double computeMaxWidth(double height) {
                 if (scrollBar.getOrientation() == Orientation.HORIZONTAL) {
@@ -203,6 +220,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 return 6.0;
             }
 
+            /// Allows vertical tracks to fill their owner while keeping horizontal tracks narrow.
             @Override
             protected double computeMaxHeight(double width) {
                 if (scrollBar.getOrientation() == Orientation.VERTICAL) {
@@ -213,6 +231,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
             }
         };
 
+        scrollBar.addEventHandler(ScrollEvent.ANY, directScrollHandler);
         this.hoverOrPressed = thumb.hoverProperty().or(thumb.pressedProperty());
         FXUtils.onChangeAndOperate(hoverOrPressed, newValue -> {
             if (thumbHoverAnimation != null) {
@@ -243,8 +262,66 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
         });
     }
 
+    /// Captures the finger offset within the thumb in track coordinates.
+    private void captureTouchGrab(double sceneX, double sceneY) {
+        touchGrabOffset = Double.NaN;
+        @Nullable ScrollBar bar = scrollBar;
+        if (bar == null || !(bar.getMax() > bar.getMin()))
+            return;
+        @Nullable Point2D point = track.sceneToLocal(sceneX, sceneY);
+        if (point == null)
+            return;
+        boolean vertical = bar.getOrientation() == Orientation.VERTICAL;
+        double travel = vertical ? track.getHeight() - thumb.getHeight() : track.getWidth() - thumb.getWidth();
+        double fraction = (MathUtils.clamp(bar.getValue(), bar.getMin(), bar.getMax()) - bar.getMin()) / (bar.getMax() - bar.getMin());
+        touchGrabOffset = (vertical ? point.getY() : point.getX()) - fraction * travel;
+    }
+
+    /// Drags grabbed thumbs through their travel range and positions track touches absolutely.
+    private void handleDirectScroll(ScrollEvent event) {
+        if (event.getEventType() == ScrollEvent.SCROLL_FINISHED) {
+            touchGrabOffset = Double.NaN;
+            return;
+        }
+        @Nullable ScrollBar bar = scrollBar;
+        if (event.getEventType() != ScrollEvent.SCROLL || !event.isDirect()
+                || bar == null || bar.isDisabled() || bar.valueProperty().isBound()
+                || !(bar.getMax() > bar.getMin()))
+            return;
+        if (event.isInertia()) {
+            event.consume();
+            return;
+        }
+        boolean vertical = bar.getOrientation() == Orientation.VERTICAL;
+        double length = vertical ? track.getHeight() : track.getWidth();
+        double thumbLength = vertical ? thumb.getHeight() : thumb.getWidth();
+        if (!(length > thumbLength))
+            return;
+        @Nullable Point2D point = track.sceneToLocal(event.getSceneX(), event.getSceneY());
+        if (point == null)
+            return;
+        double position = vertical ? point.getY() : point.getX();
+        double fraction;
+        // Gesture recognition can pick the track after the finger has already grabbed the thumb.
+        if (Double.isFinite(touchGrabOffset) || event.getTarget() == thumb) {
+            if (Double.isNaN(touchGrabOffset))
+                captureTouchGrab(event.getSceneX(), event.getSceneY());
+            fraction = (position - touchGrabOffset) / (length - thumbLength);
+        } else {
+            fraction = position / length;
+        }
+        if (!Double.isFinite(fraction))
+            return;
+        bar.setValue(bar.getMin() + MathUtils.clamp(fraction, 0, 1) * (bar.getMax() - bar.getMin()));
+        event.consume();
+    }
+
+    /// Removes touch handling and stops feedback animation before releasing the skin's owner.
     @Override
     public void dispose() {
+        if (scrollBar != null)
+            scrollBar.removeEventHandler(ScrollEvent.ANY, directScrollHandler);
+        touchGrabOffset = Double.NaN;
         if (thumbHoverAnimation != null) {
             thumbHoverAnimation.stop();
             thumbHoverAnimation = null;
@@ -254,13 +331,15 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
         group = null;
     }
 
+    /// Returns the skin root, or null after disposal.
     @Override
-    public Node getNode() {
+    public @Nullable Node getNode() {
         return group;
     }
 
+    /// Returns the owning scrollbar, or null after disposal.
     @Override
-    public ScrollBar getSkinnable() {
+    public @Nullable ScrollBar getSkinnable() {
         return scrollBar;
     }
 }

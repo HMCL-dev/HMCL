@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.modpack.mcbbs;
 
 import org.jackhuang.hmcl.game.DefaultGameInstance;
@@ -93,19 +78,27 @@ public class McbbsModpackExportTask extends Task<Void> {
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (var zip = new Zipper(modpackFile)) {
             Path runDirectory = instance.getRunDirectory();
-            List<McbbsModpackManifest.File> files = new ArrayList<>();
-            zip.putDirectory(runDirectory, "overrides", path -> {
+
+            List<Path> paths = new ArrayList<>();
+            zip.putDirectoryProgressed(runDirectory, "overrides", path -> {
                 if (Modpack.acceptFile(path, blackList, info.getWhitelist())) {
                     Path file = runDirectory.resolve(path);
                     if (Files.isRegularFile(file)) {
-                        String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                        files.add(new McbbsModpackManifest.AddonFile(true, relativePath, DigestUtils.digestToString("SHA-1", file)));
+                        paths.add(file);
                     }
                     return true;
                 } else {
                     return false;
                 }
-            });
+            }, progress -> updateProgress(0.5 * progress));
+
+            List<McbbsModpackManifest.File> files = new ArrayList<>();
+            long current = 0;
+            for (Path file : paths) {
+                String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+                files.add(new McbbsModpackManifest.AddonFile(true, relativePath, DigestUtils.digestToString("SHA-1", file)));
+                updateProgress(0.5 + 0.5 * ++current / paths.size());
+            }
 
             GameVersionNumber version = instance.getVersion();
             if (version == GameVersionNumber.unknown()) {
@@ -149,6 +142,7 @@ public class McbbsModpackExportTask extends Task<Void> {
             CurseManifest curseManifest = new CurseManifest(CurseManifest.MINECRAFT_MODPACK, 1, info.getName(), info.getVersion(), info.getAuthor(), "overrides", new CurseManifestMinecraft(gameVersion, modLoaders), Collections.emptyList());
             zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
         }
+        updateProgress(1);
     }
 
     /// Export options supported by the MCBBS format.

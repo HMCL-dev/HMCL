@@ -1,6 +1,6 @@
 # 
 # Hello Minecraft! Launcher
-# Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+# Copyright (C) 2026 The HMCL Authors
 # 
 # mcmod.cn
 # Copyright (C) 2026. All Rights Reserved.
@@ -207,7 +207,7 @@
 225,,,冒险,AdventureCraft,AC,adventurecraft
 226,,,MC实在是太简单了,Minecraft Is Too Easy,MITE,MITE
 227,randomcraft-v0-1-0,,随机工艺,RandomCraft,,RandomCraft
-228,dragon-mounts,,龙坐骑/龙骑士,Dragon Mounts,DM,DragonMounts
+228,dragon-mounts,dragon-mounts,龙骑士 / 龙坐骑,Dragon Mounts,DM,DragonMounts;mod_DragonMounts
 229,animal-bikes,,动物坐骑,Animal Bikes,AB,animalbikes
 230,,,更好的草地和树叶,Better Grass & Leaves,,BetterGrassAndLeavesMod
 232,electro-magic-tools,,电力魔法工具,Electro-Magic Tools,EMT,EMT
@@ -703,7 +703,7 @@
 755,warp-theory,,神秘扭曲学,Warp Theory,,WarpTheory
 756,hammer-lib,hammer-lib,锤子核心,Hammer Core/Hammer Lib,,hammercore;hammerlib
 757,,,采掘工具,Mining Tools,,MiningTools
-758,,,热力铸造室,Thermal Casting,,ThermalCasting
+758,thermal-casting,,热力铸造室,Thermal Casting,,ThermalCasting
 759,thermal-smeltery-redux,,热力冶炼厂重置版,Thermal Smeltery Redux,,
 760,brcore,,BRCore,,,BRCore
 761,industrial-expansion-te-addon,,工业扩充 (TE附属),Industrial Expansion [TE Addon],,industrialexpansion
@@ -770,7 +770,7 @@
 825,,,TecTech,,,tectech
 826,yam-core,,YAM Core,,Yamcl,YAMCore
 828,,,自然灾害,NaturalDisasters,ND,
-829,,,远程传送,TeleToro,,teletoro
+829,teletoro,,远程传送,TeleToro,,teletoro
 830,,,爱丽丝人偶,Alice's Doll,,touhou_alice_core;touhou_alice_dolls;touhou_alice_extras
 831,re-zero-kara-hajimeru-isekai-seikatsu,,RE:从零开始的异世界,Re: Zero kara hajimeru isekai seikatsu,Re0,ReZero
 832,minewatch,,Minewatch,,,minewatch
@@ -797,7 +797,7 @@
 855,just-enough-resources-jer,just-enough-resources-jer,Just Enough Resources,,JER,jeresources
 856,morpheus,,Morpheus,,,Morpheus;morpheus
 857,wall-jump,,飞檐走壁,Wall Jump,,walljump
-858,,,凝结成块,Condensed Block Mod Reborn,,CBMReborn
+858,condensed-block-mod-reborn,,凝结成块,Condensed Block Mod Reborn,,CBMReborn
 859,refined-avaritia,,Refined Avaritia,,,refined_avaritia
 860,weather-storms-tornadoes,weather-storms-tornadoes,局部气候&风暴,Weather\c Storms & Tornadoes,,weather2
 861,,,New Things,,,newthings
@@ -886,7 +886,7 @@
 944,better-questing,,更好的任务,Better Questing,BQ,betterquesting
 945,,,石头工艺,Stone craft,,
 946,,,不要杀戮,Don't Slay,,DonnotSlay
-947,,,CT Mortar,,,ctmortar
+947,ct-mortar,,CT Mortar,,,ctmortar
 948,ct-watercan,,CT Watercan,,,watercan
 949,totemic,fenns_totemic,图腾,Totemic,,totemic
 950,grimoire-of-alice,,爱丽丝的魔法书,Grimoire of Alice,GoA,grimoireofalice
@@ -933,7 +933,7 @@
 991,,,摄影工艺,MineCamera,,MineCameraDummy;minecamera
 992,yoyos,,悠悠球,Yoyos,,yoyos
 993,cd4017be-library,,CD4017BE Library,,,cd4017be_lib
-994,,,Iberia,,,iberia
+994,iberia,,Iberia,,,iberia
 995,reforged,reforged,重铸,Reforged,,reforged
 996,cavern,,洞穴,Cavern,,cavern
 997,block-drops-jei-addon,,Block Drops,,,blockdrops
@@ -982,11 +982,11 @@
 1041,,,快乐的PVP,Happy PVP,,happypvp
 1042,,,炽热基岩,Molten Bedrockium,,molten
 1043,cannibalism,,割肉小刀/同类相食,Cannibalism,,cannibalism
-1044,,,快速消耗,Quick Consume,,
+1044,quick-consume,,快速消耗,Quick Consume,,quickconsume
 1045,planting-dirt-for-saplings,auto-planter,自动植树机,Auto Planter / Planting dirt for saplings,,autoplanter
 1046,,,幻影时代,PhantomAge,PHTAGE,phtage
 1047,custom-crosshair-mod,custom-crosshair-mod,自定义准星,Custom Crosshair Mod,CCM,custom-crosshair-mod
-1048,,,更好的传送,Better Blink,,betterblink
+1048,better-blink,,更好的传送,Better Blink,,betterblink
 1049,biobomb,,生物炸弹,BioBomb,,biobomb
 1050,ender-hopper,,末影漏斗,Ender Hopper,,enderhopper
 1051,mine-souls,,黑魂战斗,Mine Souls,MS,minesouls
@@ -1068,7 +1068,7 @@
 1130,just-a-few-fish,,只是一些鱼,Just a Few Fish,JAFF,jaff
 1131,ynot,,YNot,,,ynot
 1132,serene-seasons,serene-seasons,静谧四季/季节,Serene Seasons,,sereneseasons
-1133,,,龙之领域,Realm Of The Dragons,ROTD,rotd
+1133,realm-of-the-dragons-rotd,,龙之领域,Realm Of The Dragons,ROTD,rotd
 1134,rockhounding-mod-core,,地质探秘/岩石狩猎,RockHounding,RH,rockhounding_oretiers;rockhounding_rocks;rockhounding_surface;globbypotato_rockhounding;rockhounding_chemistry;rockhounding_core
 1135,fancy-block-particles,,梦幻方块效果,Fancy Block Particles,FBP,fbp
 1136,thaumic-katana,,神秘之日本刀,Thaumic Katana,,thaumkatana
@@ -1169,7 +1169,7 @@
 1234,waitingtime,,加载页面游戏,WaitingTime,,waitingtime
 1235,dragontech,,龙之科技/龙鳞实验版,DragonTech / Dragon Scales EX / DragonScales,,dragontech;DragonScalesEX
 1237,gravityfalls-mod,,怪诞小镇,Gravity Falls,GF,
-1238,,,TFC植物魔法,TFCBotania,,
+1238,tfcbotania,,TFC植物魔法,TFCBotania,,tfcrbotania
 1239,no-recipe-guide,,没有合成指南,No Recipe Guide,,
 1240,takumi-craft,,爬行者世界/苦力怕世界,Takumi Craft,,takumicraft
 1241,the-mists-of-riov,,神秘世界,The Mists of RioV Mod,RioV,RioV
@@ -1198,9 +1198,9 @@
 1265,,,真实火车附加包：上海地铁包,,,
 1266,librarianlib,librarianlib,图书馆,LibrarianLib,,librarianlib
 1267,creeper-confetti,creeper-confetti,烟花苦力怕 / 烟火苦力怕,Creeper Confetti,,creeperconfetti
-1268,,,液体漏斗,Funnels,,funnels
+1268,funnels,,液体漏斗,Funnels,,funnels
 1269,advent-of-ascension-nevermine,adventofascension,虚无世界3,Advent of Ascension 3,AoA3,aoa3
-1270,,,托罗探索,Toro Quest,TQ,toroquest
+1270,toroquest,,托罗探索,Toro Quest,TQ,toroquest
 1271,,,营养学,Nutrition,,nutrition
 1272,rikmulds-core-mod,,Rikmulds Core Mod,,,corerm
 1273,just-enough-pattern-banners,,Just Enough Pattern Banners,,JEPB,jepb
@@ -1210,7 +1210,7 @@
 1277,mrcrayfishs-device-mod,,MrCrayfish 的设备,MrCrayfish's Device Mod,CDM,cdm
 1278,block-armor,,方块盔甲,Block Armor,,blockarmor
 1279,stockpile,,储物桶,Stockpile,,stockpile
-1280,,,Loot Slash Conquer,,LSC,lsc
+1280,loot-slash-conquer,,Loot Slash Conquer,,LSC,lsc
 1281,candy-world,,糖果世界,Candy World,CW,candymod
 1282,,,史莱姆工艺,SlimeCraft,,slimecraft
 1283,creativecore,creativecore,CreativeCore,,,creativecoredummy;creativecore
@@ -1220,8 +1220,8 @@
 1287,states,,城邦,States,,states
 1288,modular-machinery,,模块化机械,Modular Machinery,MM,modularmachinery
 1289,compositegear,,复合齿轮/复合装甲,Composite Gear,,compositegear
-1290,kiwi,kiwi,Kiwi 🥝,,,kiwi
-1291,cuisine,,料理工艺 🍳,Cuisine 🍳,,cuisine
+1290,kiwi,kiwi,Kiwi,,,kiwi
+1291,cuisine,,料理工艺,Cuisine 🍳,,cuisine
 1292,world-control,,世界控制,World Control,,worldcontrol
 1294,tree-chopper,,砍树,Tree Chopper,TCH,treechopper
 1295,the-lost-cities,the-lost-cities,失落的城市,The Lost Cities,,lostcities
@@ -1229,7 +1229,7 @@
 1297,,,更多的合成,Crafting++,CPP,cpp
 1298,,,装饰品合集 / 超多装饰世界,Decorations Mega Pack,DMP,dmp
 1299,simple-underground-biomes,,简单地下生物群系,Simple Underground Biomes,,simpleundergroundbiomes
-1300,zen-foundry,,禅：金属工坊 🌋,Zen: Foundry 🌋,,foundry
+1300,zen-foundry,,禅：金属工坊,Zen: Foundry 🌋,,foundry
 1301,,,扩展行星,Extended Planets,,ExtendedPlanets
 1302,,,TheCatacyst's Palindel,,,custom_sword
 1303,beyondspace,,Beyond Space / Galaxy Additions,,,beyondspace;galaxyadditions;ProjectAndromeda
@@ -1302,7 +1302,7 @@
 1374,haunch-hud,,Haunch HUD,,,haunchhud
 1375,absent-by-design,absent-by-design,Absent by Design,,,absentbydesign
 1376,no-nv-flash,no-nv-flash,无夜视闪烁,No Night Vision Flashing,,no_nv_flash
-1377,,,街机,Arcade Mod,,arcademod
+1377,arcade-mod,,街机,Arcade Mod,,arcademod
 1378,asmodeuscore,asmodeuscore,Asmodeus Core,,,asmodeuscore
 1379,building-gadgets,,建筑小帮手,Building Gadgets,,buildinggadgets;buildinggadgets2
 1380,dooglamoo-worlds,,Dooglamoo的世界,Dooglamoo Worlds,,dooglamooworlds
@@ -1429,7 +1429,7 @@
 1505,vanillaautomation,,原版自动化,VanillaAutomation,VA,va
 1506,tickprofiler,,Tick分析器,TickProfiler,,tickprofiler
 1507,vanilla-immersion,,立体工具方块,Vanilla Immersion,VI,vimmersion
-1508,,,土方工程,Earthworks,,earthworks
+1508,earthworks,,土方工程,Earthworks,,earthworks
 1509,terraqueous,terraqueous,地灵云心/海树山花,Terraqueous,,terraqueous
 1510,initial-inventory,initial-inventory,自定义初始物品,Initial Inventory,,initialinventory
 1511,interaction-wheel,interaction-wheel,Interaction Wheel,,,intwheel
@@ -1447,7 +1447,7 @@
 1523,default-world-generator-port,,Default World Generator (port),,,defaultworldgenerator-port
 1524,better-questing-standard-expansion,,更好的任务-基础扩展,Better Questing - Standard Expansion,,bq_standard
 1525,exchangers,,方块交换器,Exchangers,,exchangers
-1526,,,灵活的工具,Flexible Tools,,flexibletools
+1526,flexible-tools,,灵活的工具,Flexible Tools,,flexibletools
 1527,dimensional-control,,维度控制,Dimensional Control,,dimensionalcontrol
 1528,valkyrien-skies,valkyrien-skies,瓦尔基里天空,Valkyrien Skies,VS,valkyrienskies;vs_world;vs_control
 1529,item-scroller,item-scroller,物品滚轮,Item Scroller,,itemscroller
@@ -1455,7 +1455,7 @@
 1531,lucraft-core,,Lucraft: Core,,,lucraftcore
 1532,progressive-bosses,progressive-bosses,进化的 BOSS,Progressive Bosses,,progressivebosses
 1533,persistent-bits,persistent-bits,Persistent Bits,,,persistentbits
-1534,,,真实公路,RC Roads,,rcroads
+1534,rc-roads,,真实公路,RC Roads,,rcroads
 1535,emoticons,,动作表情,Emoticons,,emoticons
 1536,simple-diving-gear,,简单的潜水装备,Simple Diving Gear,,simpledivegear
 1537,just-enough-energistics-jee,,Just Enough Energistics,,JEE,jee
@@ -1485,7 +1485,7 @@
 1562,what-fluid-fix,,WHAT - Fluid Fix,,,what
 1563,blue-skies,blue-skies,蔚蓝浩空,Blue Skies,,blue_skies
 1564,project-vibrant-journeys,project-vibrant-journeys,活力之旅,Project: Vibrant Journeys,,projectvibrantjourneys;pvj
-1565,,,修复卡床,Bed Bugs,,bedbugs
+1565,bed-bugs,,修复卡床,Bed Bugs,,bedbugs
 1566,biometweaker,,生物群系修改器,BiomeTweaker,,biometweaker
 1567,actuallycomputers,,实用电脑,ActuallyComputers,,actuallycomputers
 1568,fence-overhaul,,斜栅栏,Fence Overhaul,,fenceoverhaul
@@ -1503,7 +1503,7 @@
 1580,time-machine-mod,,时光机,Time Machine,,timemachine
 1581,,,另一个反作弊,AnotherAntiCheat,AAC,AnotherStarAntiCheat;AnotherStar;anotheranticheat;AnotherStarByMiracle;AntiCheat3
 1582,upsizer-mod,,更大的堆叠数量,Upsizer Mod,,upsizer
-1583,,,越过栅栏,Fence Jumper,,fencejumper
+1583,fence-jumper,,越过栅栏,Fence Jumper,,fencejumper
 1584,enchantments-exchanger,,便携附魔替换台,Enchantments Exchanger,,enchxchg
 1585,additional-enchanted-miner,additional-enchanted-miner,Additional Enchanted Miner,,AEM,quarryplus
 1586,treasure-bags,,宝藏袋,Treasure Bags,,treasurebags
@@ -1531,7 +1531,7 @@
 1608,future-mc,future-mc,未来的MC,Future MC,FMC,futuremc;minecraftfuture
 1609,rope-bridge,,索桥,Rope Bridge,,ropebridge
 1610,sbm-oil-ore,,油矿石,Oil Ore,,sbmoilore
-1611,,,红石减红石,Redstone Minus Redstone,,redstoneminusredstone
+1611,redstone-minus-redstone,,红石减红石,Redstone Minus Redstone,,redstoneminusredstone
 1612,more-furnaces,,更多熔炉,More Furnaces,,morefurnaces
 1613,integrated-crafting,,集成合成学,Integrated Crafting,,integratedcrafting
 1614,integrated-terminals,integrated-terminals,集成终端,Integrated Terminals,,integratedterminals
@@ -1596,13 +1596,13 @@
 1674,roughly-enough-items,rei,REI物品管理器,Roughly Enough Items,REI,roughlyenoughitems
 1675,modmenu,modmenu,模组菜单,Mod Menu,,modmenu
 1676,architectury-quilt,,REI Addons,,,reiaddons
-1677,illuminations,,Illuminations 🔥,,,illuminations
+1677,illuminations,,Illuminations,,,illuminations
 1678,mappy,,Mappy,,,mappy
 1679,mouse-wheelie,mouse-wheelie,急速滚轮,Mouse Wheelie,,mouse-wheelie
 1680,mrcrayfishs-vehicle-mod,,MrCrayfish的载具,MrCrayfish's Vehicle Mod,CVM,vehicle
 1681,cc-tweaked,cc-tweaked,CC: Tweaked,,CC:T,cctweaked;computercraft
 1682,aliensvspredator,,异形大战铁血战士,AliensVsPredator,AVP,
-1683,,,Dragon Murder,,,dragonmurder
+1683,dragon-murder,,Dragon Murder,,,dragonmurder
 1685,birds-nests,,鸟巢,Birds Nests,BN,birdsnests
 1686,minecraft-animated,,Minecraft Animated,,MCAnm,mcanm
 1687,refined-machinery,,精致机械,Refined Machinery,RM,
@@ -1625,7 +1625,7 @@
 1706,simple-grinder,simplegrinder,简易研磨机,Simple Grinder,,simplegrinder
 1707,redstone-gauges-and-switches,,红石测量与开关,Gauges and Switches,,rsgauges
 1708,apotheosis,apotheosis,神化,Apotheosis,,apotheosis
-1709,lighting-wand,lighting-wand,照明魔杖 🌟,Lighting Wand 🌟,,lightingwand
+1709,lighting-wand,lighting-wand,照明魔杖,Lighting Wand 🌟,,lightingwand
 1710,terrarium,terrarium,地球,Terrarium,,earth
 1711,climatic-biomes,,Climatic Biomes,,,climaticbiomesjbg
 1712,howling-moon,,狼人,Howling Moon,,howlingmoon
@@ -1719,7 +1719,7 @@
 1804,mighty-ender-chicken,,强大的末影鸡,Mighty Ender Chicken,,mightyenderchicken
 1805,malisisadvert,,广告牌,MalisisAdvert,MA,malisisadvert
 1806,ido,,移动,Idō,,ido
-1807,bat-happy-mod,,🦇蝙蝠快乐MOD,🦇 Bat Happy Mod,,bathappymod
+1807,bat-happy-mod,,蝙蝠快乐MOD,🦇 Bat Happy Mod,,bathappymod
 1808,viescraft-airships,,维斯工艺-飞艇！,ViesCraft - Airships!,,vc;viescraftmachines
 1809,the-ultimate-dimension,,究极次元,The Ultimate Dimension,TUD,rt
 1810,advanced-mortars,,更好的研钵,Advanced Mortars,,advancedmortars
@@ -1784,7 +1784,7 @@
 1874,simple-farming,,简单农业,Simple Farming,,simplefarming
 1875,bigger-packets-please,,Bigger Packets Please,,,biggerpacketsplz
 1876,lockyz-extra-dimensions-mod,ledm,更多维度世界,Lockyz Extra Dimensions Mod,LEDM,lockyzextradimensionsmod
-1877,psi-combat-magic,,Psi:Combat Magic,,,psiaddons
+1877,psi-combat-magic,,Psi: Combat Magic,,,psiaddons
 1878,dtphc,,动态的树：潘马斯附属,Dynamic Trees - Pam's Harvestcraft Compat,,dynamictreesphc
 1879,largefluidtank,large-fluid-tank,大型储罐,Large Fluid Tank,LFT,fluidtank
 1880,tumbleweed,tumbleweed,风滚草,Tumbleweed,,tumbleweed
@@ -2006,11 +2006,11 @@
 2103,darknesslib,,DarknessLib,,,darknesslib
 2104,terrafirmacraft,terrafirmacraft,群峦传说：次世代,TerraFirmaCraft: The Next Generation,TFC:TNG,tfc
 2105,redstone-control,,红石控制,Redstone Control,,rs_ctr
-2106,snow-real-magic,snow-real-magic,雪！真实的魔法！⛄,Snow! Real Magic! ⛄,,snowrealmagic
+2106,snow-real-magic,snow-real-magic,雪！真实的魔法！,Snow! Real Magic! ⛄,,snowrealmagic
 2107,comforts,comforts,舒适用品,Comforts,,comforts
 2108,plasmacannon,,等离子炮,PlasmaCannon,,plasmacannons
 2109,plasmaengines,,等离子引擎,PlasmaEngines,,
-2110,bonny-food,,Bonny Food,,,
+2110,bonny-food,,Bonny Food,,,bonny_food
 2111,emerging-technology-hydroponics,,新兴技术,Emerging Technology,,emergingtechnology
 2112,,,史诗征程2,Epic Journey2,EJ2,ej2;epicjourney
 2114,twilightopia-phantasy,,暮托邦之梦,Twilightopia,TTP,twilightopia
@@ -2080,7 +2080,7 @@
 2179,Ic2c-Crop-Overrides,,IC2经典版作物覆盖,IC2C Crop Overrides,,ic2c_crop_overrides
 2180,ic2c-extras,,工业时代2经典版拓展,IC2C Extras,,ic2c_extras
 2181,advanced-solars-classic,,高级太阳能经典版,Advanced Solars Classic,,advancedsolars
-2182,power-chisels,,能量凿子,Power Chisels,,
+2182,power-chisels,,能量凿子,Power Chisels,,powerchisels
 2183,ic2c-custom-soils,,IC2C Custom Soils,,,ic2c_custom_soils
 2184,homing-exp-orbs,,经验球归航,Homing Exp Orbs,,homingexporbs
 2185,enchantmentglint,,自定义附魔光效,Jabelar's Truly Magical Enchantment Glints,,enchantmentglint
@@ -2133,7 +2133,7 @@
 2232,citadel,citadel,Citadel,,,citadel
 2233,screenshot-browser,,内置截图管理器,Screenshot Browser,,screenbrowser
 2235,,,R键整理复兴版,Inventory Tweaks Reborn,,
-2236,curio-of-undying,charm-of-undying,不死图腾插槽/不死图腾槽位,Curio of Undying / Trinket of Undying / Charm of Undying,,curioofundying;charmofundying
+2236,curio-of-undying,charm-of-undying,不死图腾插槽 / 不死图腾槽位,Curio of Undying / Trinket of Undying / Charm of Undying,,curioofundying;charmofundying
 2237,explorercraft-worldexpansion,,探险者,Explorercraft,,explorercraft
 2239,enigmatic-legacy,enigmatic-legacy,神秘遗物,Enigmatic Legacy,,enigmaticlegacy
 2240,end-reborn,endorium,末地：重生,Endorium,ER,endreborn
@@ -2306,7 +2306,7 @@
 2413,worldgeneration-profiler,,Worldgeneration Profiler,,,worldgenerationprofiler;Worldgeneration Profiler Plugin
 2414,chunk-in-a-globe,,球内区块,Chunk In A Globe,,globedimension
 2415,dragon-mounts-legacy,dragon-mounts-legacy,龙骑士：传承,Dragon Mounts: Legacy,DML,dragonmounts
-2416,fruit-trees,fruitful-fun,妙趣果园 🍊,Fruitful Fun 🍊,,fruittrees;fruitfulfun
+2416,fruit-trees,fruitful-fun,妙趣果园,Fruitful Fun 🍊,,fruittrees;fruitfulfun
 2417,journey-into-the-light-mod,jitl,光明之旅·神之本质,Journey Into the Light · Essence of the Gods,JITL,journey;jitl;essence;eotg
 2418,kitchen-mod,,厨房,The Kitchen Mod,,kitchen
 2419,more-dungeons,,更多地牢,More Dungeons,,
@@ -2565,7 +2565,7 @@
 2681,simple-planes,simple-planes,简单飞机,Simple Planes,,simpleplanes
 2682,world-tooltips,,掉落物信息显示,World Tooltips,,worldtooltips
 2683,extra-arcane-knowledge-electroblobs-wizardry,,额外巫术知识,Extra Arcane Knowledge,,ghostspells
-2684,bacteriums,bacteriums,细菌重置版,Bacterium,,bacterium
+2684,bacteriums,bacteriums,细菌重置版,Bacteriums,,bacterium
 2685,pillagers,,掠夺者,Pillagers,,pillagers
 2686,guard-villagers,guard-villagers,警卫村民,Guard Villagers,,guardvillagers
 2687,simple-machinery,,简单机器,Simple Machinery,,simplemachinery
@@ -2703,7 +2703,7 @@
 2823,dynamictreestfc,dynamictreestfc,动态的树：群峦传说附属,Dynamic Trees TFC,,dynamictreestfc;dttfc
 2824,,,无尽幸运方块,Avaritia Lucky Block,,
 2825,dynamic-trees-the-twilight-forest,,动态的树：暮色森林附属,Dynamic Trees-The Twilight Forest,,dynamictreesttf
-2826,drp-global-datapack,globalpacks,全局数据包,Global Packs/Global Data & Resourcepacks,,drpglobaldatapack;globaldataandresourcepacks;globalpacks
+2826,drp-global-datapack,globalpacks,全局数据包,Global Packs / Global Data & Resourcepacks,,drpglobaldatapack;globaldataandresourcepacks;globalpacks
 2827,mob-farm-nerfer,,Mob Farm Nerfer,,,mob_farm_nerfer
 2828,blood-in-the-water,,Blood in the Water,,,blood_in_the_water
 2829,bio-technik,,Bio Technik,,,biotechnik
@@ -2849,7 +2849,7 @@
 2974,packagedauto,packagedauto,封包合成,PackagedAuto,PAuto,packagedauto
 2975,packagedexcrafting,packagedexcrafting,封包合成拓展,PackagedExCrafting,PExC,packagedexcrafting
 2976,,,镀金装甲,Gilded Armor,GA,tnb_gildedarmor
-2977,compactstorage,compact-storage,紧凑存储,compactstorage,,compactstorage
+2977,compactstorage,compact-storage,紧凑存储,CompactStorage,,compactstorage;compact_storage
 2978,useful-backpacks,useful-backpacks,实用背包,Useful Backpacks,,usefulbackpacks
 2979,conquest-reforged,conquest-reforged,征服者,Conquest Reforged,,conquest;blockpalette;connect
 2980,steelseries-gamesense,,Steelseries Gamesense,,,gamesense
@@ -2871,7 +2871,7 @@
 2996,emotes,,Emotes,,,Emotes
 2997,oc-sensors,,OC Sensors,,,ocsensors
 2998,fabric-for-fabric,,Fabric for Fabric,,,fabricforfabric
-2999,storage-tech,,Storage Tech,,,storagetech
+2999,storage-tech,,存储技术 / 存储科技,Storage Tech,,storagetech
 3000,thaumic-periphery,,神秘外饰,Thaumic Periphery,,thaumicperiphery
 3001,embellishcraft,embellishcraft,装饰工艺,EmbellishCraft,,embellishcraft
 3002,open-loader,open-loader,开放式加载,Open Loader,,openloader
@@ -2886,7 +2886,7 @@
 3011,,,未曾设想的传送方式,Unexpected Teleport,,unexpectedteleport
 3012,,,度假日记,Vacation Diary,,vacation_diary
 3013,,,香蕉工艺,BananaCraft,,bananacraft
-3015,kaleido,,Kaleido 🎨,,,kaleido
+3015,kaleido,,Kaleido,,,kaleido
 3016,,,奥法艺术,Arcane Art,,arcaneart
 3017,crock-pot,,烹饪锅,Crock Pot,,crockpot
 3020,,,AboutTea,,,abouttea
@@ -3027,7 +3027,7 @@
 3158,chlorine,,氯,Chlorine,,chlorine
 3160,bedrock-miner,bedrock-miner,基岩矿工,Bedrock Miner,,bedrockminer
 3161,reasonable-realism,,合理的现实主义,Reasonable Realism,,ReasonableRealism
-3162,passable-foliage,passable-foliage,叶间穿行 🌳,Passable Foliage 🌳,,passablefoliage
+3162,passable-foliage,passable-foliage,叶间穿行,Passable Foliage 🌳,,passablefoliage
 3163,betterend,betterend,更好的末地,BetterEnd,,betterend
 3164,armor-chroma,,盔甲颜色显示,Armor Chroma,,armorchroma
 3165,interactions,,自定义交互事件,Interactions,,interactions
@@ -3166,7 +3166,7 @@
 3301,universal-mod-core,universal-mod-core,通用模组核心,Universal Mod Core,UMC,universalmodcore
 3302,suspended-server,,挂起服务器,Suspended Server,,suspendedserver
 3303,starlight-forge,starlight-forge,星光,Starlight,,starlight
-3304,research-table,,研究台 🔬,Research Table 🔬,,researchtable
+3304,research-table,,研究台,Research Table 🔬,,researchtable
 3305,shoulder-surfing-reloaded,shoulder-surfing-reloaded,越肩视角重制,Shoulder Surfing Reloaded,,shouldersurfing
 3306,aqua-acrobatics,,水游技艺,Aqua Acrobatics,,aquaacrobatics
 3307,silents-mechanisms,,寂静机械,Silent Mechanisms,SM,silents_mechanisms
@@ -3243,7 +3243,7 @@
 3382,nbt-manipulator,,NBT Manipulator,,,nbtmanipulator
 3383,,,Netherending Ores - Configs,,,
 3384,,,不死传说,undiedtale,UDT,undiedtale
-3385,sulfur-and-potassium-make-more-gunpowder,,Sulfur And Potassium - More Gunpowder,,,sulfurpotassiummod
+3385,sulfur-and-potassium-make-more-gunpowder,sulfur-and-potassium,Sulfur And Potassium - More Gunpowder,,,sulfurpotassiummod
 3386,statues,statues,雕像,Statues,,statues
 3387,advanced-mining-dimension,advanced-mining-dimension,先进的采矿维度,Advanced Mining Dimension,,mining_dimension
 3388,time-travel-mod,,时间旅行,Time Travel Mod,,timetravelmod
@@ -3336,7 +3336,7 @@
 3479,druidcraft,,德鲁伊工艺,Druidcraft,,druidcraft
 3480,berry-good,berry-good,Berry Good,,,berry_good
 3481,savage-and-ravage,savage-and-ravage,残暴与掠夺,Savage & Ravage,,savageandravage;savage_and_ravage
-3482,jade,jade,玉 🔍,Jade 🔍,,jade
+3482,jade,jade,玉,Jade 🔍,,jade
 3483,somnia,somnia,梦醒时分,Somnia Awoken,,somnia
 3484,industrial-reborn,industrial-reborn,Industrial Reborn,,,indreb;industrialreborn
 3485,mo-structures-forge,mo-structures,更多自然生成结构,Mo' Structures,,mostructures
@@ -3440,7 +3440,7 @@
 3584,project-mmo,project-mmo,Project MMO,,PMMO,pmmo
 3585,abnormals-delight,abnormals-delight,Abnormals Delight,,,abnormals_delight
 3586,jojos-bizarre-survival,,JoJo's Bizarre Survival,,,jojomod
-3587,,,背包合成修复,Gambiarra,,PlayerContainerFix
+3587,,,背包合成修复,Gambiarra,,PlayerContainerFix;MagiHandlers
 3588,somnus,somnus,Somnus API,,,somnus
 3589,lost-trinkets,,遗失饰物,Lost Trinkets,,losttrinkets
 3590,lookingglass,,LookingGlass,,,LookingGlass
@@ -3879,7 +3879,7 @@
 4037,campfire-overhaul,,Campfire Overhaul,,,campfire_overhaul
 4038,shatter,,Shatter,,,shatter
 4039,electric-self-balance-scooters,,电动平衡车,Electric Self-balance Scooters,ESBS,electric_selfbalancing_scooters
-4040,rats-mischief,rats-mischief,Rat's Mischief🐀,,,ratsmischief
+4040,rats-mischief,rats-mischief,Rat's Mischief,,,ratsmischief
 4041,dream-rng,,Dream RNG,,,dreamrng
 4042,wandering-trader-improvements,,Wandering Trader Improvements,,,wt_improvements
 4044,wasteland-reborn,,不毛之地：重生,Wasteland Reborn,,wastelands
@@ -4155,7 +4155,7 @@
 4318,inventory-totem,inventory-totem,更好的图腾,Inventory Totem,,inventorytotem;inventorytotem-fabric
 4319,lava-picker-upper,,熔岩收集器,Lava Picker Upper,,lavacontainer
 4320,nethers-exoticism,nethers-exoticism,Nether's Exoticism,,,nethers_exoticism
-4321,everpotion,everpotion,永恒药水 ⚗️,EverPotion ⚗️,,everpotion
+4321,everpotion,everpotion,永恒药水,EverPotion ⚗️,,everpotion
 4322,quick-shulker,quickshulker,快捷潜影盒,Quick Shulker,,quickshulker
 4323,respawnable-pets,respawnable-pets,宠物可重生,Respawnable Pets,,respawnablepets
 4324,schmucks,schmucks,小阿呆,Schmucks!,,schmucks
@@ -4213,7 +4213,7 @@
 4378,not-enough-animations,not-enough-animations,更多动画,Not Enough Animations,,notenoughanimations
 4379,better-beacon,,更好的信标与潮涌核心,Better Beacon / Conduit,,betterbeacon
 4381,dungeon-now-loading,dungeon-now-loading,地牢进行时,Dungeon Now Loading,DNL,dungeonnowloading
-4382,simple-emerald-tools-fabric,,Easy Emerald Tools & More,,,easy_emerald
+4382,simple-emerald-tools-fabric,,便利的绿宝石,Easy Emerald Tools & More,,easy_emerald
 4383,cold-sweat,cold-sweat,冷汗,Cold Sweat,,cold_sweat
 4384,witchery-rewitched,,巫术：重生,Witchery: Rewitched,,witchery_rewitched
 4385,majou-densetsu-3d,,魔城传说3D,Majou Denetsu 3D,MD3D,backtones
@@ -4443,7 +4443,7 @@
 4613,simple-tomb,,简单坟墓,Simple Tomb,,simpletomb
 4614,modern-life,modern-life,摩登生活,Modern Life,,modernlife
 4615,paxi-fabric,paxi,Paxi,,,paxi
-4616,,elemental-reaction,原神-起源,Genshin_Elemental_Reaction,GER,er
+4616,elemental-reaction,elemental-reaction,原神-起源,Genshin_Elemental_Reaction,GER,er
 4617,waveycapes,wavey-capes,飘扬披风,Wavey Capes,,waveycapes
 4618,skin-layers-3d,3dskinlayers,3D 皮肤层,Skin Layers 3D,,skinlayers3d;skinlayers
 4619,all-the-discs,,唱片大全,All the Discs,,allthediscs
@@ -4673,7 +4673,7 @@
 4846,extra-coals,,Extra Coals,,,extracoals
 4847,dark-caverns,,暗黑深穴,Dark Caverns,,dark_caverns
 4848,,,更多唱片,Lot Of Discs,LODs,lot_of_discs
-4849,,,卡牌大师,,,
+4849,,,卡牌大师,card_master,,
 4850,,,末影环,Ender Ring,,ender_ring
 4851,milk-all-the-mobs,milk-all-the-mobs,Milk All The Mobs,,,milkallthemobs
 4852,roadrunner,,RoadRunner,,,roadrunner
@@ -4709,7 +4709,7 @@
 4882,apple-trees-revived,,苹果树：复生,Apple Trees Revived,,appletreesrev
 4883,potatos-lucky-block,,马铃薯幸运方块,Potato's Lucky block,,potatos_lucky_block
 4884,even-more-tnt,,Even More TNT,,,motnt
-4885,fun-tnt,,有趣的TNT,Fun TNT,,funtnt
+4885,fun-tnt,fun-tnt,有趣的TNT,Fun TNT,,funtnt
 4886,,,核废料工艺,Nuclear Waste Craft,NWC,hbm_nwc
 4887,chileancraft,,智利工艺,Chilean Craft,,chileancraft
 4888,canals,,水渠,Canals,,canals
@@ -4727,7 +4727,7 @@
 4900,hydrogen-reforged,,氦,Helium,,hydrogen
 4901,xl-food-mod-plus,,超多食物+,XL Food Mod+,,xlfoodmod
 4902,,,克苏鲁世界,Cthulhu Mythos,,cthulhu_mythos
-4903,mcbot,mcbot,群服互联🔗,McBot🔗,,mcbot
+4903,mcbot,mcbot,群服互联,McBot🔗,,mcbot
 4904,ice-and-fire-dragonseeker,,Ice and Fire: Dragonseeker,,,dragonseeker
 4905,reeses-sodium-options,reeses-sodium-options,Reese的钠视频界面,Reese's Sodium Options,RSO,reeses-sodium-options
 4906,continuity,continuity,Continuity,,,continuity
@@ -4747,7 +4747,7 @@
 4920,castle-in-the-sky-the-fairytale-of-laputa,,天空之城,Castle in the Sky,,castle_in_the_sky
 4921,dimensionalores,,维度矿石,DimensionalOres,,dimores
 4922,illagers,illagers+,更多的灾厄村民,Illagers+,,illagers_plus
-4923,,,🌈 真实的 jeb_,🌈 Real jeb_,,jeb_
+4923,,,真实的 jeb_,🌈 Real jeb_,,jeb_
 4924,,,Make Copper Great Again,,MCGA,mcga
 4925,,,Nikkori MOD,,,nikkorimod
 4926,villagers-follow-emeralds-fabric,villagers-follow-emeralds-fabric,村民跟随绿宝石,Villagers follow Emeralds,,villagers-follow-emeralds
@@ -5113,7 +5113,7 @@
 5290,,,SeedCrackerX,,,seedcrackerx
 5291,bobby,bobby,服务器区块缓存,Bobby,,bobby
 5292,boosted-brightness,boosted-brightness,亮度增强,Boosted Brightness,,boostedbrightness
-5293,effective,effective,Effective 💦,,,effective;effective_fg
+5293,effective,effective,Effective,,,effective;effective_fg
 5294,,,回收商,Merchants,,merchants
 5295,voidtotem,voidtotem,虚空图腾,Void Totem,,voidtotem
 5296,tool-leveling-plus,tool-leveling,工具升级,Tool Leveling+,,toolleveling
@@ -5380,7 +5380,7 @@
 5561,extended-mushrooms,extended-mushrooms,Extended Mushrooms,,,extendedmushrooms
 5562,shear-madness,,Shear Madness,,,shearmadness
 5563,missing-pieces,,Missing Pieces,,,missing_pieces
-5564,hatchery,,Hatchery,,,hatchery
+5564,hatchery,,孵化巢,Hatchery,,hatchery
 5565,alexs-delight,,Alex's Delight,,,alexsdelight
 5566,creatures-and-beasts,creatures-and-beasts,动物和野兽,Creatures and Beasts,,cnb
 5567,dead-guys-deep-dark,,Dead Guys Untitled Deep Dark,,,dead_guys_untitled_deep_dark_
@@ -5405,7 +5405,7 @@
 5587,ma-enchants,,Ma 附魔,Ma Enchants,,maenchants
 5588,bits-and-chisels,bits-and-chisels,Bits and Chisels,,,bitsandchisels
 5589,trading-post,trading-post,交易站,Trading Post,TP,tradingpost
-5590,phantasmic,phantasmic,Nourished Nether/Phantasmic/Netherific,,,nourished_nether
+5590,netherific,netherific,Netherific / Phantasmic / Nourished Nether,,,nourished_nether
 5591,furnus,,Furnus,,,furnus
 5592,permanent-light-generator,plg,恒久光发电机,Permanent Light Generator,PLG,plg
 5594,immortuos-calyx,immortuos-calyx,Immortuos Calyx,,,immortuoscalyx
@@ -5421,7 +5421,7 @@
 5604,,,变形金刚,Transformers Mod,TFmod,transformers
 5605,satin-api,satin-api,Satin API,,,satin
 5606,easy-magic,easy-magic,简易附魔台,Easy Magic,EM,easymagic
-5607,enlightend,enlightend,末地启明,Enlightend/Enlightened End/Nourished End,,nourished_end;enlightened_end
+5607,enlightend,enlightend,末地启明,Enlightend / Enlightened End / Nourished End,,nourished_end;enlightened_end
 5608,rubidium,rubidium,铷,Rubidium,,rubidium
 5609,cultural-delights,cultural-delights,多元乐事,Cultural Delights,,culturaldelights;cultural_delights
 5610,,,我的世界，但是没有含水层,Minecraft\c but there are NO AQUIFERS,,
@@ -5437,9 +5437,9 @@
 5620,,,弯刀,Scimitar Mod,,integerarray_scimitar
 5621,,,魔法曲奇,Magic Cookie Mod,,integerarray_magiccookie
 5622,,,常见的绿宝石,Common Emeralds Mod,,integerarray_commonemerald
-5623,,,鸡笼,Chicken Cage Mod,,integerarray_chickencage
+5623,,,鸡笼,Chicken Cage Mod,,integerarray_chickencage;integerArray_Breeding
 5624,,,Leather Armor Plus Mod,,,integerarray_leatherarmor
-5625,,,撑竿与羽翼,Pole Vault Mod,,integerarray_leatherarmor
+5625,,,撑竿与羽翼,Pole Vault Mod,,integerarray_polevault
 5626,lyonheart,lyonheart,Lyonheart,,,lyonheart
 5627,genshin-12,,原神12,Genshin 12,,genshin12
 5628,ae-additions-extra-cells-2-fork,ae-additions,AE Additions - ExtraCells2 Fork,,EC2F,aeadditions;ae2additions
@@ -5497,12 +5497,12 @@
 5681,power-utilities-iu,power-utilities,能源转换重制,Power Utilities Remastered,,powerutils
 5682,create-gear-addon,,Create gear addon,,,creategearaddon
 5683,gun-mod-tl,,Gun mod-Weapon update,,GMWU,gm
-5684,,,分类仓库,,,classification
+5684,,,分类仓库,classification,,classification
 5685,energymeter,energymeter,Energy Meter,,,energymeter
 5686,headindex,headindex,头颅菜单,Head Index,HI,headindex
 5687,quantum-generators,quantum-generators,量子发电机,Quantum Generators,,quantum_generators
 5688,simply-quarries,simply-quarries,简易采石场,Simply Quarries,,simplyquarries
-5689,lethal-peaceful,,🐷Lethal Peaceful🔫,,,lethal_peaceful
+5689,lethal-peaceful,,Lethal Peaceful,,,lethal_peaceful
 5690,,,大方的山羊和道具的植物大战僵尸模组,Generous goats and props 's Plants Vs Zombies mod,,pvz_mod
 5691,,,假面骑士Kuuga,Kamen Rider Kuuga,,kamen_rider_kuuga;kuuga_mod
 5692,storage-drawers-crafting-recipe,,储物抽屉合成配方,Storage Drawers Crafting Recipe,,sdcr
@@ -5842,7 +5842,7 @@
 6031,nyfs-quivers,nyfs-quivers,Nyf的箭袋,Nyf's Quivers,,nyfsquiver
 6032,party-parrots,party-parrots,Party Parrots,,,partyparrots
 6033,patina-pipeworks,,古铜管道,Patina Pipeworks,,patinapipeworks
-6034,brewevolution,,酿造进化 🍺,Brewevolution 🍺,,brewevolution
+6034,brewevolution,,酿造进化,Brewevolution 🍺,,brewevolution
 6035,devil-fruits,,恶魔果实,Devil Fruits,,devilfruits
 6036,,,BetterFonts Forked by Suzutsuki,,,BetterFonts
 6037,trail-mix,,Trail Mix,,,trailmix
@@ -6013,7 +6013,7 @@
 6203,goblin-community,,Goblins Community!,,,goblins
 6204,kobolds-community,,Kobolds Community!,,,kobolds
 6205,mutant-villager,,Mutant Villager!,,,mutantvillager
-6206,pick-your-poison,pick-your-poison,Pick Your Poison 🐸,,,pickyourpoison
+6206,pick-your-poison,pick-your-poison,Pick Your Poison,,,pickyourpoison
 6207,illager-expansion-fabric,illager-expansion-polymer,Illager Expansion,,,illagerexp
 6208,immersive-armors,immersive-armors,沉浸式盔甲,Immersive Armors,,immersive_armors
 6209,seeds,seeds,Seeds,,,seeds
@@ -6553,7 +6553,7 @@
 6748,dracovita-delight-a-farmers-delight-add-on,,Dracovita Delight,,,dracovitadelight
 6749,gobber-delight-a-farmers-delight-add-on,,戈伯乐事,Gobber Delight,,gobberdelight
 6750,,,时间追逐生存挑战,WorldChallenge,,qiq2i;qiq2i_clga1
-6751,,,🦇蝙蝠快乐 Fabric,🦇 Bat Happy Mod Fabric,,bathappymod
+6751,,,蝙蝠快乐 Fabric,🦇 Bat Happy Mod Fabric,,bathappymod
 6752,extinguish-by-uss_shenzhou,,灭,Extinguish,,extinguish
 6753,biome-makeover-forge,biome-makeover,生物群系改造,Biome Makeover,,biomemakeover
 6754,throwable-blocks,,Throwable Blocks,,,throwableblocks
@@ -6785,7 +6785,7 @@
 6982,,,Better Trades,,,
 6983,,,Block-Geo Fixer / Sonic Bug Fix,,,
 6984,elytra-chestplate-swapper,elytra-chestplate-swapper,鞘翅/胸甲切换,Elytra/Chestplate Swapper,ECS,ecs
-6985,the-ends-flora,,The End's Flora🌻,,,ends_flora
+6985,the-ends-flora,,The End's Flora,,,ends_flora
 6986,apollos-additional-structures,,Apollo's Additional Structures,,AAS,apollo
 6987,,,test-utils,,,test-utils
 6988,chimes,chimes,Chimes,,,chimes
@@ -6837,7 +6837,7 @@
 7035,riding-utilities,,Riding Utilities,,,ridingutils
 7036,compact-help-command,compact-help-command,Compact Help Command,,,compacthelpcommand
 7038,miners-lung,,矿工之肺,Miner's Lung,,minerslung
-7039,greenery,greenery,绿色植物🌿,Greenery🌿,Gr,greenery
+7039,greenery,greenery,绿色植物,Greenery🌿,Gr,greenery
 7040,butchers-delight,butchers-delight,屠夫乐事,Butcher's Delight,,butchersdelight
 7041,large-meals-an-add-on-for-farmers-delight,,Large Meals,,,largemeals
 7042,explorers-delight,explorers-delight,Explorer's Delight,,,exdel
@@ -6921,7 +6921,7 @@
 7121,alternate-current,alternate-current,Alternate Current,,,alternate_current;alternate-current
 7122,no-unused-chunks,no-unused-chunks,No Unused Chunks,,,nounusedchunks
 7123,no-fade,no-fade,No Fade,,,nofade
-7124,radioactive-universe,,Radioactive universe ☢️,,,radioactive
+7124,radioactive-universe,,Radioactive universe,,,radioactive
 7125,,,额外MODJEI信息,More JEI Info For Some Mod,MJI,jeim
 7126,completeconfig,completeconfig,CompleteConfig API,,,completeconfig
 7127,fixmyspawnr,fixmyspawnr,FixMySpawnR,,,fixmyspawnr
@@ -7341,7 +7341,7 @@
 7547,flighthud,,FlightHUD,,,flighthud
 7548,meal-api,mealapi,Meal API,,,mealapi
 7549,seed-drop,,Seed Drop,,,seeddrop
-7550,fishery-expansion,fishery,🎣 Fishery,,,fishery
+7550,fishery-expansion,fishery,Fishery,,,fishery
 7551,,,FTB Quests: Localization Keys Refabricated,,,ftbconv
 7552,arrowcamfabric,,ArrowCam,,,arrowcam
 7553,overpowered-mending,overpoweredmending,OverpoweredMending,,,overpoweredmending
@@ -7563,7 +7563,7 @@
 7770,mysteriumlib,mysteriumlib,MysteriumLib,,,mysteriumlib
 7771,,inrealtime,In RealTime,,,inrealtime
 7772,furnace-recycle,furnace-recycle,熔炉回收,Furnace Recycle,,furnacerecycle;furnacerecycle-fabric
-7773,,,🦇蝙蝠快乐Mod Plus,🦇Bat Happy Mod Plus,,bathappyplus
+7773,,,蝙蝠快乐Mod Plus,🦇Bat Happy Mod Plus,,bathappyplus
 7774,wild-lands,wild-lands,Wild Lands,,,wildlands
 7775,,,更丰富的原版重制版,More Plentiful Vanilla reborn,MPV,more_plentiful_vanilla
 7776,noenchanting,,NoEnchanting,,,miscellaneous
@@ -7667,7 +7667,7 @@
 7874,nyfs-spiders,nyfs-spiders,Nyf's Spiders,,,nyfsspiders;spiderstpo
 7875,illager-additions,,Illager Additions,,,illager_additions
 7876,idolizing,,Idolizing,,,the_idle
-7877,evocation-and-annihilation,,Evocation🧙\u200d♂️ and Annihilation💣!!,,,evocationandannihilation
+7877,evocation-and-annihilation,,Evocation and Annihilation!!,,,evocationandannihilation
 7878,more-golems,,More Golems,,,moregolems
 7879,kebabs-crowns,,Kebab's Crowns,,,crowns
 7880,rerereskillable,rerereskillable,rerereSkillable,,,rereskillable
@@ -7877,7 +7877,7 @@
 8085,leaves-be-gone,leaves-be-gone,Leaves Be Gone,,LG,leavesbegone
 8086,recipe-cache,,配方缓存,Recipe Cache,,recipecache
 8087,mob-catcher,,Mob Catcher,,,mobcatcher
-8088,,quiltgoslighlyfasterlol,🗿QuiltGoSlightlyFasterLol🗿,,,quiltgoslightlyfasterlol
+8088,,quiltgoslighlyfasterlol,QuiltGoSlightlyFasterLol,,,quiltgoslightlyfasterlol
 8089,,,不要饿死重置版,Don't Strave To Death:Reload,DSDR,dont_starve_to_deathreload
 8090,,,驯化怪物,Tamed Monster,,tamedmonster
 8091,guns-rpg-waystone-addon,,Guns-RPG Waystones,,,grpgwaystones
@@ -7992,7 +7992,7 @@
 8203,compassplus,,Compass Plus,,,compassplus
 8204,create-industry,create-tfmg,机械动力：工业长路,Create: Industry/Create: The Factory Must Grow,TFMG,createindustry;tfmg
 8205,simple-splash-screen,simple-splash-screen,Simple Splash Screen,,,simplesplashscreen
-8206,unusual-prehistory-forge,unusual-prehistory-forge,Unusual Prehistory,,,unusualprehistory
+8206,unusual-prehistory,unusual-prehistory,Unusual Prehistory,,,unusualprehistory
 8207,biospheres,,生物圈,Biospheres,,biospheres
 8208,qkl,qkl,Quilt Kotlin Libraries,,QKL,qkl;qkl_core;qkl_qsl;qkl_minecraft
 8209,,,Arboria: Biome Enhancement,,,arboria
@@ -8040,7 +8040,7 @@
 8252,,plumeconfig,Plume Config,,Plug,plumeconfig
 8253,geophilic,geophilic,Geophilic – Biome Overhauls,,,geophilic
 8254,critter-fights,,Critter Fights,,,critterfights
-8255,hypothermic,hypothermic,Hypothermic / Coldwaters❄️,,,coldwaters
+8255,hypothermic,hypothermic,Hypothermic / Coldwaters,,,coldwaters
 8256,nosecrets,,不秘密,NoSecrets,,nosecrets
 8257,extra-creeper-types,,Extra Creeper Types,,,excp
 8258,loot-casket,,Loot Casket,,,lootcasket
@@ -8063,7 +8063,7 @@
 8275,reinforced-deepslate-crafting,,强化深板岩的合成,Reinforced Deepslate Crafting,RDC,reinforced_deepslate_crafting
 8276,jaopcacustom,,JAOPCA自定义,JAOPCA Custom,,jaopcacustom
 8277,friendly-fire,friendly-fire,Friendly Fire,,,friendlyfire
-8278,companion,companion,Companion 🐕,,,companion
+8278,companion,companion,Companion,,,companion
 8279,sebastrnlib,sebastrnlib,SebastrnLib,,,sebastrnlib
 8280,what-music-is-this,,What Music Is This?,,WMIT,wmit
 8281,,,沼泽乐事,Bayou Delight,BD,bayou_delight
@@ -8587,7 +8587,7 @@
 8804,minespaceex,,MineSpaceEX,,MSEX,minespaceex
 8805,gregious-maximus,,Gregious Maximus,,,gregiousmaximus
 8806,shut-up-model-loader,,Shut Up\c Model Loader!,,SUML,shutupmodelloader
-8807,cultural-delights-fabric,cultural-delights-fabric,多元乐事 (Fabric 版),Cultural Delights [Fabric],,culturaldelights
+8807,cultural-delights-fabric,cultural-delights-fabric,多元乐事 (Fabric 版),Cultural Delights [Fabric],,
 8808,collectors-reap,collectors-reap,Collector's Reap,,,collectorsreap
 8809,bones-and-swords,,Bones And Swords,,,bonesandswords
 8810,vanity-shedds-mystical-toolsets-pack,,Vanity: Shedd's Mystical Toolsets Pack,,,sheddmersopal
@@ -8862,7 +8862,7 @@
 9084,,,Unicode扩展字符支持,UnicodeFontExtend,,
 9085,,,发包崩服修复,PacketCrashFix,,
 9086,terrains,,Terrains,,,terrains
-9087,bugtorched-curseforged,bugtorch,BugTorch,,,bugtorch
+9087,bugtorch,bugtorch,BugTorch,,,bugtorch
 9088,better-tridents,better-tridents,更好的三叉戟,Better Tridents,BT,bettertridents
 9089,undead-unleashed,undead-unleashed,Undead Unleashed,,,undead_unleashed
 9090,missing-wilds,missing-wilds,遗落荒野,Missing Wilds,,missingwilds
@@ -8871,7 +8871,7 @@
 9093,advancement-locator,,Advancement Locator,,CTA,cta
 9094,universal-tweaks,universal-tweaks,通用修改,Universal Tweaks,UT,universaltweaks
 9095,,,船只操控性增强,Boat Maneuverability Enhancing,BME,boat-maneuverability-enhancing
-9096,,succ,Succ™️,,,succ
+9096,,succ,Succ,,,succ
 9097,welcome-to-the-jungle,,丛林传说,Welcome to the Jungle,,thejungle
 9098,,,生存重负：食物改革,life is so hard - food part,lish:fp,lifeissohard
 9099,,,Dash Loading Screen,,,dash-loading-screen
@@ -8979,7 +8979,7 @@
 9203,snowballing,,Snowballing,,,snowballing
 9204,winter-essentials,winter_essentials,Winter Essentials,,,winteressentials
 9205,embeddium-extras,embeddium-extras,镁/铷附属：土豆版,Magnesium/Rubidium Extra: Potato Editon (Embeddium Extras),,magnesium_extras
-9206,realisticcruelty,realisticcruelty,真实残忍,RealisticCruelty,RC,realisticcruelty
+9206,realisticcruelty,realisticcruelty,真实残忍,RealisticCruelty,RC,realisticcruelty;realistic_cruelty
 9207,trapper-pelts,trapper-pelts,Trapper Pelts,,,trapperpelts
 9208,workshops-of-doom,workshops-of-doom,Workshops of Doom,,,workshopsofdoom
 9209,create-mechanical-spawner,create-mechanical-spawner,机械动力：动力刷怪笼,Create Mechanical Spawner,,create_mechanical_spawner
@@ -9063,15 +9063,15 @@
 9294,red-pandas,red-pandas,Red Pandas,,,redpandas
 9295,,,收纳袋,,,bundle
 9296,simple-cobblestone-generator-forge,,Simple Cobblestone Generator,,,simple_cobblestone_generator
-9297,floral-flair-fabric,,🌷Floral Flair🌷,,,floral_flair
+9297,floral-flair-fabric,,Floral Flair,,,floral_flair
 9298,vertical-slabs-compat,vertical-slabs-compat,Vertical Slabs Compat,,VSC,v_slab_compat
 9299,ruins,philips-ruins,Philip's Ruins,,,philipsruins
 9300,cobblemon,cobblemon,方块宝可梦,Cobblemon,,cobblemon
 9301,mysterious-biomes,,Mysterious Biomes,,,spookybiomes
-9302,,,Spawn Animations,,,spawn_animations_mr
+9302,,,生成动画,Spawn Animations,,spawn_animations_mr
 9303,head-in-the-clouds,head-in-the-clouds,Head in the Clouds,,,head_in_the_clouds
 9304,fdmc,,HyperWorld,,,fdmc
-9305,rpg-style-more-weapons,rpg_style_more_weapons,⚔️ RPG style More Weapons!,,,rpgsmw
+9305,rpg-style-more-weapons,rpg_style_more_weapons,RPG style More Weapons!,,,rpgsmw
 9307,,,Sirius's Origins - Origins Datapack,,,
 9308,easy-experience,,Easy Experience,,,easyexperience
 9309,,,源石科技,OriginiumTech,OT,originiumtech
@@ -9623,7 +9623,7 @@
 9858,item-obliterator,item-obliterator,Item Obliterator,,,item_obliterator
 9859,you-shall-not-spawn,you-shall-not-spawn,You Shall Not Spawn!,,YSNS,ysns
 9860,hell-on-earth,,Hell on Earth,,,hellonearth
-9861,zombie-friends,zombie-friends,Zombie Friends! 🧟\u200d♀️ 🧟 🧟\u200d♂️,,,zombiefriends
+9861,zombie-friends,zombie-friends,Zombie Friends!,,,zombiefriends
 9862,stone-craft-je,stone-craft,石头工艺,Stone Craft,SC,oldb;stonecraft
 9863,trade-cycling,trade-cycling,Trade Cycling,,,trade_cycling
 9864,illager-revolution,illager-revolution,Illager Revolution,,,illagerrevolutionmod
@@ -9827,7 +9827,7 @@
 10065,,nvidium,Nvidium,,,nvidium
 10066,merequester,merequester,ME Requester,,,merequester
 10067,invade,,入侵,Invade,,invade
-10068,frame-api,frame-api,🔨 Frame API,,,frame
+10068,frame-api,frame-api,Frame API,,,frame
 10069,,,苦力怕喷嚏,CreeperSneeze,CS,creepersneeze
 10070,realisticclouds,,RealisticClouds,,RC,realisticclouds
 10071,arcane-world,,Arcane World,,,arcaneworld
@@ -10374,7 +10374,7 @@
 10618,photon,photon-editor,光子,Photon,,photon
 10619,voice-chat-interaction,voice-chat-interaction,Voice Chat Interaction,,,vcinteraction
 10620,replay-voice-chat,replay-voice-chat,Replay Voice Chat,,,replayvoicechat
-10621,ships-mod-unofficial,,船：非官方版,Cuchaz Ships Unofficial,,ship
+10621,ships-mod-unofficial,,船：非官方版,Cuchaz Ships Mod Unofficial,,ship
 10623,storage-overhaul,,Storage Overhaul,,,storage_overhaul
 10624,chorus-warps,,Chorus Warps,,,choruswarps
 10625,aureate-reliquary,,Aureate Reliquary,,,aureatereliquary
@@ -11167,7 +11167,7 @@
 11419,arcane-lanterns,arcane-lanterns,Arcane Lanterns,,AL,arcane_lanterns
 11420,,,Pillage the Village,,,
 11421,crashma,crashma,Crashma,,,crashma
-11422,,,🦇蝙蝠悲伤MOD,🦇 Bat Sad Mod,,
+11422,,,蝙蝠悲伤MOD,🦇 Bat Sad Mod,,
 11423,blackwolf-library,blackwolf-library,Blackwolf Library,,,blackwolflibrary
 11424,blues-scape-and-run-bosses,,Blue's scape and run bosses,,,greenfescapeandrun
 11425,gigeresque,gigeresque,Gigeresque,,,gigeresque
@@ -11305,7 +11305,7 @@
 11558,fishing-bobber-detector,create-fishing-bobber-detector,Create: Fishing Bobber Detector,,,bobberdetector
 11559,,unfix-mc-181190,村民折扣叠加,Unfix MC-181190,,unfixmc181190
 11560,create-balanced-flight,,Create: Balanced Flight,,,balancedflight
-11561,brewin-and-chewin-remastered,,B&C Fan-Made 1.20 Port,,,brewinandchewin
+11561,bnc-1-20-port,,B&C Fan-Made 1.20 Port,,,
 11562,cupboard,,Cupboard,,,cupboard
 11563,mcinstance-loader,mcinstance-loader,MCInstance Loader,,,mcinstanceloader
 11564,pre-fish-feed,,打窝,Pre Fish Feed,PFF,prefishfeed
@@ -11319,7 +11319,7 @@
 11572,,inverse-phantoms,Inverse Phantoms,,,inverse_phantoms
 11573,,cactus-storage,Cactus Storage,,,cactus_storage
 11574,,,暮色森林光影兼容,,,
-11575,etcetera,,Etcetera,,,etcetera
+11575,etcetera,etcetera,Etcetera,,,etcetera
 11576,,,战斧,Tomahawks,,powerdrop
 11577,,,孤独摇滚！,Bocchi The Rock,bocchi,bocchitherock
 11578,garnished,create-garnished,机械动力：装食,Create: Garnished,,garnished
@@ -11344,7 +11344,7 @@
 11597,opolis-miners,opolis-miners,Opolis Miners,,,miners
 11598,netherite-but-cheaper,,Netherite But Cheaper,,NBC,nbc_mr
 11599,,fabric-hammers,Fabric Hammers,,,fabric-hammers
-11600,items-displayed-fabric,items-displayed,物品陈列,Items Displayed,,items_displayed
+11600,items-displayed,items-displayed,物品陈列,Items Displayed,,items_displayed
 11601,wood-converter,,Wood Converter,,,woodconverter;mod_wc
 11602,hammer-mod,,Hammer Mod,,,
 11603,,,Ender的时间控制,Ender's time control,ETC,enderstimecontrol
@@ -11477,7 +11477,7 @@
 11730,,,冬之纪行诗,The Poetry Of Winter,,
 11731,,videotape,Video Tape,,,videotape
 11732,,enchantmenttweaker,Enchantment Tweaker,,,enchantmenttweaker
-11733,let-me-sleep,,让我睡觉,Let Me Sleep,LS,letmesleep
+11733,let-me-sleep,let-me-sleep-fuzs,让我睡觉,Let Me Sleep,LS,letmesleep
 11734,forge-tooltip-texts-scroller,,Tooltip Texts Scroller,,,tooltipscroller
 11735,well-behaved-mobs,,Well-Behaved Mobs / Good Skeletons Don't Strafe,,,wellbehavedmobs
 11736,,,更好的猪,Better Pigs,,better_pigs
@@ -11797,7 +11797,7 @@
 12052,cc-mb,cc-mb,纸带八音盒,Music Box,,cc_mb
 12053,oryls-adventures,,Oryl's Adventures,,,oryls_adventure
 12054,elden-craft,,Elden Craft,,,elden_craft
-12055,ruok,,钌,RuOK,,ruokmod
+12055,ruok,ruok,钌,RuOK,,ruokmod
 12056,deep-dark-regrowth,,Deep Dark: Regrowth,,,deep_dark_regrowth
 12057,textrues-embeddium-options,textrues-embeddium-options,TexTrue 的 Embeddium 视频界面,TexTrue's Embeddium Options,TEO,textrues_embeddium_options
 12058,silent-mine,,Silent Mine,,,silent_mine
@@ -12009,7 +12009,7 @@
 12265,good-boy,good-boy,Good Boy,,,goodboy
 12266,nethers-overhaul,nethers-overhaul,Nether's Overhaul,,,netheroverhaul
 12267,better-battle-towers,,战斗高塔，启动！,Better Battle Towers,BBT,battletowers
-12268,,,GCY：儿童快乐🎉,Gregicality Kids,GCYK,gregicality_kids
+12268,,,GCY：儿童快乐,Gregicality Kids,GCYK,gregicality_kids
 12269,,,The Beasts,,,the_beasts
 12270,,axiom,Axiom,,,axiom
 12271,,,ELib,,EL,elib
@@ -12189,7 +12189,7 @@
 12446,,chroma-world-border,Chroma World Border,,,chromaworldborder
 12447,just-sword-blocking,,Just Sword Blocking,,,justswordblocking
 12448,,,Abandoned & Ruin Structures,,,
-12449,,,UnifyTags,,,
+12449,,,UnifyTags,,,unify
 12450,,blissful-butterflies,Blissful Butterflies,,,blissful_butterflies
 12451,mltpojectmonster,,銘洛天的怪物增强,MLTPojectMonster,MLTPM,mltpojectmonster
 12452,,relics-of-the-sky,空岛遗物,Relics of the Sky,,relicsofthesky
@@ -12369,7 +12369,7 @@
 12628,,,TL Skin and Cape,,,tlauncher_custom_cape_skin;tlskincape
 12629,forge-cit,,Forge CIT,,,citresewn
 12630,,diamethyst-golem,Diamethyst Golem,,,diamethyst_golem
-12631,you-are-seeing-dungeons,you-are-seeing-dungeons,You Are Seeing Dungeons🏰,,YASD,youre_seeing_dungeons
+12631,you-are-seeing-dungeons,you-are-seeing-dungeons,You Are Seeing Dungeons,,YASD,youre_seeing_dungeons
 12632,,,怪物增强附属,Mobs Enhancement Addon,MEA,mobsenhancement
 12633,just-leveling,just-leveling,Just Leveling,,,justleveling
 12634,create-edible-belts,,Create: Edible Belts,,,
@@ -12511,7 +12511,7 @@
 12771,croptopia-delight,croptopia-delight,Croptopia Delight,,,croptopia_delight
 12772,,no-mining-cooldown,No Mining Cooldown,,,nmc
 12773,futuristic-decor,,次元科技装饰方块,Futuristic Decor,,futuristic_decor
-12774,,,Keybinds Galore -  Unofficial,,,keybinds_galore
+12774,,,Keybinds Galore - Unofficial,,,keybinds_galore
 12775,spyglass-of-curios,spyglass-of-curios,饰品望远镜,Spyglass of Curios,,spyglassofcurios
 12776,,,自定义彩字,ColorfulRender,CR,olorfulfont
 12778,,,匠魂-匠造之传,Tic Legend of Tinker,TLT,tic_legendoftinker
@@ -12556,7 +12556,7 @@
 12817,,you-thief-remastered-edition,You Thief: Remastered Edition,,,youthief
 12818,,,Hero Proof,,,hero_proof
 12819,more-slabs-stairs-and-walls,more-slabs-stairs-and-walls,More Slabs Stairs & Walls,,,more_slabs_stairs_and_walls
-12820,caves-canyons,,Caves & Canyons,,,caves_canyons;mr_caves__canyons
+12820,caves-canyons,,Caves & Canyons,,,mr_caves__canyons;caves_canyons
 12821,dragon-mounts-legacy-continued,dragon-mounts-legacy-continued,龙骑士重制版延续,Dragon Mounts Legacy Continued,,dragonmounts
 12822,chloride-mod,chloride,Chloride (Embeddium++/Sodium++),,,embeddiumplus;chloride
 12823,aggro-indicator,aggroindicator,Aggro Indicator,,,aggroindicator
@@ -12595,14 +12595,14 @@
 12857,pangteens-immortal-adventure,pangteens-immortal-adventure,PangTeen的平凡冒险,PangTeen's Immortal Adventure,IMM,imm
 12858,simple-shops,simpleshops,简单商店,Simple Shops,,simpleshops
 12859,forgiving-border,,仁慈的世界边界,ForgivingBorder,,forgivingborder
-12860,snow-mercy,,Snow Mercy ⛄,,,snowmercy
+12860,snow-mercy,,Snow Mercy,,,snowmercy
 12861,,,按键显示,show key,SK,show_key
 12862,,blocky-bubbles,Blocky Bubbles,,,blocky-bubbles
 12863,airdrop-supply,,空投供应,Airdrop Supply,AS,airdrop-supply
 12864,refined-proxy,,Refined Proxy,,,refinedproxy
 12865,,,Better Lush Caves,,,mr_better_lushcaves
 12866,pickable-pets,pickable-pets,Pickable Pets,,,pickablepets
-12867,snow-mercy-forge,,Snow Mercy [Forge] ⛄,,,snowmercy
+12867,snow-mercy-forge,,Snow Mercy [Forge],,,snowmercy
 12868,,,Protocol4,,,Protocol4
 12869,,,Connect to 1.12.X,,,connect_to_1_12_x
 12870,bouncestyles,bouncestyles,BounceStyles,,,
@@ -12908,14 +12908,14 @@
 13172,,,战利品箱,,,booty
 13173,motobox,motobox,Motobox,,,motobox
 13174,pottery-additional-pots,pottery,Pottery,,,pottery
-13175,better-dogs-x-doggy-talents-next,,Better Dogs X Doggy Talents Next,,,922672
+13175,better-dogs-x-doggy-talents-next,,Better Dogs X Doggy Talents Next,,,
 13176,,villagertimetable,VillagerTimetable,,,villagertimetable
 13177,towntalk,,TownTalk,,,towntalk
 13178,cumulus,cumulus,Cumulus,,,cumulus_menus
 13179,epherolib,epherolib,EpheroLib,,,epherolib
 13180,icterine,icterine,Icterine,,,icterine
 13181,notrample,,No Farmland Trample,,,notrample
-13182,industrial-foregoing-souls,industrial-foregoing-souls,Industrial Foregoing: Souls,,,industrialforegoingsouls
+13182,industrial-foregoing-souls,industrial-foregoing-souls,工业先锋：灵魂,Industrial Foregoing: Souls,,industrialforegoingsouls
 13183,fuelgoeshere,fuelgoeshere,Fuel Goes Here,,,fuelgoeshere
 13184,initial-dimension,,InitialDimension,,,initial_dimension
 13185,gensokyo-delight-youkais-feasts,youkaishomecoming,妖怪们的归家,Youkai's Homecoming,,youkaishomecoming
@@ -12970,7 +12970,7 @@
 13235,,loggerhead-luminancies,Loggerhead Luminancies,,,loggerhead_luminancies
 13236,asteorbar,asteorbar,Asteor的状态栏和血量显示,AsteorBar,,asteorbar
 13237,better-f1-reborn,better-f1-reborn,更好的F1重制版,Better F1 Reborn,,betterf1
-13238,create-tipsy-n-dizzy,create-tipsy-n-high,Create: The Kitchen Must Grow/Create: Tipsy n' Dizzy,,,createtipsy
+13238,create-tipsy-n-dizzy,create-tipsy-n-high,Create: The Kitchen Must Grow / Create: Tipsy n' Dizzy,,,createtipsy
 13239,ars-expanded-combat,ec-ars-compat,Ars Expanded Combat,,,ec_ars_plugin
 13240,,revamped-piles,Revamped Piles,,,revamped_piles
 13241,,fluiwid,FLUIwID,,,fluiwid
@@ -13378,7 +13378,7 @@
 13647,noguievolution,no-gui-evolution,沉浸进化,NoGuiEvolution,NGE,noguievolution
 13648,baseball-bats,,Bats,,,bats
 13649,tfc-weather,,TFC Weather,,,tfcweather;weathertfc
-13650,,,EigenCraft Unofficial Patch,,,mup
+13650,,,EigenCraft Unofficial Patch,,MUP,mup
 13651,conrad,conrad,Conrad,,,conrad
 13652,,,Backpack Plus,,,bps
 13653,nendermoo,,Nendermoo,,,nendermoo
@@ -13423,7 +13423,7 @@
 13692,whirlwind,whirlwind,WhirlWind,,,whirlwind
 13693,warden-tools,warden-tools,Warden Tools,,,wardentools
 13694,royal-guard,,皇家守卫,Royal Guard,RG,royal_guard
-13695,,the-mighty-architectury,The Mighty Architectury,,,mightyarchitect
+13695,the-mighty-architectury,the-mighty-architectury,The Mighty Architectury,,,mightyarchitect
 13696,themoreloyaltrident,themoreloyaltrident,更忠诚的三叉戟/移运兜转,TheMoreLoyalTrident,,moreloyaltrident
 13697,notenoughresources,,NotEnoughResources,,NER,neresources
 13698,elenai-dodge,,Elenai Dodge,,,elenaidodge
@@ -13600,7 +13600,7 @@
 13870,ascension-megamons,ascension-megamons,Ascension Megamons,,,ascension_megamons
 13871,simply-sulphur,simply-sulphur,Simply Sulphur,,,simply_sulphur
 13872,fabric-hider,,Fabric Hider,,,fabric_hider
-13873,custom-cursor,custom-cursor,Custom Cursor 🖱️,,,customcursorcomm
+13873,custom-cursor,custom-cursor,Custom Cursor,,,customcursorcomm
 13874,the-man-from-the-void,,The Man From The Void,,,man
 13875,simpletms-tms-and-trs-for-cobblemon,simpletms-tms-and-trs-for-cobblemon,SimpleTMs: TMs and TRs for Cobblemon,,,simpletms
 13876,cobblemizer,cobblemizer,Cobblemizer,,,cobblemizer
@@ -13772,7 +13772,7 @@
 14042,arc,arc,Arc Lib,,,arc
 14043,cores,cores,Cores,,,cores;dev.anye.mc.cores
 14044,,,消失的方块,Vanishing Blocks,,jkvb
-14045,citymod-traffic-and-life,citymod,我的城市,CityMod,CM,citymod
+14045,citymod-traffic-and-life,citymod,我的城市:现代生活,CityMod:Modern life,CMML,citymod
 14046,too-hard-to-dig,too-hard-to-dig,隐岩砥凿,Too Hard to Dig,,h2d
 14047,simplecobblestonegenerator,simple-cobble-gen,Simple Cobblestone Generator,,,simplecobblegen
 14048,natural-baby-animals,,Natural Baby Animals,,,naturalbabyanimals
@@ -13864,7 +13864,7 @@
 14134,homeward-bound,homeward-bound,Homeward Bound,,,homeward-bound
 14135,sword-blocking-mechanics,sword-blocking-mechanics,Sword Blocking Mechanics,,SB,sword-blocking-mechanics;swordblockingmechanics
 14136,electric-mace,electric-mace,Electric Mace,,,electric-mace
-14137,mace-backport,,重锤移植,Mace Port,,mace_backport
+14137,mace-backport,mace-backport-mod,重锤移植,Mace Port,,mace_backport
 14138,,steve-eat-stew,Steve Eat Stew,,,steveeatstew
 14139,imaginary,,Imaginary,,,imaginary
 14140,kuvalich,kuvalich,赤毒玄骸,KuvaLich,KL,kuvalich
@@ -13913,8 +13913,8 @@
 14183,maced,,重锤一击,Maced,,maced
 14184,nether-villager-trader,,Nether Villager Trader,,,nether-villager-trader
 14185,,no-exp-enchanting-reimagined,NoExpEnchantingReimagined,,,no-exp-enchanting-reimagined
-14186,odyssey-claims,odyssey-claims,Odyssey Claims/Cadmus,,,cadmus
-14187,odyssey-allies,odyssey-allies,Odyssey Allies/Argonauts,,,argonauts
+14186,odyssey-claims,odyssey-claims,Odyssey Claims / Cadmus,,,cadmus
+14187,odyssey-allies,odyssey-allies,Odyssey Allies / Argonauts,,,argonauts
 14188,giacomos-travelogue,,Giacomo's Travelogue,,,giacomostravelogue
 14189,giacomos-maps,,Giacomo's Maps,,,giacomos_maps
 14190,descension,,Descension,,,descension
@@ -14055,7 +14055,7 @@
 14328,plushie-reeker-mod,,Plushie Reeker,,,lil_reeker_mod
 14329,semi-hardcore,,Semi-Hardcore,,,semihardcore
 14330,placeables,placeables,Placeables,,,placeables
-14331,bigbanana,,🍌大香蕉🍌,BigBanana,BB,bigbanana
+14331,bigbanana,,大香蕉,BigBanana,BB,bigbanana
 14332,,dabaosword,大宝刀,DabaoSword,,dabaosword
 14333,look-eye-of-cthulhu,look,Look,,,look
 14334,,salmonberry-addition,Salmonberry Addition,,,salmonberryaddition
@@ -14740,7 +14740,7 @@
 15020,call-of-yucutan,call-of-yucutan,尤卡坦的呼唤,Call of Yucatán,,call-of-yucutan
 15021,redman,redman,红超人,,RM,redman
 15022,lets-do-addon-compat,lets-do-addon-compat,[Let's Do Addon] Compat,,,lets-do-addon-compat;letsdoaddon-compat;letsdocompat;letsdoaddon_compat
-15023,,,AttackFix,,AF,af
+15023,,,攻击修复,AttackFix,AF,af
 15024,worldeditcui-forge-edition,,WorldEditCUI Forge Edition,,,WorldEditCuiFe
 15025,slime-delight,,黏液乐事,Slime Delight,,slime_delight
 15026,darkcap,darkcap,DarkCap - Cap Your XP!,,,darkcap
@@ -14797,7 +14797,7 @@
 15077,stronger-potions,stronger-potions,更强的药水,Stronger Potions,,stronger_potions
 15078,,,游戏内账号切换 X,Accounts X,,accountsx
 15079,,,Villager Knights,,,villagerknights
-15080,,particular,Particular ✨,,,particular
+15080,,particular,Particular,,,particular
 15081,,,Say Goodbye,,SGB,sgb
 15082,reforgedplay-mod,,录像回放：重置,ReForgedPlay,,reforgedplaymod
 15083,sqript,,Sqript,,,sqript
@@ -14968,7 +14968,7 @@
 15252,iap-botania,iap-botania,IAP [Botania],,,iapb
 15253,iap-industrial-foregoing,iap-industrial-foregoing,IAP [Industrial Foregoing],,,iapif
 15254,iap-silents-gems,,IAP [Silent's Gems],,,iapsg
-15255,iap-silents-gems,iap-powah,IAP [Powah],,,iapp
+15255,iap-powah,iap-powah,IAP [Powah],,,iapp
 15256,iap-omega-craft,,IAP [Omega Craft],,,iapoc
 15257,iap-mekanism,,IAP [Mekanism],,,iapm
 15258,industrial-agriculture-plugin-silents-mechanisms,,IAP [Silent's Mechanisms],,,iapsm
@@ -14976,7 +14976,7 @@
 15260,roads-and-roofs-tfc,roads-and-roofs-tfc,Roads and Roofs TFC,,,rnr
 15261,taxvillagearchitect,,Tax' Village Architect,,,taxva
 15262,taxoceanarchitect,,Tax' Ocean Architect,,,taxoa
-15263,nethers-flora,,The Nether's Flora🌸,,,nether_flora
+15263,nethers-flora,,The Nether's Flora,,,nether_flora
 15264,,,Plasma Tech,,,plasma_tech
 15265,microcosm,,Microcosm,,,microcosm
 15266,chinese-flying-island-tower,chinese-flying-island-tower,Chinese Flying Island Tower,,,chineseflyingislandtower
@@ -15044,7 +15044,7 @@
 15329,short-grass,short-grass,Short Grass,,,short_grass
 15330,stairs-but-chairs,stairs-but-chairs,Stairs But Chairs,,,stairsbutchairs
 15331,yumo-compactmachines-por,yumo-compactmachines-por,压缩空间:产量推演,yumo compactmachines por,CMP,yumo_cmp
-15332,dynamic-trees-for-fruit-trees,,动态的树：妙趣果园 🍊附属,Dynamic Trees for Fruitful Fun 🍊,,dtfruitfulfun
+15332,dynamic-trees-for-fruit-trees,,动态的树：妙趣果园 附属,Dynamic Trees for Fruitful Fun 🍊,,dtfruitfulfun
 15333,dynamic-trees-for-better-end,,动态的树：更好的末地附属,Dynamic Trees for BetterEnd,,dtbetterend
 15334,dynamic-trees-autumnity,,动态的树：秋原附属,Dynamic Trees - Autumnity,,dtautumnity
 15335,dynamic-trees-for-bloomingnature,,动态的树：绽芳自然附属,Dynamic Trees for BloomingNature,,dtbloomingnature
@@ -15551,7 +15551,7 @@
 15840,balanced-shield,balanced-shield,Balanced Shield,,,balancedshield
 15841,more-potion-effects,more-potion-effects,更多药水效果,More Potion Effects,MPE,more_potion_effects
 15842,jungle-villages,,Jungle Villages,,,jungle_villages
-15843,truecherry,,TrueCherry,,,truecherry
+15843,truecherry,truecherry,TrueCherry,,,truecherry
 15844,,revamped-trades,Revamped Trades,,,evampedtrades
 15845,creeper-fireworks,creeper-fireworks-mod,烟花苦力怕,Creeper Fireworks Mod,CF,creeperfireworks
 15846,,word-overflow,Word Overflow,,,word_overflow
@@ -15795,7 +15795,7 @@
 16087,weave-craft,,Weave Craft,,,pearsmod123
 16088,morefarming,morefarming,更多农耕,MoreFarming,MFI,morefarming
 16089,iron-bushes,,Iron Bushes,,,iron_bushes
-16090,forestry-community-edition,forestry-community-edition,林业：社区版,Forestry: Community Edition,,forestry
+16090,forestry-community-edition,forestry-community-edition,林业：社区版,Forestry: CE / Forestry: Community Edition,,forestry
 16091,,,瞬移,Blink,,blink
 16092,specified-spawning,,Specified Spawning,,,specifiedspawning
 16093,kubejs-create-for-fabric-1-20-1,,KubeJS Create for Fabric,,,
@@ -16041,7 +16041,7 @@
 16337,my-nethers-delight-refabricated,my-nethers-delight-refabricated,My Nether's Delight Refabricated,,,mynethersdelight
 16338,,polyweather,PolyWeather,,,polyweather
 16339,shadow-x-axolotl-buckets-plus,,Axolotl Buckets +,,,axolotlbucketsplus
-16340,daily-shop,daily-shop,Daily Shop 🫙,,,dailyshop
+16340,daily-shop,daily-shop,Daily Shop,,,dailyshop
 16341,,,Recipes+,,,recipes
 16343,,,去除伤害指示器粒子,No DamageIndicatorParticle,,nodiparticle
 16344,,,Fireproof Netherite,,,FireproofNetherite
@@ -16244,7 +16244,7 @@
 16542,tfc-better-blast-furnace,,TFC Better Blast Furnace,,,tfcbetterbf
 16543,tfc-textile,tfc-textile,TFC Textile,,,tfc_textile
 16544,tfc-woodworking,tfc-woodworking,TFC Woodworking,,,tfcwoodwork
-16545,tfc-auroras,auroras,Auroras,,,tfcauroras;auroras
+16545,auroras,auroras,Auroras,,,tfcauroras;auroras
 16546,greg-paintings,greg-paintings,Greg Paintings,,,greg_paintings
 16547,gtmthings,,GTM Things,,GTMT,gtmthings
 16548,create-trading-floor,create-trading-floor,机械动力：交易站点,Create: Trading Floor,,trading_floor
@@ -16344,7 +16344,7 @@
 16644,sky-aesthetics,sky-aesthetics,Sky Aesthetics,,,sky_aesthetics
 16645,headshot-bonus,,已无可惧 / 简单爆头,Headshot Bonus,,headshotbonus
 16646,enchantlevelbrek,enchantmentlevelbreak,附魔等级上限突破2,EnchantmentLevelBreak,ELB2,enchantmentlevelbreak
-16647,the-ruler,gamerule-manager,GameRule Manager,,,the_ruler
+16647,gamerule-manager,gamerule-manager,GameRule Manager,,,the_ruler
 16648,biome-borders-revived-liteloader-only,,Biome Borders Revived,,,ArmorsHUDRevived
 16649,chunkborders,,区块边界,ChunkBorders,,chunkborders;ChunkBorders
 16650,burnt,burnt,Burnt,,,burnt
@@ -16481,7 +16481,7 @@
 16784,loaded-mods-checker,loadedmodschecker,存档模组核对,Loaded Mods Checker,,loadedmodschecker
 16785,i-have-slept,i-have-slept,朕已安寝,I have slept,,i_have_slept
 16786,,itemstackpromax,物品堆叠ProMax,ItemStackProMax,ISPM,itemstackpromax
-16787,item-split-bug-fix,,物品分裂修复,Item Split Bug Fix,ISBF,item_split_bug_fix
+16787,item-split-bug-fix,item-split-bug-fix,物品分裂修复,Item Split Bug Fix,ISBF,item_split_bug_fix
 16788,spontaneous-replace-cobwebbed,spontaneous-replace-cobwebbed,自然更替：蛛丝网迹,Spontaneous-Replace: Cobwebbed,,spontaneous-replace-cobwebbed
 16789,modernconverter,,ModernConverter,,,modernconverter;ModernConverter
 16790,frozify,frozify,Frozify,,,frozify
@@ -16521,7 +16521,7 @@
 16825,,,海绵端插件支持 NeoForge 版,SpongeNeo,,spongeneo
 16826,moonrise,moonrise-opt,Moonrise,,,moonrise
 16827,corpsecomplex-unofficial,corpsecomplex-unofficial,Corpse Complex-Unofficial,,CCU,corpsecomplex
-16828,,starlish,Starlish ⭐,,,starlish
+16828,,starlish,Starlish,,,starlish
 16829,languagereloadunofficial,languagereloadunofficial,LanguageReloadUnofficial,,,languagereload
 16830,mekanism-covers,mekanism-covers,Mekanism Covers,,,mekanismcovers
 16831,enchanted-wilderness-elegant-countryside,enchanted-wilderness-elegant-countryside.,雅致乡下,Elegant Countryside,EC,elegant_countryside
@@ -16568,7 +16568,7 @@
 16873,,,聊天栏日志显示,Log2Me,,log2me
 16874,the-glitched-one,,The Glitched One,,,man
 16875,progression-reborn,progression-reborn,Progression Reborn,,,progression_reborn
-16876,,,Effective💦 (Forge),,,effecticularity;effective
+16876,,,Effective (Forge),,,effecticularity;effective
 16877,,simple-info-display,Simple Info Display,,,coords_mod
 16878,,automaticmemories,AutomaticMemories,,,automaticmemories
 16879,zoom-camera,zoom-camera,Zoom Camera,,,zoom
@@ -16797,7 +16797,7 @@
 17104,,huangsheng1s-more-monster,更多怪物,HuangSheng1's More Monster,MM,more_monster
 17105,creeping-woods,creepingwoods,Creeping Woods,,,creepingwoods
 17106,,zac,Zombie Apocalypse Core,,,zombie_apocalypse_core
-17107,dragon-mounts-2,dragon-mounts-2,龙骑士2：延续,DragonMounts2: Expanded,DM2:E,dragonmounts
+17107,dragon-mounts-2,dragon-mounts-2,龙骑士2：延续,Dragon Mounts 2: Expanded,DM2:E,dragonmounts
 17108,life-fruits,life-fruits,生命果,Life Fruits,,lifefruit
 17109,ati-structures,,ATi Structures,,,ati_structures_fabric;ati_structures;atistructures
 17110,fantasy-armor,fantasy_armor,幻想铠甲,Fantasy Armor,,fantasy_armor
@@ -16880,7 +16880,7 @@
 17187,,createz,CreateZ,,,mr_createz
 17188,create-smart-crafter,create-smart-crafter,Create: Smart Crafter,,,smartcrafter
 17189,create-fuel-and-water-information,create-fuel-water-information,Create: Fuel & Water Information,,,cfwinfo
-17190,thematic,thematic,🖌️ Thematic,,,thematic
+17190,thematic,thematic,Thematic,,,thematic
 17191,more-composter-variants,more-composter-variants,More Composter Variants,,,lolmcmv
 17192,more-fletching-tables,more-fletching-tables,More Fletching Tables,,,lolmft
 17193,more-grindstone-variants,more-grindstone-variants,More Grindstone Variants,,,lolmgv
@@ -17039,7 +17039,7 @@
 17347,,mydriasis,Mydriasis,,,mydriasis
 17348,no-mob-spawning-on-plants,no-mob-spawning-on-plants,No Mob Spawning On Plants,,,nmsop
 17350,durability-rework,durability-rework,Unbreakable (Durability Rework),,,unbreakable
-17351,more-villagers-re-employed,more-villagers-re-employed,More Villagers : Re-employed,,,morevillagers
+17351,more-villagers-re-employed,more-villagers-re-employed,More Villagers: Re-employed,,,morevillagers
 17352,similsax-transtructors,,Similsax Transtructors - Builder's Wands,,,similsaxtranstructors
 17353,tcw-bedrock-breaker,,TCW Bedrock Breaker,,,bedrockbreaker
 17354,apothic-reforge-tokens,,Apothic Reforge Tokens,,,apotheosis_reforge_token
@@ -17075,7 +17075,7 @@
 17385,,child-folder-mod-scanner,子文件夹Mod扫描器,Child Folder Mod Scanner,CFMS,cfms
 17386,,,植物蔓延,Plant Spread,,plant_spread
 17387,,create-stress-debug,Create Stress Debug,,,createstressdebug
-17388,create-kart,,Create Kart,,,create_kart
+17388,create-kart,createkart,Create Kart,,,create_kart
 17389,,barometry,Barometry,,,barometry
 17391,menufpsunlocker,menufpsunlocker,MenuFPSUnlocker,,,mfpu
 17392,bogged-spawn,bogged-spawn,沼骸生成微调,Bogged Spawn,,boggedspawn
@@ -17159,7 +17159,7 @@
 17472,,,沉浸装备0,ImmerGears0,IG0,ImmerGears
 17473,pet-connect,,收容宠物,Pet Connect,,petconnect
 17474,heaven-destiny-moment,,天命时刻,Heaven Destiny Moment,,heaven_destiny_moment
-17475,industrial-foregoing-extra-upgrades,,工业先锋:更多升级,Industrial Foregoing: Extra Upgrades,IFEU,ifeu
+17475,industrial-foregoing-extra-upgrades,,工业先锋：更多升级,Industrial Foregoing: Extra Upgrades,IFEU,ifeu
 17476,growableores-extension,growableores-extension,甘蔗转换机,GrowableOres Extension,,growableores_extension
 17477,oneiricconcept,oneiricconcept,梦华构想,OneiricConcept,OC,oneiricconcept
 17478,simelectricity,,SimElectricity,,,simelectricity
@@ -17901,7 +17901,7 @@
 18220,spring-update-snapshot-to-old-versions,,Spring Update,,,spring
 18221,,godot-signal-system-lib,Godot Signal System Lib,,,godotsignalsystem
 18222,,,Bad Apple played on the custom Banner Patterns,,,bad_app
-18223,leons-minecraft-dungeons-paintings-mod,,Leon's Dungeons Paintings,,,ls_dungeons_paintings
+18223,leons-minecraft-dungeons-paintings-mod,leons-dungeons-paintings,Leon's Dungeons Paintings,,,ls_dungeons_paintings
 18224,miscellaneous-additions,miscellaneous-additions,Miscellaneous Additions,,,misc_additions
 18225,rupters-figure-mod-doors,,Rupters Figure Mod,,,figure
 18226,sophisticated-backpack-storage-emerald-upgrade,sophisticated-backpackstorage-emerald-upgrade,Sophisticated Backpack / Storage Emerald Upgrade,,,sophisticated_emerald_upgrade
@@ -18086,7 +18086,7 @@
 18406,,waterplayer,WaterPlayer,,,waterplayer
 18407,,home-utilities,HOME Utilities,,,home-utilities
 18408,multiplayer-button,multiplayer-button,Multiplayer Button,,,multiplayer-button
-18409,,,离线服白名单修复,WhiteList Fix,wlf,bmdmod
+18409,,,离线服白名单修复,WhiteList Fix,WLF,bmdmod
 18410,,kelui,KelUI,,,kelui
 18411,brick-lib,,Brick Lib,,,brick_lib
 18412,,no-slow-motion,无拘速行,No Slow Motion,,noslowmotion
@@ -18302,7 +18302,7 @@
 18622,the-broken-script-official,the-broken-script,The Broken Script,,TBS,thebrokenscript
 18623,torojimas-buildhelper,torojima_s_buildhelper,Torojima's Buildhelper,,,buildhelper
 18624,expanded-armory-legacy,expanded-armory-legacy,扩展装备：传承,Expanded Armory: Legacy,,exparmory
-18625,loquat-forge,loquat,Loquat 🧩,,,loquat
+18625,loquat-forge,loquat,Loquat,,,loquat
 18626,,waterbeds,Waterbeds,,,waterbeds
 18627,,customhealthhud,CustomHealthHUD,,,customhealthhud
 18628,,fix-horizontal-camera-lag,Fix Horizontal Camera Lag,,,eg_fix_horizontal_camera_lag
@@ -18318,7 +18318,7 @@
 18638,vanilla-delight,vanilla-delights,Vanilla Delight,,,vanilladelight
 18639,jade-vs,jade-vs,Jade VS,,,jade_vs
 18640,,,Draconic Ascension - Custom Ender Dragon Fight,,,custom_ender_dragon
-18641,vics-modern-warfare-patched,,维克的现代战争 (修复版),Vic's Modern Warfare (Patched),VMW,
+18641,vics-modern-warfare-patched,,维克的现代战争 (修复版),Vic's Modern Warfare (Patched),,
 18642,waterframesbackported,,WATERFrAMES: Backported Edition,,,waterframes
 18643,,,So I heard you were talking crap about Minecraft's combat? - 非官方移植,sihywtcamc unofficial port,sihywtcamc,sihywtcamc-unofficial-port
 18644,tweakeroo-update-port,,Tweakeroo Update Port,,,tweakeroo
@@ -18353,7 +18353,7 @@
 18673,productive-metalworks,,Productive Metalworks,,,productivemetalworks
 18674,better-leveling-respawn,,更好的升级：重铸,Better Leveling: Reforge,BLR,betterleveing
 18675,drive-by-wire,drive-by-wire,线缆控制,Drive-By-Wire,,drivebywire
-18676,spirit-of-fight,spirit-of-fight,战魂,Spirit of Fight,,spirit_of_fight
+18676,spirit-of-fight,spirit-of-fight,战魂,Spirit of Fight,SOF,spirit_of_fight
 18677,grim-bleak,grim-and-bleak,Grim & Bleak,,,grim_and_bleak
 18678,carrymyboss,,Carrymyboss,,,carrymyboss
 18679,ranged-damage-limit,,远域挡招/远程伤害保护,Ranged Damage Limit,,rangeddamagelimit
@@ -18389,7 +18389,7 @@
 18709,snekcraft,snekcraft,Snekcraft,,,snekcraft
 18710,hearth-and-harvest,hearth-and-harvest,暖灶丰年,Hearth and Harvest,,hearthandharvest
 18711,,,ATP高能连锁,ATP miner,ATPM,atp_miner
-18712,,,更好的附魔,I Cant Think Of A Good Name,ICTOG,enchanted
+18712,enchantmented,,更好的附魔,I Cant Think Of A Good Name,ICTOG,enchanted
 18713,,,通灵之术,Kuchiyose,,kuchiyoseno
 18714,wjys,,无尽药水,WJYS,,wjys
 18715,schematicpreview,schematicpreview,原理图预览,SchematicPreview,,schematicpreview
@@ -18446,7 +18446,7 @@
 18767,aaa-particles-world,aaa-particles-world,AAA Particles: World,,,aaa_particles_world
 18768,pick-up-tnt,pick-up-tnt,Pick Up TNT,,,pick_up_tnt
 18769,ymadditions,ymadditions,YM-Additions,,,ymadditions
-18770,immersive-machinery,immersive-machinery,Immersive Machinery,,,immersive_machinery
+18770,immersive-machinery,immersive-machinery,沉浸式机械,Immersive Machinery,,immersive_machinery
 18771,xp-synthesiser,xp-synthesiser,XP Synthesiser,,,xp_synthesiser
 18772,oredictionaryconverter,,Ore Dictionary Converter,,,fodc
 18773,cbc-modern-warfare,cbcmodernwarfare,机械动力火炮：现代战争,CBC: Modern Warfare,CBCMW,cbcmodernwarfare
@@ -18504,7 +18504,7 @@
 18825,ae2-qol-recipes,ae2-qol-recipes,AE2 QoL Recipes,,,ae2qolrecipes
 18826,cyberspace,cyberspace,Cyberspace,,,cyberspace
 18827,,,透明物品展示框,Glass Item Frame,GIF,glass_item_frame
-18828,displayed,displayed,展示,Display,DIS,display
+18828,lazy-display-stand,lazy_display_stand,懒人展示架,Lazy Display Stand,LDS,lazy_display_stand
 18829,engineered-compatibility,engineered-compatibility,Engineered Compatibility,,,engineeredcompatibility
 18830,create-abyss-catalysis,createabysscatalysis,机械动力：深渊催化,Create: AbyssCatalysis,CnAC,sculkcatalyticchamber
 18831,,,连锁挖矿数据包,KuKuSurvival,KKS,survival
@@ -18660,7 +18660,6 @@
 18981,more-murphy-pumpkins,,更多南瓜,morepumpkins,MP,morepumpkins-mod
 18982,tetradelight,,Tetradelight,,,tetradelight
 18983,,,吾有一术,WenyanProgramming,,wenyan_nature;wenyan_programming
-18984,dragon-mounts-2,,Dragon Mounts 2,,,
 18985,heroes-of-might-and-magic-3,heroes-of-might-and-magic-3,Heroes of Might and Magic 3,,HoMM3,homm3
 18986,another-changed,,Another Changed Mod,,,a_changed
 18987,randomly-tp,,随意传送,Freely/Randomly TP,,randomly_tp
@@ -18702,7 +18701,7 @@
 19024,nocapes,nocapes,NoCapes,,,nocapes
 19025,inventory-sorter-configurable,inventory-sorter-configurable,Inventory Sorter (Configurable),,,inventorysorter
 19026,smartcursor,,智能指针,SmartCursor,,SmartCursor
-19027,wither-spawn-animation,wither-spawn-animation,Wither Spawn Animation,,,wither_spawn_animation
+19027,wither-spawn-animation,wither-spawn-animation,凋灵生成动画,Wither Spawn Animation,,wither_spawn_animation
 19028,,boom-enchantment,Boom Enchantment,,,boomenchantment
 19029,prioritiser,,Prioritiser,,,Prioritiser
 19030,engineered-schematics,engineered-schematics,Engineered Schematics,,,engineered_schematics
@@ -18864,7 +18863,7 @@
 19186,clickthrough-plus,clickthrough+,穿牌开箱+,ClickThrough Plus,,clickthrough
 19187,itemzoomer,itemzoomer,Item Zoomer,,,itemzoomer
 19188,,surveystones,Surveystones,,,surveystones
-19189,particular-reforged,particular-reforged,Particular ✨ Reforged,,,particular
+19189,particular-reforged,particular-reforged,Particular Reforged,,,particular
 19190,cloud-revive,cloud_revive,云生,Cloud Revive,,cloud_revive
 19191,paranoia,,偏执狂,Paranoia,,paranoia
 19192,thaumic-brewing,,神秘酿造学,Thaumic Brewing,,thaumicbrewing
@@ -19160,7 +19159,7 @@
 19488,hud-compass,,Hud Compass,,,hudcompass
 19489,,,Vertical Slabs,,,stylax
 19490,familiar-friends,familiar-friends,亲密伙伴,Familiar Friends,,familiar_friends
-19491,golem-spawn-animation,golem-spawn-animation,Golem Spawn Animation,,,golem_spawn_animation
+19491,golem-spawn-animation,golem-spawn-animation,傀儡生成动画,Golem Spawn Animation,,golem_spawn_animation
 19492,realistic-night-vision,,Realistic Night Vision,,,realisticnightvision
 19493,stackable-items,,Stackable Items,,,stackableitems
 19494,,,RawInputMod,,,rawinput
@@ -19563,7 +19562,7 @@
 19894,expanded-experience,,Expanded Experience,,,expanded_experience
 19895,reworked-phantoms,reworked-phantoms,Reworked Phantoms,,,reworkedphantoms
 19896,ex-nihilo-fabricio,ex-nihilo-fabricio,Ex Nihilo Fabricio,,,ex-nihilo-fabricio
-19897,hybrid-delights,hybrid-delights,Hybrid Delights,,,hybrid-delights
+19897,hybrid-delights,hybrid-delights,Hybrid Delights,,,hybrid-delights;hybrid_delights
 19898,create-clothes,create-clothes,机械动力：服装,Create: Clothes,,createclothes
 19899,create-delivery-director,delivery-director,Create: Delivery Director,,,delivery_director
 19900,create-cardboard-things,create-cardboard-things,Create: Cardboard Things,,,createcardboardthings
@@ -19622,7 +19621,7 @@
 19954,smart-creeper,smart-creeper,智慧苦力怕,Smart Creeper,,smartcreeper
 19955,peaceful-depletion,peaceful_depletion,和平消耗,Peaceful Depletion,PD,peaceful_depletion
 19956,,everything-is-tnt,Everything is TNT,,,everything-is-tnt
-19957,structure-pool-api,structure-pool-api,结构池API,Structure Pool API,,structure_pool_api
+19957,structure-pool-api,structure-pool-api,结构池 API,Structure Pool API,,structure_pool_api
 19958,create-bluemap,create-bluemap,Create BlueMap,,,create-bluemap
 19959,tragicmc-2-continuation,,悲惨世界2：延续,TragicMC 2 Continuation,,
 19960,nebula-parasites,nebula-parasites,Nebula: Parasites,,,nebulaparasites
@@ -19669,7 +19668,7 @@
 20001,,twilight-forest-aurora-palace-regeared,Twilight Forest - Aurora Palace Regeared,,,gearsaw_palace
 20002,changshengjue,changshengjue,长生诀,ChangShengJue,CSJ,chang_sheng_jue
 20003,,,Nethergates,,,nethergates
-20004,medieval-buildings-nether-edition,,Medieval Buildings [Nether Edition],,,medieval_nether
+20004,medieval-buildings-nether-edition,medieval-buildings-nether-edition,Medieval Buildings [Nether Edition],,,medieval_nether
 20005,,ribbits-croaks,Ribbits: Croaks,,,ribbits_croaks
 20006,echoes-of-time,echoes-of-time,Echoes Of Time,,,echoes_of_time
 20007,horror-alexbrine,,Horror - Alexbrine,,,alexbrinereturn
@@ -20556,7 +20555,7 @@
 20899,remnant-bosses,remnant-bosses,Remnant Bosses,,,remnant_bosses
 20900,choccos-mobs,choccos-mobs,Chocco's Mobs,,,choccos_mobs
 20901,,,复原矿石|高版本移植,Restore Ore,,restore_ore
-20902,,,🦇蝙蝠快乐Mod Pro,BatHappy Pro,,bathappypro
+20902,,,蝙蝠快乐Mod Pro,BatHappy Pro,,bathappypro
 20903,uncrafting-table-xiaoyu-2009,,拆解台,Uncrafting Table,UT,uncrafting_table
 20904,,,简改焕新,Simple Improvement Renew,SIRe,sire
 20905,aewirelesschannel,,AE无线频道,AE Wireless Channel,AEWC,aewirelesschannel
@@ -20710,7 +20709,7 @@
 21053,expanded-mace-enchanting,expanded-mace-enchanting,Expanded Mace Enchanting,,,expanded_mace_enchanting
 21054,silky-spawners,,Silky Spawners,,,silky_spawners
 21055,starhud,starhud,StarHUD,,,starhud
-21056,celeritas-dynamic-lights,celeritas-dynamic-lights,Celeritas Dynamic Lights,,,celeritasdynamiclights
+21056,celeritas-dynamic-lights,celeritas-dynamic-lights,Celeritas/Nothirium Dynamic Lights,,,celeritasdynamiclights
 21057,resistance-balancer,resistance-balancer,Resistance Balancer,,,resistance_balancer
 21058,silkier-touch,silkier-touch,Silkier Touch,,,silkiertouch
 21059,wither-spawn-fix,wither-spawn-fix,凋灵生成修复,Wither Spawn Fix,,wither_spawn_fix
@@ -20972,7 +20971,7 @@
 21318,funkys-fancy-furnaces,funkys-fancy-furnaces,Funkys Fancy Furnaces,,,fancyfurnaces
 21319,timber-enchantment,,Timber Enchantment,,,mr_timber_enchantment
 21320,,alternative-chunkloading,Alternative Chunkloading,,,alternativechunkloading
-21321,,particulate,Particulate💦,,,particulate
+21321,,particulate,Particulate,,,particulate
 21322,haydenapi,,HaydenAPI,,,haydenapi
 21323,spore-inquisition,,Spore Inquisition,,,
 21324,ice-and-fire-spartan-weaponry-extras,,Ice and Fire + Spartan Weaponry: Extras,,,spartanfireextras
@@ -21136,7 +21135,7 @@
 21483,wither-infection,wither-infection,Wither Infection,,,wither_infection
 21484,creeper-infection,creeper-infection,Creeper Infection,,,creeperinfection
 21485,long-books,long-books,Long Books,,,long_books
-21486,ftb-chunks-recoloured,,FTB Chunks  Modded Support,,,ftbchunks_modded
+21486,ftb-chunks-recoloured,,FTB Chunks Modded Support,,,ftbchunks_modded
 21487,jei-hover-search,jei-hover-search,JEI Hover Search,,,jei_hover_search
 21488,rollable,rollable,Rollable,,,rollable
 21489,invisibility-aggro-fix,invisibility-aggro-fix,Invisibility Aggro Fix,,,invisibility_aggro_fix
@@ -21922,7 +21921,7 @@
 22272,,,石油发电机,Petroleum Generator,,drceph.petrogen
 22273,power-advantage,,能量优势,Power Advantage,,poweradvantge
 22274,,,EU-MJ Engine,,,eu-mj_engine
-22275,create-transmission,,Create: Transmission!,,,createtransmission
+22275,create-transmission,create-transmission!,Create: Transmission!,,,createtransmission
 22276,,,CCLights 2,,,CCLights2
 22277,,,液体UU,LiquidUU,,LiquidUU
 22278,,,Modular Computing,,,moducomp
@@ -22001,7 +22000,7 @@
 22351,,,Metallurgy Bees,,,MetallurgyBees
 22352,,area_lib,Area Lib,,,area_lib
 22353,unordinaryextras,,UnordinaryExtras,,,unordinaryextras
-22354,awakened-craziness,,Awakened Craziness,,,1342419
+22354,awakened-craziness,,Awakened Craziness,,,
 22355,villager-market-nbt-fix,,村民市场 - NBT 修复版,Villager Market - NBT Fix,,villagermarket
 22356,illager-expansions,,Illager Expansions,,,illager_expansions
 22357,,tropicraft-stationapi,Tropicraft [StationAPI],,,
@@ -22126,7 +22125,7 @@
 22479,compact-mekanism-machines-plus,compact-mekanism-machines-plus,Compact Mekanism Machines Plus,,,compactmekanismmachinesplus
 22480,woot-revived,woot-revived,Woot Revived,,,woot_revived
 22481,,,电力扩展,Electric Expansion,EE,ElectricExpansion
-22482,croparium-the-twilight-forest,croparium-the-twilight-forest,矿石种植工艺：暮色森林,Croparium: the Twilight Forest,CPTF,cp_tf
+22482,croparium-tf,croparium-tf,矿石种植工艺：暮色森林,Croparium: Twilight Forest,CPTF,cp_tf
 22483,,leafs-crucible-ice-and-fire,Leaf的炼金炉 - 冰与火,Leafs Crucible - Ice and Fire,,leafs-crucible
 22484,,,Iron's Spell: OMG,,,ironspellomg
 22485,starcatcher,starcatcher,捕星者,Starcatcher,,starcatcher
@@ -22175,7 +22174,7 @@
 22530,mining-quakes,mining-quakes,Mining Quakes,,,mining_quakes
 22531,tpw,wenxingtpw,TPW,,,tpw
 22532,inspectability-forge,hi-inspectability,Inspectability-Forge,,,
-22533,,orbital-railgun-sounds,Orbital Railgun Sounds,,,orbital_railgun_sounds
+22533,orbital-railgun-sounds,orbital-railgun-sounds,Orbital Railgun Sounds,,,orbital_railgun_sounds
 22534,beneathmixins,,BeneathMixins,,,beneathmixins
 22535,cutting-delight,cutting-delight,Cutting Delight,,,cuttingdelight
 22536,locate-command-backport,,Locate Command Backport,,,locatebackport
@@ -22190,7 +22189,7 @@
 22545,modclassifier,,模组分类器,ModClassifier,,modclassifier
 22546,lightningsuperpeashooter,,电能机枪豌豆,Lightning Super Peashooter,LSP,lightningsuperpeashooter
 22547,display-delight-fabric,display-delight-fabric,Display Delight Fabric,,,
-22548,,,大胃袋,LargeStomach,,largestomach
+22548,largestomach,,大胃袋,LargeStomach,,largestomach
 22549,,life-essential-oil,生命精油,Life Essential Oil,LEO,lifeessence
 22550,st-drive,stdrive,STDrive,,,stdrive
 22551,roadweaver,roadweaver,阡陌交通,RoadWeaver,RW,roadweaver
@@ -22319,7 +22318,7 @@
 22674,golems-kill-creepers,golemskillcreepers,Golems Kill Creepers,,,golems_kill_creepers
 22675,no-animal-tempt-delay,no-animal-tempt-delay,No Animal Tempt Delay,,,noanimaltemptdelay
 22676,,,Wearable Items+,,,rowi
-22677,pixelshot,,Pixelshot,,PS,pixelshot
+22677,pixelshot,pixelshot,Pixelshot,,PS,pixelshot
 22678,,,Dan's Re-Worked Origins / OriginsPlus,,,originsp
 22679,changeling,,Changeling,,,changeling
 22680,ancient-scribes,,Ancient Scribes,,,ancient_scribes
@@ -22428,7 +22427,7 @@
 22783,merchantjs,merchantjs,MerchantJS,,MJS,merchantjs
 22784,fetchjs,fetchjs,FetchJS,,FJS,fetchjs
 22785,all-the-mafuyu,all-the-mafuyu,万象瑞雪,All the Mafuyu,ATM,allthemafuyu
-22786,goety-event-horizon,goety-event-horizon,Goety Event Horizen / Goety End Biomes,,,goetyendbiomes
+22786,goety-event-horizon,goety-event-horizon,Goety Event Horizon / Goety End Biomes,,,goetyendbiomes
 22787,structure-spawn-area-fix,structure-spawn-area-fix,结构生成区域修复,Structure Spawn Area Fix,,structure_spawn_area_fix
 22788,aloof-new,aloof,Aloof!,,,aloof
 22789,,,Tweakerge Compat,,,tweakerge_compat
@@ -22442,8 +22441,8 @@
 22797,windswept-delights,windswept-delights,Windswept Delights,,,windswept_delights
 22798,beltborne-lanterns-accessories-layer,beltborne-lanterns-accessories-layer,Beltborne Lanterns: Accessories Layer,,,bl_accessories_layer
 22799,beltborne-lanterns,beltborne-lanterns,Beltborne Lanterns,,,beltborne_lanterns
-22800,mesophils-cities,mesophils-cities,Mesophil's Cities | City Dimension 🏢,,,mesophils_cities
-22801,mesophils-cities-classic,,Mesophil's Cities Classic | Official City Style Pack 🏢,,,mesophils_cities_classic
+22800,mesophils-cities,mesophils-cities,Mesophil's Cities | City Dimension,,,mesophils_cities
+22801,mesophils-cities-classic,,Mesophil's Cities Classic | Official City Style Pack,,,mesophils_cities_classic
 22802,villagers-reborn,villagers-reborn,Villagers Reborn,,,slimpatch
 22803,,simple-player-logger,Simple Player Logger,,,simpleplayerlogger
 22804,mint-lib,mint-lib,MINT Lib,,,mint_lib
@@ -22540,7 +22539,7 @@
 22896,,,Rust for Forge,,,rustforforge
 22897,faewulfs-lib,faewulfslib,Faewulf's Lib,,,faewulf_lib
 22898,mce2-lib,,MCE2 Lib,,,mce2lib
-22899,bop-legacy-reborn-croparium,bop-legacy-reborn-croparium,超多生物群系往昔重生 & 矿石种植工艺,Biomes O' Plenty Legacy Reborn & Croparium,BOPCP,cp_bop
+22899,bop-legacy-reborn,bop-legacy-reborn,超多生物群系往昔重生,Biomes O' Plenty Legacy Reborn,BOPCP,cp_bop
 22900,lotr-reworked-new-beginning,lotr-reworked-new-beginning,魔戒：重置,LOTR Reworked,,
 22901,kelp-fertilizer,kelp-fertilizer,海带肥料,Kelp Fertilizer,,kelpfertilizer
 22902,crystalwing,,水晶之翼,CrystalWing,,CrystalWing
@@ -22797,7 +22796,7 @@
 23159,attribute-achievement-rewards,achievement-attribute-rewards,成就属性提升,Attribute Achievement Rewards/Achievement attribute rewards,,playerattributemanagement
 23160,,,森罗物语：装饰,Kaleidoscope Deco,,kaleidoscope_deco
 23161,,easyentitylib,EasyEntityLib,,,easyentitylib
-23162,coolcatlib,,CoolCatLib,,,coolcat_lib
+23162,coolcatlib,coolcatlib,CoolCatLib: Core,,,coolcat_lib
 23163,,,Myths and Monsters,,MAM,mam
 23164,,chronograph,计时仪,Chronograph,,chronograph
 23165,cnpc-additions,cnpc-additions,CNPC-Additions,,,cnpcadditions
@@ -22807,7 +22806,7 @@
 23169,tameablemossbloom,tameablemossbloom,TameableMossbloom,,,tameablemossbloom
 23170,wolf-armor-and-storage-legacy,wolf-armor-and-storage-legacy,Wolf Armor & Storage Legacy,,,wolfarmorandstoragelegacy
 23171,,,服从调剂,Inject,IJT,fast
-23172,,mcedia,Mcedia,,,mcedia
+23172,,mcedia,McediaTV,,MTV,mcedia
 23173,,,喵鱼-自动钓鱼,MeowFish,MF,MeowFish
 23174,phonk-edit,phonk-edit,Phonk Edit,,,phonkedit
 23175,ae2addonlib,,AE2AddonLib,,,ae2addonlib
@@ -22896,7 +22895,7 @@
 23259,eternally-overburdened,,Eternally Overburdened,,,eternallyoverburdened
 23260,robot-dinos,,Robot Dinos,,,robot_dinos
 23261,stellar-decay,,繁星枯朽,Stellar Decay,SD,stellar_decay
-23262,annihilationblade,,湮灭之刃,Annihilation Blade,,annihilationblade
+23262,annihilationblade,annihilationblade,湮灭之刃,AnnihilationBlade,,annihilationblade
 23263,acceleratedblade,acceleratedblade,拔刀剑：加速渲染兼容,SlashBlade: AcceleratedRendering,,slashblade_acceleratedrendering
 23264,heartbladeunoffical,,心之所向非官方版,HeartBladeUnOffical,HBU,heartbladeunoffical
 23265,slashblade-japanese-addon-pack-adder,,拔刀剑·日系附属·扩展包,SJAPA·The SlashBlade EXtra,SJAPA,sjap_adder
@@ -23098,7 +23097,7 @@
 23463,amtgenerators,,AMTGenerators,,,amtgen
 23464,blooming-biosphere,,Blooming Biosphere,,BB,mr_blooming_biosphere
 23465,extrabees-community,,更多蜜蜂：社区版,ExtraBees: Community Edition,,extrabees
-23466,programmable-magic,programmable-magic,可编程魔法,Programmable Magic,PrM,programmable_magic
+23466,arcanism,programmable-magic,魔导主义,Arcanism,,arcanism
 23467,better-farming,better-farming-plus,Better Farming + +,,,better_farming_plus
 23468,evil-seagull,evil-seagull,邪恶海鸥,Evil Seagull,ES,evilseagull
 23469,hbm-galacticraft-companion,,HBM Galacticraft Companion,,,hbmgccompanion
@@ -23230,7 +23229,7 @@
 23596,morebatsvariants,,More Better Bats Plus,,,morebats
 23597,hxcperipherals,,HxCPeripherals,,,hxcperipherals
 23598,yori3os-grappling-hooks,yori3os-grappling-hooks,Yori3o's Grappling Hooks,,,yo_hooks
-23599,seasonal-decorations,seasonal-decorations,🎄 季节性装饰,🎄 Seasonal Decorations,,seasonal_decorations
+23599,seasonal-decorations,seasonal-decorations,季节性装饰,🎄 Seasonal Decorations,,seasonal_decorations
 23600,neon-sentry-keeper,,Neon Sentry Keeper,,,neon_sentry_keeper
 23601,,,终焉颂歌：自定义实体限伤,Song of Ending: Custom Entity Damage Limiter,SE:CEDL,song_of_ending_damage_limiter
 23602,maid-please-help-me-forge,,女仆，请帮我打铁,Maid Please Help Me Forge,,maidforge
@@ -23319,7 +23318,7 @@
 23685,better-trading-menu,better-trading-menu,更好的交易菜单,Better Trading Menu,,bettertradingmenu
 23686,easy-npc-config-ui,easy-npc-config-ui,Easy NPC: Config UI,,,easy_npc_config_ui
 23687,evolved-mekanism-extras,,通用机械：进化扩展,Evolved Mekanism Extras,EME,emextras
-23688,music-hud,music-hud,Music Hud,,,music_hud
+23688,music-hud,music-hud,Music HUD,,,music_hud
 23689,backups,,Backups,,,backups
 23690,inventory-particles,inventory-particles,物品栏粒子,Inventory Particles,,inventory_particles
 23691,backport-recipes,backport-recipes,BackPort Recipes,,,backport_recipes
@@ -23766,7 +23765,7 @@
 24138,item-flicker,itemflicker,Item Flicker,,,itemflicker
 24139,vamppatch,,VampPatch,,,vamppatch
 24140,speedy-path,speedy-path,Speedy Path,,,speedypath
-24141,,core-lib-api,Core Lib API,,,corelib
+24141,core-lib-api,core-lib-api,Core Lib API,,,corelib;core-lib-api
 24142,,text-placeholder-api-expr,Text Placeholder API Expressions,,,placeholder-api-expr
 24143,iridium-story,,铱物语,Iridium Story,,iridium
 24144,jei-enhancements,jei-enhancements,JEI Enhancements,,JEIE,jei_enhancements
@@ -24189,7 +24188,7 @@
 24566,,blockgiveeffects,方块附加药水效果,BlockGiveEffects,BGE,blockgiveeffects
 24567,,illage-art,灾厄艺术,Illage Art,IA,illageart
 24568,crd-broadcasts,crd-broadcasts,CRD Broadcasts,,,crd_broadcasts
-24569,crd-broadcasts,crd-converters,CRD Converters,,,crd_converters
+24569,crd-converters,crd-converters,CRD Converters,,,crd_converters
 24570,,create-blockchain,Create: Blockchain,,,createblockchain
 24571,miscellaneous-metals,marbleds-core,Miscellaneous Metals / Marbled's Core,,MCORE,mcore
 24572,owen233666s-windows,owen233666s-windows,owen233666's windows,,owenswindows,owenswindows
@@ -24212,7 +24211,7 @@
 24589,unitytranslate,unitytranslate,UnityTranslate,,,unitytranslate
 24590,celeritasleafculling,celeritas-leaf-culling,Celeritas Leaf Culling,,,celeritasleafculling
 24591,,,Re: PotionCore,,,re_potioncore
-24592,redstone-chemical-elements,redstone-chan-chemical-elements,红石酱的化学元素,Redstone-chan Chemical Elements,,redstone_chemical_elements
+24592,elementum-core,elementum-core,化学元素核心 / 红石酱的化学元素,Elementum Core / \tRedstone-chan Chemical Elements,EC,redstone_chemical_elements;elementum_core
 24593,tbc,,Think Big Core,,TBC,tbc
 24594,ocean-lily-pad-village,ocean-lily-pad-village,Ocean Lily Pad Village,,,ocean_lily_pad_village
 24595,,player-doll,Player Doll,,,player_doll
@@ -24262,7 +24261,7 @@
 24639,carpet-lms-addition,carpet-lms-addition,Carpet LMS Addition,,,carpet-lms-addition
 24640,maid-restaurant,maid-restaurant,女仆餐厅,Maid Restaurant,,maid_restaurant
 24641,seven-elements,seven-elements,Seven Elements,,,seven-elements
-24642,neo-eco-ae-extension,neoecoae,Neo ECO AE Extension,,,neoecoae
+24642,neo-eco-ae-extension,neoecoae,Neo ECO AE Extension,,NECO,neoecoae
 24643,golem-snowball-damage,,Golem Snowball Damage,,,golemsnowballdamage
 24644,in-the-corners,in-the-corners,In The Corners,,,in_the_corners
 24645,waystones-x,waystones-x,Waystones-X (Unofficial Waystones Fork),,,
@@ -24279,12 +24278,12 @@
 24656,player2npc,player2npc,Player2 AI NPC,,,player2npc
 24657,,,骷髅炮台,SkeletonTurret,ST,
 24658,tacz-fire-control-extension,,TaCZ: Fire Control Extension,,,tacz_fire_control_extension
-24659,celeritas-extra,celeritas-extra,Celeritas Extra,,,celeritasextra
+24659,celeritas-extra,celeritas-extra,Celeritas/Nothirium Extra,,,celeritasextra
 24660,caves-revamp,caves-revamp,Caves Revamp: Underground Biomes,,,cavesrevamp
 24661,pneumatic-popcorn,,Pneumatic Cooking,,,pneumaticcooking
 24662,rubber-tree-for-dynamic-trees,rubber-tree-for-dynamic-trees,GregTech Rubber Tree for Dynamic Trees,,,rubberdt
 24663,bladecraft,,更多剑,BladeCraft,,bladecraft
-24664,terrafirmagreg-core,terrafirmagreg-core,TerraFirmaGreg-Core,,,tfg
+24664,terrafirmagreg-core,terrafirmagreg-core,群峦格雷核心,TerraFirmaGreg-Core,,tfg
 24665,,etched-fabric,Etched: 1.20.1 Fabric Port,,,
 24666,epicfight-physic-rag-doll,epicfight-physic-rag-doll,EpicFight : Physic Rag Doll,,,epicfight_physic_rag_doll
 24667,spice-of-life-valheim-updated,sol-valheim-updated,Spice of Life: Valheim Updated,,,sol_valheim
@@ -24486,7 +24485,7 @@
 24866,redstone-chans-void-dimension,redstone-chans-void-dimension,虚空维度,Void Dimension,,void_dimension
 24867,,,Xirao的更多物品与方块,Xirao's More Items and Blocks,XMIB,xmib
 24868,,tchy_difficultyadjustment,太初寰宇难度调整,TCHY Difficulty Adjustment,TDA,tchy_difficulty_adjustment
-24869,,,我已确认并知晓执行此命令的风险 ☑️,I'm confirmed!,,confirmed
+24869,,,我已确认并知晓执行此命令的风险,I'm confirmed!,,confirmed
 24870,,,ReForged,,RF,reforged
 24871,,,金波,honeywave,,honeywave
 24872,noisiumed,noisiumed,Noisiumed,,,noisiumed
@@ -24739,7 +24738,7 @@
 25123,wizards-help-irons-spells-n-spellbooks-addon,,Wizards Help!,,,wizardshelp
 25124,ftw-addon,,FTW Addon,,,swa
 25125,new-years-delight-a-farmers-delight-add-on,new-years-delight-(a-farmers-delight-add-on),New Year's Delight,,,nydelight
-25126,,more-tools-1.21.1+,More Tools,,,more_tool
+25126,,more-tools-1.21.1+,更多工具,More Tools,MT,more_tool
 25127,,toms_simple_storage_in_tfc,Toms Simple Storage in TFC,,,tomssimplestorageintfc
 25128,,,Locate Legacy,,,locatelegacy
 25129,,oled-saver,OLED Saver,,,oledsaver
@@ -24858,7 +24857,7 @@
 25244,colored-end-crystals,,Colored End Crystals,,,coloredendcrystals
 25245,wenzhou-specialties,,温州美食,Wenzhou Specialties,,wenzhou_specialties
 25246,peyros-scythe-fix,,铁镰兼容,Peyro's Scythe Fix,PSF,peyro'sscythefix
-25247,snowify-eternal-snow,snowify-eternal-snow,❄️ Snowify: Eternal Snow ❄️,,,snowify_eternal_snow
+25247,snowify-eternal-snow,snowify-eternal-snow,Snowify: Eternal Snow,,,snowify_eternal_snow
 25248,,modernui-mc-mvus,Modern UI mVUS / ModernUI MC mVUS,,,
 25249,horror-messages-kamussy,horror-messages,HORROR - Psychological Horror Messages,,,horrormessages
 25250,velthoric,velthoric,Velthoric,,,velthoric
@@ -24908,7 +24907,7 @@
 25294,insconfig,insconfig,即时重配,InsConfig,,insconfig
 25295,entityreplacer,entityreplacer,生物替换,EntityReplacer,,entityreplacer
 25296,nohurtred,,没有受击变红,NoHurtRed,NHR,nohurtred
-25297,bilibili-media-kots,,哔哩哔哩WaterMedia兼容模组  - 耕云钓月版,Bilibili Media - KOTS,BMK,bilibili_media
+25297,bilibili-media-kots,,哔哩哔哩WaterMedia兼容模组 - 耕云钓月版,Bilibili Media - KOTS,BMK,bilibili_media
 25298,satiated-shield-fix,,饱腹代偿修复,Satiated Shield Fix,,satiated_shield_fix
 25299,tacz-armor-scaling,tacz-armor-scaling,TaCZ护甲缩放,TaCZ Armor Scaling,,armorscaling
 25300,crazy-chocobos,crazy-chocobos!,Crazy Chocobos!,,,chocobos
@@ -25000,7 +24999,7 @@
 25388,resource-replicator,resource-replicator,资源复制机,Resource Replicator,,resource_replicator
 25389,,the-fossils-mod,The Fossils Mod,,,fossils
 25390,little-johns-galvanized-square-steel,little-johns,Little John's: Galvanized Square Steel,,,little_johns
-25391,navaroneecorelib,,NavaroneeCoreLib,,,navaroneecoremod
+25391,navaroneecorelib,navaroneecore,NavaroneeCoreLib,,,navaroneecoremod
 25392,,yosbr-neo,Your Options Shall Be Neoforged,,YOSBN,
 25393,,osten_botanics,东洋花卉,Osten Botanics,OBS,osten_botanics
 25394,tree-vein-miner,,Tree Vein Miner,,,mr_tree_veinminer
@@ -25034,7 +25033,7 @@
 25422,the-cave-crawler,,The Cave Crawler,,,cave_crawler
 25423,particle-rain-backport,particle-rain-(backport),Particle Rain (Backport),,,
 25424,,inventory-disabled,物品栏禁用,Inventory disabled,,inventory_disabler
-25425,navs-motors-inc,,Nav's Motors Inc.,,,
+25425,navs-motors-inc,navs-motors-inc,Nav's Motors Inc.,,,navsmotorsinc
 25426,,,鼠标指向复制坐标,CopyPos,CP,copypos
 25427,theoria,,Theoria,,,theoria
 25428,ad-skies,,Ad Skies,,,adskies
@@ -25141,7 +25140,7 @@
 25529,ars-polymorphia,ars-polymorphia,Ars Polymorphia,,,ars_polymorphia
 25530,debug-block-overlay-reloaded,debug-block-collision-reloaded,Debug Block Collision Overlay Reloaded,,,blockcollisionoverlay
 25531,,progressive-tiers,阶梯强化,Progressive Tiers,,enhanced_monster
-25532,apothic-enchanting-addition,,通量神化附属,Apothic Enchanting Addition,,apothicenchantingaddition
+25532,apothic-flux,apothic-flux,通量神化,Apothic Flux,,apothic_flux
 25533,puddles-floods,puddles-floods,Puddles & Floods,,,puddleflood
 25534,star-dragon-dragon-survival-addon,star-dragon,星辰龙,Star Dragon,,star_dragon
 25535,casual-swing,,Casual Swing,,,casualswing
@@ -25791,7 +25790,7 @@
 26183,au-naturel-da-fishing-mod,,Au Naturel: Realistic Fishing,,,dafishingmod
 26184,crafter-hologram,,Crafter Hologram,,,crafterhologram
 26185,village-utilities,,Village Utilities,,,village_utilities
-26186,some-illager-servants,,诡厄巫法：凶兆,Goety Ominous,GO,some_illager_servants
+26186,some-illager-servants,goety-ominous,诡厄巫法：凶兆,Goety Ominous,GO,some_illager_servants
 26187,cataclysm-fallingtree-compat,,灾变伐树兼容,Cataclysm FallingTree Compat,,cataclysm_fallingtree_compat
 26188,,,Point Blank Official || Blue Archive Pack,,,pointblank-bluearchiveofficial-pack
 26189,fip-vips-aimoptimizer,,Fip_Vip's AimOptimizer,,,playerlock
@@ -25993,7 +25992,7 @@
 26386,bamboo-jungle-survival-house,bamboo-jungle-survival-house,Bamboo Jungle Survival House,,,bamboojunglesurvivalhouse
 26387,villager-frog-house,villager-frog-house,Villager Frog House,,,villager_frog_house
 26388,cherry-grove-starter-house,cherry-grove-starter-house,Cherry Grove Starter House,,,cherry_grove_starter_house
-26389,big-gift-snowglobe,swamp-boat,Swamp Boat,,,swamp_boat
+26389,swamp-boat,swamp-boat,Swamp Boat,,,swamp_boat
 26390,big-gift-snowglobe,big-gift-snowglobe,Big Gift Snowglobe,,,big_gift_snowglobe
 26391,snowman-house,snowman-house,Snowman House,,,snowman_house
 26392,giant-christmas-tree,giant-christmas-tree,巨型圣诞树,Giant Christmas Tree,,giant_christmas_tree
@@ -26148,7 +26147,7 @@
 26543,cursed-speech-cursed-fate-addon,cursed-speech-cursed-fate-addon.,Cursed Speech - Cursed Fate Addon.,,,cursed_fate_and_speech
 26544,cursed-fate-multiverse,cursed-fate-multiverse,Cursed Fate: Multiverse,,,cursedfate_ichigo
 26545,cf-ratio-technique,cf-ratio-technique,Cursed Fate: Ratio Technique Addon,,,ratio_addon
-26546,sweconm,swem,Star Worm Economy and Markets (Player Shops),,SWEM,sweconm
+26546,sweconm,,Star Worm Economy and Markets (Player Shops),,SWEconM,sweconm
 26547,box-of-structures-goety,,Box of Structures: Goety,,,bosgoety
 26548,blades-dungeons,blades-dungeons,Blade's Dungeons,,,blades-dungeons
 26549,,,永恒之门放置限制,GatewaysPlacementLimiter,,gatewaylimiters
@@ -26318,7 +26317,7 @@
 26713,my-battle-mod,my-battle-mod,My Battle Mod,,,mybattlemod
 26714,botania-flower-adjust,,植物魔法花生成调整,Botania Flower Adjust,,botania_flower_adjust
 26715,placeable-gunpowder-1-12,,Placeable Gunpowder (Modern),,,placeablegunpowder
-26716,anvilcore,anvilcore-,AnvilCore 🔨,,,anvilcore
+26716,anvilcore,anvilcore-,AnvilCore,,,anvilcore
 26717,formicapi,formicapi,FormicAPI,,,formicapi
 26718,jcs-dungeons-musics,,JC's Dungeons Musics,,,jcs_dungeons_musics
 26719,dragon-radars,,Dragon Radars,,,
@@ -26574,7 +26573,7 @@
 26973,,,Glowstone Seeds,,,mod_GlowstoneSeeds
 26974,beyond-the-skybox,beyond_the_skybox,Beyond_The_Skybox,,,beyond_the_skybox
 26975,frostbytes-maximum-mobility,frostbytes-maximum-mobility,Frostbyte's Maximum Mobility,,,mobility
-26976,armor-stand-arms-mod,,Jodek's Armor Stand Arms / Armor Stand Arms,,,armor_stand_arms
+26976,armor-stand-arms-mod,,Armor Stand Arms / Jodek's Armor Stand Arms,,,armor_stand_arms
 26977,less-simple-void-world,,Less Simple Void World,,LSVM,
 26978,metallum-metal-backend,metallum-mc,Metallum,,,metallum
 26979,just-hammers-backport,just-hammers-backport,Just Hammers Backport,,,justhammersbackport
@@ -26659,7 +26658,7 @@
 27058,modulargolemsmassivestorageupgrade,,傀儡装配：海纳百川,ModularGolems: MassiveStorageUpgrade,,modulargolemsmassivestorageupgrade
 27059,timescalelib,timescalelib,时间缩放库,TimeScaleLib,TSL,timescalelib
 27060,,moehreag-modcredits,模组鸣谢,Mod Credits,,moehreag-modcredits
-27061,,titanobsidian,泰坦黑曜石扩展,Titan Obsidian,TTO,titan_obsidian
+27061,titanobsidan,titanobsidian,泰坦黑曜石扩展,Titan Obsidian,TTO,titan_obsidian
 27062,,,AuthMod,,,authmod
 27063,sodium-chinese-localization-package1-16-x,mc1.16.5-sodium-chinese-localization-pack,钠-汉化模组,Sodium Chinese Localization Mod,SCLM,sclp
 27064,moonstone-other,moonstone-other,月之石：乱七八糟,Moonstone: Other,,moonstone_other
@@ -26683,7 +26682,7 @@
 27084,,,Moar Heat Sinks,,,
 27085,no-particle,no-particle,无粒子,No Particle,NP,no_particle
 27086,modern-industrialization-hand-crank-power,mi-hand-crank-power!,现代工业化：曲柄动力！,Modern Industrialization Hand Crank Power!,MIHCP,mihandcrank
-27087,,world-remembers-dear-diary,World Remembers Dear Diary,,,worldremembersdeardiary
+27087,world-remembers-dear-diary,world-remembers-dear-diary,World Remembers Dear Diary,,,worldremembersdeardiary
 27088,nuclearcraft-neohaul,nuclearcraft-neohaul,Nuclearcraft Neohaul,,,nuclearcraftneohaul
 27089,,,傀儡装配：有容乃大,ModularGolems：All Embracing,,modulargolemsallembracing
 27090,golem-crackiness,,Golem Crackiness,,,golemcrack
@@ -26895,7 +26894,6 @@
 27298,epicfight-kick-skills,epicfight-kick-skills,史诗战斗：踢击技能,EpicFight : Kick Skills,,efkick
 27299,untitled-log,untitledlog,untitled.log,,,untitled
 27300,hand-magic,hand-magic,Hand Magic,,,hand_magic
-27301,rollback,rollback-mod,回溯,Rollback,,rollbackmod
 27302,tacz-mcs2-projecte-compat,tacz-mcs2-projecte-compat,MCS2枪包EMC值兼容,MCS2 ProjectE Compat,MPC,tacz_mcs2_gunpack_projecte_compat
 27303,,,F1 赛道系统,F1 Racing Mod,F1,advancedmod
 27304,ram-memory-notice,,RAM Memory Notice,,,rammemorynotice
@@ -26905,7 +26903,7 @@
 27308,reroll-player,,玩家重掷,Reroll Player,,reroll
 27309,netherlink-nli,netherlink-nli,NetherLink,,NLI,netherlink
 27310,hicudan,hicudan,个性伤害数字显示,Highly Customizable Damage Numbers,HICUDAN,highly_customizable_damage_numbers
-27311,fentlib,fentlib,FentLib,,,fentlib
+27311,angellib,angellib,AngelLib / FentLib,,,fentlib
 27312,planetring,planetring,星环,Planet Ring,PR,planetring
 27313,expanded-events,,Expanded Events,,,expandedevents
 27314,compound-v,compound-v,五号化合物,Compound V,,compound_v
@@ -27109,7 +27107,7 @@
 27515,caged-and-boxed,caged-and-boxed,Caged and Boxed,,,caged_and_boxed
 27516,,quick-menu-renewed,Quick Menu Renewed,,,quickmenu
 27517,effortless-structure,,轻松建造 重置版,Effortless Structure,,
-27518,emi-backport,emi-plus-backport,Reliable EMI / EMI++ Forked,,,emixx
+27518,reliable-emi,reliable-emi,Reliable EMI / EMI++ Forked,,,emixx
 27519,added-support-for-collapsible-creative-tabs,,折叠标签页支持,Added support for collapsible creative tabs,,folding_creative_tabs_support
 27520,holo-items,holo-items,Holo Items,,,holo_items
 27521,,,TF2 Dispenser,,,TF2Dispenser
@@ -27138,7 +27136,7 @@
 27544,,,附魔来源,EnchantmentOrigin,,enchantmentorigin
 27545,,,Supernova,,,supernova
 27546,,dimension-tickrate,维度Tickrate,Dimension Tickrate,DT,dimensiontickrate
-27547,pulsar-lighting-engine,,Pulsar Lighting Engine,,,pulsar
+27547,pulsar-lighting-engine,pulsar-lighting-engine,Pulsar Lighting Engine,,,pulsar
 27548,immersive-mechanic,,Immersive Mechanic,,IM,im
 27549,neostructuremapper,neostructuremapper,结构注解,NeoStructureMapper,,neostructuremapper
 27550,pretension,,Pretension,,,pretension
@@ -27182,8 +27180,8 @@
 27588,synaxis,synaxis,Synaxis,,,synaxis
 27589,locked-in-slots,locked-in-slots,Locked In Slots,,LS,lockedinslots
 27590,name-tag-upgrade,name-tag-upgrade,Name Tag Upgrade,,NU,nametagupgrade
-27591,vintage-pick-up-notifier,,Vintage Pick Up Notifier,,,vintagepickupnotifier
-27592,minemoticon,,Minemoticon,,,minemoticon
+27591,vintage-pick-up-notifier,vpun,Vintage Pick Up Notifier,,,vintagepickupnotifier
+27592,minemoticon,minemoticon,Minemoticon,,,minemoticon
 27593,modularmachinery-community-edition-complement,,模块化机械：社区版：补充,MMCE Complement,MMCEC,mmce_complement
 27594,voidauth,voidauth,虚空认证,VoidAuth,,voidauth
 27595,konfig,konfig,Konfig,,,konfig
@@ -27303,7 +27301,7 @@
 27710,eternal-starlight-forge,,Eternal Starlight Forge,,,
 27711,,,Carboniferous Mod,,,carboniferous
 27712,holycube-backport,,Holycube Backport,,,holycubebackport
-27713,easy-magic-backport,,Easy Magic [Backport],,,
+27713,easy-magic-backport,easy-magic-backport,Easy Magic [Backport],,,
 27714,aqua-acrobatics-unofficial-forge,,水游技艺非官方版,Aqua Acrobatics Unofficial [Forge],AAU,aquaacrobaticsunofficial
 27715,,blockbreakwarden,Block Break Warden,,,blockbreakwarden
 27716,,simplesoundboard,Simple Soundboard,,,simplesoundboard
@@ -27381,7 +27379,7 @@
 27788,tj-additions,,TJ Additions,,,tj
 27789,tpa-minus-minus,tpa-minus-minus,TPA Minus Minus,,TPAMM,tpamm
 27790,,cnpcmmdskin,CNPC兼容Mmd模型加载,CNPCMmdSkin,,cnpcmmdskin
-27791,,,准星摇晃：重铸,Crosshair Bobbing Mod: Remake,,xbob
+27791,crosshairbobbingmod,crosshairbobbingmod,准星摇晃：重铸,Crosshair Bobbing Mod: Remake,,xbob
 27792,,do_not_cutting_dyedream_block,不要切削染梦合金块,DONOT Cutting Dyedream Block,,donotcuttingdyedreamblock
 27793,soi-snoop-on-immortality,soi,窥探不朽,Snoop On Immortality,SOI,soi
 27794,,,Crossbows Loads,,,mr_silvers_crossbow_loads
@@ -27589,7 +27587,7 @@
 28000,return-by-death-by-lom2333,return-by-death-by-lom233,死亡回归,Return by Death,RBD,
 28001,toucanlib,toucan,toucanLib,,,toucanlib
 28002,,anti-ghost-in-client,幽灵方块同步,anticlientghost,,anticlientghost
-28003,,,无尽贪婪：更多奇点,Avaritia:More Singularity,AMS,avaritia_more_singularity
+28003,,,无尽贪婪：更多奇点,Avaritia: More Singularity,AMS,avaritia_more_singularity
 28004,unknown-echoes,unknown-echoes,未知回响,Unknown Echoes,,unknown_echoes
 28005,visual-blueprint-materials,visual-blueprint-materials,机械动力：量化蓝图,VisualBlueprintMaterials,VBM,create_qbp;vbm
 28006,cnpc-xaerominimap-addon,,CNPC-XaeroMinimap-Addon,,CXA,cnpc_xwm_addon
@@ -27659,7 +27657,7 @@
 28071,spooky-foods,spooky-foods,Spooky Foods,,,ls_spooky_foods
 28072,peaks,,Peaks,,,peaks
 28073,chemlib-neoforged,,ChemLib: NeoForged,,,
-28074,particular-reforged-backport,,Particular ✨ Reforged (Backport),,,
+28074,particular-reforged-backport,,Particular Reforged (Backport),,,
 28075,mtr-traffic-addon,mtr-traffic-addon,MTR Traffic Addon,,MTA,mtr-traffic-addon
 28076,,,加速呈现,AcceleratedPresents,AP,acceleratedpresents
 28077,mundus-magicus,,Mundus Magicus,,,mundusmagicus
@@ -27687,7 +27685,7 @@
 28099,world-preview-tfc,world-preview-terrafirmacraft,世界预览：群峦,World Preview TFC,,world_preview_tfc
 28100,genesis-world-previewer-pregenerator,genesis-world-previewer-pregenerator,Genesis - World Previewer & Pregenerator,,,genesis
 28101,goety-dargui,goety-dargui,诡厄巫法：黑暗祭坛GUI,Goety DarGui,GDG,goetydargui
-28102,radiation-area,,辐射区,Radiation Area,,radiation_area
+28102,radiation-area,radiation-area,辐射区,Radiation Area,,radiation_area
 28103,galtc,,Galtc,,,galtc2
 28104,chestcavitytweak,,ChestCavityTweak,,CCT,chestcavitytweak
 28105,,,Voxy Server Side,,VSS,vss
@@ -27724,7 +27722,7 @@
 28136,numen-ai,numen,言出法随,Numen,,numen
 28137,irons-simple-blood,irons-simple-blood,Iron's Simple Blood,,,simpleblood
 28138,functional-chemical,,Functional Chemical,,,functionalchemical
-28139,,elytra-trails,鞘翅尾迹,Elytra Trails,CET,elytratrails
+28139,,elytra-trails,鞘翅尾迹,Elytra Trails,ElyT,elytratrails
 28140,metus-oblita,,Metus Oblita,,,metus_oblita
 28141,,,Spider Families,,,mod_SpiderFamily
 28142,,,条款扉页,RuleMod,RM,rulemod
@@ -27771,7 +27769,7 @@
 28184,op-commands,opcommands,Op-Commands,,,opcommands
 28185,new-better-combat,new-better-combat,新更好的战斗,New Better Combat,,neobettercombat
 28186,the-db,the-db,The DB (Horror),,,thedb
-28187,emi-unofficial-port-unstable,,EMI Unofficial Port Unstable,,,
+28187,emi-unofficial-port-unstable,,EMI Unofficial Port Unstable,,,emi
 28188,luminanceo,,Luminance,,,luminance
 28189,ghostpig-jar,ghostpig.jar,ghostpig.jar,,,ghostpig
 28190,the-chicken-ghost,the-chicken-ghost,The Chicken Ghost,,,chicken_ghost
@@ -27840,7 +27838,7 @@
 28253,thermal,,热成像,Thermal,,thermalvision
 28254,ae2-favorites,ae2-favorites,AE2收藏夹,AE2 Favorites,AEF,aef
 28255,irissearch,irissearch,Iris & Oculus Search,,,iris_search
-28256,neoshot,neoshot,高清截图NeoForge,Neoshot,,neoshot
+28256,prismshot,prismshot,高清截图NeoForge,Prismshot,,neoshot;prismshot
 28257,rival-channel-city,rival-channel-minecraft-city,争锋频道：我的世界城,Rival Channel Minecraft City,,rivalchannelminecraftcity
 28258,,locator-heads,Locator Heads,,,locator-heads
 28259,,lan-enhancer,更好的局域网列表,LAN Enhancer,,lanenhancer
@@ -27937,7 +27935,7 @@
 28352,,aposabackup,AposaBackup,,ApB,aposabackup
 28353,,,服务器管理工具,ServerManger,smg,servermanager
 28354,,magic-mtr,MAGIC MTR Addon,,MAGIC,jme
-28355,universal-shops,universal-shops,Universal Shops,,,
+28355,universal-shops,universal-shops,Universal Shops,,,universal_shops
 28356,window-fix,window-fix,WindowFix,,,windowfix
 28357,chiseled-enchanting-table-unofficial-port,,纂刻附魔台—社区版,Chiseled Enchanting Table—Unofficial Port,CET_UP,chiseled-enchanting-table
 28358,rotten-recycler,rotten-recycler,Rotten Recycler,,,rottenleather
@@ -28078,7 +28076,7 @@
 28494,,,Naraka-士御门胡桃 / 阴阳光伞,YinYangUmbrella,,yin_yang_umbrella
 28495,verdant-harvest,verdant-harvest,丰年,Verdant Harvest,,verdant_harvest
 28496,liteblur,,LiteBlur,,,
-28497,e33chat,e33chat,E33Chat,,EC,e33chat
+28497,e33chat,e33chat,E33聊天界面,E33Chat,EC,e33chat
 28498,sound-culling,,Sound Culling,,,soundculling
 28499,safe-spawn,safespawn,SafeSpawn,,,safespawn
 28500,timber-frames,timber-frames,Timber Frames,,,timber_frames
@@ -28217,7 +28215,7 @@
 28635,,,MMCE Parallel Equalizer,,,mmceparallelequalizer
 28636,melon-melon,,种瓜得瓜,Melon Melon,,melon_melon
 28637,true-rails,true-rails,真·铁路,True-Rails,TR,truerails
-28638,starcatchers-delight,starcatchers-delight,Starcatcher's Delight,,,starcatcher_delight
+28638,starcatchers-delight,starcatchers-delight,捕星者乐事,Starcatcher's Delight,,starcatcher_delight
 28639,extra-delight-unofficial-port,,Extra Delight Unofficial Port,,,
 28640,diversity-delight,,Diversity Delight,,,diversitydelight
 28641,farmers-respite-unofficial-port,farmers-respite-unofficial-port,Farmer's Respite (Unofficial Port),,,
@@ -28433,7 +28431,7 @@
 28854,f3-f4-gamemode-switcher-for-older-versions,f3-f4-gamemode-switcher-for-older-versions,F3 + F4 Gamemode Switcher for Older Versions,,,f3f4gamemodeswitcher
 28855,,,版本桥接 / 抗坏血酸,Vitamin C,VC,vitaminc
 28856,,fast-masa-configui,Fast Masa ConfigUI,,,fast-masa-config
-28857,,rankboard,排行榜计分板,RankBoard,,rankboard
+28857,rankboard,rankboard,排行榜计分板,RankBoard,RB,rankboard
 28858,,,Tika的Boss增强,Boss Enhancement,,boss_enhancement
 28859,no-more-63-ae2,,No More 63 AE2,,,no_more_63_ae2
 28860,cobblemon-trainers-backpack,cobblemon-trainers-backpack,Cobblemon: Trainers Backpack,,,cobblemon_trainers_backpack
@@ -28505,11 +28503,11 @@
 28926,iepowerpackfix,,沉浸工程电容背包兼容,IE Powerpack Fix,,iepowerpackfix
 28927,,toads-better-straw-beds,Better Straw Beds,,,betterstrawbeds
 28928,propeller-hats,,Propeller Hats,,,propellerhats
-28929,,,边界方块,Border Block,,borderblocks
+28929,,border-blocks,边界方块,Border Block,,borderblocks
 28930,protection-engineering,,工程防护,Protection Engineering,,protectionengineering
 28931,,legacyforgej8,LegacyForgeJ8,,,mc147j8;MC147J8
 28933,,,Inf's Farlands,,,inf_farlands
-28934,schematica-plus,schematica-plus,Schematica-Plus,,,
+28934,schematica-plus,schematica-plus,Schematica-Plus,,,schematica_plus
 28935,only-tp,only-tp,只能TP,Only TP,OTP,onlytp
 28936,shadow-drop,shadow-drop,Shadow Drop,,,shadowdrop
 28937,,no-fire-tick,No Fire Tick,,,nofiretick
@@ -28631,7 +28629,7 @@
 29053,,better-language,更好的语言,Better Language,,scoreboard-manager
 29054,,sable-vivecraft-fix,Sable Vivecraft Fix,,,sable_vivecraft_fix
 29055,,,拟态-重置版,Mimetic,,mimetic
-29056,,,起床战争,Bed Wars,BW,bedwars
+29056,,,起床空岛战争,Bed Sky Wars,BSW,bedwars
 29057,smileys-better-voice,,Smiley's Better Voice,,,verity_cartesia
 29058,laowu-meme,laowu-meme,老吴~,Laowu Meme,,laowu_meme
 29059,icy-lib,,冰洁柠檬心的Lib,Icy Lib,,icy_lib
@@ -28735,7 +28733,7 @@
 29157,,,边狱巴士镜牢饰品,,,lim_mirror
 29158,bird-watching-community-ports,,新·观鸟,Neo Guan Niao / Bird Watching - Community Ports,NGN,neoguanniao
 29159,luckperms-gui-nametags,,LuckPerms GUI & NameTags,,,luckpermsgui
-29160,,the-roads-more-travelled,The Roads More Travelled,,TRMT,trmt
+29160,the-roads-more-travelled,the-roads-more-travelled,The Roads More Travelled,,TRMT,trmt
 29161,,killblock,杀敌方块,KillBlock,,killblock
 29162,,ciallominecamera,你好，我的相机！,Ciallo Mine Camera,CMC,ciallo-mine-camera
 29163,serverwarashi,,座服童子,ServerWarashi,,serverwarashi
@@ -28769,7 +28767,7 @@
 29191,,,经验储存囊,EXP Pack,,ExpPack
 29192,,maid-tavern,女仆酒馆,Maid Tavern,,maidtavern
 29193,super-flat-core,,Super Flat Core,,,superflatcore
-29194,oritongs-diamond-core,,Oritong's Diamond Core,,,oritongsdiamondcore
+29194,oritongs-diamond-core,,Oritong's diamond core,,,oritongsdiamondcore
 29195,,,Carpet Baritone Integration,,CBI,carpetbaritoneintegration
 29196,,just-enough-accidents,险兆备份,Just Enough Accidents,JEA,just_enough_accidents
 29197,,,砂砾高山生物群系,BiomeGravelMountain,,BiomeGravelMountain
@@ -28783,7 +28781,7 @@
 29205,omni-upgrades,omni-upgrades,全能升级,Omni Upgrades,,omni_upgrades
 29206,iron-chest-fix,iron-chest-fix,更多箱子修复,Iron Chest Fix,ICF,ironchestfix
 29207,tfc-lunch-box,tfc-lunch-box,群峦午餐盒,TFC Lunch Box,,tfclunchbox
-29208,returnfeatures,,ReturnFeatures,,,returnfeatures
+29208,returnfeatures,returnfeatures,ReturnFeatures,,,returnfeatures
 29209,,etherstweaks,EtherTweaks,,ET,ethertweaks
 29210,blockshin-menu,,方神菜单,Blockshin Menu,BM,blockshin_menu
 29211,,,Mantle NeoForge 1.21.1,,,
@@ -28797,12 +28795,12 @@
 29219,chocolatiers-delight,,Chocolatiers Delight,,,chocolatiers_delight
 29220,farmers-spell,farmers-spell,魔法食事,Farmer's Spell 'n Spell Book,,farmers_spell
 29221,,libr-getter,LibrGetter,,,librgetter
-29222,uei,uei,通用附魔信息,Universal Enchantment Info (JEI/REI/EMI),UEI,uei
+29222,uei,uei,通用附魔信息,Universal Enchantment Info (JEI/REI/EMI/RRV),UEI,uei
 29223,tacz-auto-fire,,TACZ：自动射击,TACZ: Auto Fire,TACZ:AF,tacz_autofire
 29224,universal-container,,通用容器,Universal Container,UC,universal_container
 29225,moremaidtask,,更多女仆工作模式,MoreMaidTask,MMT,maidtask
 29226,thunderbolt-core,thunderbolt-core,Thunderbolt Core,,,thunderbolt
-29227,,living-item,活物品,Living Item,,living_item
+29227,living-item,living-item,活物品,Living Item,,living_item
 29228,,,附魔灌注台：添加宝藏魔咒,Enchanting Infuser: Add Treasure Enchantments,,mr_enchanting_infuseraddtreasureenchantements
 29229,worldhistory,,寰世忆影,WorldHistory,WH,worldhistory
 29230,irons-spells-3d-cast-preview,irons-spells-3d-cast-preview,铁魔法法术3D预览,Iron's Spells 3D Cast Preview,,iss_ponder
@@ -28810,7 +28808,7 @@
 29232,litematica-print,,更智能的投影打印机,Litematica-Print,LJMPR,seija-printer
 29233,evolveequipment,,更多升级装备,EvolveEquipment,EVEQ,eveq
 29234,,,皮革尬的,Pig God,,piggod
-29235,ds-neck-fix-paperdoll-compat,,龙之生存：纸娃娃兼容修复,DS Neck Fix - PaperDoll Compat,,dsneckfix
+29235,ds-neck-fix-paperdoll-compat,,龙之生存：纸娃娃兼容修复,DS Neck Fix - PaperDoll Compat,,dsneckfix_pdc
 29236,,,Simple Villager,,,simplevillager
 29237,,smoothcamera,平滑相机,Smooth Camera,,smoothcamera
 29238,touhou-maid-eat-properly,,车万女仆：好好吃饭,Touhou Maid: Eat properly,,
@@ -28844,7 +28842,7 @@
 29266,entity-modifier,,可视化实体修改器,Entity Modifier,Em,entity_modifier
 29267,zettas-spells,,Zetta's Spells,,,zettas_spells
 29268,dimension-leak-fix,dimension-leak-fix,维度内存泄露修复,Dimension Leak Fix,,dimension-leak-fix
-29269,,,MinerTrack,,MT,minertrack
+29269,minertrack-anti-xray,,MinerTrack,,MT,minertrack
 29270,,manhunt-wildcard,猎人游戏-外卡,Manhunt Wildcard,,hunterwildcard
 29271,visor,visor,Visor,,,visor
 29272,jdte,,Just Dire Things Extra,,JDTE,jdte
@@ -28863,7 +28861,7 @@
 29285,,inventory-crafting-stick-standalone,便携工作台,Inventory Crafting Stick,,invcrafting
 29286,jasons-disenchantment-forge,,Jasons Disenchantment,,,disenchant
 29287,,,白云的万能修改扳手,,,
-29288,flexibook,,自定义书,FlexiBook,FB,flexibook
+29288,flexibook,flexibook,自定义书,FlexiBook,FB,flexibook
 29289,pu-dragon,,钚龙,Plutonium Dragon,pud,pu_dragon
 29291,,listmore,ListMore,,,listmore
 29292,,,Improved Animations 动画兼容补丁,Improved Animations KosmX Compat,IAKos,jk_ia_compat
@@ -29104,7 +29102,7 @@
 29529,construction-wand-1-12-forge,,建筑手杖 1.12,Construction Wand 1.12 Forge Porting,,
 29530,mcgs-questborne,mcgs-questborne,MCG's Questborne,,,questborne
 29531,copper-furnace,,会氧化的铜熔炉,Copper Furnace,,copperfurnace
-29532,zifeng-s-custom-skill-tree,,子枫的自定义技能树,zifeng_s_custom_skill_tree,ZCS,zifeng_s_custom_skill_tree
+29532,zifeng-s-custom-skill-tree,,子枫的自定义技能树,Zifeng's Custom Skill Tree,ZCS,zifeng_s_custom_skill_tree
 29533,modularshootammo,modularshootammo,模块化射击：弹药,ModularShootAmmo,MSA,modularshootammo
 29534,icy-iron-spell,,冰的铁法术魔女,Icy Iron Spell,,icy_iron_spell
 29535,ocelotsignyunbei,ocelotsignyunbei,云北城建：豹猫指示牌,YunbeiUC: Ocelot Sign,,ocelotsignyunbei
@@ -29137,7 +29135,7 @@
 29562,,,旅者,Traveler,,traveler
 29563,beyond-the-bedrock,beyond-the-bedrock,Beyond The Bedrock,,,beyond_the_bedrock
 29564,neoterraforged,,新：地形重锻,NeoTerraForged,NTF,reterraforged
-29565,,fooddelivery,外卖系统,Food Delivery System,,fooddelivery
+29565,fooddelivery,fooddelivery,外卖系统,Food Delivery System,,fooddelivery
 29566,constructum-tech,,构元科技,Constructum Tech,CT,analysis_calibration_mod_1785553869
 29567,tinkers-strainer,,匠魂滤网,Tinker's Strainer,,tinkers_strainer
 29568,gears-of-valor,,Gears Of Valor,,,gears_of_valor
@@ -29179,7 +29177,7 @@
 29604,enchantlib,,EnchantLib,,,enchantlib
 29605,gensou-works,,幻想营造,Gensou Works,,gensouworks
 29606,gtbcs-cataclysmic-boss-ui,gtbcs-cataclysmic-boss-ui,GTBC's Cataclysmic Boss UI,,,gtbcs_cataclysmic_uis
-29607,,,AoA Ammo Box,,,aoaammobox
+29607,aoa-ammo-box,,AoA Ammo Box,,,aoaammobox
 29608,cnpc-bbs-integration,cnpcs-bbs-addon,CNPCs BBS Addon / CNPC-BBS-Integration,,,cnpcs-bbs-addon
 29609,create-advanced-frequency-network,,机械动力：高级频段网络,Create: Advanced Frequency Network,AFN,create_afn
 29610,mapart-helper,mapart-helper,Mapart Helper,,,maparthelper
@@ -29235,7 +29233,7 @@
 29660,macabre,,Macabre - Call of False Prophets,,,macabre
 29661,thaumic-dabblery,thaumic-dabblery,Thaumic Dabblery,,,thaumicdabblery
 29662,,movablegui,MovableGUI,,,movablegui
-29663,,throw-it,万物皆可抛,Throw it,,throwit
+29663,throw-everything,throw-it,万物皆可抛,Throw it / Throw Everything,,throwit
 29664,bomberbeast,bomberbeast,Bomberbeast,,,
 29665,abandoned-post-apocalyptic-buildings,,Apocalypse structures: Abandoned city buildings,,,postapocalypse_structures
 29666,bullets-boats,bullets-boats,Bullets Boats,,,bulletsboats
@@ -29274,12 +29272,12 @@
 29699,,,VG 炼钢工艺,VG Steel,,steel
 29700,better-sparse-structures,,Better Sparse Structure,,BSS,bettersparsestructures
 29701,goety-spell-source,goety-spell-source-api,诡厄巫法：法术源 API,Goety: Spell Source API,GSS,goety_spell_source
-29702,magical-psi-revival,magical-psi-revival,Magical Psi: Revival,,,
+29702,magical-psi-revival,magical-psi-revival,Magical Psi: Revival,,,magipsi
 29703,pact-curios,pact-curios,平等契约,Pact curios,Pc,
 29704,advanced-mob-leveling,,Advanced Mob Leveling,,AML,
 29705,signedit,,告示牌编辑,SignEdit,,signedit
-29706,jei-enchantment-info-1-12-2,,JEI Enchantment Info Backport,,,
-29707,chat-heads-vintage,,Chat Heads Vintage,,,
+29706,jei-enchantment-info-1-12-2,,JEI Enchantment Info Backport,,,jeienchantmentinfo
+29707,chat-heads-vintage,chat-heads-vintage,Chat Heads Vintage,,,
 29708,anvilcraft-doge-plus,anvilcraft_doge_plus,铁砧工艺：Doge+,AnvilCraft Doge+,,anvilcraft_doge_plus
 29709,,create-steam-powered,蒸汽动力 (非官方),Create: Steam Powered,SP,
 29710,,,机械动力：影院,Create:Cinema,,CreateCinema
@@ -29311,7 +29309,7 @@
 29736,cnpc-bettercombat,,CNPC BetterCombat,,,cnpccombat
 29737,orcinvasion,,兽人入侵,orcinvasion,,orcinvasion
 29738,,,混沌魔契,Chaos Occult,,chaos_occult
-29739,,superb-warfare-refabricated,Superb Warfare ReFabricated,,SBWFabric,
+29739,superb-warfare-refabricated,superb-warfare-refabricated,Superb Warfare ReFabricated,,SBWFabric,
 29740,,,MineToMesh,,MTM,minetomesh
 29741,mca-quests,mca-quests,MCA: Quests,,,mcaquests
 29742,fish-n-ships,fish-n-ships,Fish N' Ships,,,fish_n_ships
@@ -29365,7 +29363,7 @@
 29790,q-shop,,企鹅商店,Qshop,QS,qshop
 29791,,phayriosiscataclysm,Phayriosis: Cataclysm,,,phayriosis_cataclysm
 29792,the-last-sword-you-never-forgot,the-last-sword-you-never-forgot,最终之剑：重铸,The Last Sword You Never Forgot,,the_last_sword
-29793,,,神秘王冠兼容,Mystic Crown Compat,,
+29793,mystic-crown-compat,mystic-crown-compat,神秘王冠兼容,Mystic Crown Compat,,
 29794,inventory-item-groups,inventory-item-groups,物品分组,Inventory Item Groups,,inventory_item_groups
 29795,ae2-recent-search,,AE2 最近搜索,AE2 Recent Search,,ae2_recent_search
 29796,piglin-bartering-for-jei,piglin-bartering-for-jei,Piglin Bartering for JEI,,,piglin_barter_jei
@@ -29387,7 +29385,7 @@
 29812,avalonbase,,AvalonBase,,AB,
 29813,matrix-speak-to-me,matrix-speak-to-me,Matrix\c Speak to me!,,,matrixspeaktome
 29814,targetsindicate,,目标血显,Targets Indicate,,targetsindicate
-29815,nineturnring,,九转戒,Nine Turn Ring,NTR,nine_turn_ring
+29815,nineturnring,nine_turn_ring,九转戒,Nine Turn Ring,NTR,nine_turn_ring
 29816,compass-to-map,compass-to-map,Compass to Map: JourneyMap,,C2M,compasstomap
 29817,endsustain,endsustain,落幕终焉,endsustain,ES,endsustain
 29818,cobblemarket,,方可梦市场,CobbleMarket,CMkt,cobblemarket
@@ -29410,7 +29408,7 @@
 29835,kaleidoscope-hodgepodge,kaleidoscope-hodgepodge,森罗物语：杂烩,Kaleidoscope Hodgepodge,,kaleidoscope_hodgepodge
 29836,ftb-quests-container-integration,,FTB检测兼容,FTB Quests Container Integration,,ftb_quests_container_integration
 29837,the-village-fights-back,the-village-fights-back,The Village Fights Back,,,thevillagefightsback
-29838,tgzjdvs-chat,tgzjdvs-chat,TGZJDV的聊天,TGZJDV's Chat,,tgzjdvchat
+29838,,tgzjdvs-chat,TGZJDV的聊天,TGZJDV's Chat,,tgzjdvchat
 29839,project-expansion-arcanum,,Project Expansion : Arcanum,,,projectexa
 29840,rinku,rinku,Rinku,,,rinku
 29841,pianolib,,PianoLib,,PL,pianolib
@@ -29502,7 +29500,7 @@
 29928,halfmasa,halfmasa,Halfmasa,,Hasa,halfmasa
 29929,recasting2,,重铸2,Recasting 2,,recasting
 29930,wings-2,,翅膀 2,Wings 2,,
-29931,,dabaojianspracticaltools,大宝剑的实用工具 (dabaojian's practical tools),,,
+29931,dabaojians-practical-tools,,大宝剑的实用工具,dabaojian's practical tools,,
 29932,confluence-lootr,,汇流来世Lootr兼容,Confluence Lootr,CL,confluence_lootr
 29933,poopsky-flyimpact,,空中厕所：蝇趴,PoopSky: Flyimpact,,flyimpact
 29934,,,一键空置域,ChunkDevourer,CDR,chunkdevourer
@@ -29526,12 +29524,11 @@
 29953,emf-compat-irons-spells-n-spellbooks,emf-compat-irons-spells-n-spellbooks,实体模型特性兼容：Iron的法术与魔法书,EMF Compat: Iron's Spells 'n Spellbooks,,emf_compat_iron_spells
 29954,emf-compat-supplementaries,emf-compat-supplementaries,实体模型特性兼容：锦致装饰,EMF Compat: Supplementaries,,emf_compat_supplementaries
 29955,aeronautics-modernui-compat,aeronautics-modernui-compat,航空学：现代化UI兼容,Aeronautics: ModernUI Compat,,aeronautics_modernui_compat
-29956,emf-compat-exposure,emf-compat-exposure,EMF Compat: Exposure,,,emf_compat_exposure
+29956,emf-compat-exposure,emf-compat-exposure,实体模型特性兼容：拾光定影,EMF Compat: Exposure,,emf_compat_exposure
 29957,emf-compat-carry-on,emf-compat-carry-on,实体模型特性兼容：搬运,EMF Compat: Carry On,,emf_compat_carry_on
 29958,emf-compat-quark,emf-compat-quark,实体模型特性兼容：夸克,EMF Compat: Quark,,emf_compat_quark
 29959,create-cosmonautics-expansion,create-cosmonautics-expansion,Create Cosmonautics Expansion,,,rocketnautics_addon
 29960,create-aeronautics-discovery,create-aeronautics-discovery,Create Aeronautics Discovery,,,aeronauticsdiscovery
-29961,emf-compat-exposure,emf-compat-exposure,实体模型特性兼容：拾光定影,EMF Compat: Exposure,,emf_compat_exposure
 29962,emf-compat-watut,emf-compat-watut,实体模型特性兼容：WATUT,EMF Compat: WATUT,,emf_compat_watut
 29963,emf-compat-tacz,emf-compat-tacz,实体模型特性兼容：永恒枪械工坊零,EMF Compat: TACZ,,emf_compat_tacz
 29964,create-parallel-tracks,,Create: Parallel Tracks,,,create_parallel_tracks
@@ -29547,7 +29544,7 @@
 29975,rollingcats-transit-expansion,rollingcats-transit-expansion,滚猫交通扩展,Rollingcats Transit Expansion,RTE,rte
 29976,,,TaCZ：特战英雄武器包,AC Hero Gun Pack,ACH,achero
 29977,,,畅聊,async-chat-1.20.4,,async-chat
-29978,,,更好的速度显示,BetterSpeedHUD,,speedhud
+29978,betterspeedhud,betterspeedhud,更好的速度显示,BetterSpeedHUD,,speedhud
 29979,touhou-little-maid-senju,,车万女仆:千手女仆,Touhou Little maid:senju,Senju,tlm_senju
 29980,piggyback-legacy,,Piggyback Legacy,,,piggyback12
 29981,,,让头颅飞,Head Off,,headoff
@@ -29587,19 +29584,19 @@
 30015,dungeons-content-addon,dungeons-content-plus,Dungeons Content Plus,,DCP,dungeonsplus
 30016,natrium-mob-naming-utilities,,Natrium生物命名实用,Natrium Mob Naming Utilities,,natriumnaming
 30017,,,音效重复播放修复,Sound Repeat Fix,,soundrepeatfix
-30018,actinium-1-12-2-optimization,,Actinium,,,actinium
+30018,actinium-1-12-2-optimization,,锕,Actinium,Ac,actinium
 30019,kamitesque,,Kamitesque (Thaumic Divinity),,,kamitesque
 30020,vibrancy,vibrancy,Vibrancy,,,vibrancy
 30021,purification-totem,,净化图腾,Purification Totem,PT,purificationtotem
 30022,,ae2-vm,AE2 合成虚拟机,AE2 VM,ae2vm,ae2vm
-30023,,,块室,The Blockrooms,BLR,blockrooms
+30023,,the-blockrooms-mod,块室,The Blockrooms,BLR,blockrooms
 30024,gui-commands,,Gui Commands,,,guicommands
 30025,ae2-texture-updater,,AE2 Texture Updater,,AE2TU,ae2_texture_updater
 30026,maid-restaurant-storage,maid-restaruant-storage,女仆餐厅：储存,Maid Restaurant: Storage,MRS,maid_restaurant_storage
 30027,reneighborly,reneighborly,ReNeighborly,,,reneighborly
 30028,astral-dice,astral-dice,星之骰戏,Astral Dice,AD,astral_dice
 30029,,fungal-infection-cataclysm,真菌感染：灾变,Fungal Infection: Cataclysm,,night_clouds_spore_addon
-30030,kaleidoscope-immersive-eating,immersive-eating,森罗物语: 沉浸式品尝,Kaleidoscope: Immersive Eating,ImmEat,food
+30030,kaleidoscope-immersive-eating,,森罗物语: 沉浸式品尝,Kaleidoscope: Immersive Eating,,food
 30031,mcr-blocks-fix,,F***ing MCR Block,,,mcr_blocks_fix
 30032,,better-wither,Better Wither,,,better_wither
 30033,crazyae-nyonification,,疯狂的AE桥接器,CrazyAE Nyonification,CAEN,crazyae_nyonification
@@ -29619,7 +29616,7 @@
 30047,kubejs-assets-override,,KubeJS 客户端资源覆盖,KubeJS Assets Override,,kubejs_assets_override
 30048,modern-morph,modern-morph,Modern Morph,,,
 30049,alliance-netherite-monstrosity,alliance-netherite-monstrosity,Alliance Netherite Monstrosity,,,alliance_netherite_monstrosity
-30050,fungal-infection-spore-ai,,真菌感染：孢子  AI接入,Spore AI,,spore_ai
+30050,fungal-infection-spore-ai,,真菌感染：孢子 AI接入,Spore AI,,spore_ai
 30051,,,特摄英雄补完计划：技能轮盘,THIP Skill Wheel,TSW,thip_skillwheel
 30052,mekanism-magic,,通用魔法,Mekanism Magic,,mekanism_magic
 30053,,better-pie-chart,Better Pie Chart,,,betterpiechart
@@ -29750,7 +29747,7 @@
 30181,,,得一即无限背包,SN Infinite Pack,SNInfP,sninfinitepack
 30182,thermal-more-integral-components,thermal-more-integral-components,Thermal: More Integral Components,,,thermal_more
 30183,recipehandlerragecraftedition,,合成冲突消除：重铸版,No More Recipe Conflict Reforged,,recipehandlerRC
-30184,keymap-viewer,,Keymap Viewer,,,keymapviewer
+30184,keymap-viewer,keymap-viewer,按键大师,Keymap Viewer,KMV,keymapviewer
 30185,,,拆解台附属,Uncraft Everything Enhanced,,uncrafteverything_enhanced
 30186,,,随身铁傀儡,Pocket Iron Golem,,
 30188,multitools-enhanced,multitool-enhanced,Multitools Enhanced,,,multitools
@@ -29793,7 +29790,7 @@
 30225,cgc-config-addon,cgc-config-addon,自定义枪械永续配置扩展,CGC Config Addon,,cgcconfig
 30226,,fluorescentink,荧光墨水,Fluorescent Ink,,fluorescent_ink
 30227,,,更好的json文本渲染,dynamic_text_effects,DTE,dynamic_text_effects
-30228,,,森罗物语：酱料,Kaleidoscope Sauce,,kaleidoscope_sauce
+30228,,kaleidoscope-sauce,森罗物语：酱料,Kaleidoscope Sauce,,kaleidoscope_sauce
 30229,ascendanttreasures,,AscendantTreasures,,AT1,ascendant_treasures
 30230,collection-book,collection-book,收藏册/收藏之书,Collection Book,,collection_book
 30231,goety-astrology,,诡厄巫法：星象学,Goety: Astrology,GAS,goetyastrology
@@ -29833,7 +29830,7 @@
 30265,midnight-nightmares,midnight-nightmares,Midnight Nightmares,,,mnightmares
 30266,,,光剑,LightSaber,LS,lightsaber
 30267,,,MornfrostAchievements,,MFAC,mornfrost_achievements
-30268,,tab-compass,TAB Compass,,,
+30268,,tab-compass,TAB Compass,,,tabcompass
 30269,magnetization,,Magnetization,,,magnetization
 30270,lucis,lucis,Lucis,,,lucis
 30271,azotosaurus-freesky-dragon-survival-add-on,,氮沧龙,Azotosaurus Freesky Dragon,,freesky_dragon
@@ -29856,7 +29853,7 @@
 30288,create-sifting-create-fabric-6-0-8-1,create-sifting-fabric-updated,机械动力：筛子 - Create Fabric 6.0.8.1,Create Sifting — Create Fabric 6.0.8.1,,createsifter
 30289,,cursed-breeding,Cursed Breeding,,,cursed_breeding
 30290,,,EMC发电机,EMC Generator,EG,emcgenerator
-30291,,judgement-bird,审判鸟,Judgement Bird,JB,jb
+30291,the-judgement-bird,judgement-bird,审判鸟,Judgement Bird,JB,jb
 30292,,,魔法少女纪元,Magical Girl Era,MGE,mge
 30293,,,Kbyte MChemistry,,,kbyte_mchemistry
 30294,,rick-technology,瑞克科技,Rick Technology,RT,rick_technology
@@ -29955,19 +29952,19 @@
 30388,xiaozhitpa,xiaozhitpa,小志的TPA,Xiaozhi TPA,XZTPA,xiaozhi_tpa
 30389,,all-is-random,一切皆随机,All Is Random,AIR,all_is_random
 30390,,,AE2与JDT附属时间加速器,AE2 Time Card,,ae2timecard
-30391,ancient-tech,kfau7nXS,远古科技,Ancient Tech,,ancienttech
+30391,ancient-tech,ancient-tech,远古科技,Ancient Tech,,ancienttech
 30392,,third-person-nametags,第三人称玩家名称,Third Person Nametags,,thirdpersonnametags
 30393,,daysplayed,游戏天数,Days Played,,daysplayed
 30394,true-adaptive-music,true-adaptive-music,True Adaptive Music,,,trueadaptivemusic
 30395,fused-critical,,统合暴击,Fused Critical,,fusedcritical
 30396,nimble-pattern,,灵巧样板,Nimble Pattern,,nimble_pattern
 30397,let-s-do-bugs-fix,,Let's do Bug fix,,,Let-s-do-bugs-fix
-30398,,enigmatic_extra,神秘遗物：附加,Enigmatic Extra,,enigmatic_extra
+30398,enigmatic-extra,enigmatic_extra,神秘遗物：附加,Enigmatic Extra,,enigmatic_extra
 30399,music-triggers-new,,Music Triggers-new,,,
 30400,scp-facility,scp-facility,SCP: Facility,,SCPF,scp_the_facility
 30401,advanced-core-info,advanced-core-info,Advanced Core Info,,ACI,aci
 30402,playerblockstate,,玩家区块状态,,PBS,player-block-status
-30403,vlorant,,无畏契约,Valorant,,valorant
+30403,vlorant,valorant-s,无畏契约,Valorant,,valorant
 30404,immortalitytotem,,永生图腾,Immortality Totem,,ImmortalityTotem
 30405,,extractinatorforked,提炼机 (分支版),ExtractinatorForked,,extractinator
 30406,simple-rpg,,Simple RPG Mod,,,
@@ -30011,10 +30008,10 @@
 30444,bleed-zone-7,,七号区,Bleed Zone,,dumbcatmod
 30445,first-class-flying,first-class-flying,头等飞行,First Class Flying,FCF,first_class_flying
 30446,one-dimension,one-dimension,One Dimension,,,onedimension
-30447,,,更多ECO元件,ecomorecell,,ecomorecell
+30447,eco-more-cell,,更多ECO元件,ecomorecell,,ecomorecell
 30448,,,FpsMonitor,,,fpsmonitor
 30449,thunderhead,,Thunderhead - Lightning & Thunder Overhaul,,,tempestfx
-30450,new-armor-system,new-armor-system,新护甲系统,New Armor System,,
+30450,new-armor-system,new-armor-system,新护甲系统,New Armor System,NAS,new_armor_system
 30451,codxlib,codxlib,CodxLib,,,codxlib
 30452,astages-ftb-quests,astages-ftb-quests,AStages FTB Quests,,,astages_ftbquests
 30453,mob-spawner-tweaks,,刷怪笼控制与机制修改,Spawner Tweaks,,spawnertweaks
@@ -30025,7 +30022,7 @@
 30458,anka-mobs,,安卡顽敌,Anka Mobs,,anka_mobs
 30459,walk-reveal,,Walk & Reveal,,,walkreveal
 30460,dbes-spark-engine,,星火引擎,DBE's Spark Engine,,spark_engine
-30461,,simple-text-chat,简单的文本聊天,Simple Text Chat,STC,text_chat
+30461,simple-text-chat,simple-text-chat,简单的文本聊天,Simple Text Chat,STC,text_chat
 30462,tinkers-part-reclaimer,,匠魂部件返还,Tinkers Part Reclaimer,,tinkers_part_reclaimer
 30463,,,千机武,Formshift Arsenal,,formshift_arsenal
 30464,the-corners-renewed,,The Corners: Renewed,,,
@@ -30034,7 +30031,7 @@
 30467,,kubejs-studio,KubeJS Studio,,,kubejsstudio
 30468,rock-n-stone,rock-n-stone,Rock n Stone,,,rockandstone
 30469,chat-highlight-sound,chat-highlight-n-sound,Chat Highlight & Sound,,CHAS,chat_highlight_n_sound
-30470,special-effect-text,special-effect-text,特效文本,Special Effect Text,SET,special_effects_text
+30470,special-effect-text,,特效文本,Special Effect Text,SET,special_effects_text
 30471,,,Spear Backport Addon,,,spear_backport_addon
 30472,focus-value,,专注值,Focus Value,FV,focus_value
 30474,glass-bridge,,Glass Bridge,,,glassbridge
@@ -30060,7 +30057,7 @@
 30494,,,箱子里的小饰品：扩展,ChestCurioItems：Addons,,chestcurioitemsroomier
 30495,benchmark,,性能基准测试,Benchmark,,
 30496,rings-of-ascension-reborn,,提升戒指：重生,Rings of Ascension：Reborn,,ringsofascensionreborn
-30497,,,野营：修复版,The Camping Mod-Fix,,camping
+30497,,,野营：修复版,The Camping Mod-Fix,,
 30498,real-time-craftingtable,,实时工作台,Real-time CraftingTable,,real-time-crafting-table
 30499,cnpc-compatible-with-kingdomcome-combat,,CNPC兼容：天国的战斗,CNPC compatible with Kingdomcome Combat,,cnpckingdom
 30500,quick-craft,,Quick Craft,,,quickcraft
@@ -30199,7 +30196,7 @@
 30634,advanced-worldgen-info,,Advanced Worldgen Info,,AWI,awi
 30635,spellcaster,,Spellcaster,,,spellcaster
 30636,,,黑日使徒,Ater Sol Apostolus,ASA,fading_black_sun
-30637,,,从零到无穷大,From Zero To Infinity,FZTI,from_zero_to_infinity
+30637,from-zero-to-infinity,,从零到无穷大,From Zero To Infinity,FZTI,from_zero_to_infinity
 30638,,cosmonautics-deep-air,Cosmonautics: Deep Air,,,cosmonauticsdeepair
 30639,ts-modify,,TS Modify,,,tsmodify
 30640,block-outline-customizer,block-outline-customizer,Block Outline Customizer,,,blockoutlinecustomizer
@@ -30208,7 +30205,7 @@
 30643,slashblade-reborn,,SEAC拔刀剑附属 旧梦重铸,slashblade legacy compat,SBLC,slashblade_legacy_compat
 30644,,,云端速递,Cloud Express,CEx,speedupdate
 30645,apex-arcana-irons-spells-n-spellbooks-addon,,Apex Arcana — Iron's Spells 'n Spellbooks Addon,,,grandsigil
-30646,,flaming_remastered,火焰熊熊：重制版,Flaming: REmastered,FL:RE,fl_flaming_remastered
+30646,flaming-remastered,flaming_remastered,火焰熊熊：重制版,Flaming: REmastered,FL:RE,fl_flaming_remastered
 30647,bigger-stacks-2,,更大堆叠2,Bigger Stacks 2,,biggerstacks
 30649,irons-spell-smithing-template-addon,,铁魔法：锻造模板附加,Iron's Spell: Smithing Template Addon,ISSTA,iron_spell_smithing_template_addon
 30650,botania-biomes,biotania,Biotania / Botania Biomes,,,biotania
@@ -30228,7 +30225,7 @@
 30664,,,村民工作站,Villager Workstations,,workstations;keyboard_workstations
 30665,mod-access-control,mod-access-control,模组准入控制,Mod Access Control,MAC,mod_access_control
 30666,terracliff,terracliff,TerraCliff,,,zzz_terracliff
-30667,,,Neo ECO Prototype,,,neoecoprototype
+30667,neoecoprototype,,Neo ECO Prototype,,NECOP,neoecoprototype
 30668,damage-stats,,伤害溯源,Damage Stats,DS,damagestats
 30669,slashblade-resharped-recipe-fix,,拔刀剑：合成表错乱修复补丁,SlashBlade Resharped Recipe Fix,SREF,slashblade_resharped_Recipe_fix
 30670,lei-lazy-enough-items,,懒人物品管理器,Lazy Enough Items,LEI,lazy_enough_items
@@ -30273,7 +30270,7 @@
 30709,hgs-backpack-smelter,,打包烧制,HG's Backpack Smelter,,hg_backpack_smelter
 30710,hexjsneo,hexjsneo,HexJSNeo,,,hexjsneo
 30711,,,Just For Industrial Craft 2 Classic,,JFIC2C,jfic2c
-30712,,,DisplayDelightJS,,,displaydelightjs
+30712,,displaydelightjs,DisplayDelightJS,,,displaydelightjs
 30713,apoli-stream-leak,,Apoli Stream Leak,,ASL,apoli_stream_leak
 30714,,,Apoli Stream Leak Fix,,ASLfix,apolistreamleakfix
 30715,rail-placement-fix,rail-placement-fix,铁轨放置修复,Rail Placement Fix,,rail-placement-fix
@@ -30292,13 +30289,13 @@
 30728,,,ME 爆炸配方机,AE2 Blast Chamber,AE2BC,ae2blast
 30729,better-fox-trot-brew,,更好的狐步酿香,Better Fox Trot Brew,,better_fox_trot_brew
 30730,auto-librarian,,Auto Librarian,,,autolibrarian
-30731,,,千里寻踪,Trace Seeker,TS,qianlixunzong
+30731,trace-seeker,,千里寻踪,Trace Seeker,TS,qianlixunzong
 30732,,,砂轮一键去魔,Grindstone Disenchant,,grindstone_deenchant_mod
 30733,more-coal-craft,,更多的煤炭工艺,More Coal Craft,MCC,more_coal
 30734,,,只睡不聊,SleepNoChat,,sleepnochat
 30735,universal-talent-editor,,通用可视化天赋编辑器,Universal Talent Editor,,talent_editor
 30736,,,焰火之心 (附魔拓展),Firework Star Enchantment,FSE,firework_heart
-30737,,,云端之乐电弧修复,Delight o' Flight Arc Fix,,delighto_flight_fix
+30737,delightoflightarcfix,,云端之乐电弧修复,Delight o' Flight Arc Fix,,delighto_flight_fix
 30738,bdlib-rescaled,,BdLib Rescaled,,,
 30739,cys-attributes,,CYS Attributes,,,
 30740,jei-unofficial,,JEI unofficial,,JEIU,
@@ -30393,7 +30390,7 @@
 30830,,,Console CLS,,,cls
 30831,integrated-core,,Integrated Core,,,integrated_minecraft
 30832,shining-champions,,闪耀！冠军生物,Shining Champions,,shining_champions
-30833,modular-machinery-community-refoxed,modular-machinery-community-refoxed,模块化机械：社区版非官方重制版,Modular Machinery：Community Refoxed,MMCR,mmcr
+30833,modular-machinery-community-refoxed,modular-machinery-community-refoxed,模块化机械：社区版重制,Modular Machinery: Community Refoxed,MMCR,mmcr
 30834,pyrologer-and-friends-port,,Pyrologer And Friends Port,,,hport
 30835,curse-of-abyss,,Curse Of Abyss,,,curseofabyss
 30836,applied-oritech,,Applied Oritech,,,applied_oritech
@@ -30408,14 +30405,14 @@
 30845,custom-rarity,,RarityJS,,,
 30846,tame-ervery-mob,tame-every-mob,Tame Every Mob,,,tameeverymob
 30847,apocalypselib,,ApocalypseLib,,,
-30848,,,SimpleMiner,,,simpleminer
+30848,simpleminer,,简单连锁,SimpleMiner,,simpleminer
 30849,terror-of-the-spinosaurus-dinosaur-horror,,Terror Of The Spinosaurus (Dinosaur Horror),,,the_terror_of_spinosaurus
 30850,defense-innovation,defense-innovation-al1s,防御革新,Defense Innovation,,blockmod
 30851,carry-on-creative-world,,随身创境,Carry-on Creative World,,carryon_creative_world
 30852,warriorcats-events,warrior-cats-events,Warrior Cats Events,,,warriorcats_events
 30853,,stamina-dltb,Stamina [DLTB],,,
 30854,,,SUSY实用设备,SUSY Plus Plus,SUSY++,susyplusplus
-30855,,,NeoContinuity 1.12.2 Vintage,,,
+30855,,,CleanContinuity,,,
 30856,,,傀儡装配-战术人形 ReNeoForge,TaCZ Golem Compat ReNeoForge,,taczgolemcompat
 30857,more-compressed-mek-factories,,More Compressed Mek Factories,,MCMF,
 30858,more-compressed-mek-generators,,More Compressed Mek Generators,,MCMG,
@@ -30482,7 +30479,7 @@
 30919,,,真菌感染：抵抗,Fungal: Resistance,,fungal_resistance
 30920,legendary-inventory,,Legendary Inventory,,,
 30921,,,银河铁道之夜,GalaxyRailway,GRY,galaxyrailway
-30922,guns-workshop-origins,,枪械工坊：起源,Guns Workshop Origins,GWO,
+30922,guns-workshop-origins,,枪械工坊：起源,Guns Workshop Origins,GWO,gwo
 30923,,,没有小孩,NoVillagerBreed,,novillagerbreed
 30924,,,禁止刷铁与不死图腾,VillageBalanceMod,,villagebalance
 30925,ae2-pattern-disk,ae2-pattern-disk,AE2样板磁盘,AE2 Pattern Disk,AE2PD,ae2_pattern_disk
@@ -30534,7 +30531,7 @@
 30971,schematicaplusreforged,,SchematicaPlusReforged,,,
 30972,ragecraftmalisisdoors,,RageCraftMalisisDoors,,,
 30973,,,攻击距离修复,Attack Reach Fix,,aw_more_enchantments
-30974,maldict,maldict,咒邪,Maldict,,maldict
+30974,maledict,maledict,咒邪,Maledict,,maledict
 30975,,,获取配方,Get Recipes,GRS,com.recipe.GetRecipes
 30976,classic-gamerule,classic-gamerule,Classic Gamerule,,,classicgamerule
 30977,poopy-cobblemon,,Poopy Cobblemon,,,poopy_cobblemon
@@ -30557,7 +30554,7 @@
 30994,cnpc-x-spiritoffight-compatibility,,CNPC X SpiritOfFight Compatibility,,CNPCSOF,cnpcsof
 30995,cinematic-zoom,cinematiczoom-original,Cinematic Zoom/CinematicZoom Original,,,cinematiczoom
 30996,,,失焦,Focal Decay,,focal_decay
-30997,mechanical-infection,,械器感染,Mechanical Infection,MIN,mechanical_infection
+30997,mechanical-infection,,械器感染,Mechanical-infection,MIN,mechanical_infection
 30998,tinkers-of-cataclysm,,灾变匠魂材料,Tinkers of Cataclysm,,tinkers_of_cataclysm
 30999,rainbow-lotus,,彩虹莲,Rainbow Lotus,RL,
 31000,twilight-sparks-delight,,暮光乐事 / 暮光农家乐,Twilight Spark's Delight,,twilight_spark_delight
@@ -30641,7 +30638,7 @@
 31079,field-emitters,field-emitters,Field Emitters,,,fieldemitters
 31080,legendary-block-entities,legendary-block-entities,Legendary Block Entities,,,legendaryblockentities
 31081,data-sync-lib,,Data Sync Lib,,,datasynclib
-31082,blade-forge-workshop,,锻刀工坊,Blade Forge Workshop,,slashbladeresh_slashblad
+31082,blade-forge-workshop,,锻刀工坊,Blade Forge Workshop,BFW,slashbladeresh_slashblad
 31083,villager-backport,,Villager Backport,,,villagerbackport
 31084,,,TaCZ 人机,TACZ CS Bot,,taczcsbot
 31085,item-drops,item-drops,Item Drops,,,itemdrops
@@ -30671,8 +30668,8 @@
 31109,,,MCWS原版改良,MCWS Vanilla Improvement,MCWSVI,mcws_vanilla_improvement
 31110,applied-delight,applied-delight,应用乐事,Applied Delight,AD,applieddelight
 31111,better-snow-villages,,更好的雪村,Better Snow Villages,BSV,bettersnowvillages
-31112,,cyberware-unofficial,机械改造非官方版,Cyberware Unofficial,,cyberware_unofficial
-31113,antos,,AntOS Computer | Quests + Guidebook,,,antos
+31112,cyberware-unofficial,cyberware-unofficial,机械改造非官方版,Cyberware Unofficial,,cyberware_unofficial
+31113,antos,antos,AntOS Computer | Quests + Guidebook,,,antos
 31114,,,科罗廖夫十字,KorolevCross,,korolevcross
 31115,,,科技封锁,Tech Blockade,,tech_blockade
 31116,,ae2-channel-alert,AE2频道过载提示音,AE2 Channel Alert,,ae2channelalert
@@ -30694,7 +30691,7 @@
 31132,,,Minecraft 指令生成器,MC Command Generator,,mc-command-generator
 31133,,woodlandsextra,Woodlands: Extra,,,woodlands_extra
 31134,guardian-stone,guardian-stone,玩家传送石头,Guardian Stone,,guardian_gtone
-31135,,,弱小的怪物,Crash Super Pro,CSPRO,crashsuperpro
+31135,crash-super-pro,,弱小的怪物,Crash Super Pro,CSPRO,crashsuperpro
 31136,smartmaid,,智能女仆,SmartMaid,,smartmaid
 31137,furkin,furkin,绒亲,Furkin,,furkin
 31138,greedy-villagers,greedy-villagers,更良心的村民,Greedy Villagers,,greedy_villagers
@@ -30709,12 +30706,12 @@
 31147,,radial,Radial,,,radial
 31148,create-feed-me-packages,,机械动力：喂我发包！,Create: Feed Me Packages!,,create_feed_me_packages
 31149,attributelimiter,attribute-limiter,属性限制器,AttributeLimiter,,attributelimiter
-31150,easy-ants,,Easy Ants,,,easy_ants
+31150,easy-ants,easy-ants,Easy Ants,,,easy_ants
 31151,cgc-compat-legacyitem,cgc-compat-legacyitem,自定义枪械永续兼容：夕拾,CGC Compat: LegacyItem,,cgcclegacyitem
 31152,cgc-compat-shader,cgc-compat-shader,自定义枪械永续兼容：光影,CGC Compat: Shader,,cgccshader
 31153,,cc-audio-expand,CC音频拓展,CC Audio Expand,CCAE,cc_audio_expand
 31154,jdt-kubejs,,JDT KubeJS,,,jdtkubejs
-31155,ans-ars-nouveau-spellbooks-irons-spells-addon,,魔艺法术,Ars Nouveau Spellbooks - Iron's Spells Addon,ANS,ars_nouveau_spellbooks
+31155,ans-ars-nouveau-spellbooks-irons-spells-addon,,魔艺法术/铁魔法x新生魔艺,Ars Nouveau Spellbooks - Iron's Spells Addon,ANS,ars_nouveau_spellbooks
 31156,sophisticated-plus,,精妙背包++,Sophisticated Plus,SP,sophisticated_plus
 31157,,,authlib-injector,,,
 31158,dimensiontech,dimension-tech,维度科技,DimensionTech,DT,dimension_tech
@@ -30732,7 +30729,7 @@
 31170,create-crystal-industry,,晶簇工业,Create: Crystal Industry,CCI,create_crystal_industry
 31171,attribute-reset,,属性重置,Attribute Reset,AttRet,attribute_reset
 31172,,,zhuo37的忍术扩展附属,zhuo37's Naruto Addon,ZNA,narutoaddon
-31173,,aoa-3.6.11-fix-addon,虚无世界3.6.11修复,AoA 3.6.11 Fix Addon,,aoa3fixes
+31173,,,虚无世界3.6.11修复,AoA 3.6.11 Fix Addon,,aoa3fixes
 31174,,,精妙背包快捷切换,,,backpack_pager
 31175,quest-language-selection,,FTB任务书语言选择,Quest Language Selection,,ftbqlang
 31176,ae2-lightning-tech-reborn,,闪电科技：重生,AE2 Lightning Tech Reborn,AE2LTR,ae2lt
@@ -30760,7 +30757,7 @@
 31199,,theseus-quests,Theseus Quests,,,theseus
 31200,macaws-roads-and-streets,,Macaw's Roads and Streets,,,mcwroads
 31201,,gameinfo,GameInfo 非官方移植,Gameinfo for 26.3,,
-31202,,,群峦食物移植,TFC Food Port,TFCFP,tfc_food_port
+31202,tfc-food-port,,群峦食物移植,TFC Food Port,TFCFP,tfc_food_port
 31203,,,稳态-生存拓展,Enclosure Heating,,enclosure_heating
 31204,vttas-viewtrackingtargetacquisitionsystem,,视角追踪索敌系统,View Tracking Target Acquisition System,VTTAS,view_tracking_target_acquisition_system
 31205,curvy-blocks,,弯曲方块,Curvy Blocks,CB,curvyblocks
@@ -30771,7 +30768,7 @@
 31210,venominus-bloodbath,,Venominu's Bloodbath,,,venominus_bloodbath
 31211,godfall-trinkets,,登神残饰,Godfall Trinkets,,godfall-trinkets
 31212,on-ancient-ground-core,on-ancient-ground-core,On Ancient Ground - Core,,,modpack
-31213,shape-shifter-curse-forge,,幻形者诅咒非官方forge版,Shape Shifter Curse Forge,SSCF,shape_shifter_curse
+31213,shape-shifter-curse-forge,,幻形者诅咒非官方 Forge 版,Shape Shifter Curse Forge,SSCF,shape_shifter_curse
 31214,,,FTB任务互动动画,QuestFX,QTFS,questfx
 31215,otcaddon,,otcaddon,,otca,otcaddon
 31216,,,AMTZ,,AMTZ,amtz
@@ -30809,7 +30806,7 @@
 31248,,tlm-substitute-jizo-expand,车万女仆：替身地藏扩展,Touhou Little Maid: Substitute-Jizo-Expand,,tlm_substitute_jizo_expand
 31249,maidmorework,,酒狐的更多工作,MaidMoreWork,MMW,maidmorework
 31250,,,女仆饰品管理,MaidCuriosManager,,maidcuriosmanager
-31251,,,女仆建筑,Maid Construction,,blueprint
+31251,maid-construction,,女仆建筑,Maid Construction,,blueprint
 31252,,,女仆职业,Maid Professions,,maidtaskfilter
 31253,,,车万女仆：围棋,Touhou GO,THGO,touhou_go_board_1790384435
 31254,touhoulittlemaidcombat,,车万女仆：战斗增强,Touhou Little Maid: Combat Plus,,touhou_little_maid_combat
@@ -30824,7 +30821,7 @@
 31263,wither-sickness-potions,,凋零腐败药水,Wither Sickness Potions,,withersicknesspotions
 31264,,,YSM与赤焦枪械兼容,YSM x Scorched Guns 2 Compat,YSM_SG2,ysm_scg2_compat
 31265,,,红石台阶,Redstone Slab,,redstoneslab
-31266,sable-aeronautics-scaling,sable-aeronautics-scaling,航空学物理结构缩放,sable aeronautics scaling,,
+31266,sable-aeronautics-scaling,sable-aeronautics-scaling,Sable Aeronautics Scaling,,,sable_aeronautics_scaling
 31267,mob-forceload,,远游但载,Mob Forceload,,mob_forceload
 31268,creeper-spider-mod,,Creeper-Spider Mod,,,creeperspidermod
 31269,nsukdelightcropaddons,,NSUK：乐事作物附属,NSUK Delight Crop Addons,NSUK-DCA,nsukdelightcropaddons
@@ -30839,7 +30836,7 @@
 31278,hexcasting-legacy,,咒法学：遗产,Hex Casting: Legacy,,
 31279,,,战术供弹背带,TACZ Backpack Ammo,,tacz_backpack_ammo
 31280,kubejs-custom-rarity,,KubeJS Custom Rarity,,,kubejs_rarity
-31281,,,世界之礼,World Wide Kindness,WWK,worldwidekindness
+31281,world-wide-kindness,,世界之礼,World Wide Kindness,WWK,worldwidekindness
 31282,loot-stacker,,战利品自动堆叠,Loot Stacker,LS,loot_stacker
 31283,,,更多月饼,More Mooncake,,more_mooncake
 31284,,,不朽之核,immortal_core,I_E,immortal_core
@@ -30857,7 +30854,7 @@
 31296,sky-isle,,天空岛,Sky Isle,SL,sky_isle
 31297,,,建筑手杖Plus,ConstructionWand-Plus,,
 31298,veinrebirth,,矿脉重生,VeinRebirth,,veinrebirth
-31299,hedges-bestiary,,Hedge's Bestiary,,,
+31299,hedges-bestiary,,Hedge's Bestiary,,,hedges_bestiary
 31300,better-inventory-and-backpacks,,Better Inventory And Backpacks,,,
 31301,kaleidoscope-world-liquor-refabricated,,森罗物语：世界名酒——重织,Kaleidoscope WorldLiquor Refabricated,,
 31302,refinedstorage-fabric,,精致存储-Fabric,Refined Storage-Fabric,RS,
@@ -30873,16 +30870,16 @@
 31312,,hide-names,Hide Names,,,hide_name
 31313,,,元素起源,Origin of Elements,OG,elementlib
 31314,text-placeholder-api-unofficial-forge,,文本占位符 API [非官方 Forge],Text Placeholder API [Unofficial Forge],,
-31315,hostile-humans-unified,,敌对人类：统一版,Hostile Humans Unified,,hostile_humans
-31316,,,世界之桥,WorldBridge,Wb,world_bridge
-31317,,,绮梦真我,Illusory Essence,IE,illusory_essence
+31315,hostile-humans-unified,,敌对人类：统一版,Hostile Humans Unified,,hostile_humans_unified
+31316,,,世界之桥,WorldBridge,WB,world_bridge
+31317,illusory-essence,,绮梦真我,Illusory Essence,IE,illusory_essence
 31318,player-radar,player-radar,Player Radar,,,playernotifier
 31319,,jei-sdfalt,格雷科技与 JEI 兼容性修复,GTM JEI Startup Crash Fix,,gtm_jei_startup_fix
-31320,sweatyfeet,,汗脚,,SF,sweatyfeet
+31320,sweatyfeet,sweatyfeet,汗脚,SweatyFeet,SF,sweatyfeet
 31321,,,超级敌对模式,Super Hostile Mode,SHM,
 31322,modern-trials-integration,,现代试炼大厅移植,Modern Trials Integration,MTI,mti
 31323,,,MusicParty,,,mpsync
-31324,echoes-of-horizons,,Echoes of Horizons,,EON,eoh
+31324,echoes-of-horizons,,Echoes of Horizons,,EOH,eoh
 31325,crycraft,,晶体工艺,Crystal Craft,,crycraft
 31326,hammercraft-fantasy,,中古战锤：混沌魔域,HammerCraft: Chaos Realm / HammerCraft: Fantasy,,hammercraftfantasy
 31327,sophisticated-redox,,精妙背包：氧化还原,Sophisticated Redox,,sophisticatedredox
@@ -30891,7 +30888,7 @@
 31330,create-adapted,,Create: Adapted,,,
 31331,,,Neo Tree Ores,,NTO,neotreeores
 31332,,carpet-aji-addition,Carpet Aji Addition,,CAA,carpetajiaddition
-31333,refinedstorageaddons-fabric,,RS 无限范围增幅卡-Fabric,RSInfinityBooster-Fabric,,
+31333,rsinfinitybooster-fabric,,RS 无限范围增幅卡-Fabric,RSInfinityBooster-Fabric,,
 31334,reload-emc-command,,Reload EMC Command,,,reload_emc;reload_emc_command
 31335,,,随心换肤,Skin Switching,SS,skin_switching
 31336,keenlib,,KeenLib,,KL,keenlib
@@ -30912,7 +30909,7 @@
 31351,,,死亡点传送,back-mod,,backmod
 31352,oh-the-biomes-youll-go-legacy-edition,,你将去的生物群系：传承版,Oh The Biomes You'll Go: Legacy Edition,,
 31353,,,TrChat 模组版,TrChat Mod,,trchat
-31354,,,CatFrame: Compat,,,catframe_compat
+31354,catframe-compat,,CatFrame: Compat,,,catframe_compat
 31355,armor-rework,,护甲机制大修,Armor Rework,,armor-rework;armor_rework
 31356,ice-and-fire-community-delight,,冰火乐事：社区版,Ice and Fire Community Delight,IAFDCE,iceandfirecommunitydelight
 31357,convenient-equivalent,,便捷等价,Convenient Equivalent,CvE,convenient_equivalent;convenient_projecte
@@ -30929,18 +30926,18 @@
 31368,hp-end-expansion,,末地生物拓展,HP End Expansion,,hp_end_expansion
 31369,,,ME元件管理终端,component management terminal,,cmt
 31370,music-player-reborn,,音乐机 重生,Music Player Reborn,MPR,
-31371,torcherino-community-edition-remake,,加速火把社区版：经典重制版,Torcherino Community Edition Remake,TCER,
+31371,torcherino-community-edition-remake,,加速火把社区版：经典重制版,Torcherino Community Edition Remake（TorcherinoCER）,TCER,torcherino
 31372,beyond-emc-addon,,Beyond Emc Addon,,,beyond_emc_addon
-31373,,,诡厄觉醒哞菇巨兽兼容神化&天灾生成问题修复补丁,Goety Awaken Goety Cbe8,GAGC,goety_awaken_goety_cbe8
+31373,,,诡厄觉醒哞菇巨兽生成兼容神化&天灾和启示录2.3.4问题修复补丁,Goety Awaken Goety Cbe8,GAGC,goety_awaken_goety_cbe8
 31374,lfgm,,Legacy Female Gender Mod,,LFGM,
-31375,oritech-smart-splitter,oritech-smart-splitter,Oritech：智能分流,Oritech Smart Spiltter,OSS,oritechsplitter
+31375,oritech-smart-splitter,oritech-smart-splitter,Oritech：智能分拣,Oritech Smart Spiltter,OSS,oritechsplitter
 31376,better-fluid-pipes,better-fluid-pipes,Better Fluid Pipes,,,betterpipes
 31377,terrafirmaearth,,群峦地球,TerraFirmaEarth,TFE,tfe
 31378,,,诡秘之主,Lord of Mysteries,lom,lom
 31379,world-settings-quick-exit,,世界设置便携退出,World Settings Quick Exit,,
 31380,medievalcraftweapons,medieval-craft-(weapons),中世纪工艺 (武器),Medieval Craft (Weapons),,medievalcraftweapons;medieval_craft_weapons
 31381,metal-swords,,金属刀剑,Metal Swords,,simplytooltips
-31382,,,太极拔刀剑,TaiChiSlashBlade,TCSB,taichiblade
+31382,taichi-slashblade-addon,,太极拔刀剑,TaiChiSlashBlade,TCSB,taichiblade
 31383,saberforge,saberforge,SaberForge,,,saberforge
 31384,parallel-torcherino,,无限加速,Parallel Torcherino,PTR,
 31385,librarian-1,librarian,Librarian,,,librarian
@@ -30952,17 +30949,17 @@
 31391,,,怀古工业平台,Industrial Platform Legacy,IPL,industrial_platform
 31392,,,高级装甲,Advanced Armor,AAMOR,advancedarmor
 31393,create-fly-power-grid,create-fly-power-grid-unofficial-port,机械动力飞跃版：交错电网,Create Fly: Power Grid,,
-31394,smoothplayeranimations,smoothplayeranimations,平滑玩家动作,SmoothPlayerAnimations,,
-31395,ftb-teams-fabric,,FTB区块 x 旅行地图 联动,FTB Chunks JourneyMap Bridge,FCMB,
+31394,smoothplayeranimations,smoothplayeranimations,平滑玩家动作,SmoothPlayerAnimations,,smoothplayeranimations
+31395,ftb-chunks-journeymap-bridge,,FTB区块 x 旅行地图 联动,FTB Chunks JourneyMap Bridge,FCMB,
 31396,,litematlist,Litematlist,,,litematlist
 31397,obsidian-bucket,,黑曜石桶,Obsidian Bucket,,obsidianbucket
 31398,framepacer,framepacer,FramePacer,,,framepacer
 31399,concurrent-chunk-management-engine-forge,,Concurrent Chunk Management Engine - Forge,,,
-31400,echo-warrior,,英灵回声,Echo Warrior,,echo_warrior
+31400,echo-warrior,,英灵回响,Echo Warrior,,echo_warrior
 31401,echoes-core,,Echoes Core,,,echoes_core
 31402,,,匠魂专属强化,Tinkers Zhuanshu,TZ,tinkerszhuanshu
 31403,,curios-slot,自定义生物饰品栏,Curios Slot,CSL,curiosslot
-31404,carry-cats,carry-cats!,Carry cats!,,,shouldercats
+31404,carry-cats,carry-cats!,Carry Cats!,,,shouldercats
 31405,immaterial-drawers,,Immaterial Drawers,,,
 31406,tainted-tools,,污浊工具,Tainted Tools,,taintedtools
 31407,,,只是睡着了,,,
@@ -30977,19 +30974,19 @@
 31416,eeeabs-mobs-ascend-to-godhood,,EEEAB's Mobs: Ascend to Godhood,,,atgmod
 31417,,,连锁形状随心切,VeinShape Cycler,OVC,okm_shapeswitch
 31418,,,通用机械：懒人附属,Mekanism: Lazy Addon,LA,mekanism_crusher
-31419,,deathcore,死亡榜,deathcore,,
+31419,,deathcore,死亡榜,Deathcore,,deathcore
 31420,aether-spellbooks,,天境魔法书,Aether Spellbooks,,aether_spellbooks
 31421,tfcmodernlife,,群峦现代化生活,TFC Modern Life,TFCML,tfc_modern_life
 31422,immersiveaircraftmodernization,,沉浸飞机：现代化,Immersive Aircraft Modernization,,immersive_aircraft_cruise
 31423,better-blood-overlay,better-blood-overlay,血迹覆层增强,Better Blood Overlay,,
 31424,book-of-sins,,罪孽之书,Book of Sins,,book_of_sins
 31425,,,MineElona我的伊洛纳,Mlona,ME,mlona
-31426,vaskars-remains,,Vaskars Remains,,VR,
+31426,vaskars-remains,,Vaskars Remains,,VR,remains
 31427,,,RemovePixelmonSomeEdit,,,removepixelmonsome
-31428,,,Destroyer256´s TNT mod,,,mod00001
+31428,,,Destroyer256's TNT Mod,,,mod00001
 31429,the-long-travail,the-long-travail,苦旅,The Long Travail,TLL,the_long_travail
 31430,brnquest,brnquest,BRNQuest,,,brnquest
-31431,,,鸡,Chickens,,chickens
+31431,chickens-neo,,鸡,Chickens,,chickens
 31432,,,幻想塑愿,Fantasy Desire,FD,fantasydesire
 31433,,,Flux DE Support,,,flux_de_support
 31434,bundle-stash,bundle-stash,探囊取物,Bundle Stash,,bundle-stash
@@ -31004,32 +31001,32 @@
 31443,gregtech-6-neoforge,,格雷科技 6 NeoForge,GregTech 6 NeoForge,,gregtech6
 31444,no-starry-drunkenness,no-starry-drunkenness,啊啊啊啊啊吃天体果实能不能不要有星辉酩酊,No Starry Drunkenness,NSD,nsd
 31445,,,女仆性格培养,Maid Personality Cultivation,MPD,maid_personality_cultivation
-31446,,,血汗工厂-1.20.1移植版,GTMaid-1.20.1 Port,GTM,gtmaid
+31446,,,血汗工厂-1.20.1移植版,GTMaid-1.20.1 Port,GTM,
 31447,,,原版仪表盘,VanillaDashboard,,infohud
 31448,,,狐狐的魔金小工具,FoxFoxManaMetalModTools,,foxfoxm3tools
 31449,ok-integrated-dynamics,,OK Integrated Dynamics,,,
 31450,create-crafts-additions-adapted,,Create Crafts & Additions: Adapted,,,
 31451,,stevens-mod-api,Steven's Mod API,,,steven_mod_api
-31452,plague-disease,,鼠疫,plague disease,,
+31452,plague-disease,,鼠疫,Plague Disease,,mod_99696844
 31453,origins-legacy-neoforged,origins-legacy-neoforged,Origins Legacy: NeoForged,,,
 31454,origins-legacy,origins-legacy,Origins: Legacy,,,origins-legacy
 31455,create-fly-crafts-additions,create-fly-crafts-additions-unofficial-port,机械动力飞跃版：创想附加,Create Fly: Crafts & Additions,,
 31456,chemica,chemica,Chemica,,,chemica
 31457,,create-stellaris,Create: Stellaris,,,createstellaris
 31458,forge-client-reset-packet-forward,forward-forge-client-reset-packet,Forward Forge Client Reset Packet,,,clientresetpacket
-31459,,,JEI物品筛选器,,JEIF,jei_filter
-31460,chest-item-vows,,箱子里的小饰品：誓令,Chest Item： Vows,,chest_vows
+31459,,,JEI物品筛选器,JEI Filter,JEIF,jei_filter
+31460,chest-item-vows,,箱子里的小饰品：誓令,Chest Item: Vows,,chest_vows
 31461,hardcore-itemstages-reborn,,Hardcore Item Stages Reborn,,,hardcoreitemstages_reborn
 31462,pouch-of-unknown-reborn,,未知之袋：重生,Pouch Of Unknown Reborn,POUR,pouchofunknown_reborn
-31463,,,GymCraft,,,gymcraft
+31463,mygymcraft,,GymCraft,,,gymcraft
 31464,enderpearl-backport,enderpearl-backport,Enderpearl Backport,,,enderpearlbackport
-31465,tongby-adventurer-guild,,冒险者协会,Tongby adventurer guild,,adventurer_guild
+31465,tongby-adventurer-guild,,冒险者协会,Tongby Adventurer Guild,,adventurer_guild
 31466,emotecraft-unofficial-port,,表情工艺 (非官方移植版),Emotecraft (Unofficial Port),,
-31467,,,生动食刻,drink anim,FTd,drinkanim
+31467,,,生动食刻,Drink Anim,FTd,drinkanim
 31468,,,末影苦力怕,,,ender_creeper
-31469,permissionless-tp,,无权限TP,permissionless_tp,PTP,permissionless_tp
+31469,permissionless-tp,,无权限TP,Permissionless TP,PTP,permissionless_tp
 31470,charta,charta,Charta,,,charta
-31471,speed-display,,速度显示,speed display,,speed_display
+31471,speed-display,,速度显示,Speed Display,,speed_display
 31472,xiancontrollersupport,xiancontrollersupport,显的手柄支持,Xian Controller Support,XCS,xiancontrollersupport
 31473,better-connections,,Better Connections,,,better_connections
 31474,,,通用机械指南,Mek Guides for GuideME,MekG,mekguide
@@ -31037,31 +31034,31 @@
 31476,twilight-sparks-delight-fabric,,暮光乐事：重织,Twilight Spark's Delight Fabric,,twilightsparksdelightfabric
 31477,,,龙骑士数据包,Dragon Mounts Datapack,,mr_dragon_mountsdatapack
 31478,,,铁魔法：源,Iron's Spells 'n Spellbooks - Source,,irons_spells_n_spellbooks_source
-31479,,,神秘能源-旧版魔像秘经非官方版兼容修复,,TELGC,
+31479,,,神秘能源-旧版魔像秘经非官方版兼容修复,Gadomancy - Thaumic Energistics API Compatibility Patch,TELGC,
 31480,,scratch,Ube,,,scripture
 31481,mystical-agriculture-omnia,,Mystical Agriculture: Omnia,,,omnia
 31482,,smoothsneakingmod,Smooth Sneaking Mod,,,smoothsneakingmod
-31483,,ambient-camera,Ambient Camera,,,ambient_camera
+31483,ambient-camera,ambient-camera,Ambient Camera,,,ambient_camera
 31484,,,HBM终端扩展,RBMK Terminals,,rbmkterminals
-31485,,,三文鱼的武器,Salmon's weapon,SW,mod_dc2c6f32
+31485,,,三文鱼的武器,Salmon's Weapon,SW,mod_dc2c6f32
 31486,,,冻法兼容,Magic_The_Damage,MTD,magic_the_damage
-31487,more-machines-formula,,机械动力·更多装配,Create:More Machines Formula,CMMF,
-31488,,,NSUK：森罗作物附属,NSUK Kaleidoscope Crop Addons,NSUK-KCA,kaleidoscopecropaddons
+31487,more-machines-formula,,机械动力·更多装配,Create: More Machines Formula,CMMF,more_formula
+31488,nsuk-kaleidoscope-crop-addons,,NSUK：森罗作物附属,NSUK Kaleidoscope Crop Addons,NSUK-KCA,kaleidoscopecropaddons
 31489,crafter-block-backport,crafter-backport,Crafter Backport (Forge / Fabric),,,crafter
-31490,plants-zombies-skyblock-wheel,,pvz附属:转盘空岛,,,
+31490,plants-zombies-skyblock-wheel,,PVZ附属：转盘空岛,Plants & Zombies: Skyblock Wheel,,pvzkongdao
 31491,,,TConJEI 1.21.1,,,TConJEI
 31492,ae2-screenshot,ae2-screenshot,AE2截图,AE2 ScreenShot,,ae2sreenshot
 31493,cgc-animation-addon,cgc-animation-addon,自定义枪械永续动画扩展,CGC Animation Addon,,cgcanimation
 31494,,mouseclickswap,MouseClickSwap,,,mouseclickswap
 31495,nifty-ships-biomes-oplenty-compat-update-muddyfork,,Nifty Ships + Biomes O'Plenty Compat Update (MuddyPatch),,,
-31496,,,Improvement Minecarts!,,,improvement_minecarts
+31496,,,改进的矿车！,Improvement Minecarts!,,improvement_minecarts
 31497,sulfur-and-potassium-1-20-1-backport,,Sulfur and Potassium Backport,,,sulfurpotassiummod
 31498,,FJeULHIT,穹光森林：重生,Skylight Forest Reborn,,skylightforest
 31499,spatial-gui,spatial-gui,Spatial GUI,,,spatial-gui
 31500,everrose,everrose,蔷薇合金,Everrose,,everrose
 31501,,,复制方块,CopyBlock,CB,copyblock
 31502,,,障碍墙,entity walls,ew,entity_walls
-31503,,lightning-rod-creeper,避雷针爬行者,Lightning Rod Creeper,,coreppr
+31503,coreppr,lightning-rod-creeper,避雷针爬行者,Lightning Rod Creeper,,coreppr
 31504,,,诡气兼容,,GWC,
 31505,random-equipment-attributes,,装备随机属性,Random Equipment Attributes,REA,random_equipment_attributes
 31506,omni-display,,全周天驾驶舱,Omni Display,,
@@ -31069,3 +31066,568 @@
 31508,camera-inertia,camerainertia,Camera Inertia,,,
 31509,,,强化芯片,Strengthening Chips,SC,
 31510,chat-colours-modified,,Chat Colours Modified,,,chatcolours
+31511,simple-info,,简单信息展示,Simple Info,SI,
+31512,,arrbrants-custom-splash-texts,ArrBrants 的自定义闪烁标语,ArrBrants' Custom Splash Texts,,customsplash
+31513,legacy-emotecraft,,Legacy Emotecraft,,,
+31514,betterbook,betterbook,更好的书,BetterBook,,betterbook
+31515,,,GTQuality,,GTQ,gtquality
+31516,puzzles,puzzles-wjchp,谜题,Puzzles,,puzzles
+31517,modular-machinery-community-edition-reborn,,模块化机械：社区版重生,Modular Machinery: Community Edition Reborn,MMCER,
+31518,inquisition-delayed,inquisition-delayed,Inquisition Delayed,,,inq_delayed
+31519,,,网络音乐机：听听B站 (1.21.1 移植版),NetMusicCanPlayBili 1.21.1,NCPB,net_music_can_play_bili
+31520,cripple-player,cripple-player,Cripple Player,,,cripple_player
+31521,,,Celeritas Extra 的 Actinium 兼容,Actinium Celeritas Extra,,
+31522,full-draw,full-draw,满弦,Full Draw,FD,full_draw
+31523,longer-command-box,,聊天栏无限指令,Longer Command Box,LCB,longercommandbox
+31524,ancient-ruins-forgotten-age,ancient-ruins,古代遗迹,Ancient Ruins,AR,ancient_ruins
+31525,simple-beacon-flight,,Simple Beacon Flight,,,
+31526,vaskars-opus,,Vaskars Opus,,VO,remains_opus
+31527,,,Real Invisibility,,,realinvisibility
+31528,,,Pipe Utilities,,,pipe_api
+31529,,,统一算法,Unified Algorithm,UA,unified_algorithm
+31530,ultra-enchanment,ultra-enchantment,附魔进阶/究极附魔,Ultra Enchantment,UE,ultraenchantment
+31531,splatter,splattermod,沉浸式血液飞溅,Immersive Blood Splatters,,splatter
+31532,barebonesbrews,barebonesbrews,粗简制药,BareBonesBrews,,barebonesbrews
+31533,huaxia-delight,,华夏乐事,Huaxia Delight,,
+31534,,,中国人能飞,Chinese Can Fly,CCF,ccf
+31535,kanhe,,勘合,Kanhe,,kanhe
+31536,,,属性修改器,Attribute Modifier,AM,
+31537,simple-voice-chat-voice-hijacking,simple-voice-chat-voice-hijacking,简单语音聊天语音劫持,,,
+31538,,,McWW3,,,ww3
+31539,,,神秘之源,Source of Mystery,SOM,sourceofmystery
+31540,akiyggdrasil,akiyggdrasil,AkiYggdrasil,,,akiyggdrasil
+31541,,,Oh My YSM Lib,,OMYSMLib,ysm_runtime
+31542,freetrading,,Freetrading,,,freetrading
+31543,,,瑞克科技:附属,Rick Technology Addon,,rick_technology_addon
+31544,,,魔虚罗-循声守卫,,MSL,mod_2d2660c3
+31545,,,更好的忠诚,,,better_loyalty
+31546,,,储物克星,Stashbuster,,stashbuster
+31547,local-capes,local-capes,本地披风,Local Capes,LC,localcapes
+31548,,create-nowaterwheel,Create: NoWaterwheel,,CNoW,createnowaterwheel
+31549,,opengl-error-log-prevent,OpenGL Error log prevent,,,gllogfilter
+31550,camera-monitoring-fully-customizable,,Camera Monitoring,,,cameramonitoring
+31551,irons-nouveau,,Iron与新生魔艺,Iron & Nouveau,IN,irons_nouveau
+31552,,infinisteak,InfiniSteak,,,infinisteak
+31553,tinkers-search,tinkers-search,工匠检索,Tinkers' Search,,tinkerssearch
+31554,defiled-lands-rotn-edition,,污秽之地：RotN 版,Defiled Lands RotN Edition,,
+31555,rewind,rewind-merrysnow,回溯,Rewind,,rewind
+31556,,,BogoAnimation,,,bogoanimation
+31557,onlyzoom,onlyzoom,Only Zoom,,,onlyzoom
+31558,,toggleablepiechart,Toggleable Pie Chart,,,piechart
+31559,crafttweaker-gui,crafttweaker-gui,CraftTweaker GUI,,CTGUI,ctgui
+31560,mangakacraft,,Mangakacraft,,,mangakacraft
+31561,,,伊甸园,Eden,ED,eden
+31562,blocksmith-voxel-weapons,blocksmith,Blocksmith - Voxel Weapons,,,
+31563,,,Jack的学校,Jack School,MSC,mod_win_mod_windows_amd
+31564,hot-kekes-invisible-entity-glass,hot_kekes-invisible-entity-glass,hot_keke的隐藏实体玻璃,hot_keke's Invisible Entity Glass,IEG,hotkeke-invisible-entity-glass
+31565,tickcontrol,tamamo-tickcontrol,Tick 控制,Tick Control,TickC,tickcontrol
+31566,,,马桶物流,Toilet Logistics,,toilet_logistics
+31567,golden-cow,,牛来,Niu Lai,,goldencow
+31568,,,拼音搜索,Pinyin Search API,,pinyinsearch
+31569,transmutator-automator,,嬗变台：大变,Transmutator Automator,,transmutator_automator
+31570,the-shooting-star-demo,,The Shooting Star [Demo],,,shooting_star_demo_multi
+31571,mystical-everything,,神秘万物,Mystical Everything,,mysticaleverything
+31572,simple-blood,simple-blood,简易血效,Simple Blood,SB,simpleblood
+31573,spice-of-life-valheim-edition-refork,spice-of-life-valheim-edition-refork,Spice of Life: Valheim Edition Refork,,,sol_valheim
+31574,compressed-blood-magic,,Compressed Blood Magic,,CBM,compressedbloodmagic
+31575,extinction-day,,灭却之日,Slashblade: Extinction Day,,extinction_day_mod_1784441698
+31576,mythic-relic,,神话之遗,Mythic Relics,,MythicRelics
+31577,anr-ro,,ANR's Recipe Overlay,,ANRRO,anrro
+31578,golem-artifice,,傀儡装配：武备与巧械,Golem Artifice,GA,golemartifice
+31579,wither-storm-teleport,,凋灵风暴传送,Wither Storm Teleport,,witherstormteleport
+31580,dragon-golems,,傀儡装配：龙附属,Dragon Golems,DG,dragon_golems
+31581,zombies-break-and-build,zombies-break-and-build,Zombie Break & Build,,ZBB,zbb
+31582,cbbg,cbbg,Color Banding Be Gone,,CBBG,cbbg
+31583,,,苍穹坚守者,,CJBO,cjbo
+31584,advanced-quantum-engineering,,Advanced Quantum Engineering,,AQE,advanced_quantum_engineering
+31585,epoch-machine-crisis,,纪元：智械危机,Epoch: Machine Crisis,,epoch
+31586,,,拔刀剑：布景之杖,Slashblade: Scenery Staff,SS,scenerystaff
+31587,,,雾於的匠魂词条库,ThikerMagic,TICMG,tinkermagic
+31588,tinkers-newlife,tinkers-newlife,匠魂新生,Tinker's Newlife,TNL,tinkersnewlife
+31589,,,是，遗体模型,Yes Corpse Model,YCM,yes_corpse_model
+31590,ars-n-spells,,Ars 'n Spells,,,ars_n_spells
+31591,icy-contracts,,虚境契约,Icy Contracts,,icy_contracts
+31592,,,不烧心与烧心盒饭,,HF,mod_66cf866c
+31593,,,盔甲附加,Armor Addon,,armor_addon
+31594,custom-mob-potion-effect,,自定义生物药水效果,Custom Mob Potion Effect,CMPE,mobfx
+31595,create-nuclear-armaments,,机械动力：核能装备,Create Nuclear Armaments,,createnucleararmaments
+31596,ages-of-dominion,,统治时代,Ages of Dominion,,forgotten_realms_rts
+31597,ntm-next,,NTM-NEXT,,NN,
+31598,nova-mekanism,,Nova Mekanism,,,mekanism_more_multiblock
+31599,dual-vector-foil,,二向箔,Dual-Vector Foil,,
+31600,cityworld-reforged,,CityWorld ReForged,,,cityworld
+31601,,,mcopt,,,mcopt-metal
+31602,uncharted-seas,uncharted-seas,Uncharted Seas,,,uncharted_seas
+31603,mtr-yanyang,mtr-yanyang,MTR 晏阳优化版,MTR Yanyang Optimized,YYMTR,mtr
+31604,solcp-spice-of-life-carrot-power,,生活调味料：胡萝卜之力,Spice Of Life Carrot Power,SOLCP,spice_of_life_carrot_power
+31605,ore-biome-reforged,,矿石生态群系,Ore Biome Reforged,,ore_biome_reforged
+31606,locator-display,locator-display,Locator Display,,,locator-display
+31607,create-cultivation-craft-community-edition,create-cultivation-craft-community-edition,机械动力：栽培工艺社区版,Create: Cultivation Craft Community Edition,CCCCE,create_cultivation
+31608,creepertv,,苦力怕TV,CreeperTV,CTV,creepertv
+31609,mcdr-singleplayer,mcdr-singleplayer,MCDR Singleplayer,,,mcdr-singleplayer
+31610,irons-spell-tweaker-gui,,Iron's Spell Tweaker GUI,,,iron_spell_tweaker
+31611,create-connected-encased,create-connected-encased,Create Connected: Encased,,,create_connected_encased
+31612,,bits-n-tracks-ce,Create: Bits 'n' Tracks Community Edition,,,bits_n_tracks
+31613,enigmatic-addons-fix,enigmatic-addons-fix,神秘遗物拓展修复,Enigmatic Addons Fix,,enigmatic_addons_fix
+31614,,,丰饶之角 基岩重置版,Cornucopia ReBedrocked,,
+31615,wcwt-omniversal-bridge,,WCWT 万象样板桥接,WCWT Omniversal Bridge,,wcot_omnibridge
+31616,,create-electric-blaze,Create: Electric Blaze,,,create_electric_blaze
+31617,,,机械动力：手搓学,Create: Hand Made,CHM,create_hand_made
+31618,neobackports,neobackports,NeoBackport,,,neobackports
+31619,farmers-sophisticated-backpacks,,Farmer's Sophisticated Backpacks,,,farmersbp
+31620,xaeros-world-map-earth,,Xaero的世界地图：地球,Xaero's World Map: Earth,XE,xaeroearth
+31621,,useful-saved-hotbars,Useful Saved Hotbars,,,useful-saved-hotbars
+31622,humanoid-villagers,,人形村民,Humanoid Villagers,,humvil
+31623,timetimer,,计时器,Timetimer,,timetimer
+31624,,,Gugle的Carpet附加包-1.20.1Forge移植版,GugleCarpetAddition-Curtain,GCA,
+31625,,,存档封面动图,Animated World Icon,,animatedworldicon
+31626,,,末地自然生成幻翼,End Phantom,,endphantom
+31627,handycam,handycam,Handycam,,,handycam
+31628,cwsm-mas,,CWSM-Mas,,,cwsm_mas
+31629,,,无中生有神赐: 重织,Ex Deorum: ReFabricated,,
+31630,lets-do-smoker,lets-do-smoker,[Let's Do] Smoker,,,smoker
+31631,mekanismdelight,mekanismdelight,MekanismDelight,,,mekanismdelight
+31632,ae2-things-reforged,,AE2 Things: Reforged,,,ae2things
+31633,,,PoseTuner,,,posetuner
+31634,,,小行星生存,Planetoids 1.18.2,,planetoids_1_18_2
+31635,,,诡厄巫法狱火爆破空指针修复,GoetyHellBlastNullOwner,,goetyhellblastnullowner
+31636,,,自动烟花锤,Auto Firework Mace,,autofireworkmace
+31637,feimamove,feimamove,Feima's Movements,,,feimamovemod
+31638,friends-wine-meme,,朋友的酒MeMe,Friend's Wine Meme,FWM,friendwinememe
+31639,,,不死图腾名称动画,Not Dead Yet,NDY,notdeadyet
+31640,datarium,,Datarium,,,datarium
+31641,speaker-api,speaker-api,Speaker API,,,speakerapi
+31642,hoverboards,hoverboards,Hoverboards,,,hoverboards
+31643,miners-dreams,miners-dreams,矿工之梦,Miner's Dreams,,miners_dream
+31644,,,星际猎人 (红宝石舰队浮游炮),Ruby Fleet,,rubyfleet
+31645,,,技能树可视化编辑,Skill Tree Editor,STE,skill_tree_editor
+31646,maid-airways,,车万女仆：女仆航路,Maid Airways,,
+31647,maid-always-follow,,车万女仆：女仆常伴,Maid Always Follow,,maid_always_follow
+31648,,,车万女仆·亿宴酊蒸,TouhouLittleMaid: Feast&Wine All Gone,FWAG,feastwineallgone
+31649,touhou-tweaks-reborn,,东方改进：重生,Touhou Tweaks Reborn,,touhoutweaks
+31650,pocketmaid,pocketmaid,车万女仆：掌上女仆,Touhou Little Maid: Pocket Maid,,maidhome_bridge
+31651,,easy-way-to-get,更简单的获取方法,Easy Way To Get,,easywaytoget
+31652,illager-universe,illageruniverse,Illager Universe,,,illager_universe
+31653,kubejs-astralsorcery,,KubeJS AstralSorcery,,,kubejsastralsorcery
+31654,,,有关交易,AboutTrade,,abouttrade
+31655,,,Vulcraft,,,Vulcraft
+31656,,,Alex 的洞穴：核力汇聚,Alex's Caves: Nuclear Convergence,,alexscaves_nuclear_convergence;alexscavesup_nuclear_compat
+31657,otherworld-horror,,Otherworld,,,otherworld
+31658,pps-gore,,PPs Gore / PixelGore,,,pixelgore
+31659,animatedhearts,animated-heart,Animated Hearts,,,animatedhearts
+31660,noisy-neighbors,,Noisy Neighbors,,,noisy-neighbors
+31661,lyra,,天琴座,Lyra,,lyra
+31662,minesweeper-for-mcphone,,MCphone 扫雷,Minesweeper for MCphone,,mcphone_minesweeper
+31663,curios-refabric,,Curios API：重织,Curios Fabric,,curiosfabric
+31664,,,机械动力&精致存储：兼容与改善,Refined Storage & Create : Compat And Improve,RS&C:CI,rs_create_compat
+31665,,,Circe,,,circe
+31666,anvils-search,,铁砧检索,Anvil's Search,,anvilssearch
+31667,,,全景视角,Town Overview,TTO,tide_overview
+31668,twilight-dusk,,暮色森林：黄昏,Twilight：Dusk,TD,twilight_dusk
+31669,ingenium-api,ingeniumapi,Ingenium API,,,ingeniumapi
+31670,shippy-ships,shippy-ships,Shippy Ships,,,shippy-ships
+31671,,universalcompass,万界罗盘,Universal Compass,,universalcompass
+31672,,,匠魂校准 NeoForge1.21.1,Tinkers Calibration for NeoForge 1.21.1,TCNeo,tinkerscalibration
+31673,,,匠魂合金附加二次重栽版 NeoForge 1.21.1,Neo TAIGA Replant Replant,NeoTaigarr,neotaigarr
+31674,,,乐高我的世界,Lego Minecraft,,legominecraft
+31675,,macinterface,MacInterface,,,macinterface
+31676,dark-loading-screen-neoforge,dark-loading-screen-neoforge,深色加载界面 NeoForge,Dark Loading Screen NeoForge,,
+31677,gtqualityneo,,GTQualityNeo,,,gtqualityneo
+31678,,,Lodestone TP,,,mr_lodestone_tp
+31679,old-cannons,oldcannons,Old Cannons,,,oldcannons
+31680,hidden-recipes,hidden-recipes,隐藏配方,Hidden Recipes,,hidden_recipes
+31681,,,1.12.2的矿石苦力怕,Ore Creeper 1.12.2,,ore_creeper_mod_1790051007
+31682,buildcraftrefabricated,buildcraftrefabricated,建筑：重织,BuildCraft Refabricated,,
+31683,,power-farm,Power Farm,,,powerfarm
+31684,,,匠魂怪物,GuaiWuZhuanShu,GZ,guaiwuzhuanshu
+31685,,,邦友的酒,Bydalc,,bydalc
+31686,brainlayersrefabricated,brainlayersrefabricated,脑洞瓦工：重织,Brainlayers Refabricated,,brainlayers
+31687,,,AE 通配符样板,AE2 Wildcard Pattern Encoder,AE2WP,wildcardencoder
+31688,,,BetterLocate,,,betterlocate
+31689,,,Earmuffs Slot,,ES,earmuffs_slot
+31690,tomc-meaningful-glyphs,tomc-meaningful-glyphs,道可道,Meaningful Glyphs,MGL,meaningfulglyphs
+31691,all-things-visual-editor,,万物可视化编辑,All Things Visual Editor,ALL-TVS,allthings_visual_editor
+31692,,linkart-refabricated,Linkart Refabricated,,,linkart
+31693,,,NunchakuAnimationFix,,NAF,nunchakuspinfix
+31694,wolverine-claws-healing,,金刚狼：钢爪与自愈,Wolverine: Claws & Healing,,minec_minecraft_forge_1
+31695,,,聚光灯,TacLight,,taclight
+31696,,,RandomTP,,RTP,randomtp
+31697,ars-nouveau-performance-optimization,,新生魔艺性能优化,Ars Nouveau Performance Optimization,,arsnouveauperformanceoptimization
+31698,mekanismoverclockupgrades,,Mekanism Overclock Upgrades,,MOU,
+31699,magic-orb-and-spirit-pearl,,魔丸与灵珠,Magic Orb and Spirit Pearl,,mowan
+31700,,flash-carts,闪动矿车,Flash Carts,FC,flashcarts
+31701,cute-aggression-power,,Cute Aggression Power,,,cute_power
+31702,,,城镇叠叠乐,Townscaper,TS,townscaper
+31703,,,TLM Tetra Compat,,,tlm_tetra_compat
+31704,practical-enchantments,,实用附魔,Practical Enchantments,PE,
+31705,applied-thaumaturge,,Applied Thaumaturge,,,appliedthaumaturge
+31706,epic-structures-villages-standalone-edition,,Epic Structures: Villages Standalone Edition,,,mr_epic_structuresvillagesstandaloneedition
+31707,cnpc-lines,,CNPC Lines,,,cnpclines
+31708,,,ShadowCulling,,,shadowculling
+31709,,,配方编辑工坊,Recipe Editor Workshop,REW,rew
+31710,northeast-china-delight,,东北乐事,Northeast China Delight,NCD,northeast_china_delight
+31711,integrated-cobblemon,integrated-cobblemon,Integrated Cobblemon,,,integrated_cobblemon
+31712,,distant-horizons-seedgen,Distant Horizons SeedGen,,,seedrenderer
+31713,sodium-backport-patch,,Sodium Backport Patch,,,
+31714,,,半透明界面,Translucent Interface,TI,translucentbuttons
+31715,,create-speedplus,Create: Speed+,,,createspeedplus
+31716,,,机械动力：电解,Create: Electrolysis,,createelectrolysis
+31717,,mekanism-looting,通用机械：抢夺,Mekanism: Looting,MekLoot,mekanismlooting
+31718,shutter-shadow,shutter-shadow,拾光映界,Dimensional Exposure,DE,shutteshadow
+31719,quartz-flower-helper,quartz-flower-helper,魔法石英花助手,Quartz Flower Helper,,quartz_flower_helper
+31720,,wilder-delights,Wilder Delights,,,wilderdelights
+31721,better-minecart-with-furnace,better-minecart-with-furnace,更好的动力矿车,Better Minecart With Furnace,BMF,better_minecart_with_furnace
+31722,scp-sl-micro-h-i-d,,SCP:SL MICRO H.I.D,,,scpsl_microhid
+31723,enigmatic-scythest,,Enigmatic Scythes,,,enigmatic_scythes
+31724,blood-magic-mechanical,,血魔法机械,Blood Magic Mechanical,BMM,bloodmechanical
+31725,,,通用机械：中央厨房社区版,Mekanism: Central Kitchen Community Edition,MekCK-CE,
+31726,slashh,,命中特效,Slashh,,slashh
+31727,custom-glow-enchantment-outline,custom-glow-enchantment-outline,Custom Glow Enchantment Outline,,,custom_glow_enchantment_outline
+31729,,mc_stock,简易股市,MC Stock,,mcstock
+31730,electric-boogaloo,electric-boogaloo,Electric Boogaloo,,,electric_boogaloo
+31731,,,FTB Ultimine Plus,,,ftbultimineplus
+31732,lowdraglib2-unofficial-port,,LowDragLib2 - Forge (Unofficial Port),,LDLib2,
+31733,gles-mod,,GLES Mod,,,glesmod
+31734,my-blade-and-shield,,我的刀盾,My Blade and Shield,BAS,bas
+31735,,,Frilien's Magic,,FRIM,friliensmagic
+31736,,,新生魔艺：简易收容罐,Ars Simple containment jar,,ars_nouveau_simple_jar_1791351939
+31737,nemos-carpentry,nemos-carpentry,Nemo's Carpentry,,,nemos-carpentry
+31738,bossesrise-delight,,首领乐事,Bosses'Rise Delight,,bossesrise_delight
+31739,,,FFmpeg Command Mod,,,ffmpegmod
+31740,armor-model-api,armor-model-api,盔甲模型 API,Armor Model API,,armor_model_api
+31741,bundle-api,bundle-api,收纳袋 API,Bundle API,,bundleapi
+31742,,,Lfx1的强化工具,Lfx1's ReinforcedTools,LRT,lfx1s_reinforcedtools
+31743,auto-torch-item,,自动插火把物品,Auto Torch Item,,autotorchplacer
+31744,,android-audio-shim,Android Audio Shim,,,android-audio-shim
+31745,custom-saplings,,自定义树苗,Custom Saplings,,custom_sapling
+31746,,synsepalum-dulcificum-daniell,神秘果,Synsepalum Dulcificum Daniell,,mystery_fruit
+31747,scorched-guns-2-0-5-5-unofficial-port,,Scorched Guns 2 0.5.5 Unofficial port,,SCG2,scguns
+31748,gensokyo-relics,,幻想遗物,Gensokyo Relics,,gensokyo-relics
+31749,touhou-maid-steward,,车万女仆：管家,Touhou Maid: Steward,SFN,touhou_little_maid_afn
+31750,another-dynamics,another-dynamics,Another Dynamics,,,another_dynamics
+31751,circular,circular,Circular,,,circular
+31752,show-me-your-halo,,让我看看！,Show Me Your Halo!,,showmeurhalo
+31753,box-of-structures-aquamirae,,Box of Structures: Aquamirae,,,boslm
+31754,ars-conflux,,魔艺汇流,Ars Conflux,AC,ars_conflux
+31755,resonant-end,,Resonant End,,,resonantend
+31757,travelers-sophisticated-backpacks,,Traveler's Sophisticated Backpacks,,,sophtravelerspack
+31758,item-particles,item-particles,Item Particles,,,item_particles
+31759,colossal-reactors,colossal-reactors,Colossal Reactors,,,colossal_reactors
+31760,spacesb,space-sandbox,Space SandBox,,SpaceSB,spacesb-remake
+31762,experienceemerald,,经验绿宝石,ExperienceEmerald,,experience_emerald
+31763,omni-trinket,,全能饰品,Omni Trinket,OT,omnitrinket
+31764,configsentry,,ConfigSentry,,,configsentry
+31765,defensive-potato-mine,,防御性土豆地雷,Defensive Potato Mine,,defensivepotatomine
+31766,head-disguise,,Head Disguise,,,headdisguise
+31767,archaeology-compass,,考古罗盘,Archaeology Compass,,archaeologycompass
+31768,liquid-fuels,,液体燃料,Liquid Fuels,,liquidfuels
+31769,aether-bedrock-mobs-reborn,,Aether Bedrock Mobs Reborn,,,aether_bedrock_mobs_reborn
+31770,ycks-lidar,,YCK's LIDAR,,,lidar
+31771,mekanism-ceu-cloudworks,,Mekanism CEu：云工坊,Mekanism CEu: CloudWorks,,cloudworks
+31772,the-lost-ones,,Dragon Seekers: The Lost Ones,,,the_lost_ones
+31773,wither-skeleton-tweaks-refabric,,凋灵骷髅调整：重织,Wither Skeleton Tweaks ReFabric,,wstweaksfabric
+31774,shelve-1-20-1-port,,Shelve Unofficial 1.20.1 Port,,,shelve
+31775,blood-magic-altar-automation-optimization,,血魔法祭坛自动化优化,Blood Magic Altar Automation Optimization,,bloodmagicaltarautomationoptimization
+31776,toms-simple-storage-performance-optimization,,汤姆的简易存储性能优化,Tom's Simple Storage Performance Optimization,,tomsstorageperformanceoptimization
+31777,rpg-prefab-houses,rpg-prefab-houses,预制房,RPG Prefab Houses,,rpgprefabhouses
+31778,mielons-the-sift,mielons-the-sift,Mielon's The Sift,,,the_sift
+31779,tinkers-biomes,,匠魂群系,Tinker's Biomes,TB,tinkers_biomes
+31780,hybrid-birds,hybrid-birds,Hybrid Birds,,,hybrid_birds
+31781,,,匠魂可视化编辑器,Tinkers' Construct Tool,,tcmateditor
+31782,kubejs-chest-item,,箱子饰品：KubeJS,KubeJS Chest Item,,chest_kjs
+31783,flash-carts-enhanced,flash-carts-enhanced,闪动矿车 (改进版),Flash Carts Enhanced,FCE,flashcarts
+31784,brainlayers,,Brainlayers,,,brainlayers
+31785,nanonaitors-arsenal,,Nanonaitor's Arsenal,,,nanonaitors_arsenal
+31786,,,卡牌研究社,TCG PROJECT,TCGPT,tag_card_game
+31787,cloud-storage-reborn,,云存储：涅槃,Cloud Storage: Reborn,CSR,cloudstorage_reborn
+31788,free-backpack,,自由背包,Free Backpack,FB,freebackpack
+31789,ggtu,ggtu,Global Graphic Temporal Upscaler,,GGTU,resolutionscaler
+31790,ravenshire,ravenshire,Ravenshire,,,ravenshire
+31791,,,侠为谁声.武斗江湖,,,
+31792,,,侠为谁声.丹药回响,,,
+31793,no-narrator,,无旁白,No Narrator,,nonarrator
+31794,bbl-dimensional-resources,bbl-dimensional-resources,BBL Dimensional Resources,,,dimresources
+31795,twilight-forest-reviving-ancient-buildings,,暮色森林：古建筑焕新,Twilight Forest: Reviving Ancient Buildings,RAB,twilight_forest_reviving_ancient_buildings
+31796,,,Minecraft 任务管理器,Minecraft Task Manager,MCTM,tkmanager
+31797,share-everything-with-partner,,展示一切！,Share Everything with Partner,SEWP,itemchat
+31798,enchantmented,,新-更好的附魔,I Cant Think Of A Good Name,ICTOAGN,icantthinkofagoodname
+31799,,,TaCZ Create Ammo,,TCA,tacz_create_ammo
+31800,courier-owls,,Courier Owls,,,courier_owls
+31801,arcanumlib,,ArcanumLib,,,arcanumlib
+31802,orbital-railgun-updated,orbital-railgun-updated,Orbital Railgun UPDATED,,,orbital_railgun_enhanced
+31803,epic-reset,epic-reset,史诗重置,Epic Reset,ER,epic-reset
+31804,sky-lantern,,孔明灯【重置】,Sky Lantern,SL,
+31805,abyssia,,Abyssia,,,abyssia
+31806,,laychens-lie,哥的谎言,Laychen's Lie,,laychenslie
+31807,,,堕日兽物,Soltainted Behemoths,SOB,soltainted_behemoths
+31808,ascendedwither,,进阶凋灵,AscendedWither / WitherEvo,,withevo
+31809,eden-power,,伊甸威能,Eden Power,EP,eden_power
+31810,gensokyolegacy,,东方幻想绮谈,Gensokyo Legacy,,gensokyolegacy
+31811,,deicide-wither,Deicide: Wither,,,withernb
+31812,,,海伯利安,,,hyperion
+31813,super-tier-magic,super-tier-magic,简易超位魔法,Super Tier Magic,,flametalisman
+31814,,,开放式电脑Neo版,OpenComputers Neo,OCNeo,opencomputers_neo
+31815,reach-customization,reach-customization,Reach Customization,,,reach-customizer
+31816,adapted-mobs,adapted-mobs,Adapted Mobs,,,adaptedmobs
+31817,slashblade-casket,,剑匣,SlashBlade Casket,,slashblade_casket
+31818,unlimitedshield,,无限护盾,UnlimitedShield,ULS,xmly_unlimitshield
+31819,epochtechnology,,纪元,EpochTechnology,ET,epoch
+31820,matcha-rebaked,matcha-rebaked,抹茶风味：重煨,Matcha Rebaked,,matchaflavoured
+31821,,,击爆矛,,,
+31822,fair-fletching,fair-fletching,Fair Fletching,,,fair-fletching
+31823,endmine-beacon-of-duty,,终末地武库：灯火使命,ENDMINE: Beacon of Duty,,beacon_of_duty
+31824,rats-reborn,,Rats: Reborn,,,
+31825,legacy-mod-menu,,Legacy Mod Menu,,,mod_menu
+31826,maid-hand-made,,女仆：手搓学,Maid: Hand Made,,maid_hand_made
+31827,shiny,shiny-lobsterjonn,Shiny! Mobs,,,shiny
+31828,qraftys-dappled-villages,,qrafty's Dappled Villages,,,mr_qraftys_dappledvillages
+31829,,texture-builder,Texture Builder,,,texturebuilder
+31830,nomen-dubium,,Nomen Dubium,,,nomendubium
+31831,alexs-mobs-delight-reborn,,Alex 的生物乐事：重生,Alex's Mobs Delight Reborn,,
+31832,,xrzh-arenacore,竞技核心,ArenaCore,,arenacore
+31833,modern-music,,现代化音乐,Modern Music,,modernmusic
+31834,,forcegl,ForceGL,,,forcegl
+31835,lomka,lomka,Lomka,,,lomka
+31836,,,命令守卫/命令控制,Dsh Command Control,DCC,command_control
+31837,,,自定义生物编辑,Creature Editor,,creature_editor
+31838,manametal-the-entity-bank,manametal-the-entity-bank,魔金生物银行,ManaMetal: The Entity Bank,,entitybank
+31839,better-selective-combat,better-selective-combat,Better Selective Combat,,,better_selective_combat
+31840,sifts-delight,,筛界乐事,Sift's Delight,,siftsdelight
+31841,modular-bosses-reborn,,Modular Bosses Reborn,,,
+31842,tomc-keep-advancing,tomc-keep-advancing,进取,Keep Advancing,KAD,keepadvancing
+31843,tomc-biosphere,tomc-biopshere,生物圈,Biosphere,BIO,biosphere
+31844,click-machine-continued,,自动连点器延续版,Click Machine Continued,,
+31845,aem-rescaled,,Additional Enchanted Miner Rescaled,,,
+31846,,,内置网页浏览器 (Fabric),WebDisplays Fabric,,
+31847,scorched-guns-neoforged,scorched-guns-neoforged,Scorched Guns Neoforged,,,
+31848,armor-stand-arms,armor-stand-arms-mod,Armor Stand Arms,,,armorstandarms
+31849,ender-mail-reborn,ender-mail-reborn,末影邮递：重生,Ender Mail Reborn,,endermail_reborn
+31850,thaumaturge,,Thaumaturge,,,thaumaturge
+31851,,rcn_unoffical,我的城市：道路中国,RoadChina: Unoffical,RCNu,roadchina
+31852,,,附魔透视,Enchantment Preview,,enchantpreview
+31853,,,随机空岛,RandomIsland,,random_island
+31854,simple-quick-keys,simplequickkeys,简易快捷键菜单,SimpleQuickKeys,SQK,key_panel
+31855,octant,,卦限,Octant,,octant
+31856,end-template-remastered,,末地：模板创世,End Template Remastered,ETR,etr
+31857,,,更好的MC商店,Better Minecraft Shop,BMCS,better_minecraft_shop
+31858,touhoulittlemaid-agent-tweaks,,车万女仆：Agent功能拓展,TouhouLittleMaid Agent Tweaks,,tlm_agent_tweaks
+31859,friendswine,,朋友的酒,Friends Wine,,friendswine
+31860,spirits-of-purified-undead,,涤净亡魂,Spirits of Purified Undead,SPU,purified_undead
+31861,,,我暴露了！,My Cover's Blown!,,my_covers_blown
+31862,beyond-emc-expansion,,超越维度-等价交换拓展,Beyond EMC Expansion,,emc_emc_nbt_emc_8_emc_em
+31863,night-striker-dragon-survival-addon,,Night Striker - Dragon Survival Addon,,,
+31864,last-song-of-elysian,,乐土终曲,Last Song of Elysian,,lastsongofelysian
+31865,demonology-and-me,,Demonology & Me,,,demonology
+31866,godhat,,神之牛仔帽,HatMod / God Hat,HM,hatmod
+31867,kaledelights-compat,,森罗乐事：兼容,Kaledelights: Compat,,kaledelights_compat
+31868,,,“崩坏：星穹铁道”乐事,Broken Food,BTLS,brokenfood
+31869,swivel,,Swivel,,,swivel
+31870,ultraterraforged,,UltraTerraForged,,,ultraterraforged
+31871,thaumic-energistics-ce,,神秘能源社区版,Thaumic Energistics: CE,TECE,thaumicenergistics_ce
+31872,scrollshelf,,ScrollShelf - Iron's Spells 'n Spellbooks Addon,,,scrollshelf
+31873,create-fly-connected,create-fly-connected-unofficial-port,机械动力飞越版：创意传动 (非官方移植版),Create Fly: Connected (Unofficial Port),,
+31874,create-nested-factory,create-nested-factory,机械动力：嵌套工厂,Create: Nested Factory,,create_nested_factory
+31875,create-track,create-tracks-plus,Create: Tracks+,,,
+31876,physical-structures,physical_structures,Physical Structures API,,,physical_structures
+31877,aeronautics-entity-damage,,Aeronautics Entity Damage,,,aeronautocsentitydamage
+31878,lever-drugster,lever-drugster,Lever drugster,,,analogleverdrag
+31879,,,机械动力：卫星导航,Create: SatNav,,create_satnav
+31880,touch-and-motion,touch-and-motion,Touch'n Motion,,,touch_n_motion
+31881,,terrarias-box,箱中泰拉,Terraria's Box,,terrarias-box
+31882,afterwear,,Afterwear,,,fragmentum
+31883,create-andertech,,机械动力：安德科技,Create Andertech,,create_andertech
+31884,monster-conquest,monster-conquest,怪物征伐,Monster Conquest,MC,monster_conquest
+31885,forgotten-relics-plus,,失落遗物学+,Forgotten Relics Plus,FRP,forgotten_relics_plus
+31886,,smoothmount,Smooth Mount,,,smoothmount
+31887,,curious-chests,Curious Chests,,,
+31888,anthology,,Anthology: Time & Space API,,,anthology
+31889,marvel-superheroes,marvel-superheroes,Marvel Superheroes,,,marvel
+31890,marvel-legacy,marvel-legacy,Marvel Legacy,,,marvellegacy
+31891,pyfish-python-scripting-and-modding,pyfish-python,PyFish,,,pyfish
+31892,ae2-modular-energy-units,,AE2 模块化能量单元,AE2 Modular Energy Units,,ae2modularcells
+31893,,,等价链接储存,ProjectE Storage,PS,projecte_storage_mod_emc
+31894,instantunify-unofficial-version,,瞬间统一非官方版,InstantUnify Unofficial Version,,
+31895,,,Horizon QA,,,horizonqa
+31896,mesdagportlib,,MesdagPortLib,,,portlib
+31897,modern-portal-gun,,Modern Portal Gun,,,portal_gun
+31898,,,SimpleBedrockModel,,SBM,simplebedrockmodel
+31899,ice-fire-legacy,,Ice & Fire Legacy,,,iceandfirelegacy
+31900,icys-better-horses,icys-better-horses,Icy's Better Horses,,IBH,icys_better_horses
+31901,,,VTE村民交易优化,VilTraEdit,VTE,viltra_edit_26_3
+31902,,zine,Zine,,,zine
+31903,econench,,节约附魔,EconEnch,,econench
+31904,,minepathy,Minepathy,,,minepathy
+31905,,,方块电玩,Game Console,,piq_fc_arcade
+31906,multithreading-maid,,多线程女仆,Multithreading Maid,,workorder
+31907,tetra-yes-steve-model-compatl,,Tetra兼容是，史蒂夫模型,Tetra - Yes Steve Model Compatl,,tetra_ysm_compat
+31908,definitive-cannons,,Definitive Cannons,,,definitivecannons
+31909,tfc-registry-api,tfc-registry-api,TFC Registry API,,,tfcregistryapi
+31910,thaumaturge-additions,,神秘附加,Thaumaturge Additions,TA,thaumaturgeadditions
+31911,,,Iron的趣味法术拓展,Iron's Fun Spell Expansion,IE,iron_iron_iron_s_spells
+31912,thaumaturge-tweaks,,Thaumaturge Tweaks,,,thaumaturgetweaks
+31913,,spear-effects,Spear Effects,,,speareffects
+31914,luck-all-bonus,luck-all-bonus,全部运气奖励,Luck All Bonus,,luckallbonus
+31915,taiga-tconstruct3-port,,匠魂合金附加：非官方移植版,Tinkers Alloying Addon Unofficial Port,TAIGAUP,
+31916,refined-fluid-substitution,refined-fluid-substitution,Refined Fluid Substitution,,,refinedfluidsubstitution
+31917,refined-wireless-upgrades,refined-wireless-upgrades,Refined Wireless Upgrades,,,
+31918,,,精致存储：无线合成终端,Refined Storage - Wireless Crafting,RSWC,rswirelesscrafting
+31919,hyper-n-hieis-shenanigans,,Hyper 'N Hiei's Shenanigans - Iron's Spells Addon,,,hyper_n_hieis_shenanigans
+31920,infinity-gauntlet-core,,Infinity Gauntlet Core,,,infinity_gauntlet
+31921,precise-cushion-placement,,精准坐垫放置,Precise Cushion Placement,,precise_cushion_placement
+31922,playerreactions,playereactions,Reactions,,,reactions
+31923,,,元素反应,Elemental Reaction,,elemental_reaction
+31924,modulargrid,,ModularGrid,,MG,modulargrid
+31925,,unjank,Unjank,,,unjank
+31926,legendary-bosses,,Legendary Bosses,,,legendarybosses
+31927,infinite-stat-system,,无限加点系统,Infinite Stat System,ISS,
+31928,legendary-herobrine,legendary-herobrine,Legendary Herobrine,,,legendaryherobrine
+31929,psi-legacy,,PSI Legacy,,,
+31930,entity-collision-optimization,,实体碰撞性能优化,Entity Collision Optimization,ECOpt,ecopt
+31931,lets-do-every-compat,letsdoeverycompat,[Let's Do] Every Compat,,,letsdoeverycompat
+31932,bacterium,bacterium,Bacterium,,,bacterium
+31933,integrated-superheroes,,Integrated Superheroes,,,integrated_superheroes
+31934,,,流体透视,Fluid X-ray,,fluidxray
+31935,orbital-bowcanon,,Orbital Bowcanon,,,orbital_railgun
+31936,shen-enchantments,,神の附魔,Shen Enchantments,,shennofu
+31937,wu-dao-wu-qiong,,史诗战斗-武道无穷,Epic Fight -Wu Dao Wu Qiong,,wudaowuqiong
+31938,second-chapter,second-chapter,第二次生命,Second Chapter,,secondchapter
+31939,the-slopstrosity,the-slopstrosity,The Slopstrocity,,,slopstrocity
+31940,void-titans-titanes-del-vacio,,Void Titans,,,voidtitans
+31941,tnt-reforged,tnt-reforged,TNT: Reforged,,,tntreforged
+31942,de-powah-compat,de_more_compat,DE More Compat,,,de_powah_compat;de_more_compat
+31943,eeeabs-mobs-nameless-guardian-is-back,,EEEAB's Mobs | Nameless Guardian is back!,,,eeeabsmobs_namelessguardian
+31944,linkart-overhaul,linkart-overhaul,Linkart Overhaul,,,linkart
+31945,debugify-reforge,,Debugify Reforge,,,
+31946,ziplines-legacy,,Ziplines Legacy,,,ziplinebackport
+31947,wishful-recipes,wishful-recipes,Wishful Recipes,,,wishfulrecipes
+31948,,smithed-bellows,Bellows,,,bellows
+31949,golem-spawn-fix,golem-spawn-fix,傀儡生成修复,Golem Spawn Fix,,golem_spawn_fix
+31950,autojs,,AutoJS,,AJS,autojs
+31951,,,职业：命运抉择,Class: Fate Choice,CFCH,mod_845f6cad
+31952,touhoulittlemaid-bettergap,,车万女仆：更好的隙间,Touhou Little Maid：BetterGap,,maid_better_gap
+31953,nins-innovation,,Nins创意,Nins Innovation,NI,truenins
+31954,ss-supreme-sorcerer-imitation-of-supreme-witch,,至高术士,Supreme Sorcerer(Imitation of Supreme Witch\c Calamitas BOSS battle),SS,supreme_sorcerer
+31955,frb-floral-rite-bloom-curios,,花仪绽放,Floral Rite Bloom,FRB,floral_rite_bloom_curios
+31956,,,村民交易满级附魔,Villager Trades Max-level Enchanting,,max-level-enchanting
+31957,ws-effect-lib,,Ws Effect Lib,,,ws_effect_lib
+31958,,,铭刻台,InscriptionTable,,inscriptiontable
+31959,,findvalueinthevalueless,变废为宝,FindValueInTheValueless,FVTV,find_value_in_the_valueless
+31960,bell-tower-military-industry,,钟楼军工,Bell Tower Military Industry,BTMI,btmi
+31961,safe-leash,safe-leash,Safe Leash,,,safeleash
+31962,noralib,,Nora Lib,,,noralib
+31963,,create-rusty-copper,机械动力：锈迹斑斑,Create: Rusty Copper,,create_rusty_copper
+31964,nobats-for-1-21-1,,禁止蝙蝠,Simple NoBats,,nobats
+31965,terraria-echoes,,泰拉瑞亚：回响,Terraria: Echoes,Echoes,terraria_echoes
+31966,mobfarmingsupplies,mobfarmingsupplies,Mob Farming Supplies,,,mobfarmingsupplies
+31967,item-stage-js,,物品阶段,Item Stage JS,ISJS,itemstagejs
+31968,,spore_jei,真菌感染：JEI兼容,Spore: JEI,,spore_jei
+31969,,,辉夜姬的五难题：重铸,ThKaguyaMod: Reborn,TKMRB,thkaguya
+31970,blood-bits-flow,,Blood Bits: Flow,,,bloodbits_flow
+31971,cgc-compat-revive,cgc-compat-revive,自定义枪械永续兼容：救援,CGC Compat: Revive,,cgccrevive
+31973,millenaire-jeim,,千年村庄：更多JEI,Millenaire JEIm,,millenairejeim
+31974,reset-controls-confirmation,,Reset Controls Confirmation,,,reset_controls_confirmation
+31975,,,额外盔甲栏,Armor Curio,,armor_curio
+31976,,,MTRLED,,,mtrled
+31977,lymonite-horse-armor,lymonite-horse-armor,Lymonite Horse Armor,,,lymonitehorsearmor
+31978,mcgs-guidebook-aquamirae,,MCG's Guidebook: Aquamirae,,,mcgguide_aquamirae
+31979,net-music-splayer-bridge,net-music-splayer-bridge,网络音乐机：SPlayer桥,Net Music: SPlayer Bridge,,netmusic_splayer_bridge
+31980,togetherforever,,TogetherForever,,,together-forever
+31981,netherite-tweaks,netherite_tweaks,Netherite Tweaks,,,netherite_tweaks_luna
+31982,,healthy_diet,健康饮食,Healthy Diet,HD,healthy_diet
+31983,eschaton-dragon-addon,,终焉之龙,Eschaton Dragon Addon,,eschaton_dragon
+31984,,,传说生存感染兼容层,The Hordes x LSO Compat,HIC,hordes_lso_compat
+31985,mysterious-spells,,Mysterious Spells,,,wangs_spells
+31986,mcg-core-api,,MCG 核心,MCG Core [API],,mcgcore
+31987,hybrid-api,hybrid-api,Hybrid API,,HAPI,hapi
+31988,limitless-decoration,,永无止境：装饰,Limitless Decoration,LD,ywzj_decoration
+31989,human-and-dog,human-and-dog,人与忠犬,Human and Dog,,human-and-dog
+31990,chained-fate,,Chained Fate,,,chainedfate
+31991,unions-upgrade-scrolls-port,unions-upgrade-scrolls-port,Union's Upgrade Scrolls Port,,,upgrade_scrolls
+31992,simple-crash-menu,,简单崩溃界面,Simple Crash Menu,SCM,simple_crash_menu
+31993,mzycbettermtr,,MzycBetterMTR,,MBM,smooth_lift
+31994,sablework-clockworkvs-unofficial,,貂关,Sablework,,
+31995,,xbridge-auth,XBridge Auth,,,xbridge
+31996,arcane-crafting-terminal,,奥术合成终端,Arcane Crafting Terminal,,arcane_terminal
+31997,energy-core-extend,,能量核心扩展,Energy Core Extend,ECE,energycoreextend
+31998,,,回放界面,Replay UI,RUI,replayui
+31999,compixel,,CompixelUI,,,compixel
+32000,cinematic-interactions,,Cinematic Interactions,,,cinematic
+32001,visual-entity-skill-edit,,可视化实体技能编辑器,Visual Entity Skill Edit,VESD,visual_entity_skill_edit
+32002,,,破限,,,
+32003,stasis-ward,,禁锢结界,Stasis Ward,,stasis_ward
+32004,baka-danmaku,,Baka 弹幕,Baka Danmaku,,cirnodanmaku
+32005,sb-enchantment-effects,sb-enchantment-effects,Enchantment Effects,,,enchantment-effects
+32006,immersive-pillagers,immersive-pillagers,Immersive Pillagers,,,immersive_pillagers
+32007,titan-spawn,,Titan Spawn,,,titans
+32008,management-wanted-more-decor,management-wanted-more-decor,FNAF Management Wanted: More Decor,,,management_wanted_2
+32009,silver-samurai-battle-damaged-red-blade,,银色武士：战损红刃,Silver Samurai: Battle-Damaged Red Blade,,silver_samurai
+32010,blackeys-boss-battle,,Blackey's Boss Battle,,,thedecay
+32012,satchels-port,,挎包移植版,Satchels Port,,
+32013,player-animation-legacy,,Player Animation Legacy,,,entity_features
+32014,,,更好的TaCZ碰撞箱,Better TaCZ hitbox,,better_tacz_hitbox
+32015,zq-pumpkins-dnd-editor-for-curios-tic3,,开拓者核心,ZQ_pumpkin's DND Editor for Curios & TiC3,,zq_dnd
+32016,,,奇思妙想,whimsical_ideas,,Whimsical_Ideas
+32017,,,机械动力:曲柄苦力,,Crc,mod_652be280
+32018,,,特摄饰品,specialornaments,,percent_trinket
+32019,,,天生伤害吸收保护,,,fgh_absorption
+32020,evil-robots,,Evil Robots,,,evil_robots
+32021,,,大千录,,dgyx,Daqianlu
+32022,command-translation,,指令翻译/补全助手,CommandTranslation,CT,command_translation
+32023,,,解锁区块生存,,,unlockchunk
+32024,spell-relay,,法术连携,Spell Relay,,
+32025,,,金源工艺：工业时代,OriGolds: Industrial Age,,
+32026,,,万象武库,,,equipment_vault
+32027,mtr-map-overlay,,MTR地图叠加,MTR Map Overlay,,
+32028,,,更好的原版,Better Vallina,,better_vallina
+32029,,waystone-xp-payment,指路石代付储罐,Waystone XP Payment,,waystone_xp_payment
+32030,insight-chests,,InSight Chests,,,insightchests
+32031,,,如我们所期望的结局,honkaiLimpact3,BBB3,
+32032,immortal-arts,,仙法,Immortal Arts,IMA,immortal_arts
+32033,pixelmonshadercompat,pixelmonshadercompat,重铸宝可梦光影兼容,PixelmonShaderCompat,,pixelmonshadercompat
+32034,nature-in-a-bottle,,韩立的小绿瓶,Nature in a Bottle,,niab
+32035,better-blood-magic-3-potions-guide,,更好的血魔法药水,Better Blood Magic 3 Potions,,betterbloodmagic3potions
+32036,blood-magic-guide-book-chinese-translation,,血魔法指南书中文译本,Blood Magic Guide Book Chinese Translation,,bloodmagic3guidebookchinesetranslation
+32037,frozen-dominion-spells,,Frozen Dominion Spells,,,frozen_dominion_spells
+32038,,panoramic,Panoramic,,,panoramic
+32039,,,P2P Compat,,,p2p_compat
+32040,lean-object,,Lean Object,,,leanobject
+32041,truly-bright,,Truly Bright,,,trulybright
+32042,,amos-mobs,Amos' mobs,,,amosmobs
+32043,,,原版失控,Vanilla Gone Wrong,,
+32044,olympian-echoes,,奥林匹斯残响,Olympian Echoes,,olympianechoes
+32045,,,Vanilla Backport：装备增补,Vanilla Backport：Equipment Complement,,equipment_complement
+32046,villager-phrases,villager-phrases,村民式短语,Villager Phrase,VP,villagerphrases
+32047,,kaleidoscopegrillingrefabricated,森罗物语：烟火——重织,Kaleidoscope Grilling Refabricated,,kaleidoscope_grilling
+32048,kaleidoscope-lib,,森罗万象,Kaleidoscope Lib,,kaleidoscope_lib
+32049,,Sd0pe4dD,YSM 体验优化,YSM Enhancements,YSME,ysm_enhancements
+32050,void-lords,,Void Lords,,,void_lords
+32051,cyclic-unofficial-port,,循环-非官方移植版,Cyclic-Unofficial Port,,
+32052,afkstation,afkstation,AFK Station [Cinematic & More],,,
+32053,cinchs-lost-mob-grinders,cinchs-lost-mob-grinders,Cinch's Lost Mob Grinders,,,cinchslostmobgrinders
+32054,vb-compat,,Vanilla Backport Compat,,,mr_vb_compat
+32055,moonlight-magic,,月光魔法,Moonlight Magic,MoM,moonlight_magic
+32056,dragon-survival-quick-emotes,,龙之生存：快速表情,Dragon Survival Quick Emotes,DSQE,ds_quickemotes
+32057,magiczone,,禁魔结界,MagicZone,,magiczone
+32058,alloy-smelter-js,,Alloy Smelter Js,,ASJ,alloy_smelter_js
+32059,wjys-fix-patch,,WJY的修复补丁,WJY's Fix Patch,,wjys_fix_patch
+32060,overreacting-mobs,,应激生物,Overreacting Mobs,,mobreactions
+32061,,,模块化机械：延续,Modular Machinery: Continuum,MMC,modularmachinery
+32062,binnies-mods-ce,,Binnie's Mods: CE,,,
+32063,forestry-ce-mail,forestry-ce-mail,林业：社区版 - 邮件,Forestry: CE - Mail,,forestrymail
+32064,magic-bees-ce,,魔法蜜蜂：社区版,Magic Bees: CE,,
+32065,touhou-little-maid-sophisticated,,车万女仆：这很精妙,Touhou Little Maid：Sophisticated,,maid_sophisticated
+32066,,,Create: Rubberworks Compat,,,
+32067,rs2multifilter,,复活吧 我的过滤升级,rs2multifilter,,rs2multifilter
+32068,natural-weapon,natural-weapon-mod,自然武器,Natural Weapon,,natural_weapon_mod
+32069,survivalcontract,survivalcontract,生存合约,survivalcontract,SC,SurvivalContract
+32070,forestry-ce-butterflies,forestry-ce-butterflies,林业：社区版 - 蝴蝶,Forestry: CE - Butterflies,,forestrybutterflies
+32071,,,受击后伤害不再免疫,Removes Post-hit Damage Immunity,RPDI,bypasses_cooldown
+32072,,,树苗，听话！,Let the Trees Grow,LTTG,let_the_trees_grow
+32073,felled,,felled,,,felled
+32074,sable-in-bottle,,瓶中航空学,Sable In Bottle,,sableinbottle
+32075,tooltipfix-wuliao,,提示框修复,TooltipFix,,tooltipfix
+32076,winter-falls,,寒冬降临,Winter Falls,,winter_falls
+32077,portable-terminal,,随身终端,Portable Terminal,PT,portableterminal
+32078,declutterui,declutterui,DeclutterUI,,,declutterui
+32079,,,麻将,,,mahjong
+32080,bio-book,,Bio book,,,biobook

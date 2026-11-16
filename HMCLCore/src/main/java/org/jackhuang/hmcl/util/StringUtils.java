@@ -1,34 +1,13 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
 import org.commonmark.ext.autolink.AutolinkExtension;
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.ext.ins.InsExtension;
-import org.commonmark.node.IndentedCodeBlock;
-import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
-import org.commonmark.renderer.NodeRenderer;
-import org.commonmark.renderer.html.HtmlNodeRendererContext;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.commonmark.renderer.html.HtmlWriter;
-
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
@@ -684,45 +663,14 @@ public final class StringUtils {
             InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
     )).build();
 
-    private static final HtmlRenderer HTML_RENDERER_RAW_INDENTED_BLOCK = HtmlRenderer.builder()
-            .extensions(List.of(InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()))
-            .nodeRendererFactory(IndentedBlockRawRenderer::new)
-            .build();
-
     private static final Parser MD_PARSER = Parser.builder().extensions(List.of(
             AutolinkExtension.create(), InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
     )).build();
 
-    public static @Nullable String convertToHtml(String str, boolean rawIndentedBlocks) {
+    public static @Nullable String convertToHtml(String str) {
         if (str == null) return null;
         if (isBlank(str)) return "";
-
-        if (rawIndentedBlocks)
-            return HTML_RENDERER_RAW_INDENTED_BLOCK.render(MD_PARSER.parse(str));
         return HTML_RENDERER.render(MD_PARSER.parse(str));
-    }
-
-    private static final class IndentedBlockRawRenderer implements NodeRenderer {
-
-        private final HtmlWriter html;
-
-        public IndentedBlockRawRenderer(HtmlNodeRendererContext context) {
-            this.html = context.getWriter();
-        }
-
-        @Override
-        public Set<Class<? extends Node>> getNodeTypes() {
-            return Set.of(IndentedCodeBlock.class);
-        }
-
-        @Override
-        public void render(Node node) {
-            IndentedCodeBlock block = (IndentedCodeBlock) node;
-            html.line();
-            html.raw(block.getLiteral());
-            html.line();
-        }
-
     }
 
     public static OptionalInt toInt(String s) {
