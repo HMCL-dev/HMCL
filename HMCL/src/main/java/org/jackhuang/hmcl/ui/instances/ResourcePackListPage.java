@@ -512,7 +512,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         /// Loads the resource-pack icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            return FXUtils.ensureValidIcon(file.loadIcon(ImageLoaders.DEFAULT), this::getDefaultIcon);
+            Image icon = file.loadIcon(ImageLoaders.DEFAULT);
+            return FXUtils.isValidIcon(icon) ? icon : getDefaultIcon();
         }
     }
 

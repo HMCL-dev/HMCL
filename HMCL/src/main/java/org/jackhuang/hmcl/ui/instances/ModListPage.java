@@ -603,7 +603,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         /// Loads the icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            return FXUtils.ensureValidIcon(localModFile.loadIcon(ImageLoaders.DEFAULT), this::getDefaultIcon);
+            Image icon = localModFile.loadIcon(ImageLoaders.DEFAULT);
+            return FXUtils.isValidIcon(icon) ? icon : getDefaultIcon();
         }
     }
 

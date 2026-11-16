@@ -301,7 +301,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 return getDefaultIcon();
             }
 
-            return FXUtils.ensureValidIcon(image, this::getDefaultIcon);
+            return FXUtils.isValidIcon(image) ? image : this.getDefaultIcon();
         }
     }
 

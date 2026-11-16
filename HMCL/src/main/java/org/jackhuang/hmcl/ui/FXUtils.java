@@ -64,6 +64,7 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
@@ -859,19 +860,14 @@ public final class FXUtils {
         stage.getIcons().add(newBuiltinImage(icon));
     }
 
-    /// Returns the icon if it has no loading error, positive dimensions, and
-    /// a width and height that differ by less than one pixel.
-    /// Otherwise, invokes the fallback once and returns its result without validation.
-    ///
-    /// @param <I> the image type, which may be nullable if the fallback can return null
-    /// @param icon the icon to validate, or null
-    /// @param fallback the supplier invoked only when the icon is absent or invalid
-    /// @return the valid icon, or the fallback result, which may be null
-    public static <I extends Image> I ensureValidIcon(@Nullable I icon, Supplier<I> fallback) {
-        if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1)
-            return icon;
+    @Contract("null -> false")
+    public static boolean isValidImage(@Nullable Image image) {
+        return image != null && !image.isError() && image.getWidth() > 0 && image.getHeight() > 0 && Math.abs(image.getWidth() - image.getHeight()) < 1;
+    }
 
-        return fallback.get();
+    @Contract("null -> false")
+    public static boolean isValidIcon(@Nullable Image image) {
+        return isValidImage(image) && Math.abs(image.getWidth() - image.getHeight()) < 1;
     }
 
     /**
