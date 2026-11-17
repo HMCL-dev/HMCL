@@ -572,6 +572,10 @@
     -fx-fill: -m3-color-on-surface-variant;
 }
 
+.m3-dialog-pane .input-dialog-error {
+    -fx-text-fill: -m3-color-error;
+}
+
 .m3-dialog-pane .m3-dialog-error {
     -m3-content-color: -m3-color-error;
 }

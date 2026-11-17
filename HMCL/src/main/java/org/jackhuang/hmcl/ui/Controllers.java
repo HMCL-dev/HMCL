@@ -672,16 +672,16 @@ public final class Controllers {
     /// Accepting invokes the callback. Resolving completes the future with the text at resolution time
     /// and closes the dialog; rejecting displays the reason without completing the future.
     /// Closing alone does not complete or cancel the future; a pending callback may still resolve it.
-    /// Without a decorator, the future remains incomplete. See [#dialog(Region)].
+    /// Without a decorator, the future remains incomplete. See [#dialog(M3Dialog)].
     ///
     /// @param title the prompt title, or null for no title text
     /// @param onResult the callback that accepts or rejects the entered text
     /// @param initialValue the initial text, or null for an empty field
     /// @param validators the input validators, or a null or empty array for none
     public static CompletableFuture<String> prompt(@Nullable String title, FutureCallback<String> onResult, @Nullable String initialValue, ValidatorBase @Nullable ... validators) {
-        InputDialogPane pane = new InputDialogPane(title, initialValue, onResult, validators);
-        dialog(pane);
-        return pane.getCompletableFuture();
+        InputDialog dialog = new InputDialog(title, initialValue, onResult, validators);
+        dialog(dialog);
+        return dialog.getCompletableFuture();
     }
 
     /// Shows questions that directly update the builder's question objects.

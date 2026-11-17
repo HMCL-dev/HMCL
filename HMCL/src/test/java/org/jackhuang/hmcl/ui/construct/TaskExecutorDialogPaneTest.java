@@ -3,6 +3,8 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXSpinner;
+import com.jfoenix.controls.JFXTextField;
+import javafx.event.ActionEvent;
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
@@ -18,6 +20,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.LauncherState;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -42,6 +45,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.TaskManagerPage;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.TaskManager;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -777,37 +781,47 @@ final class TaskExecutorDialogPaneTest {
         });
     }
 
-    /// Keeps custom-content dialogs open on validation failure and closes only on success or cancellation.
+    /// Uses native dialog actions while preserving field validation, rejection, and keyboard cancellation.
     @Test
     void inputDialogMaterialButtonsPreserveSubmissionLifecycle() throws Exception {
         onFxThread(() -> {
             M3OverlayPane host = createDialogHost();
             AtomicInteger submissions = new AtomicInteger();
-            InputDialogPane input = new InputDialogPane("Name", "Example", (value, handler) -> {
+            InputDialog input = new InputDialog("Name", "Example", (value, handler) -> {
                 assertEquals("Example", value);
                 if (submissions.incrementAndGet() == 1)
                     handler.reject("Try again");
                 else
                     handler.resolve();
-            });
-            M3DialogHandle handle = host.showDialog(Controllers.createDialog(input));
+            }, new Validator("Required", value -> !value.isEmpty()));
+            M3DialogHandle handle = host.showDialog(input);
             host.applyCss();
             host.layout();
-            SpinnerPane spinner = assertInstanceOf(SpinnerPane.class, input.getActions().getLast());
-            M3Button accept = assertInstanceOf(M3Button.class, spinner.getContent());
-            M3Button cancel = assertInstanceOf(M3Button.class, input.getActions().get(1));
+            assertEquals("Name", input.getDialogPane().getHeadline());
+            M3Button accept = input.getDialogPane().getActions().getLast();
+            M3Button cancel = input.getDialogPane().getActions().getFirst();
+            JFXTextField field = assertInstanceOf(JFXTextField.class, input.getDialogPane().lookup(".jfx-text-field"));
+            Label warning = assertInstanceOf(Label.class, input.getDialogPane().lookup(".input-dialog-error"));
             assertEquals(M3ButtonVariant.TEXT, accept.getVariant());
             assertEquals(M3ButtonVariant.TEXT, cancel.getVariant());
+            assertTrue(accept.isDefaultButton());
+            assertTrue(cancel.isCancelButton());
+            assertFalse(warning.isManaged());
 
-            accept.setDisable(true);
+            field.setText("");
+            assertTrue(accept.isDisabled());
             accept.fire();
             assertEquals(0, submissions.get());
-            accept.setDisable(false);
-            accept.fire();
+            field.setText("Example");
+            assertFalse(accept.isDisabled());
+            field.fireEvent(new ActionEvent());
             assertTrue(handle.isShowing());
             assertFalse(input.getCompletableFuture().isDone());
-            assertFalse(spinner.isLoading());
-            assertEquals("Try again", assertInstanceOf(Label.class, input.getActions().getFirst()).getText());
+            assertNull(accept.getGraphic());
+            assertEquals("Try again", warning.getText());
+            assertTrue(warning.isVisible());
+            assertTrue(warning.isManaged());
+            assertTrue(warning.isWrapText());
 
             accept.requestFocus();
             accept.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER,
@@ -816,12 +830,58 @@ final class TaskExecutorDialogPaneTest {
             assertEquals("Example", input.getCompletableFuture().getNow(null));
             assertFalse(handle.isShowing());
 
-            InputDialogPane cancelled = new InputDialogPane("Name", "Example", (value, handler) -> fail("Unexpected submission"));
-            M3DialogHandle cancelledHandle = host.showDialog(Controllers.createDialog(cancelled));
+            InputDialog cancelled = new InputDialog(null, null, (value, handler) -> fail("Unexpected submission"));
+            M3DialogHandle cancelledHandle = host.showDialog(cancelled);
             host.applyCss();
             host.layout();
-            assertInstanceOf(M3Button.class, cancelled.getActions().get(1)).fire();
+            assertEquals("", cancelled.getDialogPane().getHeadline());
+            cancelled.getDialogPane().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE,
+                    false, false, false, false));
             assertFalse(cancelledHandle.isShowing());
+            assertFalse(cancelled.getCompletableFuture().isDone());
+            return true;
+        });
+    }
+
+    /// Handles background callback results without duplicate submissions or cancelling the accepted-text future.
+    @Test
+    void inputDialogSupportsAsynchronousSubmission() throws Exception {
+        var handlers = new ArrayList<FutureCallback.ResultHandler>();
+        InputDialog input = onFxThread(() -> {
+            M3OverlayPane host = createDialogHost();
+            InputDialog dialog = new InputDialog("Name", "Example", (value, handler) -> handlers.add(handler));
+            host.showDialog(dialog);
+            host.applyCss();
+            host.layout();
+            M3Button accept = dialog.getDialogPane().getActions().getLast();
+            accept.fire();
+            assertTrue(accept.isDisabled());
+            assertInstanceOf(M3ProgressIndicator.class, accept.getGraphic());
+            accept.fire();
+            assertEquals(1, handlers.size());
+            assertNotNull(dialog.getDialogPane().getScene());
+            return dialog;
+        });
+        handlers.getFirst().reject("Try again");
+        onFxThread(() -> {
+            M3Button accept = input.getDialogPane().getActions().getLast();
+            Label warning = assertInstanceOf(Label.class, input.getDialogPane().lookup(".input-dialog-error"));
+            assertEquals("Try again", warning.getText());
+            assertFalse(accept.isDisabled());
+            assertNull(accept.getGraphic());
+            accept.fire();
+            assertEquals(2, handlers.size());
+            assertFalse(warning.isManaged());
+            input.getDialogPane().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE,
+                    false, false, false, false));
+            assertNull(input.getDialogPane().getScene());
+            assertFalse(input.getCompletableFuture().isDone());
+            return true;
+        });
+        handlers.getLast().resolve();
+        assertEquals("Example", input.getCompletableFuture().get(5, TimeUnit.SECONDS));
+        onFxThread(() -> {
+            assertNull(input.getDialogPane().getScene());
             return true;
         });
     }
