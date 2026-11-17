@@ -330,7 +330,7 @@ public final class Controllers {
 
         Lang.thread(JavaManager::initialize, "Search Java", true);
 
-        StyleSheets.init(mainScene);
+        StyleSheets.init(mainScene, decorator.getContentRoot());
 
         if (!SystemInfo.SYSTEM_ARCH.isX86() && SettingsManager.userState().platformPromptVersionProperty().get() < 1) {
             Runnable continueAction = () -> {

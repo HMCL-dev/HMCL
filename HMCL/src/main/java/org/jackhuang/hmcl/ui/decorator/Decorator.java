@@ -328,8 +328,8 @@ public final class Decorator {
         mainWindowPane.setWindowCornersRounded(customDecoration);
     }
 
-    /// Returns the legacy date-picker parent used to locate the overlay host and route calendar keys.
-    public StackPane getDialogContainer() {
+    /// Returns the clipped window content, including overlays but excluding the outer shadow and resize margin.
+    public StackPane getContentRoot() {
         return mainWindowPane;
     }
 
@@ -1186,7 +1186,7 @@ public final class Decorator {
             {
                 @SuppressWarnings("unchecked")
                 @Nullable Stack<JFXDatePickerContent> stack =
-                        (Stack<JFXDatePickerContent>) getDialogContainer().getProperties()
+                        (Stack<JFXDatePickerContent>) getContentRoot().getProperties()
                         .get(JFXDatePickerSkin.PROPERTY_DATE_PICKER_CONTENTS);
                 if (stack != null && !stack.isEmpty()) {
                     newTarget = stack.peek();

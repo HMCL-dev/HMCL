@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.setting;
 
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import org.glavo.m3fx.animation.M3MotionSettings;
@@ -19,11 +20,11 @@ import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
 import java.util.WeakHashMap;
 
 /// Maintains launcher styles and the shared M3FX theme for initialized scenes.
@@ -35,8 +36,8 @@ public final class StyleSheets {
     /// The launcher brightness stylesheet slot.
     private static final int BRIGHTNESS_SHEET_INDEX = 2;
 
-    /// Live themed scenes, without retaining closed windows.
-    private static final Set<Scene> scenes = Collections.newSetFromMap(new WeakHashMap<>());
+    /// Live scenes and optional subtree theme roots, without retaining closed windows.
+    private static final Map<Scene, @Nullable WeakReference<Parent>> scenes = new WeakHashMap<>();
 
     /// Current launcher stylesheet URLs, replaced when appearance settings change.
     private static final String[] stylesheets;
@@ -173,9 +174,27 @@ public final class StyleSheets {
 
     /// Installs live launcher and M3FX themes for the entire scene, preserving externally added stylesheets.
     public static void init(Scene scene) {
-        if (scenes.add(scene)) {
+        init(scene, null);
+    }
+
+    /// Initializes launcher styles, restricting M3FX to `themeRoot` when non-null.
+    /// The first initialization fixes the theme scope for this scene.
+    public static void init(Scene scene, @Nullable Parent themeRoot) {
+        if (!scenes.containsKey(scene)) {
+            scenes.put(scene, themeRoot == null ? null : new WeakReference<>(themeRoot));
             scene.getStylesheets().addAll(stylesheets);
+            applyM3Theme(scene, scenes.get(scene));
+        }
+    }
+
+    /// Applies the shared theme to a scene or its retained content subtree.
+    private static void applyM3Theme(Scene scene, @Nullable WeakReference<Parent> rootReference) {
+        if (rootReference == null) {
             M3ThemeManager.install(scene, m3Theme);
+        } else {
+            @Nullable Parent root = rootReference.get();
+            if (root != null)
+                M3ThemeManager.install(root, m3Theme);
         }
     }
 
@@ -185,7 +204,7 @@ public final class StyleSheets {
         if (previous.equals(stylesheet))
             return;
         stylesheets[slot] = stylesheet;
-        for (Scene scene : scenes) {
+        for (Scene scene : scenes.keySet()) {
             // M3FX can insert stylesheets before ours, so scene indices are not stable.
             int index = scene.getStylesheets().indexOf(previous);
             if (index >= 0)
@@ -196,7 +215,7 @@ public final class StyleSheets {
     /// Applies the current resolved colors and font family to every initialized scene.
     private static void updateM3Theme() {
         m3Theme = createM3Theme();
-        scenes.forEach(scene -> M3ThemeManager.install(scene, m3Theme));
+        scenes.forEach(StyleSheets::applyM3Theme);
     }
 
     /// Reuses launcher colors and font family while retaining Material typography metrics.

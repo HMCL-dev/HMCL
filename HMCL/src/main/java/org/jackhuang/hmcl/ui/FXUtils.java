@@ -1488,7 +1488,7 @@ public final class FXUtils {
                 Label fromLabel = new Label(i18n("button.select_date.from"));
                 this.fromPicker = new JFXDatePicker(LocalDate.now());
                 fromPicker.setOverLay(true);
-                fromPicker.setDialogParent(Controllers.getDecorator().getDialogContainer());
+                fromPicker.setDialogParent(Controllers.getDecorator().getContentRoot());
                 body.add(fromLabel, 0, 0);
                 body.add(fromPicker, 1, 0);
             }
@@ -1496,7 +1496,7 @@ public final class FXUtils {
                 Label toLabel = new Label(i18n("button.select_date.to"));
                 this.toPicker = new JFXDatePicker(LocalDate.now());
                 toPicker.setOverLay(true);
-                toPicker.setDialogParent(Controllers.getDecorator().getDialogContainer());
+                toPicker.setDialogParent(Controllers.getDecorator().getContentRoot());
                 body.add(toLabel, 0, 1);
                 body.add(toPicker, 1, 1);
             }

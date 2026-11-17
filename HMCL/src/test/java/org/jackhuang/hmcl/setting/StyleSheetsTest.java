@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.setting;
 
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -16,6 +17,7 @@ import org.glavo.monetfx.ColorRole;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -56,6 +58,16 @@ final class StyleSheetsTest {
                 VBox mainRoot = new VBox();
                 Scene main = new Scene(mainRoot);
                 Scene secondary = new Scene(new VBox());
+                M3Button windowButton = new M3Button("Window action");
+                Decorator decorator = new Decorator(new StackPane(windowButton), stage -> { });
+                Scene window = new Scene(decorator.getRoot());
+                StyleSheets.init(window, decorator.getContentRoot());
+                decorator.getRoot().applyCss();
+                assertFalse(decorator.getRoot().getStyleClass().contains(M3ThemeManager.ROOT_STYLE_CLASS));
+                assertTrue(decorator.getContentRoot().getStyleClass().contains(M3ThemeManager.ROOT_STYLE_CLASS));
+                assertNull(M3ThemeManager.getTheme(window));
+                assertEquals(Color.TRANSPARENT,
+                        ((StackPane) decorator.getRoot()).getBackground().getFills().getFirst().getFill());
                 String externalStylesheet = "data:text/css;base64," + Base64.getEncoder().encodeToString(
                         ".external-style { -fx-padding: 7px; }".getBytes(StandardCharsets.UTF_8));
                 main.getStylesheets().add(externalStylesheet);
@@ -80,6 +92,12 @@ final class StyleSheetsTest {
                 assertEquals(Brightness.DARK, theme.brightness());
                 assertSame(Themes.getColorScheme(), theme.colorScheme());
                 assertSame(theme, M3ThemeManager.getTheme(secondary));
+                assertSame(theme, M3ThemeManager.getTheme(decorator.getContentRoot()));
+                decorator.getRoot().applyCss();
+                assertEquals(button.getFont(), windowButton.getFont());
+                assertEquals(button.getTextFill(), windowButton.getTextFill());
+                assertEquals(Color.TRANSPARENT,
+                        ((StackPane) decorator.getRoot()).getBackground().getFills().getFirst().getFill());
                 assertEquals(Font.font("Monospaced").getFamily(), button.getFont().getFamily());
                 assertEquals(theme.tokens().typographyTokens().labelLarge().size(), button.getFont().getSize());
                 assertColorEquals(theme.colorScheme().getColor(ColorRole.ON_PRIMARY), (Color) button.getTextFill());
