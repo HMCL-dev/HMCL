@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
@@ -16,6 +15,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -78,7 +78,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
 
-        JFXButton btnMove = new JFXButton();
+        M3IconButton btnMove = new M3IconButton();
         SpinnerPane spinnerMove = new SpinnerPane();
         spinnerMove.getStyleClass().add("small-spinner-pane");
         btnMove.setOnAction(e -> {
@@ -104,7 +104,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerMove.setContent(btnMove);
         right.getChildren().add(spinnerMove);
 
-        JFXButton btnRefresh = FXUtils.newToggleButton4(SVG.REFRESH);
+        M3IconButton btnRefresh = FXUtils.newToggleButton4(SVG.REFRESH);
         SpinnerPane spinnerRefresh = new SpinnerPane();
         spinnerRefresh.getStyleClass().setAll("small-spinner-pane");
         spinnerRefresh.setPrefSize(30.0, 30.0);
@@ -128,7 +128,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerRefresh.setContent(btnRefresh);
         right.getChildren().add(spinnerRefresh);
 
-        JFXButton btnUpload = FXUtils.newToggleButton4(SVG.CHECKROOM);
+        M3IconButton btnUpload = FXUtils.newToggleButton4(SVG.CHECKROOM);
         SpinnerPane spinnerUpload = new SpinnerPane();
         btnUpload.setOnAction(e -> {
             Task<?> uploadTask = skinnable.uploadSkin();
@@ -145,12 +145,12 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerUpload.getStyleClass().add("small-spinner-pane");
         right.getChildren().add(spinnerUpload);
 
-        JFXButton btnCopyUUID = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
+        M3IconButton btnCopyUUID = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
         btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getProfileID().toString()));
         FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid"));
         right.getChildren().add(btnCopyUUID);
 
-        JFXButton btnRemove = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
+        M3IconButton btnRemove = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
         btnRemove.setOnAction(e -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::remove, null));
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
         FXUtils.installFastTooltip(btnRemove, i18n("button.delete"));

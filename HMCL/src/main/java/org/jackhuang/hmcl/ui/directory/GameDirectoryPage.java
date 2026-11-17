@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.directory;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.RequiredFieldValidator;
 import com.jfoenix.validation.base.ValidatorBase;
@@ -20,6 +19,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -147,7 +147,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
         savePane.setStyle("-fx-padding: 20;");
         StackPane.setAlignment(savePane, Pos.BOTTOM_RIGHT);
         {
-            JFXButton saveButton = FXUtils.newRaisedButton(i18n("button.save"));
+            M3Button saveButton = FXUtils.newRaisedButton(i18n("button.save"));
             savePane.setRight(saveButton);
             BorderPane.setAlignment(savePane, Pos.BOTTOM_RIGHT);
             StackPane.setAlignment(saveButton, Pos.BOTTOM_RIGHT);

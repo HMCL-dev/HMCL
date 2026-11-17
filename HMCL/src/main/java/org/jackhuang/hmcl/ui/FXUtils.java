@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.*;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -45,13 +44,13 @@ import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
@@ -943,48 +942,28 @@ public final class FXUtils {
         return image;
     }
 
-    public static JFXButton newRaisedButton(String text) {
-        JFXButton button = new JFXButton(text);
-        button.getStyleClass().add("jfx-button-raised");
-        button.setButtonType(JFXButton.ButtonType.RAISED);
-        return button;
+    /// Creates a filled button for a primary action.
+    public static M3Button newRaisedButton(String text) {
+        return new M3Button(text, M3ButtonVariant.FILLED);
     }
 
-    public static JFXButton newBorderButton(String text) {
-        JFXButton button = new JFXButton(text);
-        button.getStyleClass().add("jfx-button-border");
-        return button;
+    /// Creates an outlined action button.
+    public static M3Button newBorderButton(String text) {
+        return new M3Button(text, M3ButtonVariant.OUTLINED);
     }
 
-    public static JFXButton newToggleButton4(SVG icon) {
-        JFXButton button = new JFXButton();
+    /// Creates a compact action button with the icon at its natural size.
+    public static M3IconButton newToggleButton4(SVG icon) {
+        M3IconButton button = new M3IconButton(icon.createIcon());
         button.getStyleClass().add("toggle-icon4");
-        button.setGraphic(icon.createIcon());
         return button;
     }
 
-    public static JFXButton newToggleButton4(SVG icon, int size) {
-        JFXButton button = new JFXButton();
+    /// Creates a compact action button with an icon of the given size.
+    public static M3IconButton newToggleButton4(SVG icon, int size) {
+        M3IconButton button = new M3IconButton(icon.createIcon(size));
         button.getStyleClass().add("toggle-icon4");
-        button.setGraphic(icon.createIcon(size));
         return button;
-    }
-
-    public static void setOnActionWithCooldown(ButtonBase button, Runnable action) {
-        setOnActionWithCooldown(button, action, Motion.SHORT4);
-    }
-
-    public static void setOnActionWithCooldown(ButtonBase button, Runnable action, Duration cooldown) {
-        button.setOnAction(e -> {
-            button.setDisable(true);
-
-            var pause = new PauseTransition(cooldown);
-            pause.setOnFinished(event -> button.setDisable(false));
-            pause.play();
-
-            action.run();
-            e.consume();
-        });
     }
 
     public static Label newSafeTruncatedLabel() {

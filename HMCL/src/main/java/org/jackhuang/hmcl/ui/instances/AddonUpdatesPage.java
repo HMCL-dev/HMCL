@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
@@ -22,6 +21,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -139,13 +139,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
 
-            JFXButton exportListButton = FXUtils.newRaisedButton(i18n("button.export"));
+            M3Button exportListButton = FXUtils.newRaisedButton(i18n("button.export"));
             exportListButton.setOnAction(e -> exportList());
 
-            JFXButton nextButton = FXUtils.newRaisedButton(i18n("addon.check_update.confirm"));
+            M3Button nextButton = FXUtils.newRaisedButton(i18n("addon.check_update.confirm"));
             nextButton.setOnAction(e -> updateFiles());
 
-            JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
+            M3Button cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
             cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
             onEscPressed(this, cancelButton::fire);
             onEscPressed(listView, cancelButton::fire);
@@ -314,7 +314,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private final JFXCheckBox enabledBox = new JFXCheckBox();
         private final ImageContainer imageContainer = new ImageContainer(40);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton changelogButton = FXUtils.newToggleButton4(SVG.INFO);
+        private final M3IconButton changelogButton = FXUtils.newToggleButton4(SVG.INFO);
 
         AddonUpdateListCell(ListView<AddonUpdatesPage.AddonUpdateObject> listView) {
             HBox hbox = new HBox(16);

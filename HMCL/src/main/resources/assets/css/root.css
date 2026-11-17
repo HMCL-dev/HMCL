@@ -5,7 +5,7 @@
 
 .root {
     -title-fill: -monet-on-primary-container;
-    -m3-press-feedback: state-layer;
+    -m3-ripple-enabled: false;
 }
 
 .svg {
@@ -430,58 +430,17 @@
  *                                                                             *
  ******************************************************************************/
 
-.launch-pane {
-    -fx-max-height: 57px;
-    -fx-min-height: 57px;
-    -fx-max-width: 230px;
-    -fx-min-width: 230px;
+.launch-button .m3-split-button-action {
+    -fx-pref-width: 172px;
+    -fx-content-display: bottom;
+    -fx-graphic-text-gap: 0;
+    -fx-font-size: 16px;
 }
 
-.launch-pane > .jfx-button {
-    -fx-translate-y: 1px;
-    -fx-max-height: 55px;
-    -fx-min-height: 55px;
-    -fx-background-color: -monet-primary-container;
-    -fx-opacity: 1; /* Override the opacity of disabled button */
-    -fx-cursor: hand;
-}
-
-.launch-pane > .jfx-button.launch-button {
-    -fx-max-width: 200px;
-    -fx-min-width: 200px;
-    -fx-border-width: 0 3px 0 0;
-    -fx-border-color: linear-gradient(
-        to bottom, 
-        transparent 0%, 
-        transparent 20%, 
-        -monet-on-surface-variant 20%,
-        -monet-on-surface-variant 80%,
-        transparent 80%, 
-        transparent 100%
-    );
-    -fx-background-radius: 4px 0 0 4px;
-}
-
-.launch-pane > .jfx-button.menu-button {
-    -fx-max-width: 27px;
-    -fx-min-width: 27px;
-    -fx-font-size: 15px;
-    -fx-background-radius: 0 4px 4px 0;
-}
-
-.launch-pane > .jfx-button > StackPane > .jfx-rippler {
-    -jfx-rippler-fill: -monet-on-primary-container;
-    -jfx-mask-type: CIRCLE;
-    -fx-padding: 0;
-}
-
-.launch-pane > .launch-button .label {
-    -fx-text-fill: -monet-on-primary-container;
-    -fx-font-size: 14px;
-}
-
-.launch-pane .svg {
-    -fx-fill: -monet-on-primary-container;
+.launch-button .m3-split-button-action .label {
+    -fx-max-width: 124px;
+    -fx-font-size: 12px;
+    -fx-text-fill: -m3-content-color;
 }
 
 /*******************************************************************************
@@ -758,7 +717,7 @@
 }
 
 .jfx-tool-bar-button {
-    -fx-text-fill: -monet-on-surface;
+    -m3-content-color: -monet-on-surface;
     -fx-font-size: 14px;
     -fx-toggle-icon4-size: 37px;
     -fx-pref-height: -fx-toggle-icon4-size;
@@ -875,38 +834,6 @@
     -jfx-rippler-fill: -monet-on-surface;
     -jfx-mask-type: CIRCLE;
     -fx-padding: 0.0;
-}
-
-.jfx-button-raised {
-    -fx-background-color: -monet-primary;
-}
-
-.jfx-button-raised .jfx-rippler {
-    -jfx-rippler-fill: -monet-on-primary;
-    -jfx-mask-type: CIRCLE;
-    -fx-padding: 0.0;
-}
-
-.jfx-button-raised, .jfx-button-raised * {
-    -fx-text-fill: -monet-on-primary;
-    -fx-font-size: 14px;
-}
-
-.jfx-button-border {
-    -fx-background-color: transparent;
-    -fx-border-color: -monet-outline;
-    -fx-border-radius: 5px;
-    -fx-border-width: 0.2px;
-    -fx-padding: 8px;
-}
-
-.jfx-button-border, .jfx-button-border * {
-    -fx-text-fill: -monet-primary;
-}
-
-.jfx-button-raised-round {
-    -fx-background-color: -monet-primary-container;
-    -fx-background-radius: 50px;
 }
 
 .expandable-pane-header-label {
@@ -1339,6 +1266,7 @@
 
 
 .toggle-icon4 {
+    -m3-horizontal-padding: 0;
     -fx-toggle-icon4-size: 30px;
     -fx-pref-width: -fx-toggle-icon4-size;
     -fx-max-width: -fx-toggle-icon4-size;
@@ -1355,11 +1283,6 @@
 .toggle-icon4 .icon {
     -fx-fill: rgb(204.0, 204.0, 51.0);
     -fx-padding: 10.0;
-}
-
-.toggle-icon4 .jfx-rippler {
-    -jfx-rippler-fill: -monet-primary;
-    -jfx-mask-type: CIRCLE;
 }
 
 .toggle-icon-tiny {
@@ -1384,11 +1307,6 @@
 
 .toggle-icon-tiny:overridden .svg {
     -fx-fill: -monet-primary;
-}
-
-.toggle-icon-tiny .jfx-rippler {
-    -jfx-rippler-fill: -monet-primary;
-    -jfx-mask-type: CIRCLE;
 }
 
 .announcement-close-button {
@@ -1467,8 +1385,8 @@
     -fx-fill: -monet-surface-tint;
 }
 
-.log-window .jfx-button {
-    -fx-text-fill: -monet-on-surface;
+.log-window .m3-button {
+    -m3-content-color: -monet-on-surface;
 }
 
 .log-window-list-cell {
@@ -1637,8 +1555,8 @@
 .color-palette-region {
 }
 
-.color-palette-region .jfx-button {
-    -fx-text-fill: -monet-on-surface;
+.color-palette-region .m3-button {
+    -m3-content-color: -monet-on-surface;
 }
 
 .color-palette {
@@ -1673,15 +1591,6 @@
     -fx-background-color: -monet-surface;
     -fx-padding: 0.0 10.0 5.0 0.0;
     -fx-alignment: center-right;
-}
-
-.custom-color-dialog .jfx-color-dialog-accept {
-    -fx-padding: 0.7em 0.8em;
-}
-
-.custom-color-dialog .jfx-color-dialog-cancel {
-    -fx-text-fill: -monet-on-surface-variant;
-    -fx-padding: 0.7em 0.8em;
 }
 
 /*******************************************************************************

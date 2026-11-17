@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
@@ -17,6 +16,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
+import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3OverlayPane;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.*;
@@ -420,7 +420,7 @@ public class GameCrashWindow extends Stage {
                 SpinnerPane exportButtonPane = new SpinnerPane();
                 exportButtonPane.getStyleClass().add("small-spinner-pane");
 
-                JFXButton exportButton = FXUtils.newRaisedButton(i18n("logwindow.export_game_crash_logs"));
+                M3Button exportButton = FXUtils.newRaisedButton(i18n("logwindow.export_game_crash_logs"));
                 exportButtonPane.setContent(exportButton);
                 exportButton.setOnAction(e -> {
                     exportButtonPane.showSpinner();
@@ -449,10 +449,10 @@ public class GameCrashWindow extends Stage {
                     }, Schedulers.javafx());
                 });
 
-                JFXButton logButton = FXUtils.newRaisedButton(i18n("logwindow.title"));
+                M3Button logButton = FXUtils.newRaisedButton(i18n("logwindow.title"));
                 logButton.setOnAction(e -> showLogWindow());
 
-                JFXButton helpButton = FXUtils.newRaisedButton(i18n("help"));
+                M3Button helpButton = FXUtils.newRaisedButton(i18n("help"));
                 helpButton.setOnAction(e -> FXUtils.openLink(Metadata.CONTACT_URL));
                 FXUtils.installFastTooltip(helpButton, i18n("logwindow.help"));
 

@@ -29,9 +29,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.glavo.m3fx.controls.M3OverlayPane;
-import org.glavo.m3fx.controls.M3DialogHandle;
 import org.glavo.m3fx.controls.M3Dialog;
+import org.glavo.m3fx.controls.M3DialogHandle;
+import org.glavo.m3fx.controls.M3OverlayPane;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.control.ScrollPane;
@@ -394,7 +394,7 @@ final class TaskExecutorDialogPaneTest {
         AtomicInteger installations = new AtomicInteger();
         TaskManagerPage page = onFxThread(() -> {
             TaskManagerPage result = new TaskManagerPage();
-            new Scene(result, 600, 400);
+            StyleSheets.init(new Scene(result, 600, 400));
             return result;
         });
         TaskExecutorDialogPane pane = onFxThread(() -> {
@@ -422,7 +422,7 @@ final class TaskExecutorDialogPaneTest {
                 assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
                 page.applyCss();
                 page.layout();
-                ButtonBase install = page.lookupAll(".jfx-button").stream()
+                ButtonBase install = page.lookupAll(".m3-button").stream()
                         .filter(ButtonBase.class::isInstance)
                         .map(ButtonBase.class::cast)
                         .filter(button -> i18n("button.install").equals(button.getText()))

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
@@ -33,6 +32,7 @@ import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.*;
@@ -539,7 +539,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 }
             });
 
-            JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
+            M3IconButton closeSearchBar = createToolbarButton2(SVG.CLOSE, () -> {
                 changeToolbar(toolbarNormal);
 
                 searchField.clear();
@@ -633,10 +633,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private final HBox right = new HBox();
 
         /// Shows the package file.
-        private final JFXButton revealButton;
+        private final M3IconButton revealButton;
 
         /// Deletes the package.
-        private final JFXButton deleteButton;
+        private final M3IconButton deleteButton;
 
         /// Creates a reusable theme-pack list cell.
         ///

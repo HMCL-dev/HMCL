@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXSwitch;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
@@ -13,6 +12,7 @@ import javafx.css.PseudoClass;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -33,7 +33,7 @@ public final class LineInheritableSwitch extends LineButtonBase {
     private static final int INHERIT_BUTTON_ICON_SIZE = 12;
 
     /// The button that toggles between inherited and overridden mode.
-    private final JFXButton inheritButton;
+    private final M3IconButton inheritButton;
 
     /// The tooltip shown on the inheritance button.
     private final Tooltip inheritTooltip;
@@ -45,7 +45,7 @@ public final class LineInheritableSwitch extends LineButtonBase {
     public LineInheritableSwitch() {
         this.getStyleClass().addAll(DEFAULT_STYLE_CLASS, "line-switch");
 
-        this.inheritButton = new JFXButton();
+        this.inheritButton = new M3IconButton();
         inheritButton.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
         inheritButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         inheritButton.setGraphic(SVG.PUBLIC.createIcon(INHERIT_BUTTON_ICON_SIZE));

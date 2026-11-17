@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
@@ -28,6 +27,7 @@ import javafx.stage.FileChooser;
 import javafx.scene.text.Text;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.mod.LocalMod;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
@@ -721,7 +721,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                 this.right = new HBox(8);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+                M3IconButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 {
                     var fo = SVG.FOLDER_OPEN.createIcon();
                     var f = SVG.FOLDER.createIcon();
@@ -736,7 +736,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                     if (item != null) item.onReveal();
                 });
 
-                JFXButton btnExplore = FXUtils.newToggleButton4(SVG.EXPLORE); // Change the icon if allows editing
+                M3IconButton btnExplore = FXUtils.newToggleButton4(SVG.EXPLORE); // Change the icon if allows editing
                 btnExplore.setOnAction(event -> {
                     Item item = getItem();
                     if (item instanceof SchematicItem) {
@@ -748,7 +748,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                 });
                 btnExplore.visibleProperty().bind(isFileProperty);
 
-                JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
+                M3IconButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                 btnDelete.setOnAction(event -> {
                     Item item = getItem();
                     if (item != null) {
@@ -825,9 +825,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
             {
                 var toolbar = new HBox();
-                JFXButton btnGoBack = createToolbarButton2("", SVG.ARROW_BACK, skinnable::navigateBack);
+                M3IconButton btnGoBack = createToolbarButton2(SVG.ARROW_BACK, skinnable::navigateBack);
                 btnGoBack.disableProperty().bind(skinnable.isRootProperty());
-                JFXButton btnDownload = createToolbarButton2(i18n("schematics.install_mod"), SVG.DOWNLOAD, skinnable::downloadLitematica);
+                M3Button btnDownload = createToolbarButton2(i18n("schematics.install_mod"), SVG.DOWNLOAD, skinnable::downloadLitematica);
                 FXUtils.onChangeAndOperate(skinnable.downloadTarget, (t) -> btnDownload.setDisable(t == null));
                 toolbar.getChildren().setAll(
                         btnGoBack,

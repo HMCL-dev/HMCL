@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.ObjectProperty;
@@ -16,6 +15,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.*;
@@ -148,20 +148,20 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
             HBox right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
             {
-                JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+                M3IconButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 revealButton.setOnAction(e -> skinnable.onReveal());
                 FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
                 if (skinnable.realPath == null) {
                     revealButton.setDisable(true);
 
-                    JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
+                    M3IconButton removeButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                     removeButton.setOnAction(e -> skinnable.onRemove());
                     FXUtils.installFastTooltip(removeButton, i18n("java.disabled.management.remove"));
 
                     right.getChildren().setAll(revealButton, removeButton);
                 } else {
-                    JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                    M3IconButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
                     restoreButton.setOnAction(e -> skinnable.onRestore());
                     FXUtils.installFastTooltip(restoreButton, i18n("java.disabled.management.restore"));
 

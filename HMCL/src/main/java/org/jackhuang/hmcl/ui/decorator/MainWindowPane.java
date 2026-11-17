@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.decorator;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXSpinner;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -18,6 +17,7 @@ import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.monetfx.ColorRole;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
@@ -177,7 +177,7 @@ final class MainWindowPane extends StackPane {
         decorator.capableDraggingWindow(buttons);
         buttons.setMaxSize(Region.USE_PREF_SIZE, 40);
 
-        JFXButton tasksButton = new JFXButton();
+        M3IconButton tasksButton = new M3IconButton();
         tasksButton.setFocusTraversable(false);
         tasksButton.setAccessibleText(i18n("task.list"));
         tasksButton.getStyleClass().add("jfx-decorator-button");
@@ -205,21 +205,21 @@ final class MainWindowPane extends StackPane {
             }
         });
 
-        JFXButton helpButton = new JFXButton();
+        M3IconButton helpButton = new M3IconButton();
         helpButton.setFocusTraversable(false);
         helpButton.setGraphic(SVG.HELP.createIcon());
         helpButton.getStyleClass().add("jfx-decorator-button");
         helpButton.setOnAction(event -> FXUtils.openLink(Metadata.CONTACT_URL));
         decorator.forbidDraggingWindow(helpButton);
 
-        JFXButton minimizeButton = new JFXButton();
+        M3IconButton minimizeButton = new M3IconButton();
         minimizeButton.setFocusTraversable(false);
         minimizeButton.setGraphic(SVG.MINIMIZE_CENTER.createIcon());
         minimizeButton.getStyleClass().add("jfx-decorator-button");
         minimizeButton.setOnAction(event -> decorator.minimizeWindow());
         decorator.forbidDraggingWindow(minimizeButton);
 
-        JFXButton closeButton = new JFXButton();
+        M3IconButton closeButton = new M3IconButton();
         closeButton.setFocusTraversable(false);
         closeButton.setGraphic(SVG.CLOSE.createIcon());
         closeButton.getStyleClass().add("jfx-decorator-button");
@@ -264,7 +264,7 @@ final class MainWindowPane extends StackPane {
 
         // Left navigation buttons
         if (state.backable()) {
-            JFXButton backButton = new JFXButton();
+            M3IconButton backButton = new M3IconButton();
             backButton.setFocusTraversable(false);
             backButton.setGraphic(SVG.ARROW_BACK.createIcon());
             backButton.getStyleClass().add("jfx-decorator-button");
@@ -276,7 +276,7 @@ final class MainWindowPane extends StackPane {
         if (decorator.canCloseProperty().get()) {
             boolean showCloseAsHome = decorator.showCloseAsHomeProperty().get();
 
-            JFXButton closeButton = new JFXButton();
+            M3IconButton closeButton = new M3IconButton();
             closeButton.setFocusTraversable(false);
             closeButton.setGraphic((showCloseAsHome ? SVG.HOME : SVG.CLOSE).createIcon());
             closeButton.getStyleClass().add("jfx-decorator-button");
@@ -314,7 +314,7 @@ final class MainWindowPane extends StackPane {
 
         // Right refresh button
         if (state.refreshable()) {
-            JFXButton refreshButton = new JFXButton();
+            M3IconButton refreshButton = new M3IconButton();
             refreshButton.setFocusTraversable(false);
             refreshButton.setGraphic(SVG.REFRESH.createIcon());
             refreshButton.getStyleClass().add("jfx-decorator-button");

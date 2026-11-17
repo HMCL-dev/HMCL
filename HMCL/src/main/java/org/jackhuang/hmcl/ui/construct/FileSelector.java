@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleStringProperty;
@@ -14,6 +13,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -30,7 +30,7 @@ public class FileSelector extends HBox {
     private SelectionMode selectionMode = SelectionMode.FILE;
     private final ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
 
-    JFXButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
+    M3IconButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
 
     public enum SelectionMode {
         FILE,

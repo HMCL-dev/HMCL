@@ -20,6 +20,7 @@ import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
@@ -406,7 +407,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 });
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
-                JFXButton btnAddServer = FXUtils.newToggleButton4(SVG.ADD, 20);
+                M3IconButton btnAddServer = FXUtils.newToggleButton4(SVG.ADD, 20);
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());
                 });

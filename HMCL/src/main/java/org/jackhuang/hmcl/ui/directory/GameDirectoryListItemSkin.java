@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.directory;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.scene.control.SkinBase;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -46,7 +46,7 @@ public class GameDirectoryListItemSkin extends SkinBase<GameDirectoryListItem> {
 
         FXUtils.onClicked(getSkinnable(), () -> GameDirectoryManager.setSelectedGameDirectory(skinnable.getGameDirectory()));
 
-        JFXButton btnRemove = FXUtils.newToggleButton4(SVG.CLOSE, 14);
+        M3IconButton btnRemove = FXUtils.newToggleButton4(SVG.CLOSE, 14);
         btnRemove.setOnAction(e -> skinnable.remove());
         item.setTrailing(btnRemove);
 

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.ObjectProperty;
@@ -16,6 +15,8 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -72,7 +73,7 @@ public final class SettingsPage extends ScrollPane {
                 ObjectProperty<UpdateChannel> updateChannel;
                 {
 
-                    JFXButton updateButton = FXUtils.newToggleButton4(SVG.UPDATE, 20);
+                    M3IconButton updateButton = FXUtils.newToggleButton4(SVG.UPDATE, 20);
                     updateButton.setOnAction(e -> onUpdate());
                     updateButton.setPadding(Insets.EMPTY);
                     FXUtils.installFastTooltip(updateButton, i18n("update.tooltip"));
@@ -193,15 +194,14 @@ public final class SettingsPage extends ScrollPane {
                     BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                     debugPane.setLeft(left);
 
-                    JFXButton openLogFolderButton = new JFXButton(i18n("settings.launcher.launcher_log.reveal"));
+                    M3Button openLogFolderButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.reveal"));
                     openLogFolderButton.setOnAction(e -> openLogFolder());
-                    openLogFolderButton.getStyleClass().add("jfx-button-border");
                     if (LOG.getLogFile() == null)
                         openLogFolderButton.setDisable(true);
 
                     SpinnerPane exportLogPane = new SpinnerPane();
 
-                    JFXButton logButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.export"));
+                    M3Button logButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.export"));
                     exportLogPane.setContent(logButton);
                     logButton.setOnAction(e -> {
                         exportLogPane.showSpinner();

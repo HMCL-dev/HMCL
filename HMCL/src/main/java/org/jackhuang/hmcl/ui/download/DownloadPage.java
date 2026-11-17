@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
+import org.glavo.m3fx.controls.M3Button;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.*;
@@ -105,7 +105,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 Instances.downloadModpackImpl(downloadProvider, repository, uploadInstance, modpack, file);
             }, false);
 
-            JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
+            M3Button installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
             installLocalModpackButton.setOnAction(e -> Instances.importModpack());
 
             page.getActions().add(installLocalModpackButton);

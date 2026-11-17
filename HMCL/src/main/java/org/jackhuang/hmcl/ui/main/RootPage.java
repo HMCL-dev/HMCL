@@ -4,6 +4,9 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
@@ -152,6 +155,13 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
         // the root page, with the sidebar in left, navigator in center.
         setContent(getMainPage());
+        var enter = new KeyCodeCombination(KeyCode.ENTER);
+        addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+            if (enter.match(event)) {
+                getMainPage().fireLaunchButton();
+                event.consume();
+            }
+        });
     }
 
     @Override

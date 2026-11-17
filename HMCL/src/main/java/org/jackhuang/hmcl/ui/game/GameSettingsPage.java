@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.game;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
@@ -26,6 +25,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -356,7 +356,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             }
 
             // Memory Setting
-            @Nullable JFXButton autoMemoryButton = !isPresetSetting ? createInheritanceButton() : null;
+            @Nullable M3IconButton autoMemoryButton = !isPresetSetting ? createInheritanceButton() : null;
             ObjectProperty<Boolean> memorySelectedValue = new SimpleObjectProperty<>(true);
             var memorySublist = new ComponentSublist(() -> {
                 var memoryItem = new RadioChoiceList<Boolean>();
@@ -372,7 +372,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 FXUtils.setValidateWhileTextChanged(maxMemoryTextField, true);
                 maxMemoryTextField.setValidators(new NumberValidator(i18n("input.number"), false));
 
-                @Nullable JFXButton maxMemoryButton = null;
+                @Nullable M3IconButton maxMemoryButton = null;
                 if (!isPresetSetting) {
                     maxMemoryButton = createInheritanceButton();
                 }
@@ -466,7 +466,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 cboWindowSize.setEditable(true);
                 cboWindowSize.setPromptText("854x480");
                 cboWindowSize.getItems().setAll(getSupportedResolutions());
-                @Nullable JFXButton windowSizeInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
+                @Nullable M3IconButton windowSizeInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
                 bindWindowSizeComboBox(cboWindowSize, windowSizeInheritanceButton);
 
                 for (GameWindowType type : GameWindowType.values()) {
@@ -523,7 +523,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     }
                 }));
                 FXUtils.setValidateWhileTextChanged(multiplayerTextField, true);
-                @Nullable JFXButton multiplayerInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
+                @Nullable M3IconButton multiplayerInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
                 var multiplayerOption = new EditorChoice<>(
                         i18n("settings.game.quick_play.multiplayer"),
                         QuickPlayType.MULTIPLAYER,
@@ -537,7 +537,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     return FileUtils.isNameValid(str);
                 }));
                 FXUtils.setValidateWhileTextChanged(singleplayerTextField, true);
-                @Nullable JFXButton singleplayerInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
+                @Nullable M3IconButton singleplayerInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
                 var singleplayerOption = new EditorChoice<>(
                         i18n("settings.game.quick_play.singleplayer"),
                         QuickPlayType.SINGLEPLAYER,
@@ -545,7 +545,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                         singleplayerInheritanceButton);
 
                 var realmsTextField = new JFXTextField();
-                @Nullable JFXButton realmsInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
+                @Nullable M3IconButton realmsInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
                 var realmsOption = new EditorChoice<>(
                         i18n("settings.game.quick_play.realms"),
                         QuickPlayType.REALMS,
@@ -1004,7 +1004,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             @Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime> value,
             Node rightNode,
             Function<GameSettings, InheritableProperty<T>> propertyGetter) {
-        @Nullable JFXButton inheritButton = null;
+        @Nullable M3IconButton inheritButton = null;
         if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             bindJavaPayloadInheritanceButton(inheritButton, propertyGetter);
@@ -1014,7 +1014,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Binds an inheritance button to a Java selection payload property.
     private <T> void bindJavaPayloadInheritanceButton(
-            JFXButton button,
+            M3IconButton button,
             Function<GameSettings, InheritableProperty<T>> propertyGetter) {
         ObjectProperty<@Nullable InheritableProperty<T>> activeProperty = new SimpleObjectProperty<>();
 
@@ -1118,7 +1118,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     /// Binds the windowed resolution selector to the width and height settings.
-    private void bindWindowSizeComboBox(JFXComboBox<String> comboBox, @Nullable JFXButton inheritButton) {
+    private void bindWindowSizeComboBox(JFXComboBox<String> comboBox, @Nullable M3IconButton inheritButton) {
         ObjectProperty<@Nullable InheritableProperty<Double>> activeWidthProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<Double>> activeHeightProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<Double>> activeParentWidthProperty = new SimpleObjectProperty<>();
@@ -1344,8 +1344,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     /// Creates a compact button that displays inherited or overridden state.
-    private JFXButton createInheritanceButton() {
-        var button = new JFXButton();
+    private M3IconButton createInheritanceButton() {
+        var button = new M3IconButton();
         button.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         Tooltip tooltip = new Tooltip();
@@ -1356,7 +1356,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     /// Updates the icon and pseudo class of an inheritance state button.
-    private static void updateInheritanceButton(JFXButton button, boolean inherited) {
+    private static void updateInheritanceButton(M3IconButton button, boolean inherited) {
         button.setGraphic((inherited ? SVG.PUBLIC : SVG.TUNE).createIcon(INHERIT_BUTTON_ICON_SIZE));
         button.pseudoClassStateChanged(PSEUDO_OVERRIDDEN, !inherited);
 
@@ -1470,12 +1470,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         ObjectProperty<@Nullable InheritableProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton = null;
+        @Nullable M3IconButton inheritButton = null;
         if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             line.setTitleTrailing(inheritButton);
         }
-        @Nullable JFXButton finalInheritButton = inheritButton;
+        @Nullable M3IconButton finalInheritButton = inheritButton;
 
         InvalidationListener refresh = observable -> {
             GameSettings setting = currentSetting.get();
@@ -1581,7 +1581,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private void bindInheritableStringValue(
             Property<String> textProperty,
             Function<GameSettings, InheritableProperty<String>> propertyGetter,
-            @Nullable JFXButton inheritButton) {
+            @Nullable M3IconButton inheritButton) {
         ObjectProperty<@Nullable InheritableProperty<String>> activeProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
@@ -1762,7 +1762,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         final Holder<Boolean> updating = new Holder<>(false);
         ObjectProperty<@Nullable InheritableProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        JFXButton inheritButton = createInheritanceButton();
+        M3IconButton inheritButton = createInheritanceButton();
         line.setTitleTrailing(inheritButton);
 
         InvalidationListener refresh = observable -> {
@@ -1991,12 +1991,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         ObjectProperty<@Nullable InheritableProperty<T>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton = null;
+        @Nullable M3IconButton inheritButton = null;
         if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             sublist.setTitleRight(inheritButton);
         }
-        @Nullable JFXButton finalInheritButton = inheritButton;
+        @Nullable M3IconButton finalInheritButton = inheritButton;
 
         InvalidationListener propertyListener = observable -> {
             GameSettings setting = currentSetting.get();
@@ -2103,12 +2103,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         ObjectProperty<@Nullable InheritableProperty<GameWindowType>> activeParentWindowTypeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton = null;
+        @Nullable M3IconButton inheritButton = null;
         if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             sublist.setTitleRight(inheritButton);
         }
-        @Nullable JFXButton finalInheritButton = inheritButton;
+        @Nullable M3IconButton finalInheritButton = inheritButton;
 
         InvalidationListener propertyListener = observable -> {
             GameSettings setting = currentSetting.get();
@@ -2291,7 +2291,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         private final Node rightNode;
 
         /// Creates an editor choice.
-        private EditorChoice(String title, T value, Node rightNode, @Nullable JFXButton inheritButton) {
+        private EditorChoice(String title, T value, Node rightNode, @Nullable M3IconButton inheritButton) {
             super(title, value);
             this.rightNode = rightNode;
             if (inheritButton != null) {
@@ -2353,12 +2353,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         ObjectProperty<@Nullable InheritableProperty<T>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton = null;
+        @Nullable M3IconButton inheritButton = null;
         if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             button.setTitleTrailing(inheritButton);
         }
-        @Nullable JFXButton finalInheritButton = inheritButton;
+        @Nullable M3IconButton finalInheritButton = inheritButton;
 
         InvalidationListener refresh = observable -> {
             GameSettings setting = currentSetting.get();

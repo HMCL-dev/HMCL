@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -15,6 +14,8 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -158,7 +159,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
         @Override
         protected List<Node> initializeToolbar(WorldBackupsPage skinnable) {
-            JFXButton createBackup = createToolbarButton2(i18n("world.backup.create.new_one"), SVG.ARCHIVE, skinnable::createBackup);
+            M3Button createBackup = createToolbarButton2(i18n("world.backup.create.new_one"), SVG.ARCHIVE, skinnable::createBackup);
             createBackup.disableProperty().bind(getSkinnable().readOnly);
 
             return Arrays.asList(
@@ -248,12 +249,12 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+                M3IconButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 right.getChildren().add(btnReveal);
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
                 btnReveal.setOnAction(event -> skinnable.onReveal());
 
-                JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
+                M3IconButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                 right.getChildren().add(btnDelete);
                 FXUtils.installFastTooltip(btnDelete, i18n("world.backup.delete"));
                 btnDelete.setOnAction(event -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::onDelete, null));

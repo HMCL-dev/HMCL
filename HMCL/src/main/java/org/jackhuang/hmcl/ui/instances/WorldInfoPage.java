@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -16,6 +15,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.nbt.tag.*;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.game.World;
@@ -119,8 +119,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
                 }
 
-                JFXButton editIconButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
-                JFXButton resetIconButton = FXUtils.newToggleButton4(SVG.RESTORE, 20);
+                M3IconButton editIconButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
+                M3IconButton resetIconButton = FXUtils.newToggleButton4(SVG.RESTORE, 20);
                 {
                     editIconButton.setDisable(isReadOnly);
                     editIconButton.setOnAction(event -> Controllers.confirm(
@@ -149,7 +149,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 seedPane.setTitle(i18n("world.info.random_seed"));
 
                 SimpleBooleanProperty visibility = new SimpleBooleanProperty();
-                JFXButton visibilityButton = FXUtils.newToggleButton4(SVG.VISIBILITY_OFF);
+                M3IconButton visibilityButton = FXUtils.newToggleButton4(SVG.VISIBILITY_OFF);
                 {
                     visibilityButton.setAlignment(Pos.CENTER);
                     visibilityButton.setOnAction((event) -> visibility.set(!visibility.get()));

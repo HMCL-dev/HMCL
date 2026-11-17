@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -10,6 +9,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
 import org.jackhuang.hmcl.download.java.JavaRemoteVersion;
 import org.jackhuang.hmcl.download.java.disco.DiscoJavaDistribution;
 import org.jackhuang.hmcl.download.java.disco.DiscoJavaRemoteVersion;
@@ -133,7 +133,7 @@ public final class JavaInstallPage extends WizardSinglePage {
 
                 BorderPane installPane = new BorderPane();
                 {
-                    JFXButton installButton = FXUtils.newRaisedButton(i18n("button.install"));
+                    M3Button installButton = FXUtils.newRaisedButton(i18n("button.install"));
                     installButton.setOnAction(e -> {
                         String name = control.nameProperty.get();
                         if (JavaManager.REPOSITORY.isInstalled(control.info.getPlatform(), name)) {

@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.export;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackExportTask;
@@ -44,8 +45,8 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
         );
     }
 
-    private JFXButton createButton(String type, ModpackExportInfo.Options option) {
-        JFXButton button = new JFXButton();
+    private M3Button createButton(String type, ModpackExportInfo.Options option) {
+        M3Button button = new M3Button("", M3ButtonVariant.TEXT);
 
         button.getStyleClass().add("card");
         button.setOnAction(e -> {

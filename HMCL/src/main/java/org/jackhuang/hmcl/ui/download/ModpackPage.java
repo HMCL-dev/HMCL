@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -33,9 +33,9 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
     protected final StringProperty versionProperty;
     protected final StringProperty authorProperty;
     protected final JFXTextField txtModpackName;
-    protected final JFXButton btnInstall;
-    protected final JFXButton btnDescription;
-    protected final JFXButton btnOptionalFiles;
+    protected final M3Button btnInstall;
+    protected final M3Button btnDescription;
+    protected final M3Button btnOptionalFiles;
 
     protected ModpackPage(WizardController controller) {
         this.controller = controller;

@@ -18,6 +18,9 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3OverlayPane;
 import org.glavo.m3fx.controls.M3Snackbar;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
@@ -154,7 +157,7 @@ public final class LogWindow extends Stage {
         private final BooleanProperty wrapText = new SimpleBooleanProperty(true);
         private final StringProperty[] buttonText = new StringProperty[LEVELS.length];
         private final BooleanProperty[] showLevel = new BooleanProperty[LEVELS.length];
-        private final JFXButton btnAlwaysOnTop = FXUtils.newToggleButton4(SVG.KEEP, 20);
+        private final M3IconButton btnAlwaysOnTop = FXUtils.newToggleButton4(SVG.KEEP, 20);
         private final Stage stage = LogWindow.this;
         private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
         /// Hosts log content, dialogs, and queued messages.
@@ -406,15 +409,15 @@ public final class LogWindow extends Stage {
                 wrapTextCheckBox.setSelected(true);
                 control.wrapText.bind(wrapTextCheckBox.selectedProperty());
 
-                JFXButton exportLogsButton = new JFXButton(i18n("button.export"));
+                M3Button exportLogsButton = new M3Button(i18n("button.export"), M3ButtonVariant.TEXT);
                 exportLogsButton.setOnAction(e -> getSkinnable().onExportLogs());
 
-                JFXButton terminateButton = new JFXButton(i18n("logwindow.terminate_game"));
+                M3Button terminateButton = new M3Button(i18n("logwindow.terminate_game"), M3ButtonVariant.TEXT);
                 terminateButton.setOnAction(e -> getSkinnable().onTerminateGame());
 
                 SpinnerPane exportDumpPane = new SpinnerPane();
                 exportDumpPane.getStyleClass().add("small-spinner-pane");
-                JFXButton exportDumpButton = new JFXButton(i18n("logwindow.export_dump"));
+                M3Button exportDumpButton = new M3Button(i18n("logwindow.export_dump"), M3ButtonVariant.TEXT);
                 if (SystemUtils.supportJVMAttachment()) {
                     exportDumpButton.setOnAction(e -> getSkinnable().onExportDump(exportDumpPane));
                 } else {
@@ -423,7 +426,7 @@ public final class LogWindow extends Stage {
                 }
                 exportDumpPane.setContent(exportDumpButton);
 
-                JFXButton clearButton = new JFXButton(i18n("button.clear"));
+                M3Button clearButton = new M3Button(i18n("button.clear"), M3ButtonVariant.TEXT);
                 clearButton.setOnAction(e -> getSkinnable().onClear());
                 hBox.getChildren().setAll(autoScrollCheckBox, wrapTextCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
 

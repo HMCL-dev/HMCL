@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.export;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextArea;
 import com.jfoenix.controls.JFXTextField;
@@ -19,6 +18,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -331,7 +331,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     hbox.setAlignment(Pos.CENTER_RIGHT);
                     borderPane.setBottom(hbox);
 
-                    JFXButton nextButton = FXUtils.newRaisedButton(i18n("wizard.next"));
+                    M3Button nextButton = FXUtils.newRaisedButton(i18n("wizard.next"));
                     nextButton.setOnAction(e -> skinnable.onNext());
                     nextButton.setPrefWidth(100);
                     nextButton.setPrefHeight(40);

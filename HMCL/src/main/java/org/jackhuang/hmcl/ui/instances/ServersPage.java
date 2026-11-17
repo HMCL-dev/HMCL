@@ -25,6 +25,7 @@ import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.image.ImageLoaders;
@@ -698,7 +699,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
             contentLine2AddressMaskPane.labelAddStyleClass("subtitle");
 
-            JFXButton editBtn = FXUtils.newToggleButton4(SVG.EDIT);
+            M3IconButton editBtn = FXUtils.newToggleButton4(SVG.EDIT);
             FXUtils.installFastTooltip(editBtn, i18n("server.manage.edit"));
             editBtn.setOnAction(event -> {
                 ServerListItem item = getItem();
@@ -706,7 +707,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                     page.editServer(item);
             });
 
-            JFXButton launchBtn = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
+            M3IconButton launchBtn = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
             FXUtils.installFastTooltip(launchBtn, i18n("instance.launch"));
             launchBtn.setOnAction(event -> {
                 ServerListItem item = getItem();
@@ -715,7 +716,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 }
             });
 
-            JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
+            M3IconButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
             btnMore.setOnAction(event -> {
                 ServerListItem item = getItem();
                 if (item != null) {
@@ -868,7 +869,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                     }
                 });
 
-                JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
+                M3IconButton closeSearchBar = createToolbarButton2(SVG.CLOSE, () -> {
                     changeToolbar(toolbarNormal);
                     searchField.clear();
                     searchPause.stop();

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTextField;
@@ -25,6 +24,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -219,7 +219,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                         }
                     });
 
-                    JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
+                    M3IconButton closeSearchBar = createToolbarButton2(SVG.CLOSE, () -> {
                         changeToolbar(toolbarNormal);
                         searchField.clear();
 

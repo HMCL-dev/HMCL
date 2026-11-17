@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
@@ -22,6 +21,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -261,7 +261,7 @@ public final class WorldListPage extends ListPageBase<World> {
         private final ImageContainer imageView;
         private final Tooltip leftTooltip;
         private final TwoLineListItem content;
-        private final JFXButton btnLaunch;
+        private final M3IconButton btnLaunch;
 
         /// Creates a world row with launch and management actions for the supplied page.
         public WorldListCell(WorldListPage page) {
@@ -303,7 +303,7 @@ public final class WorldListPage extends ListPageBase<World> {
                         page.launch(world);
                 });
 
-                JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
+                M3IconButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
                 right.getChildren().add(btnMore);
                 btnMore.setOnAction(event -> {
                     World world = getItem();

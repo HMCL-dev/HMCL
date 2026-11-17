@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.nbt;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.geometry.Insets;
@@ -13,6 +12,7 @@ import javafx.scene.control.TreeView;
 import javafx.scene.control.skin.TreeViewSkin;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import org.glavo.m3fx.controls.M3Button;
 import org.glavo.nbt.NBTElement;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -63,7 +63,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
         actions.setPadding(new Insets(8));
         actions.setAlignment(Pos.CENTER_RIGHT);
 
-        JFXButton saveButton = FXUtils.newRaisedButton(i18n("button.save"));
+        M3Button saveButton = FXUtils.newRaisedButton(i18n("button.save"));
         saveButton.setOnAction(e -> {
             try {
                 save();
@@ -73,7 +73,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
             }
         });
 
-        JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
+        M3Button cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 

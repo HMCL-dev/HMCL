@@ -15,6 +15,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
@@ -159,13 +161,13 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             actions.setPickOnBounds(false);
             {
                 if (control.componentType == GameComponentType.GAME) {
-                    JFXButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
+                    M3IconButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
                     wikiButton.setOnAction(event -> onOpenWiki());
                     FXUtils.installFastTooltip(wikiButton, i18n("wiki.tooltip"));
                     actions.getChildren().add(wikiButton);
                 }
 
-                JFXButton actionButton = newToggleButton4(SVG.ARROW_FORWARD);
+                M3IconButton actionButton = newToggleButton4(SVG.ARROW_FORWARD);
                 actionButton.setOnAction(e -> onAction());
                 actions.getChildren().add(actionButton);
             }
@@ -348,7 +350,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     categoryField.setConverter(stringConverter(type -> i18n("instance.game." + type.name().toLowerCase(Locale.ROOT))));
                     categoryField.getSelectionModel().selectedItemProperty().addListener(o -> updateList());
 
-                    JFXButton refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
+                    M3Button refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
                     refreshButton.setOnAction(event -> control.onRefresh());
 
                     if (control.downloadProvider.hasType(control.componentType)) {

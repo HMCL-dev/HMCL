@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSpinner;
 import javafx.geometry.Insets;
@@ -14,6 +13,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
@@ -66,7 +67,7 @@ public final class TaskListPage extends StackPane {
         private final StackPane statusIcon = new StackPane();
 
         /// Restores progress or invokes the pending completion action.
-        private final JFXButton actionButton = FXUtils.newToggleButton4(SVG.ARROW_FORWARD);
+        private final M3Button actionButton = new M3Button("", M3ButtonVariant.TEXT);
 
         /// Describes the current row action.
         private final Tooltip actionTooltip = new Tooltip();
@@ -119,9 +120,9 @@ public final class TaskListPage extends StackPane {
             } else {
                 content.titleProperty().bind(pane.titleProperty());
                 @Nullable TaskExecutorDialogPane.PendingAction action = pane.pendingActionProperty().get();
-                actionButton.getStyleClass().removeAll("toggle-icon4", "jfx-button-border");
+                actionButton.getStyleClass().remove("toggle-icon4");
                 if (action != null) {
-                    actionButton.getStyleClass().add("jfx-button-border");
+                    actionButton.setVariant(M3ButtonVariant.OUTLINED);
                     statusIcon.getChildren().setAll(SVG.PENDING.createIcon(24));
                     content.setSubtitle(action.description());
                     actionButton.setGraphic(null);
@@ -129,6 +130,7 @@ public final class TaskListPage extends StackPane {
                     actionButton.setAccessibleText(action.text());
                     actionTooltip.setText(action.text());
                 } else {
+                    actionButton.setVariant(M3ButtonVariant.TEXT);
                     actionButton.getStyleClass().add("toggle-icon4");
                     if (pane.queuedProperty().get()) {
                         statusIcon.getChildren().setAll(SVG.PENDING.createIcon(24));

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.property.SimpleStringProperty;
@@ -17,6 +16,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -40,11 +40,11 @@ public final class GameListCell extends ListCell<GameListItem> {
     /// Reflects and changes the repository's selected instance.
     private final JFXRadioButton chkSelected;
     /// Starts an update for an instance that supports updates.
-    private final JFXButton btnUpgrade;
+    private final M3IconButton btnUpgrade;
     /// Opens the settings for this cell's game instance.
-    private final JFXButton btnEditInstance;
+    private final M3IconButton btnEditInstance;
     /// Toggles the current instance's management menu.
-    private final JFXButton btnManage;
+    private final M3IconButton btnManage;
 
     /// Contains the actions available for the current instance.
     private final HBox right;

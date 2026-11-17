@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.export;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckTreeCell;
 import com.jfoenix.controls.JFXTreeView;
 import javafx.geometry.Insets;
@@ -15,6 +14,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3Button;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -89,7 +89,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         nextPane.setPadding(new Insets(16, 16, 16, 0));
         nextPane.setAlignment(Pos.CENTER_RIGHT);
 
-        JFXButton btnNext = FXUtils.newRaisedButton(i18n("wizard.next"));
+        M3Button btnNext = FXUtils.newRaisedButton(i18n("wizard.next"));
         btnNext.setPrefSize(100, 40);
         btnNext.setOnAction(e -> onNext());
         nextPane.getChildren().setAll(btnNext);
@@ -100,7 +100,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.setBottom(nextPane);
     }
 
-    private void loadRoot(JFXTreeView<String> treeView, StackPane placeholderPane, SpinnerPane spinnerPane, JFXButton btnNext) {
+    private void loadRoot(JFXTreeView<String> treeView, StackPane placeholderPane, SpinnerPane spinnerPane, M3Button btnNext) {
         spinnerPane.setLoading(true);
         btnNext.setDisable(true);
         CompletableFuture

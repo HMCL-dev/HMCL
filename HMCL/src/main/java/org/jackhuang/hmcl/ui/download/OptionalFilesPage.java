@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
@@ -24,6 +23,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.modpack.ModpackFile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -118,9 +118,9 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
         {
             var descPane = new BorderPane();
             HBox selectionButtons = new HBox(8);
-            JFXButton btnSelectAll = FXUtils.newBorderButton(i18n("button.select_all"));
+            M3Button btnSelectAll = FXUtils.newBorderButton(i18n("button.select_all"));
             btnSelectAll.setOnAction(e -> excludedFiles.clear());
-            JFXButton btnClear = FXUtils.newBorderButton(i18n("button.clear"));
+            M3Button btnClear = FXUtils.newBorderButton(i18n("button.clear"));
             btnClear.setOnAction(e -> {
                 excludedFiles.clear();
                 for (ModpackFile file : optionalFiles) {
@@ -186,7 +186,7 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
     private final class OptionalFileEntry extends MDListCell<ModpackFile> {
         private final JFXCheckBox checkBox = new JFXCheckBox();
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton infoButton = new JFXButton();
+        private final M3IconButton infoButton = new M3IconButton();
         private final HBox container = new HBox(8);
 
         /// Currently bidirectionally bound selected property, or `null` when unbound.

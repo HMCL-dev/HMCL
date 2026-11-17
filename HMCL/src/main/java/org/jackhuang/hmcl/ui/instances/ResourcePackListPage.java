@@ -25,6 +25,7 @@ import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
@@ -352,7 +353,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     }
                 });
 
-                JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
+                M3IconButton closeSearchBar = createToolbarButton2(SVG.CLOSE,
                         () -> {
                             changeToolbar(toolbarNormal);
 
@@ -533,8 +534,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
-        private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
+        private final M3IconButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
+        private final M3IconButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXSwitch activeSwitch;
 
         private BooleanProperty booleanProperty = null;

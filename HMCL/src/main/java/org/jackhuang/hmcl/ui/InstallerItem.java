@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
@@ -18,6 +17,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
@@ -313,7 +313,7 @@ public class InstallerItem extends Control {
             buttonsContainer.setAlignment(Pos.CENTER);
             pane.getChildren().add(buttonsContainer);
 
-            JFXButton removeButton = FXUtils.newToggleButton4(SVG.CLOSE);
+            M3IconButton removeButton = FXUtils.newToggleButton4(SVG.CLOSE);
             if (control.type == GameComponentType.GAME) {
                 removeButton.setVisible(false);
             } else {
@@ -330,7 +330,7 @@ public class InstallerItem extends Control {
             });
             buttonsContainer.getChildren().add(removeButton);
 
-            JFXButton installButton = new JFXButton();
+            M3IconButton installButton = new M3IconButton();
             installButton.graphicProperty().bind(Bindings.createObjectBinding(() ->
                             control.resolvedStateProperty.get() instanceof InstallableState ?
                                     SVG.ARROW_FORWARD.createIcon() :

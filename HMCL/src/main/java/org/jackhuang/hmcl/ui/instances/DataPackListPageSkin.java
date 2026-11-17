@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSwitch;
 import com.jfoenix.controls.JFXTextField;
@@ -28,6 +27,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.addon.datapack.DataPack;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -100,12 +101,12 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
 
-            JFXButton removeButton = createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () ->
+            M3Button removeButton = createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () ->
                     Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
                             skinnable.removeSelected(listView.getSelectionModel().getSelectedItems()), null));
-            JFXButton enableButton = createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
+            M3Button enableButton = createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
                     skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true));
-            JFXButton disableButton = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
+            M3Button disableButton = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                     skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false));
             removeButton.disableProperty().bind(getSkinnable().readOnly);
             enableButton.disableProperty().bind(getSkinnable().readOnly);
@@ -134,7 +135,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     searchPause.playFromStart();
                 }
             });
-            JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
+            M3IconButton closeSearchBar = createToolbarButton2(SVG.CLOSE,
                     () -> {
                         changeToolbar(normalToolbar);
 

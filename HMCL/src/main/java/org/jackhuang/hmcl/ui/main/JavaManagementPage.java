@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
@@ -16,6 +15,8 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -192,7 +193,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         protected List<Node> initializeToolbar(JavaManagementPage skinnable) {
             ArrayList<Node> res = new ArrayList<>(4);
 
-            JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, () -> {
+            M3Button refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, () -> {
                 if (skinnable.isLoading()) return;
 
                 skinnable.setLoading(true);
@@ -204,11 +205,11 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             if (skinnable.onInstallJava != null) {
                 res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD, skinnable.onInstallJava));
             }
-            JFXButton addJava = createToolbarButton2(i18n("java.add"), SVG.ADD, skinnable::onAddJava);
+            M3Button addJava = createToolbarButton2(i18n("java.add"), SVG.ADD, skinnable::onAddJava);
             addJava.setDisable(SettingsManager.isUserSettingsReadOnly());
             res.add(addJava);
 
-            JFXButton disableJava = createToolbarButton2(i18n("java.disabled.management"), SVG.FORMAT_LIST_BULLETED, skinnable::onShowRestoreJavaPage);
+            M3Button disableJava = createToolbarButton2(i18n("java.disabled.management"), SVG.FORMAT_LIST_BULLETED, skinnable::onShowRestoreJavaPage);
             if (SettingsManager.isUserSettingsReadOnly()) {
                 disableJava.setDisable(true);
             } else {
@@ -231,7 +232,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         private final TwoLineListItem content;
 
         private SVG removeIcon;
-        private final JFXButton removeButton;
+        private final M3IconButton removeButton;
         private final StackPane removeIconPane;
         private final Tooltip removeTooltip = new Tooltip();
 
@@ -251,7 +252,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             HBox right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
             {
-                JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+                M3IconButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 revealButton.setOnAction(e -> {
                     @Nullable JavaRuntime java = getItem();
                     if (java != null)
@@ -259,7 +260,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 });
                 FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
-                removeButton = new JFXButton();
+                removeButton = new M3IconButton();
                 removeButton.getStyleClass().add("toggle-icon4");
                 removeButton.setOnAction(e -> {
                     @Nullable JavaRuntime java = getItem();

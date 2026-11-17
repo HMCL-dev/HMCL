@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -13,6 +12,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -135,12 +136,12 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                 versionNamePane.getChildren().addAll(new Label(i18n("instance.name")), control.txtName);
 
                 if (control.showExtendPane()) {
-                    JFXButton clearButton = FXUtils.newToggleButton4(SVG.CLOSE);
+                    M3IconButton clearButton = FXUtils.newToggleButton4(SVG.CLOSE);
                     FXUtils.installFastTooltip(clearButton, i18n("button.clear"));
                     clearButton.disableProperty().bind(control.txtName.textProperty().isEmpty().or(control.txtName.disableProperty()));
                     clearButton.setOnAction(e -> control.txtName.clear());
 
-                    JFXButton resetButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                    M3IconButton resetButton = FXUtils.newToggleButton4(SVG.RESTORE);
                     FXUtils.installFastTooltip(resetButton, i18n("button.reset"));
                     resetButton.disableProperty().bind(control.txtName.disableProperty());
                     resetButton.setOnAction(e -> control.resetDefaultName());
@@ -166,7 +167,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             }
 
             {
-                JFXButton installButton = FXUtils.newRaisedButton(i18n("button.install"));
+                M3Button installButton = FXUtils.newRaisedButton(i18n("button.install"));
                 installButton.disableProperty().bind(control.installable.not());
                 installButton.setPrefWidth(100);
                 installButton.setPrefHeight(40);

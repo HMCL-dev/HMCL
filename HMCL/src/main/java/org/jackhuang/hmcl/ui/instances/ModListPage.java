@@ -32,6 +32,7 @@ import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -387,7 +388,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     }
                 });
 
-                JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
+                M3IconButton closeSearchBar = createToolbarButton2(SVG.CLOSE,
                         () -> {
                             changeToolbar(toolbarNormal);
 
@@ -402,7 +403,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
                 searchBar.getChildren().setAll(searchField, closeSearchBar);
 
-                JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh);
+                M3Button refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh);
                 refreshButton.disableProperty().bind(skinnable.loadingProperty());
 
                 // Toolbar Normal
@@ -749,9 +750,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
-        private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
-        private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
+        private final M3IconButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
+        private final M3IconButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
+        private final M3IconButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXSwitch activeSwitch = new JFXSwitch();
 
         private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getModInfo().isActive());

@@ -2,21 +2,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXPopup;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
-import javafx.animation.RotateTransition;
+import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.AccessibleAttribute;
 import javafx.scene.Cursor;
-import javafx.scene.Node;
+import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
@@ -28,6 +26,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3ButtonSize;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3SplitButton;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
@@ -40,6 +42,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
 import org.jackhuang.hmcl.ui.construct.MessageType;
@@ -61,7 +64,6 @@ import org.jetbrains.annotations.UnmodifiableView;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
-import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.download.ComponentRemoteVersion.Type.RELEASE;
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
@@ -93,7 +95,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private TransitionPane announcementPane;
     private final StackPane updatePane;
-    private final JFXButton menuButton;
+    /// The home page's default launch action, shared by pointer and keyboard input.
+    private final M3SplitButton launchButton;
 
     private RemoteVersion lastShownVersion;
 
@@ -133,7 +136,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             titleBar.getStyleClass().add("title");
             titleBar.setLeft(new Label(title));
 
-            JFXButton btnHide = new JFXButton();
+            M3IconButton btnHide = new M3IconButton();
             btnHide.setOnAction(e -> {
                 announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
                 if (Metadata.isDev()) {
@@ -189,7 +192,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 hBox.getChildren().setAll(SVG.UPDATE.createIcon(20), prompt);
             }
 
-            JFXButton closeUpdateButton = new JFXButton();
+            M3IconButton closeUpdateButton = new M3IconButton();
             closeUpdateButton.setGraphic(SVG.CLOSE.createIcon(10));
             StackPane.setAlignment(closeUpdateButton, Pos.TOP_RIGHT);
             closeUpdateButton.getStyleClass().add("toggle-icon-tiny");
@@ -199,107 +202,86 @@ public final class MainPage extends StackPane implements DecoratorPage {
             updatePane.getChildren().setAll(new RipplerContainer(hBox), closeUpdateButton);
         }
 
-        HBox launchPane = new HBox();
-        launchPane.getStyleClass().add("launch-pane");
-        FXUtils.onChangeAndOperate(selectedRepositorySnapshot, ignored -> mutableInstances.setAll(GameDirectoryManager.getSelectedRepository().getDisplayInstances().toList()));
-        FXUtils.onScroll(launchPane, instances, list -> {
+        launchButton = createLaunchButton(currentGameProperty(), () -> {
+            if (getCurrentGame() == null)
+                launchNoGame();
+            else
+                launch();
+        });
+        GameListPopupMenu instanceMenu = new GameListPopupMenu();
+        launchButton.getItems().add(instanceMenu);
+        FXUtils.onChangeAndOperate(selectedRepositorySnapshot, ignored -> {
+            mutableInstances.setAll(GameDirectoryManager.getSelectedRepository().getDisplayInstances().toList());
+            instanceMenu.setInstances(instances);
+        });
+        FXUtils.onChange(launchButton.showingProperty(), showing -> {
+            if (showing)
+                instanceMenu.focusInstance(getCurrentGame());
+        });
+        FXUtils.onScroll(launchButton, instances, list -> {
             @Nullable HMCLGameInstance currentGame = getCurrentGame();
             @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
             return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
         }, instance -> instance.getRepository().setSelectedInstance(instance));
 
-        StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
-        {
-            JFXButton launchButton = new JFXButton();
-            launchButton.getStyleClass().add("launch-button");
-            launchButton.setDefaultButton(true);
-            {
-                VBox graphic = new VBox();
-                graphic.setAlignment(Pos.CENTER);
-                Label launchLabel = new Label();
-                launchLabel.setStyle("-fx-font-size: 16px;");
-                Label currentLabel = new Label();
-                currentLabel.setStyle("-fx-font-size: 12px;");
+        StackPane.setAlignment(launchButton, Pos.BOTTOM_RIGHT);
+        getChildren().addAll(updatePane, launchButton);
+    }
 
-                FXUtils.onChangeAndOperate(currentGameProperty(), new Consumer<>() {
-                    private Tooltip tooltip;
+    /// Creates the home launch action and its instance-menu trigger.
+    static M3SplitButton createLaunchButton(ObservableValue<@Nullable HMCLGameInstance> currentGame, Runnable launch) {
+        M3SplitButton button = new M3SplitButton();
+        button.setSize(M3ButtonSize.MEDIUM);
+        button.setVariant(M3ButtonVariant.FILLED);
+        button.getStyleClass().add("launch-button");
 
-                    @Override
-                    public void accept(@Nullable HMCLGameInstance currentGame) {
-                        if (currentGame == null) {
-                            launchLabel.setText(i18n("instance.launch.empty"));
-                            currentLabel.setText(null);
-                            graphic.getChildren().setAll(launchLabel);
-                            FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launchNoGame);
-                            if (tooltip == null)
-                                tooltip = new Tooltip(i18n("instance.launch.empty.tooltip"));
-                            FXUtils.installFastTooltip(launchButton, tooltip);
-                        } else {
-                            launchLabel.setText(i18n("instance.launch"));
-                            currentLabel.setText(currentGame.getId().toString());
-                            graphic.getChildren().setAll(launchLabel, currentLabel);
-                            FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launch);
-                            if (tooltip != null)
-                                Tooltip.uninstall(launchButton, tooltip);
-                        }
-                    }
-                });
+        ButtonBase primary = (ButtonBase) button.queryAccessibleAttribute(AccessibleAttribute.ITEM_AT_INDEX, 0);
+        ButtonBase menu = (ButtonBase) button.queryAccessibleAttribute(AccessibleAttribute.ITEM_AT_INDEX, 1);
+        menu.setAccessibleText(i18n("instance.switch"));
+        FXUtils.installFastTooltip(menu, i18n("instance.switch"));
 
-                launchButton.setGraphic(graphic);
+        Label instanceName = new Label();
+        Tooltip emptyTooltip = new Tooltip(i18n("instance.launch.empty.tooltip"));
+        FXUtils.onChangeAndOperate(currentGame, instance -> {
+            button.setText(i18n(instance == null ? "instance.launch.empty" : "instance.launch"));
+            if (instance == null) {
+                button.setGraphic(null);
+                primary.setAccessibleText(button.getText());
+                FXUtils.installFastTooltip(primary, emptyTooltip);
+            } else {
+                instanceName.setText(instance.getId().toString());
+                button.setGraphic(instanceName);
+                primary.setAccessibleText(button.getText() + " " + instanceName.getText());
+                Tooltip.uninstall(primary, emptyTooltip);
             }
+        });
 
-            menuButton = new JFXButton();
-            menuButton.getStyleClass().add("menu-button");
-            menuButton.setOnAction(e -> {
-                if (GameListPopupMenu.hideShowing(menuButton)) {
-                    return;
-                }
+        PauseTransition cooldown = new PauseTransition(Motion.SHORT4);
+        cooldown.setOnFinished(event -> primary.setDisable(false));
+        button.setOnAction(event -> {
+            // The menu segment's action also bubbles through the split button.
+            if (event.getTarget() == button && !primary.isDisabled()) {
+                primary.setDisable(true);
+                cooldown.playFromStart();
+                launch.run();
+                event.consume();
+            }
+        });
+        button.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+            if (event.getButton() == MouseButton.SECONDARY && event.getClickCount() == 1) {
+                if (button.isShowing())
+                    button.hideMenu();
+                else
+                    button.showMenu();
+                event.consume();
+            }
+        });
+        return button;
+    }
 
-                JFXPopup popup = GameListPopupMenu.showAndGetPopup(
-                        menuButton,
-                        JFXPopup.PopupVPosition.BOTTOM,
-                        JFXPopup.PopupHPosition.RIGHT,
-                        0,
-                        -menuButton.getHeight(),
-                        instances
-                );
-
-                Node graphic = menuButton.getGraphic();
-                if (graphic != null) {
-                    if (AnimationUtils.isAnimationEnabled()) {
-                        Duration duration = Duration.millis(200);
-                        RotateTransition rotateOpen = new RotateTransition(duration, graphic);
-                        rotateOpen.setToAngle(-180);
-                        FXUtils.playAnimation(graphic, "arrow-rotation", rotateOpen);
-
-                        popup.setOnHidden(windowEvent -> {
-                            RotateTransition rotateClose = new RotateTransition(duration, graphic);
-                            rotateClose.setToAngle(0);
-                            FXUtils.playAnimation(graphic, "arrow-rotation", rotateClose);
-                        });
-                    } else {
-                        graphic.setRotate(-180);
-                        popup.setOnHidden(windowEvent -> graphic.setRotate(0));
-                    }
-                }
-            });
-            FXUtils.installFastTooltip(menuButton, i18n("instance.switch"));
-            menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
-
-            EventHandler<MouseEvent> secondaryClickHandle = event -> {
-                if (event.getButton() == MouseButton.SECONDARY && event.getClickCount() == 1) {
-                    menuButton.fire();
-                    event.consume();
-                }
-            };
-            launchButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
-            menuButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
-
-            launchPane.getChildren().setAll(launchButton, menuButton);
-        }
-
-        getChildren().addAll(updatePane, launchPane);
-
+    /// Activates the launch action with the same cooldown as a pointer click.
+    void fireLaunchButton() {
+        launchButton.fire();
     }
 
     private void showUpdateDialog(boolean show) {
