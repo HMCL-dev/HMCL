@@ -5,6 +5,7 @@
 
 .root {
     -title-fill: -monet-on-primary-container;
+    -m3-press-feedback: state-layer;
 }
 
 .svg {
