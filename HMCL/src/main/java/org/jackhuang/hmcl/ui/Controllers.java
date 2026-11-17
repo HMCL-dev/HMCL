@@ -12,6 +12,7 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
@@ -19,6 +20,8 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.stage.*;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Dialog;
+import org.glavo.m3fx.controls.M3DialogPane;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -492,14 +495,42 @@ public final class Controllers {
 
     /// Shows the content in the main-window dialog stack without waiting for it to close.
     ///
-    /// Does nothing if no decorator exists. If the decorator has no scene, display is deferred
-    /// to the JavaFX application thread; otherwise this method must be called on that thread.
+    /// Does nothing if no decorator exists. Content is retained until the main window is shown.
+    /// Must be called on the JavaFX application thread.
     ///
     /// @param content the dialog content
-    /// @throws IllegalStateException if the decorator has a scene and the caller is not on the JavaFX application thread
+    /// @throws IllegalStateException if a decorator exists and the caller is not on the JavaFX application thread
     public static void dialog(Region content) {
         if (decorator != null)
             decorator.showDialog(content);
+    }
+
+    /// Wraps existing dialog content, forwarding its close events and lifecycle callbacks to M3FX.
+    /// Content from a closing presentation can be reused immediately. Must be called on the JavaFX thread.
+    public static M3Dialog createDialog(Node content) {
+        FXUtils.checkFxUserThread();
+        for (@Nullable Node parent = content.getParent(); parent != null; parent = parent.getParent()) {
+            if (parent instanceof M3DialogPane pane && pane.getContent() == content) {
+                pane.setContent(null);
+                break;
+            }
+        }
+        M3Dialog dialog = new M3Dialog();
+        dialog.setDismissOnScrimClick(false);
+        dialog.getDialogPane().setContentPadding(0);
+        dialog.getDialogPane().setContent(content);
+        dialog.setOnShown(event -> {
+            EventHandler<DialogCloseEvent> closeHandler = close -> event.getHandle().requestClose();
+            content.addEventHandler(DialogCloseEvent.CLOSE, closeHandler);
+            dialog.setOnHiding(hiding -> {
+                content.removeEventHandler(DialogCloseEvent.CLOSE, closeHandler);
+                if (content instanceof DialogAware aware)
+                    aware.onDialogClosed();
+            });
+            if (content instanceof DialogAware aware)
+                aware.onDialogShown(event.getHandle());
+        });
+        return dialog;
     }
 
     /// Shows an informational message with the default title; see [#dialog(String, String)].

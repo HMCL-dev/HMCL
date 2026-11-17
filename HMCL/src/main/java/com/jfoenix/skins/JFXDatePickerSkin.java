@@ -8,8 +8,6 @@ package com.jfoenix.skins;
 import com.jfoenix.adapters.ReflectionHelper;
 import com.jfoenix.adapters.skins.DatePickerSkin;
 import com.jfoenix.controls.JFXDatePicker;
-import com.jfoenix.controls.JFXDialog;
-import com.jfoenix.controls.JFXDialog.DialogTransition;
 import javafx.beans.property.ReadOnlyBooleanPropertyBase;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
@@ -19,9 +17,14 @@ import javafx.scene.Node;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import org.glavo.m3fx.controls.M3Dialog;
+import org.glavo.m3fx.controls.M3DialogEvent;
+import org.glavo.m3fx.controls.M3DialogHandle;
+import org.glavo.m3fx.controls.M3OverlayPane;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -35,7 +38,8 @@ public class JFXDatePickerSkin extends DatePickerSkin {
     private final JFXDatePicker jfxDatePicker;
     private TextField displayNode;
     private JFXDatePickerContent content;
-    private JFXDialog dialog;
+    /// The active overlay presentation, or null after closing starts.
+    private @Nullable M3DialogHandle dialogHandle;
 
     public JFXDatePickerSkin(JFXDatePicker datePicker) {
         super(datePicker);
@@ -111,54 +115,50 @@ public class JFXDatePickerSkin extends DatePickerSkin {
         return this.content;
     }
 
+    /// Opens the calendar in its configured popup or the window's M3FX overlay.
     @Override
+    @SuppressWarnings("unchecked")
     public void show() {
-        if (!((JFXDatePicker) this.getSkinnable()).isOverLay()) {
+        if (!jfxDatePicker.isOverLay()) {
             super.show();
+            getPopupContent().init();
+            getPopupContent().clearFocus();
+            return;
         }
+        if (dialogHandle != null)
+            return;
 
-        if (this.content != null) {
-            this.content.init();
-            this.content.clearFocus();
-        }
-
-        if (((JFXDatePicker) this.getSkinnable()).isOverLay() && this.dialog == null) {
-            StackPane dialogParent = this.jfxDatePicker.getDialogParent();
-            if (dialogParent == null) {
-                dialogParent = (StackPane) this.getSkinnable().getScene().getRoot();
-            }
-
-            this.dialog = new JFXDialog(dialogParent, this.getPopupContent(), DialogTransition.CENTER, true) {
-                @Override
-                public void close() {
-                    super.close();
-                    Object o = getDialogContainer().getProperties().get(PROPERTY_DATE_PICKER_CONTENTS);
-                    if (o instanceof Stack<?> stack) {
-                        stack.pop();
-                    }
-                    jfxDatePicker.hide();
-                }
-            };
-            this.getPopupContent().addEventHandler(DialogCloseEvent.CLOSE, e -> this.dialog.close());
-            getArrowButton().setOnMouseClicked((click) -> {
-                if (((JFXDatePicker) this.getSkinnable()).isOverLay()) {
-                    StackPane parent = this.jfxDatePicker.getDialogParent();
-                    if (parent == null) {
-                        parent = (StackPane) this.getSkinnable().getScene().getRoot();
-                    }
-                    Stack<JFXDatePickerContent> contentStack = (Stack<JFXDatePickerContent>) parent.getProperties().computeIfAbsent(PROPERTY_DATE_PICKER_CONTENTS, k -> new Stack<>());
-                    contentStack.push(this.getPopupContent());
-
-                    this.getPopupContent().valueProperty.set(this.getSkinnable().getValue());
-                    this.dialog.show(parent);
-                }
-            });
-        }
-
+        @Nullable Node configuredParent = jfxDatePicker.getDialogParent();
+        Node parent = configuredParent != null ? configuredParent : jfxDatePicker.getScene().getRoot();
+        if (!(parent.lookup(".m3-overlay-pane") instanceof M3OverlayPane host))
+            throw new IllegalStateException("Date picker requires an M3OverlayPane");
+        JFXDatePickerContent calendar = getPopupContent();
+        calendar.init();
+        calendar.clearFocus();
+        calendar.valueProperty.set(jfxDatePicker.getValue());
+        Stack<JFXDatePickerContent> stack = (Stack<JFXDatePickerContent>) parent.getProperties()
+                .computeIfAbsent(PROPERTY_DATE_PICKER_CONTENTS, key -> new Stack<>());
+        M3Dialog dialog = Controllers.createDialog(calendar);
+        dialog.setDismissOnScrimClick(true);
+        dialog.addEventHandler(M3DialogEvent.SHOWN, event -> {
+            stack.push(calendar);
+            dialogHandle = event.getHandle();
+        });
+        dialog.addEventHandler(M3DialogEvent.HIDING, event -> {
+            stack.remove(calendar);
+            dialogHandle = null;
+            jfxDatePicker.hide();
+        });
+        host.showDialog(dialog);
     }
 
-    JFXDialog getDialog() {
-        return this.dialog;
+    /// Closes the current presentation when the date picker is hidden programmatically.
+    @Override
+    public void hide() {
+        if (dialogHandle != null)
+            dialogHandle.requestClose();
+        else
+            super.hide();
     }
 
     @Override

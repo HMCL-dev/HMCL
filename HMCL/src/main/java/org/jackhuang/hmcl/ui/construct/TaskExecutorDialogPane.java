@@ -13,11 +13,11 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import org.glavo.m3fx.controls.M3DialogHandle;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -267,10 +267,13 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
     /// Has no effect if execution has stopped or the dialog is already hidden.
     public void runInBackground() {
         FXUtils.checkFxUserThread();
-        if ((!running && !queued.get()) || !DialogUtils.isShowing(this))
+        if ((!running && !queued.get()) || dialogHandle == null)
             return;
         runningInBackground.set(true);
-        DialogUtils.close(this);
+        if (!dialogHandle.requestClose()) {
+            runningInBackground.set(false);
+            return;
+        }
         @Nullable Runnable action = onBackground;
         onBackground = null;
         if (action != null)
@@ -282,7 +285,7 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
     /// Has no effect if execution has stopped or the dialog is already in the dialog stack.
     public void restore() {
         FXUtils.checkFxUserThread();
-        if ((running || queued.get()) && !DialogUtils.isShowing(this))
+        if ((running || queued.get()) && !isDialogShowing())
             Controllers.dialog(this);
     }
 
@@ -339,10 +342,25 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
         return runningInBackground.getReadOnlyProperty();
     }
 
-    /// Clears the background state when this dialog is displayed, including through direct dialog calls.
+    /// The current presentation, cleared as soon as closing starts.
+    private @Nullable M3DialogHandle dialogHandle;
+
+    /// Returns whether this content has a presentation that has not started closing.
+    public boolean isDialogShowing() {
+        return dialogHandle != null && dialogHandle.isShowing();
+    }
+
+    /// Retains the current presentation and clears the background state.
     @Override
-    public void onDialogShown() {
+    public void onDialogShown(M3DialogHandle handle) {
+        dialogHandle = handle;
         runningInBackground.set(false);
+    }
+
+    /// Releases the presentation before its exit animation finishes.
+    @Override
+    public void onDialogClosed() {
+        dialogHandle = null;
     }
 
     /// Sets an action to run once when the active dialog is next sent to the background.

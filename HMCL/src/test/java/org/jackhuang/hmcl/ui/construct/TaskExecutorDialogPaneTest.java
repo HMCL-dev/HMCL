@@ -11,12 +11,19 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.SVGPath;
 import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.LauncherState;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.DialogUtils;
+import org.glavo.m3fx.controls.M3OverlayPane;
+import org.glavo.m3fx.controls.M3DialogHandle;
+import org.glavo.m3fx.animation.M3MotionSettings;
+import org.glavo.m3fx.theme.M3Theme;
+import org.glavo.m3fx.theme.M3ThemeManager;
+import javafx.stage.Stage;
+import org.junit.jupiter.api.AfterEach;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.TaskManagerPage;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
@@ -53,6 +60,12 @@ final class TaskExecutorDialogPaneTest {
     /// Settings replaced temporarily to initialize dialog animation preferences.
     private static @Nullable Object previousSettings;
 
+    /// Window geometry state replaced without installing persistence listeners.
+    private static @Nullable Object previousState;
+
+    /// The shared M3FX motion preference before this test class runs.
+    private static boolean previousReducedMotion;
+
     /// Installs in-memory settings with synchronous dialog transitions for lifecycle assertions.
     @BeforeAll
     static void prepareSettings() throws Exception {
@@ -63,6 +76,15 @@ final class TaskExecutorDialogPaneTest {
         // The default depends on runtime graphics capabilities and can defer onDialogShown to an animation pulse.
         settings.animationDisabledProperty().set(true);
         field.set(null, settings);
+        Field stateField = SettingsManager.class.getDeclaredField("launcherState");
+        stateField.setAccessible(true);
+        previousState = stateField.get(null);
+        stateField.set(null, new LauncherState());
+        onFxThread(() -> {
+            previousReducedMotion = M3MotionSettings.isGlobalReducedMotionRequested();
+            M3MotionSettings.setGlobalReducedMotionRequested(true);
+            return true;
+        });
     }
 
     /// Restores the settings that were present before these tests.
@@ -71,6 +93,13 @@ final class TaskExecutorDialogPaneTest {
         Field field = SettingsManager.class.getDeclaredField("launcherSettings");
         field.setAccessible(true);
         field.set(null, previousSettings);
+        Field stateField = SettingsManager.class.getDeclaredField("launcherState");
+        stateField.setAccessible(true);
+        stateField.set(null, previousState);
+        onFxThread(() -> {
+            M3MotionSettings.setGlobalReducedMotionRequested(previousReducedMotion);
+            return true;
+        });
     }
 
     /// Verifies dialog reuse and the task button's idle, running, and pending presentations.
@@ -81,7 +110,7 @@ final class TaskExecutorDialogPaneTest {
             field.setAccessible(true);
             @Nullable Object previous = field.get(null);
             Decorator decorator = new Decorator(new StackPane(), stage -> { });
-            new Scene(decorator.getRoot());
+            showStage(new Scene(decorator.getRoot(), 800, 600));
             field.set(null, decorator);
             TaskExecutorDialogPane pane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
             TaskExecutorDialogPane second = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
@@ -105,13 +134,9 @@ final class TaskExecutorDialogPaneTest {
                 pane.restore();
                 assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
                 assertSame(icon, tasksButton.getGraphic());
-                assertTrue(DialogUtils.isShowing(pane));
+                assertTrue(pane.isDialogShowing());
                 assertSame(progress, pane.getCenter());
-                @Nullable JFXDialogPane stack = (JFXDialogPane) pane.getProperties()
-                        .get(DialogUtils.PROPERTY_PARENT_PANE_REF);
-                assertNotNull(stack);
-                assertEquals(1, stack.size());
-                assertSame(pane, stack.peek().orElseThrow());
+                assertNotNull(pane.getParent());
                 assertEquals(1, executor.starts);
 
                 ControlledExecutor secondExecutor = new ControlledExecutor();
@@ -152,9 +177,9 @@ final class TaskExecutorDialogPaneTest {
                 assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
                 assertSame(icon, tasksButton.getGraphic());
             } finally {
-                DialogUtils.close(pane);
+                pane.fireEvent(new DialogCloseEvent());
                 pane.setExecutor(null);
-                DialogUtils.close(second);
+                second.fireEvent(new DialogCloseEvent());
                 second.setExecutor(null);
                 field.set(null, previous);
             }
@@ -216,9 +241,8 @@ final class TaskExecutorDialogPaneTest {
                     stopped.countDown();
                 }
             });
-            StackPane container = new StackPane();
-            new Scene(container);
-            DialogUtils.show(container, dialog);
+            M3OverlayPane container = createDialogHost();
+            container.showDialog(Controllers.createDialog(dialog));
             executor.start();
             return dialog;
         });
@@ -228,30 +252,26 @@ final class TaskExecutorDialogPaneTest {
                 AtomicInteger backgroundCalls = new AtomicInteger();
                 pane.setOnBackground(backgroundCalls::incrementAndGet);
                 Node progress = pane.getCenter();
-                StackPane container = new StackPane();
-                new Scene(container);
+                M3OverlayPane container = createDialogHost();
                 for (int i = 0; i < 3; i++) {
                     pane.runInBackground();
                     pane.runInBackground();
                     assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
-                    assertFalse(DialogUtils.isShowing(pane));
+                    assertFalse(pane.isDialogShowing());
                     assertFalse(executor.isCancelled());
                     assertTrue(TaskManager.getInstance().getTasks().contains(pane));
                     // Reuse the same pane through the dialog stack used by Controllers.dialog.
-                    DialogUtils.show(container, pane);
-                    DialogUtils.show(container, pane);
+                    container.showDialog(Controllers.createDialog(pane));
+                    pane.restore();
                     assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
                     pane.restore();
                     assertSame(progress, pane.getCenter());
-                    @Nullable JFXDialogPane stack = (JFXDialogPane) pane.getProperties()
-                            .get(DialogUtils.PROPERTY_PARENT_PANE_REF);
-                    assertNotNull(stack);
-                    assertEquals(1, stack.size());
+                    assertNotNull(pane.getParent());
                 }
                 assertEquals(1, backgroundCalls.get());
                 pane.runInBackground();
                 Label other = new Label("Another dialog");
-                DialogUtils.show(container, other);
+                container.showDialog(Controllers.createDialog(other));
                 return true;
             });
         } finally {
@@ -260,10 +280,10 @@ final class TaskExecutorDialogPaneTest {
         assertTrue(stopped.await(10, TimeUnit.SECONDS));
         onFxThread(() -> {
             assertFalse(TaskManager.getInstance().getTasks().contains(pane));
-            assertFalse(DialogUtils.isShowing(pane));
+            assertFalse(pane.isDialogShowing());
             assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
             pane.restore();
-            assertFalse(DialogUtils.isShowing(pane));
+            assertFalse(pane.isDialogShowing());
             return true;
         });
         assertEquals(1, executions.get());
@@ -282,7 +302,7 @@ final class TaskExecutorDialogPaneTest {
                 field.setAccessible(true);
                 @Nullable Object previous = field.get(null);
                 Decorator decorator = new Decorator(new StackPane(), stage -> { });
-                new Scene(decorator.getRoot());
+                showStage(new Scene(decorator.getRoot(), 800, 600));
                 field.set(null, decorator);
                 TaskExecutorDialogPane first = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
                 TaskExecutorDialogPane second = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
@@ -298,18 +318,18 @@ final class TaskExecutorDialogPaneTest {
                     assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                     second.runInBackground();
                     assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
-                    assertFalse(DialogUtils.isShowing(second));
+                    assertFalse(second.isDialogShowing());
                     second.restore();
                     second.restore();
-                    assertTrue(DialogUtils.isShowing(second));
+                    assertTrue(second.isDialogShowing());
                     assertTrue(second.queuedProperty().get());
                     assertEquals(0, executions.get());
                     second.runInBackground();
                     first.setExecutor(null);
                     assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
                 } finally {
-                    DialogUtils.close(first);
-                    DialogUtils.close(second);
+                    first.fireEvent(new DialogCloseEvent());
+                    second.fireEvent(new DialogCloseEvent());
                     first.setExecutor(null);
                     second.setExecutor(null);
                     field.set(null, previous);
@@ -334,9 +354,8 @@ final class TaskExecutorDialogPaneTest {
             dialog.setExecutor(executor, false);
             executor.start();
             assertTrue(TaskManager.getInstance().getTasks().contains(dialog));
-            StackPane container = new StackPane();
-            new Scene(container);
-            DialogUtils.show(container, dialog);
+            M3OverlayPane container = createDialogHost();
+            container.showDialog(Controllers.createDialog(dialog));
             dialog.runInBackground();
             assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
             assertThrows(UnsupportedOperationException.class,
@@ -365,9 +384,8 @@ final class TaskExecutorDialogPaneTest {
             dialog.setTitle("Example modpack");
             ControlledExecutor executor = new ControlledExecutor();
             dialog.setExecutor(executor);
-            StackPane container = new StackPane();
-            new Scene(container);
-            DialogUtils.show(container, dialog);
+            M3OverlayPane container = createDialogHost();
+            container.showDialog(Controllers.createDialog(dialog));
             executor.start();
             dialog.runInBackground();
             page.applyCss();
@@ -381,7 +399,7 @@ final class TaskExecutorDialogPaneTest {
         onFxThread(() -> {
             try {
                 assertEquals(0, installations.get());
-                assertFalse(DialogUtils.isShowing(pane));
+                assertFalse(pane.isDialogShowing());
                 assertTrue(TaskManager.getInstance().getTasks().contains(pane));
                 assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
                 page.applyCss();
@@ -414,13 +432,12 @@ final class TaskExecutorDialogPaneTest {
             TaskExecutorDialogPane dialog = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
             ControlledExecutor executor = new ControlledExecutor();
             dialog.setExecutor(executor);
-            StackPane container = new StackPane();
-            new Scene(container);
-            DialogUtils.show(container, dialog);
+            M3OverlayPane container = createDialogHost();
+            container.showDialog(Controllers.createDialog(dialog));
             executor.start();
             if (restore) {
                 dialog.runInBackground();
-                DialogUtils.show(container, dialog);
+                container.showDialog(Controllers.createDialog(dialog));
             }
             AtomicInteger installations = new AtomicInteger();
             assertTrue(dialog.runOrDeferCompletionAction("Install", "Ready to install", installations::incrementAndGet));
@@ -431,7 +448,7 @@ final class TaskExecutorDialogPaneTest {
         });
         onFxThread(() -> {
             assertFalse(TaskManager.getInstance().getTasks().contains(pane));
-            assertFalse(DialogUtils.isShowing(pane));
+            assertFalse(pane.isDialogShowing());
             return true;
         });
     }
@@ -445,9 +462,8 @@ final class TaskExecutorDialogPaneTest {
             TaskExecutorDialogPane dialog = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
             ControlledExecutor executor = new ControlledExecutor();
             dialog.setExecutor(executor);
-            StackPane container = new StackPane();
-            new Scene(container);
-            DialogUtils.show(container, dialog);
+            M3OverlayPane container = createDialogHost();
+            container.showDialog(Controllers.createDialog(dialog));
             executor.start();
             dialog.runInBackground();
             assertFalse(dialog.runOrDeferCompletionAction("Install", "Ready to install", installations::incrementAndGet));
@@ -494,18 +510,153 @@ final class TaskExecutorDialogPaneTest {
     @Test
     void closingHiddenDialogIsIdempotent() throws Exception {
         onFxThread(() -> {
-            StackPane container = new StackPane();
-            new Scene(container);
+            M3OverlayPane container = createDialogHost();
             Label first = new Label("First");
             Label second = new Label("Second");
-            DialogUtils.show(container, first);
-            DialogUtils.close(first);
-            DialogUtils.show(container, second);
-            DialogUtils.close(first);
-            assertTrue(DialogUtils.isShowing(second));
-            assertFalse(DialogUtils.isShowing(first));
-            assertNull(first.getProperties().get(DialogUtils.PROPERTY_PARENT_PANE_REF));
-            DialogUtils.close(second);
+            M3DialogHandle firstHandle = container.showDialog(Controllers.createDialog(first));
+            first.fireEvent(new DialogCloseEvent());
+            M3DialogHandle secondHandle = container.showDialog(Controllers.createDialog(second));
+            first.fireEvent(new DialogCloseEvent());
+            assertFalse(firstHandle.requestClose());
+            assertTrue(secondHandle.isShowing());
+            assertFalse(firstHandle.isShowing());
+            second.fireEvent(new DialogCloseEvent());
+            return true;
+        });
+    }
+
+    /// Verifies restoring during the exit animation transfers content without retaining the old close handler.
+    @Test
+    void restoresBeforeExitAnimationFinishes() throws Exception {
+        onFxThread(() -> {
+            M3OverlayPane host = createDialogHost();
+            TaskExecutorDialogPane pane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+            ControlledExecutor executor = new ControlledExecutor();
+            pane.setExecutor(executor, false);
+            executor.start();
+            M3MotionSettings.setGlobalReducedMotionRequested(false);
+            try {
+                var first = Controllers.createDialog(pane);
+                M3DialogHandle firstHandle = host.showDialog(first);
+                pane.runInBackground();
+                var second = Controllers.createDialog(pane);
+                M3DialogHandle secondHandle = host.showDialog(second);
+                assertNull(first.getDialogPane().getContent());
+                assertTrue(pane.isDialogShowing());
+                assertFalse(firstHandle.requestClose());
+                assertTrue(secondHandle.isShowing());
+                assertEquals(1, executor.starts);
+                pane.fireEvent(new DialogCloseEvent());
+                assertFalse(pane.isDialogShowing());
+            } finally {
+                pane.setExecutor(null);
+                M3MotionSettings.setGlobalReducedMotionRequested(true);
+            }
+            return true;
+        });
+    }
+
+    /// Verifies nested dialogs, deferred messages, and completion while the main window is hidden.
+    @Test
+    void retainsDialogsAcrossWindowHiding() throws Exception {
+        onFxThread(() -> {
+            Decorator decorator = new Decorator(new StackPane(), stage -> { });
+            Stage stage = new Stage();
+            stages.add(stage);
+            Scene scene = decorator.attachStage(stage);
+            M3ThemeManager.install(scene, M3Theme.defaultTheme());
+            Label first = new Label("First");
+            Label second = new Label("Second");
+            Label deferred = new Label("Deferred");
+            try {
+                decorator.showDialog(first);
+                assertNull(first.getScene());
+                stage.show();
+                assertSame(scene, first.getScene());
+                decorator.showDialog(second);
+                decorator.showDialogLater(deferred);
+                assertSame(scene, second.getScene());
+                assertNull(deferred.getScene());
+                second.fireEvent(new DialogCloseEvent());
+                assertSame(scene, first.getScene());
+                assertNull(deferred.getScene());
+
+                stage.hide();
+                assertNull(first.getScene());
+                stage.show();
+                assertSame(scene, first.getScene());
+                stage.hide();
+                first.fireEvent(new DialogCloseEvent());
+                stage.show();
+                assertNull(first.getScene());
+                assertSame(scene, deferred.getScene());
+                deferred.fireEvent(new DialogCloseEvent());
+
+                decorator.showToast("First message");
+                decorator.showToast("Second message");
+                M3OverlayPane host = decorator.getOverlayPane();
+                assertEquals("First message", Objects.requireNonNull(host.getSnackbar()).getText());
+                assertEquals(1, host.getSnackbarQueue().size());
+                host.dismissSnackbar();
+                assertEquals("Second message", Objects.requireNonNull(host.getSnackbar()).getText());
+                host.dismissAllSnackbars();
+            } finally {
+                stage.hide();
+                decorator.detachStage();
+            }
+            return true;
+        });
+    }
+
+    /// Verifies the legacy date picker closes and reopens through the M3FX modal host.
+    @Test
+    void datePickerUsesOverlayDialog() throws Exception {
+        onFxThread(() -> {
+            M3OverlayPane host = createDialogHost();
+            com.jfoenix.controls.JFXDatePicker picker = new com.jfoenix.controls.JFXDatePicker();
+            picker.setOverLay(true);
+            host.setContent(picker);
+            host.applyCss();
+            picker.show();
+            assertEquals(1, host.lookupAll(".m3-dialog-pane").size());
+            picker.hide();
+            assertTrue(host.lookupAll(".m3-dialog-pane").isEmpty());
+            picker.show();
+            assertEquals(1, host.lookupAll(".m3-dialog-pane").size());
+            @Nullable Node calendar = host.lookup(".date-picker-popup");
+            assertNotNull(calendar);
+            calendar.fireEvent(new DialogCloseEvent());
+            assertFalse(picker.isShowing());
+            assertTrue(host.lookupAll(".m3-dialog-pane").isEmpty());
+            return true;
+        });
+    }
+
+    /// Windows created by this test, closed after each case.
+    private final List<Stage> stages = new ArrayList<>();
+
+    /// Creates an attached overlay host required by M3FX dialog presentations.
+    private M3OverlayPane createDialogHost() {
+        M3OverlayPane host = new M3OverlayPane();
+        showStage(new Scene(host, 800, 600));
+        return host;
+    }
+
+    /// Installs the M3 theme and shows a test window.
+    private void showStage(Scene scene) {
+        M3ThemeManager.install(scene, M3Theme.defaultTheme());
+        Stage stage = new Stage();
+        stage.setScene(scene);
+        stages.add(stage);
+        stage.show();
+    }
+
+    /// Closes all windows owned by the completed case.
+    @AfterEach
+    void closeStages() throws Exception {
+        onFxThread(() -> {
+            stages.forEach(Stage::close);
+            stages.clear();
             return true;
         });
     }

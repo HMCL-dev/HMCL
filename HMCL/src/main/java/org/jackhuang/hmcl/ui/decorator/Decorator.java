@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.decorator;
 
-import com.jfoenix.controls.JFXSnackbar;
-import com.jfoenix.controls.JFXSnackbarLayout;
 import com.jfoenix.skins.JFXDatePickerContent;
 import com.jfoenix.skins.JFXDatePickerSkin;
 import javafx.animation.KeyFrame;
@@ -46,19 +44,22 @@ import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import javafx.stage.WindowEvent;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Dialog;
+import org.glavo.m3fx.controls.M3DialogEvent;
+import org.glavo.m3fx.controls.M3OverlayPane;
+import org.glavo.m3fx.controls.M3Snackbar;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
@@ -68,7 +69,12 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.SequencedMap;
 import java.util.Stack;
 import java.util.function.Consumer;
 
@@ -149,8 +155,14 @@ public final class Decorator {
     /// The clipped main-window content hosted inside [#shadowContainer].
     private final MainWindowPane mainWindowPane;
 
-    /// The snackbar shared by all main-window toast messages.
-    private final JFXSnackbar snackbar = new JFXSnackbar();
+    /// The retained host for modal dialogs and queued toast messages.
+    private final M3OverlayPane overlayPane = new M3OverlayPane();
+
+    /// Requested dialogs in presentation order, retained while the main window is hidden.
+    private final SequencedMap<Node, M3Dialog> dialogs = new LinkedHashMap<>();
+
+    /// Content waiting for all currently requested dialogs to close.
+    private final Queue<Node> pendingDialogs = new ArrayDeque<>();
 
     /// Whether the navigation bar should display its close or home action.
     private final BooleanProperty canClose = new SimpleBooleanProperty(this, "canClose");
@@ -214,6 +226,12 @@ public final class Decorator {
     /// Plays the opening animation immediately before the attached stage becomes visible.
     private final EventHandler<WindowEvent> windowShowingHandler = event -> playOpenAnimation();
 
+    /// Restores dialogs after the retained scene is attached to a visible window.
+    private final EventHandler<WindowEvent> windowShownHandler = event -> {
+        for (M3Dialog dialog : List.copyOf(dialogs.values()))
+            overlayPane.showDialog(dialog);
+    };
+
     /// Releases animation caching and resets transforms when the attached stage is hidden.
     private final EventHandler<WindowEvent> windowHiddenHandler = event -> stopWindowAnimation();
 
@@ -252,7 +270,7 @@ public final class Decorator {
         root.addEventFilter(MouseEvent.MOUSE_DRAGGED, this::onMouseDragged);
         root.addEventFilter(MouseEvent.MOUSE_MOVED, this::onMouseMoved);
 
-        snackbar.registerSnackbarContainer(mainWindowPane);
+        overlayPane.setSnackbarDisplayDuration(Duration.seconds(1.5));
 
         navigator.init(mainPage);
 
@@ -310,11 +328,14 @@ public final class Decorator {
         mainWindowPane.setWindowCornersRounded(customDecoration);
     }
 
-    /// Returns the pane on which application dialogs are stacked.
-    ///
-    /// @return the stable main-window pane used as the dialog container
+    /// Returns the legacy date-picker parent used to locate the overlay host and route calendar keys.
     public StackPane getDialogContainer() {
         return mainWindowPane;
+    }
+
+    /// Returns the retained host for dialogs and transient messages.
+    public M3OverlayPane getOverlayPane() {
+        return overlayPane;
     }
 
     /// Prewarms a page for navigation using [TransitionPane#prewarm(Node)].
@@ -352,25 +373,70 @@ public final class Decorator {
 
     /// Shows `node` as the current application dialog.
     ///
-    /// If the window has not yet been attached to a scene, showing is deferred to the JavaFX application thread.
+    /// Content is retained until the main window is shown. Repeated requests for the same content have no effect.
     ///
     /// @param node the dialog content
     public void showDialog(Node node) {
-        DialogUtils.show(this, node);
+        FXUtils.checkFxUserThread();
+        if (dialogs.containsKey(node))
+            return;
+        M3Dialog dialog = Controllers.createDialog(node);
+        dialog.getDialogPane().maxWidthProperty().bind(overlayPane.widthProperty().multiply(0.7));
+        dialog.getDialogPane().maxHeightProperty().bind(overlayPane.heightProperty().multiply(0.7));
+        dialog.getDialogPane().containerMaxWidthProperty().bind(overlayPane.widthProperty().multiply(0.7));
+        forbidDraggingWindow(dialog.getDialogPane());
+        dialog.addEventHandler(M3DialogEvent.SHOWN,
+                event -> capableDraggingOverlay(Objects.requireNonNull(dialog.getDialogPane().getParent())));
+        // Pending content must still accept completion events while no M3FX presentation exists.
+        EventHandler<DialogCloseEvent> closeWhileHidden = new EventHandler<>() {
+            /// Discards a pending dialog closed before its window becomes visible.
+            @Override
+            public void handle(DialogCloseEvent event) {
+                if (dialog.getDialogPane().getScene() == null) {
+                    node.removeEventHandler(DialogCloseEvent.CLOSE, this);
+                    removeDialog(node, dialog);
+                }
+            }
+        };
+        node.addEventHandler(DialogCloseEvent.CLOSE, closeWhileHidden);
+        // Window hiding also dismisses M3FX presentations, but must retain application dialogs for restoration.
+        BooleanProperty closeRequested = new SimpleBooleanProperty();
+        dialog.addEventHandler(M3DialogEvent.CLOSE_REQUEST, event -> closeRequested.set(true));
+        dialog.addEventHandler(M3DialogEvent.HIDING, event -> {
+            if (closeRequested.get()) {
+                node.removeEventHandler(DialogCloseEvent.CLOSE, closeWhileHidden);
+                removeDialog(node, dialog);
+            }
+        });
+        dialogs.put(node, dialog);
+        @Nullable Scene scene = overlayPane.getScene();
+        if (scene != null && scene.getWindow() != null && scene.getWindow().isShowing())
+            overlayPane.showDialog(dialog);
+    }
+
+    /// Removes a dismissed dialog and advances the deferred queue once no dialogs remain.
+    private void removeDialog(Node node, M3Dialog dialog) {
+        dialogs.remove(node, dialog);
+        if (dialogs.isEmpty() && !pendingDialogs.isEmpty())
+            showDialog(pendingDialogs.remove());
     }
 
     /// Queues `node` to be shown after the current application dialog closes.
     ///
     /// @param node the dialog content
     public void showDialogLater(Node node) {
-        DialogUtils.showLater(this, node);
+        FXUtils.checkFxUserThread();
+        if (dialogs.isEmpty())
+            showDialog(node);
+        else if (!pendingDialogs.contains(node) && !dialogs.containsKey(node))
+            pendingDialogs.add(node);
     }
 
     /// Shows a transient message at the bottom center of the main window.
     ///
     /// @param content the message to show
     public void showToast(String content) {
-        snackbar.fireEvent(new JFXSnackbar.SnackbarEvent(new JFXSnackbarLayout(content)));
+        overlayPane.enqueueSnackbar(new M3Snackbar(content));
     }
 
     /// Starts a wizard without an explicit category title.
@@ -863,6 +929,7 @@ public final class Decorator {
             updateWindowDecoration(false);
             stage = newStage;
             newStage.addEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
+            newStage.addEventHandler(WindowEvent.WINDOW_SHOWN, windowShownHandler);
             newStage.addEventHandler(WindowEvent.WINDOW_HIDDEN, windowHiddenHandler);
             newStage.iconifiedProperty().addListener(iconifiedListener);
             newStage.maximizedProperty().addListener(stageDecorationListener);
@@ -899,6 +966,7 @@ public final class Decorator {
         if (stage != null) {
             Themes.windowTransparentProperty().removeListener(windowStyleListener);
             stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
+            stage.removeEventHandler(WindowEvent.WINDOW_SHOWN, windowShownHandler);
             stage.removeEventHandler(WindowEvent.WINDOW_HIDDEN, windowHiddenHandler);
             stage.iconifiedProperty().removeListener(iconifiedListener);
             stage.maximizedProperty().removeListener(stageDecorationListener);
@@ -1123,11 +1191,8 @@ public final class Decorator {
                 if (stack != null && !stack.isEmpty()) {
                     newTarget = stack.peek();
                 } else {
-                    @Nullable JFXDialogPane currentDialogPane =
-                            (JFXDialogPane) getDialogContainer().getProperties()
-                                    .get(DialogUtils.PROPERTY_DIALOG_PANE_INSTANCE);
-                    if (currentDialogPane != null && currentDialogPane.peek().isPresent()) {
-                        newTarget = currentDialogPane.peek().orElseThrow();
+                    if (!dialogs.isEmpty()) {
+                        newTarget = dialogs.lastEntry().getKey();
                     } else {
                         newTarget = navigator.getCurrentPage();
                     }

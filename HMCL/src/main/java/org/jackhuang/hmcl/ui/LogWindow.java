@@ -17,6 +17,9 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3OverlayPane;
+import org.glavo.m3fx.controls.M3Snackbar;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.setting.StyleSheets;
@@ -153,7 +156,8 @@ public final class LogWindow extends Stage {
         private final JFXButton btnAlwaysOnTop = FXUtils.newToggleButton4(SVG.KEEP, 20);
         private final Stage stage = LogWindow.this;
         private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
-        private final StackPane stackPane = new StackPane();
+        /// Hosts log content, dialogs, and queued messages.
+        private final M3OverlayPane overlayPane = new M3OverlayPane();
 
         LogWindowImpl() {
             getStyleClass().add("log-window");
@@ -191,6 +195,7 @@ public final class LogWindow extends Stage {
             logs.clear();
         }
 
+        /// Exports the current logs and reports the saved path while this window remains visible.
         private void onExportLogs() {
             thread(() -> {
                 Path logFile = Paths.get("minecraft-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
@@ -203,13 +208,15 @@ public final class LogWindow extends Stage {
 
                 Platform.runLater(() -> {
                     var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.success", logFile), i18n("message.success"), MessageDialogPane.MessageType.SUCCESS).ok(null).build();
-                    DialogUtils.show(stackPane, dialog);
+                    if (stage.isShowing())
+                        overlayPane.showDialog(Controllers.createDialog(dialog));
                 });
 
                 FXUtils.showFileInExplorer(logFile);
             });
         }
 
+        /// Exports a game dump, showing progress and reporting failure in this window.
         private void onExportDump(SpinnerPane pane) {
             assert SystemUtils.supportJVMAttachment();
 
@@ -228,7 +235,8 @@ public final class LogWindow extends Stage {
 
                     Platform.runLater(() -> {
                         var dialog = new MessageDialogPane.Builder(i18n("logwindow.export_dump") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR).ok(null).build();
-                        DialogUtils.show(stackPane, dialog);
+                        if (stage.isShowing())
+                            overlayPane.showDialog(Controllers.createDialog(dialog));
                     });
                 }
 
@@ -254,16 +262,16 @@ public final class LogWindow extends Stage {
         private static final PseudoClass INFO = PseudoClass.getPseudoClass("info");
         private static final PseudoClass DEBUG = PseudoClass.getPseudoClass("debug");
         private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
-        private final JFXSnackbar snackbar = new JFXSnackbar();
 
+        /// Builds the log viewer with an M3FX overlay host for dialogs and messages.
         LogWindowSkin(LogWindowImpl control) {
             super(control);
 
             VBox vbox = new VBox(3);
             vbox.setPadding(new Insets(3, 0, 3, 0));
-            getSkinnable().stackPane.getChildren().setAll(vbox);
-            getChildren().setAll(getSkinnable().stackPane);
-            snackbar.registerSnackbarContainer(getSkinnable().stackPane);
+            getSkinnable().overlayPane.setContent(vbox);
+            getChildren().setAll(getSkinnable().overlayPane);
+            getSkinnable().overlayPane.setSnackbarDisplayDuration(Duration.seconds(1.5));
 
             {
                 BorderPane borderPane = new BorderPane();
@@ -373,7 +381,7 @@ public final class LogWindow extends Stage {
                         }
 
                         FXUtils.copyText(stringBuilder.toString(), null);
-                        snackbar.fireEvent(new JFXSnackbar.SnackbarEvent(new JFXSnackbarLayout(i18n("message.copied"))));
+                        getSkinnable().overlayPane.enqueueSnackbar(new M3Snackbar(i18n("message.copied")));
                     }
                 });
 

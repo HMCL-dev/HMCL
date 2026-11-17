@@ -641,26 +641,6 @@
 
 /*******************************************************************************
  *                                                                             *
- * JFX Snack Bar                                                               *
- *                                                                             *
- ******************************************************************************/
-
-.jfx-snackbar-content {
-    -fx-background-color: -monet-inverse-surface;
-    -fx-padding: 5;
-    -fx-spacing: 5;
-}
-
-.jfx-snackbar-toast {
-    -fx-text-fill: -monet-inverse-on-surface;
-}
-
-.jfx-snackbar-action {
-    -fx-text-fill: -monet-inverse-primary;
-}
-
-/*******************************************************************************
- *                                                                             *
  * JFX Icons                                                                   *
  *                                                                             *
  ******************************************************************************/

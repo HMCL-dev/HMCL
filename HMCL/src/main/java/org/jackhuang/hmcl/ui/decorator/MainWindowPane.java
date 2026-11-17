@@ -120,7 +120,8 @@ final class MainWindowPane extends StackPane {
 
         decorator.capableDraggingWindow(titleBar);
 
-        getChildren().setAll(backgroundNode, frame);
+        decorator.getOverlayPane().setContent(new StackPane(backgroundNode, frame));
+        getChildren().setAll(decorator.getOverlayPane());
     }
 
     /// Moves the custom title bar into or out of the native dragging header.

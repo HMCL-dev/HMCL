@@ -13,11 +13,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
+import org.glavo.m3fx.controls.M3OverlayPane;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.launch.ProcessListener;
@@ -68,10 +68,12 @@ public class GameCrashWindow extends Stage {
     private final ProcessListener.ExitType exitType;
     private final LaunchOptions launchOptions;
     private final View view;
-    private final StackPane stackPane;
+    /// Hosts crash details and modal dialogs.
+    private final M3OverlayPane overlayPane;
 
     private final List<Log> logs;
 
+    /// Creates a crash report window with export actions and an M3FX dialog host.
     public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, HMCLGameInstance gameInstance, LaunchOptions launchOptions, List<Log> logs) {
         Themes.applyNativeDarkMode(this);
 
@@ -91,10 +93,11 @@ public class GameCrashWindow extends Stage {
 
         this.view = new View();
 
-        this.stackPane = new StackPane(view);
+        this.overlayPane = new M3OverlayPane();
+        this.overlayPane.setContent(view);
         this.feedbackTextFlow.getChildren().addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
 
-        setScene(new Scene(stackPane, 800, 480));
+        setScene(new Scene(overlayPane, 800, 480));
         StyleSheets.init(getScene());
         setTitle(i18n("game.crash.title"));
         FXUtils.setIcon(this);
@@ -289,6 +292,7 @@ public class GameCrashWindow extends Stage {
 
     private final class View extends VBox {
 
+        /// Builds the crash summary and diagnostic actions.
         View() {
             this.getStyleClass().add("game-crash-window");
 
@@ -429,7 +433,8 @@ public class GameCrashWindow extends Stage {
                                     i18n("message.success"),
                                     MessageDialogPane.MessageType.SUCCESS
                             ).ok(null).build();
-                            DialogUtils.show(stackPane, dialog);
+                            if (GameCrashWindow.this.isShowing())
+                                overlayPane.showDialog(Controllers.createDialog(dialog));
                         } else {
                             LOG.warning("Failed to export game crash info", exception);
                             var dialog = new MessageDialogPane.Builder(
@@ -437,7 +442,8 @@ public class GameCrashWindow extends Stage {
                                     i18n("message.error"),
                                     MessageDialogPane.MessageType.ERROR
                             ).ok(null).build();
-                            DialogUtils.show(stackPane, dialog);
+                            if (GameCrashWindow.this.isShowing())
+                                overlayPane.showDialog(Controllers.createDialog(dialog));
                         }
                     }, Schedulers.javafx());
                 });
