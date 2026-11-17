@@ -2,46 +2,66 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.setting;
 
-import javafx.beans.binding.Bindings;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
+import org.glavo.m3fx.animation.M3MotionSettings;
+import org.glavo.m3fx.theme.M3Theme;
+import org.glavo.m3fx.theme.M3ThemeManager;
+import org.glavo.m3fx.tokens.M3TextStyle;
+import org.glavo.m3fx.tokens.M3TokenSet;
+import org.glavo.m3fx.tokens.M3TypographyTokens;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorScheme;
 import org.jackhuang.hmcl.theme.ResolvedTheme;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.Set;
+import java.util.WeakHashMap;
 
-/**
- * @author Glavo
- */
+/// Maintains launcher styles and the shared M3FX theme for initialized scenes.
 public final class StyleSheets {
+    /// The launcher font stylesheet slot.
     private static final int FONT_STYLE_SHEET_INDEX = 0;
+    /// The launcher color stylesheet slot.
     private static final int THEME_STYLE_SHEET_INDEX = 1;
+    /// The launcher brightness stylesheet slot.
     private static final int BRIGHTNESS_SHEET_INDEX = 2;
 
-    private static final ObservableList<String> stylesheets;
+    /// Live themed scenes, without retaining closed windows.
+    private static final Set<Scene> scenes = Collections.newSetFromMap(new WeakHashMap<>());
+
+    /// Current launcher stylesheet URLs, replaced when appearance settings change.
+    private static final String[] stylesheets;
+
+    /// The shared theme used by existing and newly initialized scenes.
+    private static M3Theme m3Theme;
 
     static {
-        String[] array = new String[]{
+        stylesheets = new String[]{
                 getFontStyleSheet(),
                 getThemeStyleSheet(),
                 getBrightnessStyleSheet(),
                 "/assets/css/root.css"
         };
-        stylesheets = FXCollections.observableList(Arrays.asList(array));
+        m3Theme = createM3Theme();
+        M3MotionSettings.setGlobalReducedMotionRequested(!AnimationUtils.isAnimationEnabled());
 
-        FontManager.fontProperty().addListener(o -> stylesheets.set(FONT_STYLE_SHEET_INDEX, getFontStyleSheet()));
+        FontManager.fontProperty().addListener(o -> {
+            updateStyleSheet(FONT_STYLE_SHEET_INDEX, getFontStyleSheet());
+            updateM3Theme();
+        });
         Themes.colorSchemeProperty().addListener(o -> {
-            stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet());
-            stylesheets.set(BRIGHTNESS_SHEET_INDEX, getBrightnessStyleSheet());
+            updateStyleSheet(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet());
+            updateStyleSheet(BRIGHTNESS_SHEET_INDEX, getBrightnessStyleSheet());
+            updateM3Theme();
         });
     }
 
@@ -151,8 +171,66 @@ public final class StyleSheets {
         return toStyleSheetUri(builder.toString());
     }
 
+    /// Installs live launcher and M3FX themes for the entire scene, preserving externally added stylesheets.
     public static void init(Scene scene) {
-        Bindings.bindContent(scene.getStylesheets(), stylesheets);
+        if (scenes.add(scene)) {
+            scene.getStylesheets().addAll(stylesheets);
+            M3ThemeManager.install(scene, m3Theme);
+        }
+    }
+
+    /// Replaces one launcher stylesheet without disturbing entries added by M3FX or application code.
+    private static void updateStyleSheet(int slot, String stylesheet) {
+        String previous = stylesheets[slot];
+        if (previous.equals(stylesheet))
+            return;
+        stylesheets[slot] = stylesheet;
+        for (Scene scene : scenes) {
+            // M3FX can insert stylesheets before ours, so scene indices are not stable.
+            int index = scene.getStylesheets().indexOf(previous);
+            if (index >= 0)
+                scene.getStylesheets().set(index, stylesheet);
+        }
+    }
+
+    /// Applies the current resolved colors and font family to every initialized scene.
+    private static void updateM3Theme() {
+        m3Theme = createM3Theme();
+        scenes.forEach(scene -> M3ThemeManager.install(scene, m3Theme));
+    }
+
+    /// Reuses launcher colors and font family while retaining Material typography metrics.
+    private static M3Theme createM3Theme() {
+        M3Theme base = M3Theme.fromColorScheme(Themes.getColorScheme());
+        FontManager.@Nullable FontReference font = FontManager.getFont();
+        if (font == null || "System".equals(font.family()))
+            return base;
+
+        String family = font.family();
+        M3TypographyTokens typography = base.tokens().typographyTokens();
+        M3TypographyTokens adapted = M3TypographyTokens.builder(typography)
+                .displayLarge(withFamily(typography.displayLarge(), family))
+                .displayMedium(withFamily(typography.displayMedium(), family))
+                .displaySmall(withFamily(typography.displaySmall(), family))
+                .headlineLarge(withFamily(typography.headlineLarge(), family))
+                .headlineMedium(withFamily(typography.headlineMedium(), family))
+                .headlineSmall(withFamily(typography.headlineSmall(), family))
+                .titleLarge(withFamily(typography.titleLarge(), family))
+                .titleMedium(withFamily(typography.titleMedium(), family))
+                .titleSmall(withFamily(typography.titleSmall(), family))
+                .labelLarge(withFamily(typography.labelLarge(), family))
+                .labelMedium(withFamily(typography.labelMedium(), family))
+                .labelSmall(withFamily(typography.labelSmall(), family))
+                .bodyLarge(withFamily(typography.bodyLarge(), family))
+                .bodyMedium(withFamily(typography.bodyMedium(), family))
+                .bodySmall(withFamily(typography.bodySmall(), family))
+                .build();
+        return M3Theme.fromTokenSet(M3TokenSet.builder(base.tokens()).typographyTokens(adapted).build());
+    }
+
+    /// Changes a text role's family without altering its size, weight, line height, or tracking.
+    private static M3TextStyle withFamily(M3TextStyle style, String family) {
+        return M3TextStyle.of(family, style.size(), style.lineHeight(), style.weight(), style.tracking());
     }
 
     private StyleSheets() {
