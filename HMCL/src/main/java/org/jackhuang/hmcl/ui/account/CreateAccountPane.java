@@ -407,7 +407,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 });
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
-                M3IconButton btnAddServer = FXUtils.newToggleButton4(SVG.ADD, 20);
+                M3IconButton btnAddServer = new M3IconButton(SVG.ADD.createIcon(20));
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());
                 });

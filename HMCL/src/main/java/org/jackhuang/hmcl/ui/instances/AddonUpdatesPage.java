@@ -315,7 +315,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private final JFXCheckBox enabledBox = new JFXCheckBox();
         private final ImageContainer imageContainer = new ImageContainer(40);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final M3IconButton changelogButton = FXUtils.newToggleButton4(SVG.INFO);
+        private final M3IconButton changelogButton = new M3IconButton(SVG.INFO.createIcon());
 
         AddonUpdateListCell(ListView<AddonUpdatesPage.AddonUpdateObject> listView) {
             HBox hbox = new HBox(16);

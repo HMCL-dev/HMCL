@@ -17,7 +17,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.paint.Paint;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -101,7 +101,7 @@ public class AdvancedListItem extends Control {
 
     /// Replaces the right graphic with a centered icon button that runs the action when activated.
     public void setRightAction(SVG icon, Runnable action) {
-        var button = FXUtils.newToggleButton4(icon, 14);
+        var button = new M3IconButton(icon.createIcon(14));
         button.setOnAction(e -> {
             action.run();
             e.consume();

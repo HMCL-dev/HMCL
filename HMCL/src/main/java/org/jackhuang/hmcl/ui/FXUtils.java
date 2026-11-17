@@ -44,7 +44,6 @@ import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
-import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.StyleSheets;
@@ -940,20 +939,6 @@ public final class FXUtils {
                 .setSignificance(Task.TaskSignificance.MINOR)
                 .start();
         return image;
-    }
-
-    /// Creates a compact action button with the icon at its natural size.
-    public static M3IconButton newToggleButton4(SVG icon) {
-        M3IconButton button = new M3IconButton(icon.createIcon());
-        button.getStyleClass().add("toggle-icon4");
-        return button;
-    }
-
-    /// Creates a compact action button with an icon of the given size.
-    public static M3IconButton newToggleButton4(SVG icon, int size) {
-        M3IconButton button = new M3IconButton(icon.createIcon(size));
-        button.getStyleClass().add("toggle-icon4");
-        return button;
     }
 
     public static Label newSafeTruncatedLabel() {

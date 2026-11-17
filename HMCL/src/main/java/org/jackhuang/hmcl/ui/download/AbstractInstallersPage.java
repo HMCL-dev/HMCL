@@ -138,12 +138,12 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                 versionNamePane.getChildren().addAll(new Label(i18n("instance.name")), control.txtName);
 
                 if (control.showExtendPane()) {
-                    M3IconButton clearButton = FXUtils.newToggleButton4(SVG.CLOSE);
+                    M3IconButton clearButton = new M3IconButton(SVG.CLOSE.createIcon());
                     FXUtils.installFastTooltip(clearButton, i18n("button.clear"));
                     clearButton.disableProperty().bind(control.txtName.textProperty().isEmpty().or(control.txtName.disableProperty()));
                     clearButton.setOnAction(e -> control.txtName.clear());
 
-                    M3IconButton resetButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                    M3IconButton resetButton = new M3IconButton(SVG.RESTORE.createIcon());
                     FXUtils.installFastTooltip(resetButton, i18n("button.reset"));
                     resetButton.disableProperty().bind(control.txtName.disableProperty());
                     resetButton.setOnAction(e -> control.resetDefaultName());

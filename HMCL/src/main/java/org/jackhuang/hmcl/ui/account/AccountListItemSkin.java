@@ -93,7 +93,6 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
 
             moveAccount(skinnable);
         });
-        btnMove.getStyleClass().add("toggle-icon4");
         if (skinnable.getAccount().isPortable()) {
             btnMove.setGraphic(SVG.PUBLIC.createIcon());
             FXUtils.installFastTooltip(btnMove, i18n("account.move_to_global"));
@@ -104,10 +103,10 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerMove.setContent(btnMove);
         right.getChildren().add(spinnerMove);
 
-        M3IconButton btnRefresh = FXUtils.newToggleButton4(SVG.REFRESH);
+        M3IconButton btnRefresh = new M3IconButton(SVG.REFRESH.createIcon());
         SpinnerPane spinnerRefresh = new SpinnerPane();
         spinnerRefresh.getStyleClass().setAll("small-spinner-pane");
-        spinnerRefresh.setPrefSize(30.0, 30.0);
+        spinnerRefresh.setPrefSize(btnRefresh.prefWidth(-1), btnRefresh.prefHeight(-1));
         if (skinnable.getAccount() instanceof MicrosoftAccount && Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
             btnRefresh.setDisable(true);
             FXUtils.installFastTooltip(spinnerRefresh, i18n("account.methods.microsoft.snapshot.tooltip"));
@@ -128,7 +127,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerRefresh.setContent(btnRefresh);
         right.getChildren().add(spinnerRefresh);
 
-        M3IconButton btnUpload = FXUtils.newToggleButton4(SVG.CHECKROOM);
+        M3IconButton btnUpload = new M3IconButton(SVG.CHECKROOM.createIcon());
         SpinnerPane spinnerUpload = new SpinnerPane();
         btnUpload.setOnAction(e -> {
             Task<?> uploadTask = skinnable.uploadSkin();
@@ -145,12 +144,12 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerUpload.getStyleClass().add("small-spinner-pane");
         right.getChildren().add(spinnerUpload);
 
-        M3IconButton btnCopyUUID = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
+        M3IconButton btnCopyUUID = new M3IconButton(SVG.CONTENT_COPY.createIcon());
         btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getProfileID().toString()));
         FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid"));
         right.getChildren().add(btnCopyUUID);
 
-        M3IconButton btnRemove = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
+        M3IconButton btnRemove = new M3IconButton(SVG.DELETE_FOREVER.createIcon());
         btnRemove.setOnAction(e -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::remove, null));
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
         FXUtils.installFastTooltip(btnRemove, i18n("button.delete"));

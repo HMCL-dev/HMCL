@@ -157,7 +157,7 @@ public final class LogWindow extends Stage {
         private final BooleanProperty wrapText = new SimpleBooleanProperty(true);
         private final StringProperty[] buttonText = new StringProperty[LEVELS.length];
         private final BooleanProperty[] showLevel = new BooleanProperty[LEVELS.length];
-        private final M3IconButton btnAlwaysOnTop = FXUtils.newToggleButton4(SVG.KEEP, 20);
+        private final M3IconButton btnAlwaysOnTop = new M3IconButton(SVG.KEEP.createIcon(20));
         private final Stage stage = LogWindow.this;
         private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
         /// Hosts log content, dialogs, and queued messages.

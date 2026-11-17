@@ -721,7 +721,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                 this.right = new HBox(8);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                M3IconButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+                M3IconButton btnReveal = new M3IconButton(SVG.FOLDER_OPEN.createIcon());
                 {
                     var fo = SVG.FOLDER_OPEN.createIcon();
                     var f = SVG.FOLDER.createIcon();
@@ -736,7 +736,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                     if (item != null) item.onReveal();
                 });
 
-                M3IconButton btnExplore = FXUtils.newToggleButton4(SVG.EXPLORE); // Change the icon if allows editing
+                M3IconButton btnExplore = new M3IconButton(SVG.EXPLORE.createIcon()); // Change the icon if allows editing
                 btnExplore.setOnAction(event -> {
                     Item item = getItem();
                     if (item instanceof SchematicItem) {
@@ -748,7 +748,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                 });
                 btnExplore.visibleProperty().bind(isFileProperty);
 
-                M3IconButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
+                M3IconButton btnDelete = new M3IconButton(SVG.DELETE_FOREVER.createIcon());
                 btnDelete.setOnAction(event -> {
                     Item item = getItem();
                     if (item != null) {

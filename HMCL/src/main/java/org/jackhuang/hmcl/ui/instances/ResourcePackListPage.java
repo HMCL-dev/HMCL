@@ -534,8 +534,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final M3IconButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
-        private final M3IconButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
+        private final M3IconButton btnReveal = new M3IconButton(SVG.FOLDER.createIcon());
+        private final M3IconButton btnInfo = new M3IconButton(SVG.INFO.createIcon());
         private final JFXSwitch activeSwitch;
 
         private BooleanProperty booleanProperty = null;

@@ -1189,7 +1189,7 @@ public class PersonalizationPage extends StackPane {
                         cboFont.setValue(settings().launcherFontFamilyProperty().get());
                         FXUtils.onChange(cboFont.valueProperty(), FontManager::setFontFamily);
 
-                        M3IconButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                        M3IconButton clearButton = new M3IconButton(SVG.RESTORE.createIcon());
                         clearButton.setOnAction(e -> cboFont.setValue(null));
 
                         FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
@@ -1232,7 +1232,7 @@ public class PersonalizationPage extends StackPane {
                                 .fallbackTo(12.0)
                                 .asPredicate(Validator.addTo(txtLogFontSize)));
 
-                        M3IconButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                        M3IconButton clearButton = new M3IconButton(SVG.RESTORE.createIcon());
                         clearButton.setOnAction(e -> cboLogFont.setValue(null));
 
                         FXUtils.installFastTooltip(clearButton, i18n("button.reset"));

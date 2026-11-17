@@ -74,7 +74,7 @@ public final class SettingsPage extends ScrollPane {
                 ObjectProperty<UpdateChannel> updateChannel;
                 {
 
-                    M3IconButton updateButton = FXUtils.newToggleButton4(SVG.UPDATE, 20);
+                    M3IconButton updateButton = new M3IconButton(SVG.UPDATE.createIcon(20));
                     updateButton.setOnAction(e -> onUpdate());
                     updateButton.setPadding(Insets.EMPTY);
                     FXUtils.installFastTooltip(updateButton, i18n("update.tooltip"));

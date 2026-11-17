@@ -187,7 +187,7 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
     private final class OptionalFileEntry extends MDListCell<ModpackFile> {
         private final JFXCheckBox checkBox = new JFXCheckBox();
         private final TwoLineListItem content = new TwoLineListItem();
-        private final M3IconButton infoButton = new M3IconButton();
+        private final M3IconButton infoButton = new M3IconButton(SVG.INFO.createIcon());
         private final HBox container = new HBox(8);
 
         /// Currently bidirectionally bound selected property, or `null` when unbound.
@@ -204,8 +204,6 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
             setSelectable();
             container.getChildren().setAll(checkBox, content);
 
-            infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(SVG.INFO.createIcon());
             container.getChildren().add(infoButton);
             getContainer().getChildren().setAll(container);
         }

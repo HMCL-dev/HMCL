@@ -279,7 +279,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
 
             HBox.setHgrow(content, Priority.ALWAYS);
 
-            M3IconButton copyButton = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
+            M3IconButton copyButton = new M3IconButton(SVG.CONTENT_COPY.createIcon());
             copyButton.setOnAction(e -> {
                 @Nullable Screenshot screenshot = getItem();
                 if (screenshot != null) {
@@ -288,7 +288,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
                 }
             });
 
-            M3IconButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
+            M3IconButton revealButton = new M3IconButton(SVG.FOLDER.createIcon());
             revealButton.setOnAction(e -> {
                 @Nullable Screenshot screenshot = getItem();
                 if (screenshot != null) {
@@ -296,7 +296,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
                 }
             });
 
-            M3IconButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
+            M3IconButton infoButton = new M3IconButton(SVG.INFO.createIcon());
             infoButton.setOnAction(e -> {
                 @Nullable Screenshot screenshot = getItem();
                 if (screenshot != null) {
@@ -305,7 +305,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             });
             FXUtils.onDoubleClicked(this, infoButton::fire);
 
-            M3IconButton deleteButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
+            M3IconButton deleteButton = new M3IconButton(SVG.DELETE_FOREVER.createIcon());
             deleteButton.setOnAction(e -> {
                 @Nullable Screenshot screenshot = getItem();
                 if (screenshot != null) {

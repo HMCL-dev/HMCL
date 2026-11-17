@@ -249,12 +249,12 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                M3IconButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+                M3IconButton btnReveal = new M3IconButton(SVG.FOLDER_OPEN.createIcon());
                 right.getChildren().add(btnReveal);
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
                 btnReveal.setOnAction(event -> skinnable.onReveal());
 
-                M3IconButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
+                M3IconButton btnDelete = new M3IconButton(SVG.DELETE_FOREVER.createIcon());
                 right.getChildren().add(btnDelete);
                 FXUtils.installFastTooltip(btnDelete, i18n("world.backup.delete"));
                 btnDelete.setOnAction(event -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::onDelete, null));

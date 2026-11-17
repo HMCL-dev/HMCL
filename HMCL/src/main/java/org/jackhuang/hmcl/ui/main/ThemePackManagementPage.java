@@ -666,7 +666,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             right.setPickOnBounds(false);
             content.setTrailing(right);
 
-            revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+            revealButton = new M3IconButton(SVG.FOLDER_OPEN.createIcon());
             revealButton.setOnAction(event -> {
                 ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {
@@ -675,7 +675,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             });
             FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
-            deleteButton = FXUtils.newToggleButton4(SVG.DELETE);
+            deleteButton = new M3IconButton(SVG.DELETE.createIcon());
             deleteButton.setOnAction(event -> {
                 ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {

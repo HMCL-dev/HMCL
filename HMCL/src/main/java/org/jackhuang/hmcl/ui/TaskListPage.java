@@ -120,7 +120,6 @@ public final class TaskListPage extends StackPane {
             } else {
                 content.titleProperty().bind(pane.titleProperty());
                 @Nullable TaskExecutorDialogPane.PendingAction action = pane.pendingActionProperty().get();
-                actionButton.getStyleClass().remove("toggle-icon4");
                 if (action != null) {
                     actionButton.setVariant(M3ButtonVariant.OUTLINED);
                     statusIcon.getChildren().setAll(SVG.PENDING.createIcon(24));
@@ -131,7 +130,6 @@ public final class TaskListPage extends StackPane {
                     actionTooltip.setText(action.text());
                 } else {
                     actionButton.setVariant(M3ButtonVariant.TEXT);
-                    actionButton.getStyleClass().add("toggle-icon4");
                     if (pane.queuedProperty().get()) {
                         statusIcon.getChildren().setAll(SVG.PENDING.createIcon(24));
                         content.setSubtitle(i18n("task.queued"));

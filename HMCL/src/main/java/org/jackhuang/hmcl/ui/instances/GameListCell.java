@@ -108,7 +108,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             right.setAlignment(Pos.CENTER_RIGHT);
             right.setPickOnBounds(false);
 
-            this.btnUpgrade = FXUtils.newToggleButton4(SVG.UPDATE);
+            this.btnUpgrade = new M3IconButton(SVG.UPDATE.createIcon());
             btnUpgrade.setOnAction(e -> {
                 @Nullable GameListItem item = this.getItem();
                 if (item != null)
@@ -117,7 +117,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             FXUtils.installFastTooltip(btnUpgrade, i18n("instance.update"));
             right.getChildren().add(btnUpgrade);
 
-            this.btnEditInstance = FXUtils.newToggleButton4(SVG.SETTINGS);
+            this.btnEditInstance = new M3IconButton(SVG.SETTINGS.createIcon());
             btnEditInstance.setOnAction(e -> {
                 @Nullable GameListItem item = this.getItem();
                 if (item != null)
@@ -126,7 +126,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             FXUtils.installFastTooltip(btnEditInstance, i18n("instance.manage.manage"));
             right.getChildren().add(btnEditInstance);
 
-            this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
+            this.btnManage = new M3IconButton(SVG.MORE_VERT.createIcon());
             btnManage.setOnAction(e -> {
                 @Nullable GameListItem item = this.getItem();
                 if (item == null)

@@ -35,10 +35,10 @@ public final class ImagePickerItem extends BorderPane {
         imageContainer = new ImageContainer(32);
         imageContainer.setSmooth(false);
 
-        M3IconButton selectButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
+        M3IconButton selectButton = new M3IconButton(SVG.EDIT.createIcon(20));
         selectButton.onActionProperty().bind(onSelectButtonClicked);
 
-        M3IconButton deleteButton = FXUtils.newToggleButton4(SVG.RESTORE, 20);
+        M3IconButton deleteButton = new M3IconButton(SVG.RESTORE.createIcon(20));
         deleteButton.onActionProperty().bind(onDeleteButtonClicked);
 
         FXUtils.installFastTooltip(selectButton, i18n("button.edit"));

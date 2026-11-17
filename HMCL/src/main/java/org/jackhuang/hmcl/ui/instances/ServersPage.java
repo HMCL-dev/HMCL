@@ -699,7 +699,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
             contentLine2AddressMaskPane.labelAddStyleClass("subtitle");
 
-            M3IconButton editBtn = FXUtils.newToggleButton4(SVG.EDIT);
+            M3IconButton editBtn = new M3IconButton(SVG.EDIT.createIcon());
             FXUtils.installFastTooltip(editBtn, i18n("server.manage.edit"));
             editBtn.setOnAction(event -> {
                 ServerListItem item = getItem();
@@ -707,7 +707,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                     page.editServer(item);
             });
 
-            M3IconButton launchBtn = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
+            M3IconButton launchBtn = new M3IconButton(SVG.ROCKET_LAUNCH.createIcon());
             FXUtils.installFastTooltip(launchBtn, i18n("instance.launch"));
             launchBtn.setOnAction(event -> {
                 ServerListItem item = getItem();
@@ -716,7 +716,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 }
             });
 
-            M3IconButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
+            M3IconButton btnMore = new M3IconButton(SVG.MORE_VERT.createIcon());
             btnMore.setOnAction(event -> {
                 ServerListItem item = getItem();
                 if (item != null) {

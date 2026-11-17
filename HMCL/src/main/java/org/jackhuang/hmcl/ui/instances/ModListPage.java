@@ -750,9 +750,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final M3IconButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
-        private final M3IconButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
-        private final M3IconButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
+        private final M3IconButton restoreButton = new M3IconButton(SVG.RESTORE.createIcon());
+        private final M3IconButton revealButton = new M3IconButton(SVG.FOLDER.createIcon());
+        private final M3IconButton infoButton = new M3IconButton(SVG.INFO.createIcon());
         private final JFXSwitch activeSwitch = new JFXSwitch();
 
         private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getModInfo().isActive());

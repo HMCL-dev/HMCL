@@ -719,10 +719,10 @@
 .jfx-tool-bar-button {
     -m3-content-color: -monet-on-surface;
     -fx-font-size: 14px;
-    -fx-toggle-icon4-size: 37px;
-    -fx-pref-height: -fx-toggle-icon4-size;
-    -fx-max-height: -fx-toggle-icon4-size;
-    -fx-min-height: -fx-toggle-icon4-size;
+    -fx-tool-bar-button-height: 37px;
+    -fx-pref-height: -fx-tool-bar-button-height;
+    -fx-max-height: -fx-tool-bar-button-height;
+    -fx-min-height: -fx-tool-bar-button-height;
     -fx-background-radius: 5px;
     -fx-background-color: transparent;
     -jfx-toggle-color: -monet-on-surface;
@@ -1262,27 +1262,6 @@
     -fx-background-radius: 50px;
     -fx-pref-height: 50px;
     -fx-background-color: transparent;
-}
-
-
-.toggle-icon4 {
-    -m3-horizontal-padding: 0;
-    -fx-toggle-icon4-size: 30px;
-    -fx-pref-width: -fx-toggle-icon4-size;
-    -fx-max-width: -fx-toggle-icon4-size;
-    -fx-min-width: -fx-toggle-icon4-size;
-    -fx-pref-height: -fx-toggle-icon4-size;
-    -fx-max-height: -fx-toggle-icon4-size;
-    -fx-min-height: -fx-toggle-icon4-size;
-    -fx-background-radius: 50px;
-    -fx-background-color: transparent;
-    -jfx-toggle-color: -monet-primary;
-    -jfx-untoggle-color: transparent;
-}
-
-.toggle-icon4 .icon {
-    -fx-fill: rgb(204.0, 204.0, 51.0);
-    -fx-padding: 10.0;
 }
 
 .toggle-icon-tiny {

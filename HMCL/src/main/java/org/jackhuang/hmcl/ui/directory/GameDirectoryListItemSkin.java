@@ -46,7 +46,7 @@ public class GameDirectoryListItemSkin extends SkinBase<GameDirectoryListItem> {
 
         FXUtils.onClicked(getSkinnable(), () -> GameDirectoryManager.setSelectedGameDirectory(skinnable.getGameDirectory()));
 
-        M3IconButton btnRemove = FXUtils.newToggleButton4(SVG.CLOSE, 14);
+        M3IconButton btnRemove = new M3IconButton(SVG.CLOSE.createIcon(14));
         btnRemove.setOnAction(e -> skinnable.remove());
         item.setTrailing(btnRemove);
 

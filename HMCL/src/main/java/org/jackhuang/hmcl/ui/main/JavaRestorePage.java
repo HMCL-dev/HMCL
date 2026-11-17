@@ -148,20 +148,20 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
             HBox right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
             {
-                M3IconButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+                M3IconButton revealButton = new M3IconButton(SVG.FOLDER_OPEN.createIcon());
                 revealButton.setOnAction(e -> skinnable.onReveal());
                 FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
                 if (skinnable.realPath == null) {
                     revealButton.setDisable(true);
 
-                    M3IconButton removeButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
+                    M3IconButton removeButton = new M3IconButton(SVG.DELETE_FOREVER.createIcon());
                     removeButton.setOnAction(e -> skinnable.onRemove());
                     FXUtils.installFastTooltip(removeButton, i18n("java.disabled.management.remove"));
 
                     right.getChildren().setAll(revealButton, removeButton);
                 } else {
-                    M3IconButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                    M3IconButton restoreButton = new M3IconButton(SVG.RESTORE.createIcon());
                     restoreButton.setOnAction(e -> skinnable.onRestore());
                     FXUtils.installFastTooltip(restoreButton, i18n("java.disabled.management.restore"));
 

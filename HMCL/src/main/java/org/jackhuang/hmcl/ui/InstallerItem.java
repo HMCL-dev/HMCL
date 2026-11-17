@@ -313,7 +313,7 @@ public class InstallerItem extends Control {
             buttonsContainer.setAlignment(Pos.CENTER);
             pane.getChildren().add(buttonsContainer);
 
-            M3IconButton removeButton = FXUtils.newToggleButton4(SVG.CLOSE);
+            M3IconButton removeButton = new M3IconButton(SVG.CLOSE.createIcon());
             if (control.type == GameComponentType.GAME) {
                 removeButton.setVisible(false);
             } else {
@@ -337,7 +337,6 @@ public class InstallerItem extends Control {
                                     SVG.UPDATE.createIcon(),
                     control.resolvedStateProperty
             ));
-            installButton.getStyleClass().add("toggle-icon4");
             installButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
                 if (control.getOnInstall() == null) {
                     return false;

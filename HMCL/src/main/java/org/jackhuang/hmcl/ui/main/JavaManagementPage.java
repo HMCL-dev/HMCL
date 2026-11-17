@@ -252,7 +252,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             HBox right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
             {
-                M3IconButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+                M3IconButton revealButton = new M3IconButton(SVG.FOLDER_OPEN.createIcon());
                 revealButton.setOnAction(e -> {
                     @Nullable JavaRuntime java = getItem();
                     if (java != null)
@@ -261,7 +261,6 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
                 removeButton = new M3IconButton();
-                removeButton.getStyleClass().add("toggle-icon4");
                 removeButton.setOnAction(e -> {
                     @Nullable JavaRuntime java = getItem();
                     if (java != null)

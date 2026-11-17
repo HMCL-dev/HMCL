@@ -162,13 +162,13 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             actions.setPickOnBounds(false);
             {
                 if (control.componentType == GameComponentType.GAME) {
-                    M3IconButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
+                    M3IconButton wikiButton = new M3IconButton(SVG.GLOBE_BOOK.createIcon());
                     wikiButton.setOnAction(event -> onOpenWiki());
                     FXUtils.installFastTooltip(wikiButton, i18n("wiki.tooltip"));
                     actions.getChildren().add(wikiButton);
                 }
 
-                M3IconButton actionButton = newToggleButton4(SVG.ARROW_FORWARD);
+                M3IconButton actionButton = new M3IconButton(SVG.ARROW_FORWARD.createIcon());
                 actionButton.setOnAction(e -> onAction());
                 actions.getChildren().add(actionButton);
             }

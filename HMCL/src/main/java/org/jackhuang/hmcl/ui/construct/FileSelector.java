@@ -30,7 +30,7 @@ public class FileSelector extends HBox {
     private SelectionMode selectionMode = SelectionMode.FILE;
     private final ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
 
-    M3IconButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
+    M3IconButton selectButton = new M3IconButton(SVG.FOLDER_OPEN.createIcon(15));
 
     public enum SelectionMode {
         FILE,

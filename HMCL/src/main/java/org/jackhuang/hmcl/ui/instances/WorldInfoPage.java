@@ -119,8 +119,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
                 }
 
-                M3IconButton editIconButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
-                M3IconButton resetIconButton = FXUtils.newToggleButton4(SVG.RESTORE, 20);
+                M3IconButton editIconButton = new M3IconButton(SVG.EDIT.createIcon(20));
+                M3IconButton resetIconButton = new M3IconButton(SVG.RESTORE.createIcon(20));
                 {
                     editIconButton.setDisable(isReadOnly);
                     editIconButton.setOnAction(event -> Controllers.confirm(
@@ -149,7 +149,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 seedPane.setTitle(i18n("world.info.random_seed"));
 
                 SimpleBooleanProperty visibility = new SimpleBooleanProperty();
-                M3IconButton visibilityButton = FXUtils.newToggleButton4(SVG.VISIBILITY_OFF);
+                M3IconButton visibilityButton = new M3IconButton(SVG.VISIBILITY_OFF.createIcon());
                 {
                     visibilityButton.setAlignment(Pos.CENTER);
                     visibilityButton.setOnAction((event) -> visibility.set(!visibility.get()));

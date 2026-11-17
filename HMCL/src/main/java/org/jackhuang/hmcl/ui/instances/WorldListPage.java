@@ -292,7 +292,7 @@ public final class WorldListPage extends ListPageBase<World> {
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
+                btnLaunch = new M3IconButton(SVG.ROCKET_LAUNCH.createIcon());
                 btnLaunch.visibleProperty().bind(page.supportQuickPlayProperty());
                 btnLaunch.managedProperty().bind(btnLaunch.visibleProperty());
                 right.getChildren().add(btnLaunch);
@@ -303,7 +303,7 @@ public final class WorldListPage extends ListPageBase<World> {
                         page.launch(world);
                 });
 
-                M3IconButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
+                M3IconButton btnMore = new M3IconButton(SVG.MORE_VERT.createIcon());
                 right.getChildren().add(btnMore);
                 btnMore.setOnAction(event -> {
                     World world = getItem();
