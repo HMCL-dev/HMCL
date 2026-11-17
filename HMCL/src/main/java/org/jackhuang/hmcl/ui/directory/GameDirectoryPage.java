@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.PathSelector;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.FXThread;
@@ -120,8 +121,8 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
 
                     gameDir = new LineFileChooserButton();
                     gameDir.setTitle(i18n("game_directory.instance_directory"));
-                    gameDir.setFileChooserTitle(i18n("game_directory.instance_directory.choose"));
-                    gameDir.setType(LineFileChooserButton.Type.OPEN_DIRECTORY);
+                    gameDir.getSelector().setTitle(i18n("game_directory.instance_directory.choose"));
+                    gameDir.setType(PathSelector.Type.DIRECTORY);
                     gameDir.locationProperty().bindBidirectional(location);
 
                     switchUseRelativePath = new LineSwitch();

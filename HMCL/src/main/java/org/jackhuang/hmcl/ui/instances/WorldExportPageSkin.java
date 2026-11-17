@@ -11,6 +11,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.PathSelector;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LineFileChooserButton;
 import org.jackhuang.hmcl.ui.construct.LinePane;
@@ -35,8 +36,8 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
 
         var chooseFileButton = new LineFileChooserButton();
         chooseFileButton.setTitle(i18n("world.export.location"));
-        chooseFileButton.setType(LineFileChooserButton.Type.SAVE_FILE);
-        chooseFileButton.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
+        chooseFileButton.setType(PathSelector.Type.SAVE);
+        chooseFileButton.getSelector().setExtensionFilters(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
         chooseFileButton.locationProperty().bindBidirectional(skinnable.pathProperty());
 
         var worldNamePane = new LinePane();

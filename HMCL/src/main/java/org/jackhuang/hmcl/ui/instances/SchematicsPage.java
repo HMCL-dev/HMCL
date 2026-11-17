@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -258,12 +259,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
         }
     }
 
+    /// Opens a schematic chooser and adds the selected files to the current directory.
     public void onAddFiles() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("schematics.add.title"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
-                i18n("extension.schematic"), "*.litematic", "*.nbt", "*.schematic", "*.schem"));
-        List<Path> files = Controllers.showOpenMultipleDialog(fileChooser);
+        @Nullable @Unmodifiable List<Path> files = new PathSelector().setTitle(i18n("schematics.add.title"))
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.schematic"), "*.litematic", "*.nbt", "*.schematic", "*.schem"))
+                .showMulti();
         if (files != null && !files.isEmpty()) {
             addFiles(files);
         }

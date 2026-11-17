@@ -215,15 +215,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                         javaVersionTextField,
                         GameSettings::customJavaVersionProperty);
 
-                javaCustomSelector = new FileSelector()
-                        .setChooserTitle(i18n("settings.game.java_directory.choose"));
+                javaCustomSelector = new FileSelector();
+                javaCustomSelector.getSelector().setTitle(i18n("settings.game.java_directory.choose"));
                 javaCustomOption = createJavaPayloadChoice(
                         i18n("settings.custom"),
                         pair(JavaVersionType.CUSTOM, null),
                         javaCustomSelector,
                         GameSettings::customJavaPathProperty);
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-                    javaCustomSelector.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("settings.game.java_directory"), "java.exe"));
+                    javaCustomSelector.getSelector().setExtensionFilters(new FileChooser.ExtensionFilter(i18n("settings.game.java_directory"), "java.exe"));
 
                 holder.add(FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), allJava -> {
                     var options = new ArrayList<RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>>>();
@@ -575,9 +575,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var runningDirPane = new LinePane();
                 runningDirPane.setTitle(i18n("settings.game.running_directory"));
                 {
-                    var runningDirSelector = new FileSelector()
-                            .setChooserTitle(i18n("settings.game.working_directory.choose"))
-                            .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
+                    var runningDirSelector = new FileSelector().setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
+                    runningDirSelector.getSelector().setTitle(i18n("settings.game.working_directory.choose"));
                     runningDirSelector.setPrefWidth(400);
                     runningDirPane.setRight(runningDirSelector);
                     bindRunningDirectoryProperty(runningDirPane, runningDirSelector.valueProperty(), runningDirSelector);

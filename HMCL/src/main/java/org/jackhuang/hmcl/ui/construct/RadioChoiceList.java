@@ -416,13 +416,13 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
 
         /// Sets the chooser title.
         public FileChoice<T> setChooserTitle(String chooserTitle) {
-            selector.setChooserTitle(chooserTitle);
+            selector.getSelector().setTitle(chooserTitle);
             return this;
         }
 
-        /// Adds an extension filter to the chooser.
-        public FileChoice<T> addExtensionFilter(FileChooser.ExtensionFilter filter) {
-            selector.getExtensionFilters().add(filter);
+        /// Sets the extension filters to the chooser.
+        public FileChoice<T> setExtensionFilters(FileChooser.ExtensionFilter... filter) {
+            selector.getSelector().setExtensionFilters(filter);
             return this;
         }
 

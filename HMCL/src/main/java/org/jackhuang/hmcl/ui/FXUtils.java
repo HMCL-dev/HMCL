@@ -1282,11 +1282,6 @@ public final class FXUtils {
         return String.format("#%02x%02x%02x", r, g, b);
     }
 
-    public static FileChooser.ExtensionFilter getImageExtensionFilter() {
-        return new FileChooser.ExtensionFilter(i18n("extension.png"),
-                IMAGE_EXTENSIONS.stream().map(ext -> "*." + ext).toArray(String[]::new));
-    }
-
     /**
      * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries,
      * window boundaries, and clipping containers like ScrollPane.

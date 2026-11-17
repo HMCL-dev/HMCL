@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.PathSelector;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.construct.URLValidator;
@@ -94,10 +95,9 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
     }
 
     private void onChooseLocalFile() {
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("modpack.choose"));
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip", "*.mrpack"));
-        Path selectedFile = Controllers.showOpenDialog(chooser);
+        Path selectedFile = new PathSelector().setTitle(i18n("modpack.choose"))
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip", "*.mrpack"))
+                .showOpen();
         if (selectedFile == null) {
             return;
         }

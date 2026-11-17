@@ -14,21 +14,22 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.addon.AddonLoader;
-import org.jackhuang.hmcl.addon.AddonProjectInfo;
-import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
-import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.addon.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
-import org.jackhuang.hmcl.addon.RemoteAddon;
-import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.SimpleMultimap;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -151,12 +152,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     public void saveAs(RemoteAddon.Version file) {
         String extension = StringUtils.substringAfterLast(file.file().filename(), '.');
-
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("button.save_as"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("file"), "*." + extension));
-        fileChooser.setInitialFileName(file.file().filename());
-        Path dest = Controllers.showSaveDialog(fileChooser);
+        Path dest = new PathSelector().setTitle(i18n("button.save_as"))
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("file"), "*." + extension))
+                .setInitialFileName(file.file().filename())
+                .showSave();
         if (dest == null) {
             return;
         }

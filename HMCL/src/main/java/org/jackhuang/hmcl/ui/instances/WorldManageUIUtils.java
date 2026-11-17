@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.PathSelector;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
@@ -55,11 +56,10 @@ public final class WorldManageUIUtils {
     }
 
     public static void export(World world, FileChannel sessionLockChannel) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("world.export.title"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
-        fileChooser.setInitialFileName(world.getWorldName() + ".zip");
-        Path file = Controllers.showSaveDialog(fileChooser);
+        Path file = new PathSelector().setTitle(i18n("world.export.title"))
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"))
+                .setInitialFileName(world.getWorldName() + ".zip")
+                .showSave();
         if (file == null) {
             return;
         }

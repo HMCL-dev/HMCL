@@ -3,21 +3,17 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.*;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.Scene;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
-import javafx.stage.Window;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.ui.PathSelector;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jsoup.internal.StringUtil;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
+@NotNullByDefault
 public class LineFileChooserButton extends LineButton {
     private static final String DEFAULT_STYLE_CLASS = "line-file-select-button";
 
@@ -38,170 +34,68 @@ public class LineFileChooserButton extends LineButton {
         return path.normalize().toString();
     }
 
-    @Override
-    public void fire() {
-        super.fire();
+    private final ObjectProperty<PathSelector> selector = new SimpleObjectProperty<>(this, "selector", new PathSelector());
 
-        Scene scene = this.getScene();
+    private final StringProperty location = new SimpleStringProperty(this, "location", "");
 
-        Window owner = scene != null ? scene.getWindow() : null; // TODO: Allow user to set owner stage
-        String windowTitle = getFileChooserTitle();
-
-        Path initialDirectory = null;
-        if (getLocation() != null) {
-            Path file;
-            try {
-                file = FileUtils.toAbsolute(Path.of(getLocation()));
-                if (Files.exists(file)) {
-                    if (Files.isRegularFile(file))
-                        initialDirectory = file.getParent();
-                    else if (Files.isDirectory(file))
-                        initialDirectory = file;
-                }
-            } catch (IllegalArgumentException e) {
-                LOG.warning("Failed to resolve path: " + getLocation());
-            }
-        }
-
-        Path path;
-        Type type = getType();
-        if (type == Type.OPEN_DIRECTORY) {
-            var directoryChooser = new DirectoryChooser();
-            if (windowTitle != null)
-                directoryChooser.setTitle(windowTitle);
-            if (initialDirectory != null)
-                directoryChooser.setInitialDirectory(initialDirectory.toFile());
-
-            path = FileUtils.toPath(directoryChooser.showDialog(owner));
-        } else {
-            var fileChooser = new FileChooser();
-            if (windowTitle != null)
-                fileChooser.setTitle(windowTitle);
-            if (initialDirectory != null)
-                fileChooser.setInitialDirectory(initialDirectory.toFile());
-
-            if (extensionFilters != null)
-                fileChooser.getExtensionFilters().setAll(extensionFilters);
-
-            fileChooser.setInitialFileName(getInitialFileName());
-
-            path = FileUtils.toPath(switch (type) {
-                case OPEN_FILE -> fileChooser.showOpenDialog(owner);
-                case SAVE_FILE -> fileChooser.showSaveDialog(owner);
-                default -> throw new AssertionError("Unknown Type: " + type);
-            });
-        }
-
-        if (path != null) {
-            setLocation(processPath(path));
-        }
+    {
+        trailingTextProperty().bind(location);
     }
-
-    private final StringProperty location = new StringPropertyBase() {
-        @Override
-        public Object getBean() {
-            return LineFileChooserButton.this;
-        }
-
-        @Override
-        public String getName() {
-            return "location";
-        }
-
-        @Override
-        protected void invalidated() {
-            setTrailingText(get());
-        }
-    };
 
     public StringProperty locationProperty() {
         return location;
     }
 
-    public String getLocation() {
-        return locationProperty().get();
-    }
+    private @Nullable ObjectProperty<PathSelector.Type> type = null;
 
     public void setLocation(String location) {
         locationProperty().set(location);
     }
 
-    private final StringProperty fileChooserTitle = new SimpleStringProperty(this, "fileChooserTitle");
+    private @Nullable BooleanProperty convertToRelativePath;
 
-    public StringProperty fileChooserTitleProperty() {
-        return fileChooserTitle;
+    public String getLocation() {
+        return locationProperty().get();
     }
 
-    public String getFileChooserTitle() {
-        return fileChooserTitleProperty().get();
+    @Override
+    public void fire() {
+        super.fire();
+
+        if (!StringUtil.isBlank(getLocation())) {
+            FileUtils.tryGetPath(getLocation()).ifPresent(getSelector()::setInitialDirectoryFromExisting);
+        }
+
+        Path path = getSelector().show(getType());
+        if (path != null) {
+            setLocation(processPath(path));
+        }
     }
 
-    public void setFileChooserTitle(String fileChooserTitle) {
-        fileChooserTitleProperty().set(fileChooserTitle);
-    }
-
-    private ObjectProperty<Type> type;
-
-    public ObjectProperty<Type> typeProperty() {
+    public ObjectProperty<PathSelector.Type> typeProperty() {
         if (type == null) {
-            type = new SimpleObjectProperty<>(this, "type", Type.OPEN_FILE);
+            type = new SimpleObjectProperty<>(this, "type", PathSelector.Type.OPEN);
         }
         return type;
     }
 
-    public Type getType() {
-        return type != null ? type.get() : Type.OPEN_FILE;
+    public PathSelector.Type getType() {
+        return type != null ? type.get() : PathSelector.Type.OPEN;
     }
 
-    public void setType(Type type) {
+    public void setType(PathSelector.Type type) {
         typeProperty().set(type);
     }
 
-    private ObjectProperty<String> initialFileName;
-
-    public final ObjectProperty<String> initialFileNameProperty() {
-        if (initialFileName == null)
-            initialFileName = new SimpleObjectProperty<>(this, "initialFileName");
-
-        return initialFileName;
+    public PathSelector getSelector() {
+        return selector.get();
     }
-
-    public final String getInitialFileName() {
-        return initialFileName != null ? initialFileName.get() : null;
-    }
-
-    public final void setInitialFileName(String value) {
-        initialFileNameProperty().set(value);
-    }
-
-    private ObservableList<FileChooser.ExtensionFilter> extensionFilters;
-
-    public ObservableList<FileChooser.ExtensionFilter> getExtensionFilters() {
-        if (extensionFilters == null)
-            extensionFilters = FXCollections.observableArrayList();
-        return extensionFilters;
-    }
-
-    private BooleanProperty convertToRelativePath;
 
     public BooleanProperty convertToRelativePathProperty() {
         if (convertToRelativePath == null)
-            convertToRelativePath = new BooleanPropertyBase(false) {
-                @Override
-                public Object getBean() {
-                    return LineFileChooserButton.this;
-                }
-
-                @Override
-                public String getName() {
-                    return "convertToRelativePath";
-                }
-
+            convertToRelativePath = new SimpleBooleanProperty(this, "convertToRelativePath", false) {
                 @Override
                 protected void invalidated() {
-                    String location = getLocation();
-                    if (location == null)
-                        return;
                     try {
                         setLocation(processPath(FileUtils.toAbsolute(Path.of(getLocation()))));
                     } catch (IllegalArgumentException ignored) {
@@ -217,11 +111,5 @@ public class LineFileChooserButton extends LineButton {
 
     public void setConvertToRelativePath(boolean convertToRelativePath) {
         convertToRelativePathProperty().set(convertToRelativePath);
-    }
-
-    public enum Type {
-        OPEN_FILE,
-        OPEN_DIRECTORY,
-        SAVE_FILE
     }
 }

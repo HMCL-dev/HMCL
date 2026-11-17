@@ -95,11 +95,10 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     }
 
     void onAddJava() {
-        FileChooser chooser = new FileChooser();
+        PathSelector selector = new PathSelector().setTitle(i18n("settings.game.java_directory.choose"));
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe"));
-        chooser.setTitle(i18n("settings.game.java_directory.choose"));
-        Path file = Controllers.showOpenDialog(chooser);
+            selector.setExtensionFilters(new FileChooser.ExtensionFilter("Java", "java.exe"));
+        Path file = selector.showOpen();
         if (file != null) {
             JavaManager.getAddJavaTask(file).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {
