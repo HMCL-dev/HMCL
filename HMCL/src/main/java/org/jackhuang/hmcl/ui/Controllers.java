@@ -285,6 +285,7 @@ public final class Controllers {
         FXUtils.setIcon(stage);
         stage.titleProperty().bind(launcherTitleProperty());
         WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(stage);
+        MacOSNativeUtils.installApplicationName(stage);
     }
 
     /// Initializes the main application stage, scene graph, and background services.
