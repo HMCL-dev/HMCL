@@ -262,18 +262,15 @@ public final class MultiFileItem<T> extends VBox {
             return this;
         }
 
-        /// Sets the chooser title.
         public FileOption<T> setChooserTitle(String chooserTitle) {
             selector.getSelector().setTitle(chooserTitle);
             return this;
         }
 
-        /// Sets the extension filters to the chooser.
         public FileOption<T> setExtensionFilters(FileChooser.ExtensionFilter... filter) {
             selector.getSelector().setExtensionFilters(filter);
             return this;
         }
-
 
         @Override
         protected Node createItem(ToggleGroup group) {
