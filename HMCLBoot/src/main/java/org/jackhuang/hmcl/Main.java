@@ -10,6 +10,7 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
@@ -92,6 +93,16 @@ public final class Main {
         System.exit(1);
     }
 
+    /// Names the application HMCL instead of the main-class name on macOS.
+    ///
+    /// AWT reads `apple.awt.application.name` once, when the toolkit starts, so this must run before
+    /// any Swing dialog or the JavaFX launcher is shown. An explicit `-Dapple.awt.application.name` is preserved.
+    static void initMacApplicationName() {
+        String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        if (osName.startsWith("mac") || osName.startsWith("darwin"))
+            System.getProperties().putIfAbsent("apple.awt.application.name", "HMCL");
+    }
+
     private static void checkDirectoryPath() {
         String currentDir = System.getProperty("user.dir", "");
         String jarPath = getThisJarPath();
@@ -127,6 +138,7 @@ public final class Main {
     }
 
     public static void main(String[] args) throws Throwable {
+        initMacApplicationName();
         checkDirectoryPath();
         if (getJavaFeatureVersion(System.getProperty("java.version")) >= MINIMUM_JAVA_VERSION) {
             EntryPoint.main(args);

@@ -3,6 +3,10 @@
 package org.jackhuang.hmcl;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
+
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,5 +33,31 @@ public final class MainTest {
         assertEquals(-1, Main.getJavaFeatureVersion("1.abc"));
         assertEquals(-1, Main.getJavaFeatureVersion(".1"));
         assertEquals(-1, Main.getJavaFeatureVersion("1111111111111111111111"));
+    }
+
+    @Test
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
+    public void testInitMacApplicationName() {
+        String property = "apple.awt.application.name";
+        String previous = System.getProperty(property);
+        try {
+            System.clearProperty(property);
+            Main.initMacApplicationName();
+            if (System.getProperty("os.name", "").toLowerCase(Locale.ROOT).startsWith("mac")) {
+                assertEquals("HMCL", System.getProperty(property));
+            } else {
+                assertNull(System.getProperty(property));
+            }
+
+            System.setProperty(property, "CustomApplicationName");
+            Main.initMacApplicationName();
+            assertEquals("CustomApplicationName", System.getProperty(property));
+        } finally {
+            if (previous == null) {
+                System.clearProperty(property);
+            } else {
+                System.setProperty(property, previous);
+            }
+        }
     }
 }
