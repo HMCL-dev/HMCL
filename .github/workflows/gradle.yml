@@ -44,7 +44,7 @@ jobs:
         cache-read-only: ${{ !matrix.cache-write || github.ref_name != github.event.repository.default_branch }}
     - name: Build with Gradle
       shell: bash
-      run: ${{ matrix.build-prefix }} ./gradlew build --no-daemon --parallel --stacktrace --configuration-cache
+      run: ${{ matrix.build-prefix }} ./gradlew build --no-daemon --parallel --stacktrace
       env:
         JAVA_TOOL_OPTIONS: ${{ matrix.java-tool-options }}
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
