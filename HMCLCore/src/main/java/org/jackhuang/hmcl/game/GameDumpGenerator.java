@@ -7,7 +7,7 @@ import com.sun.tools.attach.VirtualMachine;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.io.*;
 import java.nio.CharBuffer;
@@ -147,7 +147,7 @@ public final class GameDumpGenerator {
     }
 
     private static void execute(VirtualMachine vm, String command, Appendable target) throws IOException {
-        try (Reader reader = new InputStreamReader(executeJVMCommand(vm, command), OperatingSystem.NATIVE_CHARSET)) {
+        try (Reader reader = new InputStreamReader(executeJVMCommand(vm, command), SystemInfo.NATIVE_CHARSET)) {
             char[] data = new char[256];
             CharBuffer cb = CharBuffer.wrap(data);
             int len;

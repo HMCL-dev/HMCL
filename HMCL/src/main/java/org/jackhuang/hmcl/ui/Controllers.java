@@ -53,6 +53,7 @@ import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -301,7 +302,7 @@ public final class Controllers {
                 LOG.info("Enable sub-pixel antialiasing");
                 System.getProperties().put("prism.lcdtext", "true");
             } else if ("gray".equalsIgnoreCase(fontAntiAliasing)
-                    || OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Screen.getPrimary().getOutputScaleX() > 1) {
+                    || SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS && Screen.getPrimary().getOutputScaleX() > 1) {
                 LOG.info("Disable sub-pixel antialiasing");
                 System.getProperties().put("prism.lcdtext", "false");
             }
@@ -328,20 +329,20 @@ public final class Controllers {
 
         StyleSheets.init(mainScene);
 
-        if (!Architecture.SYSTEM_ARCH.isX86() && SettingsManager.userState().platformPromptVersionProperty().get() < 1) {
+        if (!SystemInfo.SYSTEM_ARCH.isX86() && SettingsManager.userState().platformPromptVersionProperty().get() < 1) {
             Runnable continueAction = () -> {
                 UserState userState = userState();
                 userState.platformPromptVersionProperty().set(1);
             };
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+            if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS && SystemInfo.SYSTEM_ARCH == Architecture.ARM64) {
                 continueAction.run();
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+            } else if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS && SystemInfo.SYSTEM_ARCH == Architecture.ARM64) {
                 Controllers.dialog(i18n("fatal.unsupported_platform.windows_arm64"), null, MessageType.INFO, continueAction);
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX &&
-                    (Architecture.SYSTEM_ARCH == Architecture.LOONGARCH64
-                            || Architecture.SYSTEM_ARCH == Architecture.LOONGARCH64_OW
-                            || Architecture.SYSTEM_ARCH == Architecture.MIPS64EL)) {
+            } else if (SystemInfo.CURRENT_OS == OperatingSystem.LINUX &&
+                    (SystemInfo.SYSTEM_ARCH == Architecture.LOONGARCH64
+                            || SystemInfo.SYSTEM_ARCH == Architecture.LOONGARCH64_OW
+                            || SystemInfo.SYSTEM_ARCH == Architecture.MIPS64EL)) {
                 Controllers.dialog(i18n("fatal.unsupported_platform.loongarch"), null, MessageType.INFO, continueAction);
             } else {
                 Controllers.dialog(i18n("fatal.unsupported_platform"), null, MessageType.WARNING, continueAction);

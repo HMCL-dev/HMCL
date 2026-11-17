@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.windows.IPropertyStore;
 import org.jackhuang.hmcl.util.platform.windows.Shell32;
 import org.jackhuang.hmcl.util.platform.windows.WinTypes;
@@ -65,7 +66,7 @@ public final class WindowsNativeUtils {
     ///
     /// @param stage the primary launcher stage
     public static void installWindowsAppUserModelRelaunchProperties(Stage stage) {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS)
             return;
         if (!NativeUtils.USE_JNA || Shell32.INSTANCE == null)
             return;
