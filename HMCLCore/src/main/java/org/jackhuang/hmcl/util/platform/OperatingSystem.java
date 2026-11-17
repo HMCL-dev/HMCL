@@ -100,6 +100,9 @@ public enum OperatingSystem {
      */
     public static final String SYSTEM_NAME;
 
+    /// The current operating system name for user interfaces.
+    public static final String SYSTEM_DISPLAY_NAME;
+
     /// The version of current operating system.
     ///
     /// If [#CURRENT_OS] is [#WINDOWS], then [#SYSTEM_VERSION] must be an instance of [OSVersion.Windows].
@@ -246,6 +249,7 @@ public enum OperatingSystem {
         }
         OS_RELEASE_NAME = osRelease.get("NAME");
         OS_RELEASE_PRETTY_NAME = osRelease.get("PRETTY_NAME");
+        SYSTEM_DISPLAY_NAME = CURRENT_OS == MACOS ? "macOS" : SYSTEM_NAME;
     }
 
     public static OperatingSystem parseOSName(String name) {
