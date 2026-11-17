@@ -1454,6 +1454,24 @@
     -fx-spacing: 10px;
 }
 
+.feedback-links .m3-list-item {
+    -fx-background-color: -m3-color-surface;
+    -fx-background-radius: 16px;
+    -fx-cursor: hand;
+}
+
+.feedback-links .m3-list-item.group-start {
+    -fx-background-radius: 16px 16px 4px 4px;
+}
+
+.feedback-links .m3-list-item.group-end {
+    -fx-background-radius: 4px 4px 16px 16px;
+}
+
+.feedback-links .m3-list-item .m3-list-item-container {
+    -fx-background-color: transparent;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Combo Box                                                                *
