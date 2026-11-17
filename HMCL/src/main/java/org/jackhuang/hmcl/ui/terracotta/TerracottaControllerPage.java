@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.terracotta;
 
-import com.jfoenix.controls.JFXProgressBar;
 import javafx.beans.binding.Binding;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -22,6 +21,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
+import org.glavo.m3fx.controls.M3ProgressBar;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -500,7 +500,7 @@ public class TerracottaControllerPage extends StackPane {
                 {
                     Label status = new Label();
                     status.textProperty().bind(statusProperty);
-                    JFXProgressBar progress = new JFXProgressBar();
+                    M3ProgressBar progress = new M3ProgressBar();
                     progress.progressProperty().bind(progressProperty);
                     progress.setMaxWidth(Double.MAX_VALUE);
 

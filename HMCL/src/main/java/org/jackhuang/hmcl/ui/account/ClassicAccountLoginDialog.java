@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXPasswordField;
-import com.jfoenix.controls.JFXProgressBar;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -12,6 +11,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3ProgressBar;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
@@ -34,16 +34,17 @@ public class ClassicAccountLoginDialog extends StackPane {
 
     private final JFXPasswordField txtPassword;
     private final Label lblCreationWarning = new Label();
-    private final JFXProgressBar progressBar;
+    /// Indicates that password authentication is in progress.
+    private final M3ProgressBar progressBar = new M3ProgressBar();
 
     public ClassicAccountLoginDialog(ClassicAccount oldAccount, Consumer<AuthInfo> success, Runnable failed) {
         this.oldAccount = oldAccount;
         this.success = success;
         this.failed = failed;
 
-        progressBar = new JFXProgressBar();
         StackPane.setAlignment(progressBar, Pos.TOP_CENTER);
         progressBar.setVisible(false);
+        progressBar.setMouseTransparent(true);
 
         JFXDialogLayout dialogLayout = new JFXDialogLayout();
 
@@ -77,7 +78,7 @@ public class ClassicAccountLoginDialog extends StackPane {
             dialogLayout.setActions(lblCreationWarning, cancelButton, acceptButton);
         }
 
-        getChildren().setAll(dialogLayout);
+        getChildren().setAll(dialogLayout, progressBar);
 
         onEscPressed(this, this::onCancel);
     }

@@ -3,11 +3,8 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXProgressBar;
 import javafx.application.Platform;
 import javafx.beans.WeakListener;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -15,9 +12,9 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import org.glavo.m3fx.controls.M3ProgressBar;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -199,7 +196,8 @@ public final class TaskListPane extends StackPane {
         private final StackPane left = new StackPane();
         private final Label title = new Label();
         private final Label message = new Label();
-        private final JFXProgressBar bar = new JFXProgressBar();
+        /// Displays the progress of the task currently assigned to this cell.
+        private final M3ProgressBar bar = new M3ProgressBar();
 
         private WeakReference<StageNode> prevStageNodeRef;
         private StatusChangeListener statusChangeListener;
@@ -217,14 +215,7 @@ public final class TaskListPane extends StackPane {
             BorderPane.setAlignment(title, Pos.CENTER_LEFT);
             pane.setCenter(title);
 
-            DoubleBinding barWidth = Bindings.createDoubleBinding(() -> {
-                Insets padding = pane.getPadding();
-                Insets insets = pane.getInsets();
-                return pane.getWidth() - padding.getLeft() - padding.getRight() - insets.getLeft() - insets.getRight();
-            }, pane.paddingProperty(), pane.widthProperty());
-            bar.minWidthProperty().bind(barWidth);
-            bar.prefWidthProperty().bind(barWidth);
-            bar.maxWidthProperty().bind(barWidth);
+            bar.setMaxWidth(Double.MAX_VALUE);
             BorderPane.setMargin(bar, PROGRESS_BAR_MARGIN);
 
             setGraphic(pane);
@@ -242,7 +233,8 @@ public final class TaskListPane extends StackPane {
             title.textProperty().unbind();
             message.textProperty().unbind();
 
-            bar.setSmoothProgress(false);
+            // Snap to the new task before animating subsequent progress updates.
+            bar.setAnimationsEnabled(false);
             bar.progressProperty().unbind();
             StageNode prevStageNode;
             if (prevStageNodeRef != null && (prevStageNode = prevStageNodeRef.get()) != null)
@@ -260,7 +252,7 @@ public final class TaskListPane extends StackPane {
             } else if (item instanceof StageNode stageNode) {
                 title.textProperty().bind(stageNode.title);
                 message.setText("");
-                bar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+                bar.setProgress(M3ProgressBar.INDETERMINATE_PROGRESS);
 
                 pane.setPadding(Insets.EMPTY);
                 pane.setLeft(left);
@@ -275,14 +267,14 @@ public final class TaskListPane extends StackPane {
             } else { // item == null
                 title.setText("");
                 message.setText("");
-                bar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+                bar.setProgress(M3ProgressBar.INDETERMINATE_PROGRESS);
                 pane.setPadding(Insets.EMPTY);
                 pane.setLeft(null);
                 pane.setRight(null);
                 pane.setBottom(null);
             }
 
-            bar.setSmoothProgress(true);
+            bar.setAnimationsEnabled(true);
         }
     }
 
