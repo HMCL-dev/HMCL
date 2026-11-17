@@ -114,7 +114,7 @@ public final class EntryPoint {
     ///
     /// An explicit `-Dapple.awt.application.name` is preserved. Other operating systems are unchanged.
     static void installMacApplicationName() {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+        if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS)
             System.getProperties().putIfAbsent("apple.awt.application.name", Metadata.NAME);
     }
 

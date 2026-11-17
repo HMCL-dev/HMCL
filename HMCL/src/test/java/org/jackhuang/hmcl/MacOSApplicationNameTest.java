@@ -5,6 +5,7 @@ package org.jackhuang.hmcl;
 import com.sun.jna.Pointer;
 import org.jackhuang.hmcl.ui.MacOSNativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.macos.ObjectiveCRuntime;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ final class MacOSApplicationNameTest {
         try {
             System.clearProperty(APPLICATION_NAME_PROPERTY);
             EntryPoint.installMacApplicationName();
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
                 assertEquals(Metadata.NAME, System.getProperty(APPLICATION_NAME_PROPERTY));
             } else {
                 assertNull(System.getProperty(APPLICATION_NAME_PROPERTY));
@@ -57,7 +58,7 @@ final class MacOSApplicationNameTest {
     /// Updates NSProcessInfo.processName and restores the previous name.
     @Test
     void setApplicationNameUpdatesProcessName() {
-        assumeTrue(OperatingSystem.CURRENT_OS == OperatingSystem.MACOS);
+        assumeTrue(SystemInfo.CURRENT_OS == OperatingSystem.MACOS);
         assumeTrue(MacOSNativeUtils.isSupported());
 
         String previous = currentProcessName();
