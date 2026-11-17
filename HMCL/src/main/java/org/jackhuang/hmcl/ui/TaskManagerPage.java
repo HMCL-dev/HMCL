@@ -28,7 +28,7 @@ public final class TaskManagerPage extends DecoratorAnimatedPage implements Deco
         TabController tabController = new TabController(transitionPane, tasksTab);
         tabController.selectTab(tasksTab);
 
-        getSidebar().addNavigationDrawerTab(tabController, tasksTab, i18n("task.list"), SVG.LIST_ALT);
+        getSidebar().addNavigationDrawerTab(tabController, tasksTab, i18n("task.list"), SVG.LIST_ALT, false);
         setContent(transitionPane);
     }
 
