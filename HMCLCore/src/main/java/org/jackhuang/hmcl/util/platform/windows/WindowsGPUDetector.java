@@ -39,6 +39,9 @@ final class WindowsGPUDetector {
             // MuMu Virtual Display Adapter
             "Root\\MuMuIddDriver",
 
+            // Zako Virtual Display Adapter
+            "Root\\ZakoVDD",
+
             // Honor Virtual Display Device
             "IndirectDSP\\VirtualDisplayDriver",
 

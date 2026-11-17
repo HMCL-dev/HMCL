@@ -11,7 +11,6 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.SetChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -37,6 +36,7 @@ import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.ThemeColorType;
@@ -709,7 +709,7 @@ public final class Themes {
                 @Nullable ThemePackResource imageResource = resolvedBackground.imageResource();
                 if (imageResource != null) {
                     try {
-                        image = FXUtils.loadImage(imageResource.openStream(), imageResource.name());
+                        image = ImageLoaders.DEFAULT.load(imageResource.openStream(), imageResource.name());
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -944,9 +944,9 @@ public final class Themes {
             String url,
             @Nullable NetworkBackgroundImageCachePolicy cachePolicy) throws Exception {
         if (cachePolicy == NetworkBackgroundImageCachePolicy.DISABLED) {
-            return FXUtils.loadImage(WebURL.parseBrowserInput(url));
+            return ImageLoaders.DEFAULT.load(WebURL.parseBrowserInput(url));
         }
-        return FXUtils.loadImage(new CacheFileTask(url).run());
+        return ImageLoaders.DEFAULT.load(new CacheFileTask(url).run());
     }
 
     /// Creates a JavaFX paint background with a separately stored node opacity.
@@ -1054,7 +1054,7 @@ public final class Themes {
         }
 
         try {
-            return FXUtils.loadImage(path);
+            return ImageLoaders.DEFAULT.load(path);
         } catch (Exception e) {
             LOG.warning("Couldn't load background image", e);
             return null;
@@ -1102,20 +1102,6 @@ public final class Themes {
             settings().themeBrightnessModeProperty(),
             FXUtils.DARK_MODE != null ? FXUtils.DARK_MODE : settings().themeBrightnessModeProperty()
     );
-
-    /// The title text fill derived from the current color scheme.
-    private static final ObjectBinding<Color> titleFill = Bindings.createObjectBinding(
-            () -> titleBarTransparent.get()
-                    ? getColorScheme().getOnSurface()
-                    : getColorScheme().getOnPrimaryContainer(),
-            colorSchemeProperty(),
-            titleBarTransparent
-    );
-
-    /// Returns the title text fill property derived from the current color scheme.
-    public static ObservableValue<Color> titleFillProperty() {
-        return titleFill;
-    }
 
     /// Returns whether the title area should be transparent after applying launcher and theme settings.
     public static BooleanBinding titleBarTransparentProperty() {

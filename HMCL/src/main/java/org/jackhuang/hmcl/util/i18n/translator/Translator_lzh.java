@@ -38,7 +38,7 @@ public class Translator_lzh extends Translator {
                 : String.valueOf(digit);
     }
 
-    private static String numberToString(int number) {
+    public static String numberToString(int number) {
         return number >= 0 && number < NUMBERS.length ? NUMBERS[number] : String.valueOf(number);
     }
 

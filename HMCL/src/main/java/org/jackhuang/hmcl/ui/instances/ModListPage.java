@@ -8,7 +8,6 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -26,6 +25,9 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.AddonLoader;
@@ -42,6 +44,7 @@ import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
@@ -57,7 +60,6 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
@@ -68,8 +70,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
@@ -93,6 +93,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     private @Nullable HMCLGameInstance gameInstance;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
+
+    private long modLoadRequestId;
 
     /// Creates a mod list that reloads when `instanceContext` changes.
     ///
@@ -123,6 +125,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     public void refresh() {
+        if (isLoading()) return;
+
         loadMods(modManager);
     }
 
@@ -136,12 +140,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     private void loadMods(ModManager modManager) {
+        long requestId = ++modLoadRequestId;
+
         setLoading(true);
 
         if (this.modManager != modManager) {
             getItems().clear();
         }
         this.modManager = modManager;
+
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
             try {
@@ -153,20 +160,23 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
-            if (this.modManager != modManager) {
+            if (this.modManager != modManager || requestId != modLoadRequestId) {
                 return;
             }
 
-            supportedLoaders.clear();
-            supportedLoaders.addAll(modManager.getSupportedLoaders());
+            try {
+                supportedLoaders.clear();
+                supportedLoaders.addAll(modManager.getSupportedLoaders());
 
-            if (exception == null) {
-                getItems().setAll(list);
-            } else {
-                LOG.warning("Failed to load mods", exception);
-                getItems().clear();
+                if (exception == null) {
+                    getItems().setAll(list);
+                } else {
+                    LOG.warning("Failed to load mods", exception);
+                    getItems().clear();
+                }
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         }, Schedulers.javafx());
     }
 
@@ -390,9 +400,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
                 searchBar.getChildren().setAll(searchField, closeSearchBar);
 
+                JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh);
+                refreshButton.disableProperty().bind(skinnable.loadingProperty());
+
                 // Toolbar Normal
                 toolbarNormal.getChildren().setAll(
-                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                        refreshButton,
                         createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
@@ -588,49 +601,26 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
         }
 
+        /// Loads the icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            List<String> iconPaths = new ArrayList<>();
-
-            if (StringUtils.isNotBlank(this.localModFile.getLogoPath())) {
-                iconPaths.add(this.localModFile.getLogoPath());
-            }
-
-            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(this.localModFile.getFile())) {
-                for (String path : iconPaths) {
-                    Path iconPath = fs.getPath(path);
-                    if (Files.exists(iconPath)) {
-                        Image image = FXUtils.loadImage(iconPath, 80, 80, true, true);
-                        if (!image.isError() && image.getWidth() > 0 && image.getHeight() > 0 &&
-                                Math.abs(image.getWidth() - image.getHeight()) < 1) {
-                            return image;
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                LOG.warning("Failed to load mod icons", e);
-            }
-
-            return getDefaultIcon();
+            Image icon = localModFile.loadIcon(ImageLoaders.DEFAULT);
+            return FXUtils.isValidIcon(icon) ? icon : getDefaultIcon();
         }
     }
 
+    /// Displays mod metadata with a scrollable description.
     private static final class ModInfoDialog extends JFXDialogLayout {
 
+        /// Creates a dialog whose description viewport follows its content and the window height.
         ModInfoDialog(ModInfoObject modInfo) {
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
             titleContainer.setPadding(new Insets(0, 0, 12, 0));
 
-            DoubleBinding widthBinding = Controllers.getDecorator().contentWidthProperty().multiply(0.7);
-            prefWidthProperty().bind(widthBinding);
-            maxWidthProperty().bind(widthBinding);
-
             var imageContainer = new ImageContainer(40);
             titleContainer.setAlignment(Pos.CENTER_LEFT);
             modInfo.iconCache.attachValue(imageContainer.imageProperty(), null);
 
-            TwoLineListItem title = new TwoLineListItem();
-            title.getTitleLabel().setWrapText(true);
             String displayName = modInfo.getModInfo().getName();
             if (modInfo.getProjectInfo() != null && I18n.isUseChinese()) {
                 String chineseName = modInfo.getProjectInfo().mainName();
@@ -639,7 +629,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         displayName = chineseName + " (" + displayName + ")";
                 }
             }
-            title.setTitle(displayName);
+            Text titleText = new Text(displayName);
+            TextFlow title = new TextFlow(titleText);
+            title.getStyleClass().add("title");
 
             StringJoiner subtitle = new StringJoiner("\n");
             subtitle.add(i18n("archive.file.name") + ": " + FileUtils.getName(modInfo.getModInfo().getFile()));
@@ -652,9 +644,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
                 subtitle.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
             }
-            title.setSubtitle(subtitle.toString());
+            Label subtitleLabel = new Label(subtitle.toString());
+            subtitleLabel.getStyleClass().add("subtitle");
+            subtitleLabel.setWrapText(true);
 
-            titleContainer.getChildren().setAll(imageContainer, title);
+            VBox details = new VBox(title, subtitleLabel);
+            details.getStyleClass().add("two-line-list-item");
+            details.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(details, Priority.ALWAYS);
+            titleContainer.getChildren().setAll(imageContainer, details);
             setHeading(titleContainer);
 
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
@@ -662,18 +660,18 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             FXUtils.copyOnDoubleClick(description);
 
             ScrollPane descriptionPane = new ScrollPane(description);
-            FXUtils.smoothScrolling(descriptionPane);
+            ScrollUtils.installSmoothScrolling(descriptionPane);
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
-            description.heightProperty().addListener((obs, oldVal, newVal) -> {
-                double maxHeight = Controllers.getDecorator().contentHeightProperty().get() * 0.5;
-                double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
-                descriptionPane.setPrefViewportHeight(targetHeight);
-            });
+            // Use the wrapped content height to request a readable viewport within the dialog size limit.
+            descriptionPane.prefViewportHeightProperty().bind(Bindings.min(
+                    description.heightProperty(),
+                    Controllers.getDecorator().contentHeightProperty().multiply(0.5)));
 
             setBody(descriptionPane);
 
+            Set<String> displayedLoaders = new LinkedHashSet<>();
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
                 for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
                         pair("addon.curseforge", CurseForgeRemoteAddonRepository.getInstance()),
@@ -691,7 +689,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                                     String tag = I18n.translateLoaderName(loader);
                                     if (tag != null) tags.add(tag);
                                 }
-                                title.addTagsIfNotExist(tags);
+                                for (String tag : tags) {
+                                    if (displayedLoaders.add(tag)) {
+                                        Label label = new Label(tag);
+                                        label.getStyleClass().add("tag");
+                                        title.getChildren().addAll(new Text(" "), label);
+                                    }
+                                }
 
                                 button.setExternalLink(remoteAddon.pageUrl());
                                 button.setDisable(false);

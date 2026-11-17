@@ -115,7 +115,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(SettingsMap settings) {
-        settings.put("title", i18n("install.modpack.installation"));
+        settings.put("title", i18n("install.modpack.installation", settings.get(LocalModpackPage.MODPACK_NAME)));
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (ignored, exception, next) -> {
             if (exception instanceof ModpackCompletionException) {
