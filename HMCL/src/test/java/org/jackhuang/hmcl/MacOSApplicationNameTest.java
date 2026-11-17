@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl;
 
 import com.sun.jna.Pointer;
+import javafx.application.Platform;
 import org.jackhuang.hmcl.ui.MacOSNativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
@@ -12,6 +13,11 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.api.parallel.Resources;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -56,18 +62,44 @@ final class MacOSApplicationNameTest {
     }
 
     /// Updates NSProcessInfo.processName and restores the previous name.
+    ///
+    /// AppKit only allows main-menu changes on the main thread, which is the JavaFX application thread on macOS.
     @Test
-    void setApplicationNameUpdatesProcessName() {
+    void setApplicationNameUpdatesProcessName() throws Exception {
         assumeTrue(SystemInfo.CURRENT_OS == OperatingSystem.MACOS);
         assumeTrue(MacOSNativeUtils.isSupported());
+        JavaFXLauncher.start();
+        assumeTrue(JavaFXLauncher.isStarted());
 
-        String previous = currentProcessName();
         String sentinel = "HMCLApplicationNameTest";
+        String[] names = onFxThread(() -> {
+            String previous = currentProcessName();
+            try {
+                MacOSNativeUtils.setApplicationName(sentinel);
+                return new String[]{previous, currentProcessName()};
+            } finally {
+                MacOSNativeUtils.setApplicationName(previous);
+            }
+        });
+        assertEquals(sentinel, names[1]);
+    }
+
+    /// Runs `action` on the JavaFX application thread and returns its result.
+    private static <T> T onFxThread(Callable<T> action) throws Exception {
+        CompletableFuture<T> result = new CompletableFuture<>();
+        Platform.runLater(() -> {
+            try {
+                result.complete(action.call());
+            } catch (Throwable e) {
+                result.completeExceptionally(e);
+            }
+        });
         try {
-            MacOSNativeUtils.setApplicationName(sentinel);
-            assertEquals(sentinel, currentProcessName());
-        } finally {
-            MacOSNativeUtils.setApplicationName(previous);
+            return result.get(10, TimeUnit.SECONDS);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof Exception cause)
+                throw cause;
+            throw e;
         }
     }
 
