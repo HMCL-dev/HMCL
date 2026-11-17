@@ -103,7 +103,7 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
                     default -> true;
                 });
             else
-                return !Identifier.of(id).path().contains("/");
+                return Identifier.isValidNamespace(id); // '/' is not allowed
         }
         return false;
     }
@@ -124,7 +124,7 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
                 return List.<NBTStructureInfoObject>of();
 
             if (flattened) {
-                String structureDirName = dataVersion >= 3946 // 1.21 24w21a
+                String structureDirName = dataVersion >= 4774 // 26.1-snapshot-6
                         ? "structure"
                         : "structures";
 
@@ -199,8 +199,11 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
     private Path getPathFor(String id) {
         if (directory == null) throw new IllegalStateException("Unsupported world game version");
         if (flattened) {
+            String structureDirName = dataVersion >= 4774 // 26.1-snapshot-6
+                    ? "structure"
+                    : "structures";
             var identifier = Identifier.of(id);
-            return directory.resolve(identifier.namespace()).resolve("structures").resolve(identifier.path() + ".nbt");
+            return directory.resolve(identifier.namespace()).resolve(structureDirName).resolve(identifier.path() + ".nbt");
         } else {
             return directory.resolve(id + ".nbt");
         }
