@@ -239,7 +239,9 @@ public final class GameListCell extends ListCell<GameListItem> {
                 new IconedMenuItem(SVG.DELETE, i18n("instance.manage.remove"), item::remove, popup),
                 new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), item::export, popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.game"), item::browse, popup));
+                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.game"), item::browse, popup),
+                new MenuSeparator(),
+                new IconedMenuItem(SVG.SETTINGS, i18n("instance.manage.manage"), item::modifyGameSettings, popup));
         return popup;
     }
 }

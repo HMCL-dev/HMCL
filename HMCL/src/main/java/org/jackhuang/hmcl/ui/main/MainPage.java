@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -54,8 +53,7 @@ import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
@@ -111,7 +109,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             titleLabel.setRotate(180);
         }
         titleLabel.getStyleClass().add("jfx-decorator-title");
-        titleLabel.textFillProperty().bind(Themes.titleFillProperty());
         titleNode.getChildren().setAll(titleIcon, titleLabel);
 
         state.setValue(new State(null, titleNode, false, false, true));
@@ -352,7 +349,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Task<?> task = downloadProvider.getVersionsAsync(GameComponentType.GAME, null, false)
                 .thenApplyAsync(versions -> versions.stream()
                         .filter(it -> it.getVersionType() == RELEASE)
-                        .filter(it -> NativePatcher.checkSupportedStatus(it.getGameVersion(), Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION) != NativePatcher.SupportStatus.UNSUPPORTED)
+                        .filter(it -> NativePatcher.checkSupportedStatus(it.getGameVersion(), SystemInfo.SYSTEM_PLATFORM, SystemInfo.SYSTEM_VERSION) != NativePatcher.SupportStatus.UNSUPPORTED)
                         .sorted()
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))

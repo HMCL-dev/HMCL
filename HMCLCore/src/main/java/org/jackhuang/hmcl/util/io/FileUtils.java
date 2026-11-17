@@ -7,6 +7,7 @@ import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,7 +138,7 @@ public final class FileUtils {
 
     /// @see #isNameValid(OperatingSystem, String)
     public static boolean isNameValid(String name) {
-        return isNameValid(OperatingSystem.CURRENT_OS, name);
+        return isNameValid(SystemInfo.CURRENT_OS, name);
     }
 
     /// Returns true if the given name is a valid file name on the given operating system,
@@ -207,7 +208,7 @@ public final class FileUtils {
 
     /// @see #isNameValidForJar(OperatingSystem, String)
     public static boolean isNameValidForJar(String name) {
-        return isNameValidForJar(OperatingSystem.CURRENT_OS, name);
+        return isNameValidForJar(SystemInfo.CURRENT_OS, name);
     }
 
     /// Returns true if the given name is a valid jar file name on the given operating system,
@@ -243,7 +244,7 @@ public final class FileUtils {
     public static String readTextMaybeNativeEncoding(Path file) throws IOException {
         byte[] bytes = Files.readAllBytes(file);
 
-        if (OperatingSystem.NATIVE_CHARSET == UTF_8)
+        if (SystemInfo.NATIVE_CHARSET == UTF_8)
             return new String(bytes, UTF_8);
 
         EncodingDetector detector = EncodingDetector.MODERN_WEB;
@@ -253,7 +254,7 @@ public final class FileUtils {
         if (detectedCharset != null && (detectedCharset == UTF_8 || detectedCharset == US_ASCII))
             return new String(bytes, UTF_8);
         else
-            return new String(bytes, OperatingSystem.NATIVE_CHARSET);
+            return new String(bytes, SystemInfo.NATIVE_CHARSET);
     }
 
     public static void deleteDirectory(Path directory) throws IOException {
@@ -332,7 +333,7 @@ public final class FileUtils {
     }
 
     public static boolean hasKnownDesktop() {
-        if (!OperatingSystem.CURRENT_OS.isLinuxOrBSD())
+        if (!SystemInfo.isXdgPreferred())
             return true;
 
         String desktops = System.getenv("XDG_CURRENT_DESKTOP");
@@ -365,7 +366,7 @@ public final class FileUtils {
      * @return false if moveToTrash does not exist, or platform does not support Desktop.Action.MOVE_TO_TRASH
      */
     public static boolean moveToTrash(Path file) {
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && hasKnownDesktop()) {
+        if (SystemInfo.isXdgPreferred() && hasKnownDesktop()) {
             if (!Files.exists(file)) {
                 return false;
             }

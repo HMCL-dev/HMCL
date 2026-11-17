@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.ui.decorator;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /// Applies the main window's platform-specific maximization policy.
@@ -25,7 +26,7 @@ public final class WindowState {
     /// @return `false` for transparent stages on macOS; `true` otherwise
     public static boolean supportsMaximization(Stage stage) {
         // https://github.com/HMCL-dev/HMCL/issues/4290
-        return OperatingSystem.CURRENT_OS != OperatingSystem.MACOS || stage.getStyle() != StageStyle.TRANSPARENT;
+        return SystemInfo.CURRENT_OS != OperatingSystem.MACOS || stage.getStyle() != StageStyle.TRANSPARENT;
     }
 
     /// Returns whether the stage is maximized under the launcher's platform policy.
