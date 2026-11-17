@@ -18,6 +18,8 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
@@ -64,7 +66,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private AccountFactory<?> factory;
 
     private final Label lblErrorMessage;
-    private final JFXButton btnAccept;
+    private final M3Button btnAccept;
     private final SpinnerPane spinner;
     private final Node body;
     private final HBox actions;
@@ -113,16 +115,14 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             lblErrorMessage.setWrapText(true);
             lblErrorMessage.setMaxWidth(400);
 
-            btnAccept = new JFXButton(i18n("account.login"));
-            btnAccept.getStyleClass().add("dialog-accept");
+            btnAccept = new M3Button(i18n("account.login"), M3ButtonVariant.TEXT);
             btnAccept.setOnAction(e -> onAccept());
 
             spinner = new SpinnerPane();
             spinner.getStyleClass().add("small-spinner-pane");
             spinner.setContent(btnAccept);
 
-            JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
-            btnCancel.getStyleClass().add("dialog-cancel");
+            M3Button btnCancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             btnCancel.setOnAction(e -> onCancel());
             onEscPressed(this, btnCancel::fire);
 
@@ -575,7 +575,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     public static class DialogCharacterSelector extends JFXDialogLayout implements CharacterSelector {
 
         private final AdvancedListBox listBox = new AdvancedListBox();
-        private final JFXButton cancel = new JFXButton();
+        private final M3Button cancel = new M3Button("", M3ButtonVariant.TEXT);
 
         private final CountDownLatch latch = new CountDownLatch(1);
         private GameProfile selectedProfile = null;
@@ -585,7 +585,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             cancel.setText(i18n("button.cancel"));
             cancel.setOnAction(e -> latch.countDown());
-            cancel.getStyleClass().add("dialog-cancel");
 
             listBox.startCategory(i18n("account.choose").toUpperCase(Locale.ROOT));
 

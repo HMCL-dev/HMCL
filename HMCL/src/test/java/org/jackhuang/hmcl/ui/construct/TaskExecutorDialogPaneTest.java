@@ -209,7 +209,7 @@ final class TaskExecutorDialogPaneTest {
             ControlledExecutor executor = new ControlledExecutor();
             dialog.setExecutor(executor, false);
             executor.start();
-            @Nullable ButtonBase cancel = (ButtonBase) dialog.lookup(".dialog-cancel");
+            @Nullable M3Button cancel = (M3Button) dialog.lookup(".m3-button");
             assertNotNull(cancel);
             assertTrue(cancel.isDisabled());
             cancel.fire();
@@ -773,6 +773,55 @@ final class TaskExecutorDialogPaneTest {
             M3Dialog wrappedMessage = new MessageDialogBuilder("Long text ".repeat(100), "Title", MessageType.INFO).build();
             ScrollPane wrappedBody = assertInstanceOf(ScrollPane.class, wrappedMessage.getDialogPane().getContent());
             assertInstanceOf(Label.class, wrappedBody.getContent());
+            return true;
+        });
+    }
+
+    /// Keeps custom-content dialogs open on validation failure and closes only on success or cancellation.
+    @Test
+    void inputDialogMaterialButtonsPreserveSubmissionLifecycle() throws Exception {
+        onFxThread(() -> {
+            M3OverlayPane host = createDialogHost();
+            AtomicInteger submissions = new AtomicInteger();
+            InputDialogPane input = new InputDialogPane("Name", "Example", (value, handler) -> {
+                assertEquals("Example", value);
+                if (submissions.incrementAndGet() == 1)
+                    handler.reject("Try again");
+                else
+                    handler.resolve();
+            });
+            M3DialogHandle handle = host.showDialog(Controllers.createDialog(input));
+            host.applyCss();
+            host.layout();
+            SpinnerPane spinner = assertInstanceOf(SpinnerPane.class, input.getActions().getLast());
+            M3Button accept = assertInstanceOf(M3Button.class, spinner.getContent());
+            M3Button cancel = assertInstanceOf(M3Button.class, input.getActions().get(1));
+            assertEquals(M3ButtonVariant.TEXT, accept.getVariant());
+            assertEquals(M3ButtonVariant.TEXT, cancel.getVariant());
+
+            accept.setDisable(true);
+            accept.fire();
+            assertEquals(0, submissions.get());
+            accept.setDisable(false);
+            accept.fire();
+            assertTrue(handle.isShowing());
+            assertFalse(input.getCompletableFuture().isDone());
+            assertFalse(spinner.isLoading());
+            assertEquals("Try again", assertInstanceOf(Label.class, input.getActions().getFirst()).getText());
+
+            accept.requestFocus();
+            accept.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER,
+                    false, false, false, false));
+            assertEquals(2, submissions.get());
+            assertEquals("Example", input.getCompletableFuture().getNow(null));
+            assertFalse(handle.isShowing());
+
+            InputDialogPane cancelled = new InputDialogPane("Name", "Example", (value, handler) -> fail("Unexpected submission"));
+            M3DialogHandle cancelledHandle = host.showDialog(Controllers.createDialog(cancelled));
+            host.applyCss();
+            host.layout();
+            assertInstanceOf(M3Button.class, cancelled.getActions().get(1)).fire();
+            assertFalse(cancelledHandle.isShowing());
             return true;
         });
     }

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXSpinner;
 import io.nayuki.qrcodegen.QrCode;
@@ -16,6 +15,8 @@ import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.shape.SVGPath;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -56,7 +57,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     private TaskExecutor browserTaskExecutor;
     private TaskExecutor deviceTaskExecutor;
 
-    private final JFXButton btnLogin;
+    private final M3Button btnLogin;
     private final SpinnerPane loginButtonSpinner;
 
     public MicrosoftAccountLoginPane() {
@@ -85,15 +86,13 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
         onEscPressed(this, this::onCancel);
 
-        btnLogin = new JFXButton(i18n("account.login"));
-        btnLogin.getStyleClass().add("dialog-accept");
+        btnLogin = new M3Button(i18n("account.login"), M3ButtonVariant.TEXT);
 
         loginButtonSpinner = new SpinnerPane();
         loginButtonSpinner.getStyleClass().add("small-spinner-pane");
         loginButtonSpinner.setContent(btnLogin);
 
-        JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
-        btnCancel.getStyleClass().add("dialog-cancel");
+        M3Button btnCancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
         btnCancel.setOnAction(e -> onCancel());
 
         setActions(btnCancel, loginButtonSpinner);

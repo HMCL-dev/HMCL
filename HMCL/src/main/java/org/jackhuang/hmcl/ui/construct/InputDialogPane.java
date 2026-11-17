@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
@@ -10,6 +9,8 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FutureCallback;
 
@@ -24,7 +25,7 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
     private final JFXTextField textField;
     private final Label lblCreationWarning;
     private final SpinnerPane acceptPane;
-    private final JFXButton acceptButton;
+    private final M3Button acceptButton;
 
     public InputDialogPane(String text, String initialValue, FutureCallback<String> onResult, ValidatorBase... validators) {
         this(text, initialValue, onResult);
@@ -46,12 +47,10 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
 
         acceptPane = new SpinnerPane();
         acceptPane.getStyleClass().add("small-spinner-pane");
-        acceptButton = new JFXButton(i18n("button.ok"));
-        acceptButton.getStyleClass().add("dialog-accept");
+        acceptButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
         acceptPane.setContent(acceptButton);
 
-        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-        cancelButton.getStyleClass().add("dialog-cancel");
+        M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
 
         this.setActions(lblCreationWarning, cancelButton, acceptPane);
 

@@ -580,16 +580,6 @@
     -fx-fill: -m3-color-primary;
 }
 
-.dialog-accept {
-    -fx-text-fill: -monet-primary;
-    -fx-padding: 0.7em 0.8em;
-}
-
-.dialog-cancel {
-    -fx-text-fill: -monet-on-surface-variant;
-    -fx-padding: 0.7em 0.8em;
-}
-
 .task-executor-dialog-layout {
     -fx-background-radius: 4px;
     -fx-background-color: -monet-surface-container-high;

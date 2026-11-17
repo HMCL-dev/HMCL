@@ -26,6 +26,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.scene.text.Text;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.mod.LocalMod;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
@@ -670,8 +672,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                 }
 
                 {
-                    JFXButton okButton = new JFXButton();
-                    okButton.getStyleClass().add("dialog-accept");
+                    M3Button okButton = new M3Button("", M3ButtonVariant.TEXT);
                     okButton.setText(i18n("button.ok"));
                     okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
                     getActions().add(okButton);

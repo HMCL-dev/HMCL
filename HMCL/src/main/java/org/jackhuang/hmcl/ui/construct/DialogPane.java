@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.Label;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -17,7 +18,7 @@ public class DialogPane extends JFXDialogLayout {
     private final StringProperty title = new SimpleStringProperty();
     private final BooleanProperty valid = new SimpleBooleanProperty(true);
     protected final SpinnerPane acceptPane = new SpinnerPane();
-    protected final JFXButton cancelButton = new JFXButton();
+    protected final M3Button cancelButton = new M3Button("", M3ButtonVariant.TEXT);
     protected final Label warningLabel = new Label();
 
     public DialogPane() {
@@ -25,16 +26,14 @@ public class DialogPane extends JFXDialogLayout {
         titleLabel.textProperty().bind(title);
         setHeading(titleLabel);
 
-        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
+        M3Button acceptButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
         acceptButton.setOnAction(e -> onAccept());
         acceptButton.disableProperty().bind(valid.not());
-        acceptButton.getStyleClass().add("dialog-accept");
         acceptPane.getStyleClass().add("small-spinner-pane");
         acceptPane.setContent(acceptButton);
 
         cancelButton.setText(i18n("button.cancel"));
         cancelButton.setOnAction(e -> onCancel());
-        cancelButton.getStyleClass().add("dialog-cancel");
         onEscPressed(this, cancelButton::fire);
 
         setActions(warningLabel, cancelButton, acceptPane);

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -14,6 +13,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfo;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
@@ -541,10 +542,9 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXButton downloadButton = null;
+            @Nullable M3Button downloadButton = null;
             if (selfPage.callback != null) {
-                downloadButton = new JFXButton(type == RemoteAddon.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
-                downloadButton.getStyleClass().add("dialog-accept");
+                downloadButton = new M3Button(type == RemoteAddon.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"), M3ButtonVariant.TEXT);
                 downloadButton.setOnAction(e -> {
                     if (type == RemoteAddon.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                         fireEvent(new DialogCloseEvent());
@@ -553,8 +553,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 });
             }
 
-            JFXButton saveAsButton = new JFXButton(i18n("mods.save_as"));
-            saveAsButton.getStyleClass().add("dialog-accept");
+            M3Button saveAsButton = new M3Button(i18n("mods.save_as"), M3ButtonVariant.TEXT);
             saveAsButton.setOnAction(e -> {
                 if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                     fireEvent(new DialogCloseEvent());
@@ -562,8 +561,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 selfPage.saveAs(version);
             });
 
-            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-            cancelButton.getStyleClass().add("dialog-cancel");
+            M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             if (downloadButton == null) {
@@ -683,8 +681,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXButton closeButton = new JFXButton(i18n("button.ok"));
-            closeButton.getStyleClass().add("dialog-accept");
+            M3Button closeButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
             closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             setActions(closeButton);

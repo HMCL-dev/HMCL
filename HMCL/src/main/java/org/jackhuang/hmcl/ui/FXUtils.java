@@ -43,6 +43,8 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.StyleSheets;
@@ -1502,12 +1504,10 @@ public final class FXUtils {
             }
             setBody(body);
 
-            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-            cancelButton.getStyleClass().add("dialog-cancel");
+            M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
-            JFXButton okButton = new JFXButton(i18n("button.ok"));
-            okButton.getStyleClass().add("dialog-accept");
+            M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
             okButton.setOnAction(e -> {
                 if (onConfirm != null) onConfirm.accept(Pair.pair(fromPicker.getValue(), toPicker.getValue()));
                 fireEvent(new DialogCloseEvent());

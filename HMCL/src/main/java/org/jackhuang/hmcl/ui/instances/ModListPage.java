@@ -30,6 +30,8 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -728,8 +730,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 getActions().add(mcmodButton);
             }
 
-            JFXButton okButton = new JFXButton();
-            okButton.getStyleClass().add("dialog-accept");
+            M3Button okButton = new M3Button("", M3ButtonVariant.TEXT);
             okButton.setText(i18n("button.ok"));
             okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
             getActions().add(okButton);

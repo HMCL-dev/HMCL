@@ -22,6 +22,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.modpack.ModpackFile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -285,8 +287,7 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
             pageButton.setOnAction(e -> FXUtils.openLink(addon.pageUrl()));
             getActions().add(pageButton);
 
-            JFXButton okButton = new JFXButton();
-            okButton.getStyleClass().add("dialog-accept");
+            M3Button okButton = new M3Button("", M3ButtonVariant.TEXT);
             okButton.setText(i18n("button.ok"));
             okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
             getActions().add(okButton);

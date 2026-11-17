@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
@@ -15,6 +14,8 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
@@ -223,8 +224,7 @@ public class OfflineAccountSkinPane extends StackPane {
             }
         });
 
-        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
-        acceptButton.getStyleClass().add("dialog-accept");
+        M3Button acceptButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
         acceptButton.setOnAction(e -> {
             account.setSkin(getSkin());
             fireEvent(new DialogCloseEvent());
@@ -232,8 +232,7 @@ public class OfflineAccountSkinPane extends StackPane {
 
         JFXHyperlink littleSkinLink = new JFXHyperlink(i18n("account.skin.type.little_skin"));
         littleSkinLink.setOnAction(e -> FXUtils.openLink("https://littleskin.cn/"));
-        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-        cancelButton.getStyleClass().add("dialog-cancel");
+        M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 

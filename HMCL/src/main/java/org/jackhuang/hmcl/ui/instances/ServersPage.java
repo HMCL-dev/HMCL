@@ -23,6 +23,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.image.ImageLoaders;
@@ -460,8 +462,8 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         private final JFXTextField serverIpField = new JFXTextField();
         private final JFXComboBox<Server.ServerPackStatus> serverPackStatusField = new JFXComboBox<>();
 
-        private final JFXButton btnAccept = new JFXButton();
-        private final JFXButton btnCancel = new JFXButton();
+        private final M3Button btnAccept = new M3Button("", M3ButtonVariant.TEXT);
+        private final M3Button btnCancel = new M3Button("", M3ButtonVariant.TEXT);
         private final SpinnerPane spinner = new SpinnerPane();
 
         public EditServerDialog(Type type, @Nullable Server reference, Consumer<Server> handleCallback) {
@@ -586,7 +588,6 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 case EDIT -> i18n("server.manage.edit.accept");
                 case ADD -> i18n("server.manage.add.accept");
             });
-            btnAccept.getStyleClass().add("dialog-accept");
             btnAccept.disableProperty().bind(new BooleanBinding() {
                 {
                     bind(serverIpField.textProperty());
@@ -599,7 +600,6 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             });
 
             btnCancel.setText(i18n("button.cancel"));
-            btnCancel.getStyleClass().add("dialog-cancel");
             onEscPressed(this, btnCancel::fire);
 
             spinner.getStyleClass().add("small-spinner-pane");

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.KeyFrame;
@@ -398,15 +397,13 @@ public final class Controllers {
             agreementPane.setBody(new Label(i18n("launcher.agreement.hint")));
             JFXHyperlink agreementLink = new JFXHyperlink(i18n("launcher.agreement"));
             agreementLink.setExternalLink(Metadata.EULA_URL);
-            JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
-            yesButton.getStyleClass().add("dialog-accept");
+            M3Button yesButton = new M3Button(i18n("launcher.agreement.accept"), M3ButtonVariant.TEXT);
             yesButton.setOnAction(e -> {
                 UserState userState = userState();
                 userState.agreementVersionProperty().set(1);
                 agreementPane.fireEvent(new DialogCloseEvent());
             });
-            JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));
-            noButton.getStyleClass().add("dialog-cancel");
+            M3Button noButton = new M3Button(i18n("launcher.agreement.decline"), M3ButtonVariant.TEXT);
             noButton.setOnAction(e -> javafx.application.Platform.exit());
             agreementPane.setActions(agreementLink, noButton, yesButton);
             Controllers.dialog(agreementPane);

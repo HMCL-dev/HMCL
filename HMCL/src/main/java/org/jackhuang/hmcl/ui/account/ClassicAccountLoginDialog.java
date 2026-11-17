@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXPasswordField;
 import com.jfoenix.controls.JFXProgressBar;
@@ -11,6 +10,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
@@ -67,13 +68,11 @@ public class ClassicAccountLoginDialog extends StackPane {
         }
 
         {
-            JFXButton acceptButton = new JFXButton(i18n("button.ok"));
+            M3Button acceptButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
             acceptButton.setOnAction(e -> onAccept());
-            acceptButton.getStyleClass().add("dialog-accept");
 
-            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+            M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             cancelButton.setOnAction(e -> onCancel());
-            cancelButton.getStyleClass().add("dialog-cancel");
 
             dialogLayout.setActions(lblCreationWarning, cancelButton, acceptButton);
         }

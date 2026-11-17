@@ -18,6 +18,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.BackgroundType;
@@ -358,23 +360,20 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
                 else head.setSubtitle((int) image.getWidth() + " * " + (int) image.getHeight());
             }
 
-            JFXButton setAsBgButton = new JFXButton(i18n("screenshots.set_as_bg"));
-            setAsBgButton.getStyleClass().add("dialog-accept");
+            M3Button setAsBgButton = new M3Button(i18n("screenshots.set_as_bg"), M3ButtonVariant.TEXT);
             setAsBgButton.setOnAction(e -> {
                 SettingsManager.settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
                 SettingsManager.settings().backgroundTypeProperty().set(BackgroundType.CUSTOM);
                 SettingsManager.settings().customBackgroundImagePathProperty().set(screenshot.getPath().toString());
             });
 
-            JFXButton copyButton = new JFXButton(i18n("menu.copy"));
-            copyButton.getStyleClass().add("dialog-accept");
+            M3Button copyButton = new M3Button(i18n("menu.copy"), M3ButtonVariant.TEXT);
             copyButton.setDisable(image == null);
             copyButton.setOnAction(e -> {
                 if (image != null) FXUtils.copyImage(image);
             });
 
-            JFXButton okButton = new JFXButton(i18n("button.ok"));
-            okButton.getStyleClass().add("dialog-accept");
+            M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
             okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
             FXUtils.onEscPressed(this, okButton::fire);
             setActions(setAsBgButton, copyButton, okButton);

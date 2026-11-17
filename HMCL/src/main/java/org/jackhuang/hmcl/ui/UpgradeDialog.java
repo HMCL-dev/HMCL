@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXSpinner;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -93,12 +94,10 @@ public final class UpgradeDialog extends JFXDialogLayout {
         JFXHyperlink openInBrowser = new JFXHyperlink(i18n("web.view_in_browser"));
         openInBrowser.setExternalLink(url);
 
-        JFXButton updateButton = new JFXButton(i18n("update.accept"));
-        updateButton.getStyleClass().add("dialog-accept");
+        M3Button updateButton = new M3Button(i18n("update.accept"), M3ButtonVariant.TEXT);
         updateButton.setOnAction(e -> updateRunnable.run());
 
-        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-        cancelButton.getStyleClass().add("dialog-cancel");
+        M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
         setActions(openInBrowser, cancelButton, updateButton);

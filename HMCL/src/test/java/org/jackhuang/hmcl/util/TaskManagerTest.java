@@ -94,7 +94,7 @@ final class TaskManagerTest {
         try {
             onFxThread(() -> {
                 assertTrue(second.pane().queuedProperty().get());
-                @Nullable ButtonBase cancel = (ButtonBase) second.pane().lookup(".dialog-cancel");
+                @Nullable ButtonBase cancel = (ButtonBase) second.pane().lookup(".m3-button");
                 assertNotNull(cancel);
                 assertFalse(cancel.isDisabled());
                 cancel.fire();
@@ -126,7 +126,7 @@ final class TaskManagerTest {
         try {
             await(entered);
             onFxThread(() -> {
-                @Nullable ButtonBase cancel = (ButtonBase) first.pane().lookup(".dialog-cancel");
+                @Nullable ButtonBase cancel = (ButtonBase) first.pane().lookup(".m3-button");
                 assertNotNull(cancel);
                 cancel.fire();
                 assertTrue(next.pane().queuedProperty().get());

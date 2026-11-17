@@ -31,6 +31,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.*;
@@ -471,8 +473,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             body.setPadding(new Insets(10, 0, 0, 0));
             setBody(body);
 
-            JFXButton okButton = new JFXButton(i18n("button.ok"));
-            okButton.getStyleClass().add("dialog-accept");
+            M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
             okButton.setOnAction(event -> fireEvent(new DialogCloseEvent()));
             setActions(okButton);
             onEscPressed(this, okButton::fire);

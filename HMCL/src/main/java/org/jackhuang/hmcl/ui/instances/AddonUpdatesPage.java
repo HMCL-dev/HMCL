@@ -20,6 +20,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -429,8 +431,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             versionPageBtn.setDisable(true);
             loadVersionPageUrl(object, versionPageBtn);
 
-            JFXButton closeButton = new JFXButton(i18n("button.ok"));
-            closeButton.getStyleClass().add("dialog-accept");
+            M3Button closeButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
             closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             setActions(versionPageBtn, closeButton);

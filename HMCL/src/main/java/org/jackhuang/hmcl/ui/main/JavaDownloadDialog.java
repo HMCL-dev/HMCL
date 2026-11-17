@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
@@ -17,6 +16,8 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.java.JavaDistribution;
 import org.jackhuang.hmcl.download.java.JavaPackageType;
@@ -201,7 +202,7 @@ public final class JavaDownloadDialog extends StackPane {
         private final JFXComboBox<JavaPackageType> packageTypeBox;
         private final Label warningLabel = new Label();
 
-        private final JFXButton downloadButton;
+        private final M3Button downloadButton;
         private final StackPane downloadButtonPane = new StackPane();
 
         private final DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
@@ -223,14 +224,12 @@ public final class JavaDownloadDialog extends StackPane {
             this.packageTypeBox.setConverter(FXUtils.stringConverter(JavaPackageType::getDisplayName));
             this.packageTypeBox.disableProperty().bind(Bindings.isNull(distributionBox.getSelectionModel().selectedItemProperty()));
 
-            this.downloadButton = new JFXButton(i18n("download"));
+            this.downloadButton = new M3Button(i18n("download"), M3ButtonVariant.TEXT);
             downloadButton.setOnAction(e -> onDownload());
-            downloadButton.getStyleClass().add("dialog-accept");
             downloadButton.disableProperty().bind(Bindings.isNull(remoteVersionBox.getSelectionModel().selectedItemProperty()));
 
-            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+            M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-            cancelButton.getStyleClass().add("dialog-cancel");
             onEscPressed(this, cancelButton::fire);
 
             GridPane body = new GridPane();

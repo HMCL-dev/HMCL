@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
@@ -58,8 +59,7 @@ public class GameInstanceIconDialog extends JFXDialogLayout {
         );
         setBody(pane);
 
-        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-        cancelButton.getStyleClass().add("dialog-cancel");
+        M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
         cancelButton.setOnAction(event -> fireEvent(new DialogCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 

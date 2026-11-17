@@ -32,6 +32,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
@@ -393,13 +395,11 @@ public class JFXDatePickerContent extends VBox {
     }
 
     protected HBox createActions() {
-        JFXButton cancelButton = new JFXButton(I18n.i18n("button.cancel"));
-        cancelButton.getStyleClass().add("dialog-cancel");
-        FXUtils.onClicked(cancelButton, () -> fireEvent(new DialogCloseEvent()));
+        M3Button cancelButton = new M3Button(I18n.i18n("button.cancel"), M3ButtonVariant.TEXT);
+        cancelButton.setOnAction(event -> fireEvent(new DialogCloseEvent()));
 
-        JFXButton acceptButton = new JFXButton(I18n.i18n("button.ok"));
-        acceptButton.getStyleClass().add("dialog-accept");
-        FXUtils.onClicked(acceptButton, () -> {
+        M3Button acceptButton = new M3Button(I18n.i18n("button.ok"), M3ButtonVariant.TEXT);
+        acceptButton.setOnAction(event -> {
             datePicker.setValue(valueProperty.get());
             fireEvent(new DialogCloseEvent());
         });

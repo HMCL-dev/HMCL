@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
@@ -13,6 +12,9 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3DialogHandle;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -67,9 +69,9 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
     /// The aggregate download speed.
     private final Label lblProgress;
     /// The action that requests cancellation.
-    private final JFXButton btnCancel;
+    private final M3Button btnCancel;
     /// The action that hides the dialog without cancelling its executor.
-    private final JFXButton btnBackground;
+    private final M3IconButton btnBackground;
     /// The retained task progress view.
     private final TaskListPane taskListPane;
 
@@ -93,7 +95,7 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
             lblTitle.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(lblTitle, Priority.ALWAYS);
 
-            btnBackground = FXUtils.newToggleButton4(SVG.MINIMIZE_CENTER);
+            btnBackground = new M3IconButton(SVG.MINIMIZE_CENTER.createIcon(20));
             btnBackground.setAccessibleText(i18n("task.background"));
             FXUtils.installFastTooltip(btnBackground, i18n("task.background"));
             btnBackground.setDisable(true);
@@ -117,8 +119,7 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
             lblProgress = new Label();
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
-            btnCancel = new JFXButton(i18n("button.cancel"));
-            btnCancel.getStyleClass().add("dialog-cancel");
+            btnCancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             bottom.getChildren().setAll(lblProgress, spacer, btnCancel);
         }
 
