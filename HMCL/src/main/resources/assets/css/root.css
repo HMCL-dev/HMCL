@@ -584,6 +584,12 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+/* M3FX owns the dialog surface and its shape; legacy content only supplies layout. */
+.m3-dialog-pane .jfx-dialog-layout,
+.m3-dialog-pane .task-executor-dialog-layout {
+    -fx-background-color: transparent;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Microsoft Login Dialog                                                      *

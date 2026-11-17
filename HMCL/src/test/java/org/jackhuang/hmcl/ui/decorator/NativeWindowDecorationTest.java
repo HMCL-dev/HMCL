@@ -140,9 +140,9 @@ final class NativeWindowDecorationTest {
         });
     }
 
-    /// Verifies dialog overlays preserve native header dragging without allowing ordinary mouse clicks through.
+    /// Verifies a scrim preserves native title dragging while blocking content dragging and ordinary clicks.
     @Test
-    void picksHeaderThroughDialogOverlay() throws Exception {
+    void preservesHeaderDraggingThroughDialogOverlay() throws Exception {
         onFxThread(() -> {
             NativeWindowDecoration decoration = createDecoration();
             Rectangle title = new Rectangle(20, 20);

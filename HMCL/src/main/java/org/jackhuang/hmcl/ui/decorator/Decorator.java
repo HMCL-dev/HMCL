@@ -188,6 +188,9 @@ public final class Decorator {
     /// Whether a drag starting at the current pointer location may move the stage.
     private boolean allowMove;
 
+    /// The current title area, excluding navigation and window-action buttons.
+    private @Nullable Node titleDragArea;
+
     /// Whether a stage move or resize gesture is currently active.
     private boolean dragging;
 
@@ -384,9 +387,10 @@ public final class Decorator {
         dialog.getDialogPane().maxWidthProperty().bind(overlayPane.widthProperty().multiply(0.7));
         dialog.getDialogPane().maxHeightProperty().bind(overlayPane.heightProperty().multiply(0.7));
         dialog.getDialogPane().containerMaxWidthProperty().bind(overlayPane.widthProperty().multiply(0.7));
-        forbidDraggingWindow(dialog.getDialogPane());
-        dialog.addEventHandler(M3DialogEvent.SHOWN,
-                event -> capableDraggingOverlay(Objects.requireNonNull(dialog.getDialogPane().getParent())));
+        dialog.addEventHandler(M3DialogEvent.SHOWN, event -> {
+            allowMove = false;
+            configureDialogDragging(dialog.getDialogPane());
+        });
         // Pending content must still accept completion events while no M3FX presentation exists.
         EventHandler<DialogCloseEvent> closeWhileHidden = new EventHandler<>() {
             /// Discards a pending dialog closed before its window becomes visible.
@@ -476,23 +480,40 @@ public final class Decorator {
         });
     }
 
-    /// Configures window dragging through an overlay while retaining ordinary mouse picking.
-    ///
-    /// Native decoration permits dragging only over underlying draggable header areas. Custom decoration
-    /// permits dragging from the overlay itself. Interactive content must be excluded with [#forbidDraggingWindow(Node)].
-    ///
-    /// @param overlay the overlay above the window content and title bar
-    public void capableDraggingOverlay(Node overlay) {
-        capableDraggingWindow(overlay);
-        if (nativeDecoration != null) {
+    /// Keeps title-area window gestures available through the scrim, without enabling content-area dragging.
+    private void configureDialogDragging(Node pane) {
+        Node overlay = Objects.requireNonNull(pane.getParent());
+        forbidDraggingWindow(pane);
+        if (nativeDecoration != null)
             nativeDecoration.setDragTransparent(overlay);
-        }
+        EventHandler<MouseEvent> updateDragArea = event -> {
+            if (!nativeDecorationEnabled)
+                allowMove = isOverlayTitlePoint(pane, event);
+        };
+        overlay.addEventHandler(MouseEvent.MOUSE_MOVED, updateDragArea);
+        overlay.addEventHandler(MouseEvent.MOUSE_PRESSED, updateDragArea);
+        overlay.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
+            if (allowMove)
+                onTitleBarDragged(event);
+        });
+        overlay.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+            if (isOverlayTitlePoint(pane, event))
+                onTitleBarDoubleClick(event);
+        });
     }
 
-    /// Registers `node` as the title-bar area used to restore and maximize the attached stage.
+    /// Tests the underlying title area while excluding any overlapping dialog content.
+    private boolean isOverlayTitlePoint(Node pane, MouseEvent event) {
+        return titleDragArea != null && titleDragArea.getScene() == root.getScene()
+                && titleDragArea.contains(titleDragArea.sceneToLocal(event.getSceneX(), event.getSceneY()))
+                && !pane.contains(pane.sceneToLocal(event.getSceneX(), event.getSceneY()));
+    }
+
+    /// Registers `node` as the title-bar area used to move, restore, and maximize the attached stage.
     ///
     /// @param node the title-bar node
     void registerTitleBar(Node node) {
+        titleDragArea = node;
         node.addEventHandler(MouseEvent.MOUSE_CLICKED, this::onTitleBarDoubleClick);
         node.addEventHandler(MouseEvent.MOUSE_DRAGGED, this::onTitleBarDragged);
     }

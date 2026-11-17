@@ -4,15 +4,22 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXSpinner;
 import javafx.application.Platform;
+import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.PickResult;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.LauncherState;
 import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -606,6 +613,79 @@ final class TaskExecutorDialogPaneTest {
             }
             return true;
         });
+    }
+
+    /// Verifies M3 surfaces and distinguishes title-area dragging from blocked modal-content dragging.
+    @Test
+    void usesMaterialSurfaceAndPreservesTitleDragging() throws Exception {
+        onFxThread(() -> {
+            Decorator decorator = new Decorator(new StackPane(), stage -> { });
+            Stage stage = new Stage();
+            stages.add(stage);
+            Scene scene = decorator.attachStage(stage);
+            StyleSheets.init(scene, decorator.getContentRoot());
+            try {
+                stage.show();
+                for (Region content : List.of(
+                        new MessageDialogPane.Builder("Message", "Title", MessageDialogPane.MessageType.INFO).ok(null).build(),
+                        new TaskExecutorDialogPane(TaskCancellationAction.NORMAL))) {
+                    decorator.showDialog(content);
+                    decorator.getRoot().applyCss();
+                    decorator.getRoot().layout();
+                    Region surface = (Region) Objects.requireNonNull(scene.lookup(".m3-dialog-surface"));
+                    assertEquals(28, surface.getBackground().getFills().getFirst().getRadii().getTopLeftHorizontalRadius());
+                    assertTrue(content.getBackground().getFills().stream()
+                            .allMatch(fill -> Color.TRANSPARENT.equals(fill.getFill())));
+
+                    Node scrim = Objects.requireNonNull(scene.lookup(".m3-scrim"));
+                    double x = stage.getX();
+                    double y = stage.getY();
+                    dragAt(scrim, 80, 80);
+                    assertEquals(x, stage.getX());
+                    assertEquals(y, stage.getY());
+
+                    Node title = Objects.requireNonNull(scene.lookup(".jfx-decorator-title")).getParent();
+                    Bounds titleBounds = title.localToScene(title.getBoundsInLocal());
+                    dragAt(scrim, titleBounds.getCenterX(), titleBounds.getCenterY());
+                    assertEquals(x + 50, stage.getX(), 1);
+                    assertEquals(y + 50, stage.getY(), 1);
+
+                    x = stage.getX();
+                    y = stage.getY();
+                    Node button = Objects.requireNonNull(scene.lookup(".jfx-decorator-button"));
+                    Bounds buttonBounds = button.localToScene(button.getBoundsInLocal());
+                    dragAt(scrim, buttonBounds.getCenterX(), buttonBounds.getCenterY());
+                    Bounds contentBounds = content.localToScene(content.getBoundsInLocal());
+                    dragAt(content, contentBounds.getCenterX(), contentBounds.getCenterY());
+                    assertEquals(x, stage.getX());
+                    assertEquals(y, stage.getY());
+                    content.fireEvent(new DialogCloseEvent());
+                }
+            } finally {
+                stage.hide();
+                decorator.detachStage();
+            }
+            return true;
+        });
+    }
+
+    /// Dispatches a complete drag gesture with a 50-pixel screen displacement.
+    private static void dragAt(Node target, double sceneX, double sceneY) {
+        target.fireEvent(new MouseEvent(MouseEvent.MOUSE_MOVED, sceneX, sceneY, 200, 200,
+                MouseButton.NONE, 0, false, false, false, false,
+                false, false, false, false, false, false, new PickResult(target, sceneX, sceneY)));
+        target.fireEvent(new MouseEvent(MouseEvent.MOUSE_PRESSED, sceneX, sceneY, 200, 200,
+                MouseButton.PRIMARY, 1, false, false, false, false,
+                true, false, false, false, false, true, new PickResult(target, sceneX, sceneY)));
+        for (int offset : new int[]{0, 50}) {
+            target.fireEvent(new MouseEvent(MouseEvent.MOUSE_DRAGGED, sceneX + offset, sceneY + offset,
+                    200 + offset, 200 + offset, MouseButton.PRIMARY, 1,
+                    false, false, false, false, true, false, false, false, false, false,
+                    new PickResult(target, sceneX + offset, sceneY + offset)));
+        }
+        target.fireEvent(new MouseEvent(MouseEvent.MOUSE_RELEASED, sceneX + 50, sceneY + 50, 250, 250,
+                MouseButton.PRIMARY, 1, false, false, false, false,
+                false, false, false, false, false, false, new PickResult(target, sceneX + 50, sceneY + 50)));
     }
 
     /// Verifies the legacy date picker closes and reopens through the M3FX modal host.
