@@ -6,14 +6,8 @@ import org.commonmark.ext.autolink.AutolinkExtension;
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.ext.ins.InsExtension;
-import org.commonmark.node.IndentedCodeBlock;
-import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
-import org.commonmark.renderer.NodeRenderer;
-import org.commonmark.renderer.html.HtmlNodeRendererContext;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.commonmark.renderer.html.HtmlWriter;
-
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
@@ -669,45 +663,14 @@ public final class StringUtils {
             InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
     )).build();
 
-    private static final HtmlRenderer HTML_RENDERER_RAW_INDENTED_BLOCK = HtmlRenderer.builder()
-            .extensions(List.of(InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()))
-            .nodeRendererFactory(IndentedBlockRawRenderer::new)
-            .build();
-
     private static final Parser MD_PARSER = Parser.builder().extensions(List.of(
             AutolinkExtension.create(), InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
     )).build();
 
-    public static @Nullable String convertToHtml(String str, boolean rawIndentedBlocks) {
+    public static @Nullable String convertToHtml(String str) {
         if (str == null) return null;
         if (isBlank(str)) return "";
-
-        if (rawIndentedBlocks)
-            return HTML_RENDERER_RAW_INDENTED_BLOCK.render(MD_PARSER.parse(str));
         return HTML_RENDERER.render(MD_PARSER.parse(str));
-    }
-
-    private static final class IndentedBlockRawRenderer implements NodeRenderer {
-
-        private final HtmlWriter html;
-
-        public IndentedBlockRawRenderer(HtmlNodeRendererContext context) {
-            this.html = context.getWriter();
-        }
-
-        @Override
-        public Set<Class<? extends Node>> getNodeTypes() {
-            return Set.of(IndentedCodeBlock.class);
-        }
-
-        @Override
-        public void render(Node node) {
-            IndentedCodeBlock block = (IndentedCodeBlock) node;
-            html.line();
-            html.raw(block.getLiteral());
-            html.line();
-        }
-
     }
 
     public static OptionalInt toInt(String s) {

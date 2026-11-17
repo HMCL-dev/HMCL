@@ -26,6 +26,24 @@ public final class SystemUtils {
     private SystemUtils() {
     }
 
+    /// Returns the absolute application directory using the current system's home-directory convention.
+    /// Does not create the directory.
+    public static Path getWorkingDirectory(String folder) {
+        String home = System.getProperty("user.home", ".");
+        switch (SystemInfo.CURRENT_OS) {
+            case LINUX:
+            case FREEBSD:
+                return Paths.get(home, "." + folder).toAbsolutePath();
+            case WINDOWS:
+                @Nullable String appdata = System.getenv("APPDATA");
+                return Paths.get(appdata == null ? home : appdata, "." + folder).toAbsolutePath();
+            case MACOS:
+                return Paths.get(home, "Library", "Application Support", folder).toAbsolutePath();
+            default:
+                return Paths.get(home, folder).toAbsolutePath();
+        }
+    }
+
     public static @Nullable Path which(String command) {
         String path = System.getenv("PATH");
         if (path == null)
@@ -68,15 +86,29 @@ public final class SystemUtils {
     }
 
     public static String run(List<String> command, Duration maxWaitTime) throws Exception {
-        return run(command, inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET), maxWaitTime);
+        return run(command, inputStream -> IOUtils.readFullyAsString(inputStream, SystemInfo.NATIVE_CHARSET), maxWaitTime);
+    }
+
+    /// Runs the configured process and reads standard output using the native charset, discarding standard error.
+    /// Throws on timeout or a nonzero exit code.
+    public static String run(ProcessBuilder processBuilder, Duration maxWaitTime) throws Exception {
+        return run(processBuilder, inputStream -> IOUtils.readFullyAsString(inputStream, SystemInfo.NATIVE_CHARSET), maxWaitTime);
     }
 
     public static <T> T run(List<String> command, ExceptionalFunction<InputStream, T, ?> convert) throws Exception {
         return run(command, convert, DEFAULT_MAX_WAIT_TIME);
     }
 
+    /// Runs a command and converts standard output, discarding standard error.
+    /// Throws on timeout or a nonzero exit code.
     public static <T> T run(List<String> command, ExceptionalFunction<InputStream, T, ?> convert, Duration maxWaitTime) throws Exception {
-        Process process = new ProcessBuilder(command)
+        return run(new ProcessBuilder(command), convert, maxWaitTime);
+    }
+
+    /// Runs the configured process and converts standard output, setting its error redirect to discard.
+    /// Throws on timeout or a nonzero exit code.
+    public static <T> T run(ProcessBuilder processBuilder, ExceptionalFunction<InputStream, T, ?> convert, Duration maxWaitTime) throws Exception {
+        Process process = processBuilder
                 .redirectError(ProcessBuilder.Redirect.DISCARD)
                 .start();
         try {

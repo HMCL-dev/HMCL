@@ -129,7 +129,7 @@ public final class JavaInstallPage extends WizardSinglePage {
                     addInfo(i18n("java.install.archive"), control.file.toAbsolutePath().toString());
 
                 addInfo(i18n("java.info.version"), control.info.getVersion());
-                addInfo(i18n("java.info.architecture"), control.info.getPlatform().getArchitecture().getDisplayName());
+                addInfo(i18n("java.info.architecture"), control.info.getPlatform().arch().getDisplayName());
 
                 BorderPane installPane = new BorderPane();
                 {

@@ -43,8 +43,8 @@ import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -222,7 +222,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                         pair(JavaVersionType.CUSTOM, null),
                         javaCustomSelector,
                         GameSettings::customJavaPathProperty);
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
                     javaCustomSelector.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("settings.game.java_directory"), "java.exe"));
 
                 holder.add(FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), allJava -> {
@@ -230,14 +230,14 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     options.add(javaAutoDeterminedOption);
                     options.add(javaVersionOption);
                     if (allJava != null) {
-                        boolean isX86 = Architecture.SYSTEM_ARCH.isX86() && allJava.stream().allMatch(java -> java.getArchitecture().isX86());
+                        boolean isX86 = SystemInfo.SYSTEM_ARCH.isX86() && allJava.stream().allMatch(java -> java.getArchitecture().isX86());
 
                         for (JavaRuntime java : allJava) {
                             options.add(new RadioChoiceList.Choice<>(
                                     i18n("settings.game.java_directory.template",
                                             java.getVersion(),
                                             isX86 ? i18n("settings.game.java_directory.bit", java.getBits().getBit())
-                                                    : java.getPlatform().getArchitecture().getDisplayName()),
+                                                    : java.getPlatform().arch().getDisplayName()),
                                     pair(JavaVersionType.DETECTED, java))
                                     .setSubtitle(java.getBinary().toString()));
                         }

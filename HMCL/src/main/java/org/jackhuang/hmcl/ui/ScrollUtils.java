@@ -32,14 +32,14 @@ public final class ScrollUtils {
 
     /// Installs smooth wheel scrolling and direct pixel-based gestures on the FX thread.
     @VisibleForTesting
-    public static void addSmoothScrolling(ScrollPane scrollPane) {
+    static void addSmoothScrolling(ScrollPane scrollPane) {
         if (controller(scrollPane) == null)
             scrollPane.getProperties().put(CONTROLLER_KEY, new ScrollPaneAdapter(scrollPane).controller);
     }
 
     /// Installs scrolling on either flow orientation, preserving native cross-axis scrolling.
     @VisibleForTesting
-    public static void addSmoothScrolling(VirtualFlow<?> virtualFlow) {
+    static void addSmoothScrolling(VirtualFlow<?> virtualFlow) {
         if (controller(virtualFlow) == null)
             virtualFlow.getProperties().put(CONTROLLER_KEY, new VirtualFlowAdapter(virtualFlow).controller);
     }

@@ -11,7 +11,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ public class DefaultCacheRepository extends CacheRepository {
     private Index index = null;
 
     public DefaultCacheRepository() {
-        this(OperatingSystem.getWorkingDirectory("minecraft"));
+        this(SystemUtils.getWorkingDirectory("minecraft"));
     }
 
     public DefaultCacheRepository(Path commonDirectory) {

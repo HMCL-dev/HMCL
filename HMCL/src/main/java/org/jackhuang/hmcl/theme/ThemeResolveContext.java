@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.theme;
 
 import org.glavo.monetfx.Brightness;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ public record ThemeResolveContext(
     public static ThemeResolveContext current(Brightness brightness) {
         return new ThemeResolveContext(
                 brightness,
-                normalizeOperatingSystem(OperatingSystem.CURRENT_OS),
+                normalizeOperatingSystem(SystemInfo.CURRENT_OS),
                 Locale.getDefault().getLanguage());
     }
 
