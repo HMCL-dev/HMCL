@@ -605,7 +605,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             spinner.getStyleClass().add("small-spinner-pane");
             spinner.setContent(btnAccept);
 
-            HBox actions = new HBox(spinner, btnCancel);
+            HBox actions = new HBox(btnCancel, spinner);
             actions.setAlignment(Pos.CENTER_RIGHT);
 
             rootLayout.setActions(actions);

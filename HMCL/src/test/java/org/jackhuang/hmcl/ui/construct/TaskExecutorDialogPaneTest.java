@@ -696,7 +696,7 @@ final class TaskExecutorDialogPaneTest {
         });
     }
 
-    /// Verifies native message actions, keyboard cancellation, and disabled or consumed action events.
+    /// Verifies dismiss-before-confirm layout, keyboard cancellation, and native action handling.
     @Test
     void messageActionsUseNativeDialogLifecycle() throws Exception {
         onFxThread(() -> {
@@ -708,10 +708,20 @@ final class TaskExecutorDialogPaneTest {
             assertEquals(MessageType.QUESTION.getDisplayName(), question.getDialogPane().getHeadline());
             assertEquals("Body", question.getDialogPane().getSupportingText());
             assertNull(question.getDialogPane().getContent());
+            M3Button noButton = question.getDialogPane().getActions().getFirst();
+            M3Button yesButton = question.getDialogPane().getActions().getLast();
+            assertEquals(i18n("button.no"), noButton.getText());
+            assertTrue(noButton.isCancelButton());
+            assertEquals(i18n("button.yes"), yesButton.getText());
+            assertTrue(yesButton.isDefaultButton());
             M3Dialog literal = new MessageDialogBuilder("3 < 5", "Title", MessageType.INFO).build();
             assertEquals("3 < 5", literal.getDialogPane().getSupportingText());
             assertNull(literal.getDialogPane().getContent());
             M3DialogHandle handle = host.showDialog(question);
+            host.applyCss();
+            host.layout();
+            assertTrue(noButton.localToScene(noButton.getBoundsInLocal()).getMaxX()
+                    <= yesButton.localToScene(yesButton.getBoundsInLocal()).getMinX());
             question.getDialogPane().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE,
                     false, false, false, false));
             assertFalse(handle.isShowing());
@@ -723,6 +733,8 @@ final class TaskExecutorDialogPaneTest {
             action.setOnAction(event -> accepted.incrementAndGet());
             M3Dialog confirmation = new MessageDialogBuilder("Body", "Title", MessageType.WARNING)
                     .actionOrCancel(action, cancelled::incrementAndGet).build();
+            assertSame(action, confirmation.getDialogPane().getActions().getLast());
+            assertTrue(confirmation.getDialogPane().getActions().getFirst().isCancelButton());
             M3DialogHandle confirmationHandle = host.showDialog(confirmation);
             KeyEvent enter = new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER,
                     false, false, false, false);
@@ -739,6 +751,15 @@ final class TaskExecutorDialogPaneTest {
                     false, false, false, false));
             assertFalse(confirmationHandle.isShowing());
             assertEquals(1, accepted.get());
+
+            M3Dialog notice = new MessageDialogBuilder("Body", "Title", MessageType.INFO)
+                    .addHyperLink("Learn more", "https://example.com")
+                    .ok(null).addCancel("Do not show again", null).build();
+            assertEquals(List.of("Learn more", "Do not show again", i18n("button.ok")),
+                    notice.getDialogPane().getActions().stream().map(M3Button::getText).toList());
+            assertTrue(notice.getDialogPane().getActions().get(1).isCancelButton());
+            assertFalse(notice.getDialogPane().getActions().getLast().isCancelButton());
+            assertTrue(notice.getDialogPane().getActions().getLast().isDefaultButton());
 
             M3Dialog rich = new MessageDialogBuilder("<b>Bold</b> <a href=\"https://example.com\">Link</a>",
                     "Title", MessageType.INFO).ok(null).build();

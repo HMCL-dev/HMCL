@@ -241,7 +241,7 @@ public class OfflineAccountSkinPane extends StackPane {
                 skinItem.selectedDataProperty().isEqualTo(Skin.Type.CUSTOM_SKIN_LOADER_API)
                         .and(cslApiField.activeValidatorProperty().isNotNull()));
 
-        layout.setActions(littleSkinLink, acceptButton, cancelButton);
+        layout.setActions(littleSkinLink, cancelButton, acceptButton);
     }
 
     private Skin getSkin() {

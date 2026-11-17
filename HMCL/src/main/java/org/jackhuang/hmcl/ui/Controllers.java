@@ -408,7 +408,7 @@ public final class Controllers {
             JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));
             noButton.getStyleClass().add("dialog-cancel");
             noButton.setOnAction(e -> javafx.application.Platform.exit());
-            agreementPane.setActions(agreementLink, yesButton, noButton);
+            agreementPane.setActions(agreementLink, noButton, yesButton);
             Controllers.dialog(agreementPane);
         }
 

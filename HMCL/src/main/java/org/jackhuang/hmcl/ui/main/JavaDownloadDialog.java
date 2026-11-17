@@ -141,9 +141,9 @@ public final class JavaDownloadDialog extends StackPane {
             if (!distributions.isEmpty()) {
                 JFXHyperlink more = new JFXHyperlink(i18n("java.download.more"));
                 more.setOnAction(event -> JavaDownloadDialog.this.getChildren().setAll(new DownloadDiscoJava()));
-                setActions(warningLabel, more, acceptPane, cancelButton);
+                setActions(warningLabel, more, cancelButton, acceptPane);
             } else
-                setActions(warningLabel, acceptPane, cancelButton);
+                setActions(warningLabel, cancelButton, acceptPane);
         }
 
         @Override
@@ -338,7 +338,7 @@ public final class JavaDownloadDialog extends StackPane {
 
             setHeading(new Label(i18n("java.download.title")));
             setBody(body);
-            setActions(warningLabel, downloadButtonPane, cancelButton);
+            setActions(warningLabel, cancelButton, downloadButtonPane);
             if (platform.os() == OperatingSystem.LINUX && platform.arch() == Architecture.RISCV64) {
                 JFXHyperlink hyperlink = new JFXHyperlink(i18n("java.download.banshanjdk-8"));
                 hyperlink.setExternalLink("https://www.zthread.cn/#product");

@@ -104,11 +104,15 @@ public final class MessageDialogBuilder {
         return addCancel(i18n("button.cancel"), action);
     }
 
-    /// Adds a named cancel action, replacing the previous Escape action.
+    /// Inserts a named cancel action before the first default action, replacing the previous Escape action.
     public MessageDialogBuilder addCancel(String text, @Nullable Runnable action) {
         M3Button button = newAction(text, action);
         setCancelButton(button);
-        dialog.getDialogPane().getActions().add(button);
+        var actions = dialog.getDialogPane().getActions();
+        int index = 0;
+        while (index < actions.size() && !actions.get(index).isDefaultButton())
+            index++;
+        actions.add(index, button);
         return this;
     }
 

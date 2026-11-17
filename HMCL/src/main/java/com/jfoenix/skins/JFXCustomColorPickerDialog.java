@@ -170,7 +170,7 @@ public class JFXCustomColorPickerDialog extends StackPane {
         cancelButton.setOnAction(event -> close());
         cancelButton.getStyleClass().add("jfx-color-dialog-cancel");
 
-        actionsHBox.getChildren().addAll(acceptButton, cancelButton);
+        actionsHBox.getChildren().addAll(cancelButton, acceptButton);
         container.getChildren().add(actionsHBox);
 
         initRun = () -> {

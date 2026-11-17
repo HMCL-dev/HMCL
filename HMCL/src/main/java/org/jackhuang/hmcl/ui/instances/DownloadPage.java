@@ -567,9 +567,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             if (downloadButton == null) {
-                this.setActions(saveAsButton, cancelButton);
+                this.setActions(cancelButton, saveAsButton);
             } else {
-                this.setActions(downloadButton, saveAsButton, cancelButton);
+                this.setActions(saveAsButton, cancelButton, downloadButton);
             }
 
             onEscPressed(this, cancelButton::fire);

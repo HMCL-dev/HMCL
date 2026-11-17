@@ -53,7 +53,7 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");
 
-        this.setActions(lblCreationWarning, acceptPane, cancelButton);
+        this.setActions(lblCreationWarning, cancelButton, acceptPane);
 
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
         acceptButton.setOnAction(e -> {
