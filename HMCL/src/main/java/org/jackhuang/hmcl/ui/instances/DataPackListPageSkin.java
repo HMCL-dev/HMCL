@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXSwitch;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -29,12 +28,12 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3Switch;
 import org.jackhuang.hmcl.addon.datapack.DataPack;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -283,7 +282,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     }
 
     private static final class DataPackInfoListCell extends MDListCell<DataPackInfoObject> {
-        private final JFXSwitch activeSwitch = new JFXSwitch();
+        private final M3Switch activeSwitch = new M3Switch();
         ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
 
@@ -303,10 +302,6 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             setSelectable();
 
             activeSwitch.disableProperty().bind(isReadOnlyProperty);
-            activeSwitch.setSize(20);
-            activeSwitch.setMinSize(30, 30);
-            activeSwitch.setPrefSize(30, 30);
-            activeSwitch.setMaxSize(30, 30);
             HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             imageContainer.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
@@ -326,8 +321,9 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
             DataPack.Pack packInfo = dataItem.getPackInfo();
             (observedActiveProperty = packInfo.activeProperty()).addListener(weakActiveListener);
-            activeSwitch.setDisableAnimation(true);
+            activeSwitch.setAnimationsEnabled(false);
             activeSwitch.setSelected(packInfo.isActive());
+            activeSwitch.setAnimationsEnabled(true);
             activeSwitch.setOnAction(event -> {
                 try {
                     packInfo.setActive(activeSwitch.isSelected());
@@ -338,7 +334,6 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     activeSwitch.setSelected(packInfo.isActive());
                 }
             });
-            activeSwitch.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
             dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
         }
     }

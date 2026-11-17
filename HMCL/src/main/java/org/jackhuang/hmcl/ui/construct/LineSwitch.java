@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXSwitch;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import org.glavo.m3fx.controls.M3Switch;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /// A switch row for a boolean setting.
@@ -14,13 +14,13 @@ public final class LineSwitch extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-switch";
 
     /// The switch that edits the selected state.
-    private final JFXSwitch switchControl;
+    private final M3Switch switchControl;
 
     /// Creates an unselected switch row.
     public LineSwitch() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        this.switchControl = new JFXSwitch();
+        this.switchControl = new M3Switch();
         switchControl.selectedProperty().bindBidirectional(selectedProperty());
         switchControl.accessibleTextProperty().bind(titleProperty());
         setTrailing(switchControl);

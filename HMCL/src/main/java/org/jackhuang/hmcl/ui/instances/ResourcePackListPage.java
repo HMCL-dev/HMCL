@@ -26,6 +26,7 @@ import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3Switch;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
@@ -49,6 +50,7 @@ import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -202,26 +204,30 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
+    /// Applies the requested state to the original packs after any required compatibility confirmation.
     private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
-        if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
-            Controllers.confirm(
-                    i18n("resourcepack.warning.manipulate"),
-                    i18n("message.warning"),
-                    MessageType.WARNING,
-                    () -> {
-                        SettingsManager.state().getShownTips().put(TIP_KEY, true);
-                        setSelectedEnabled(selectedItems, true);
-                    }, null);
-        } else {
-            if (resourcePackManager == null) return;
-            if (enabled) {
-                resourcePackManager.enableResourcePacks(selectedItems.stream().map(ResourcePackInfoObject::getFile).toList());
-            } else {
-                resourcePackManager.disableResourcePacks(selectedItems.stream().map(ResourcePackInfoObject::getFile).toList());
-            }
-            for (ResourcePackInfoObject item : selectedItems) {
+        @Nullable ResourcePackManager manager = resourcePackManager;
+        if (manager == null || selectedItems.isEmpty()) return;
+
+        @Unmodifiable List<ResourcePackInfoObject> items = List.copyOf(selectedItems);
+        @Unmodifiable List<ResourcePackFile> files = items.stream().map(ResourcePackInfoObject::getFile).toList();
+        Runnable apply = () -> {
+            if (enabled)
+                manager.enableResourcePacks(files);
+            else
+                manager.disableResourcePacks(files);
+            for (ResourcePackInfoObject item : items)
                 item.enabledProperty().set(enabled);
-            }
+        };
+
+        if (enabled && !Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY))
+                && files.stream().anyMatch(file -> !file.isCompatible())) {
+            Controllers.confirm(i18n("resourcepack.warning.manipulate"), i18n("message.warning"), MessageType.WARNING, () -> {
+                SettingsManager.state().getShownTips().put(TIP_KEY, true);
+                apply.run();
+            }, null);
+        } else {
+            apply.run();
         }
     }
 
@@ -530,20 +536,16 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     private static final class ResourcePackListCell extends MDListCell<ResourcePackInfoObject> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
-        private final ResourcePackListPage page;
-
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final M3IconButton btnReveal = new M3IconButton(SVG.FOLDER.createIcon());
         private final M3IconButton btnInfo = new M3IconButton(SVG.INFO.createIcon());
-        private final JFXSwitch activeSwitch;
-
-        private BooleanProperty booleanProperty = null;
+        /// Reflects the current pack's committed state, including changes from the toolbar.
+        private final M3Switch activeSwitch = new M3Switch();
 
         /// Creates a selectable pack row with compatibility confirmation and file actions.
         public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
             super(listView);
-            this.page = page;
 
             getStyleClass().add("resource-pack-list-cell");
 
@@ -552,30 +554,15 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             root.setAlignment(Pos.CENTER_LEFT);
             root.setPadding(new Insets(0, 8, 0, 8));
 
-            activeSwitch = new JFXSwitch() {
-                @Override
-                public void fire() {
-                    if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !isSelected() && getItem() != null && !getItem().getFile().isCompatible()) {
-                        Controllers.confirm(
-                                i18n("resourcepack.warning.manipulate"),
-                                i18n("message.info"),
-                                MessageType.INFO,
-                                () -> {
-                                    super.fire();
-                                    SettingsManager.state().getShownTips().put(TIP_KEY, true);
-                                }, null);
-                    } else {
-                        super.fire();
-                    }
+            itemProperty().flatMap(ResourcePackInfoObject::enabledProperty).orElse(false).subscribe(activeSwitch::setSelected);
+            activeSwitch.setOnAction(event -> {
+                @Nullable ResourcePackInfoObject item = getItem();
+                if (item != null) {
+                    page.setSelectedEnabled(List.of(item), activeSwitch.isSelected());
+                    // A pending confirmation leaves the model unchanged.
+                    activeSwitch.setSelected(item.enabledProperty().get());
                 }
-            };
-            activeSwitch.setOnAction(e -> {
-                if (getItem() != null) getItem().getFile().setEnabled(activeSwitch.isSelected());
             });
-            activeSwitch.setSize(20);
-            activeSwitch.setMinSize(30, 30);
-            activeSwitch.setPrefSize(30, 30);
-            activeSwitch.setMaxSize(30, 30);
             HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             HBox.setHgrow(content, Priority.ALWAYS);
@@ -612,11 +599,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getFile()));
 
             btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(item)));
-
-            if (booleanProperty != null) {
-                activeSwitch.selectedProperty().unbindBidirectional(booleanProperty);
-            }
-            activeSwitch.selectedProperty().bindBidirectional(booleanProperty = item.enabledProperty());
 
             {
                 var compatibility = file.getCompatibility();

@@ -33,6 +33,7 @@ import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3Switch;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -54,7 +55,6 @@ import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -753,7 +753,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final M3IconButton restoreButton = new M3IconButton(SVG.RESTORE.createIcon());
         private final M3IconButton revealButton = new M3IconButton(SVG.FOLDER.createIcon());
         private final M3IconButton infoButton = new M3IconButton(SVG.INFO.createIcon());
-        private final JFXSwitch activeSwitch = new JFXSwitch();
+        private final M3Switch activeSwitch = new M3Switch();
 
         private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
@@ -786,10 +786,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             actions.setAlignment(Pos.CENTER);
             actions.getChildren().setAll(restoreButton, revealButton, infoButton, activeSwitch);
 
-            activeSwitch.setSize(20);
-            activeSwitch.setMinSize(30, 30);
-            activeSwitch.setPrefSize(30, 30);
-            activeSwitch.setMaxSize(30, 30);
             HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             container.getChildren().setAll(imageContainer, content, actions);
@@ -856,8 +852,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.getTags().setAll(tags);
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
-            activeSwitch.setDisableAnimation(true);
+            activeSwitch.setAnimationsEnabled(false);
             activeSwitch.setSelected(modInfo.isActive());
+            activeSwitch.setAnimationsEnabled(true);
             activeSwitch.setOnAction(event -> {
                 try {
                     modInfo.setActive(activeSwitch.isSelected());
@@ -868,7 +865,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     activeSwitch.setSelected(modInfo.isActive());
                 }
             });
-            activeSwitch.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()
