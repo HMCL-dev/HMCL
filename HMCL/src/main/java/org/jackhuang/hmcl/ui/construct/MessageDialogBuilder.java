@@ -40,7 +40,7 @@ public final class MessageDialogBuilder {
     public MessageDialogBuilder(String text, @Nullable String title, MessageType type) {
         dialog.setDismissOnScrimClick(false);
         M3DialogPane pane = dialog.getDialogPane();
-        pane.setHeaderText(title != null ? title : type.getDisplayName());
+        pane.setHeadline(title != null ? title : type.getDisplayName());
         pane.setGraphic(type.getIcon().createIcon(24));
         if (MARKUP_TAG.matcher(text).find()) {
             TextFlow flow = new TextFlow();
@@ -54,7 +54,7 @@ public final class MessageDialogBuilder {
             label.getStyleClass().add("content-label");
             pane.setContent(scrollable(label));
         } else {
-            pane.setContentText(text);
+            pane.setSupportingText(text);
         }
     }
 

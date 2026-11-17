@@ -705,11 +705,11 @@ final class TaskExecutorDialogPaneTest {
             AtomicInteger cancelled = new AtomicInteger();
             M3Dialog question = new MessageDialogBuilder("Body", null, MessageType.QUESTION)
                     .yesOrNo(accepted::incrementAndGet, cancelled::incrementAndGet).build();
-            assertEquals(MessageType.QUESTION.getDisplayName(), question.getDialogPane().getHeaderText());
-            assertEquals("Body", question.getDialogPane().getContentText());
+            assertEquals(MessageType.QUESTION.getDisplayName(), question.getDialogPane().getHeadline());
+            assertEquals("Body", question.getDialogPane().getSupportingText());
             assertNull(question.getDialogPane().getContent());
             M3Dialog literal = new MessageDialogBuilder("3 < 5", "Title", MessageType.INFO).build();
-            assertEquals("3 < 5", literal.getDialogPane().getContentText());
+            assertEquals("3 < 5", literal.getDialogPane().getSupportingText());
             assertNull(literal.getDialogPane().getContent());
             M3DialogHandle handle = host.showDialog(question);
             question.getDialogPane().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE,
