@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.util.platform;
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -107,6 +109,9 @@ public enum OperatingSystem {
     ///
     /// If [#CURRENT_OS] is [#WINDOWS], then [#SYSTEM_VERSION] must be an instance of [OSVersion.Windows].
     public static final OSVersion SYSTEM_VERSION;
+
+    /// The system version for display and diagnostics.
+    public static final String SYSTEM_DISPLAY_VERSION;
 
     public static final String OS_RELEASE_NAME;
     public static final String OS_RELEASE_PRETTY_NAME;
@@ -250,6 +255,32 @@ public enum OperatingSystem {
         OS_RELEASE_NAME = osRelease.get("NAME");
         OS_RELEASE_PRETTY_NAME = osRelease.get("PRETTY_NAME");
         SYSTEM_DISPLAY_NAME = CURRENT_OS == MACOS ? "macOS" : SYSTEM_NAME;
+        @Nullable String buildVersion = CURRENT_OS == MACOS ? detectMacOSBuildVersion() : null;
+        SYSTEM_DISPLAY_VERSION = SYSTEM_VERSION.getVersion() + (buildVersion == null ? "" : " (" + buildVersion + ')');
+    }
+
+    private static @Nullable String detectMacOSBuildVersion() {
+        try {
+            Process process = new ProcessBuilder("/usr/bin/sw_vers", "-buildVersion")
+                    .redirectError(ProcessBuilder.Redirect.DISCARD)
+                    .start();
+            try {
+                if (!process.waitFor(2, TimeUnit.SECONDS) || process.exitValue() != 0)
+                    return null;
+
+                try (var input = process.getInputStream()) {
+                    String buildVersion = new String(input.readAllBytes(), StandardCharsets.US_ASCII).trim();
+                    return buildVersion.isEmpty() ? null : buildVersion;
+                }
+            } finally {
+                if (process.isAlive())
+                    process.destroyForcibly();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (IOException | SecurityException ignored) {
+        }
+        return null;
     }
 
     public static OperatingSystem parseOSName(String name) {
