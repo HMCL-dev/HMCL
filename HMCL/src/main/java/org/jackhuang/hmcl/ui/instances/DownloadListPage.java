@@ -22,6 +22,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.AddonProjectInfo;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
@@ -406,14 +407,14 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
                     Holder<Runnable> changeButton = new Holder<>();
 
-                    M3Button firstPageButton = FXUtils.newBorderButton(i18n("search.first_page"));
+                    M3Button firstPageButton = new M3Button(I18n.i18n("search.first_page"), M3ButtonVariant.OUTLINED);
                     firstPageButton.setOnAction(event -> {
                         control.pageOffset.set(0);
                         searchAction.handle(event);
                         changeButton.value.run();
                     });
 
-                    M3Button previousPageButton = FXUtils.newBorderButton(i18n("search.previous_page"));
+                    M3Button previousPageButton = new M3Button(I18n.i18n("search.previous_page"), M3ButtonVariant.OUTLINED);
                     previousPageButton.setOnAction(event -> {
                         int pageOffset = control.pageOffset.get();
                         if (pageOffset > 0) {
@@ -429,7 +430,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                         return i18n("search.page_n", control.pageOffset.get() + 1, pageCount == -1 ? "-" : String.valueOf(pageCount));
                     }, control.pageOffset, control.pageCount));
 
-                    M3Button nextPageButton = FXUtils.newBorderButton(i18n("search.next_page"));
+                    M3Button nextPageButton = new M3Button(I18n.i18n("search.next_page"), M3ButtonVariant.OUTLINED);
                     nextPageButton.setOnAction(event -> {
                         int nv = control.pageOffset.get() + 1;
                         if (nv < control.pageCount.get()) {
@@ -439,7 +440,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                         }
                     });
 
-                    M3Button lastPageButton = FXUtils.newBorderButton(i18n("search.last_page"));
+                    M3Button lastPageButton = new M3Button(I18n.i18n("search.last_page"), M3ButtonVariant.OUTLINED);
                     lastPageButton.setOnAction(event -> {
                         control.pageOffset.set(control.pageCount.get() - 1);
                         searchAction.handle(event);
@@ -487,7 +488,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                     Pane placeholder = new Pane();
                     HBox.setHgrow(placeholder, Priority.SOMETIMES);
 
-                    M3Button searchButton = FXUtils.newRaisedButton(i18n("search"));
+                    M3Button searchButton = new M3Button(I18n.i18n("search"), M3ButtonVariant.FILLED);
                     searchButton.setOnAction(searchAction);
 
                     actions.appendList(FXCollections.observableArrayList(firstPageButton, previousPageButton, pageDescription, nextPageButton, lastPageButton, placeholder, searchButton));

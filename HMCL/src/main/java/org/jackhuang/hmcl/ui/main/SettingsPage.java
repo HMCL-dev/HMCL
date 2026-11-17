@@ -16,6 +16,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -194,14 +195,14 @@ public final class SettingsPage extends ScrollPane {
                     BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                     debugPane.setLeft(left);
 
-                    M3Button openLogFolderButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.reveal"));
+                    M3Button openLogFolderButton = new M3Button(I18n.i18n("settings.launcher.launcher_log.reveal"), M3ButtonVariant.OUTLINED);
                     openLogFolderButton.setOnAction(e -> openLogFolder());
                     if (LOG.getLogFile() == null)
                         openLogFolderButton.setDisable(true);
 
                     SpinnerPane exportLogPane = new SpinnerPane();
 
-                    M3Button logButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.export"));
+                    M3Button logButton = new M3Button(I18n.i18n("settings.launcher.launcher_log.export"), M3ButtonVariant.OUTLINED);
                     exportLogPane.setContent(logButton);
                     logButton.setOnAction(e -> {
                         exportLogPane.showSpinner();

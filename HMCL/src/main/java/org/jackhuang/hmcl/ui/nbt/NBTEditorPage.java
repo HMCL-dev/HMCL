@@ -13,18 +13,19 @@ import javafx.scene.control.skin.TreeViewSkin;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.nbt.NBTElement;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
@@ -63,7 +64,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
         actions.setPadding(new Insets(8));
         actions.setAlignment(Pos.CENTER_RIGHT);
 
-        M3Button saveButton = FXUtils.newRaisedButton(i18n("button.save"));
+        M3Button saveButton = new M3Button(I18n.i18n("button.save"), M3ButtonVariant.FILLED);
         saveButton.setOnAction(e -> {
             try {
                 save();
@@ -73,7 +74,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
             }
         });
 
-        M3Button cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
+        M3Button cancelButton = new M3Button(I18n.i18n("button.cancel"), M3ButtonVariant.FILLED);
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 

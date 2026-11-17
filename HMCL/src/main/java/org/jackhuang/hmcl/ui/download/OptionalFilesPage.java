@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,9 +119,9 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
         {
             var descPane = new BorderPane();
             HBox selectionButtons = new HBox(8);
-            M3Button btnSelectAll = FXUtils.newBorderButton(i18n("button.select_all"));
+            M3Button btnSelectAll = new M3Button(I18n.i18n("button.select_all"), M3ButtonVariant.OUTLINED);
             btnSelectAll.setOnAction(e -> excludedFiles.clear());
-            M3Button btnClear = FXUtils.newBorderButton(i18n("button.clear"));
+            M3Button btnClear = new M3Button(I18n.i18n("button.clear"), M3ButtonVariant.OUTLINED);
             btnClear.setOnAction(e -> {
                 excludedFiles.clear();
                 for (ModpackFile file : optionalFiles) {
@@ -130,7 +131,7 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
             selectionButtons.getChildren().setAll(btnSelectAll, btnClear);
             descPane.setLeft(selectionButtons);
 
-            var btnInstall = FXUtils.newRaisedButton(i18n("button.install"));
+            var btnInstall = new M3Button(I18n.i18n("button.install"), M3ButtonVariant.FILLED);
             descPane.setRight(btnInstall);
             btnInstall.setOnAction(e -> install.run());
             tail.getChildren().add(descPane);

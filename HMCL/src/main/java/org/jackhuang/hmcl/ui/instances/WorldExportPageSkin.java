@@ -10,11 +10,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LineFileChooserButton;
 import org.jackhuang.hmcl.ui.construct.LinePane;
 import org.jackhuang.hmcl.ui.construct.LineTextPane;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -57,7 +59,7 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
                 list
         );
 
-        M3Button btnExport = FXUtils.newRaisedButton(i18n("button.export"));
+        M3Button btnExport = new M3Button(I18n.i18n("button.export"), M3ButtonVariant.FILLED);
         btnExport.disableProperty().bind(Bindings.createBooleanBinding(() -> txtWorldName.getText().isEmpty() || Files.exists(Paths.get(chooseFileButton.getLocation())),
                 txtWorldName.textProperty().isEmpty(), chooseFileButton.locationProperty()));
         btnExport.setOnAction(e -> skinnable.export());

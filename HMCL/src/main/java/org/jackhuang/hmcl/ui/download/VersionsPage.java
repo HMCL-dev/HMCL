@@ -16,6 +16,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
@@ -350,7 +351,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     categoryField.setConverter(stringConverter(type -> i18n("instance.game." + type.name().toLowerCase(Locale.ROOT))));
                     categoryField.getSelectionModel().selectedItemProperty().addListener(o -> updateList());
 
-                    M3Button refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
+                    M3Button refreshButton = new M3Button(I18n.i18n("button.refresh"), M3ButtonVariant.FILLED);
                     refreshButton.setOnAction(event -> control.onRefresh());
 
                     if (control.downloadProvider.hasType(control.componentType)) {

@@ -942,16 +942,6 @@ public final class FXUtils {
         return image;
     }
 
-    /// Creates a filled button for a primary action.
-    public static M3Button newRaisedButton(String text) {
-        return new M3Button(text, M3ButtonVariant.FILLED);
-    }
-
-    /// Creates an outlined action button.
-    public static M3Button newBorderButton(String text) {
-        return new M3Button(text, M3ButtonVariant.OUTLINED);
-    }
-
     /// Creates a compact action button with the icon at its natural size.
     public static M3IconButton newToggleButton4(SVG icon) {
         M3IconButton button = new M3IconButton(icon.createIcon());

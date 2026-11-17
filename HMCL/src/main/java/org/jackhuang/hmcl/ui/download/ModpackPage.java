@@ -9,6 +9,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -19,6 +20,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -77,17 +79,17 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
 
             var descriptionPane = new BorderPane();
             {
-                btnDescription = FXUtils.newBorderButton(i18n("modpack.description"));
+                btnDescription = new M3Button(I18n.i18n("modpack.description"), M3ButtonVariant.OUTLINED);
                 btnDescription.setOnAction(e -> onDescribe());
                 descriptionPane.setLeft(btnDescription);
 
                 var installHBox = new HBox(8);
-                btnOptionalFiles = FXUtils.newRaisedButton(i18n("modpack.optional_files"));
+                btnOptionalFiles = new M3Button(I18n.i18n("modpack.optional_files"), M3ButtonVariant.FILLED);
                 btnOptionalFiles.setVisible(false);
                 btnOptionalFiles.setManaged(false);
                 installHBox.getChildren().add(btnOptionalFiles);
 
-                btnInstall = FXUtils.newRaisedButton(i18n("button.install"));
+                btnInstall = new M3Button(I18n.i18n("button.install"), M3ButtonVariant.FILLED);
                 btnInstall.setOnAction(e -> onInstall());
                 var nameInvalid = createBooleanBinding(() -> !txtModpackName.validate(), txtModpackName.textProperty());
                 btnInstall.disableProperty().bind(nameInvalid);

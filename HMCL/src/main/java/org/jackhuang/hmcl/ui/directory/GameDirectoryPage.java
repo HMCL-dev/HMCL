@@ -20,17 +20,18 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -147,7 +148,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
         savePane.setStyle("-fx-padding: 20;");
         StackPane.setAlignment(savePane, Pos.BOTTOM_RIGHT);
         {
-            M3Button saveButton = FXUtils.newRaisedButton(i18n("button.save"));
+            M3Button saveButton = new M3Button(I18n.i18n("button.save"), M3ButtonVariant.FILLED);
             savePane.setRight(saveButton);
             BorderPane.setAlignment(savePane, Pos.BOTTOM_RIGHT);
             StackPane.setAlignment(saveButton, Pos.BOTTOM_RIGHT);

@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jetbrains.annotations.Nullable;
@@ -139,13 +140,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
 
-            M3Button exportListButton = FXUtils.newRaisedButton(i18n("button.export"));
+            M3Button exportListButton = new M3Button(I18n.i18n("button.export"), M3ButtonVariant.FILLED);
             exportListButton.setOnAction(e -> exportList());
 
-            M3Button nextButton = FXUtils.newRaisedButton(i18n("addon.check_update.confirm"));
+            M3Button nextButton = new M3Button(I18n.i18n("addon.check_update.confirm"), M3ButtonVariant.FILLED);
             nextButton.setOnAction(e -> updateFiles());
 
-            M3Button cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
+            M3Button cancelButton = new M3Button(I18n.i18n("button.cancel"), M3ButtonVariant.FILLED);
             cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
             onEscPressed(this, cancelButton::fire);
             onEscPressed(listView, cancelButton::fire);

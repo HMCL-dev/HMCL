@@ -13,6 +13,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.GameComponentType;
@@ -27,6 +28,7 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
@@ -167,7 +169,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             }
 
             {
-                M3Button installButton = FXUtils.newRaisedButton(i18n("button.install"));
+                M3Button installButton = new M3Button(I18n.i18n("button.install"), M3ButtonVariant.FILLED);
                 installButton.disableProperty().bind(control.installable.not());
                 installButton.setPrefWidth(100);
                 installButton.setPrefHeight(40);

@@ -13,6 +13,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.ProxyType;
@@ -117,7 +118,7 @@ public class DownloadSettingsPage extends StackPane {
                                     .orElse(i18n("launcher.cache_directory.disabled")),
                             settings().commonDirectoryProperty(), settings().commonDirectoryTypeProperty()));
 
-            M3Button cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
+            M3Button cleanButton = new M3Button(I18n.i18n("launcher.cache_directory.clean"), M3ButtonVariant.OUTLINED);
             cleanButton.setOnAction(e -> clearCacheDirectory(cleanButton));
             fileCommonLocationSublist.setHeaderRight(cleanButton);
 

@@ -17,6 +17,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3OverlayPane;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.*;
@@ -32,6 +33,7 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
@@ -420,7 +422,7 @@ public class GameCrashWindow extends Stage {
                 SpinnerPane exportButtonPane = new SpinnerPane();
                 exportButtonPane.getStyleClass().add("small-spinner-pane");
 
-                M3Button exportButton = FXUtils.newRaisedButton(i18n("logwindow.export_game_crash_logs"));
+                M3Button exportButton = new M3Button(I18n.i18n("logwindow.export_game_crash_logs"), M3ButtonVariant.FILLED);
                 exportButtonPane.setContent(exportButton);
                 exportButton.setOnAction(e -> {
                     exportButtonPane.showSpinner();
@@ -449,10 +451,10 @@ public class GameCrashWindow extends Stage {
                     }, Schedulers.javafx());
                 });
 
-                M3Button logButton = FXUtils.newRaisedButton(i18n("logwindow.title"));
+                M3Button logButton = new M3Button(I18n.i18n("logwindow.title"), M3ButtonVariant.FILLED);
                 logButton.setOnAction(e -> showLogWindow());
 
-                M3Button helpButton = FXUtils.newRaisedButton(i18n("help"));
+                M3Button helpButton = new M3Button(I18n.i18n("help"), M3ButtonVariant.FILLED);
                 helpButton.setOnAction(e -> FXUtils.openLink(Metadata.CONTACT_URL));
                 FXUtils.installFastTooltip(helpButton, i18n("logwindow.help"));
 

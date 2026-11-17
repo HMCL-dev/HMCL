@@ -10,6 +10,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.download.java.JavaRemoteVersion;
 import org.jackhuang.hmcl.download.java.disco.DiscoJavaDistribution;
 import org.jackhuang.hmcl.download.java.disco.DiscoJavaRemoteVersion;
@@ -22,6 +23,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.WizardSinglePage;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -133,7 +135,7 @@ public final class JavaInstallPage extends WizardSinglePage {
 
                 BorderPane installPane = new BorderPane();
                 {
-                    M3Button installButton = FXUtils.newRaisedButton(i18n("button.install"));
+                    M3Button installButton = new M3Button(I18n.i18n("button.install"), M3ButtonVariant.FILLED);
                     installButton.setOnAction(e -> {
                         String name = control.nameProperty.get();
                         if (JavaManager.REPOSITORY.isInstalled(control.info.getPlatform(), name)) {
