@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.Region;
 import javafx.scene.text.TextFlow;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
@@ -14,6 +16,8 @@ import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.regex.Pattern;
+
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Configures native M3 dialogs with launcher message conventions and callbacks.
@@ -22,6 +26,15 @@ public final class MessageDialogBuilder {
     /// The Material dialog being configured.
     private final M3Dialog dialog = new M3Dialog();
 
+    /// Plain messages above this character count use a scrollable body.
+    private static final int MAX_INLINE_CHARACTERS = 512;
+
+    /// Plain messages above this line count use a scrollable body.
+    private static final int MAX_INLINE_LINES = 16;
+
+    /// Opening tags supported by the launcher's message markup parser.
+    private static final Pattern MARKUP_TAG = Pattern.compile("<(?:a|b|br)(?:\\s|/?>)");
+
     /// Creates a message using the type's default title when `title` is null.
     /// Supports launcher text markup and scrolls long messages within the content area.
     public MessageDialogBuilder(String text, @Nullable String title, MessageType type) {
@@ -29,20 +42,29 @@ public final class MessageDialogBuilder {
         M3DialogPane pane = dialog.getDialogPane();
         pane.setHeaderText(title != null ? title : type.getDisplayName());
         pane.setGraphic(type.getIcon().createIcon(24));
-        TextFlow flow = new TextFlow();
-        flow.getStyleClass().add("message-dialog-body");
-        flow.getChildren().setAll(FXUtils.parseSegment(text, Controllers::onHyperlinkAction));
-        if (flow.prefHeight(400) > 350) {
-            ScrollPane scroll = new ScrollPane(flow);
-            ScrollUtils.installSmoothScrolling(scroll);
-            scroll.setFitToWidth(true);
-            scroll.setPrefHeight(350);
-            pane.setContent(scroll);
-        } else if (text.indexOf('<') >= 0) {
-            pane.setContent(flow);
+        if (MARKUP_TAG.matcher(text).find()) {
+            TextFlow flow = new TextFlow();
+            flow.getStyleClass().add("message-dialog-body");
+            flow.getChildren().setAll(FXUtils.parseSegment(text, Controllers::onHyperlinkAction));
+            pane.setContent(flow.prefHeight(400) > 350 ? scrollable(flow) : flow);
+        } else if (text.length() > MAX_INLINE_CHARACTERS
+                || text.lines().limit(MAX_INLINE_LINES + 1).count() > MAX_INLINE_LINES) {
+            Label label = new Label(text);
+            label.setWrapText(true);
+            label.getStyleClass().add("content-label");
+            pane.setContent(scrollable(label));
         } else {
             pane.setContentText(text);
         }
+    }
+
+    /// Bounds a long message while allowing its full contents to be scrolled.
+    private static ScrollPane scrollable(Region content) {
+        ScrollPane scroll = new ScrollPane(content);
+        ScrollUtils.installSmoothScrolling(scroll);
+        scroll.setFitToWidth(true);
+        scroll.setPrefHeight(350);
+        return scroll;
     }
 
     /// Adds a text action that opens a link without closing the dialog.

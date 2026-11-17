@@ -708,6 +708,9 @@ final class TaskExecutorDialogPaneTest {
             assertEquals(MessageType.QUESTION.getDisplayName(), question.getDialogPane().getHeaderText());
             assertEquals("Body", question.getDialogPane().getContentText());
             assertNull(question.getDialogPane().getContent());
+            M3Dialog literal = new MessageDialogBuilder("3 < 5", "Title", MessageType.INFO).build();
+            assertEquals("3 < 5", literal.getDialogPane().getContentText());
+            assertNull(literal.getDialogPane().getContent());
             M3DialogHandle handle = host.showDialog(question);
             question.getDialogPane().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE,
                     false, false, false, false));
@@ -742,7 +745,13 @@ final class TaskExecutorDialogPaneTest {
             TextFlow flow = assertInstanceOf(TextFlow.class, rich.getDialogPane().getContent());
             assertTrue(flow.getChildren().stream().anyMatch(node -> node.getStyleClass().contains("hyperlink")));
             M3Dialog longMessage = new MessageDialogBuilder("Line\n".repeat(100), "Title", MessageType.ERROR).ok(null).build();
-            assertInstanceOf(ScrollPane.class, longMessage.getDialogPane().getContent());
+            ScrollPane longBody = assertInstanceOf(ScrollPane.class, longMessage.getDialogPane().getContent());
+            Label longText = assertInstanceOf(Label.class, longBody.getContent());
+            assertEquals("Line\n".repeat(100), longText.getText());
+            assertTrue(longText.isWrapText());
+            M3Dialog wrappedMessage = new MessageDialogBuilder("Long text ".repeat(100), "Title", MessageType.INFO).build();
+            ScrollPane wrappedBody = assertInstanceOf(ScrollPane.class, wrappedMessage.getDialogPane().getContent());
+            assertInstanceOf(Label.class, wrappedBody.getContent());
             return true;
         });
     }
