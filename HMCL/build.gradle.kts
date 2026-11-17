@@ -5,7 +5,6 @@ import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.*
 import org.jackhuang.hmcl.gradle.pack.CreateDeb
 import org.jackhuang.hmcl.gradle.pack.ReleaseType
-import org.jackhuang.hmcl.gradle.terracotta.AbstractTerracottaTask
 import org.jackhuang.hmcl.gradle.terracotta.TerracottaConfigUpgradeTask
 import org.jackhuang.hmcl.gradle.terracotta.TerracottaConfigValidateTask
 import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.resolveArtifactFile
@@ -369,6 +368,7 @@ tasks.register<JavaExec>("run") {
 val terracottaConfigFile = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
 
 val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
+    version = libs.versions.terracotta
     configFile = terracottaConfigFile
 
     classifiers = listOf(
@@ -384,12 +384,9 @@ val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgra
 }
 
 val validateTerracottaConfig = tasks.register<TerracottaConfigValidateTask>("validateTerracottaConfig") {
+    version = libs.versions.terracotta
     configFile = terracottaConfigFile
     upgradeTaskPath = upgradeTerracottaConfig.map { it.path }
-}
-
-tasks.withType<AbstractTerracottaTask> {
-    version = libs.versions.terracotta
 }
 
 // Check Translations

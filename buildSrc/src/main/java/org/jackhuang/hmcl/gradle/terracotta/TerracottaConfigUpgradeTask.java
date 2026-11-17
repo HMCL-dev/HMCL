@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.gradle.terracotta;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import kala.compress.archivers.tar.TarArchiveEntry;
 import kala.compress.archivers.tar.TarArchiveReader;
+import org.gradle.api.DefaultTask;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
 
-public abstract class TerracottaConfigUpgradeTask extends AbstractTerracottaTask {
+public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
 
     @Input
     public abstract ListProperty<@NotNull String> getClassifiers();
@@ -48,12 +48,13 @@ public abstract class TerracottaConfigUpgradeTask extends AbstractTerracottaTask
     @OutputFile
     public abstract RegularFileProperty getConfigFile();
 
+    @Input
+    public abstract Property<@NotNull String> getVersion();
+
     @TaskAction
     public void run() throws Exception {
-        JsonObject config = GSON.fromJson(
-                Files.readString(getTemplateFile().get().getAsFile().toPath(), StandardCharsets.UTF_8),
-                JsonObject.class
-        );
+        JsonObject config = JsonParser.parseString(Files.readString(getTemplateFile().get().getAsFile().toPath()))
+                .getAsJsonObject();
 
         Map<String, Path> files = new LinkedHashMap<>();
         HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build();
@@ -126,11 +127,13 @@ public abstract class TerracottaConfigUpgradeTask extends AbstractTerracottaTask
             Files.delete(decompressedBundle);
         }
 
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
         config.add("__comment__", new JsonPrimitive("THIS FILE IS MACHINE GENERATED! DO NOT EDIT!"));
         config.add("version_latest", new JsonPrimitive(getVersion().get()));
-        config.add("packages", GSON.toJsonTree(bundles));
+        config.add("packages", gson.toJsonTree(bundles));
 
-        Files.writeString(getConfigFile().get().getAsFile().toPath(), GSON.toJson(config), StandardCharsets.UTF_8);
+        Files.writeString(getConfigFile().get().getAsFile().toPath(), gson.toJson(config), StandardCharsets.UTF_8);
     }
 
     private record Bundle(
