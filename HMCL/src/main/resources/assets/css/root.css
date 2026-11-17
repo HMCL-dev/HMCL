@@ -4,6 +4,7 @@
  */
 
 .root {
+    -title-fill: -monet-on-primary-container;
 }
 
 .svg {
@@ -630,7 +631,7 @@
 }
 
 .jfx-popup-container {
-    -fx-background-color: -monet-surface;
+    -fx-background-color: -monet-surface-container;
     -fx-background-radius: 4;
 }
 
@@ -686,10 +687,16 @@
 
 .jfx-tool-bar .jfx-decorator-title {
     -fx-font-weight: BOLD;
+    -fx-text-fill: -title-fill;
 }
 
 .jfx-tool-bar.background {
     -fx-background-color: -monet-primary-container;
+}
+
+.jfx-tool-bar.background:transparent {
+    -title-fill: -monet-on-surface;
+    -fx-background-color: -monet-surface-transparent-50;
 }
 
 /*.jfx-tool-bar HBox {*/
@@ -708,11 +715,11 @@
 }
 
 .jfx-tool-bar .jfx-decorator-button .svg {
-    -fx-fill: -monet-on-primary-container;
+    -fx-fill: -title-fill;
 }
 
 .jfx-decorator-button .jfx-spinner .arc {
-    -fx-stroke: -monet-on-primary-container;
+    -fx-stroke: -title-fill;
 }
 
 .jfx-tool-bar Label {
@@ -909,7 +916,7 @@
     -fx-background-radius: 50px;
 }
 
-.menu-up-down-button .label {
+.expandable-pane-header-label {
     -fx-text-fill: -monet-on-surface;
 }
 

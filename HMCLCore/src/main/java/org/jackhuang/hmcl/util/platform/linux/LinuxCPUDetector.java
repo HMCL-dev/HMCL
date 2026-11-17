@@ -4,7 +4,7 @@ package org.jackhuang.hmcl.util.platform.linux;
 
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -138,7 +138,7 @@ final class LinuxCPUDetector {
             modelName = firstCore.get("cpu model");
 
         // ARM's procfs model name may describe only the architecture, not the actual SoC.
-        if (modelName == null || Architecture.SYSTEM_ARCH.isArm()) {
+        if (modelName == null || SystemInfo.SYSTEM_ARCH.isArm()) {
             for (Path deviceTreeRoot : deviceTreeRoots) {
                 Path compatiblePath = deviceTreeRoot.resolve("compatible");
                 try {
@@ -194,7 +194,7 @@ final class LinuxCPUDetector {
         }
 
         boolean avf = deviceTreeRoots.stream().anyMatch(root -> Files.isDirectory(root.resolve("avf")));
-        if (Architecture.SYSTEM_ARCH.isArm() && (StringUtils.isBlank(modelName) || modelName.startsWith("ARMv8 Processor"))) {
+        if (SystemInfo.SYSTEM_ARCH.isArm() && (StringUtils.isBlank(modelName) || modelName.startsWith("ARMv8 Processor"))) {
             @Nullable LinuxArmSoCModel model = LinuxArmSoCModel.detect(cpuInfo);
             if (model != null) {
                 builder.setName(model.getDisplayName()).setVendor(model.getVendor());
@@ -370,7 +370,7 @@ final class LinuxCPUDetector {
             if (!core.performance && !isEfficiency && classifyByCapacity && core.capacity != null) {
                 // For display, x86 keeps only the highest tier as P; other architectures keep only the lowest as E.
                 // This deliberately merges multiple tiers rather than reconstructing physical clusters.
-                isEfficiency = Architecture.SYSTEM_ARCH.isX86() ? core.capacity < capacities.getMax() : core.capacity == capacities.getMin();
+                isEfficiency = SystemInfo.SYSTEM_ARCH.isX86() ? core.capacity < capacities.getMax() : core.capacity == capacities.getMin();
             }
             if (isEfficiency)
                 efficiencyCount++;
