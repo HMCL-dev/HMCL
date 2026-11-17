@@ -242,7 +242,7 @@ final class MainWindowPane extends StackPane {
         decorator.forbidDraggingWindow(closeButton);
 
         buttons.getChildren().setAll(tasksButton, helpButton, minimizeButton, closeButton);
-        buttons.getStyleClass().addAll("jfx-tool-bar", "background");
+        buttons.getStyleClass().add("jfx-tool-bar");
         return buttons;
     }
 
