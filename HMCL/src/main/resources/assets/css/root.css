@@ -670,8 +670,9 @@
     -fx-fill: -title-fill;
 }
 
-.jfx-decorator-button .jfx-spinner .arc {
-    -fx-stroke: -title-fill;
+.jfx-decorator-button .m3-progress-indicator {
+    -m3-color-primary: -title-fill;
+    -m3-color-secondary-container: transparent;
 }
 
 .jfx-tool-bar Label {
@@ -1280,24 +1281,13 @@
 
 /*******************************************************************************
 *                                                                              *
-* JFX Spinner                                                                  *
+* Spinner Pane                                                                 *
 *                                                                              *
 *******************************************************************************/
 
-.jfx-spinner .arc {
-    -fx-stroke: -monet-primary-container;
-}
-
-.small-spinner {
-    -jfx-radius: 9;
-}
-
-.small-spinner .arc {
-    -fx-stroke-width: 3.0;
-}
-
-.small-spinner-pane .jfx-spinner {
-    -jfx-radius: 9;
+.small-spinner-pane .m3-progress-indicator {
+    -m3-indicator-size: 18px;
+    -m3-track-thickness: 2px;
 }
 
 .spinner-pane .spinner-pane-content {

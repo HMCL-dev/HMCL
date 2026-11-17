@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXSpinner;
 import com.jfoenix.controls.JFXTextField;
 import javafx.event.ActionEvent;
 import javafx.application.Platform;
@@ -18,6 +17,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
+import javafx.scene.shape.Shape;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
@@ -128,7 +128,9 @@ final class TaskExecutorDialogPaneTest {
             field.setAccessible(true);
             @Nullable Object previous = field.get(null);
             Decorator decorator = new Decorator(new StackPane(), stage -> { });
-            showStage(new Scene(decorator.getRoot(), 800, 600));
+            Scene scene = new Scene(decorator.getRoot(), 800, 600);
+            scene.getStylesheets().addAll("/assets/css/blue.css", "/assets/css/root.css");
+            showStage(scene);
             field.set(null, decorator);
             TaskExecutorDialogPane pane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
             TaskExecutorDialogPane second = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
@@ -136,7 +138,7 @@ final class TaskExecutorDialogPaneTest {
                 ButtonBase tasksButton = decorator.getRoot().lookupAll(".jfx-decorator-button").stream()
                         .filter(node -> i18n("task.list").equals(node.getAccessibleText()))
                         .map(ButtonBase.class::cast).findFirst().orElseThrow();
-                Node icon = Objects.requireNonNull(tasksButton.getGraphic());
+                SVGPath icon = assertInstanceOf(SVGPath.class, tasksButton.getGraphic());
                 ControlledExecutor executor = new ControlledExecutor();
                 pane.setExecutor(executor, false);
                 executor.start();
@@ -146,8 +148,13 @@ final class TaskExecutorDialogPaneTest {
                 Node progress = pane.getCenter();
                 pane.runInBackground();
                 assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
-                Node spinner = Objects.requireNonNull(tasksButton.getGraphic());
-                assertInstanceOf(JFXSpinner.class, spinner);
+                M3ProgressIndicator spinner = assertInstanceOf(M3ProgressIndicator.class, tasksButton.getGraphic());
+                decorator.getRoot().applyCss();
+                decorator.getRoot().layout();
+                assertTrue(spinner.isIndeterminate());
+                assertEquals(20, spinner.getWidth());
+                assertEquals(20, spinner.getHeight());
+                assertEquals(icon.getFill(), assertInstanceOf(Shape.class, spinner.lookup(".indicator")).getStroke());
                 pane.restore();
                 pane.restore();
                 assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
@@ -163,7 +170,7 @@ final class TaskExecutorDialogPaneTest {
                 Controllers.dialog(second);
                 second.runInBackground();
                 Node nextSpinner = Objects.requireNonNull(tasksButton.getGraphic());
-                assertInstanceOf(JFXSpinner.class, nextSpinner);
+                assertInstanceOf(M3ProgressIndicator.class, nextSpinner);
                 assertNotSame(spinner, nextSpinner);
                 pane.runInBackground();
                 pane.restore();
@@ -181,7 +188,7 @@ final class TaskExecutorDialogPaneTest {
                 assertEquals(SVG.PENDING.getPath(), pendingIcon.getContent());
                 second.runInBackground();
                 assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
-                Node resumedSpinner = assertInstanceOf(JFXSpinner.class, tasksButton.getGraphic());
+                Node resumedSpinner = assertInstanceOf(M3ProgressIndicator.class, tasksButton.getGraphic());
                 assertNotSame(nextSpinner, resumedSpinner);
                 pane.runPendingAction();
                 assertEquals(1, actions.get());
@@ -408,7 +415,7 @@ final class TaskExecutorDialogPaneTest {
             dialog.runInBackground();
             page.applyCss();
             page.layout();
-            assertFalse(page.lookupAll(".jfx-spinner").isEmpty());
+            assertFalse(page.lookupAll(".m3-progress-indicator").isEmpty());
             assertFalse(dialog.runOrDeferCompletionAction(i18n("button.install"), i18n("modpack.install.ready"),
                     installations::incrementAndGet));
             executor.stop(true);
@@ -429,7 +436,7 @@ final class TaskExecutorDialogPaneTest {
                         .findFirst().orElseThrow();
                 assertTrue(page.lookupAll(".label").stream().anyMatch(node -> node instanceof Label label
                         && i18n("modpack.install.ready").equals(label.getText())));
-                assertTrue(page.lookupAll(".jfx-spinner").isEmpty());
+                assertTrue(page.lookupAll(".m3-progress-indicator").isEmpty());
                 install.fire();
                 pane.runPendingAction();
                 assertEquals(1, installations.get());

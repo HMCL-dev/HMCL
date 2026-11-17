@@ -350,8 +350,9 @@ public class DownloadSettingsPage extends StackPane {
             cleanButton.setMinWidth(cleanButton.getWidth());
             var txt = cleanButton.getText();
             cleanButton.setText("");
-            var spinner = new JFXSpinner();
-            spinner.setRadius(8);
+            var spinner = FXUtils.newSpinner();
+            spinner.setIndicatorSize(18);
+            spinner.setTrackThickness(2);
             cleanButton.setGraphic(spinner);
             Task.runAsync("Clear Cache Directory", Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")))
                     .whenComplete(Schedulers.javafx(), ignored -> {

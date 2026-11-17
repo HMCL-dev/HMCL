@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXSpinner;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.control.Label;
@@ -15,6 +14,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
@@ -133,9 +133,9 @@ public final class TaskListPage extends StackPane {
                     if (pane.queuedProperty().get()) {
                         statusIcon.getChildren().setAll(SVG.PENDING.createIcon(24));
                         content.setSubtitle(i18n("task.queued"));
-                    } else if (statusIcon.getChildren().isEmpty() || !(statusIcon.getChildren().get(0) instanceof JFXSpinner)) {
-                        JFXSpinner spinner = new JFXSpinner();
-                        spinner.setRadius(12);
+                    } else if (statusIcon.getChildren().isEmpty() || !(statusIcon.getChildren().get(0) instanceof M3ProgressIndicator)) {
+                        M3ProgressIndicator spinner = FXUtils.newSpinner();
+                        spinner.setIndicatorSize(24);
                         statusIcon.getChildren().setAll(spinner);
                     }
                     actionButton.setGraphic(SVG.ARROW_FORWARD.createIcon());

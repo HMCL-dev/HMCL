@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXSpinner;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -35,7 +34,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
         Label heading = new Label(i18n("update.changelog"));
         heading.setPadding(new Insets(0, 0, 8, 0));
         setHeading(heading);
-        setBody(new JFXSpinner());
+        setBody(FXUtils.newSpinner());
 
         String url = CHANGELOG_URL + remoteVersion.channel().channelName + ".html";
 

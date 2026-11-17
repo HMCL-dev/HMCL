@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.decorator;
 
-import com.jfoenix.controls.JFXSpinner;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -194,12 +193,10 @@ final class MainWindowPane extends StackPane {
                 case IDLE -> tasksButton.setGraphic(tasksEmptyIcon);
                 case PENDING -> tasksButton.setGraphic(SVG.PENDING.createIcon());
                 case RUNNING -> {
-                    JFXSpinner tasksSpinner = new JFXSpinner();
-                    tasksSpinner.getStyleClass().add("small-spinner");
-                    tasksSpinner.setRadius(9);
+                    var tasksSpinner = FXUtils.newSpinner();
+                    tasksSpinner.setIndicatorSize(20);
+                    tasksSpinner.setTrackThickness(2);
                     tasksSpinner.setMouseTransparent(true);
-                    FXUtils.setLimitWidth(tasksSpinner, 20);
-                    FXUtils.setLimitHeight(tasksSpinner, 20);
                     tasksButton.setGraphic(tasksSpinner);
                 }
             }

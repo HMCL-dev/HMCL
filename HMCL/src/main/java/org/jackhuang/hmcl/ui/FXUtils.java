@@ -44,6 +44,7 @@ import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.StyleSheets;
@@ -939,6 +940,13 @@ public final class FXUtils {
                 .setSignificance(Task.TaskSignificance.MINOR)
                 .start();
         return image;
+    }
+
+    /// Creates an indeterminate circular indicator that keeps its preferred diameter in resizable layouts.
+    public static M3ProgressIndicator newSpinner() {
+        M3ProgressIndicator spinner = new M3ProgressIndicator();
+        spinner.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        return spinner;
     }
 
     public static Label newSafeTruncatedLabel() {

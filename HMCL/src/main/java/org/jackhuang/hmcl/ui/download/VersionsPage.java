@@ -18,6 +18,7 @@ import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
@@ -291,7 +292,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final JFXListView<ComponentRemoteVersion> list;
 
         private final TransitionPane transitionPane;
-        private final JFXSpinner spinner;
+        /// Indicates that the remote version list is loading.
+        private final M3ProgressIndicator spinner;
 
         private final JFXTextField nameField;
         private final JFXComboBox<VersionTypeFilter> categoryField = new JFXComboBox<>();
@@ -374,7 +376,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 root.setCenter(spinnerPane);
 
                 transitionPane = new TransitionPane();
-                spinner = new JFXSpinner();
+                spinner = FXUtils.newSpinner();
                 TransitionPane.setCacheAllowed(spinner, false);
 
                 StackPane centerWrapper = new StackPane();
