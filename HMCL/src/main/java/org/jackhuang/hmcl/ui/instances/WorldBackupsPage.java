@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Pair;
@@ -134,12 +134,12 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
                 WorldBackupsPage.this.getItems().sort(Comparator.naturalOrder());
-                Controllers.dialog(i18n("world.backup.create.success", result.getKey()), null, MessageDialogPane.MessageType.INFO);
+                Controllers.dialog(i18n("world.backup.create.success", result.getKey()), null, MessageType.INFO);
             } else if (exception instanceof WorldLockedException) {
-                Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
+                Controllers.dialog(i18n("world.locked.failed"), null, MessageType.WARNING);
             } else {
                 LOG.warning("Failed to create backup", exception);
-                Controllers.dialog(i18n("world.backup.create.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
+                Controllers.dialog(i18n("world.backup.create.failed", StringUtils.getStackTrace(exception)), null, MessageType.WARNING);
             }
         }), i18n("world.backup"), TaskCancellationAction.NO_CANCEL);
     }

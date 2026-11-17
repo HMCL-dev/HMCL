@@ -19,7 +19,7 @@ import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -124,7 +124,7 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
             JavaManager.getAddJavaTask(realPath).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {
                     LOG.warning("Failed to add java", exception);
-                    Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                    Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageType.ERROR);
                 }
             }).start();
         }

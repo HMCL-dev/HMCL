@@ -253,7 +253,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
             refresh();
         } catch (FileAlreadyExistsException ignored) {
         } catch (IOException e) {
-            Controllers.dialog(i18n("schematics.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            Controllers.dialog(i18n("schematics.add.failed"), i18n("message.error"), MessageType.ERROR);
             LOG.warning("Failed to add schematics to " + dir, e);
         }
     }

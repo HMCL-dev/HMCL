@@ -25,7 +25,8 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.Themes;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Log4jLevel;
@@ -428,22 +429,22 @@ public class GameCrashWindow extends Stage {
 
                         if (exception == null) {
                             FXUtils.showFileInExplorer(result);
-                            var dialog = new MessageDialogPane.Builder(
+                            var dialog = new MessageDialogBuilder(
                                     i18n("settings.launcher.launcher_log.export.success", result),
                                     i18n("message.success"),
-                                    MessageDialogPane.MessageType.SUCCESS
+                                    MessageType.SUCCESS
                             ).ok(null).build();
                             if (GameCrashWindow.this.isShowing())
-                                overlayPane.showDialog(Controllers.createDialog(dialog));
+                                overlayPane.showDialog(dialog);
                         } else {
                             LOG.warning("Failed to export game crash info", exception);
-                            var dialog = new MessageDialogPane.Builder(
+                            var dialog = new MessageDialogBuilder(
                                     i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception),
                                     i18n("message.error"),
-                                    MessageDialogPane.MessageType.ERROR
+                                    MessageType.ERROR
                             ).ok(null).build();
                             if (GameCrashWindow.this.isShowing())
-                                overlayPane.showDialog(Controllers.createDialog(dialog));
+                                overlayPane.showDialog(dialog);
                         }
                     }, Schedulers.javafx());
                 });

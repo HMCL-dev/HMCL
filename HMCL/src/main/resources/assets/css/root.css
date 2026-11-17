@@ -568,6 +568,18 @@
     -fx-padding: 0.7em 0.8em;
 }
 
+.m3-dialog-pane .message-dialog-body > Text {
+    -fx-fill: -m3-color-on-surface-variant;
+}
+
+.m3-dialog-pane .m3-dialog-error {
+    -m3-content-color: -m3-color-error;
+}
+
+.m3-dialog-pane .message-dialog-body > .hyperlink {
+    -fx-fill: -m3-color-primary;
+}
+
 .dialog-accept {
     -fx-text-fill: -monet-primary;
     -fx-padding: 0.7em 0.8em;

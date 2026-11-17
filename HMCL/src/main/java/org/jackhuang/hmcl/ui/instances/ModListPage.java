@@ -231,7 +231,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         loadMods(modManager);
         if (!failed.isEmpty())
             Controllers.dialog(i18n("mods.delete.failed") + "\n" + String.join(",\n", failed),
-                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                    i18n("message.error"), MessageType.ERROR);
     }
 
     void setSelectedEnabled(ObservableList<ModInfoObject> selectedItems, boolean enabled) {
@@ -248,7 +248,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 });
         if (!failed.isEmpty())
             Controllers.dialog(i18n("mods.toggle.failed") + "\n" + String.join(",\n", failed),
-                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                    i18n("message.error"), MessageType.ERROR);
     }
 
     public void openModFolder() {
@@ -283,7 +283,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception instanceof CancellationException) return;
                             if (exception != null || result == null) {
-                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageType.ERROR);
                                 if (exception != null) LOG.warning("Failed to check for updates", exception);
                             } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
@@ -297,7 +297,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         if (gameInstance.isModpack()) {
             Controllers.confirm(
                     i18n("mods.update_modpack_mod.warning"), null,
-                    MessageDialogPane.MessageType.WARNING,
+                    MessageType.WARNING,
                     action, null);
         } else {
             action.run();

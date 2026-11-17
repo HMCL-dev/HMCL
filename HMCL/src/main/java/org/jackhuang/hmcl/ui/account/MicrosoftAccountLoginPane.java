@@ -128,13 +128,13 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         rootContainer.getChildren().add(warningPane);
 
         if (!IntegrityChecker.isOfficial()) {
-            var unofficialHintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+            var unofficialHintPane = new HintPane(MessageType.WARNING);
             unofficialHintPane.setSegment(i18n("unofficial.hint"));
             warningPane.getChildren().setAll(unofficialHintPane);
         }
 
         if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
-            HintPane snapshotHint = new HintPane(MessageDialogPane.MessageType.ERROR);
+            HintPane snapshotHint = new HintPane(MessageType.ERROR);
             snapshotHint.setSegment(i18n("account.methods.microsoft.snapshot"));
             warningPane.getChildren().setAll(snapshotHint);
             btnLogin.setDisable(true);
@@ -143,7 +143,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
             loginButtonSpinner.setLoading(false);
 
-            var hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+            var hintPane = new HintPane(MessageType.INFO);
             hintPane.setText(i18n("account.methods.microsoft.hint"));
             rootContainer.getChildren().add(hintPane);
         } else if (currentStep instanceof Step.StartAuthorizationCodeLogin) {
@@ -171,7 +171,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             });
             loginButtonSpinner.setLoading(false);
 
-            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+            HintPane hintPane = new HintPane(MessageType.INFO);
             hintPane.setSegment(
                     i18n("account.methods.microsoft.methods.browser.hint", StringUtils.escapeXmlAttribute(wait.url()), wait.url()),
                     FXUtils::copyText
@@ -199,7 +199,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                     ? "https://www.microsoft.com/link?otc=" + wait.userCode()
                     : wait.verificationUri();
 
-            var deviceHint = new HintPane(MessageDialogPane.MessageType.INFO);
+            var deviceHint = new HintPane(MessageType.INFO);
             deviceHint.setSegment(i18n("account.methods.microsoft.methods.device.hint",
                     StringUtils.escapeXmlAttribute(scanUri),
                     wait.verificationUri(),
@@ -229,7 +229,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         } else if (currentStep instanceof Step.DeviceLoginCompleted) {
             loginButtonSpinner.setLoading(true);
 
-            var hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+            var hintPane = new HintPane(MessageType.INFO);
             hintPane.setSegment(i18n("account.methods.microsoft.methods.device.hint.completed"));
 
             rootContainer.getChildren().addAll(hintPane);
@@ -238,7 +238,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             loginButtonSpinner.setLoading(false);
             cancelAllTasks();
 
-            HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
+            HintPane errHintPane = new HintPane(MessageType.ERROR);
             errHintPane.setSegment(failed.message());
             rootContainer.getChildren().add(errHintPane);
         }

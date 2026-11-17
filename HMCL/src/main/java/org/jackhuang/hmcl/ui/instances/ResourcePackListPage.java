@@ -168,7 +168,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 for (Path file: failures) {
                     failure.append("\n").append(file.toString());
                 }
-                Controllers.dialog(failure.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                Controllers.dialog(failure.toString(), i18n("message.error"), MessageType.ERROR);
             }
             refresh();
         }).start();
@@ -204,7 +204,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             Controllers.confirm(
                     i18n("resourcepack.warning.manipulate"),
                     i18n("message.warning"),
-                    MessageDialogPane.MessageType.WARNING,
+                    MessageType.WARNING,
                     () -> {
                         SettingsManager.state().getShownTips().put(TIP_KEY, true);
                         setSelectedEnabled(selectedItems, true);
@@ -230,7 +230,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 }
             }
         } catch (IOException e) {
-            Controllers.dialog(i18n("resourcepack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            Controllers.dialog(i18n("resourcepack.delete.failed", e.getMessage()), i18n("message.error"), MessageType.ERROR);
             LOG.warning("Failed to delete resource packs", e);
         }
     }
@@ -259,7 +259,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null || result == null) {
-                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageType.ERROR);
                             } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
@@ -272,7 +272,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         if (gameInstance.isModpack()) {
             Controllers.confirm(
                     i18n("resourcepack.update_in_modpack.warning"), null,
-                    MessageDialogPane.MessageType.WARNING,
+                    MessageType.WARNING,
                     action, null);
         } else {
             action.run();
@@ -556,7 +556,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         Controllers.confirm(
                                 i18n("resourcepack.warning.manipulate"),
                                 i18n("message.info"),
-                                MessageDialogPane.MessageType.INFO,
+                                MessageType.INFO,
                                 () -> {
                                     super.fire();
                                     SettingsManager.state().getShownTips().put(TIP_KEY, true);

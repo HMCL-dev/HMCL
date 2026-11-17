@@ -23,7 +23,8 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WebPage;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -116,7 +117,7 @@ public final class LocalModpackPage extends ModpackPage {
                             txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile));
                         }
 
-                        Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"), MessageDialogPane.MessageType.WARNING,
+                        Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"), MessageType.WARNING,
                                 () -> {
                                 },
                                 controller::onEnd);
@@ -124,10 +125,10 @@ public final class LocalModpackPage extends ModpackPage {
                         controller.getSettings().put(MODPACK_MANUALLY_CREATED, true);
                     } else if (exception != null) {
                         LOG.warning("Failed to read modpack manifest", exception);
-                        Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                        Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageType.ERROR);
                         Platform.runLater(controller::onEnd);
                     } else if (manifest == null) {
-                        Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                        Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageType.ERROR);
                         Platform.runLater(controller::onEnd);
                     } else {
                         this.manifest = manifest;
@@ -184,10 +185,10 @@ public final class LocalModpackPage extends ModpackPage {
 
         // Check for non-ASCII characters.
         if (!StringUtils.isASCII(name)) {
-            Controllers.dialog(new MessageDialogPane.Builder(
+            Controllers.dialog(new MessageDialogBuilder(
                     i18n("install.name.invalid"),
                     i18n("message.warning"),
-                    MessageDialogPane.MessageType.QUESTION)
+                    MessageType.QUESTION)
                     .yesOrNo(() -> finishInstall(name), () -> {
                         // The user selects Cancel and does nothing.
                     })

@@ -41,7 +41,8 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -306,7 +307,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 && !Objects.equals(state().getPromptedVersion(), getLatestVersion().version())
         ) {
             lastShownVersion = getLatestVersion();
-            Controllers.dialogLater(new MessageDialogPane.Builder("", i18n("update.bubble.title", getLatestVersion().version()), MessageDialogPane.MessageType.INFO)
+            Controllers.dialogLater(new MessageDialogBuilder("", i18n("update.bubble.title", getLatestVersion().version()), MessageType.INFO)
                     .addAction(i18n("button.view"), () -> {
                         state().setPromptedVersion(getLatestVersion().version());
                         onUpgrade();
@@ -374,7 +375,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         LOG.warning("Failed to install game", exception);
                         Controllers.dialog(StringUtils.getStackTrace(exception),
                                 i18n("install.failed"),
-                                MessageDialogPane.MessageType.WARNING);
+                                MessageType.WARNING);
                     }
                 });
         Controllers.taskDialog(task, i18n("instance.launch.empty.installing"), TaskCancellationAction.NORMAL);

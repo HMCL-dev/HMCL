@@ -315,7 +315,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
             FileUtils.deleteDirectoryQuietly(libraries);
         }).whenComplete(Schedulers.javafx(), (exception) -> {
             if (exception != null) {
-                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageType.ERROR);
             }
         }).start();
     }
@@ -335,7 +335,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
             }
         }).whenComplete(Schedulers.javafx(), (exception) -> {
             if (exception != null) {
-                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageType.ERROR);
             }
         }).start();
     }

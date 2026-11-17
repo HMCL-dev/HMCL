@@ -103,7 +103,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private void closePageForLoadingFail() {
         Platform.runLater(() -> {
             fireEvent(new PageCloseEvent());
-            Controllers.dialog(i18n("world.load.fail"), null, MessageDialogPane.MessageType.ERROR);
+            Controllers.dialog(i18n("world.load.fail"), null, MessageType.ERROR);
         });
     }
 

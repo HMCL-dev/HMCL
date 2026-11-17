@@ -9,7 +9,8 @@ import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.InstallerItem;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -81,10 +82,10 @@ public class InstallersPage extends AbstractInstallersPage {
         GameInstanceID instanceId = new GameInstanceID(txtName.getText());
 
         if (!checkName(instanceId.id())) {
-            Controllers.dialog(new MessageDialogPane.Builder(
+            Controllers.dialog(new MessageDialogBuilder(
                     i18n("install.name.invalid"),
                     i18n("message.warning"),
-                    MessageDialogPane.MessageType.QUESTION)
+                    MessageType.QUESTION)
                     .yesOrNo(() -> {
                         controller.getSettings().put(INSTANCE_ID, instanceId);
                         controller.onFinish();

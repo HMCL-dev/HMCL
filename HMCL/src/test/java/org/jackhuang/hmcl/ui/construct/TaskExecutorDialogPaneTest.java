@@ -16,6 +16,8 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.LauncherState;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -26,6 +28,11 @@ import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.glavo.m3fx.controls.M3OverlayPane;
 import org.glavo.m3fx.controls.M3DialogHandle;
+import org.glavo.m3fx.controls.M3Dialog;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.text.TextFlow;
 import org.glavo.m3fx.animation.M3MotionSettings;
 import org.glavo.m3fx.theme.M3Theme;
 import org.glavo.m3fx.theme.M3ThemeManager;
@@ -607,6 +614,21 @@ final class TaskExecutorDialogPaneTest {
                 host.dismissSnackbar();
                 assertEquals("Second message", Objects.requireNonNull(host.getSnackbar()).getText());
                 host.dismissAllSnackbars();
+
+                M3Dialog nativeFirst = new MessageDialogBuilder("First", "Title", MessageType.INFO).ok(null).build();
+                M3Dialog nativeSecond = new MessageDialogBuilder("Second", "Title", MessageType.INFO).ok(null).build();
+                decorator.showDialog(nativeFirst);
+                decorator.showDialogLater(nativeSecond);
+                decorator.showDialogLater(nativeSecond);
+                assertNull(nativeSecond.getDialogPane().getScene());
+                nativeFirst.getDialogPane().getActions().getFirst().fire();
+                assertSame(scene, nativeSecond.getDialogPane().getScene());
+                stage.hide();
+                stage.show();
+                assertSame(scene, nativeSecond.getDialogPane().getScene());
+                decorator.getRoot().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE,
+                        false, false, false, false));
+                assertNull(nativeSecond.getDialogPane().getScene());
             } finally {
                 stage.hide();
                 decorator.detachStage();
@@ -626,16 +648,18 @@ final class TaskExecutorDialogPaneTest {
             StyleSheets.init(scene, decorator.getContentRoot());
             try {
                 stage.show();
-                for (Region content : List.of(
-                        new MessageDialogPane.Builder("Message", "Title", MessageDialogPane.MessageType.INFO).ok(null).build(),
-                        new TaskExecutorDialogPane(TaskCancellationAction.NORMAL))) {
-                    decorator.showDialog(content);
+                for (M3Dialog dialog : List.of(
+                        new MessageDialogBuilder("Message", "Title", MessageType.INFO).ok(null).build(),
+                        Controllers.createDialog(new TaskExecutorDialogPane(TaskCancellationAction.NORMAL)))) {
+                    decorator.showDialog(dialog);
+                    Region content = dialog.getDialogPane();
                     decorator.getRoot().applyCss();
                     decorator.getRoot().layout();
                     Region surface = (Region) Objects.requireNonNull(scene.lookup(".m3-dialog-surface"));
                     assertEquals(28, surface.getBackground().getFills().getFirst().getRadii().getTopLeftHorizontalRadius());
-                    assertTrue(content.getBackground().getFills().stream()
-                            .allMatch(fill -> Color.TRANSPARENT.equals(fill.getFill())));
+                    if (dialog.getDialogPane().getContent() instanceof TaskExecutorDialogPane taskPane)
+                        assertTrue(taskPane.getBackground().getFills().stream()
+                                .allMatch(fill -> Color.TRANSPARENT.equals(fill.getFill())));
 
                     Node scrim = Objects.requireNonNull(scene.lookup(".m3-scrim"));
                     double x = stage.getX();
@@ -659,12 +683,66 @@ final class TaskExecutorDialogPaneTest {
                     dragAt(content, contentBounds.getCenterX(), contentBounds.getCenterY());
                     assertEquals(x, stage.getX());
                     assertEquals(y, stage.getY());
-                    content.fireEvent(new DialogCloseEvent());
+                    if (dialog.getDialogPane().getContent() instanceof TaskExecutorDialogPane taskPane)
+                        taskPane.fireEvent(new DialogCloseEvent());
+                    else
+                        dialog.getDialogPane().getActions().getFirst().fire();
                 }
             } finally {
                 stage.hide();
                 decorator.detachStage();
             }
+            return true;
+        });
+    }
+
+    /// Verifies native message actions, keyboard cancellation, and disabled or consumed action events.
+    @Test
+    void messageActionsUseNativeDialogLifecycle() throws Exception {
+        onFxThread(() -> {
+            M3OverlayPane host = createDialogHost();
+            AtomicInteger accepted = new AtomicInteger();
+            AtomicInteger cancelled = new AtomicInteger();
+            M3Dialog question = new MessageDialogBuilder("Body", null, MessageType.QUESTION)
+                    .yesOrNo(accepted::incrementAndGet, cancelled::incrementAndGet).build();
+            assertEquals(MessageType.QUESTION.getDisplayName(), question.getDialogPane().getHeaderText());
+            assertEquals("Body", question.getDialogPane().getContentText());
+            assertNull(question.getDialogPane().getContent());
+            M3DialogHandle handle = host.showDialog(question);
+            question.getDialogPane().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE,
+                    false, false, false, false));
+            assertFalse(handle.isShowing());
+            assertEquals(0, accepted.get());
+            assertEquals(1, cancelled.get());
+
+            M3Button action = new M3Button("Continue", M3ButtonVariant.TEXT);
+            action.setDisable(true);
+            action.setOnAction(event -> accepted.incrementAndGet());
+            M3Dialog confirmation = new MessageDialogBuilder("Body", "Title", MessageType.WARNING)
+                    .actionOrCancel(action, cancelled::incrementAndGet).build();
+            M3DialogHandle confirmationHandle = host.showDialog(confirmation);
+            KeyEvent enter = new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER,
+                    false, false, false, false);
+            action.fireEvent(enter);
+            assertTrue(confirmationHandle.isShowing());
+            assertEquals(0, accepted.get());
+            action.setDisable(false);
+            action.setOnAction(event -> event.consume());
+            action.fire();
+            assertTrue(confirmationHandle.isShowing());
+            action.setOnAction(event -> accepted.incrementAndGet());
+            action.requestFocus();
+            action.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER,
+                    false, false, false, false));
+            assertFalse(confirmationHandle.isShowing());
+            assertEquals(1, accepted.get());
+
+            M3Dialog rich = new MessageDialogBuilder("<b>Bold</b> <a href=\"https://example.com\">Link</a>",
+                    "Title", MessageType.INFO).ok(null).build();
+            TextFlow flow = assertInstanceOf(TextFlow.class, rich.getDialogPane().getContent());
+            assertTrue(flow.getChildren().stream().anyMatch(node -> node.getStyleClass().contains("hyperlink")));
+            M3Dialog longMessage = new MessageDialogBuilder("Line\n".repeat(100), "Title", MessageType.ERROR).ok(null).build();
+            assertInstanceOf(ScrollPane.class, longMessage.getDialogPane().getContent());
             return true;
         });
     }

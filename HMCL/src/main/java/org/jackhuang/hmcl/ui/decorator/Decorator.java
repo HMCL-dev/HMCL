@@ -69,11 +69,9 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.Queue;
 import java.util.SequencedMap;
 import java.util.Stack;
 import java.util.function.Consumer;
@@ -161,8 +159,8 @@ public final class Decorator {
     /// Requested dialogs in presentation order, retained while the main window is hidden.
     private final SequencedMap<Node, M3Dialog> dialogs = new LinkedHashMap<>();
 
-    /// Content waiting for all currently requested dialogs to close.
-    private final Queue<Node> pendingDialogs = new ArrayDeque<>();
+    /// Dialogs waiting for all currently requested dialogs to close, keyed by their input-routing target.
+    private final SequencedMap<Node, M3Dialog> pendingDialogs = new LinkedHashMap<>();
 
     /// Whether the navigation bar should display its close or home action.
     private final BooleanProperty canClose = new SimpleBooleanProperty(this, "canClose");
@@ -385,8 +383,22 @@ public final class Decorator {
             return;
         M3Dialog dialog = Controllers.createDialog(node);
         dialog.getDialogPane().maxWidthProperty().bind(overlayPane.widthProperty().multiply(0.7));
-        dialog.getDialogPane().maxHeightProperty().bind(overlayPane.heightProperty().multiply(0.7));
         dialog.getDialogPane().containerMaxWidthProperty().bind(overlayPane.widthProperty().multiply(0.7));
+        showDialog(node, dialog);
+    }
+
+    /// Shows a native Material dialog, retaining it if the main window is hidden.
+    public void showDialog(M3Dialog dialog) {
+        showDialog(dialog.getDialogPane(), dialog);
+    }
+
+    /// Presents a dialog and routes keyboard input to its native pane or legacy content.
+    private void showDialog(Node node, M3Dialog dialog) {
+        FXUtils.checkFxUserThread();
+        if (dialogs.containsKey(node))
+            return;
+        pendingDialogs.remove(node);
+        dialog.getDialogPane().maxHeightProperty().bind(overlayPane.heightProperty().multiply(0.7));
         dialog.addEventHandler(M3DialogEvent.SHOWN, event -> {
             allowMove = false;
             configureDialogDragging(dialog.getDialogPane());
@@ -421,8 +433,10 @@ public final class Decorator {
     /// Removes a dismissed dialog and advances the deferred queue once no dialogs remain.
     private void removeDialog(Node node, M3Dialog dialog) {
         dialogs.remove(node, dialog);
-        if (dialogs.isEmpty() && !pendingDialogs.isEmpty())
-            showDialog(pendingDialogs.remove());
+        if (dialogs.isEmpty() && !pendingDialogs.isEmpty()) {
+            var next = Objects.requireNonNull(pendingDialogs.pollFirstEntry());
+            showDialog(next.getKey(), next.getValue());
+        }
     }
 
     /// Queues `node` to be shown after the current application dialog closes.
@@ -432,8 +446,21 @@ public final class Decorator {
         FXUtils.checkFxUserThread();
         if (dialogs.isEmpty())
             showDialog(node);
-        else if (!pendingDialogs.contains(node) && !dialogs.containsKey(node))
-            pendingDialogs.add(node);
+        else if (!pendingDialogs.containsKey(node) && !dialogs.containsKey(node)) {
+            M3Dialog dialog = Controllers.createDialog(node);
+            dialog.getDialogPane().maxWidthProperty().bind(overlayPane.widthProperty().multiply(0.7));
+            dialog.getDialogPane().containerMaxWidthProperty().bind(overlayPane.widthProperty().multiply(0.7));
+            pendingDialogs.put(node, dialog);
+        }
+    }
+
+    /// Queues a native Material dialog until all currently requested dialogs close.
+    public void showDialogLater(M3Dialog dialog) {
+        FXUtils.checkFxUserThread();
+        if (dialogs.isEmpty())
+            showDialog(dialog);
+        else if (!dialogs.containsKey(dialog.getDialogPane()))
+            pendingDialogs.putIfAbsent(dialog.getDialogPane(), dialog);
     }
 
     /// Shows a transient message at the bottom center of the main window.

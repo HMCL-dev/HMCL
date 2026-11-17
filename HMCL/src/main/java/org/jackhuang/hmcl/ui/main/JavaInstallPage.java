@@ -137,7 +137,7 @@ public final class JavaInstallPage extends WizardSinglePage {
                     installButton.setOnAction(e -> {
                         String name = control.nameProperty.get();
                         if (JavaManager.REPOSITORY.isInstalled(control.info.getPlatform(), name)) {
-                            Controllers.dialog(i18n("java.install.failed.exists"), null, MessageDialogPane.MessageType.WARNING);
+                            Controllers.dialog(i18n("java.install.failed.exists"), null, MessageType.WARNING);
                             usedNames.add(name);
                             nameField.validate();
                         } else

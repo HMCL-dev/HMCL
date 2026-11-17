@@ -340,14 +340,14 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
     }
 
     private void showModifiedErrorDialog(@NotNull ServersDatFile.FileModifiedExternalException e) {
-        Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.file.error.external"), null, MessageDialogPane.MessageType.ERROR)
+        Controllers.dialog(new MessageDialogBuilder(i18n("server.manage.file.error.external"), null, MessageType.ERROR)
                 .addCancel(i18n("button.refresh"), this::refresh)
                 .build()
         );
     }
 
     private void showModifiedErrorDialog(@NotNull IllegalStateException e) {
-        Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.file.error.state"), null, MessageDialogPane.MessageType.ERROR)
+        Controllers.dialog(new MessageDialogBuilder(i18n("server.manage.file.error.state"), null, MessageType.ERROR)
                 .addCancel(i18n("button.refresh"), this::refresh)
                 .build()
         );

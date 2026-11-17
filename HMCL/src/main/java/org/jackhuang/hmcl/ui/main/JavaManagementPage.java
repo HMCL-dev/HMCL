@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.Tag;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -101,7 +101,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             JavaManager.getAddJavaTask(file).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {
                     LOG.warning("Failed to add java", exception);
-                    Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                    Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageType.ERROR);
                 }
             }).start();
         }
@@ -118,7 +118,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         JavaManager.getAddJavaTask(file).whenComplete(Schedulers.javafx(), exception -> {
             if (exception != null) {
                 LOG.warning("Failed to add java", exception);
-                Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageType.ERROR);
             }
         }).start();
     }
@@ -132,7 +132,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         }).whenComplete(Schedulers.javafx(), exception -> {
             if (exception != null) {
                 LOG.warning("Failed to add java", exception);
-                Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageType.ERROR);
             }
         }).start();
     }
@@ -153,9 +153,9 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                         new JavaInstallPage(controller::onFinish, result.getValue(), null, null, result.getKey(), file)));
             } else {
                 if (exception instanceof UnsupportedPlatformException) {
-                    Controllers.dialog(i18n("java.install.failed.unsupported_platform"), null, MessageDialogPane.MessageType.WARNING);
+                    Controllers.dialog(i18n("java.install.failed.unsupported_platform"), null, MessageType.WARNING);
                 } else {
-                    Controllers.dialog(i18n("java.install.failed.invalid"), null, MessageDialogPane.MessageType.WARNING);
+                    Controllers.dialog(i18n("java.install.failed.invalid"), null, MessageType.WARNING);
                 }
             }
         }).start();

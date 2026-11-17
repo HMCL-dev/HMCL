@@ -126,7 +126,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     editIconButton.setOnAction(event -> Controllers.confirm(
                             I18n.i18n("world.icon.change.tip"),
                             I18n.i18n("world.icon.change"),
-                            MessageDialogPane.MessageType.INFO,
+                            MessageType.INFO,
                             this::changeWorldIcon,
                             null
                     ));
@@ -637,14 +637,14 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             image = ImageLoaders.DEFAULT.load(iconPath);
         } catch (Exception e) {
             LOG.warning("Failed to load image", e);
-            Controllers.dialog(i18n("world.icon.change.fail.load.text"), i18n("world.icon.change.fail.load.title"), MessageDialogPane.MessageType.ERROR);
+            Controllers.dialog(i18n("world.icon.change.fail.load.text"), i18n("world.icon.change.fail.load.title"), MessageType.ERROR);
             return;
         }
         if ((int) image.getWidth() == 64 && (int) image.getHeight() == 64) {
             Path output = world.getFile().resolve("icon.png");
             saveWorldIcon(iconPath, image, output);
         } else {
-            Controllers.dialog(i18n("world.icon.change.fail.not_64x64.text", (int) image.getWidth(), (int) image.getHeight()), i18n("world.icon.change.fail.not_64x64.title"), MessageDialogPane.MessageType.ERROR);
+            Controllers.dialog(i18n("world.icon.change.fail.not_64x64.text", (int) image.getWidth(), (int) image.getHeight()), i18n("world.icon.change.fail.not_64x64.title"), MessageType.ERROR);
         }
     }
 

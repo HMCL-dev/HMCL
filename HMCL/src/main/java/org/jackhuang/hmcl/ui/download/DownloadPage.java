@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.TabController;
 import org.jackhuang.hmcl.ui.construct.TabItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
@@ -176,7 +176,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             }).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {
                     if (!(exception instanceof CancellationException)) {
-                        Controllers.dialog(I18n.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                        Controllers.dialog(I18n.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageType.ERROR);
                     }
                 } else {
                     Controllers.showToast(i18n("install.success"));

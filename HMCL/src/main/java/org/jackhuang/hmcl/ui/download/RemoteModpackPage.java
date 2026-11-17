@@ -8,7 +8,7 @@ import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.WebPage;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -32,7 +32,7 @@ public final class RemoteModpackPage extends ModpackPage {
         try {
             controller.getSettings().put(MODPACK_MANIFEST, manifest.toModpack());
         } catch (IOException e) {
-            Controllers.dialog(i18n("modpack.type.server.malformed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            Controllers.dialog(i18n("modpack.type.server.malformed"), i18n("message.error"), MessageType.ERROR);
             Platform.runLater(controller::onEnd);
             return;
         }

@@ -258,7 +258,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
     @FXThread
     private void onSave() {
         if (Objects.equals(Path.of(getLocation()).getRoot(), Path.of(getLocation()))) {
-            Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, this::doSave, null);
+            Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageType.WARNING, this::doSave, null);
         } else doSave();
     }
 

@@ -25,7 +25,8 @@ import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.theme.Themes;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Log4jLevel;
@@ -207,9 +208,9 @@ public final class LogWindow extends Stage {
                 }
 
                 Platform.runLater(() -> {
-                    var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.success", logFile), i18n("message.success"), MessageDialogPane.MessageType.SUCCESS).ok(null).build();
+                    var dialog = new MessageDialogBuilder(i18n("settings.launcher.launcher_log.export.success", logFile), i18n("message.success"), MessageType.SUCCESS).ok(null).build();
                     if (stage.isShowing())
-                        overlayPane.showDialog(Controllers.createDialog(dialog));
+                        overlayPane.showDialog(dialog);
                 });
 
                 FXUtils.showFileInExplorer(logFile);
@@ -234,9 +235,9 @@ public final class LogWindow extends Stage {
                     LOG.warning("Failed to create minecraft jstack dump", e);
 
                     Platform.runLater(() -> {
-                        var dialog = new MessageDialogPane.Builder(i18n("logwindow.export_dump") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR).ok(null).build();
+                        var dialog = new MessageDialogBuilder(i18n("logwindow.export_dump") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageType.ERROR).ok(null).build();
                         if (stage.isShowing())
-                            overlayPane.showDialog(Controllers.createDialog(dialog));
+                            overlayPane.showDialog(dialog);
                     });
                 }
 

@@ -18,7 +18,7 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -130,7 +130,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 else
                     message = i18n("terracotta.unsupported");
 
-                Controllers.dialog(message, null, MessageDialogPane.MessageType.WARNING);
+                Controllers.dialog(message, null, MessageType.WARNING);
             }
         });
 
@@ -177,7 +177,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                             } catch (Throwable e) {
                                 LOG.warning("Fail to open nbt file", e);
                                 Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
-                                        i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                                        i18n("message.error"), MessageType.ERROR);
                             }
                         } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
                             Instances.installFromJson(GameDirectoryManager.getSelectedRepository(), file);

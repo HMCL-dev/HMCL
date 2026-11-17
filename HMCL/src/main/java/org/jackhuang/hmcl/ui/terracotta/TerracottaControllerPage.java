@@ -108,7 +108,7 @@ public class TerracottaControllerPage extends StackPane {
                 Controllers.dialog(
                         i18n("terracotta.from_local.file_name_mismatch", TerracottaMetadata.PACKAGE_NAME, FileUtils.getName(path)),
                         i18n("message.error"),
-                        MessageDialogPane.MessageType.ERROR
+                        MessageType.ERROR
                 );
                 return;
             }
@@ -196,10 +196,10 @@ public class TerracottaControllerPage extends StackPane {
                             UI_STATE.set(s1);
                         }
                     } else {
-                        Controllers.dialog(new MessageDialogPane.Builder(
+                        Controllers.dialog(new MessageDialogBuilder(
                                 i18n("terracotta.status.waiting.host.launch.desc"),
                                 i18n("terracotta.status.waiting.host.launch.title"),
-                                MessageDialogPane.MessageType.QUESTION
+                                MessageType.QUESTION
                         ).addAction(i18n("instance.launch"), () -> {
                             var repository = GameDirectoryManager.getSelectedRepository();
                             Instances.launch(repository.getSelectedInstance(), launcherHelper -> {
@@ -522,7 +522,7 @@ public class TerracottaControllerPage extends StackPane {
         VBox content = new VBox(10);
         content.getChildren().add(ComponentList.createComponentListTitle(i18n("terracotta.status")));
         if (!"CN".equals(RegionUtils.MACHINE_REGION)) {
-            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+            HintPane hintPane = new HintPane(MessageType.WARNING);
             hintPane.setText(i18n("terracotta.unsupported.region"));
             content.getChildren().add(hintPane);
         }
@@ -553,7 +553,7 @@ public class TerracottaControllerPage extends StackPane {
             item.setTitle(link.description().getText(I18n.getLocale().getCandidateLocales()));
             item.setOnAction(event -> Controllers.dialog(
                     i18n("terracotta.from_local.guide", TerracottaMetadata.PACKAGE_NAME),
-                    i18n("message.info"), MessageDialogPane.MessageType.INFO,
+                    i18n("message.info"), MessageType.INFO,
                     () -> FXUtils.openLink(link.link())
             ));
             locals.getContent().add(item);

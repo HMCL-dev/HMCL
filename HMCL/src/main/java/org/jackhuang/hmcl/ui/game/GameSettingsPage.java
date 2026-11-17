@@ -141,7 +141,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         rootPane.getStyleClass().add("card-list");
         scrollPane.setContent(rootPane);
 
-        readOnlySettingsHint = new HintPane(MessageDialogPane.MessageType.WARNING);
+        readOnlySettingsHint = new HintPane(MessageType.WARNING);
         readOnlySettingsHint.setVisible(false);
         readOnlySettingsHint.setManaged(false);
         rootPane.getChildren().add(readOnlySettingsHint);

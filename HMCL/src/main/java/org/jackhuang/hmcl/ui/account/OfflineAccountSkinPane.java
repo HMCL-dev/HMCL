@@ -188,7 +188,7 @@ public class OfflineAccountSkinPane extends StackPane {
                         break;
 
                     case LITTLE_SKIN:
-                        HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
+                        HintPane hint = new HintPane(MessageType.INFO);
                         hint.setText(i18n("account.skin.type.little_skin.hint"));
 
                         hint.setMaxWidth(Double.MAX_VALUE);

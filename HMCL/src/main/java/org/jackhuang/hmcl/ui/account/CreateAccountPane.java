@@ -239,7 +239,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
         if (factory instanceof OfflineAccountFactory && username != null && (!USERNAME_CHECKER_PATTERN.matcher(username).matches() || username.length() > 16)) {
             Controllers.confirmWithCountdown(i18n("account.methods.offline.name.invalid"), i18n("message.warning"), 10,
-                    MessageDialogPane.MessageType.WARNING,
+                    MessageType.WARNING,
                     doCreate, () -> {
                         body.setDisable(false);
                         spinner.hideSpinner();
@@ -343,7 +343,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             int rowIndex = 0;
 
             if (!IntegrityChecker.isOfficial() && !(factory instanceof OfflineAccountFactory)) {
-                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+                HintPane hintPane = new HintPane(MessageType.WARNING);
                 hintPane.setSegment(i18n("unofficial.hint"));
                 GridPane.setColumnSpan(hintPane, 2);
                 add(hintPane, 0, rowIndex);
@@ -493,7 +493,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 txtUUID.setOnAction(e -> onAction.run());
                 advancedMenu.add(txtUUID, 1, 0);
 
-                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+                HintPane hintPane = new HintPane(MessageType.WARNING);
                 hintPane.setText(i18n("account.methods.offline.uuid.hint"));
                 GridPane.setColumnSpan(hintPane, 2);
                 advancedMenu.add(hintPane, 0, 1);

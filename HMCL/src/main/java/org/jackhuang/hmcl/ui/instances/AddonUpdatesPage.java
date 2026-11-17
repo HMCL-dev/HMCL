@@ -170,7 +170,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                         Controllers.dialog(i18n("addon.check_update.failed_download") + "\n" +
                                         task.getFailedAddons().stream().map(LocalAddonFile::getFileName).collect(Collectors.joining("\n")),
                                 i18n("install.failed"),
-                                MessageDialogPane.MessageType.ERROR);
+                                MessageType.ERROR);
                     }
 
                     if (exception == null) {
@@ -206,7 +206,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             if (exception == null) {
                 Controllers.dialog(path.toString(), i18n("message.success"));
             } else {
-                Controllers.dialog("", i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                Controllers.dialog("", i18n("message.error"), MessageType.ERROR);
             }
         }), i18n("button.export"), TaskCancellationAction.NORMAL);
     }

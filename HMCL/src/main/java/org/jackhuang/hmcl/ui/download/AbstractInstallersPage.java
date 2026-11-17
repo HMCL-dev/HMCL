@@ -20,7 +20,8 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -53,10 +54,10 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                         && (type == GameComponentType.FABRIC_API
                         || type == GameComponentType.QUILT_API
                         || type == GameComponentType.LEGACY_FABRIC_API)) {
-                    Controllers.dialog(new MessageDialogPane.Builder(
+                    Controllers.dialog(new MessageDialogBuilder(
                             i18n("install.installer.fabric-quilt-api.warning", i18n("install.installer." + type.getPatchId())),
                             i18n("message.warning"),
-                            MessageDialogPane.MessageType.WARNING
+                            MessageType.WARNING
                     ).ok(null).addCancel(i18n("button.do_not_show_again"), () -> state().getShownTips().put(FABRIC_QUILT_API_TIP, true)).build());
                 }
 

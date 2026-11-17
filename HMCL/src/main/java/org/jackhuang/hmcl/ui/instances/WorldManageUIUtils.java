@@ -8,7 +8,7 @@ import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
@@ -41,9 +41,9 @@ public final class WorldManageUIUtils {
                             if (exception == null) {
                                 runnable.run();
                             } else if (exception instanceof WorldLockedException) {
-                                Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
+                                Controllers.dialog(i18n("world.locked.failed"), null, MessageType.WARNING);
                             } else {
-                                Controllers.dialog(i18n("world.delete.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
+                                Controllers.dialog(i18n("world.delete.failed", StringUtils.getStackTrace(exception)), null, MessageType.WARNING);
                             }
                         }).start(),
                 null
