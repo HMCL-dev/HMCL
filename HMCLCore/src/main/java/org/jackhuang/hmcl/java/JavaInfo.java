@@ -6,8 +6,9 @@ import kala.compress.archivers.ArchiveEntry;
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Contract;
@@ -67,15 +68,23 @@ public final class JavaInfo {
         if (javaVersion == null)
             throw new IOException("Missing Java version");
 
-        return new JavaInfo(Platform.getPlatform(os, arch), javaVersion, vendor);
+        return new JavaInfo(NativePlatform.of(os, arch), javaVersion, vendor);
     }
 
+    /// Reads JDK metadata and verifies that the archive contains a Java executable.
+    /// On old-world LoongArch hosts, assumes Linux LoongArch64 archives use the host ABI.
+    /// Does not distinguish new-world archives imported on an old-world host.
     public static <F, E extends ArchiveEntry> JavaInfo fromArchive(ArchiveFileTree<F, E> tree) throws IOException {
+        return fromArchive(tree, SystemInfo.SYSTEM_ARCH);
+    }
+
+    /// Reads an archive using the supplied host architecture for the LoongArch ABI fallback.
+    static <F, E extends ArchiveEntry> JavaInfo fromArchive(ArchiveFileTree<F, E> tree, Architecture hostArchitecture) throws IOException {
         if (tree.getRoot().getSubDirs().size() != 1 || !tree.getRoot().getFiles().isEmpty())
             throw new IOException();
 
         ArchiveFileTree.Dir<E> jdkRoot = tree.getRoot().getSubDirs().values().iterator().next();
-        E releaseEntry = jdkRoot.getFiles().get("release");
+        @Nullable E releaseEntry = jdkRoot.getFiles().get("release");
         if (releaseEntry == null)
             throw new IOException("Missing release file");
 
@@ -84,9 +93,15 @@ public final class JavaInfo {
             info = JavaInfo.fromReleaseFile(reader);
         }
 
-        ArchiveFileTree.Dir<E> binDir = jdkRoot.getSubDirs().get("bin");
-        if (binDir == null || binDir.getFiles().get(info.getPlatform().getOperatingSystem().getJavaExecutable()) == null)
+        @Nullable ArchiveFileTree.Dir<E> binDir = jdkRoot.getSubDirs().get("bin");
+        @Nullable E executable = binDir == null ? null : binDir.getFiles().get(info.getPlatform().os().getJavaExecutable());
+        if (executable == null)
             throw new IOException("Missing java executable file");
+
+        if (hostArchitecture == Architecture.LOONGARCH64_OW
+                && info.getPlatform().equals(NativePlatform.LINUX_LOONGARCH64)) {
+            info = new JavaInfo(NativePlatform.LINUX_LOONGARCH64_OW, info.getVersion(), info.getVendor());
+        }
 
         return info;
     }
@@ -107,11 +122,11 @@ public final class JavaInfo {
     }
 
     public static final class Builder {
-        private final Platform platform;
+        private final NativePlatform platform;
         private final String version;
         private @Nullable String vendor;
 
-        public Builder(Platform platform, String version) {
+        public Builder(NativePlatform platform, String version) {
             this.platform = platform;
             this.version = version;
         }
@@ -127,20 +142,20 @@ public final class JavaInfo {
         }
     }
 
-    public static Builder newBuilder(@NotNull Platform platform, @NotNull String version) {
+    public static Builder newBuilder(@NotNull NativePlatform platform, @NotNull String version) {
         return new Builder(platform, version);
     }
 
-    public static final JavaInfo CURRENT_ENVIRONMENT = new JavaInfo(Platform.CURRENT_PLATFORM, System.getProperty("java.version"), System.getProperty("java.vendor"));
+    public static final JavaInfo CURRENT_ENVIRONMENT = new JavaInfo(SystemInfo.CURRENT_PLATFORM, System.getProperty("java.version"), System.getProperty("java.vendor"));
 
-    private final Platform platform;
+    private final NativePlatform platform;
     private final String version;
     private final @Nullable String vendor;
 
     private final transient int parsedVersion;
     private final transient VersionNumber versionNumber;
 
-    public JavaInfo(Platform platform, String version, @Nullable String vendor) {
+    public JavaInfo(NativePlatform platform, String version, @Nullable String vendor) {
         this.platform = platform;
         this.version = version;
         this.parsedVersion = parseVersion(version);
@@ -148,7 +163,7 @@ public final class JavaInfo {
         this.vendor = vendor;
     }
 
-    public Platform getPlatform() {
+    public NativePlatform getPlatform() {
         return platform;
     }
 
