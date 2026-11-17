@@ -694,12 +694,12 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         private void loadChangelog(RemoteAddon.Version version, RemoteAddonRepository repo, DownloadProvider provider, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
-            Task.supplyAsync(() ->
-                    StringUtils.convertToHtml(
-                            repo.getAddonChangelog(provider, version.projectId(), version.versionId()),
-                            "238222".equals(version.projectId()) // https://github.com/HMCL-dev/HMCL/pull/4828#issuecomment-3791068569 FUCK YOU JEI, FUCK YOU CURSEFORGE
-                    )
-            ).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            Task.supplyAsync(() -> {
+                String raw = repo.getAddonChangelog(provider, version.projectId(), version.versionId());
+                if ("238222".equals(version.projectId())) // https://github.com/HMCL-dev/HMCL/pull/4828#issuecomment-3791068569 FUCK YOU JEI, FUCK YOU CURSEFORGE
+                    return raw;
+                return StringUtils.convertToHtml(raw);
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     String changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));

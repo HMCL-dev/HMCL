@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ import java.util.function.Predicate;
 public final class FileNameSet {
     public static FileNameSet list(Path directory, @Nullable Predicate<? super Path> predicate) throws IOException {
         try (var list = Files.list(directory)) {
-            boolean caseSensitive = OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
+            boolean caseSensitive = SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS
                     || directory.getFileSystem() != FileSystems.getDefault();
             var set = new FileNameSet(caseSensitive);
 

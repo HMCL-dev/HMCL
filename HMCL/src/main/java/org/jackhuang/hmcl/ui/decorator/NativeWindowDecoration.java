@@ -14,6 +14,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,8 +102,8 @@ final class NativeWindowDecoration {
         if (!forced && preference != null && !"auto".equalsIgnoreCase(preference)) {
             LOG.warning("Invalid native decoration preference: " + preference + "; using auto");
         }
-        if (!forced && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS
-                && !OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11)) {
+        if (!forced && SystemInfo.CURRENT_OS != OperatingSystem.MACOS
+                && !SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11)) {
             return null;
         }
         try {

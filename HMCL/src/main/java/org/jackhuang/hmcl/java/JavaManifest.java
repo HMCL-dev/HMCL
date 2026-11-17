@@ -5,8 +5,8 @@ package org.jackhuang.hmcl.java;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
@@ -28,8 +28,8 @@ public record JavaManifest(JavaInfo info, @Nullable Map<String, Object> update, 
         @Override
         public JsonElement serialize(JavaManifest src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject res = new JsonObject();
-            res.addProperty("os.name", src.info().getPlatform().getOperatingSystem().getCheckedName());
-            res.addProperty("os.arch", src.info().getPlatform().getArchitecture().getCheckedName());
+            res.addProperty("os.name", src.info().getPlatform().os().getCheckedName());
+            res.addProperty("os.arch", src.info().getPlatform().arch().getCheckedName());
             res.addProperty("java.version", src.info().getVersion());
             res.addProperty("java.vendor", src.info().getVendor());
 
@@ -60,7 +60,7 @@ public record JavaManifest(JavaInfo info, @Nullable Map<String, Object> update, 
                 if (osName == null || osArch == null || javaVersion == null)
                     throw new JsonParseException(json.toString());
 
-                return new JavaManifest(new JavaInfo(Platform.getPlatform(osName, osArch), javaVersion, javaVendor), update, files);
+                return new JavaManifest(new JavaInfo(NativePlatform.of(osName, osArch), javaVersion, javaVendor), update, files);
             } catch (JsonParseException e) {
                 throw e;
             } catch (Throwable e) {

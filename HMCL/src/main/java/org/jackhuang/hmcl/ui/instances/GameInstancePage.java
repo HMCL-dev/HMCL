@@ -179,10 +179,22 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 })
                 .addNavigationDrawerItem(i18n("instance.launch.test"), SVG.ROCKET_LAUNCH, this::testGame)
                 .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, null, browseMenuItem -> {
-                    browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
+                    browseMenuItem.setOnAction(e -> {
+                        if (browsePopup.isShowing()) {
+                            browsePopup.hide();
+                        } else {
+                            browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0, true);
+                        }
+                    });
                 })
                 .addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managementItem -> {
-                    managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0));
+                    managementItem.setOnAction(e -> {
+                        if (managementPopup.isShowing()) {
+                            managementPopup.hide();
+                        } else {
+                            managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0, true);
+                        }
+                    });
                 });
         toolbar.getStyleClass().add("advanced-list-box-clear-padding");
 
