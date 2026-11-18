@@ -8,6 +8,8 @@ import javafx.scene.paint.Color;
 import org.glavo.m3fx.animation.M3MotionSettings;
 import org.glavo.m3fx.theme.M3Theme;
 import org.glavo.m3fx.theme.M3ThemeManager;
+import org.glavo.m3fx.tokens.M3Density;
+import org.glavo.m3fx.tokens.M3Profile;
 import org.glavo.m3fx.tokens.M3TextStyle;
 import org.glavo.m3fx.tokens.M3TokenSet;
 import org.glavo.m3fx.tokens.M3TypographyTokens;
@@ -220,7 +222,7 @@ public final class StyleSheets {
 
     /// Reuses launcher colors and font family while retaining Material typography metrics.
     private static M3Theme createM3Theme() {
-        M3Theme base = M3Theme.fromColorScheme(Themes.getColorScheme());
+        M3Theme base = M3Theme.fromColorScheme(M3Profile.BASELINE_2021, Themes.getColorScheme(), M3Density.of(-2));
         FontManager.@Nullable FontReference font = FontManager.getFont();
         if (font == null || "System".equals(font.family()))
             return base;
