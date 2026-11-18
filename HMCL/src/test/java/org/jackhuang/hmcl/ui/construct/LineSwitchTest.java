@@ -15,6 +15,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Switch;
+import org.glavo.m3fx.controls.M3SwitchEvent;
 import org.glavo.m3fx.theme.M3Theme;
 import org.glavo.m3fx.theme.M3ThemeManager;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -54,6 +55,43 @@ public final class LineSwitchTest {
             assertTrue(row.isOverridden());
             assertTrue(row.getRawValue());
             assertTrue(row.isEffectiveValue());
+            assertTrue(control.isSelected());
+            assertEquals(1, actions.get());
+        });
+    }
+
+    /// Row activation honors a veto and uses the original target even when enabling an override changes the effective value.
+    @Test
+    void inheritableRowToggleRequest() throws Exception {
+        onFxThread(() -> {
+            LineInheritableSwitch row = new LineInheritableSwitch();
+            row.setRawValue(true);
+            row.setEffectiveValue(false);
+            row.overriddenProperty().addListener(observable -> row.setEffectiveValue(row.getRawValue()));
+            row.rawValueProperty().addListener(observable -> row.setEffectiveValue(row.getRawValue()));
+            AtomicInteger actions = new AtomicInteger();
+            row.addEventHandler(ActionEvent.ACTION, event -> actions.incrementAndGet());
+            VBox root = new VBox(row);
+            M3Switch control = layoutSwitch(root);
+            AtomicInteger requests = new AtomicInteger();
+            root.addEventFilter(M3SwitchEvent.TOGGLE_REQUEST, event -> {
+                assertTrue(event.getRequestedValue());
+                if (requests.incrementAndGet() == 1) event.consume();
+            });
+            row.fire();
+            assertFalse(row.isOverridden());
+            assertFalse(control.isSelected());
+            assertEquals(0, actions.get());
+
+            root.setDisable(true);
+            row.fire();
+            assertEquals(1, requests.get());
+            assertEquals(0, actions.get());
+
+            root.setDisable(false);
+            row.fire();
+            assertTrue(row.isOverridden());
+            assertTrue(row.getRawValue());
             assertTrue(control.isSelected());
             assertEquals(1, actions.get());
         });

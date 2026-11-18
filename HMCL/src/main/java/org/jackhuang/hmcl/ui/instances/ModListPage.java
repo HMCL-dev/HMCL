@@ -5,11 +5,8 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -755,10 +752,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final M3IconButton infoButton = new M3IconButton(SVG.INFO.createIcon());
         private final M3Switch activeSwitch = new M3Switch();
 
-        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getModInfo().isActive());
-        private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
-        private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
-
         private Tooltip warningTooltip;
 
         /// Creates a selectable mod row with file actions for the supplied page.
@@ -786,6 +779,18 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             actions.setAlignment(Pos.CENTER);
             actions.getChildren().setAll(restoreButton, revealButton, infoButton, activeSwitch);
 
+            activeSwitch.setOnToggleRequest(event -> {
+                event.consume();
+                @Nullable ModInfoObject item = getItem();
+                if (item == null) return;
+                LocalModFile modInfo = item.getModInfo();
+                try {
+                    modInfo.setActive(event.getRequestedValue());
+                } catch (IOException e) {
+                    LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
+                    Controllers.showToast(i18n("mods.toggle.failed"));
+                }
+            });
             HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             container.getChildren().setAll(imageContainer, content, actions);
@@ -797,8 +802,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         /// Updates mod details, warnings, and tags while retaining reusable tag labels.
         @Override
         protected void updateControl(@Nullable ModInfoObject dataItem, boolean empty) {
-            if (observedActiveProperty != null)
-                observedActiveProperty.removeListener(weakActiveListener);
+            activeSwitch.selectedProperty().unbind();
 
             pseudoClassStateChanged(WARNING, false);
             if (warningTooltip != null) {
@@ -851,20 +855,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             content.getTags().setAll(tags);
 
-            (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
             activeSwitch.setAnimationsEnabled(false);
-            activeSwitch.setSelected(modInfo.isActive());
+            activeSwitch.selectedProperty().bind(modInfo.activeProperty());
             activeSwitch.setAnimationsEnabled(true);
-            activeSwitch.setOnAction(event -> {
-                try {
-                    modInfo.setActive(activeSwitch.isSelected());
-                } catch (IOException e) {
-                    LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
-                    Controllers.showToast(i18n("mods.toggle.failed"));
-                } finally {
-                    activeSwitch.setSelected(modInfo.isActive());
-                }
-            });
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()

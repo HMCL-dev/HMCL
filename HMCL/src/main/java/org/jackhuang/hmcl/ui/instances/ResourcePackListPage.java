@@ -554,14 +554,12 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             root.setAlignment(Pos.CENTER_LEFT);
             root.setPadding(new Insets(0, 8, 0, 8));
 
-            itemProperty().flatMap(ResourcePackInfoObject::enabledProperty).orElse(false).subscribe(activeSwitch::setSelected);
-            activeSwitch.setOnAction(event -> {
+            activeSwitch.selectedProperty().bind(itemProperty().flatMap(ResourcePackInfoObject::enabledProperty).orElse(false));
+            activeSwitch.setOnToggleRequest(event -> {
+                event.consume();
                 @Nullable ResourcePackInfoObject item = getItem();
-                if (item != null) {
-                    page.setSelectedEnabled(List.of(item), activeSwitch.isSelected());
-                    // A pending confirmation leaves the model unchanged.
-                    activeSwitch.setSelected(item.enabledProperty().get());
-                }
+                if (item != null)
+                    page.setSelectedEnabled(List.of(item), event.getRequestedValue());
             });
             HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 

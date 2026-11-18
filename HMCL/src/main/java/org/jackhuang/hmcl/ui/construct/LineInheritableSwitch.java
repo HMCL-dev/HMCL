@@ -68,12 +68,11 @@ public final class LineInheritableSwitch extends LineButtonBase {
 
         this.switchControl = new M3Switch();
         switchControl.accessibleTextProperty().bind(titleProperty());
-        switchControl.setOnAction(event -> {
-            // Override listeners may refresh the switch synchronously; preserve the requested value.
-            boolean selected = switchControl.isSelected();
+        switchControl.selectedProperty().bind(effectiveValueProperty());
+        switchControl.setOnToggleRequest(event -> {
             event.consume();
             setOverridden(true);
-            setRawValue(selected);
+            setRawValue(event.getRequestedValue());
             super.fire();
         });
 
@@ -81,9 +80,7 @@ public final class LineInheritableSwitch extends LineButtonBase {
         setTrailing(switchControl);
 
         InvalidationListener refreshListener = observable -> refresh();
-        rawValue.addListener(refreshListener);
         overridden.addListener(refreshListener);
-        effectiveValue.addListener(refreshListener);
         inheritAvailable.addListener(refreshListener);
         inheritedTooltip.addListener(refreshListener);
         overriddenTooltip.addListener(refreshListener);
@@ -206,12 +203,10 @@ public final class LineInheritableSwitch extends LineButtonBase {
     /// Overrides the inherited value with its inverse and fires the row action.
     @Override
     public void fire() {
-        setOverridden(true);
-        setRawValue(!isEffectiveValue());
-        super.fire();
+        switchControl.fire();
     }
 
-    /// Refreshes the visual state from the raw and effective values.
+    /// Refreshes the inheritance icon and tooltip.
     private void refresh() {
         boolean inheritAvailable = isInheritAvailable();
         boolean inherited = inheritAvailable && !isOverridden();
@@ -222,7 +217,5 @@ public final class LineInheritableSwitch extends LineButtonBase {
         inheritButton.setVisible(inheritAvailable);
         inheritButton.setManaged(inheritAvailable);
         inheritTooltip.setText(inherited ? getInheritedTooltip() : getOverriddenTooltip());
-
-        switchControl.setSelected(isEffectiveValue());
     }
 }

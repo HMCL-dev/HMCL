@@ -6,11 +6,8 @@ import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
@@ -286,10 +283,6 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
 
-        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getPackInfo().isActive());
-        private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
-        private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
-
         /// Creates a selectable data pack row whose switch follows the read-only state.
         DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
             super(listView);
@@ -302,6 +295,18 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             setSelectable();
 
             activeSwitch.disableProperty().bind(isReadOnlyProperty);
+            activeSwitch.setOnToggleRequest(event -> {
+                event.consume();
+                @Nullable DataPackInfoObject item = getItem();
+                if (item == null) return;
+                DataPack.Pack packInfo = item.getPackInfo();
+                try {
+                    packInfo.setActive(event.getRequestedValue());
+                } catch (IOException e) {
+                    LOG.warning("Unable to change state of datapack " + packInfo.getPath(), e);
+                    Controllers.showToast(i18n("datapack.toggle.failed"));
+                }
+            });
             HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             imageContainer.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
@@ -313,27 +318,15 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
         @Override
         protected void updateControl(@Nullable DataPackInfoObject dataItem, boolean empty) {
-            if (observedActiveProperty != null)
-                observedActiveProperty.removeListener(weakActiveListener);
+            activeSwitch.selectedProperty().unbind();
             if (empty || dataItem == null) return;
             content.setTitle(dataItem.getTitle());
             content.setSubtitle(dataItem.getSubtitle());
 
             DataPack.Pack packInfo = dataItem.getPackInfo();
-            (observedActiveProperty = packInfo.activeProperty()).addListener(weakActiveListener);
             activeSwitch.setAnimationsEnabled(false);
-            activeSwitch.setSelected(packInfo.isActive());
+            activeSwitch.selectedProperty().bind(packInfo.activeProperty());
             activeSwitch.setAnimationsEnabled(true);
-            activeSwitch.setOnAction(event -> {
-                try {
-                    packInfo.setActive(activeSwitch.isSelected());
-                } catch (IOException e) {
-                    LOG.warning("Unable to change state of datapack " + packInfo.getPath(), e);
-                    Controllers.showToast(i18n("datapack.toggle.failed"));
-                } finally {
-                    activeSwitch.setSelected(packInfo.isActive());
-                }
-            });
             dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
         }
     }
