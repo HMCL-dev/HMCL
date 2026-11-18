@@ -63,7 +63,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         HMCLGameRepository repository = gameInstance.getRepository();
 
         itemsProperty().clear();
-        InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameInstance.getVersion(), InstallerItem.Style.LIST_ITEM);
+        InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameInstance.getVersion());
 
         // Conventional libraries: game, fabric, legacyfabric, forge, cleanroom, neoforge, liteloader, optifine
         for (InstallerItem component : group.getComponents()) {
@@ -109,7 +109,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
             // we have done this library above.
 
-            InstallerItem installerItem = new InstallerItem(mark.componentType(), InstallerItem.Style.LIST_ITEM);
+            InstallerItem installerItem = new InstallerItem(mark.componentType());
             installerItem.versionProperty().set(new InstallerItem.InstalledState(mark.version(), false, false));
             installerItem.setOnRemove(() -> repository.getDependency().updateInstanceAsync(
                             gameInstance.getId(),

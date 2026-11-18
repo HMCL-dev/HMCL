@@ -242,7 +242,9 @@ public class RipplerContainer extends StackPane {
     }
 
     /// Returns whether the event targets the feedback layer or an opted-in decoration in this wrapper.
-    private boolean isBackgroundEvent(MouseEvent event) {
+    /// Descendant ripplers form separate input boundaries. Subclasses may use this test to extend
+    /// background interaction without handling input owned by descendant controls.
+    protected final boolean isBackgroundEvent(MouseEvent event) {
         if (event.getTarget() == interactionLayer)
             return true;
         if (!(event.getTarget() instanceof Node target))
