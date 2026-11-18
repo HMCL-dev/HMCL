@@ -46,16 +46,16 @@ public class FileSelector extends HBox {
                 selector.setInitialDirectory(null);
             }
             switch (selectionMode) {
-                case OPEN_FILE -> open(PathChooser.Type.OPEN);
-                case DIRECTORY -> open(PathChooser.Type.DIRECTORY);
-                case SAVE_FILE -> open(PathChooser.Type.SAVE);
+                case OPEN_FILE -> postOpenProcess(selector.showOpen());
+                case DIRECTORY -> postOpenProcess(selector.showOpenDirectory());
+                case SAVE_FILE -> postOpenProcess(selector.showSave());
                 case FILE_OR_DIRECTORY -> {
                     PopupMenu selectPopupMenu = new PopupMenu();
                     JFXPopup selectModePopup = new JFXPopup(selectPopupMenu);
 
                     selectPopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> open(PathChooser.Type.OPEN), selectModePopup),
-                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> open(PathChooser.Type.DIRECTORY), selectModePopup)
+                            new IconedMenuItem(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> postOpenProcess(selector.showOpen()), selectModePopup),
+                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> postOpenProcess(selector.showOpenDirectory()), selectModePopup)
                     );
 
                     selectModePopup.show(selectButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -selectButton.getWidth(), 0);
@@ -119,11 +119,9 @@ public class FileSelector extends HBox {
         selectButton.fire();
     }
 
-    private void open(PathChooser.Type type) {
-        @Nullable Path file = selector.show(type);
-        if (file != null) {
-            setText(processPath(file).toString());
-        }
+    private void postOpenProcess(@Nullable Path path) {
+        if (path != null)
+            setText(processPath(path).toString());
     }
 
     private Path processPath(Path path) {

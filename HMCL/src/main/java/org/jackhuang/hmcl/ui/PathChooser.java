@@ -150,14 +150,6 @@ public class PathChooser {
         return null;
     }
 
-    public @Nullable Path show(Type type) {
-        return switch (type) {
-            case OPEN -> showOpen();
-            case SAVE -> showSave();
-            case DIRECTORY -> showOpenDirectory();
-        };
-    }
-
     public enum ChooserContext {
         DEFAULT(() -> "");
 
@@ -170,11 +162,5 @@ public class PathChooser {
         public Path getDefaultPath() {
             return defaultPath;
         }
-    }
-
-    public enum Type {
-        OPEN,
-        SAVE,
-        DIRECTORY
     }
 }
