@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.Base64Utils;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.Subscription;
@@ -81,7 +82,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
     public static @NotNull Image parseServerFaviconImageOrDefault(@Nullable String imageBase64String) {
         if (imageBase64String != null && !imageBase64String.isEmpty()) {
-            try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(imageBase64String))) {
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64Utils.decode(imageBase64String))) {
                 // png format.
                 return ImageLoaders.DEFAULT.load(bais, "icon.png", 0, 0, true, true);
             } catch (Exception e) {

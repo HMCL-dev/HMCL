@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.util.url.data;
 
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.util.Base64Utils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +100,7 @@ public final class DataURL {
     public byte[] readBytes() throws IOException {
         if (base64) {
             try {
-                return Base64.getDecoder().decode(rawData);
+                return Base64Utils.decode(rawData);
             } catch (IllegalArgumentException e) {
                 throw new IOException(e);
             }
@@ -114,7 +115,7 @@ public final class DataURL {
     public String readString() throws IOException {
         if (base64) {
             try {
-                return new String(Base64.getDecoder().decode(rawData), charset);
+                return new String(Base64Utils.decode(rawData), charset);
             } catch (IllegalArgumentException e) {
                 throw new IOException(e);
             }
