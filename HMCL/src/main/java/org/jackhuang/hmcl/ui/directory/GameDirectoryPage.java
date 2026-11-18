@@ -18,7 +18,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -149,16 +148,15 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
             StackPane.setAlignment(saveButton, Pos.BOTTOM_RIGHT);
             saveButton.setPrefSize(100, 40);
             saveButton.setOnAction(e -> onSave());
-            String initialLocation = gameDir.getLocation();
+            Path initialLocation = gameDir.getValidPath();
             boolean initialUseRelativePath = switchUseRelativePath.isSelected();
             saveButton.disableProperty().bind(Bindings.createBooleanBinding(
-                    () -> !txtGameDirectoryName.validate() || gameDir.getLocation().isBlank()
+                    () -> !txtGameDirectoryName.validate() || gameDir.getValidPath() == null
                             || (gameDirectory != null
                             && Objects.equals(txtGameDirectoryName.getText(), gameDirectoryDisplayName)
-                            && gameDir.getLocation().equals(initialLocation)
-                            && gameDir.getValidPath() != null
+                            && gameDir.getValidPath().equals(initialLocation)
                             && switchUseRelativePath.isSelected() == initialUseRelativePath),
-                    txtGameDirectoryName.textProperty(), gameDir.locationProperty(), switchUseRelativePath.selectedProperty()));
+                    txtGameDirectoryName.textProperty(), gameDir.validPathProperty(), gameDir.locationProperty(), switchUseRelativePath.selectedProperty()));
         }
 
         if (gameDirectory == null) {
@@ -166,10 +164,11 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                 if (gameDir.getValidPath() == null)
                     return;
 
-                if (!".minecraft".equals(FileUtils.getName(gameDir.getValidPath())))
+                Path path = FileUtils.toAbsolute(gameDir.getValidPath());
+                if (!".minecraft".equals(FileUtils.getName(path)))
                     return;
 
-                @Nullable Path parent = gameDir.getValidPath().getParent();
+                @Nullable Path parent = path.getParent();
                 if (parent == null)
                     return;
 
@@ -195,10 +194,9 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
     }
 
     @FXThread
-    private void doSave() {
+    private void doSave(PortablePath path) {
         if (gameDirectory != null) {
             LocalizedText name = LocalizedText.plain(txtGameDirectoryName.getText());
-            PortablePath path = gameDir.getLocation().isBlank() ? gameDirectory.getPath() : createPortableLocation();
             if (!GameDirectoryManager.canUpdateGameDirectory(gameDirectory, path)) {
                 Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
                     GameDirectoryManager.forceOverwriteGameDirectoryFiles(gameDirectory, path);
@@ -210,13 +208,10 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
 
             GameDirectoryManager.updateGameDirectory(gameDirectory, name, path);
         } else {
-            if (gameDir.getLocation().isBlank()) {
-                gameDir.fire();
-            }
             GameDirectory newGameDirectory = new GameDirectory(
                     GameDirectoryManager.newGameDirectoryId(),
                     LocalizedText.plain(txtGameDirectoryName.getText()),
-                    createPortableLocation());
+                    path);
             if (newGameDirectory.getPath().isAbsolute()) {
                 if (SettingsManager.isUserGameDirectoriesReadOnly()) {
                     Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
@@ -250,24 +245,15 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
     /// Saves the edited game directory or adds a new entry to the appropriate game directory store.
     @FXThread
     private void onSave() {
-        if (gameDir.getValidPath() != null && gameDir.getValidPath().equals(gameDir.getValidPath().getRoot())) {
-            Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, this::doSave, null);
-        } else doSave();
-    }
+        @Nullable Path path = gameDir.getValidPath();
+        if (path == null)
+            return;
 
-    /// Creates the portable path for the current location according to the relative-path switch.
-    private PortablePath createPortableLocation() {
-        if (switchUseRelativePath.isSelected()) {
-            Path path = Path.of(gameDir.getLocation());
-            Path absolutePath = FileUtils.toAbsolute(path);
-            try {
-                return PortablePath.fromPath(Metadata.CURRENT_DIRECTORY.relativize(absolutePath).normalize());
-            } catch (IllegalArgumentException ignored) {
-                // Keep the original path when it cannot be expressed relative to the launcher directory.
-            }
-        }
-
-        return PortablePath.of(gameDir.getLocation());
+        PortablePath portablePath = PortablePath.fromPath(path);
+        Path absolutePath = FileUtils.toAbsolute(path);
+        if (absolutePath.equals(absolutePath.getRoot())) {
+            Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, () -> doSave(portablePath), null);
+        } else doSave(portablePath);
     }
 
     /// Returns the decorator title state for this page.

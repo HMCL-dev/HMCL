@@ -31,22 +31,16 @@ public class FileSelector extends HBox {
     private final JFXButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
     private final ReadOnlyObjectWrapper<@Nullable Path> validPath = new ReadOnlyObjectWrapper<>(this, "validPath", null);
     private final BooleanProperty existingValidationEnabled = new SimpleBooleanProperty(this, "existingValidationEnabled", true);
-    private final BooleanProperty convertToRelativePath = new SimpleBooleanProperty(this, "convertToRelativePath", false) {
-        @Override
-        protected void invalidated() {
-            if (getValidPath() != null)
-                setLocation(processPath(FileUtils.toAbsolute(getValidPath())));
-        }
-    };
+    private final BooleanProperty convertToRelativePath = new SimpleBooleanProperty(this, "convertToRelativePath", false);
 
     public FileSelector(SelectionMode selectionMode) {
         pathField.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(pathField, Priority.ALWAYS);
-
         pathField.setValidators(new Validator(i18n("selector.invalid_path"), s -> StringUtils.isBlank(s) || getValidPath() != null));
         FXUtils.setValidateWhileTextChanged(pathField, true);
+
         selectButton.setOnAction(e -> {
-            if (!getLocation().isBlank() && getValidPath() != null) {
+            if (getValidPath() != null) {
                 selector.setInitialDirectoryFromExisting(getValidPath());
             } else {
                 selector.setInitialDirectory(null);
@@ -74,15 +68,21 @@ public class FileSelector extends HBox {
         getChildren().addAll(pathField, selectButton);
 
         validPath.bind(Bindings.createObjectBinding(() -> FileUtils.tryGetPath(getLocation())
-                .filter(p -> !existingValidationEnabled.get() || switch (selectionMode) {
-                    case DIRECTORY -> Files.isDirectory(p);
-                    case OPEN_FILE -> Files.isRegularFile(p);
+                .filter(path -> !getLocation().isBlank())
+                .map(this::processPath)
+                .filter(path -> !existingValidationEnabled.get() || switch (selectionMode) {
+                    case DIRECTORY -> Files.isDirectory(path);
+                    case OPEN_FILE -> Files.isRegularFile(path);
                     case SAVE_FILE -> true;
-                    case FILE_OR_DIRECTORY -> Files.exists(p);
-                }).orElse(null), locationProperty(), existingValidationEnabled));
+                    case FILE_OR_DIRECTORY -> Files.exists(path);
+                }).orElse(null), locationProperty(), existingValidationEnabled, convertToRelativePath));
+        convertToRelativePath.addListener(o -> {
+            if (getValidPath() != null)
+                setLocation(getValidPath().toString());
+        });
     }
 
-    public String getLocation() {
+    private String getLocation() {
         return pathField.textProperty().getValueSafe();
     }
 
@@ -116,22 +116,19 @@ public class FileSelector extends HBox {
     }
 
     private void open(PathSelector.Type type) {
-        Path file = selector.show(type);
+        @Nullable Path file = selector.show(type);
         if (file != null) {
-            setLocation(processPath(file));
+            setLocation(processPath(file).toString());
         }
     }
 
-    /// Converts the given path to absolute/relative(if possible) path according to [#convertToRelativePathProperty()].
-    private String processPath(Path path) {
-        if (convertToRelativePath.get() && path.isAbsolute()) {
-            try {
-                return Metadata.CURRENT_DIRECTORY.relativize(path).normalize().toString();
-            } catch (IllegalArgumentException e) {
-                // the given path can't be relativized against current path
-            }
-        }
-        return path.normalize().toString();
+    private Path processPath(Path path) {
+        Path absolutePath = FileUtils.toAbsolute(path);
+        if (!convertToRelativePath.get() || !Metadata.CURRENT_DIRECTORY.getRoot().equals(absolutePath.getRoot()))
+            return absolutePath;
+
+        Path relativePath = Metadata.CURRENT_DIRECTORY.relativize(absolutePath);
+        return relativePath.toString().isEmpty() ? Path.of(".") : relativePath;
     }
 
     public BooleanProperty convertToRelativePathProperty() {

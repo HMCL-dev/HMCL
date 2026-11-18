@@ -246,7 +246,9 @@ public class OfflineAccountSkinPane extends StackPane {
     private Skin getSkin() {
         Skin.Type type = skinItem.getSelectedData();
         if (type == Skin.Type.LOCAL_FILE) {
-            return new Skin(type, cslApiField.getText(), modelCombobox.getValue(), skinSelector.getLocation(), capeSelector.getLocation());
+            Path skin = skinSelector.getValidPath();
+            Path cape = capeSelector.getValidPath();
+            return new Skin(type, cslApiField.getText(), modelCombobox.getValue(), skin == null ? null : skin.toString(), cape == null ? null : cape.toString());
         } else {
             String cslApi = type == Skin.Type.CUSTOM_SKIN_LOADER_API ? cslApiField.getText() : null;
             return new Skin(type, cslApi, null, null, null);
