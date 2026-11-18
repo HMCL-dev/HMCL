@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.modpack.multimc;
 
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.util.Base64Utils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
@@ -25,7 +26,7 @@ public final class MultiMCComponents {
         // Check whether MultiMCComponents is 'org.jackhuang.hmcl.mod.multimc.MultiMCComponents'.
         // We use a base64-encoded value here to prevent string literals from being replaced by IDE if users trigger the 'Refactor' feature.
         if (new String(
-                Base64.getDecoder().decode("b3JnLmphY2todWFuZy5obWNsLm1vZC5tdWx0aW1jLk11bHRpTUNDb21wb25lbnRz"),
+                Base64Utils.decode("b3JnLmphY2todWFuZy5obWNsLm1vZC5tdWx0aW1jLk11bHRpTUNDb21wb25lbnRz"),
                 StandardCharsets.UTF_8
         ).equals(MultiMCComponents.class.getName())) {
             INSTALLER_PROFILE.put("Implementation", "Probably vanilla. Class location is not modified (org.jackhuang.hmcl.mod.multimc.MultiMCComponents).");

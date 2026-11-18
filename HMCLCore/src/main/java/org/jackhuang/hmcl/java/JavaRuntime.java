@@ -45,6 +45,10 @@ public final class JavaRuntime implements Comparable<JavaRuntime> {
         return binary;
     }
 
+    public JavaInfo getInfo() {
+        return info;
+    }
+
     public String getVersion() {
         return info.getVersion();
     }
