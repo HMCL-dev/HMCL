@@ -78,7 +78,7 @@ public class OfflineAccountSkinPane extends StackPane {
             if (e.isAccepted()) {
                 Path skin = e.getDragboard().getFiles().get(0).toPath();
                 Platform.runLater(() -> {
-                    skinSelector.setValue(FileUtils.getAbsolutePath(skin));
+                    skinSelector.setLocation(FileUtils.getAbsolutePath(skin));
                     skinItem.setSelectedData(Skin.Type.LOCAL_FILE);
                 });
             }
@@ -117,8 +117,8 @@ public class OfflineAccountSkinPane extends StackPane {
             skinItem.setSelectedData(account.getSkin().type());
             cslApiField.setText(account.getSkin().cslApi());
             modelCombobox.setValue(account.getSkin().textureModel());
-            skinSelector.setValue(account.getSkin().localSkinPath());
-            capeSelector.setValue(account.getSkin().localCapePath());
+            skinSelector.setLocation(account.getSkin().localSkinPath());
+            capeSelector.setLocation(account.getSkin().localCapePath());
         }
 
         PauseTransition pauseTransition = new PauseTransition(Duration.seconds(1));
@@ -162,7 +162,7 @@ public class OfflineAccountSkinPane extends StackPane {
                 pauseTransition.stop();
                 loadSkin.run();
             }
-        }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
+        }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.locationProperty(), capeSelector.locationProperty());
 
         VBox right = new VBox();
         right.setPadding(new Insets(0, 0, 0, 10));
@@ -247,7 +247,7 @@ public class OfflineAccountSkinPane extends StackPane {
     private Skin getSkin() {
         Skin.Type type = skinItem.getSelectedData();
         if (type == Skin.Type.LOCAL_FILE) {
-            return new Skin(type, cslApiField.getText(), modelCombobox.getValue(), skinSelector.getValue(), capeSelector.getValue());
+            return new Skin(type, cslApiField.getText(), modelCombobox.getValue(), skinSelector.getLocation(), capeSelector.getLocation());
         } else {
             String cslApi = type == Skin.Type.CUSTOM_SKIN_LOADER_API ? cslApiField.getText() : null;
             return new Skin(type, cslApi, null, null, null);

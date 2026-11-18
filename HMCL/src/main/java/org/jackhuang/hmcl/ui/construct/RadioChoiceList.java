@@ -389,17 +389,17 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
 
         /// Returns the selected path.
         public String getPath() {
-            return selector.getValue();
+            return selector.getLocation();
         }
 
         /// Returns the selected path property.
         public StringProperty pathProperty() {
-            return selector.valueProperty();
+            return selector.locationProperty();
         }
 
         /// Sets the selected path.
         public void setPath(String value) {
-            selector.setValue(value);
+            selector.setLocation(value);
         }
 
         /// Sets the file selector mode.
@@ -410,7 +410,7 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
 
         /// Binds the selected path to another property.
         public FileChoice<T> bindPathBidirectional(Property<String> property) {
-            selector.valueProperty().bindBidirectional(property);
+            selector.locationProperty().bindBidirectional(property);
             return this;
         }
 

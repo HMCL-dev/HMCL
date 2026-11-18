@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.PathSelector;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.FXThread;
@@ -60,7 +59,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
     private final JFXTextField txtGameDirectoryName;
 
     /// Directory chooser bound to [#location].
-    private final LineFileChooserButton gameDir;
+    private final FileSelector gameDir;
 
     /// Switch that controls whether a saved path is converted to a relative path when possible.
     private final LineSwitch switchUseRelativePath;
@@ -119,11 +118,15 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                         });
                     }
 
-                    gameDir = new LineFileChooserButton();
-                    gameDir.setTitle(i18n("game_directory.instance_directory"));
-                    gameDir.getSelector().setTitle(i18n("game_directory.instance_directory.choose"));
-                    gameDir.setType(PathSelector.Type.DIRECTORY);
-                    gameDir.locationProperty().bindBidirectional(location);
+                    LinePane gameDirectorySelectPane = new LinePane();
+                    gameDirectorySelectPane.setTitle(i18n("game_directory.instance_directory"));
+                    {
+                        gameDir = new FileSelector().setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
+                        gameDir.getSelector().setTitle(i18n("game_directory.instance_directory.choose"));
+                        gameDir.setPrefWidth(400);
+                        gameDirectorySelectPane.setRight(gameDir);
+                        gameDir.locationProperty().bindBidirectional(location);
+                    }
 
                     switchUseRelativePath = new LineSwitch();
                     switchUseRelativePath.setTitle(i18n("game_directory.use_relative_path"));
@@ -133,7 +136,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                         switchUseRelativePath.setSelected(!gameDirectory.getPath().isAbsolute());
                     }
 
-                    componentList.getContent().setAll(gameDirectoryNamePane, gameDir, switchUseRelativePath);
+                    componentList.getContent().setAll(gameDirectoryNamePane, gameDirectorySelectPane, switchUseRelativePath);
                 }
 
                 rootPane.getChildren().setAll(componentList);
