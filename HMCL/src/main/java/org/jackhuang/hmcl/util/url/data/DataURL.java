@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Base64;
 
 /// Parses a data URL's media type, charset, and percent-decoded payload.
 /// Query content is included in the payload; the fragment is excluded.
