@@ -241,6 +241,10 @@ public final class MultiFileItem<T> extends VBox {
             selector = new FileSelector(mode);
         }
 
+        public String getValue() {
+            return selector.getText();
+        }
+
         public StringProperty valueProperty() {
             return selector.textProperty();
         }
