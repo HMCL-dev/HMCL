@@ -15,9 +15,11 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 
@@ -206,6 +208,9 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             localFiles.clear();
             localMods.clear();
 
+            // Re-read the pin file, so edits made outside this manager are picked up.
+            pinnedFiles = null;
+
             analyze();
 
             boolean supportSubfolders = analyzer.has(GameComponentType.FORGE)
@@ -383,6 +388,100 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     public boolean isDisabled(Path file) {
         return FileUtils.getName(file).endsWith(DISABLED_EXTENSION);
+    }
+
+    /// Name of the file that lists the pinned mods, one per line.
+    ///
+    /// It has no mod extension, so the directory scan skips it.
+    public static final String PINNED_FILE_NAME = ".hmcl-pinned";
+
+    /// Pinned mod file names, or null until they are read from [#PINNED_FILE_NAME].
+    private @Nullable Set<String> pinnedFiles;
+
+    /// Returns whether the update check skips the given mod.
+    public boolean isPinned(Path file) {
+        lock.lock();
+        try {
+            return getPinnedFiles().contains(getLocalAddonName(file));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// Pins or unpins the given mods, writing [#PINNED_FILE_NAME] once.
+    ///
+    /// @throws IOException if the pin file cannot be written
+    public void setPinned(Collection<Path> files, boolean pinned) throws IOException {
+        lock.lock();
+        try {
+            // The name has no .disabled or .old suffix, so a pin survives these renames.
+            var names = new HashSet<>(getPinnedFiles());
+            boolean changed = false;
+            for (Path file : files) {
+                if (pinned ? names.add(getLocalAddonName(file)) : names.remove(getLocalAddonName(file))) {
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                // Save first, so a failed write leaves the memory unchanged.
+                Set<String> newPins = Set.copyOf(names);
+                savePinnedFiles(newPins);
+                pinnedFiles = newPins;
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// Returns the pinned mod names, reading [#PINNED_FILE_NAME] on first access.
+    private @Unmodifiable Set<String> getPinnedFiles() {
+        if (pinnedFiles == null) {
+            pinnedFiles = loadPinnedFiles();
+        }
+        return pinnedFiles;
+    }
+
+    /// Reads [#PINNED_FILE_NAME]. A missing or unreadable file yields no pins.
+    private @Unmodifiable Set<String> loadPinnedFiles() {
+        Path file = getDirectory().resolve(PINNED_FILE_NAME);
+        if (!Files.isRegularFile(file)) {
+            return Set.of();
+        }
+
+        try {
+            Set<String> names = new HashSet<>();
+            for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
+                String name = line.trim();
+                if (!name.isEmpty()) {
+                    names.add(name);
+                }
+            }
+            return Set.copyOf(names);
+        } catch (IOException e) {
+            LOG.warning("Unable to read pinned mods from " + file, e);
+            return Set.of();
+        }
+    }
+
+    /// Writes the pinned mod names to [#PINNED_FILE_NAME], sorted.
+    ///
+    /// @throws IOException if the file cannot be written
+    private void savePinnedFiles(Collection<String> names) throws IOException {
+        Path file = getDirectory().resolve(PINNED_FILE_NAME);
+        // Write to a temporary file, so an interrupted write cannot truncate the pin file.
+        Path temp = Files.createTempFile(getDirectory(), PINNED_FILE_NAME, ".tmp");
+        try {
+            Files.write(temp, names.stream().sorted().toList(), StandardCharsets.UTF_8);
+            try {
+                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                // Some file systems cannot replace atomically.
+                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temp);
+        }
     }
 
     public static boolean isFileNameMod(Path file) {
