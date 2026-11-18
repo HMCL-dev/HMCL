@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.PathSelector;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.account.CreateAccountPane;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -301,7 +301,7 @@ public final class Instances {
     public static void generateLaunchScript(HMCLGameInstance gameInstance, Consumer<LauncherHelper>... injecters) {
         ensureSelectedAccount(account -> {
             Path runDirectory = gameInstance.getRunDirectory();
-            PathSelector selector = new PathSelector().setTitle(i18n("instance.launch_script.save"));
+            PathChooser selector = new PathChooser().setTitle(i18n("instance.launch_script.save"));
             if (Files.isDirectory(runDirectory))
                 selector.setInitialDirectory(runDirectory);
             List<FileChooser.ExtensionFilter> filters = new ArrayList<>();

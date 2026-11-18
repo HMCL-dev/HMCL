@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
-import org.jackhuang.hmcl.ui.PathSelector;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
@@ -133,7 +133,7 @@ public class AccountListItem extends RadioButton {
             return null;
         }
 
-        Path selectedFile = new PathSelector().setTitle(i18n("account.skin.upload"))
+        Path selectedFile = new PathChooser().setTitle(i18n("account.skin.upload"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("account.skin.file"), "*.png"))
                 .showOpen();
         if (selectedFile == null) {

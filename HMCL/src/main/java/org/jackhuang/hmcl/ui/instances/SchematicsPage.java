@@ -261,7 +261,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     /// Opens a schematic chooser and adds the selected files to the current directory.
     public void onAddFiles() {
-        @Nullable @Unmodifiable List<Path> files = new PathSelector().setTitle(i18n("schematics.add.title"))
+        @Nullable @Unmodifiable List<Path> files = new PathChooser().setTitle(i18n("schematics.add.title"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.schematic"), "*.litematic", "*.nbt", "*.schematic", "*.schem"))
                 .showMulti();
         if (files != null && !files.isEmpty()) {

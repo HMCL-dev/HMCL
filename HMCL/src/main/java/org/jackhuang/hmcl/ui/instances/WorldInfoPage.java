@@ -621,7 +621,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void changeWorldIcon() {
-        Path iconPath = new PathSelector().setTitle(i18n("world.icon.choose.title"))
+        Path iconPath = new PathChooser().setTitle(i18n("world.icon.choose.title"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png"))
                 .showOpen();
         if (iconPath == null) return;

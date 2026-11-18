@@ -152,7 +152,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     public void saveAs(RemoteAddon.Version file) {
         String extension = StringUtils.substringAfterLast(file.file().filename(), '.');
-        Path dest = new PathSelector().setTitle(i18n("button.save_as"))
+        Path dest = new PathChooser().setTitle(i18n("button.save_as"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("file"), "*." + extension))
                 .setInitialFileName(file.file().filename())
                 .showSave();

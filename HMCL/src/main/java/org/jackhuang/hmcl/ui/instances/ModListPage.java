@@ -183,7 +183,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
     /// Opens a mod chooser, installs the selected files, and reports the results.
     public void add() {
-        @Nullable @Unmodifiable List<Path> res = new PathSelector().setTitle(i18n("mods.add.title"))
+        @Nullable @Unmodifiable List<Path> res = new PathChooser().setTitle(i18n("mods.add.title"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"))
                 .showMulti();
 

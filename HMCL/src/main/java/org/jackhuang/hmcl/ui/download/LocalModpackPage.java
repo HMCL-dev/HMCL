@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.PathSelector;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.WebPage;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
@@ -92,7 +92,7 @@ public final class LocalModpackPage extends ModpackPage {
         if (filePath != null) {
             selectedFile = filePath;
         } else {
-            selectedFile = new PathSelector().setTitle(i18n("modpack.choose"))
+            selectedFile = new PathChooser().setTitle(i18n("modpack.choose"))
                     .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"))
                     .showOpen();
             if (selectedFile == null) {

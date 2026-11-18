@@ -19,7 +19,7 @@ import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.PathSelector;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -214,7 +214,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
 
     private void onNext() {
         var info = Objects.requireNonNull(controller.getSettings().get(MODPACK_INFO));
-        PathSelector fileChooser = new PathSelector().setTitle(i18n("modpack.wizard.step.initialization.save"));
+        PathChooser fileChooser = new PathChooser().setTitle(i18n("modpack.wizard.step.initialization.save"));
         if (!info.isPackWithLauncher() && MODPACK_TYPE_MODRINTH.equals(controller.getSettings().get(MODPACK_TYPE))) {
             fileChooser.setExtensionFilters(new FileChooser.ExtensionFilter(i18n("modpack"), "*.mrpack"))
                     .setInitialFileName(info.getName() + (SystemInfo.CURRENT_OS == OperatingSystem.MACOS ? "" : ".mrpack"));

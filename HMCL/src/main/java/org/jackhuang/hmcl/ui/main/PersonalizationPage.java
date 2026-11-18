@@ -348,7 +348,7 @@ public class PersonalizationPage extends StackPane {
     /// Saves current launcher appearance as a theme-pack file with the given package metadata.
     private void exportCurrentThemePack(String packId, String version, String packName, String authorName) {
         String initialFileName = sanitizeThemePackFileName(packName);
-        Path output = new PathSelector().setTitle(i18n("theme_pack.export.title"))
+        Path output = new PathChooser().setTitle(i18n("theme_pack.export.title"))
                 .setInitialFileName((FileUtils.isNameValid(initialFileName) ? initialFileName : "theme-pack")
                         + (SystemInfo.CURRENT_OS == OperatingSystem.MACOS ? "" : ThemePackExporter.FILE_EXTENSION))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION)).showSave();
@@ -651,7 +651,7 @@ public class PersonalizationPage extends StackPane {
             RadioChoiceList.FileChoice<BackgroundType> customBackgroundOption =
                     new RadioChoiceList.FileChoice<>(i18n("settings.custom"), BackgroundType.CUSTOM, FileSelector.SelectionMode.FILE_OR_DIRECTORY)
                             .setChooserTitle(i18n("launcher.background.choose"))
-                            .setExtensionFilters(PathSelector.getImageExtensionFilter());
+                            .setExtensionFilters(PathChooser.getImageExtensionFilter());
             RadioChoiceList.TextChoice<BackgroundType> networkBackgroundOption =
                     new RadioChoiceList.TextChoice<>(i18n("launcher.background.network"), BackgroundType.NETWORK)
                             .setValidators(new URLValidator(true));

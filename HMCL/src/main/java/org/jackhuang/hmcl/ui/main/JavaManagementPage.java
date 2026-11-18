@@ -92,7 +92,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     }
 
     void onAddJava() {
-        PathSelector selector = new PathSelector().setTitle(i18n("settings.game.java_directory.choose"));
+        PathChooser selector = new PathChooser().setTitle(i18n("settings.game.java_directory.choose"));
         if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
             selector.setExtensionFilters(new FileChooser.ExtensionFilter("Java", "java.exe"));
         Path file = selector.showOpen();

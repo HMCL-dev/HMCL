@@ -178,7 +178,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     /// Opens a resource pack chooser and adds the selected archives.
     public void onAddFiles() {
-        @Nullable @Unmodifiable List<Path> files = new PathSelector().setTitle(i18n("resourcepack.add"))
+        @Nullable @Unmodifiable List<Path> files = new PathChooser().setTitle(i18n("resourcepack.add"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"))
                 .showMulti();
         if (files != null && !files.isEmpty()) {

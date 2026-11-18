@@ -12,7 +12,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.PathSelector;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -26,7 +26,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 @NotNullByDefault
 public class FileSelector extends HBox {
-    private final PathSelector selector = new PathSelector();
+    private final PathChooser selector = new PathChooser();
     private final JFXTextField pathField = new JFXTextField();
     private final JFXButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
     private final ReadOnlyObjectWrapper<@Nullable Path> path = new ReadOnlyObjectWrapper<>(this, "validPath", null);
@@ -46,16 +46,16 @@ public class FileSelector extends HBox {
                 selector.setInitialDirectory(null);
             }
             switch (selectionMode) {
-                case OPEN_FILE -> open(PathSelector.Type.OPEN);
-                case DIRECTORY -> open(PathSelector.Type.DIRECTORY);
-                case SAVE_FILE -> open(PathSelector.Type.SAVE);
+                case OPEN_FILE -> open(PathChooser.Type.OPEN);
+                case DIRECTORY -> open(PathChooser.Type.DIRECTORY);
+                case SAVE_FILE -> open(PathChooser.Type.SAVE);
                 case FILE_OR_DIRECTORY -> {
                     PopupMenu selectPopupMenu = new PopupMenu();
                     JFXPopup selectModePopup = new JFXPopup(selectPopupMenu);
 
                     selectPopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> open(PathSelector.Type.OPEN), selectModePopup),
-                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> open(PathSelector.Type.DIRECTORY), selectModePopup)
+                            new IconedMenuItem(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> open(PathChooser.Type.OPEN), selectModePopup),
+                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> open(PathChooser.Type.DIRECTORY), selectModePopup)
                     );
 
                     selectModePopup.show(selectButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -selectButton.getWidth(), 0);
@@ -94,7 +94,7 @@ public class FileSelector extends HBox {
         return pathField.textProperty();
     }
 
-    public PathSelector getSelector() {
+    public PathChooser getSelector() {
         return selector;
     }
 
@@ -119,7 +119,7 @@ public class FileSelector extends HBox {
         selectButton.fire();
     }
 
-    private void open(PathSelector.Type type) {
+    private void open(PathChooser.Type type) {
         @Nullable Path file = selector.show(type);
         if (file != null) {
             setText(processPath(file).toString());

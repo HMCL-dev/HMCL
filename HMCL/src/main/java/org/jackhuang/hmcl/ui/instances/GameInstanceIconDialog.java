@@ -12,7 +12,7 @@ import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.PathSelector;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -66,7 +66,7 @@ public class GameInstanceIconDialog extends JFXDialogLayout {
     }
 
     private void exploreIcon() {
-        Path selectedFile = new PathSelector().setExtensionFilters(PathSelector.getImageExtensionFilter()).showOpen();
+        Path selectedFile = new PathChooser().setExtensionFilters(PathChooser.getImageExtensionFilter()).showOpen();
         if (selectedFile != null) {
             try {
                 gameInstance.setIconFile(selectedFile);

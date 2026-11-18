@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 @NotNullByDefault
-public class PathSelector {
+public class PathChooser {
     private final ObservableList<FileChooser.ExtensionFilter> extensionFilter = FXCollections.observableArrayList();
     private ChooserContext context = ChooserContext.DEFAULT;
     private @Nullable Path initialDirectory;
@@ -45,12 +45,12 @@ public class PathSelector {
         SettingsManager.userSettings().getRecentFileChooserPaths().put(context.name(), path);
     }
 
-    public PathSelector setChooserContext(ChooserContext context) {
+    public PathChooser setChooserContext(ChooserContext context) {
         this.context = context;
         return this;
     }
 
-    public PathSelector setInitialDirectory(@Nullable Path initialDirectory) {
+    public PathChooser setInitialDirectory(@Nullable Path initialDirectory) {
         this.initialDirectory = initialDirectory;
         return this;
     }
@@ -65,27 +65,27 @@ public class PathSelector {
         return null;
     }
 
-    public PathSelector setInitialDirectoryFromExisting(Path existingPath) {
+    public PathChooser setInitialDirectoryFromExisting(Path existingPath) {
         initialDirectory = getInitialDirectoryFromExisting(existingPath);
         return this;
     }
 
-    public PathSelector setTitle(@Nullable String title) {
+    public PathChooser setTitle(@Nullable String title) {
         this.title = title;
         return this;
     }
 
-    public PathSelector setExtensionFilters(FileChooser.ExtensionFilter... extensionFilter) {
+    public PathChooser setExtensionFilters(FileChooser.ExtensionFilter... extensionFilter) {
         this.extensionFilter.setAll(extensionFilter);
         return this;
     }
 
-    public PathSelector setExtensionFilters(Collection<FileChooser.ExtensionFilter> extensionFilter) {
+    public PathChooser setExtensionFilters(Collection<FileChooser.ExtensionFilter> extensionFilter) {
         this.extensionFilter.setAll(extensionFilter);
         return this;
     }
 
-    public PathSelector setInitialFileName(@Nullable String initialFileName) {
+    public PathChooser setInitialFileName(@Nullable String initialFileName) {
         this.initialFileName = initialFileName;
         return this;
     }

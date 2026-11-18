@@ -142,7 +142,7 @@ public final class WorldListPage extends ListPageBase<World> {
 
     /// Opens a world archive chooser and imports the first selected world.
     public void add() {
-        @Nullable @Unmodifiable List<Path> res = new PathSelector().setTitle(i18n("world.add.title"))
+        @Nullable @Unmodifiable List<Path> res = new PathChooser().setTitle(i18n("world.add.title"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.world"), "*.zip"))
                 .showMulti();
 
