@@ -84,4 +84,13 @@ class Base64UtilsTest {
     void rejectsMalformedInput(String encoded) {
         assertThrows(IllegalArgumentException.class, () -> Base64Utils.decode(encoded));
     }
+
+    /// Checks that a long valid prefix cannot hide a malformed final group.
+    /// Keep these rejection checks independent of the JDK decoder affected by CVE-2026-114938.
+    @ParameterizedTest
+    @ValueSource(strings = {"A", "AA=", "AA!A", "YQ==AAAA"})
+    void rejectsMalformedSuffixAfterValidGroups(String suffix) {
+        String encoded = "Zm9v".repeat(1024) + suffix;
+        assertThrows(IllegalArgumentException.class, () -> Base64Utils.decode(encoded));
+    }
 }
