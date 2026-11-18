@@ -38,7 +38,8 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
         exportPath.getSelector().setExtensionFilters(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
         exportPath.setPrefWidth(400);
         exportPathSelectPane.setRight(exportPath);
-        exportPath.locationProperty().bindBidirectional(skinnable.pathProperty());
+        exportPath.setLocation(skinnable.pathProperty().getValue().toString());
+        skinnable.pathProperty().bind(exportPath.validPathProperty());
 
         var worldNamePane = new LinePane();
         worldNamePane.setTitle(i18n("world.name"));

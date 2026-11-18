@@ -111,6 +111,10 @@ public class FileSelector extends HBox {
         return validPath.get();
     }
 
+    public @Nullable String getValidPathString() {
+        return getValidPath() == null ? null : getValidPath().toString();
+    }
+
     public void fire() {
         selectButton.fire();
     }
