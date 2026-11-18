@@ -425,11 +425,11 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         /// this page.
         private final Map<String, String> changelogCache = new ConcurrentHashMap<>();
         /// ID of the most recent request. Only the result of that request may update the UI.
+        ///
+        /// Requests are compared by id instead of version because: switching A -> B -> A starts two requests for A,
+        /// and the older one may finish last.
         @FXThread
-        private int changelogRequestId = 0;
-        /// ID of the most recent request. Only the result of that request may update the UI.
-        @FXThread
-        private int versionPageRequestId = 0;
+        private int latestRequestId = 0;
 
         /// Creates a changelog dialog with a preferred height that follows the window height.
         public AddonChangelog(AddonUpdateObject object) {
@@ -467,8 +467,9 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             versionPageBtn.setDisable(true);
 
             Consumer<RemoteAddon.Version> onSelectedVersionChange = (version) -> {
-                loadChangelog(version, spinnerPane, scrollPane);
-                loadVersionPageUrl(version, versionPageBtn);
+                int requestId = ++latestRequestId;
+                loadChangelog(version, requestId, spinnerPane, scrollPane);
+                loadVersionPageUrl(version, requestId, versionPageBtn);
             };
 
             spinnerPane.setOnFailedAction(e -> onSelectedVersionChange.accept(versionComboBox.getSelectionModel().getSelectedItem()));
@@ -492,8 +493,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         ///
         /// Results of requests superseded by a newer selection are discarded, so that a slow request
         /// cannot overwrite the changelog of the version the user selected last.
-        private void loadChangelog(RemoteAddon.Version version, SpinnerPane spinnerPane, ScrollPane scrollPane) {
-            int requestId = ++changelogRequestId;
+        private void loadChangelog(RemoteAddon.Version version, int requestId, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             RemoteAddonRepository repo = version.source().getRepository();
 
             spinnerPane.setLoading(true);
@@ -508,9 +508,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 changelogCache.put(version.versionId(), text);
                 return text;
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                // Comparing versions is not enough: switching A -> B -> A starts two requests for A,
-                // and the older one may finish last.
-                if (requestId != changelogRequestId) return;
+                if (requestId != latestRequestId) return;
 
                 if (exception == null) {
                     String html = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
@@ -527,13 +525,12 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         /// Loads the page URL of `version` into `button`, keeping the button disabled until the URL is available.
         ///
         /// Results of requests superseded by a newer selection are discarded.
-        private void loadVersionPageUrl(RemoteAddon.Version version, JFXHyperlink button) {
+        private void loadVersionPageUrl(RemoteAddon.Version version, int requestId, JFXHyperlink button) {
             button.setDisable(true);
-            int requestId = ++versionPageRequestId;
             Task.supplyAsync(() ->
                     version.source().getRepository().getVersionPageUrl(version)
             ).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                if (requestId != versionPageRequestId) {
+                if (requestId != latestRequestId) {
                     return;
                 }
 
