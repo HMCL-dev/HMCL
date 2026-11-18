@@ -11,7 +11,6 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.SetChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -52,6 +51,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.platform.windows.Dwmapi;
 import org.jackhuang.hmcl.util.platform.windows.WinConstants;
@@ -492,7 +492,7 @@ public final class Themes {
 
         LOG.info("Detecting system theme brightness");
         Brightness brightness = Brightness.DEFAULT;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
             WinReg reg = WinReg.INSTANCE;
             if (reg != null) {
                 Object appsUseLightTheme = reg.queryValue(WinReg.HKEY.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", "AppsUseLightTheme");
@@ -500,7 +500,7 @@ public final class Themes {
                     brightness = value == 0 ? Brightness.DARK : Brightness.LIGHT;
                 }
             }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+        } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
             try {
                 String result = SystemUtils.run("/usr/bin/defaults", "read", "-g", "AppleInterfaceStyle").trim();
                 brightness = "Dark".equalsIgnoreCase(result) ? Brightness.DARK : Brightness.LIGHT;
@@ -508,7 +508,7 @@ public final class Themes {
                 // If the key does not exist, it means Light mode is used
                 brightness = Brightness.LIGHT;
             }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+        } else if (SystemInfo.CURRENT_OS == OperatingSystem.LINUX) {
             Path dbusSend = SystemUtils.which("dbus-send");
             if (dbusSend != null) {
                 try {
@@ -1103,20 +1103,6 @@ public final class Themes {
             FXUtils.DARK_MODE != null ? FXUtils.DARK_MODE : settings().themeBrightnessModeProperty()
     );
 
-    /// The title text fill derived from the current color scheme.
-    private static final ObjectBinding<Color> titleFill = Bindings.createObjectBinding(
-            () -> titleBarTransparent.get()
-                    ? getColorScheme().getOnSurface()
-                    : getColorScheme().getOnPrimaryContainer(),
-            colorSchemeProperty(),
-            titleBarTransparent
-    );
-
-    /// Returns the title text fill property derived from the current color scheme.
-    public static ObservableValue<Color> titleFillProperty() {
-        return titleFill;
-    }
-
     /// Returns whether the title area should be transparent after applying launcher and theme settings.
     public static BooleanBinding titleBarTransparentProperty() {
         return titleBarTransparent;
@@ -1148,7 +1134,7 @@ public final class Themes {
         if (stage.getProperties().containsKey(NATIVE_DARK_MODE_LISTENER)) {
             return;
         }
-        if (OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11) && NativeUtils.USE_JNA && Dwmapi.INSTANCE != null) {
+        if (SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11) && NativeUtils.USE_JNA && Dwmapi.INSTANCE != null) {
             ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), darkMode -> {
                 if (stage.isShowing()) {
                     WindowsNativeUtils.getWindowHandle(stage).ifPresent(handle -> {
@@ -1177,7 +1163,7 @@ public final class Themes {
                     }
                 });
             }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && MacOSNativeUtils.isSupported()) {
+        } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS && MacOSNativeUtils.isSupported()) {
             MacOSNativeUtils.setAppearance(darkModeProperty().get());
 
             ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), MacOSNativeUtils::setAppearance);
