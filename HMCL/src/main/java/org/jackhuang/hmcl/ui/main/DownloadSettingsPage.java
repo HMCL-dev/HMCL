@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.*;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -119,7 +120,9 @@ public class DownloadSettingsPage extends StackPane {
                             settings().commonDirectoryProperty(), settings().commonDirectoryTypeProperty()));
 
             M3Button cleanButton = new M3Button(I18n.i18n("launcher.cache_directory.clean"), M3ButtonVariant.OUTLINED);
-            cleanButton.setOnAction(e -> clearCacheDirectory(cleanButton));
+            var cleaningCache = FXUtils.newButtonLoadingProperty(cleanButton);
+            cleanButton.disableProperty().bind(cleaningCache);
+            cleanButton.setOnAction(e -> clearCacheDirectory(cleaningCache));
             fileCommonLocationSublist.setHeaderRight(cleanButton);
 
             ComponentSublist downloadThreadsSublist = new ComponentSublist(() -> {
@@ -339,27 +342,15 @@ public class DownloadSettingsPage extends StackPane {
 
     }
 
+    /// Reports progress on the clean button until the cache operation completes.
     @FXThread
-    private boolean cleaningCache = false;
-
-    private void clearCacheDirectory(M3Button cleanButton) {
-        if (cleaningCache) return;
+    private void clearCacheDirectory(BooleanProperty cleaningCache) {
         String commonDirectory = settings().getResolvedCommonDirectory();
         if (commonDirectory != null) {
-            cleaningCache = true;
-            cleanButton.setMinWidth(cleanButton.getWidth());
-            var txt = cleanButton.getText();
-            cleanButton.setText("");
-            var spinner = FXUtils.newSpinner();
-            spinner.setIndicatorSize(18);
-            spinner.setTrackThickness(2);
-            cleanButton.setGraphic(spinner);
+            cleaningCache.set(true);
             Task.runAsync("Clear Cache Directory", Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")))
-                    .whenComplete(Schedulers.javafx(), ignored -> {
-                        cleanButton.setGraphic(null);
-                        cleanButton.setText(txt);
-                        cleaningCache = false;
-                    }).setSignificance(Task.TaskSignificance.MINOR)
+                    .whenComplete(Schedulers.javafx(), ignored -> cleaningCache.set(false))
+                    .setSignificance(Task.TaskSignificance.MINOR)
                     .start();
         }
     }

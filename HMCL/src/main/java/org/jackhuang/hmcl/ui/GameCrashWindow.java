@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
 import org.jackhuang.hmcl.ui.construct.MessageType;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
@@ -419,15 +418,13 @@ public class GameCrashWindow extends Stage {
             HBox toolBar = new HBox();
             VBox.setMargin(toolBar, new Insets(0, 0, 4, 0));
             {
-                SpinnerPane exportButtonPane = new SpinnerPane();
-                exportButtonPane.getStyleClass().add("small-spinner-pane");
-
                 M3Button exportButton = new M3Button(I18n.i18n("logwindow.export_game_crash_logs"), M3ButtonVariant.FILLED);
-                exportButtonPane.setContent(exportButton);
+                var exporting = FXUtils.newButtonLoadingProperty(exportButton);
+                exportButton.disableProperty().bind(exporting);
                 exportButton.setOnAction(e -> {
-                    exportButtonPane.showSpinner();
+                    exporting.set(true);
                     exportGameCrashInfo().whenCompleteAsync((result, exception) -> {
-                        exportButtonPane.hideSpinner();
+                        exporting.set(false);
 
                         if (exception == null) {
                             FXUtils.showFileInExplorer(result);
@@ -461,7 +458,7 @@ public class GameCrashWindow extends Stage {
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportButtonPane, logButton, helpButton);
+                toolBar.getChildren().setAll(exportButton, logButton, helpButton);
             }
 
             getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);

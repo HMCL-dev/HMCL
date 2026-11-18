@@ -863,7 +863,10 @@ final class TaskExecutorDialogPaneTest {
             M3Button accept = dialog.getDialogPane().getActions().getLast();
             accept.fire();
             assertTrue(accept.isDisabled());
-            assertInstanceOf(M3ProgressIndicator.class, accept.getGraphic());
+            assertEquals(i18n("button.ok"), accept.getText());
+            M3ProgressIndicator indicator = assertInstanceOf(M3ProgressIndicator.class, accept.getGraphic());
+            assertEquals(18, indicator.getIndicatorSize());
+            assertTrue(indicator.isIndeterminate());
             accept.fire();
             assertEquals(1, handlers.size());
             assertNotNull(dialog.getDialogPane().getScene());

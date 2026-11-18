@@ -426,18 +426,16 @@ public class TerracottaControllerPage extends StackPane {
                     }
                 });
 
-                SpinnerPane exportLog = new SpinnerPane();
-                var exportLogInner = createLargeTitleLineButton();
-                exportLogInner.setLeading(SVG.OUTPUT, ICON_SIZE);
-                exportLogInner.setTitle(i18n("terracotta.export_log"));
-                exportLogInner.setSubtitle(i18n("terracotta.export_log.desc"));
-                exportLog.setContent(exportLogInner);
-                ComponentList.setNoPadding(exportLog);
-                // FIXME: SpinnerPane loses its content width in loading state.
-                exportLog.minHeightProperty().bind(back.heightProperty());
+                var exportLog = createLargeTitleLineButton();
+                exportLog.setLeading(SVG.OUTPUT, ICON_SIZE);
+                exportLog.setTitle(i18n("terracotta.export_log"));
+                exportLog.setSubtitle(i18n("terracotta.export_log.desc"));
 
-                exportLogInner.setOnAction(event -> {
-                    exportLog.setLoading(true);
+                exportLog.setOnAction(event -> {
+                    exportLog.setDisable(true);
+                    var indicator = FXUtils.newSpinner();
+                    indicator.setIndicatorSize(ICON_SIZE);
+                    exportLog.setLeading(indicator);
 
                     TerracottaManager.exportLogs().thenAcceptAsync(Schedulers.io(), data -> {
                         if (data == null || data.isEmpty()) {
@@ -458,7 +456,10 @@ public class TerracottaControllerPage extends StackPane {
                             () -> Thread.sleep(3000)
                     ).whenComplete(
                             Schedulers.javafx(),
-                            e -> exportLog.setLoading(false)
+                            e -> {
+                                exportLog.setLeading(SVG.OUTPUT, ICON_SIZE);
+                                exportLog.setDisable(false);
+                            }
                     ).start();
                 });
 

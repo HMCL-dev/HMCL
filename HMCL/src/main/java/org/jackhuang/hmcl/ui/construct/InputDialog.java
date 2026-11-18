@@ -6,7 +6,6 @@ import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
@@ -14,7 +13,6 @@ import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3Dialog;
 import org.glavo.m3fx.controls.M3DialogEvent;
 import org.glavo.m3fx.controls.M3DialogHandle;
-import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -37,7 +35,7 @@ public final class InputDialog extends M3Dialog {
     private final Label warningLabel = new Label();
 
     /// Prevents overlapping submissions while the callback is pending.
-    private final BooleanProperty submitting = new SimpleBooleanProperty(false);
+    private final BooleanProperty submitting;
 
     /// The native accepting action, also invoked by Enter in the field.
     private final M3Button acceptButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
@@ -64,23 +62,20 @@ public final class InputDialog extends M3Dialog {
         warningLabel.managedProperty().bind(warningLabel.visibleProperty());
         getDialogPane().setContent(new VBox(12, textField, warningLabel));
 
-        M3ProgressIndicator progress = new M3ProgressIndicator();
-        progress.setIndicatorSize(18);
-        progress.setTrackThickness(2);
+        submitting = FXUtils.newButtonLoadingProperty(acceptButton);
         acceptButton.setDefaultButton(true);
         acceptButton.disableProperty().bind(submitting.or(textField.activeValidatorProperty().isNotNull()));
         acceptButton.setOnAction(event -> {
             // Native actions close by default; acceptance must wait for the callback instead.
             event.consume();
             submitting.set(true);
-            acceptButton.setGraphic(progress);
             warningLabel.setText("");
             onResult.call(textField.getText(), new FutureCallback.ResultHandler() {
                 /// Completes the result and closes the current presentation on the FX thread.
                 @Override
                 public void resolve() {
                     FXUtils.runInFX(() -> {
-                        finishSubmission();
+                        submitting.set(false);
                         future.complete(textField.getText());
                         if (handle != null)
                             handle.requestClose();
@@ -91,7 +86,7 @@ public final class InputDialog extends M3Dialog {
                 @Override
                 public void reject(String reason) {
                     FXUtils.runInFX(() -> {
-                        finishSubmission();
+                        submitting.set(false);
                         warningLabel.setText(reason);
                     });
                 }
@@ -109,12 +104,6 @@ public final class InputDialog extends M3Dialog {
                 Platform.runLater(event.getHandle()::requestClose);
         });
         addEventHandler(M3DialogEvent.HIDDEN, event -> handle = null);
-    }
-
-    /// Removes submission feedback and restores validation-dependent action availability.
-    private void finishSubmission() {
-        submitting.set(false);
-        acceptButton.setGraphic(null);
     }
 
     /// Returns the accepted-text future; closing alone does not complete or cancel it.

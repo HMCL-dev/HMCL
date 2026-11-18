@@ -12,6 +12,7 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
@@ -30,7 +31,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
 import org.jackhuang.hmcl.ui.construct.MessageType;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -221,10 +221,10 @@ public final class LogWindow extends Stage {
         }
 
         /// Exports a game dump, showing progress and reporting failure in this window.
-        private void onExportDump(SpinnerPane pane) {
+        private void onExportDump(BooleanProperty exporting) {
             assert SystemUtils.supportJVMAttachment();
 
-            pane.setLoading(true);
+            exporting.set(true);
 
             thread(() -> {
                 Path dumpFile = Paths.get("minecraft-exported-jstack-dump-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
@@ -244,7 +244,7 @@ public final class LogWindow extends Stage {
                     });
                 }
 
-                Platform.runLater(() -> pane.setLoading(false));
+                Platform.runLater(() -> exporting.set(false));
             });
         }
 
@@ -415,20 +415,21 @@ public final class LogWindow extends Stage {
                 M3Button terminateButton = new M3Button(i18n("logwindow.terminate_game"), M3ButtonVariant.TEXT);
                 terminateButton.setOnAction(e -> getSkinnable().onTerminateGame());
 
-                SpinnerPane exportDumpPane = new SpinnerPane();
-                exportDumpPane.getStyleClass().add("small-spinner-pane");
                 M3Button exportDumpButton = new M3Button(i18n("logwindow.export_dump"), M3ButtonVariant.TEXT);
+                Node dumpAction = exportDumpButton;
                 if (SystemUtils.supportJVMAttachment()) {
-                    exportDumpButton.setOnAction(e -> getSkinnable().onExportDump(exportDumpPane));
+                    var exporting = FXUtils.newButtonLoadingProperty(exportDumpButton);
+                    exportDumpButton.disableProperty().bind(exporting);
+                    exportDumpButton.setOnAction(e -> getSkinnable().onExportDump(exporting));
                 } else {
-                    FXUtils.installFastTooltip(exportDumpPane, i18n("logwindow.export_dump.no_dependency"));
+                    dumpAction = new StackPane(exportDumpButton);
+                    FXUtils.installFastTooltip(dumpAction, i18n("logwindow.export_dump.no_dependency"));
                     exportDumpButton.setDisable(true);
                 }
-                exportDumpPane.setContent(exportDumpButton);
 
                 M3Button clearButton = new M3Button(i18n("button.clear"), M3ButtonVariant.TEXT);
                 clearButton.setOnAction(e -> getSkinnable().onClear());
-                hBox.getChildren().setAll(autoScrollCheckBox, wrapTextCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
+                hBox.getChildren().setAll(autoScrollCheckBox, wrapTextCheckBox, exportLogsButton, terminateButton, dumpAction, clearButton);
 
                 control.getGameProcess().getProcess()
                         .onExit()

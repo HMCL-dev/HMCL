@@ -465,7 +465,6 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
         private final M3Button btnAccept = new M3Button("", M3ButtonVariant.TEXT);
         private final M3Button btnCancel = new M3Button("", M3ButtonVariant.TEXT);
-        private final SpinnerPane spinner = new SpinnerPane();
 
         public EditServerDialog(Type type, @Nullable Server reference, Consumer<Server> handleCallback) {
             this.type = type;
@@ -603,10 +602,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             btnCancel.setText(i18n("button.cancel"));
             onEscPressed(this, btnCancel::fire);
 
-            spinner.getStyleClass().add("small-spinner-pane");
-            spinner.setContent(btnAccept);
-
-            HBox actions = new HBox(btnCancel, spinner);
+            HBox actions = new HBox(btnCancel, btnAccept);
             actions.setAlignment(Pos.CENTER_RIGHT);
 
             rootLayout.setActions(actions);

@@ -1285,9 +1285,9 @@
 *                                                                              *
 *******************************************************************************/
 
-.small-spinner-pane .m3-progress-indicator {
-    -m3-indicator-size: 18px;
-    -m3-track-thickness: 2px;
+/* Apply the button's disabled opacity only once to its progress indicator. */
+.m3-button-base .m3-progress-indicator:disabled {
+    -fx-opacity: 1;
 }
 
 .spinner-pane .spinner-pane-content {

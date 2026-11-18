@@ -200,14 +200,13 @@ public final class SettingsPage extends ScrollPane {
                     if (LOG.getLogFile() == null)
                         openLogFolderButton.setDisable(true);
 
-                    SpinnerPane exportLogPane = new SpinnerPane();
-
                     M3Button logButton = new M3Button(I18n.i18n("settings.launcher.launcher_log.export"), M3ButtonVariant.OUTLINED);
-                    exportLogPane.setContent(logButton);
+                    var exporting = FXUtils.newButtonLoadingProperty(logButton);
+                    logButton.disableProperty().bind(exporting);
                     logButton.setOnAction(e -> {
-                        exportLogPane.showSpinner();
+                        exporting.set(true);
                         onExportLogs().whenCompleteAsync((result, exception) -> {
-                            exportLogPane.hideSpinner();
+                            exporting.set(false);
                             if (exception == null) {
                                 Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", result));
                                 FXUtils.showFileInExplorer(result);
@@ -224,7 +223,7 @@ public final class SettingsPage extends ScrollPane {
 
                     HBox buttonBox = new HBox();
                     buttonBox.setSpacing(10);
-                    buttonBox.getChildren().addAll(openLogFolderButton, exportLogPane);
+                    buttonBox.getChildren().addAll(openLogFolderButton, logButton);
                     BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
                     debugPane.setRight(buttonBox);
 

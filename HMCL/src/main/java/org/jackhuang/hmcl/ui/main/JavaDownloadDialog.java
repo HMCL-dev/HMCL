@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Result;
@@ -142,9 +141,9 @@ public final class JavaDownloadDialog extends StackPane {
             if (!distributions.isEmpty()) {
                 JFXHyperlink more = new JFXHyperlink(i18n("java.download.more"));
                 more.setOnAction(event -> JavaDownloadDialog.this.getChildren().setAll(new DownloadDiscoJava()));
-                setActions(warningLabel, more, cancelButton, acceptPane);
+                setActions(warningLabel, more, cancelButton, acceptButton);
             } else
-                setActions(warningLabel, cancelButton, acceptPane);
+                setActions(warningLabel, cancelButton, acceptButton);
         }
 
         @Override
@@ -203,7 +202,6 @@ public final class JavaDownloadDialog extends StackPane {
         private final Label warningLabel = new Label();
 
         private final M3Button downloadButton;
-        private final StackPane downloadButtonPane = new StackPane();
 
         private final DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
 
@@ -226,7 +224,8 @@ public final class JavaDownloadDialog extends StackPane {
 
             this.downloadButton = new M3Button(i18n("download"), M3ButtonVariant.TEXT);
             downloadButton.setOnAction(e -> onDownload());
-            downloadButton.disableProperty().bind(Bindings.isNull(remoteVersionBox.getSelectionModel().selectedItemProperty()));
+            var loading = FXUtils.newButtonLoadingProperty(downloadButton);
+            downloadButton.disableProperty().bind(loading.or(remoteVersionBox.getSelectionModel().selectedItemProperty().isNull()));
 
             M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
@@ -292,22 +291,17 @@ public final class JavaDownloadDialog extends StackPane {
                 remoteVersionBox.getSelectionModel().selectFirst();
             });
 
-            SpinnerPane spinnerPane = new SpinnerPane();
-            spinnerPane.getStyleClass().add("small-spinner-pane");
-            spinnerPane.setContent(downloadButton);
-            downloadButtonPane.getChildren().setAll(spinnerPane);
-
             Consumer<DiscoJavaVersionList> updateListStatus = list -> {
                 remoteVersionBox.setItems(null);
                 packageTypeBox.getItems().clear();
                 warningLabel.setText(null);
 
                 if (list == null || (list.versions != null && list.versions.isEmpty()))
-                    spinnerPane.hideSpinner();
+                    loading.set(false);
                 else if (list.status == DiscoJavaVersionList.Status.LOADING)
-                    spinnerPane.showSpinner();
+                    loading.set(true);
                 else {
-                    spinnerPane.hideSpinner();
+                    loading.set(false);
 
                     if (list.status == DiscoJavaVersionList.Status.SUCCESS) {
                         packageTypeBox.getItems().setAll(list.versions.keySet());
@@ -337,7 +331,7 @@ public final class JavaDownloadDialog extends StackPane {
 
             setHeading(new Label(i18n("java.download.title")));
             setBody(body);
-            setActions(warningLabel, cancelButton, downloadButtonPane);
+            setActions(warningLabel, cancelButton, downloadButton);
             if (platform.os() == OperatingSystem.LINUX && platform.arch() == Architecture.RISCV64) {
                 JFXHyperlink hyperlink = new JFXHyperlink(i18n("java.download.banshanjdk-8"));
                 hyperlink.setExternalLink("https://www.zthread.cn/#product");

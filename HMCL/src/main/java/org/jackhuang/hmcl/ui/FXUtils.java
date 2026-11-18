@@ -949,6 +949,22 @@ public final class FXUtils {
         return spinner;
     }
 
+    /// Binds a button's graphic to a loading flag, restoring its initial graphic while idle.
+    /// Callers can combine the flag with their own validation when binding the disabled state.
+    public static BooleanProperty newButtonLoadingProperty(ButtonBase button) {
+        BooleanProperty loading = new SimpleBooleanProperty(false);
+        @Nullable Node idleGraphic = button.getGraphic();
+        button.graphicProperty().bind(loading.map(active -> {
+            if (!active)
+                return idleGraphic;
+            M3ProgressIndicator indicator = newSpinner();
+            indicator.setIndicatorSize(18);
+            indicator.setTrackThickness(2);
+            return indicator;
+        }));
+        return loading;
+    }
+
     public static Label newSafeTruncatedLabel() {
         Label label = new Label();
         label.setTextOverrun(OverrunStyle.CENTER_WORD_ELLIPSIS);

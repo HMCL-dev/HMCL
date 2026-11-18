@@ -14,6 +14,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.auth.Account;
@@ -28,7 +29,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -79,8 +79,6 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         right.setAlignment(Pos.CENTER_RIGHT);
 
         M3IconButton btnMove = new M3IconButton();
-        SpinnerPane spinnerMove = new SpinnerPane();
-        spinnerMove.getStyleClass().add("small-spinner-pane");
         btnMove.setOnAction(e -> {
             Account account = skinnable.getAccount();
             if (!Accounts.canMoveAccount(account)) {
@@ -100,22 +98,24 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
             btnMove.setGraphic(SVG.OUTPUT.createIcon());
             FXUtils.installFastTooltip(btnMove, i18n("account.move_to_portable"));
         }
-        spinnerMove.setContent(btnMove);
-        right.getChildren().add(spinnerMove);
+        right.getChildren().add(btnMove);
 
         M3IconButton btnRefresh = new M3IconButton(SVG.REFRESH.createIcon());
-        SpinnerPane spinnerRefresh = new SpinnerPane();
-        spinnerRefresh.getStyleClass().setAll("small-spinner-pane");
-        spinnerRefresh.setPrefSize(btnRefresh.prefWidth(-1), btnRefresh.prefHeight(-1));
+        var refreshing = FXUtils.newButtonLoadingProperty(btnRefresh);
         if (skinnable.getAccount() instanceof MicrosoftAccount && Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
             btnRefresh.setDisable(true);
-            FXUtils.installFastTooltip(spinnerRefresh, i18n("account.methods.microsoft.snapshot.tooltip"));
+            StackPane refreshHint = new StackPane(btnRefresh);
+            FXUtils.installFastTooltip(refreshHint, i18n("account.methods.microsoft.snapshot.tooltip"));
+            right.getChildren().add(refreshHint);
+        } else {
+            btnRefresh.disableProperty().bind(refreshing);
+            right.getChildren().add(btnRefresh);
         }
         btnRefresh.setOnAction(e -> {
-            spinnerRefresh.showSpinner();
+            refreshing.set(true);
             skinnable.refreshAsync()
                     .whenComplete(Schedulers.javafx(), ex -> {
-                        spinnerRefresh.hideSpinner();
+                        refreshing.set(false);
 
                         if (ex != null) {
                             Controllers.showToast(Accounts.localizeErrorMessage(ex));
@@ -124,25 +124,21 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
                     .start();
         });
         FXUtils.installFastTooltip(btnRefresh, i18n("button.refresh"));
-        spinnerRefresh.setContent(btnRefresh);
-        right.getChildren().add(spinnerRefresh);
 
         M3IconButton btnUpload = new M3IconButton(SVG.CHECKROOM.createIcon());
-        SpinnerPane spinnerUpload = new SpinnerPane();
+        var uploading = FXUtils.newButtonLoadingProperty(btnUpload);
         btnUpload.setOnAction(e -> {
             Task<?> uploadTask = skinnable.uploadSkin();
             if (uploadTask != null) {
-                spinnerUpload.showSpinner();
+                uploading.set(true);
                 uploadTask
-                        .whenComplete(Schedulers.javafx(), ex -> spinnerUpload.hideSpinner())
+                        .whenComplete(Schedulers.javafx(), ex -> uploading.set(false))
                         .start();
             }
         });
         FXUtils.installFastTooltip(btnUpload, i18n("account.skin." + (skinnable.getAccount() instanceof OfflineAccount ? "edit" : "upload")));
-        btnUpload.disableProperty().bind(Bindings.not(skinnable.canUploadSkin()));
-        spinnerUpload.setContent(btnUpload);
-        spinnerUpload.getStyleClass().add("small-spinner-pane");
-        right.getChildren().add(spinnerUpload);
+        btnUpload.disableProperty().bind(uploading.or(Bindings.not(skinnable.canUploadSkin())));
+        right.getChildren().add(btnUpload);
 
         M3IconButton btnCopyUUID = new M3IconButton(SVG.CONTENT_COPY.createIcon());
         btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getProfileID().toString()));

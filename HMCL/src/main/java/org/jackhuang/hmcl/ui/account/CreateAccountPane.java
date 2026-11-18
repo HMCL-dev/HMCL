@@ -8,7 +8,6 @@ import javafx.application.Platform;
 import javafx.beans.NamedArg;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -68,13 +67,12 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
     private final Label lblErrorMessage;
     private final M3Button btnAccept;
-    private final SpinnerPane spinner;
+    /// Tracks the pending account submission, including username confirmation.
+    private final BooleanProperty submitting;
     private final Node body;
     private final HBox actions;
     private Node detailsPane; // AccountDetailsInputPane for Offline / Mojang / authlib-injector, Label for Microsoft
     private final Pane detailsContainer;
-
-    private final BooleanProperty logging = new SimpleBooleanProperty();
 
     private TaskExecutor loginTask;
 
@@ -119,15 +117,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             btnAccept = new M3Button(i18n("account.login"), M3ButtonVariant.TEXT);
             btnAccept.setOnAction(e -> onAccept());
 
-            spinner = new SpinnerPane();
-            spinner.getStyleClass().add("small-spinner-pane");
-            spinner.setContent(btnAccept);
+            submitting = FXUtils.newButtonLoadingProperty(btnAccept);
 
             M3Button btnCancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             btnCancel.setOnAction(e -> onCancel());
             onEscPressed(this, btnCancel::fire);
 
-            actions = new HBox(btnCancel, spinner);
+            actions = new HBox(btnCancel, btnAccept);
             actions.setAlignment(Pos.CENTER_RIGHT);
 
             setActions(lblErrorMessage, actions);
@@ -190,7 +186,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     }
 
     private void onAccept() {
-        spinner.showSpinner();
+        submitting.set(true);
         lblErrorMessage.setText("");
 
         if (!(factory instanceof MicrosoftAccountFactory)) {
@@ -212,13 +208,11 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
 
         Runnable doCreate = () -> {
-            logging.set(true);
-
             loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
                     .whenComplete(Schedulers.javafx(), account -> {
                         if (Accounts.isAccountFilesReadOnly(account)) {
                             body.setDisable(false);
-                            spinner.hideSpinner();
+                            submitting.set(false);
                             Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
                                 Accounts.forceOverwriteAccountFiles(account);
                                 completeLogin(account);
@@ -234,7 +228,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                             lblErrorMessage.setText(Accounts.localizeErrorMessage(exception));
                         }
                         body.setDisable(false);
-                        spinner.hideSpinner();
+                        submitting.set(false);
                     }).executor(true);
         };
 
@@ -243,7 +237,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     MessageType.WARNING,
                     doCreate, () -> {
                         body.setDisable(false);
-                        spinner.hideSpinner();
+                        submitting.set(false);
                     });
         } else {
             doCreate.run();
@@ -263,7 +257,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
         Accounts.setSelectedAccount(account);
 
-        spinner.hideSpinner();
+        submitting.set(false);
         fireEvent(new DialogCloseEvent());
     }
 
@@ -287,7 +281,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             setActions();
         } else {
             detailsPane = new AccountDetailsInputPane(factory, btnAccept::fire);
-            btnAccept.disableProperty().bind(((AccountDetailsInputPane) detailsPane).validProperty().not());
+            btnAccept.disableProperty().bind(submitting.or(((AccountDetailsInputPane) detailsPane).validProperty().not()));
             setActions(lblErrorMessage, actions);
         }
 

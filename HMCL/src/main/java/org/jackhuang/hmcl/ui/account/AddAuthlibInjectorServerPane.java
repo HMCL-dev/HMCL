@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
+import javafx.beans.property.BooleanProperty;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
@@ -36,7 +37,8 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
     private final JFXTextField txtServerUrl;
     private final JFXDialogLayout addServerPane;
     private final JFXDialogLayout confirmServerPane;
-    private final SpinnerPane nextPane;
+    /// Tracks the pending server metadata request.
+    private final BooleanProperty checkingServer;
     private final M3Button btnAddNext;
 
     private AuthlibInjectorServer serverBeingAdded;
@@ -62,13 +64,11 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 M3Button cancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
                 cancel.setOnAction(e -> onAddCancel());
 
-                nextPane = new SpinnerPane();
-                nextPane.getStyleClass().add("small-spinner-pane");
                 btnAddNext = new M3Button(i18n("wizard.next"), M3ButtonVariant.TEXT);
                 btnAddNext.setOnAction(e -> onAddNext());
-                nextPane.setContent(btnAddNext);
+                checkingServer = FXUtils.newButtonLoadingProperty(btnAddNext);
 
-                actions.getChildren().setAll(cancel, nextPane);
+                actions.getChildren().setAll(cancel, btnAddNext);
             }
 
             VBox body = new VBox();
@@ -90,7 +90,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
             txtServerUrl.getValidators().addAll(new RequiredValidator(), new URLValidator());
             FXUtils.setValidateWhileTextChanged(txtServerUrl, true);
-            btnAddNext.disableProperty().bind(txtServerUrl.activeValidatorProperty().isNotNull());
+            btnAddNext.disableProperty().bind(checkingServer.or(txtServerUrl.activeValidatorProperty().isNotNull()));
         }
 
         confirmServerPane = new JFXDialogLayout();
@@ -149,8 +149,6 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
         this.setContent(addServerPane, ContainerAnimations.NONE);
 
-        nextPane.hideSpinner();
-
         onEscPressed(this, this::onAddCancel);
     }
 
@@ -187,14 +185,14 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
         String url = txtServerUrl.getText();
 
-        nextPane.showSpinner();
+        checkingServer.set(true);
         addServerPane.setDisable(true);
 
         Task.runAsync(() -> {
             serverBeingAdded = AuthlibInjectorServer.locateServer(url);
         }).whenComplete(Schedulers.javafx(), exception -> {
             addServerPane.setDisable(false);
-            nextPane.hideSpinner();
+            checkingServer.set(false);
 
             if (exception == null) {
                 lblServerName.setText(serverBeingAdded.getName());
