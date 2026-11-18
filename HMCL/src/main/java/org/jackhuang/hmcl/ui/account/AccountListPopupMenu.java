@@ -19,11 +19,20 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class AccountListPopupMenu extends StackPane {
+    private static final String KEY = AccountListPopupMenu.class.getName() + ".popup";
+
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY) {
+        if (owner.getProperties().get(KEY) instanceof JFXPopup showingPopup && showingPopup.isShowing()) {
+            showingPopup.hide();
+            return;
+        }
+
         var menu = new AccountListPopupMenu();
         JFXPopup popup = new JFXPopup(menu);
-        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
+        owner.getProperties().put(KEY, popup);
+        popup.setOnHidden(event -> owner.getProperties().remove(KEY, popup));
+        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY, true);
     }
 
     @SuppressWarnings("FieldCanBeLocal")
