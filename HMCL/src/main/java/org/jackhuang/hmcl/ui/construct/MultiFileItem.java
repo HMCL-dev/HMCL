@@ -22,6 +22,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -241,7 +242,7 @@ public final class MultiFileItem<T> extends VBox {
             selector = new FileSelector(mode);
         }
 
-        public String getValue() {
+        public @Nullable String getValue() {
             return selector.getLocation();
         }
 

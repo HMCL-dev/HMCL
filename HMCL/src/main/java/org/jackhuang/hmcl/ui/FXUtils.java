@@ -337,23 +337,22 @@ public final class FXUtils {
         });
     }
 
-    public static void setValidateWhileTextChanged(Node field, boolean validate) {
-        if (field instanceof JFXTextField) {
-            if (validate) {
-                addListener(field, "FXUtils.validation", ((JFXTextField) field).textProperty(), o -> ((JFXTextField) field).validate());
-            } else {
-                removeListener(field, "FXUtils.validation");
-            }
-            ((JFXTextField) field).validate();
-        } else if (field instanceof JFXPasswordField) {
-            if (validate) {
-                addListener(field, "FXUtils.validation", ((JFXPasswordField) field).textProperty(), o -> ((JFXPasswordField) field).validate());
-            } else {
-                removeListener(field, "FXUtils.validation");
-            }
-            ((JFXPasswordField) field).validate();
-        } else
-            throw new IllegalArgumentException("Only JFXTextField and JFXPasswordField allowed");
+    public static void setValidateWhileTextChanged(JFXTextField field, boolean validate) {
+        if (validate) {
+            addListener(field, "FXUtils.validation", field.textProperty(), o -> field.validate());
+        } else {
+            removeListener(field, "FXUtils.validation");
+        }
+        field.validate();
+    }
+
+    public static void setValidateWhileTextChanged(JFXPasswordField field, boolean validate) {
+        if (validate) {
+            addListener(field, "FXUtils.validation", field.textProperty(), o -> field.validate());
+        } else {
+            removeListener(field, "FXUtils.validation");
+        }
+        field.validate();
     }
 
     public static Rectangle setOverflowHidden(Region region) {

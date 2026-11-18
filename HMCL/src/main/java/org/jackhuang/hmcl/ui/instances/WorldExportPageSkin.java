@@ -15,7 +15,6 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.FileSelector;
 import org.jackhuang.hmcl.ui.construct.LinePane;
 import org.jackhuang.hmcl.ui.construct.LineTextPane;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.Files;
 
@@ -60,7 +59,7 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
         );
 
         JFXButton btnExport = FXUtils.newRaisedButton(i18n("button.export"));
-        btnExport.disableProperty().bind(Bindings.createBooleanBinding(() -> txtWorldName.getText().isEmpty() || FileUtils.tryGetPath(exportPath.getLocation()).map(Files::exists).orElse(false),
+        btnExport.disableProperty().bind(Bindings.createBooleanBinding(() -> txtWorldName.getText().isEmpty() || exportPath.getValidPath() == null || Files.exists(exportPath.getValidPath()),
                 txtWorldName.textProperty().isEmpty(), exportPath.locationProperty()));
         btnExport.setOnAction(e -> skinnable.export());
         HBox bottom = new HBox();

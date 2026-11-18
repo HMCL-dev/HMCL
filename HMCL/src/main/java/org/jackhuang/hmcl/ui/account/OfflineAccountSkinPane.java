@@ -46,6 +46,7 @@ public class OfflineAccountSkinPane extends StackPane {
     private final FileSelector skinSelector = new FileSelector(FileSelector.SelectionMode.OPEN_FILE);
     private final FileSelector capeSelector = new FileSelector(FileSelector.SelectionMode.OPEN_FILE);
 
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private final InvalidationListener skinBinding;
 
     public OfflineAccountSkinPane(OfflineAccount account) {
@@ -123,29 +124,27 @@ public class OfflineAccountSkinPane extends StackPane {
 
         PauseTransition pauseTransition = new PauseTransition(Duration.seconds(1));
 
-        Runnable loadSkin = () -> {
-            getSkin().load(account.getProfileName())
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                        if (exception != null) {
-                            LOG.warning("Failed to load skin", exception);
-                            Controllers.showToast(i18n("message.failed"));
-                        } else {
-                            UUID uuid = this.account.getProfileID();
-                            if (result == null || result.skin() == null && result.cape() == null) {
-                                canvas.updateSkin(
-                                        TexturesLoader.getDefaultSkin(uuid).image(),
-                                        TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM,
-                                        null
-                                );
-                                return;
-                            }
+        Runnable loadSkin = () -> getSkin().load(account.getProfileName())
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception != null) {
+                        LOG.warning("Failed to load skin", exception);
+                        Controllers.showToast(i18n("message.failed"));
+                    } else {
+                        UUID uuid = this.account.getProfileID();
+                        if (result == null || result.skin() == null && result.cape() == null) {
                             canvas.updateSkin(
-                                    result.skin() != null ? result.skin().image() : TexturesLoader.getDefaultSkin(uuid).image(),
-                                    result.model() == TextureModel.SLIM,
-                                    result.cape() != null ? result.cape().image() : null);
+                                    TexturesLoader.getDefaultSkin(uuid).image(),
+                                    TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM,
+                                    null
+                            );
+                            return;
                         }
-                    }).start();
-        };
+                        canvas.updateSkin(
+                                result.skin() != null ? result.skin().image() : TexturesLoader.getDefaultSkin(uuid).image(),
+                                result.model() == TextureModel.SLIM,
+                                result.cape() != null ? result.cape().image() : null);
+                    }
+                }).start();
 
         pauseTransition.setOnFinished(e -> loadSkin.run());
 
