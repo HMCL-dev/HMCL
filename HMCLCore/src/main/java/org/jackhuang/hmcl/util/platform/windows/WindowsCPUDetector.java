@@ -6,7 +6,7 @@ import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
-import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -102,7 +102,7 @@ final class WindowsCPUDetector {
             int efficiency = 0;
             if (classes.size() > 1) {
                 // Merge upper ARM tiers and lower x86 tiers for a coarse P/E display.
-                efficiency = Architecture.SYSTEM_ARCH.isX86()
+                efficiency = SystemInfo.SYSTEM_ARCH.isX86()
                         ? packageCores.size() - classes.lastEntry().getValue()
                         : classes.firstEntry().getValue();
             }

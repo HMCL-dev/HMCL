@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
@@ -132,8 +133,8 @@ public enum JavaVersionConstraint {
         @Override
         protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable GameComponentAnalyzer analyzer) {
-            return OperatingSystem.CURRENT_OS == OperatingSystem.LINUX
-                    && Architecture.SYSTEM_ARCH == Architecture.X86_64
+            return SystemInfo.CURRENT_OS == OperatingSystem.LINUX
+                    && SystemInfo.SYSTEM_ARCH == Architecture.X86_64
                     && (java == null || java.getArchitecture() == Architecture.X86_64)
                     && (analyzer == null || !analyzer.has(GameComponentType.CLEANROOM))
                     && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
@@ -152,7 +153,7 @@ public enum JavaVersionConstraint {
             if (java == null || java.getArchitecture() != Architecture.ARM64)
                 return false;
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+            if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS || SystemInfo.CURRENT_OS == OperatingSystem.MACOS)
                 return gameVersionNumber.compareTo("1.6") < 0;
 
             return false;

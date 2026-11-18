@@ -1,23 +1,16 @@
 // SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
-package org.jackhuang.hmcl.gradle;
+package org.jackhuang.hmcl.gradle.terracotta;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import kala.compress.archivers.tar.TarArchiveEntry;
 import kala.compress.archivers.tar.TarArchiveReader;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -38,19 +31,13 @@ import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
 
 public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-
     @Input
     public abstract ListProperty<@NotNull String> getClassifiers();
-
-    @Input
-    public abstract Property<@NotNull String> getVersion();
 
     @Input
     public abstract Property<@NotNull String> getDownloadURL();
@@ -59,14 +46,15 @@ public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
     public abstract RegularFileProperty getTemplateFile();
 
     @OutputFile
-    public abstract RegularFileProperty getOutputFile();
+    public abstract RegularFileProperty getConfigFile();
+
+    @Input
+    public abstract Property<@NotNull String> getVersion();
 
     @TaskAction
     public void run() throws Exception {
-        JsonObject config = GSON.fromJson(
-                Files.readString(getTemplateFile().get().getAsFile().toPath(), StandardCharsets.UTF_8),
-                JsonObject.class
-        );
+        JsonObject config = JsonParser.parseString(Files.readString(getTemplateFile().get().getAsFile().toPath()))
+                .getAsJsonObject();
 
         Map<String, Path> files = new LinkedHashMap<>();
         HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build();
@@ -139,26 +127,13 @@ public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
             Files.delete(decompressedBundle);
         }
 
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
         config.add("__comment__", new JsonPrimitive("THIS FILE IS MACHINE GENERATED! DO NOT EDIT!"));
         config.add("version_latest", new JsonPrimitive(getVersion().get()));
-        config.add("packages", GSON.toJsonTree(bundles));
+        config.add("packages", gson.toJsonTree(bundles));
 
-        Files.writeString(getOutputFile().get().getAsFile().toPath(), GSON.toJson(config), StandardCharsets.UTF_8);
-    }
-
-    public void checkValid() throws IOException {
-        Path output = getOutputFile().get().getAsFile().toPath();
-        if (Files.isReadable(output)) {
-            String version = GSON.fromJson(Files.readString(output, StandardCharsets.UTF_8), JsonObject.class)
-                    .get("version_latest").getAsJsonPrimitive().getAsString();
-            if (Objects.equals(version, getVersion().get())) {
-                return;
-            }
-        }
-
-        throw new GradleException(String.format("Terracotta config isn't up-to-date! " +
-                "You might have just edited the version number in libs.version.toml. " +
-                "Please run task %s to resolve the new config.", getPath()));
+        Files.writeString(getConfigFile().get().getAsFile().toPath(), gson.toJson(config), StandardCharsets.UTF_8);
     }
 
     private record Bundle(
