@@ -61,7 +61,7 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
 
         JFXButton btnExport = FXUtils.newRaisedButton(i18n("button.export"));
         btnExport.disableProperty().bind(Bindings.createBooleanBinding(() -> txtWorldName.getText().isEmpty() || exportPath.getValidPath() == null || Files.exists(exportPath.getValidPath()),
-                txtWorldName.textProperty().isEmpty(), exportPath.locationProperty()));
+                txtWorldName.textProperty().isEmpty(), exportPath.validPathProperty()));
         btnExport.setOnAction(e -> skinnable.export());
         HBox bottom = new HBox();
         bottom.setAlignment(Pos.CENTER_RIGHT);

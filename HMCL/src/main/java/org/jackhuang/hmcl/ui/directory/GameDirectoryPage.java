@@ -156,7 +156,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                             && Objects.equals(txtGameDirectoryName.getText(), gameDirectoryDisplayName)
                             && gameDir.getValidPath().equals(initialLocation)
                             && switchUseRelativePath.isSelected() == initialUseRelativePath),
-                    txtGameDirectoryName.textProperty(), gameDir.validPathProperty(), gameDir.locationProperty(), switchUseRelativePath.selectedProperty()));
+                    txtGameDirectoryName.textProperty(), gameDir.validPathProperty(), switchUseRelativePath.selectedProperty()));
         }
 
         if (gameDirectory == null) {
