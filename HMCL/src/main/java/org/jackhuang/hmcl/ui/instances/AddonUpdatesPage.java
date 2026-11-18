@@ -235,11 +235,11 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         public AddonUpdateObject(AddonUpdate data) {
             this.data = data;
 
-            this.enabled.set(!data.localAddonFile().isDisabled());
             this.source = switch (data.currentVersion().source()) {
                 case CURSEFORGE -> i18n("addon.curseforge");
                 case MODRINTH -> i18n("addon.modrinth");
             };
+            this.enabled.set(!data.localAddonFile().isDisabled());
             this.selectedVersion.set(data.targetVersion());
 
             this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
@@ -324,7 +324,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 (observable, oldVersion, newVersion) -> {
                     AddonUpdateObject item = getItem();
                     if (item != null) {
-                        updateTags(item);
+                        updateTagsAndSubtitle(item);
                     }
                 };
 
@@ -362,9 +362,9 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             FXUtils.limitCellWidth(listView, this);
         }
 
-        /// Rebuilds the tags of `item`, including the channel of the currently selected target version.
-        private void updateTags(AddonUpdateObject item) {
+        private void updateTagsAndSubtitle(AddonUpdateObject item) {
             LocalAddonFile<?> addonFile = item.getLocalAddonFile();
+
             var tags = new ArrayList<Tag>(3);
             if (addonFile instanceof LocalModFile modFile)
                 tags.add(new Tag(modFile.getId()));
@@ -375,6 +375,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             content.setSubtitle(item.getCurrentVersion() + " → " + item.getTargetVersion());
         }
 
+        /// Updates addon version information and replaces tags together, reusing their labels.
         @Override
         public void updateItem(@Nullable AddonUpdateObject item, boolean empty) {
             @Nullable AddonUpdateObject oldItem = getItem();
@@ -391,7 +392,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             if (oldItem != null) {
                 enabledBox.selectedProperty().unbindBidirectional(oldItem.enabledProperty());
                 oldItem.selectedVersion.removeListener(selectedVersionListener);
-                content.subtitleProperty().unbind();
             }
 
             if (empty || item == null) {
@@ -405,7 +405,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             LocalAddonFile<?> addonFile = item.getLocalAddonFile();
 
-            updateTags(item);
+            updateTagsAndSubtitle(item);
 
             if (addonFile instanceof LocalModFile modFile) {
                 content.setTitle(modFile.getName());
@@ -502,13 +502,14 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 if (cached != null) return cached;
 
                 String raw = repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.projectId(), version.versionId());
-                // CurseForge already returns HTML, while the other repositories return Markdown.
                 String text = "238222".equals(version.projectId()) ? raw : StringUtils.convertToHtml(raw);
                 if (text == null) text = "";
                 changelogCache.put(version.versionId(), text);
                 return text;
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                if (requestId != latestRequestId) return;
+                if (requestId != latestRequestId) {
+                    return;
+                }
 
                 if (exception == null) {
                     String html = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
@@ -527,6 +528,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         /// Results of requests superseded by a newer selection are discarded.
         private void loadVersionPageUrl(RemoteAddon.Version version, int requestId, JFXHyperlink button) {
             button.setDisable(true);
+
             Task.supplyAsync(() ->
                     version.source().getRepository().getVersionPageUrl(version)
             ).whenComplete(Schedulers.javafx(), (result, exception) -> {
