@@ -234,10 +234,11 @@ public final class MultiFileItem<T> extends VBox {
     }
 
     public static final class FileOption<T> extends Option<T> {
-        private final FileSelector selector = new FileSelector();
+        private final FileSelector selector;
 
-        public FileOption(String title, T data) {
+        public FileOption(String title, T data, FileSelector.SelectionMode mode) {
             super(title, data);
+            selector = new FileSelector(mode);
         }
 
         public String getValue() {
@@ -250,11 +251,6 @@ public final class MultiFileItem<T> extends VBox {
 
         public void setValue(String value) {
             selector.setLocation(value);
-        }
-
-        public FileOption<T> setSelectionMode(FileSelector.SelectionMode selectionMode) {
-            selector.setSelectionMode(selectionMode);
-            return this;
         }
 
         public FileOption<T> bindBidirectional(Property<String> property) {

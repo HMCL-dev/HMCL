@@ -380,11 +380,12 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
     /// @param <T> the selected value type
     public static final class FileChoice<T extends @UnknownNullability Object> extends Choice<T> {
         /// The file selector attached to this choice.
-        private final FileSelector selector = new FileSelector();
+        private final FileSelector selector;
 
         /// Creates a file choice.
-        public FileChoice(String title, T value) {
+        public FileChoice(String title, T value, FileSelector.SelectionMode mode) {
             super(title, value);
+            selector = new FileSelector(mode);
         }
 
         /// Returns the selected path.
@@ -400,12 +401,6 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         /// Sets the selected path.
         public void setPath(String value) {
             selector.setLocation(value);
-        }
-
-        /// Sets the file selector mode.
-        public FileChoice<T> setSelectionMode(FileSelector.SelectionMode selectionMode) {
-            selector.setSelectionMode(selectionMode);
-            return this;
         }
 
         /// Binds the selected path to another property.

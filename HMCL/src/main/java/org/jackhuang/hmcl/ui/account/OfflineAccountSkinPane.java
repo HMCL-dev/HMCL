@@ -43,8 +43,8 @@ public class OfflineAccountSkinPane extends StackPane {
     private final MultiFileItem<Skin.Type> skinItem = new MultiFileItem<>();
     private final JFXTextField cslApiField = new JFXTextField();
     private final JFXComboBox<TextureModel> modelCombobox = new JFXComboBox<>();
-    private final FileSelector skinSelector = new FileSelector();
-    private final FileSelector capeSelector = new FileSelector();
+    private final FileSelector skinSelector = new FileSelector(FileSelector.SelectionMode.OPEN_FILE);
+    private final FileSelector capeSelector = new FileSelector(FileSelector.SelectionMode.OPEN_FILE);
 
     private final InvalidationListener skinBinding;
 

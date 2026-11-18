@@ -121,7 +121,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                     LinePane gameDirectorySelectPane = new LinePane();
                     gameDirectorySelectPane.setTitle(i18n("game_directory.instance_directory"));
                     {
-                        gameDir = new FileSelector().setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
+                        gameDir = new FileSelector(FileSelector.SelectionMode.DIRECTORY);
                         gameDir.getSelector().setTitle(i18n("game_directory.instance_directory.choose"));
                         gameDir.setPrefWidth(400);
                         gameDirectorySelectPane.setRight(gameDir);

@@ -35,7 +35,7 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
 
         LinePane exportPathSelectPane = new LinePane();
         exportPathSelectPane.setTitle(i18n("world.export.location"));
-        var exportPath = new FileSelector().setSelectionMode(FileSelector.SelectionMode.SAVE);
+        var exportPath = new FileSelector(FileSelector.SelectionMode.SAVE_FILE);
         exportPath.getSelector().setExtensionFilters(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
         exportPath.setPrefWidth(400);
         exportPathSelectPane.setRight(exportPath);

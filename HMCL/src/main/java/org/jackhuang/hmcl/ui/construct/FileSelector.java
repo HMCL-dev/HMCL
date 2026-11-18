@@ -26,14 +26,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 @NotNullByDefault
 public class FileSelector extends HBox {
-    private SelectionMode selectionMode = SelectionMode.FILE;
     private final PathSelector selector = new PathSelector();
     private final JFXTextField pathField = new JFXTextField();
     private final JFXButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
 
     public enum SelectionMode {
-        FILE,
-        SAVE,
+        OPEN_FILE,
+        SAVE_FILE,
         DIRECTORY,
         FILE_OR_DIRECTORY
     }
@@ -54,12 +53,7 @@ public class FileSelector extends HBox {
         return selector;
     }
 
-    public FileSelector setSelectionMode(SelectionMode selectionMode) {
-        this.selectionMode = selectionMode;
-        return this;
-    }
-
-    public FileSelector() {
+    public FileSelector(SelectionMode selectionMode) {
         pathField.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(pathField, Priority.ALWAYS);
 
@@ -68,9 +62,9 @@ public class FileSelector extends HBox {
                 FileUtils.tryGetPath(getLocation()).ifPresent(selector::setInitialDirectoryFromExisting);
             }
             switch (selectionMode) {
-                case FILE -> open(PathSelector.Type.OPEN);
+                case OPEN_FILE -> open(PathSelector.Type.OPEN);
                 case DIRECTORY -> open(PathSelector.Type.DIRECTORY);
-                case SAVE -> open(PathSelector.Type.SAVE);
+                case SAVE_FILE -> open(PathSelector.Type.SAVE);
                 case FILE_OR_DIRECTORY -> {
                     PopupMenu selectPopupMenu = new PopupMenu();
                     JFXPopup selectModePopup = new JFXPopup(selectPopupMenu);
@@ -131,9 +125,5 @@ public class FileSelector extends HBox {
 
     public boolean isConvertToRelativePath() {
         return convertToRelativePath != null && convertToRelativePath.get();
-    }
-
-    public void setConvertToRelativePath(boolean convertToRelativePath) {
-        convertToRelativePathProperty().set(convertToRelativePath);
     }
 }

@@ -649,10 +649,9 @@ public class PersonalizationPage extends StackPane {
                     };
 
             RadioChoiceList.FileChoice<BackgroundType> customBackgroundOption =
-                    new RadioChoiceList.FileChoice<>(i18n("settings.custom"), BackgroundType.CUSTOM)
+                    new RadioChoiceList.FileChoice<>(i18n("settings.custom"), BackgroundType.CUSTOM, FileSelector.SelectionMode.FILE_OR_DIRECTORY)
                             .setChooserTitle(i18n("launcher.background.choose"))
-                            .setExtensionFilters(PathSelector.getImageExtensionFilter())
-                            .setSelectionMode(FileSelector.SelectionMode.FILE_OR_DIRECTORY);
+                            .setExtensionFilters(PathSelector.getImageExtensionFilter());
             RadioChoiceList.TextChoice<BackgroundType> networkBackgroundOption =
                     new RadioChoiceList.TextChoice<>(i18n("launcher.background.network"), BackgroundType.NETWORK)
                             .setValidators(new URLValidator(true));
