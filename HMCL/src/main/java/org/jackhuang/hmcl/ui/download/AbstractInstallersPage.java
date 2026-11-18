@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -13,6 +14,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -40,6 +45,10 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
     protected JFXTextField txtName = new JFXTextField();
 
     protected BooleanProperty installable = new SimpleBooleanProperty();
+
+    private final BooleanProperty fabricApiOptionVisible = new SimpleBooleanProperty(false);
+    private final BooleanProperty installFabricApiProperty = new SimpleBooleanProperty(true);
+    public static final String INSTALL_FABRIC_API_KEY = "installFabricApi";
 
     public AbstractInstallersPage(WizardController controller, GameVersionNumber gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
@@ -75,6 +84,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             component.setOnRemove(() -> {
                 controller.getSettings().remove(type.getPatchId());
                 reload();
+                updateFabricApiOptionVisible();
             });
         }
     }
@@ -91,6 +101,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
     @Override
     public void onNavigate(SettingsMap settings) {
         reload();
+        updateFabricApiOptionVisible();
     }
 
     @Override
@@ -110,6 +121,10 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
     /// Restores the default value of the name field.
     protected abstract void resetDefaultName();
+
+    protected boolean showFabricApiAutoInstallOption() {
+        return false;
+    }
 
     protected static class InstallersPageSkin extends SkinBase<AbstractInstallersPage> {
         /**
@@ -165,16 +180,74 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             }
 
             {
+                HBox actions = new HBox(8);
+                actions.setAlignment(Pos.CENTER_RIGHT);
+
+                {
+                    HBox fabricApiBox = new HBox(8);
+                    fabricApiBox.visibleProperty().bind(control.fabricApiOptionVisible);
+                    fabricApiBox.managedProperty().bind(fabricApiBox.visibleProperty());
+
+                    JFXCheckBox fabricApiCheckBox = new JFXCheckBox(i18n("install.installer.install", i18n("install.installer.fabric-api")));
+                    fabricApiCheckBox.selectedProperty().bindBidirectional(control.installFabricApiProperty);
+                    fabricApiCheckBox.setOnAction(event -> control.setInstallFabricApi(fabricApiCheckBox.isSelected()));
+
+                    StackPane fabricApiHelpIcon = new StackPane(SVG.HELP.createIcon(16));
+                    FXUtils.installFastTooltip(fabricApiHelpIcon, i18n("install.installer.fabric-quilt-api.warning", i18n("install.installer.fabric-api")));
+
+                    fabricApiBox.getChildren().addAll(fabricApiCheckBox, fabricApiHelpIcon);
+                    fabricApiBox.setAlignment(Pos.CENTER);
+
+                    actions.getChildren().add(fabricApiBox);
+                }
+
+                Region spacer = new Region();
+                HBox.setHgrow(spacer, Priority.ALWAYS);
+
+                actions.getChildren().add(spacer);
+
                 JFXButton installButton = FXUtils.newRaisedButton(i18n("button.install"));
                 installButton.disableProperty().bind(control.installable.not());
                 installButton.setPrefWidth(100);
                 installButton.setPrefHeight(40);
                 installButton.setOnAction(e -> control.onInstall());
                 BorderPane.setAlignment(installButton, Pos.CENTER_RIGHT);
-                root.setBottom(installButton);
+
+                actions.getChildren().add(installButton);
+
+                root.setBottom(actions);
             }
 
             getChildren().setAll(root);
+        }
+    }
+
+    private void updateFabricApiOptionVisible() {
+        boolean hasFabric = controller.getSettings().get(GameComponentType.FABRIC.getPatchId()) instanceof ComponentRemoteVersion;
+        boolean hasFabricApi = controller.getSettings().get(GameComponentType.FABRIC_API.getPatchId()) instanceof ComponentRemoteVersion;
+
+        fabricApiOptionVisible.set(showFabricApiAutoInstallOption() && hasFabric && !hasFabricApi);
+        updateFabricApiAutoSelected();
+    }
+
+    private void setInstallFabricApi(boolean selected) {
+        installFabricApiProperty.setValue(selected);
+        controller.getSettings().put(INSTALL_FABRIC_API_KEY, selected);
+        updateFabricApiAutoSelected();
+    }
+
+    private void updateFabricApiAutoSelected() {
+        boolean autoSelected = (
+            fabricApiOptionVisible.get()
+                    && installFabricApiProperty.get()
+                    && !(controller.getSettings().get(GameComponentType.FABRIC_API.getPatchId()) instanceof ComponentRemoteVersion)
+        );
+
+        for (InstallerItem component : group.getComponents()) {
+            if (component.getComponentType() == GameComponentType.FABRIC_API) {
+                component.setAutoSelected(autoSelected);
+                break;
+            }
         }
     }
 }
