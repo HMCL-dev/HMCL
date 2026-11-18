@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.util.platform.linux;
 
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
@@ -34,7 +35,7 @@ public final class LinuxHardwareDetector extends HardwareDetector {
     /// Detects Linux processors, using the default detector when native information is unavailable.
     @Override
     public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
+        if (SystemInfo.CURRENT_OS != OperatingSystem.LINUX)
             return super.detectCentralProcessors();
         @Unmodifiable List<CentralProcessor> processors = LinuxCPUDetector.detect();
         return processors.isEmpty() ? super.detectCentralProcessors() : processors;
@@ -43,7 +44,7 @@ public final class LinuxHardwareDetector extends HardwareDetector {
     /// Returns an immutable graphics card list, empty if detection is unsupported or fails.
     @Override
     public @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
+        if (SystemInfo.CURRENT_OS != OperatingSystem.LINUX)
             return List.of();
         @Unmodifiable List<GraphicsCard> cards = LinuxGPUDetector.detect();
         return cards.isEmpty() ? super.detectGraphicsCards() : cards;
@@ -57,7 +58,7 @@ public final class LinuxHardwareDetector extends HardwareDetector {
     /// Placeholder matching ignores case and requires a full match; other model names are preserved.
     @Override
     public @Nullable DeviceInfo detectDeviceInfo() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
+        if (SystemInfo.CURRENT_OS != OperatingSystem.LINUX)
             return super.detectDeviceInfo();
 
         @Nullable String androidName = detectAndroidDeviceName();

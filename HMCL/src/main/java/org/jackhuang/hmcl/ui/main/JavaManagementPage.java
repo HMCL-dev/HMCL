@@ -33,12 +33,9 @@ import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
+import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jetbrains.annotations.Nullable;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -61,7 +58,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     public JavaManagementPage() {
         this.listener = FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), this::loadJava);
 
-        if (Platform.SYSTEM_PLATFORM.equals(OperatingSystem.LINUX, Architecture.LOONGARCH64_OW)) {
+        if (SystemInfo.SYSTEM_PLATFORM.equals(NativePlatform.LINUX_LOONGARCH64_OW)) {
             onInstallJava = () -> FXUtils.openLink("https://www.loongnix.cn/zh/api/java/");
         } else {
             onInstallJava = JavaDownloadDialog.showDialogAction(DownloadProviders.getDownloadProvider());
@@ -69,7 +66,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         FXUtils.applyDragListener(this, it -> {
             String name = FileUtils.getName(it);
-            return Files.isDirectory(it) || name.endsWith(".zip") || name.endsWith(".tar.gz") || name.equals(OperatingSystem.CURRENT_OS.getJavaExecutable());
+            return Files.isDirectory(it) || name.endsWith(".zip") || name.endsWith(".tar.gz") || name.equals(SystemInfo.CURRENT_OS.getJavaExecutable());
         }, files -> {
             for (Path file : files) {
                 if (Files.isDirectory(file)) {
@@ -77,7 +74,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 } else {
                     String fileName = FileUtils.getName(file);
 
-                    if (fileName.equals(OperatingSystem.CURRENT_OS.getJavaExecutable())) {
+                    if (fileName.equals(SystemInfo.CURRENT_OS.getJavaExecutable())) {
                         onAddJavaBinary(file);
                     } else if (fileName.endsWith(".zip") || fileName.endsWith(".tar.gz")) {
                         onInstallArchive(file);
@@ -96,7 +93,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
     void onAddJava() {
         PathSelector selector = new PathSelector().setTitle(i18n("settings.game.java_directory.choose"));
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
             selector.setExtensionFilters(new FileChooser.ExtensionFilter("Java", "java.exe"));
         Path file = selector.showOpen();
         if (file != null) {
@@ -130,7 +127,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             Path releaseFile = file.resolve("release");
             if (Files.notExists(releaseFile))
                 throw new IOException("Missing release file " + releaseFile);
-            return JavaManager.getAddJavaTask(file.resolve("bin").resolve(OperatingSystem.CURRENT_OS.getJavaExecutable()));
+            return JavaManager.getAddJavaTask(file.resolve("bin").resolve(SystemInfo.CURRENT_OS.getJavaExecutable()));
         }).whenComplete(Schedulers.javafx(), exception -> {
             if (exception != null) {
                 LOG.warning("Failed to add java", exception);

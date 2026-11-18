@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -304,10 +305,10 @@ public final class Instances {
             if (Files.isDirectory(runDirectory))
                 selector.setInitialDirectory(runDirectory);
             List<FileChooser.ExtensionFilter> filters = new ArrayList<>();
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
                 filters.add(new FileChooser.ExtensionFilter(i18n("extension.command"), "*.command"));
             }
-            filters.add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+            filters.add(SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
             filters.add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
@@ -328,14 +329,14 @@ public final class Instances {
     }
 
     private static boolean isValidScriptExtension(String ext) {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
             return ext.equalsIgnoreCase("bat") || ext.equalsIgnoreCase("ps1");
         }
         return ext.equalsIgnoreCase("sh") || ext.equalsIgnoreCase("bash") || ext.equalsIgnoreCase("command") || ext.equalsIgnoreCase("ps1");
     }
 
     private static String getDefaultScriptExtension() {
-        return switch (OperatingSystem.CURRENT_OS) {
+        return switch (SystemInfo.CURRENT_OS) {
             case WINDOWS -> "bat";
             case MACOS -> "command";
             default -> "sh";

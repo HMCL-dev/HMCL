@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -216,7 +217,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         PathSelector fileChooser = new PathSelector().setTitle(i18n("modpack.wizard.step.initialization.save"));
         if (!info.isPackWithLauncher() && MODPACK_TYPE_MODRINTH.equals(controller.getSettings().get(MODPACK_TYPE))) {
             fileChooser.setExtensionFilters(new FileChooser.ExtensionFilter(i18n("modpack"), "*.mrpack"))
-                    .setInitialFileName(info.getName() + (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ? "" : ".mrpack"));
+                    .setInitialFileName(info.getName() + (SystemInfo.CURRENT_OS == OperatingSystem.MACOS ? "" : ".mrpack"));
         } else {
             fileChooser.setExtensionFilters(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"))
                     .setInitialFileName(info.getName() + ".zip");

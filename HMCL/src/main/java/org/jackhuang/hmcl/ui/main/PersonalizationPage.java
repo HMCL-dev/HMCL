@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -349,7 +350,7 @@ public class PersonalizationPage extends StackPane {
         String initialFileName = sanitizeThemePackFileName(packName);
         Path output = new PathSelector().setTitle(i18n("theme_pack.export.title"))
                 .setInitialFileName((FileUtils.isNameValid(initialFileName) ? initialFileName : "theme-pack")
-                        + (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ? "" : ThemePackExporter.FILE_EXTENSION))
+                        + (SystemInfo.CURRENT_OS == OperatingSystem.MACOS ? "" : ThemePackExporter.FILE_EXTENSION))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION)).showSave();
         if (output == null) {
             return;
