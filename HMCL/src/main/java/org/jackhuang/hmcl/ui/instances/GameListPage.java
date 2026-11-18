@@ -232,7 +232,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
                     searchBar.getChildren().setAll(searchField, closeSearchBar);
 
-                    toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("install.new_game"), SVG.DOWNLOAD, Instances::addNewGame), createToolbarButton2(i18n("install.modpack"), SVG.PACKAGE2, Instances::importModpack), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
+                    toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("install.new_game"), SVG.DOWNLOAD, Instances::addNewGame), createToolbarButton2(i18n("install.modpack"), SVG.PACKAGE2, Instances::importModpack), createToolbarButton2(i18n("assets.cleanup"), SVG.DELETE_FOREVER, Instances::cleanAssets), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
 
                     toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
 
