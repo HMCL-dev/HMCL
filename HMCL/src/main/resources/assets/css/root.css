@@ -353,8 +353,20 @@
     -fx-font-size: 15px;
 }
 
+.terracotta-list {
+    -fx-background-color: -m3-color-surface;
+}
+
+.terracotta-list .m3-expandable-setting-content {
+    -fx-padding: 0;
+}
+
+.terracotta-list .m3-list-item-supporting {
+    -fx-wrap-text: true;
+}
+
 .terracotta-hint Text {
-    -fx-fill: -monet-on-surface;
+    -fx-fill: -m3-color-on-surface;
 }
 
 .game-crash-window {
