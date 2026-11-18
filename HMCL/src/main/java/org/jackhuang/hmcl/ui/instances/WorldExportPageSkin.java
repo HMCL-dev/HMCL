@@ -38,8 +38,8 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
         exportPath.getSelector().setExtensionFilters(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
         exportPath.setPrefWidth(400);
         exportPathSelectPane.setRight(exportPath);
-        exportPath.setLocation(skinnable.pathProperty().getValue().toString());
-        skinnable.pathProperty().bind(exportPath.validPathProperty());
+        exportPath.setText(skinnable.pathProperty().getValue().toString());
+        skinnable.pathProperty().bind(exportPath.pathProperty());
 
         var worldNamePane = new LinePane();
         worldNamePane.setTitle(i18n("world.name"));
@@ -60,8 +60,8 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
         );
 
         JFXButton btnExport = FXUtils.newRaisedButton(i18n("button.export"));
-        btnExport.disableProperty().bind(Bindings.createBooleanBinding(() -> txtWorldName.getText().isEmpty() || exportPath.getValidPath() == null || Files.exists(exportPath.getValidPath()),
-                txtWorldName.textProperty().isEmpty(), exportPath.validPathProperty()));
+        btnExport.disableProperty().bind(Bindings.createBooleanBinding(() -> txtWorldName.getText().isEmpty() || exportPath.getPath() == null || Files.exists(exportPath.getPath()),
+                txtWorldName.textProperty().isEmpty(), exportPath.pathProperty()));
         btnExport.setOnAction(e -> skinnable.export());
         HBox bottom = new HBox();
         bottom.setAlignment(Pos.CENTER_RIGHT);

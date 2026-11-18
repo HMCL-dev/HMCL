@@ -113,7 +113,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                     {
                         gameDir = new FileSelector(FileSelector.SelectionMode.DIRECTORY);
                         gameDir.getSelector().setTitle(i18n("game_directory.instance_directory.choose"));
-                        gameDir.setLocation(Optional.ofNullable(gameDirectory).map(GameDirectory::getPath).map(PortablePath::toPath).map(FileUtils::getAbsolutePath).orElse(".minecraft"));
+                        gameDir.setText(Optional.ofNullable(gameDirectory).map(GameDirectory::getPath).map(PortablePath::toPath).map(FileUtils::getAbsolutePath).orElse(".minecraft"));
                         gameDir.setPrefWidth(400);
                         gameDir.setExistingValidationEnabled(false);
                         gameDirectorySelectPane.setRight(gameDir);
@@ -148,23 +148,23 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
             StackPane.setAlignment(saveButton, Pos.BOTTOM_RIGHT);
             saveButton.setPrefSize(100, 40);
             saveButton.setOnAction(e -> onSave());
-            Path initialLocation = gameDir.getValidPath();
+            Path initialLocation = gameDir.getPath();
             boolean initialUseRelativePath = switchUseRelativePath.isSelected();
             saveButton.disableProperty().bind(Bindings.createBooleanBinding(
-                    () -> !txtGameDirectoryName.validate() || gameDir.getValidPath() == null
+                    () -> !txtGameDirectoryName.validate() || gameDir.getPath() == null
                             || (gameDirectory != null
                             && Objects.equals(txtGameDirectoryName.getText(), gameDirectoryDisplayName)
-                            && gameDir.getValidPath().equals(initialLocation)
+                            && gameDir.getPath().equals(initialLocation)
                             && switchUseRelativePath.isSelected() == initialUseRelativePath),
-                    txtGameDirectoryName.textProperty(), gameDir.validPathProperty(), switchUseRelativePath.selectedProperty()));
+                    txtGameDirectoryName.textProperty(), gameDir.pathProperty(), switchUseRelativePath.selectedProperty()));
         }
 
         if (gameDirectory == null) {
             InvalidationListener listener = (e) -> {
-                if (gameDir.getValidPath() == null)
+                if (gameDir.getPath() == null)
                     return;
 
-                Path path = FileUtils.toAbsolute(gameDir.getValidPath());
+                Path path = FileUtils.toAbsolute(gameDir.getPath());
                 if (!".minecraft".equals(FileUtils.getName(path)))
                     return;
 
@@ -177,8 +177,8 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                     txtGameDirectoryName.setText(suggestedName);
                 }
             };
-            listener.invalidated(gameDir.validPathProperty());
-            gameDir.validPathProperty().addListener(listener);
+            listener.invalidated(gameDir.pathProperty());
+            gameDir.pathProperty().addListener(listener);
 
             txtGameDirectoryName.textProperty().addListener(new InvalidationListener() {
                 /// Stops automatic name suggestions after the user edits the name.
@@ -186,7 +186,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                 public void invalidated(Observable observable) {
                     if (txtGameDirectoryName.isFocused()) {
                         txtGameDirectoryName.textProperty().removeListener(this);
-                        gameDir.validPathProperty().removeListener(listener);
+                        gameDir.pathProperty().removeListener(listener);
                     }
                 }
             });
@@ -245,7 +245,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
     /// Saves the edited game directory or adds a new entry to the appropriate game directory store.
     @FXThread
     private void onSave() {
-        @Nullable Path path = gameDir.getValidPath();
+        @Nullable Path path = gameDir.getPath();
         if (path == null)
             return;
 

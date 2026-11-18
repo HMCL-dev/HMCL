@@ -29,19 +29,19 @@ public class FileSelector extends HBox {
     private final PathSelector selector = new PathSelector();
     private final JFXTextField pathField = new JFXTextField();
     private final JFXButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
-    private final ReadOnlyObjectWrapper<@Nullable Path> validPath = new ReadOnlyObjectWrapper<>(this, "validPath", null);
+    private final ReadOnlyObjectWrapper<@Nullable Path> path = new ReadOnlyObjectWrapper<>(this, "validPath", null);
     private final BooleanProperty existingValidationEnabled = new SimpleBooleanProperty(this, "existingValidationEnabled", true);
     private final BooleanProperty convertToRelativePath = new SimpleBooleanProperty(this, "convertToRelativePath", false);
 
     public FileSelector(SelectionMode selectionMode) {
         pathField.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(pathField, Priority.ALWAYS);
-        pathField.setValidators(new Validator(i18n("selector.invalid_path"), s -> StringUtils.isBlank(s) || getValidPath() != null));
+        pathField.setValidators(new Validator(i18n("selector.invalid_path"), s -> StringUtils.isBlank(s) || getPath() != null));
         FXUtils.setValidateWhileTextChanged(pathField, true);
 
         selectButton.setOnAction(e -> {
-            if (getValidPath() != null) {
-                selector.setInitialDirectoryFromExisting(getValidPath());
+            if (getPath() != null) {
+                selector.setInitialDirectoryFromExisting(getPath());
             } else {
                 selector.setInitialDirectory(null);
             }
@@ -67,30 +67,30 @@ public class FileSelector extends HBox {
         setSpacing(3);
         getChildren().addAll(pathField, selectButton);
 
-        validPath.bind(Bindings.createObjectBinding(() -> FileUtils.tryGetPath(getLocation())
-                .filter(path -> !getLocation().isBlank())
+        path.bind(Bindings.createObjectBinding(() -> FileUtils.tryGetPath(getText())
+                .filter(path -> !StringUtils.isBlank(getText()))
                 .map(this::processPath)
                 .filter(path -> !existingValidationEnabled.get() || switch (selectionMode) {
                     case DIRECTORY -> Files.isDirectory(path);
                     case OPEN_FILE -> Files.isRegularFile(path);
                     case SAVE_FILE -> true;
                     case FILE_OR_DIRECTORY -> Files.exists(path);
-                }).orElse(null), locationProperty(), existingValidationEnabled, convertToRelativePath));
+                }).orElse(null), textProperty(), existingValidationEnabled, convertToRelativePath));
         convertToRelativePath.addListener(o -> {
-            if (getValidPath() != null)
-                setLocation(getValidPath().toString());
+            if (getPath() != null)
+                setText(getPath().toString());
         });
     }
 
-    private String getLocation() {
-        return pathField.textProperty().getValueSafe();
+    public @Nullable String getText() {
+        return pathField.getText();
     }
 
-    public void setLocation(@Nullable String value) {
+    public void setText(@Nullable String value) {
         pathField.setText(value);
     }
 
-    public StringProperty locationProperty() {
+    public StringProperty textProperty() {
         return pathField.textProperty();
     }
 
@@ -103,16 +103,16 @@ public class FileSelector extends HBox {
         pathField.validate();
     }
 
-    public ReadOnlyObjectProperty<@Nullable Path> validPathProperty() {
-        return validPath.getReadOnlyProperty();
+    public ReadOnlyObjectProperty<@Nullable Path> pathProperty() {
+        return path.getReadOnlyProperty();
     }
 
-    public @Nullable Path getValidPath() {
-        return validPath.get();
+    public @Nullable Path getPath() {
+        return path.get();
     }
 
-    public @Nullable String getValidPathString() {
-        return getValidPath() == null ? null : getValidPath().toString();
+    public @Nullable String getPathString() {
+        return getPath() == null ? null : getPath().toString();
     }
 
     public void fire() {
@@ -122,7 +122,7 @@ public class FileSelector extends HBox {
     private void open(PathSelector.Type type) {
         @Nullable Path file = selector.show(type);
         if (file != null) {
-            setLocation(processPath(file).toString());
+            setText(processPath(file).toString());
         }
     }
 

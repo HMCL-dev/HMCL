@@ -242,15 +242,15 @@ public final class MultiFileItem<T> extends VBox {
         }
 
         public StringProperty valueProperty() {
-            return selector.locationProperty();
+            return selector.textProperty();
         }
 
         public void setValue(String value) {
-            selector.setLocation(value);
+            selector.setText(value);
         }
 
         public FileOption<T> bindBidirectional(Property<String> property) {
-            selector.locationProperty().bindBidirectional(property);
+            selector.textProperty().bindBidirectional(property);
             return this;
         }
 

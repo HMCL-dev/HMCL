@@ -382,22 +382,22 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
 
         /// Returns the selected path.
         public @Nullable String getPath() {
-            return selector.getValidPathString();
+            return selector.getPathString();
         }
 
         /// Returns the selected path property.
         public StringProperty pathProperty() {
-            return selector.locationProperty();
+            return selector.textProperty();
         }
 
         /// Sets the selected path.
         public void setPath(String value) {
-            selector.setLocation(value);
+            selector.setText(value);
         }
 
         /// Binds the selected path to another property.
         public FileChoice<T> bindPathBidirectional(Property<String> property) {
-            selector.locationProperty().bindBidirectional(property);
+            selector.textProperty().bindBidirectional(property);
             return this;
         }
 

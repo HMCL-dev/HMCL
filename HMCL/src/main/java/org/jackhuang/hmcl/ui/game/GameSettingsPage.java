@@ -318,7 +318,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 }
             });
 
-            javaCustomSelector.locationProperty().addListener((observable, oldValue, newValue) -> {
+            javaCustomSelector.textProperty().addListener((observable, oldValue, newValue) -> {
                 S setting = currentSetting.get();
                 if (setting != null && javaCustomOption.isSelected() && !updatingSelectedJava) {
                     setPropertyOverridden(setting, setting.javaTypeProperty(), true);
@@ -579,7 +579,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     runningDirSelector.getSelector().setTitle(i18n("settings.game.working_directory.choose"));
                     runningDirSelector.setPrefWidth(400);
                     runningDirPane.setRight(runningDirSelector);
-                    bindRunningDirectoryProperty(runningDirPane, runningDirSelector.locationProperty(), runningDirSelector);
+                    bindRunningDirectoryProperty(runningDirPane, runningDirSelector.textProperty(), runningDirSelector);
                 }
 
                 var gameArgsPane = new LinePane();
@@ -823,7 +823,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 nativesDirPane.setRight(nativesDirSelector);
                 bindInheritableStringProperty(
                         nativesDirPane,
-                        nativesDirSelector.locationProperty(),
+                        nativesDirSelector.textProperty(),
                         GameSettings::nativesDirectoryProperty);
             }
 
@@ -2745,7 +2745,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         switch (javaType) {
             case CUSTOM:
                 javaCustomOption.setSelected(true);
-                javaCustomSelector.setLocation(getEffectiveValue(setting, GameSettings::customJavaPathProperty));
+                javaCustomSelector.setText(getEffectiveValue(setting, GameSettings::customJavaPathProperty));
                 break;
             case VERSION:
                 javaVersionOption.setSelected(true);
