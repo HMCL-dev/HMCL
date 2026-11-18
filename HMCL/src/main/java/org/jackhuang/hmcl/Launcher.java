@@ -286,6 +286,9 @@ public final class Launcher extends Application {
                 LOG.info("Processor Identifier: " + System.getenv("PROCESSOR_IDENTIFIER"));
             }
             LOG.info("System Architecture: " + SystemInfo.SYSTEM_ARCH.getDisplayName());
+            if (SystemInfo.SYSTEM_ARCH.isX86()) {
+                LOG.info("AVX Version: " + (SystemInfo.AVX_VERSION < 0 ? "Unknown" : SystemInfo.AVX_VERSION));
+            }
             try {
                 LOG.info("Process PID: " + ProcessHandle.current().pid());
             } catch (UnsupportedOperationException ignored) {

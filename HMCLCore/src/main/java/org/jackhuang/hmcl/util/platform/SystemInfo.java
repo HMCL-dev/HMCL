@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform;
 
+import com.sun.management.HotSpotDiagnosticMXBean;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.lang.management.ManagementFactory;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -61,6 +63,9 @@ public final class SystemInfo {
 
     /// Whether the ARM64 host supports executing x86-64 applications through translation.
     private static final boolean SUPPORTED_TRANSLATION_X86_64 = detectTranslationX86_64Support();
+
+    /// The detected AVX version, or -1 if detection is unsupported or fails.
+    public static final int AVX_VERSION = detectAvxVersion();
 
     /// Lazily initializes the platform detector and cached system information.
     private static final class Holder {
@@ -391,6 +396,20 @@ public final class SystemInfo {
         } else {
             return false;
         }
+    }
+
+    private static int detectAvxVersion() {
+        try {
+            HotSpotDiagnosticMXBean bean = ManagementFactory.getPlatformMXBean(HotSpotDiagnosticMXBean.class);
+            //noinspection ConstantValue
+            if (bean != null) {
+                var option = bean.getVMOption("UseAVX");
+                return Integer.parseInt(option.getValue());
+            }
+        } catch (Throwable ignored) {
+        }
+
+        return -1;
     }
 
     /// Prevents instantiation of this utility class.
