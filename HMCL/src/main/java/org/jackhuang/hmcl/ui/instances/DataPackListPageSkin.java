@@ -267,32 +267,8 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         }
 
         private Image loadIcon() {
-            Image image = null;
-            Path imagePath;
-            if (file.isDirectory()) {
-                imagePath = file.getFile().resolve("pack.png");
-                try {
-                    image = ImageLoaders.DEFAULT.load(imagePath, 64, 64, true, true);
-                } catch (Exception e) {
-                    LOG.warning("fail to load image, datapack path: " + file.getFile(), e);
-                }
-            } else {
-                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file.getFile())) {
-                    imagePath = fs.getPath("/pack.png");
-                    if (Files.exists(imagePath)) {
-                        image = ImageLoaders.DEFAULT.load(imagePath, 64, 64, true, true);
-                    }
-                } catch (Exception e) {
-                    LOG.warning("fail to load image, datapack path: " + file.getFile(), e);
-                }
-            }
-
-            if (image != null && !image.isError() && image.getWidth() > 0 && image.getHeight() > 0 &&
-                    Math.abs(image.getWidth() - image.getHeight()) < 1) {
-                return image;
-            } else {
-                return getDefaultIcon();
-            }
+            Image icon = file.loadIcon(ImageLoaders.DEFAULT);
+            return FXUtils.isValidIcon(icon) ? icon : getDefaultIcon();
         }
     }
 

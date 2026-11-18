@@ -6,17 +6,21 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
+import org.jackhuang.hmcl.image.ImageLoader;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.addon.LocalAddonManager.DISABLED_EXTENSION;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
 public class DataPackFile extends LocalAddonFile<DataPackFile> {
@@ -96,6 +100,25 @@ public class DataPackFile extends LocalAddonFile<DataPackFile> {
 
     public boolean isDirectory() {
         return isDirectory;
+    }
+
+    /// Loads the data-pack icon, returning null when it is missing or cannot be read.
+    public <I> @Nullable I loadIcon(ImageLoader<I> loader) {
+        try {
+            if (isDirectory) {
+                try (var inputStream = Files.newInputStream(path.resolve("pack.png"))) {
+                    return loader.load(inputStream, "pack.png", 64, 64, true, true);
+                }
+            }
+
+            try (FileSystem fileSystem = CompressingUtils.createReadOnlyZipFileSystem(path);
+                 var inputStream = Files.newInputStream(fileSystem.getPath("/pack.png"))) {
+                return loader.load(inputStream, "pack.png", 64, 64, true, true);
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to load data pack icon", e);
+            return null;
+        }
     }
 
     @Override
