@@ -54,6 +54,10 @@ public class WorldExportPage extends WizardSinglePage {
         onFinish.run();
     }
 
+    public  World getWorld() {
+        return world;
+    }
+
     @Override
     public String getTitle() {
         return i18n("world.export.wizard", world.getFileName());

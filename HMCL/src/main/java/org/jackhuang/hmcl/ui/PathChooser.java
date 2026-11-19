@@ -7,7 +7,6 @@ import javafx.collections.ObservableList;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -129,10 +128,6 @@ public class PathChooser {
 
         static ChooserContext GAME(Supplier<@Nullable HMCLGameInstance> supplier) {
             return new ObjectContext<>(supplier, HMCLGameInstance::getRunDirectory);
-        }
-
-        static ChooserContext WORLD(Supplier<@Nullable World> supplier) {
-            return new ObjectContext<>(supplier, World::getFile);
         }
 
         Path getDir();
