@@ -5,6 +5,8 @@ package org.jackhuang.hmcl.ui.main;
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
@@ -17,6 +19,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.setting.UserSettings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -51,6 +55,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -230,6 +235,46 @@ public final class SettingsPage extends ScrollPane {
                     miscPaneList.getContent().add(debugPane);
                 }
 
+                {
+                    IntegerProperty property = userSettings().logRetentionProperty();
+
+                    var resetButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                    FXUtils.installFastTooltip(resetButton, i18n("button.reset"));
+
+                    var line = new LogRetentionLineButton(resetButton);
+                    line.setTitle(i18n("settings.launcher.launcher_log.retention"));
+                    line.setNullSafeConverter(value -> value < 0
+                            ? i18n("settings.launcher.launcher_log.retention.keep_all")
+                            : i18n("settings.launcher.launcher_log.retention.count", value));
+                    line.subtitleProperty().bind(Bindings.createStringBinding(
+                            () -> property.get() < 0
+                                    ? i18n("settings.launcher.launcher_log.retention.keep_all.subtitle")
+                                    : i18n("settings.launcher.launcher_log.retention.subtitle"),
+                            property));
+
+                    int value = property.get();
+                    var choices = new HashSet<>(List.of(-1, 5, 10, UserSettings.LOG_RETENTION_DEFAULT, 50, 100));
+                    if (value >= 0) {
+                        // include values not in default choices (from manually editing settings JSON)
+                        // negative values ignored because they're normalized to -1
+                        choices.add(value);
+                    }
+                    line.setItems(choices.stream().sorted().toList());
+                    line.setValue(value < 0 ? -1 : value);
+
+                    FXUtils.onChangeAndOperate(line.valueProperty(), property::setValue);
+                    resetButton.setOnAction(e -> line.setValue(UserSettings.LOG_RETENTION_DEFAULT));
+
+                    if (SettingsManager.isUserSettingsReadOnly()) {
+                        line.setDisable(true);
+                        resetButton.setDisable(true);
+                    } else {
+                        resetButton.disableProperty().bind(property.isEqualTo(UserSettings.LOG_RETENTION_DEFAULT));
+                    }
+
+                    miscPaneList.getContent().add(line);
+                }
+
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.misc")), miscPaneList);
             }
         }
@@ -369,6 +414,17 @@ public final class SettingsPage extends ScrollPane {
 
             return outputFile;
         }), Schedulers.io());
+    }
+
+    @NotNullByDefault
+    private static final class LogRetentionLineButton extends LineSelectButton<Integer> {
+        private LogRetentionLineButton(Node resetButton) {
+            Node selection = Objects.requireNonNull(container.getTrailing());
+
+            HBox trailing = new HBox(SPACING, resetButton, selection);
+            trailing.setPickOnBounds(false);
+            setTrailing(trailing);
+        }
     }
 
     /// Combines an independent update action with the channel selector's existing trailing content.
