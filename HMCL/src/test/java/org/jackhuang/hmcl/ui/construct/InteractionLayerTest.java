@@ -4,6 +4,8 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 import javafx.scene.AccessibleAttribute;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -14,7 +16,6 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
@@ -22,8 +23,11 @@ import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import org.glavo.m3fx.controls.M3Button;
-import org.glavo.m3fx.controls.M3ColorPicker;
+import org.glavo.m3fx.controls.M3ColorArea;
+import org.glavo.m3fx.controls.M3ColorChannel;
+import org.glavo.m3fx.controls.M3ColorSlider;
 import org.glavo.m3fx.controls.M3ColorSwatch;
+import org.glavo.m3fx.controls.M3ColorSwatchPicker;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3OverlayPane;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
@@ -35,6 +39,7 @@ import org.glavo.m3fx.theme.M3ThemeManager;
 import org.glavo.monetfx.Brightness;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -54,6 +59,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Verifies interaction continuity, state restoration, and persistent tab selection.
@@ -61,6 +67,55 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 @Isolated("Temporarily supplies settings while initializing the cached animation policy")
 public final class InteractionLayerTest {
+
+    /// The preset palette and actions fit within the dialog at the launcher's compact overlay size.
+    @Test
+    void colorDialogFitsCompactWindow() throws Exception {
+        onFxThread(() -> {
+            var host = new M3OverlayPane();
+            host.setAnimationsEnabled(false);
+            var scene = new Scene(host, 800, 450);
+            M3ThemeManager.install(scene, M3Theme.defaultTheme());
+            scene.getStylesheets().addAll("/assets/css/blue.css", "/assets/css/root.css");
+            var stage = new Stage();
+            try {
+                stage.setScene(scene);
+                stage.show();
+                var choice = new ColorPickerButton(i18n("settings.launcher.theme_color"),
+                        ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
+                choice.setValue(ThemeColor.DEFAULT.color());
+                var dialog = choice.createDialog();
+                var pane = dialog.getDialogPane();
+                pane.maxHeightProperty().bind(host.heightProperty().multiply(0.7));
+                pane.setAnimationsEnabled(false);
+                host.showDialog(dialog);
+                host.applyCss();
+                host.layout();
+                Bounds body = pane.getContent().localToScene(pane.getContent().getLayoutBounds());
+                // Allow for floating-point rounding when transforming nested controls into scene coordinates.
+                var editorBounds = new BoundingBox(body.getMinX() - 0.01, body.getMinY() - 0.01,
+                        body.getWidth() + 0.02, body.getHeight() + 0.02);
+                var cells = pane.lookupAll(".color-swatch-cell");
+                assertEquals(ThemeColor.STANDARD_COLORS.size(), cells.size());
+                for (var cell : cells) {
+                    assertTrue(editorBounds.contains(cell.localToScene(cell.getLayoutBounds())), "Preset outside dialog body");
+                }
+                for (String selector : List.of(".m3-color-area", ".m3-color-slider", ".m3-text-field")) {
+                    var control = pane.lookup(selector);
+                    Bounds bounds = control.localToScene(control.getLayoutBounds());
+                    assertTrue(editorBounds.contains(bounds), () -> selector + " " + bounds + " outside " + body);
+                }
+                for (var action : pane.getActions()) {
+                    Bounds bounds = action.localToScene(action.getLayoutBounds());
+                    assertTrue(bounds.getMinY() >= body.getMaxY(), "Action overlaps editor");
+                    assertTrue(bounds.getMaxY() <= pane.localToScene(pane.getLayoutBounds()).getMaxY()
+                            - pane.getInsets().getBottom(), "Action outside dialog padding");
+                }
+            } finally {
+                stage.close();
+            }
+        });
+    }
 
     /// The editor rejects RGBA and preserves a legacy translucent setting until RGB is confirmed.
     @Test
@@ -88,11 +143,14 @@ public final class InteractionLayerTest {
                 var handle = host.showDialog(cancelled);
                 host.applyCss();
                 host.layout();
-                var picker = assertInstanceOf(M3ColorPicker.class, cancelled.getDialogPane().lookup(".m3-color-picker"));
-                assertFalse(picker.isShowAlpha());
-                assertFalse(picker.lookup(".m3-color-picker-alpha-slider").isVisible());
-                assertEquals(List.of(new M3RgbColor(Color.RED)), picker.getPresets());
-                picker.setValue(new M3RgbColor(Color.RED));
+                var sliders = cancelled.getDialogPane().lookupAll(".m3-color-slider");
+                assertEquals(1, sliders.size());
+                assertEquals(M3ColorChannel.HUE, assertInstanceOf(M3ColorSlider.class, sliders.iterator().next()).getChannel());
+                var palette = assertInstanceOf(M3ColorSwatchPicker.class, cancelled.getDialogPane().lookup(".m3-color-swatch-picker"));
+                assertEquals(List.of(new M3RgbColor(Color.RED)), palette.getItems());
+                palette.selectColor(new M3RgbColor(Color.RED));
+                var area = assertInstanceOf(M3ColorArea.class, cancelled.getDialogPane().lookup(".m3-color-area"));
+                assertEquals(Color.RED, area.getValue().toFxColor());
                 assertEquals(Color.BLUE, Objects.requireNonNull(swatch.getColor()).toFxColor());
                 cancelled.getDialogPane().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE,
                         false, false, false, false));
@@ -105,11 +163,9 @@ public final class InteractionLayerTest {
                 handle = host.showDialog(dialog);
                 host.applyCss();
                 host.layout();
-                picker = assertInstanceOf(M3ColorPicker.class, dialog.getDialogPane().lookup(".m3-color-picker"));
-                assertEquals(Color.BLUE, picker.getValue().toFxColor());
-                assertFalse(picker.lookup(".m3-color-field").isVisible());
-                var content = assertInstanceOf(VBox.class, dialog.getDialogPane().getContent());
-                var field = assertInstanceOf(M3TextField.class, content.getChildren().getLast());
+                area = assertInstanceOf(M3ColorArea.class, dialog.getDialogPane().lookup(".m3-color-area"));
+                assertEquals(Color.BLUE, area.getValue().toFxColor());
+                var field = assertInstanceOf(M3TextField.class, dialog.getDialogPane().lookup(".m3-text-field"));
                 var ok = dialog.getDialogPane().getActions().getLast();
                 for (String invalid : List.of("#XYZ", "#1234", "#33669980", "336699FF")) {
                     field.selectAll();
@@ -117,10 +173,10 @@ public final class InteractionLayerTest {
                     assertTrue(ok.isDisabled());
                     ok.fire();
                     assertTrue(handle.isShowing());
-                    assertEquals(Color.BLUE, picker.getValue().toFxColor());
+                    assertEquals(Color.BLUE, area.getValue().toFxColor());
                 }
                 field.setText("aBc");
-                assertEquals(Color.web("#AABBCC"), picker.getValue().toFxColor());
+                assertEquals(Color.web("#AABBCC"), area.getValue().toFxColor());
                 field.setText("#336699");
                 assertFalse(ok.isDisabled());
                 assertEquals(0, changes.get());

@@ -5,13 +5,21 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.geometry.Pos;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
-import org.glavo.m3fx.controls.M3ColorPicker;
+import org.glavo.m3fx.controls.M3ColorArea;
+import org.glavo.m3fx.controls.M3ColorChannel;
+import org.glavo.m3fx.controls.M3ColorSlider;
 import org.glavo.m3fx.controls.M3ColorSwatch;
+import org.glavo.m3fx.controls.M3ColorSwatchPicker;
+import org.glavo.m3fx.controls.M3ColorSwatchRounding;
 import org.glavo.m3fx.controls.M3ColorSwatchSize;
 import org.glavo.m3fx.controls.M3Dialog;
 import org.glavo.m3fx.controls.M3RgbColor;
@@ -75,17 +83,21 @@ public final class ColorPickerButton extends StackPane {
 
     /// Creates a fresh editing session from the current setting.
     M3Dialog createDialog() {
-        var picker = new M3ColorPicker(opaqueRgb(Objects.requireNonNullElse(getValue(), Color.WHITE)));
-        picker.setShowAlpha(false);
-        picker.setShowColorField(false); // The built-in field accepts RGBA even when the alpha slider is hidden.
-        picker.getPresets().setAll(presets);
+        var area = new M3ColorArea(opaqueRgb(Objects.requireNonNullElse(getValue(), Color.WHITE)));
+        var hue = new M3ColorSlider(M3ColorChannel.HUE);
+        hue.valueProperty().bindBidirectional(area.valueProperty());
+        var adjustments = new VBox(4, area, hue);
+        VBox.setVgrow(area, Priority.ALWAYS);
 
+        var preview = new M3ColorSwatch();
+        preview.colorProperty().bind(area.valueProperty());
         var field = FXUtils.newTextField();
+        field.setPrefColumnCount(8);
         field.setPromptText("#RRGGBB");
         field.setAccessibleText("RGB");
         var rgb = Bindings.createObjectBinding(() -> parseRgb(field.getText()), field.textProperty());
         field.errorProperty().bind(rgb.isNull());
-        var pickerHex = picker.valueProperty().map(color -> ThemeColor.getColorDisplayName(color.toFxColor()));
+        var pickerHex = area.valueProperty().map(color -> ThemeColor.getColorDisplayName(color.toFxColor()));
         pickerHex.subscribe(hex -> {
             if (!hex.equals(ThemeColor.getColorDisplayName(rgb.get()))) {
                 field.setText(hex);
@@ -94,20 +106,41 @@ public final class ColorPickerButton extends StackPane {
         rgb.addListener((obs, old, color) -> {
             // Keep the picker's full precision when its rounded display value matches the text.
             if (color != null && !ThemeColor.getColorDisplayName(color).equals(pickerHex.getValue())) {
-                picker.setValue(new M3RgbColor(color));
+                area.setValue(new M3RgbColor(color));
             }
         });
 
+        var valueRow = new HBox(8, preview, field);
+        valueRow.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(field, Priority.ALWAYS);
+        var details = new VBox(12, valueRow);
+        if (!presets.isEmpty()) {
+            var palette = new M3ColorSwatchPicker();
+            palette.setColumnCount(3);
+            palette.setRounding(M3ColorSwatchRounding.DEFAULT);
+            palette.setMaxWidth(Region.USE_PREF_SIZE);
+            palette.setMinHeight(Region.USE_PREF_SIZE);
+            palette.getItems().setAll(presets);
+            area.valueProperty().subscribe(palette::selectColor);
+            palette.selectedColorProperty().subscribe(color -> {
+                if (color != null && !color.isEquivalentTo(area.getValue())) {
+                    area.setValue(color);
+                }
+            });
+            details.getChildren().add(palette);
+        }
+        var content = new HBox(16, adjustments, details);
+        HBox.setHgrow(adjustments, Priority.ALWAYS);
         var dialog = new M3Dialog();
         var pane = dialog.getDialogPane();
         pane.setHeadline(title);
-        pane.setContent(new VBox(8, picker, field));
+        pane.setContent(content);
         var cancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
         cancel.setCancelButton(true);
         var ok = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
         ok.setDefaultButton(true);
         ok.disableProperty().bind(field.errorProperty());
-        ok.setOnAction(event -> setValue(picker.getValue().toFxColor()));
+        ok.setOnAction(event -> setValue(area.getValue().toFxColor()));
         pane.getActions().setAll(cancel, ok);
         return dialog;
     }
