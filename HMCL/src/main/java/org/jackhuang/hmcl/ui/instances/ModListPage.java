@@ -32,6 +32,7 @@ import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3Switch;
 import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -375,7 +376,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 // Search Bar
                 searchBar.setAlignment(Pos.CENTER);
                 searchBar.setPadding(new Insets(0, 5, 0, 5));
-                searchField = FXUtils.newTextField();
+                searchField = FXUtils.newTextField(M3TextInputVariant.FILLED);
                 searchField.setPromptText(i18n("search"));
                 HBox.setHgrow(searchField, Priority.ALWAYS);
                 searchPause.setOnFinished(e -> search());

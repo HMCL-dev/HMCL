@@ -26,6 +26,7 @@ import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.image.ImageLoaders;
@@ -798,7 +799,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
     private final class ServerListPageSkin extends SkinBase<ServersPage> {
         private final JFXListView<ServersPage.ServerListItem> listView = new JFXListView<>();
-        private final M3TextField searchField = FXUtils.newTextField();
+        private final M3TextField searchField = FXUtils.newTextField(M3TextInputVariant.FILLED);
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
         private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 

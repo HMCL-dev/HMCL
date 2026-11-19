@@ -13,6 +13,7 @@ import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3PasswordField;
 import org.glavo.m3fx.controls.M3ProgressBar;
 import org.glavo.m3fx.controls.M3TextInputLayout;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
@@ -63,7 +64,7 @@ public class ClassicAccountLoginDialog extends StackPane {
 
             Label usernameLabel = new Label(oldAccount.getLoginName());
 
-            txtPassword = FXUtils.newPasswordField();
+            txtPassword = FXUtils.newPasswordField(M3TextInputVariant.FILLED);
             txtPassword.setOnAction(e -> onAccept());
             passwordLayout = new M3TextInputLayout(txtPassword);
             passwordLayout.setLabelText(i18n("account.password"));

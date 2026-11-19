@@ -9,6 +9,7 @@ import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -53,7 +54,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
         addServerPane = new JFXDialogLayout();
         addServerPane.setHeading(new Label(i18n("account.injector.add")));
         {
-            txtServerUrl = FXUtils.newTextField();
+            txtServerUrl = FXUtils.newTextField(M3TextInputVariant.FILLED);
             txtServerUrl.setPromptText(i18n("account.injector.server_url"));
             txtServerUrl.setOnAction(e -> onAddNext());
 

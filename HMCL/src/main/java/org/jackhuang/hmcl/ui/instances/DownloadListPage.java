@@ -23,6 +23,7 @@ import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.AddonProjectInfo;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
@@ -300,7 +301,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                     rowIndex++;
                 }
 
-                M3TextField nameField = FXUtils.newTextField();
+                M3TextField nameField = FXUtils.newTextField(M3TextInputVariant.FILLED);
                 nameField.setPromptText(getSkinnable().supportChinese.get() ? i18n("search.hint.chinese") : i18n("search.hint.english"));
                 if (getSkinnable().supportChinese.get()) {
                     FXUtils.installFastTooltip(nameField, i18n("search.hint.chinese"));

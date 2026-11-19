@@ -22,6 +22,7 @@ import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputLayout;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.LauncherState;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -789,6 +790,24 @@ final class TaskExecutorDialogPaneTest {
         });
     }
 
+    /// A hint leaves a single prompt filled, while an additional input makes it a form.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void promptFieldVariantFollowsEditableInputs(boolean includeCheckbox) throws Exception {
+        onFxThread(() -> {
+            var builder = new PromptDialogPane.Builder("Name", (questions, handler) -> handler.resolve())
+                    .addQuestion(new PromptDialogPane.Builder.HintQuestion("Choose a name"))
+                    .addQuestion(new PromptDialogPane.Builder.StringQuestion("Name", ""));
+            if (includeCheckbox)
+                builder.addQuestion(new PromptDialogPane.Builder.BooleanQuestion("Copy settings", false));
+            var prompt = new PromptDialogPane(builder);
+            var layout = assertInstanceOf(M3TextInputLayout.class, prompt.getBody().getFirst().lookup(".m3-text-input-layout"));
+            var field = assertInstanceOf(M3TextField.class, layout.getInput());
+            assertEquals(includeCheckbox ? M3TextInputVariant.OUTLINED : M3TextInputVariant.FILLED, field.getVariant());
+            return true;
+        });
+    }
+
     /// Uses native dialog actions while preserving field validation, rejection, and keyboard cancellation.
     @Test
     void inputDialogMaterialButtonsPreserveSubmissionLifecycle() throws Exception {
@@ -809,6 +828,7 @@ final class TaskExecutorDialogPaneTest {
             M3Button accept = input.getDialogPane().getActions().getLast();
             M3Button cancel = input.getDialogPane().getActions().getFirst();
             M3TextField field = assertInstanceOf(M3TextField.class, input.getDialogPane().lookup(".m3-text-field"));
+            assertEquals(M3TextInputVariant.FILLED, field.getVariant());
             M3TextInputLayout layout = assertInstanceOf(M3TextInputLayout.class, input.getDialogPane().lookup(".m3-text-input-layout"));
             Label warning = assertInstanceOf(Label.class, input.getDialogPane().lookup(".input-dialog-error"));
             assertEquals(M3ButtonVariant.TEXT, accept.getVariant());

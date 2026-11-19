@@ -26,6 +26,7 @@ import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3Switch;
 import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.addon.datapack.DataPack;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -121,7 +122,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
             searchBar.setAlignment(Pos.CENTER);
             searchBar.setPadding(new Insets(0, 5, 0, 5));
-            searchField = FXUtils.newTextField();
+            searchField = FXUtils.newTextField(M3TextInputVariant.FILLED);
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
             searchPause.setOnFinished(e -> search());

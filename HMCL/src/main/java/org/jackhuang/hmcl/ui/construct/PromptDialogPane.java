@@ -16,6 +16,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputValidator;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -43,11 +44,13 @@ public class PromptDialogPane extends DialogPane {
         body.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
         setBody(body);
         List<BooleanBinding> bindings = new ArrayList<>();
+        long inputCount = builder.questions.stream().filter(question -> !(question instanceof Builder.HintQuestion)).count();
+        M3TextInputVariant variant = inputCount == 1 ? M3TextInputVariant.FILLED : M3TextInputVariant.OUTLINED;
         int rowIndex = 0;
         for (Builder.Question<?> question : builder.questions) {
             if (question instanceof Builder.StringQuestion) {
                 Builder.StringQuestion stringQuestion = (Builder.StringQuestion) question;
-                M3TextField textField = FXUtils.newTextField();
+                M3TextField textField = FXUtils.newTextField(variant);
                 textField.textProperty().addListener((a, b, newValue) -> stringQuestion.value = textField.getText());
                 textField.setText(stringQuestion.value);
                 var layout = FXUtils.newValidatedTextField(textField, stringQuestion.validators.toArray(M3TextInputValidator[]::new));

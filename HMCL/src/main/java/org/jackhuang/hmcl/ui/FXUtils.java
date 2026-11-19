@@ -49,6 +49,7 @@ import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputLayout;
 import org.glavo.m3fx.controls.M3TextInputValidator;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.StyleSheets;
@@ -342,16 +343,28 @@ public final class FXUtils {
         });
     }
 
-    /// Creates a Material text field with the launcher's localized editing menu.
+    /// Creates an outlined text field with the launcher's localized editing menu.
     public static M3TextField newTextField() {
+        return newTextField(M3TextInputVariant.OUTLINED);
+    }
+
+    /// Creates a text field with the given variant and the launcher's localized editing menu.
+    public static M3TextField newTextField(M3TextInputVariant variant) {
         M3TextField field = new M3TextField();
+        field.setVariant(variant);
         useJFXContextMenu(field);
         return field;
     }
 
-    /// Creates a masked password field with the launcher's localized editing menu.
+    /// Creates an outlined password field with the launcher's localized editing menu.
     public static M3PasswordField newPasswordField() {
+        return newPasswordField(M3TextInputVariant.OUTLINED);
+    }
+
+    /// Creates a masked password field with the given variant and the launcher's localized editing menu.
+    public static M3PasswordField newPasswordField(M3TextInputVariant variant) {
         M3PasswordField field = new M3PasswordField();
+        field.setVariant(variant);
         useJFXContextMenu(field);
         return field;
     }

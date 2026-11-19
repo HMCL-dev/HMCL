@@ -21,6 +21,7 @@ import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3TextArea;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputValidator;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -275,6 +276,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     {
                         VBox pane = new VBox(8);
                         M3TextArea area = new M3TextArea();
+                        area.setVariant(M3TextInputVariant.OUTLINED);
                         area.setWrapText(false);
                         FXUtils.useJFXContextMenu(area);
                         area.textProperty().bindBidirectional(skinnable.description);

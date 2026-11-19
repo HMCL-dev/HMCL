@@ -25,6 +25,7 @@ import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -207,7 +208,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
                     searchBar.setAlignment(Pos.CENTER);
                     searchBar.setPadding(new Insets(0, 5, 0, 5));
-                    searchField = FXUtils.newTextField();
+                    searchField = FXUtils.newTextField(M3TextInputVariant.FILLED);
                     searchField.setPromptText(i18n("search"));
                     HBox.setHgrow(searchField, Priority.ALWAYS);
                     PauseTransition pause = new PauseTransition(Duration.millis(100));

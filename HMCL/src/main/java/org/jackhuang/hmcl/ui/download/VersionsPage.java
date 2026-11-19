@@ -20,6 +20,7 @@ import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
@@ -330,7 +331,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 int rowIndex = 0;
 
                 {
-                    nameField = FXUtils.newTextField();
+                    nameField = FXUtils.newTextField(M3TextInputVariant.FILLED);
                     nameField.setPromptText(i18n("instance.search.prompt"));
                     nameField.textProperty().addListener(o -> updateList());
 

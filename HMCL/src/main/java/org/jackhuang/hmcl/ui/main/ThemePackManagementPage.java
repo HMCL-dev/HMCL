@@ -33,6 +33,7 @@ import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.*;
@@ -497,7 +498,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
 
         /// Search input.
-        private final M3TextField searchField = FXUtils.newTextField();
+        private final M3TextField searchField = FXUtils.newTextField(M3TextInputVariant.FILLED);
 
         /// List of installed theme packs.
         private final JFXListView<ThemePackManager.InstalledThemePack> listView = new JFXListView<>();

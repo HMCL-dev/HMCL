@@ -13,6 +13,7 @@ import org.glavo.m3fx.controls.M3DialogEvent;
 import org.glavo.m3fx.controls.M3DialogHandle;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputValidator;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -49,7 +50,7 @@ public final class InputDialog extends M3Dialog {
                        M3TextInputValidator @Nullable ... validators) {
         setDismissOnScrimClick(false);
         getDialogPane().setHeadline(title == null ? "" : title);
-        textField = FXUtils.newTextField();
+        textField = FXUtils.newTextField(M3TextInputVariant.FILLED);
         textField.setText(initialValue == null ? "" : initialValue);
         var input = validators == null || validators.length == 0 ? textField : FXUtils.newValidatedTextField(textField, validators);
 
