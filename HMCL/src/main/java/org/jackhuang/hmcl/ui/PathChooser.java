@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -38,14 +39,14 @@ public class PathChooser {
         return new FileChooser.ExtensionFilter(i18n("extension.png"), FXUtils.IMAGE_EXTENSIONS.stream().map(ext -> "*." + ext).toList());
     }
 
-    private static @Nullable Path getExistingPath(@Nullable String pathString) {
+    private static Optional<Path> getExistingPath(@Nullable String pathString) {
         return FileUtils.tryGetPath(pathString).filter(Files::exists).map(p -> {
             if (Files.isRegularFile(p))
                 return p.getParent();
             else if (Files.isDirectory(p))
                 return p;
             return null;
-        }).orElse(null);
+        });
     }
 
     public PathChooser setChooserContext(ChooserContext context) {
@@ -54,7 +55,7 @@ public class PathChooser {
     }
 
     public void setInitialDirectory(@Nullable String path) {
-        initialDirectory = getExistingPath(path);
+        initialDirectory = getExistingPath(path).orElse(null);
     }
 
     public PathChooser setTitle(@Nullable String title) {
@@ -142,8 +143,8 @@ public class PathChooser {
         record PersistentContext(String name) implements ChooserContext {
             @Override
             public Path getDir() {
-                var path = getExistingPath(SettingsManager.userSettings().getRecentFileChooserPaths().get(name));
-                return Objects.requireNonNullElse(path, Path.of("."));
+                String path = SettingsManager.userSettings().getRecentFileChooserPaths().get(name);
+                return getExistingPath(path).orElse(Path.of("."));
             }
 
             @Override
@@ -158,8 +159,11 @@ public class PathChooser {
         record ObjectContext<T>(Supplier<@Nullable T> supplier, Function<T, Path> func) implements ChooserContext {
             @Override
             public Path getDir() {
-                T instance = supplier.get();
-                return instance == null ? DEFAULT.getDir() : func.apply(instance);
+                return Optional.ofNullable(supplier.get())
+                        .map(func)
+                        .map(Object::toString)
+                        .flatMap(PathChooser::getExistingPath)
+                        .orElseGet(DEFAULT::getDir);
             }
         }
     }
