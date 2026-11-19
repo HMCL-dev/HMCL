@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -16,6 +15,7 @@ import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
@@ -42,7 +42,7 @@ public class OfflineAccountSkinPane extends StackPane {
     private final OfflineAccount account;
 
     private final MultiFileItem<Skin.Type> skinItem = new MultiFileItem<>();
-    private final JFXTextField cslApiField = new JFXTextField();
+    private final M3TextField cslApiField = FXUtils.newTextField();
     private final JFXComboBox<TextureModel> modelCombobox = new JFXComboBox<>();
     private final FileSelector skinSelector = new FileSelector();
     private final FileSelector capeSelector = new FileSelector();
@@ -96,8 +96,7 @@ public class OfflineAccountSkinPane extends StackPane {
         layout.setBody(pane);
 
         cslApiField.setPromptText(i18n("account.skin.type.csl_api.location.hint"));
-        cslApiField.setValidators(new URLValidator());
-        FXUtils.setValidateWhileTextChanged(cslApiField, true);
+        var cslApiLayout = FXUtils.newValidatedTextField(cslApiField, new URLValidator());
 
         skinItem.loadChildren(Arrays.asList(
                 new MultiFileItem.Option<>(i18n("message.default"), Skin.Type.DEFAULT),
@@ -154,7 +153,7 @@ public class OfflineAccountSkinPane extends StackPane {
             Skin.Type selectedType = skinItem.getSelectedData();
 
             if (selectedType == Skin.Type.CUSTOM_SKIN_LOADER_API) {
-                if (!cslApiField.validate()) {
+                if (cslApiField.isError()) {
                     pauseTransition.stop();
                     return;
                 }
@@ -211,7 +210,7 @@ public class OfflineAccountSkinPane extends StackPane {
                     case CUSTOM_SKIN_LOADER_API:
                         right.getChildren().addAll(
                             new Label(i18n("account.skin.type.csl_api.location")),
-                            cslApiField
+                            cslApiLayout
                         );
                         break;
                 }
@@ -238,7 +237,7 @@ public class OfflineAccountSkinPane extends StackPane {
 
         acceptButton.disableProperty().bind(
                 skinItem.selectedDataProperty().isEqualTo(Skin.Type.CUSTOM_SKIN_LOADER_API)
-                        .and(cslApiField.activeValidatorProperty().isNotNull()));
+                        .and(cslApiField.errorProperty()));
 
         layout.setActions(littleSkinLink, cancelButton, acceptButton);
     }

@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.game;
 
 import com.jfoenix.controls.JFXSlider;
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
@@ -13,6 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
@@ -48,7 +48,7 @@ final class IndependentSettingBinder {
             boolean presetSetting,
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             LineComponent line,
-            JFXTextField textField,
+            M3TextField textField,
             Function<GameSettings, SettingProperty<String>> propertyGetter,
             Supplier<M3IconButton> inheritanceButtonFactory,
             BiConsumer<M3IconButton, Boolean> inheritanceButtonUpdater,
@@ -147,7 +147,7 @@ final class IndependentSettingBinder {
             boolean presetSetting,
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             LineComponent line,
-            JFXTextField textField,
+            M3TextField textField,
             Function<GameSettings, ? extends SettingProperty<Integer>> propertyGetter,
             Supplier<M3IconButton> inheritanceButtonFactory,
             BiConsumer<M3IconButton, Boolean> inheritanceButtonUpdater,
@@ -252,7 +252,7 @@ final class IndependentSettingBinder {
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             RadioChoiceList<Boolean> choiceList,
             JFXSlider maxMemorySlider,
-            JFXTextField maxMemoryTextField,
+            M3TextField maxMemoryTextField,
             MemoryStatusBar memoryStatusBar,
             BorderPane memoryStatusLabels,
             @Nullable M3IconButton autoMemoryButton,

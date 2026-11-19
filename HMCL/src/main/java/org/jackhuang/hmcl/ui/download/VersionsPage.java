@@ -19,6 +19,7 @@ import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
@@ -295,7 +296,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         /// Indicates that the remote version list is loading.
         private final M3ProgressIndicator spinner;
 
-        private final JFXTextField nameField;
+        private final M3TextField nameField;
         private final JFXComboBox<VersionTypeFilter> categoryField = new JFXComboBox<>();
 
         /// Creates the searchable version list with viewport-constrained cells and loading states.
@@ -329,7 +330,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 int rowIndex = 0;
 
                 {
-                    nameField = new JFXTextField();
+                    nameField = FXUtils.newTextField();
                     nameField.setPromptText(i18n("instance.search.prompt"));
                     nameField.textProperty().addListener(o -> updateList());
 

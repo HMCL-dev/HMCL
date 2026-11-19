@@ -6,7 +6,6 @@ import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
@@ -26,6 +25,7 @@ import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.image.ImageLoaders;
@@ -459,8 +459,8 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         private final Server reference;
         private final Type type;
         private final GridPane body = new GridPane();
-        private final JFXTextField serverNameField = new JFXTextField();
-        private final JFXTextField serverIpField = new JFXTextField();
+        private final M3TextField serverNameField = FXUtils.newTextField();
+        private final M3TextField serverIpField = FXUtils.newTextField();
         private final JFXComboBox<Server.ServerPackStatus> serverPackStatusField = new JFXComboBox<>();
 
         private final M3Button btnAccept = new M3Button("", M3ButtonVariant.TEXT);
@@ -538,7 +538,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 GridPane.setHalignment(label, HPos.LEFT);
                 body.add(label, 0, 1);
 
-                serverIpField.setValidators(
+                var addressLayout = FXUtils.newValidatedTextField(serverIpField,
                         new RequiredValidator(),
                         new Validator(i18n("server.address.malformed"), str -> {
                             if (StringUtils.isBlank(str))
@@ -551,9 +551,8 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                             }
                         })
                 );
-                setValidateWhileTextChanged(serverIpField, true);
 
-                body.add(serverIpField, 1, 1);
+                body.add(addressLayout, 1, 1);
 
                 if (referenceServerIP != null) {
                     serverIpField.setText(referenceServerIP);
@@ -588,16 +587,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 case EDIT -> i18n("server.manage.edit.accept");
                 case ADD -> i18n("server.manage.add.accept");
             });
-            btnAccept.disableProperty().bind(new BooleanBinding() {
-                {
-                    bind(serverIpField.textProperty());
-                }
-
-                @Override
-                protected boolean computeValue() {
-                    return !serverIpField.validate();
-                }
-            });
+            btnAccept.disableProperty().bind(serverIpField.errorProperty());
 
             btnCancel.setText(i18n("button.cancel"));
             onEscPressed(this, btnCancel::fire);
@@ -808,7 +798,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
     private final class ServerListPageSkin extends SkinBase<ServersPage> {
         private final JFXListView<ServersPage.ServerListItem> listView = new JFXListView<>();
-        private final JFXTextField searchField = new JFXTextField();
+        private final M3TextField searchField = FXUtils.newTextField();
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
         private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 

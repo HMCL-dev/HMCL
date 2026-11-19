@@ -4,8 +4,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXTextField;
-import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleStringProperty;
@@ -16,6 +14,8 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputValidator;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -47,24 +47,24 @@ public class PromptDialogPane extends DialogPane {
         for (Builder.Question<?> question : builder.questions) {
             if (question instanceof Builder.StringQuestion) {
                 Builder.StringQuestion stringQuestion = (Builder.StringQuestion) question;
-                JFXTextField textField = new JFXTextField();
+                M3TextField textField = FXUtils.newTextField();
                 textField.textProperty().addListener((a, b, newValue) -> stringQuestion.value = textField.getText());
                 textField.setText(stringQuestion.value);
-                textField.setValidators(((Builder.StringQuestion) question).validators.toArray(new ValidatorBase[0]));
+                var layout = FXUtils.newValidatedTextField(textField, stringQuestion.validators.toArray(M3TextInputValidator[]::new));
                 if (stringQuestion.promptText != null) {
                     textField.setPromptText(stringQuestion.promptText);
                 }
-                bindings.add(Bindings.createBooleanBinding(textField::validate, textField.textProperty()));
+                bindings.add(textField.errorProperty().not());
 
                 if (StringUtils.isNotBlank(question.question.get())) {
                     Label label = createQuestionLabel(question.question.get());
                     GridPane.setMargin(label, new Insets(0, 0, 20, 0));
-                    body.addRow(rowIndex++, label, textField);
+                    body.addRow(rowIndex++, label, layout);
                 } else {
-                    GridPane.setColumnSpan(textField, 2);
-                    body.addRow(rowIndex++, textField);
+                    GridPane.setColumnSpan(layout, 2);
+                    body.addRow(rowIndex++, layout);
                 }
-                GridPane.setMargin(textField, new Insets(0, 0, 20, 0));
+                GridPane.setMargin(layout, new Insets(0, 0, 20, 0));
             } else if (question instanceof Builder.BooleanQuestion) {
                 HBox hBox = new HBox();
                 GridPane.setColumnSpan(hBox, 1);
@@ -176,10 +176,10 @@ public class PromptDialogPane extends DialogPane {
         }
 
         public static class StringQuestion extends Question<String> {
-            protected final List<ValidatorBase> validators;
+            protected final List<M3TextInputValidator> validators;
             protected String promptText;
 
-            public StringQuestion(String question, String defaultValue, ValidatorBase... validators) {
+            public StringQuestion(String question, String defaultValue, M3TextInputValidator... validators) {
                 super(question);
                 this.value = defaultValue;
                 this.validators = Arrays.asList(validators);

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
@@ -15,6 +14,8 @@ import javafx.scene.layout.Priority;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputLayout;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -41,7 +42,9 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
     protected final WizardController controller;
 
     protected InstallerItem.InstallerItemGroup group;
-    protected JFXTextField txtName = new JFXTextField();
+    protected final M3TextField txtName = FXUtils.newTextField();
+    /// Displays the name validation rules supplied by the installer page.
+    protected final M3TextInputLayout nameLayout = FXUtils.newValidatedTextField(txtName);
 
     protected BooleanProperty installable = new SimpleBooleanProperty();
 
@@ -133,9 +136,9 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                 versionNamePane.setStyle("-fx-padding: 20 16 20 16");
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
 
-                HBox.setHgrow(control.txtName, Priority.ALWAYS);
+                HBox.setHgrow(control.nameLayout, Priority.ALWAYS);
 
-                versionNamePane.getChildren().addAll(new Label(i18n("instance.name")), control.txtName);
+                versionNamePane.getChildren().addAll(new Label(i18n("instance.name")), control.nameLayout);
 
                 if (control.showExtendPane()) {
                     M3IconButton clearButton = new M3IconButton(SVG.CLOSE.createIcon());

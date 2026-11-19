@@ -3,12 +3,12 @@
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.BooleanProperty;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -34,7 +34,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
     private final Label lblServerName;
     private final Label lblCreationWarning;
     private final Label lblServerWarning;
-    private final JFXTextField txtServerUrl;
+    private final M3TextField txtServerUrl;
     private final JFXDialogLayout addServerPane;
     private final JFXDialogLayout confirmServerPane;
     /// Tracks the pending server metadata request.
@@ -53,7 +53,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
         addServerPane = new JFXDialogLayout();
         addServerPane.setHeading(new Label(i18n("account.injector.add")));
         {
-            txtServerUrl = new JFXTextField();
+            txtServerUrl = FXUtils.newTextField();
             txtServerUrl.setPromptText(i18n("account.injector.server_url"));
             txtServerUrl.setOnAction(e -> onAddNext());
 
@@ -81,16 +81,14 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
             lblCreationWarning.managedProperty().bind(lblCreationWarning.visibleProperty());
 
             body.getChildren().addAll(
-                txtServerUrl,
+                FXUtils.newValidatedTextField(txtServerUrl, new RequiredValidator(), new URLValidator()),
                 lblCreationWarning
             );
 
             addServerPane.setBody(body);
             addServerPane.setActions(actions);
 
-            txtServerUrl.getValidators().addAll(new RequiredValidator(), new URLValidator());
-            FXUtils.setValidateWhileTextChanged(txtServerUrl, true);
-            btnAddNext.disableProperty().bind(checkingServer.or(txtServerUrl.activeValidatorProperty().isNotNull()));
+            btnAddNext.disableProperty().bind(checkingServer.or(txtServerUrl.errorProperty()));
         }
 
         confirmServerPane = new JFXDialogLayout();

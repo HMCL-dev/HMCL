@@ -23,6 +23,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import javafx.stage.FileChooser;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
@@ -1225,19 +1226,21 @@ public class PersonalizationPage extends StackPane {
                         FontComboBox cboLogFont = new FontComboBox();
                         cboLogFont.valueProperty().bindBidirectional(settings().logFontFamilyProperty());
 
-                        JFXTextField txtLogFontSize = new JFXTextField();
-                        FXUtils.setLimitWidth(txtLogFontSize, 50);
-                        FXUtils.bind(txtLogFontSize, settings().logFontSizeProperty(), SafeStringConverter.fromFiniteDouble()
+                        M3TextField txtLogFontSize = FXUtils.newTextField();
+                        var converter = SafeStringConverter.fromFiniteDouble()
                                 .restrict(it -> it > 0)
-                                .fallbackTo(12.0)
-                                .asPredicate(Validator.addTo(txtLogFontSize)));
+                                .fallbackTo(12.0);
+                        var fontSizeLayout = FXUtils.newValidatedTextField(txtLogFontSize,
+                                new Validator(i18n("input.number"), converter.asPredicate()));
+                        FXUtils.setLimitWidth(fontSizeLayout, 80);
+                        FXUtils.bind(txtLogFontSize, settings().logFontSizeProperty(), converter);
 
                         M3IconButton clearButton = new M3IconButton(SVG.RESTORE.createIcon());
                         clearButton.setOnAction(e -> cboLogFont.setValue(null));
 
                         FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
 
-                        hBox.getChildren().setAll(cboLogFont, txtLogFontSize, clearButton);
+                        hBox.getChildren().setAll(cboLogFont, fontSizeLayout, clearButton);
 
                         borderPane.setRight(hBox);
                     }

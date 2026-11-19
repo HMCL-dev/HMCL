@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXTextField;
 import javafx.event.ActionEvent;
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
@@ -21,6 +20,8 @@ import javafx.scene.shape.Shape;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputLayout;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.LauncherState;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -807,7 +808,8 @@ final class TaskExecutorDialogPaneTest {
             assertEquals("Name", input.getDialogPane().getHeadline());
             M3Button accept = input.getDialogPane().getActions().getLast();
             M3Button cancel = input.getDialogPane().getActions().getFirst();
-            JFXTextField field = assertInstanceOf(JFXTextField.class, input.getDialogPane().lookup(".jfx-text-field"));
+            M3TextField field = assertInstanceOf(M3TextField.class, input.getDialogPane().lookup(".m3-text-field"));
+            M3TextInputLayout layout = assertInstanceOf(M3TextInputLayout.class, input.getDialogPane().lookup(".m3-text-input-layout"));
             Label warning = assertInstanceOf(Label.class, input.getDialogPane().lookup(".input-dialog-error"));
             assertEquals(M3ButtonVariant.TEXT, accept.getVariant());
             assertEquals(M3ButtonVariant.TEXT, cancel.getVariant());
@@ -816,10 +818,13 @@ final class TaskExecutorDialogPaneTest {
             assertFalse(warning.isManaged());
 
             field.setText("");
+            assertEquals("Required", layout.getValidationErrorText());
+            assertTrue(field.isError());
             assertTrue(accept.isDisabled());
             accept.fire();
             assertEquals(0, submissions.get());
             field.setText("Example");
+            assertFalse(field.isError());
             assertFalse(accept.isDisabled());
             field.fireEvent(new ActionEvent());
             assertTrue(handle.isShowing());

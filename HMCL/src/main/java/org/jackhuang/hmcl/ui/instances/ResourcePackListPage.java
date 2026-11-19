@@ -27,6 +27,7 @@ import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3Switch;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
@@ -291,7 +292,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     @NotNullByDefault
     private static final class ResourcePackListPageSkin extends SkinBase<ResourcePackListPage> {
         private final JFXListView<ResourcePackInfoObject> listView;
-        private final JFXTextField searchField = new JFXTextField();
+        private final M3TextField searchField = FXUtils.newTextField();
 
         private final TransitionPane toolbarPane = new TransitionPane();
         private final HBox searchBar = new HBox();

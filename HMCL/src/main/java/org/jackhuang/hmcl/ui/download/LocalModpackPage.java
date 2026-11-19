@@ -69,12 +69,12 @@ public final class LocalModpackPage extends ModpackPage {
         } else {
             FXUtils.onChangeAndOperate(installAsVersion, installAsVersion -> {
                 if (installAsVersion) {
-                    txtModpackName.getValidators().setAll(
+                    nameLayout.getValidators().setAll(
                             new RequiredValidator(),
                             new Validator(i18n("install.new_game.already_exists"), str -> !repository.instanceIdConflicts(str)),
                             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
                 } else {
-                    txtModpackName.getValidators().setAll(
+                    nameLayout.getValidators().setAll(
                             new RequiredValidator(),
                             new Validator(i18n("install.new_game.already_exists"), str -> !ModpackHelper.isExternalGameNameConflicts(str)
                                     && GameDirectoryManager.getGameDirectories().stream()

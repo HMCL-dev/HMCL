@@ -15,6 +15,8 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3PasswordField;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.ProxyType;
@@ -141,12 +143,14 @@ public class DownloadSettingsPage extends StackPane {
                                 JFXSlider slider = new JFXSlider(1, 256, 64);
                                 HBox.setHgrow(slider, Priority.ALWAYS);
 
-                                JFXTextField threadsField = new JFXTextField();
-                                FXUtils.setLimitWidth(threadsField, 60);
-                                FXUtils.bind(threadsField, settings().downloadThreadsProperty(), SafeStringConverter.fromInteger()
+                                M3TextField threadsField = FXUtils.newTextField();
+                                var converter = SafeStringConverter.fromInteger()
                                         .restrict(it -> it > 0)
-                                        .fallbackTo(FetchTask.DEFAULT_CONCURRENCY)
-                                        .asPredicate(Validator.addTo(threadsField)));
+                                        .fallbackTo(FetchTask.DEFAULT_CONCURRENCY);
+                                var threadsLayout = FXUtils.newValidatedTextField(threadsField,
+                                        new Validator(i18n("input.number"), converter.asPredicate()));
+                                FXUtils.setLimitWidth(threadsLayout, 80);
+                                FXUtils.bind(threadsField, settings().downloadThreadsProperty(), converter);
 
                                 var changedByTextField = new Holder<>(false);
                                 FXUtils.onChangeAndOperate(settings().downloadThreadsProperty(), value -> {
@@ -159,7 +163,7 @@ public class DownloadSettingsPage extends StackPane {
                                     settings().downloadThreadsProperty().set(value.getValue().intValue());
                                 });
 
-                                hbox.getChildren().setAll(slider, threadsField);
+                                hbox.getChildren().setAll(slider, threadsLayout);
                                 return hbox;
                             }
                         }
@@ -252,7 +256,7 @@ public class DownloadSettingsPage extends StackPane {
                     }
 
                     {
-                        JFXTextField txtProxyHost = new JFXTextField();
+                        M3TextField txtProxyHost = FXUtils.newTextField();
                         GridPane.setRowIndex(txtProxyHost, 1);
                         GridPane.setColumnIndex(txtProxyHost, 1);
                         gridPane.getChildren().add(txtProxyHost);
@@ -267,18 +271,19 @@ public class DownloadSettingsPage extends StackPane {
                     }
 
                     {
-                        JFXTextField txtProxyPort = new JFXTextField();
-                        GridPane.setFillWidth(txtProxyPort, false);
-                        txtProxyPort.setMaxWidth(200);
-                        GridPane.setRowIndex(txtProxyPort, 2);
-                        GridPane.setColumnIndex(txtProxyPort, 1);
-                        FXUtils.setValidateWhileTextChanged(txtProxyPort, true);
-                        gridPane.getChildren().add(txtProxyPort);
-
-                        FXUtils.bind(txtProxyPort, settings().proxyPortProperty(), SafeStringConverter.fromInteger()
+                        M3TextField txtProxyPort = FXUtils.newTextField();
+                        var converter = SafeStringConverter.fromInteger()
                                 .restrict(it -> it >= 0 && it <= 0xFFFF)
-                                .fallbackTo(0)
-                                .asPredicate(Validator.addTo(txtProxyPort)));
+                                .fallbackTo(0);
+                        var portLayout = FXUtils.newValidatedTextField(txtProxyPort,
+                                new Validator(i18n("input.number"), converter.asPredicate()));
+                        GridPane.setFillWidth(portLayout, false);
+                        portLayout.setMaxWidth(200);
+                        GridPane.setRowIndex(portLayout, 2);
+                        GridPane.setColumnIndex(portLayout, 1);
+                        gridPane.getChildren().add(portLayout);
+
+                        FXUtils.bind(txtProxyPort, settings().proxyPortProperty(), converter);
                     }
                     proxyPane.getChildren().add(gridPane);
                 }
@@ -311,7 +316,7 @@ public class DownloadSettingsPage extends StackPane {
                     }
 
                     {
-                        JFXTextField txtProxyUsername = new JFXTextField();
+                        M3TextField txtProxyUsername = FXUtils.newTextField();
                         GridPane.setRowIndex(txtProxyUsername, 0);
                         GridPane.setColumnIndex(txtProxyUsername, 1);
                         authPane.getChildren().add(txtProxyUsername);
@@ -326,7 +331,7 @@ public class DownloadSettingsPage extends StackPane {
                     }
 
                     {
-                        JFXPasswordField txtProxyPassword = new JFXPasswordField();
+                        M3PasswordField txtProxyPassword = FXUtils.newPasswordField();
                         GridPane.setRowIndex(txtProxyPassword, 1);
                         GridPane.setColumnIndex(txtProxyPassword, 1);
                         authPane.getChildren().add(txtProxyPassword);

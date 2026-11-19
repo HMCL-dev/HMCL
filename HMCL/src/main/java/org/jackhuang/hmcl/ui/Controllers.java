@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -22,6 +21,7 @@ import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3Dialog;
 import org.glavo.m3fx.controls.M3DialogPane;
+import org.glavo.m3fx.controls.M3TextInputValidator;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -662,7 +662,7 @@ public final class Controllers {
             decorator.showDialogLater(dialog);
     }
 
-    /// Shows a text prompt using [#prompt(String, FutureCallback, String, ValidatorBase...)] with empty input and no validators.
+    /// Shows a text prompt using [#prompt(String, FutureCallback, String, M3TextInputValidator...)] with empty input and no validators.
     public static CompletableFuture<String> prompt(@Nullable String title, FutureCallback<String> onResult) {
         return prompt(title, onResult, "");
     }
@@ -678,7 +678,7 @@ public final class Controllers {
     /// @param onResult the callback that accepts or rejects the entered text
     /// @param initialValue the initial text, or null for an empty field
     /// @param validators the input validators, or a null or empty array for none
-    public static CompletableFuture<String> prompt(@Nullable String title, FutureCallback<String> onResult, @Nullable String initialValue, ValidatorBase @Nullable ... validators) {
+    public static CompletableFuture<String> prompt(@Nullable String title, FutureCallback<String> onResult, @Nullable String initialValue, M3TextInputValidator @Nullable ... validators) {
         InputDialog dialog = new InputDialog(title, initialValue, onResult, validators);
         dialog(dialog);
         return dialog.getCompletableFuture();

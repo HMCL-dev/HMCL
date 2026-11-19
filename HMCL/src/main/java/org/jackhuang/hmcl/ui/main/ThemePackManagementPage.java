@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -33,6 +32,7 @@ import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.*;
@@ -497,7 +497,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
 
         /// Search input.
-        private final JFXTextField searchField = new JFXTextField();
+        private final M3TextField searchField = FXUtils.newTextField();
 
         /// List of installed theme packs.
         private final JFXListView<ThemePackManager.InstalledThemePack> listView = new JFXListView<>();

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
@@ -11,6 +10,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputLayout;
 import org.jackhuang.hmcl.download.java.JavaRemoteVersion;
 import org.jackhuang.hmcl.download.java.disco.DiscoJavaDistribution;
 import org.jackhuang.hmcl.download.java.disco.DiscoJavaRemoteVersion;
@@ -82,7 +83,9 @@ public final class JavaInstallPage extends WizardSinglePage {
 
         private final ComponentList componentList = new ComponentList();
 
-        private final JFXTextField nameField;
+        private final M3TextField nameField;
+        /// Rechecks the chosen name when another installation is discovered.
+        private final M3TextInputLayout nameLayout;
 
         private final Set<String> usedNames = new HashSet<>();
 
@@ -99,11 +102,9 @@ public final class JavaInstallPage extends WizardSinglePage {
                 {
                     namePane.setTitle(i18n("java.install.name"));
 
-                    nameField = new JFXTextField();
+                    nameField = FXUtils.newTextField();
                     nameField.textProperty().bindBidirectional(control.nameProperty);
-                    FXUtils.setLimitWidth(nameField, 200);
-                    namePane.setRight(nameField);
-                    nameField.setValidators(
+                    nameLayout = FXUtils.newValidatedTextField(nameField,
                             new RequiredValidator(),
                             new Validator(i18n("java.install.warning.invalid_character"),
                                     text -> !text.startsWith(HMCLJavaRepository.MOJANG_JAVA_PREFIX) && NAME_PATTERN.matcher(text).matches()),
@@ -113,8 +114,9 @@ public final class JavaInstallPage extends WizardSinglePage {
                     if (JavaManager.REPOSITORY.isInstalled(control.info.getPlatform(), defaultName)) {
                         usedNames.add(defaultName);
                     }
-                    nameField.textProperty().addListener(o -> nameField.validate());
-                    nameField.validate();
+                    FXUtils.setLimitWidth(nameLayout, 200);
+                    namePane.setRight(nameLayout);
+                    nameLayout.validate();
 
                     componentList.getContent().add(namePane);
                 }
@@ -141,11 +143,11 @@ public final class JavaInstallPage extends WizardSinglePage {
                         if (JavaManager.REPOSITORY.isInstalled(control.info.getPlatform(), name)) {
                             Controllers.dialog(i18n("java.install.failed.exists"), null, MessageType.WARNING);
                             usedNames.add(name);
-                            nameField.validate();
+                            nameLayout.validate();
                         } else
                             control.onFinish.run();
                     });
-                    installButton.disableProperty().bind(nameField.activeValidatorProperty().isNotNull());
+                    installButton.disableProperty().bind(nameField.errorProperty());
                     installPane.setRight(installButton);
 
                     componentList.getContent().add(installPane);

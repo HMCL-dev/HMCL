@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
@@ -23,6 +22,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.AddonProjectInfo;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
@@ -300,7 +300,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                     rowIndex++;
                 }
 
-                JFXTextField nameField = new JFXTextField();
+                M3TextField nameField = FXUtils.newTextField();
                 nameField.setPromptText(getSkinnable().supportChinese.get() ? i18n("search.hint.chinese") : i18n("search.hint.english"));
                 if (getSkinnable().supportChinese.get()) {
                     FXUtils.installFastTooltip(nameField, i18n("search.hint.chinese"));

@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
-import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -25,6 +24,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -184,7 +184,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             /// Whether the search mechanism is currently active.
             private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
 
-            private final JFXTextField searchField;
+            private final M3TextField searchField;
 
             /// Creates the instance list with search controls and viewport-constrained rows.
             public GameListSkin(GameList skinnable) {
@@ -207,7 +207,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
                     searchBar.setAlignment(Pos.CENTER);
                     searchBar.setPadding(new Insets(0, 5, 0, 5));
-                    searchField = new JFXTextField();
+                    searchField = FXUtils.newTextField();
                     searchField.setPromptText(i18n("search"));
                     HBox.setHgrow(searchField, Priority.ALWAYS);
                     PauseTransition pause = new PauseTransition(Duration.millis(100));

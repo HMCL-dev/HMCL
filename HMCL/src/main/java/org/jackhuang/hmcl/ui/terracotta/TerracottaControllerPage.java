@@ -459,7 +459,6 @@ public class TerracottaControllerPage extends StackPane {
         group.setLeading(icon);
 
         M3ListPane links = new M3ListPane();
-        links.setPadding(new Insets(0, 0, 0, 48));
         for (TerracottaMetadata.Link link : TerracottaMetadata.PACKAGE_LINKS) {
             M3ListItem item = new M3ListItem(link.description().getText(I18n.getLocale().getCandidateLocales()));
             item.setTrailing(SVG.OPEN_IN_NEW.createIcon());

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
@@ -11,6 +10,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LineFileChooserButton;
@@ -43,7 +43,7 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
 
         var worldNamePane = new LinePane();
         worldNamePane.setTitle(i18n("world.name"));
-        JFXTextField txtWorldName = new JFXTextField();
+        M3TextField txtWorldName = FXUtils.newTextField();
         txtWorldName.textProperty().bindBidirectional(skinnable.worldNameProperty());
         txtWorldName.setPrefWidth(300);
         worldNamePane.setRight(txtWorldName);

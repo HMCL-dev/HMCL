@@ -31,6 +31,7 @@ import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3Switch;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -346,7 +347,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         /// Whether the search mechanism is currently active.
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
 
-        private final JFXTextField searchField;
+        private final M3TextField searchField;
 
         /// Timer for debouncing search input to avoid executing search on every keystroke.
         private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
@@ -374,7 +375,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 // Search Bar
                 searchBar.setAlignment(Pos.CENTER);
                 searchBar.setPadding(new Insets(0, 5, 0, 5));
-                searchField = new JFXTextField();
+                searchField = FXUtils.newTextField();
                 searchField.setPromptText(i18n("search"));
                 HBox.setHgrow(searchField, Priority.ALWAYS);
                 searchPause.setOnFinished(e -> search());

@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXTextField;
-import com.jfoenix.validation.base.ValidatorBase;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.scene.control.Label;
@@ -13,6 +11,8 @@ import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3Dialog;
 import org.glavo.m3fx.controls.M3DialogEvent;
 import org.glavo.m3fx.controls.M3DialogHandle;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputValidator;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -29,7 +29,7 @@ public final class InputDialog extends M3Dialog {
     private final CompletableFuture<String> future = new CompletableFuture<>();
 
     /// The editable text and its existing launcher validators.
-    private final JFXTextField textField;
+    private final M3TextField textField;
 
     /// A wrapping submission error displayed below the field.
     private final Label warningLabel = new Label();
@@ -46,25 +46,23 @@ public final class InputDialog extends M3Dialog {
     /// Creates a prompt on the FX thread; null text values are empty and null validators mean none.
     /// Callback results may arrive on any thread. Rejection keeps the dialog open for another attempt.
     public InputDialog(@Nullable String title, @Nullable String initialValue, FutureCallback<String> onResult,
-                       ValidatorBase @Nullable ... validators) {
+                       M3TextInputValidator @Nullable ... validators) {
         setDismissOnScrimClick(false);
         getDialogPane().setHeadline(title == null ? "" : title);
-        textField = new JFXTextField(initialValue == null ? "" : initialValue);
-        if (validators != null && validators.length > 0) {
-            textField.getValidators().addAll(validators);
-            FXUtils.setValidateWhileTextChanged(textField, true);
-        }
+        textField = FXUtils.newTextField();
+        textField.setText(initialValue == null ? "" : initialValue);
+        var input = validators == null || validators.length == 0 ? textField : FXUtils.newValidatedTextField(textField, validators);
 
         warningLabel.setWrapText(true);
         warningLabel.setMinWidth(0);
         warningLabel.getStyleClass().add("input-dialog-error");
         warningLabel.visibleProperty().bind(warningLabel.textProperty().isNotEmpty());
         warningLabel.managedProperty().bind(warningLabel.visibleProperty());
-        getDialogPane().setContent(new VBox(12, textField, warningLabel));
+        getDialogPane().setContent(new VBox(12, input, warningLabel));
 
         submitting = FXUtils.newButtonLoadingProperty(acceptButton);
         acceptButton.setDefaultButton(true);
-        acceptButton.disableProperty().bind(submitting.or(textField.activeValidatorProperty().isNotNull()));
+        acceptButton.disableProperty().bind(submitting.or(textField.errorProperty()));
         acceptButton.setOnAction(event -> {
             // Native actions close by default; acceptance must wait for the callback instead.
             event.consume();

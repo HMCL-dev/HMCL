@@ -18,7 +18,6 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstallersPage extends AbstractInstallersPage {
@@ -28,11 +27,11 @@ public class InstallersPage extends AbstractInstallersPage {
     public InstallersPage(WizardController controller, HMCLGameRepository repository, GameVersionNumber gameVersion, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
 
-        txtName.getValidators().addAll(
+        nameLayout.getValidators().addAll(
                 new RequiredValidator(),
                 new Validator(i18n("install.new_game.already_exists"), str -> !repository.instanceIdConflicts(str)),
                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
-        installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
+        installable.bind(txtName.errorProperty().not());
 
         txtName.textProperty().addListener((obs, oldText, newText) -> isNameModifiedByUser = true);
     }

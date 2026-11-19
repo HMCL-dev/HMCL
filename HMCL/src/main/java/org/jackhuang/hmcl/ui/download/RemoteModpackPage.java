@@ -48,7 +48,7 @@ public final class RemoteModpackPage extends ModpackPage {
             txtModpackName.setDisable(true);
         } else {
             txtModpackName.setText(LocalModpackPage.processModpackName(manifest.getName()));
-            txtModpackName.getValidators().addAll(
+            nameLayout.getValidators().addAll(
                     new RequiredValidator(),
                     new Validator(i18n("install.new_game.already_exists"), str -> !repository.instanceIdConflicts(str)),
                     new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
@@ -63,7 +63,7 @@ public final class RemoteModpackPage extends ModpackPage {
     }
 
     protected void onInstall() {
-        if (!txtModpackName.validate()) return;
+        if (!nameLayout.validate()) return;
         controller.getSettings().put(MODPACK_NAME, txtModpackName.getText());
         controller.onFinish();
     }

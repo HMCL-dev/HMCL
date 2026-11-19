@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -13,9 +12,11 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.nbt.tag.*;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.game.World;
@@ -83,8 +84,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var worldNamePane = new LinePane();
             {
                 worldNamePane.setTitle(i18n("world.name"));
-                JFXTextField worldNameField = new JFXTextField();
-                setRightTextField(worldNamePane, worldNameField, 200);
+                M3TextField worldNameField = FXUtils.newTextField();
+                worldNameField.setDisable(isReadOnly);
+                worldNameField.setPrefWidth(200);
+                worldNamePane.setRight(worldNameField);
 
                 if (dataTag.get("LevelName") instanceof StringTag worldNameTag) {
                     var worldName = new SimpleStringProperty(worldNameTag.get());
@@ -385,25 +388,25 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var healthPane = new LinePane();
             {
                 healthPane.setTitle(i18n("world.info.player.health"));
-                setRightTextField(healthPane, 50, playerTag.get("Health"));
+                setNumericField(healthPane, playerTag.get("Health"));
             }
 
             var foodLevelPane = new LinePane();
             {
                 foodLevelPane.setTitle(i18n("world.info.player.food_level"));
-                setRightTextField(foodLevelPane, 50, playerTag.get("foodLevel"));
+                setNumericField(foodLevelPane, playerTag.get("foodLevel"));
             }
 
             var foodSaturationPane = new LinePane();
             {
                 foodSaturationPane.setTitle(i18n("world.info.player.food_saturation_level"));
-                setRightTextField(foodSaturationPane, 50, playerTag.get("foodSaturationLevel"));
+                setNumericField(foodSaturationPane, playerTag.get("foodSaturationLevel"));
             }
 
             var xpLevelPane = new LinePane();
             {
                 xpLevelPane.setTitle(i18n("world.info.player.xp_level"));
-                setRightTextField(xpLevelPane, 50, playerTag.get("XpLevel"));
+                setNumericField(xpLevelPane, playerTag.get("XpLevel"));
             }
 
             playerInfo.getContent().setAll(
@@ -415,22 +418,23 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         }
     }
 
-    private void setRightTextField(LinePane linePane, int perfWidth, Tag tag) {
-        JFXTextField textField = new JFXTextField();
-        setRightTextField(linePane, textField, perfWidth);
+    /// Displays a numeric tag editor, disabled when the tag is absent or unsupported.
+    private void setNumericField(LinePane linePane, @Nullable Tag tag) {
+        M3TextField textField = FXUtils.newTextField();
+        textField.setDisable(isReadOnly);
+        Region editor;
         if (tag instanceof IntTag intTag) {
+            editor = FXUtils.newValidatedTextField(textField, new NumberValidator(true));
             bindTagAndTextField(intTag, textField);
         } else if (tag instanceof FloatTag floatTag) {
+            editor = FXUtils.newValidatedTextField(textField, new DoubleValidator(true));
             bindTagAndTextField(floatTag, textField);
         } else {
             textField.setDisable(true);
+            editor = textField;
         }
-    }
-
-    private void setRightTextField(LinePane linePane, JFXTextField textField, int perfWidth) {
-        textField.setDisable(isReadOnly);
-        textField.setPrefWidth(perfWidth);
-        linePane.setRight(textField);
+        editor.setPrefWidth(80);
+        linePane.setRight(editor);
     }
 
     /// Saves boolean byte-tag edits through the switch, disabling it for missing or invalid tags.
@@ -456,10 +460,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         }
     }
 
-    private void bindTagAndTextField(IntTag intTag, JFXTextField jfxTextField) {
-        jfxTextField.setText(intTag.getValue().toString());
+    private void bindTagAndTextField(IntTag intTag, M3TextField textField) {
+        textField.setText(intTag.getValue().toString());
 
-        jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
+        textField.textProperty().addListener((o, oldValue, newValue) -> {
             if (newValue != null) {
                 try {
                     Integer integer = Lang.toIntOrNull(newValue);
@@ -468,19 +472,17 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         saveWorldData();
                     }
                 } catch (Exception e) {
-                    jfxTextField.setText(oldValue);
+                    textField.setText(oldValue);
                     LOG.warning("Exception happened when saving world data", e);
                 }
             }
         });
-        FXUtils.setValidateWhileTextChanged(jfxTextField, true);
-        jfxTextField.setValidators(new NumberValidator(i18n("input.number"), true));
     }
 
-    private void bindTagAndTextField(FloatTag floatTag, JFXTextField jfxTextField) {
-        jfxTextField.setText(new DecimalFormat("0.#").format(floatTag.getValue()));
+    private void bindTagAndTextField(FloatTag floatTag, M3TextField textField) {
+        textField.setText(new DecimalFormat("0.#").format(floatTag.getValue()));
 
-        jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
+        textField.textProperty().addListener((o, oldValue, newValue) -> {
             if (newValue != null) {
                 try {
                     Float floatValue = Lang.toFloatOrNull(newValue);
@@ -489,13 +491,11 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         saveWorldData();
                     }
                 } catch (Exception e) {
-                    jfxTextField.setText(oldValue);
+                    textField.setText(oldValue);
                     LOG.warning("Exception happened when saving world data", e);
                 }
             }
         });
-        FXUtils.setValidateWhileTextChanged(jfxTextField, true);
-        jfxTextField.setValidators(new DoubleValidator(i18n("input.number"), true));
     }
 
     private void saveWorldData() {

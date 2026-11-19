@@ -4,8 +4,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXColorPicker;
 import com.jfoenix.controls.JFXRadioButton;
-import com.jfoenix.controls.JFXTextField;
-import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,6 +17,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputLayout;
+import org.glavo.m3fx.controls.M3TextInputValidator;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -176,13 +177,15 @@ public final class MultiFileItem<T> extends VBox {
     }
 
     public static final class StringOption<T> extends Option<T> {
-        private final JFXTextField customField = new JFXTextField();
+        private final M3TextField customField = FXUtils.newTextField();
+        /// Presents validation errors for the editable choice.
+        private final M3TextInputLayout inputLayout = FXUtils.newValidatedTextField(customField);
 
         public StringOption(String title, T data) {
             super(title, data);
         }
 
-        public JFXTextField getCustomField() {
+        public M3TextField getCustomField() {
             return customField;
         }
 
@@ -203,8 +206,8 @@ public final class MultiFileItem<T> extends VBox {
             return this;
         }
 
-        public StringOption<T> setValidators(ValidatorBase... validators) {
-            customField.setValidators(validators);
+        public StringOption<T> setValidators(M3TextInputValidator... validators) {
+            inputLayout.getValidators().addAll(validators);
             return this;
         }
 
@@ -212,7 +215,7 @@ public final class MultiFileItem<T> extends VBox {
         protected Node createItem(ToggleGroup group) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(3));
-            FXUtils.setLimitHeight(pane, 30);
+            pane.setMinHeight(30);
 
             left.setText(title);
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
@@ -220,14 +223,11 @@ public final class MultiFileItem<T> extends VBox {
             left.setUserData(data);
             pane.setLeft(left);
 
-            BorderPane.setAlignment(customField, Pos.CENTER_RIGHT);
+            BorderPane.setAlignment(inputLayout, Pos.CENTER_RIGHT);
             customField.disableProperty().bind(left.selectedProperty().not());
 
-            if (!customField.getValidators().isEmpty()) {
-                FXUtils.setValidateWhileTextChanged(customField, true);
-            }
 
-            pane.setRight(customField);
+            pane.setRight(inputLayout);
 
             return pane;
         }
@@ -276,7 +276,7 @@ public final class MultiFileItem<T> extends VBox {
         protected Node createItem(ToggleGroup group) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(3));
-            FXUtils.setLimitHeight(pane, 30);
+            pane.setMinHeight(30);
 
             left.setText(title);
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);

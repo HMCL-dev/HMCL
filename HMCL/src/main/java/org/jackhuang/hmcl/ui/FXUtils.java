@@ -44,7 +44,11 @@ import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3PasswordField;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputLayout;
+import org.glavo.m3fx.controls.M3TextInputValidator;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.StyleSheets;
@@ -338,23 +342,26 @@ public final class FXUtils {
         });
     }
 
-    public static void setValidateWhileTextChanged(Node field, boolean validate) {
-        if (field instanceof JFXTextField) {
-            if (validate) {
-                addListener(field, "FXUtils.validation", ((JFXTextField) field).textProperty(), o -> ((JFXTextField) field).validate());
-            } else {
-                removeListener(field, "FXUtils.validation");
-            }
-            ((JFXTextField) field).validate();
-        } else if (field instanceof JFXPasswordField) {
-            if (validate) {
-                addListener(field, "FXUtils.validation", ((JFXPasswordField) field).textProperty(), o -> ((JFXPasswordField) field).validate());
-            } else {
-                removeListener(field, "FXUtils.validation");
-            }
-            ((JFXPasswordField) field).validate();
-        } else
-            throw new IllegalArgumentException("Only JFXTextField and JFXPasswordField allowed");
+    /// Creates a Material text field with the launcher's localized editing menu.
+    public static M3TextField newTextField() {
+        M3TextField field = new M3TextField();
+        useJFXContextMenu(field);
+        return field;
+    }
+
+    /// Creates a masked password field with the launcher's localized editing menu.
+    public static M3PasswordField newPasswordField() {
+        M3PasswordField field = new M3PasswordField();
+        useJFXContextMenu(field);
+        return field;
+    }
+
+    /// Displays validation errors below the field, including for its initial value.
+    public static M3TextInputLayout newValidatedTextField(TextField field, M3TextInputValidator... validators) {
+        M3TextInputLayout layout = new M3TextInputLayout(field);
+        layout.getValidators().addAll(validators);
+        layout.validate();
+        return layout;
     }
 
     public static Rectangle setOverflowHidden(Region region) {
@@ -623,7 +630,7 @@ public final class FXUtils {
         });
     }
 
-    public static <T> void bind(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
+    public static <T> void bind(M3TextField textField, Property<T> property, @Nullable StringConverter<T> converter) {
         TextFieldBinding<T> binding = new TextFieldBinding<>(textField, property, converter);
         binding.updateTextField();
         textField.getProperties().put("FXUtils.bind.binding", binding);
@@ -632,15 +639,15 @@ public final class FXUtils {
         property.addListener(binding.propertyListener);
     }
 
-    public static void bindInt(JFXTextField textField, Property<Number> property) {
+    public static void bindInt(M3TextField textField, Property<Number> property) {
         bind(textField, property, SafeStringConverter.fromInteger());
     }
 
-    public static void bindString(JFXTextField textField, Property<String> property) {
+    public static void bindString(M3TextField textField, Property<String> property) {
         bind(textField, property, null);
     }
 
-    public static void unbind(JFXTextField textField, Property<?> property) {
+    public static void unbind(M3TextField textField, Property<?> property) {
         TextFieldBinding<?> binding = (TextFieldBinding<?>) textField.getProperties().remove("FXUtils.bind.binding");
         if (binding != null) {
             textField.focusedProperty().removeListener(binding.focusedListener);
@@ -650,22 +657,22 @@ public final class FXUtils {
     }
 
     private static final class TextFieldBinding<T> {
-        private final JFXTextField textField;
+        private final M3TextField textField;
         private final Property<T> property;
-        private final StringConverter<T> converter;
+        private final @Nullable StringConverter<T> converter;
 
         public final ChangeListener<Boolean> focusedListener;
         public final ChangeListener<Scene> sceneListener;
         public final InvalidationListener propertyListener;
 
-        public TextFieldBinding(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
+        public TextFieldBinding(M3TextField textField, Property<T> property, @Nullable StringConverter<T> converter) {
             this.textField = textField;
             this.property = property;
             this.converter = converter;
 
             focusedListener = (observable, oldFocused, newFocused) -> {
                 if (oldFocused && !newFocused) {
-                    if (textField.validate()) {
+                    if (!textField.isError()) {
                         updateProperty();
                     } else {
                         // Rollback to old value
@@ -677,7 +684,7 @@ public final class FXUtils {
             sceneListener = (observable, oldScene, newScene) -> {
                 if (oldScene != null && newScene == null) {
                     // Component is being removed from scene
-                    if (textField.validate()) {
+                    if (!textField.isError()) {
                         updateProperty();
                     }
                 }
