@@ -6,7 +6,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.game.GameInstance;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -126,8 +127,8 @@ public class PathChooser {
         ChooserContext IMPORT_IMAGE = new PersistentContext("import_image");
         ChooserContext EXPORT = new PersistentContext("export");
 
-        static ChooserContext GAME(Supplier<@Nullable HMCLGameInstance> supplier) {
-            return new ObjectContext<>(supplier, HMCLGameInstance::getRunDirectory);
+        static ChooserContext GAME(Supplier<@Nullable GameInstance> supplier) {
+            return new ObjectContext<>(supplier, GameInstance::getRunDirectory);
         }
 
         Path getDir();
@@ -135,11 +136,15 @@ public class PathChooser {
         default void postOpen(@Nullable Path path, boolean isDir) {
         }
 
+        static Path getDefaultDir() {
+            return GameDirectoryManager.getSelectedGameDirectory().getPath().toPath();
+        }
+
         record PersistentContext(String name) implements ChooserContext {
             @Override
             public Path getDir() {
                 String path = SettingsManager.userSettings().getRecentFileChooserPaths().get(name);
-                return getExistingPath(path).orElse(Path.of("."));
+                return getExistingPath(path).orElseGet(ChooserContext::getDefaultDir);
             }
 
             @Override
@@ -158,7 +163,7 @@ public class PathChooser {
                         .map(func)
                         .map(Object::toString)
                         .flatMap(PathChooser::getExistingPath)
-                        .orElseGet(DEFAULT::getDir);
+                        .orElseGet(ChooserContext::getDefaultDir);
             }
         }
     }
