@@ -9,7 +9,6 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakInvalidationListener;
-import javafx.beans.WeakListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
@@ -35,7 +34,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -90,7 +88,6 @@ import java.io.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -746,100 +743,6 @@ public final class FXUtils {
             T value = property.getValue();
             textField.setText(converter == null ? (String) value : converter.toString(value));
         }
-    }
-
-    private static final class PaintBidirectionalBinding implements InvalidationListener, WeakListener {
-        private final WeakReference<ColorPicker> colorPickerRef;
-        private final WeakReference<Property<Paint>> propertyRef;
-        private final int hashCode;
-
-        private boolean updating = false;
-
-        private PaintBidirectionalBinding(ColorPicker colorPicker, Property<Paint> property) {
-            this.colorPickerRef = new WeakReference<>(colorPicker);
-            this.propertyRef = new WeakReference<>(property);
-            this.hashCode = System.identityHashCode(colorPicker) ^ System.identityHashCode(property);
-        }
-
-        @Override
-        public void invalidated(Observable sourceProperty) {
-            if (!updating) {
-                final ColorPicker colorPicker = colorPickerRef.get();
-                final Property<Paint> property = propertyRef.get();
-
-                if (colorPicker == null || property == null) {
-                    if (colorPicker != null) {
-                        colorPicker.valueProperty().removeListener(this);
-                    }
-
-                    if (property != null) {
-                        property.removeListener(this);
-                    }
-                } else {
-                    updating = true;
-                    try {
-                        if (property == sourceProperty) {
-                            Paint newValue = property.getValue();
-                            if (newValue instanceof Color)
-                                colorPicker.setValue((Color) newValue);
-                            else
-                                colorPicker.setValue(null);
-                        } else {
-                            Paint newValue = colorPicker.getValue();
-                            property.setValue(newValue);
-                        }
-                    } finally {
-                        updating = false;
-                    }
-                }
-            }
-        }
-
-        @Override
-        public boolean wasGarbageCollected() {
-            return colorPickerRef.get() == null || propertyRef.get() == null;
-        }
-
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (!(o instanceof FXUtils.PaintBidirectionalBinding))
-                return false;
-
-            var that = (FXUtils.PaintBidirectionalBinding) o;
-
-            final ColorPicker colorPicker = this.colorPickerRef.get();
-            final Property<Paint> property = this.propertyRef.get();
-
-            final ColorPicker thatColorPicker = that.colorPickerRef.get();
-            final Property<?> thatProperty = that.propertyRef.get();
-
-            if (colorPicker == null || property == null || thatColorPicker == null || thatProperty == null)
-                return false;
-
-            return colorPicker == thatColorPicker && property == thatProperty;
-        }
-    }
-
-    public static void bindPaint(ColorPicker colorPicker, Property<Paint> property) {
-        PaintBidirectionalBinding binding = new PaintBidirectionalBinding(colorPicker, property);
-
-        colorPicker.valueProperty().removeListener(binding);
-        property.removeListener(binding);
-
-        if (property.getValue() instanceof Color)
-            colorPicker.setValue((Color) property.getValue());
-        else
-            colorPicker.setValue(null);
-
-        colorPicker.valueProperty().addListener(binding);
-        property.addListener(binding);
     }
 
     public static List<Subscription> bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {

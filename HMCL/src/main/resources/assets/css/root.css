@@ -1237,59 +1237,6 @@
 }
 
 /*******************************************************************************
-*                                                                              *
-* JFX Color Picker                                                             *
-*                                                                              *
-*******************************************************************************/
-
-.jfx-color-picker:armed,
-.jfx-color-picker:hover,
-.jfx-color-picker:focused,
-.jfx-color-picker {
-    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
-    -fx-background-radius: 3px;
-    -fx-background-insets: 0px;
-    -fx-min-height: 36px;
-}
-
-.color-palette-region {
-}
-
-.color-palette-region .m3-button {
-    -m3-content-color: -monet-on-surface;
-}
-
-.color-palette {
-    -fx-background-color: -monet-surface;
-}
-
-.custom-color-dialog .jfx-tab-pane {
-    -fx-background-color: -monet-surface;
-}
-
-.custom-color-dialog .custom-color-field {
-    -fx-max-width: 300;
-}
-
-.custom-color-dialog .tab .tab-label {
-    -fx-text-fill: -monet-on-surface;
-}
-
-.custom-color-dialog .tab .jfx-rippler {
-    -jfx-rippler-fill: -monet-on-surface;
-}
-
-.custom-color-dialog .tab-selected-line {
-    -fx-background-color: -monet-on-surface;
-}
-
-.custom-color-dialog .jfx-color-dialog-actions {
-    -fx-background-color: -monet-surface;
-    -fx-padding: 0.0 10.0 5.0 0.0;
-    -fx-alignment: center-right;
-}
-
-/*******************************************************************************
  *                                                                             *
  * Table View                                                                  *
  *                                                                             *

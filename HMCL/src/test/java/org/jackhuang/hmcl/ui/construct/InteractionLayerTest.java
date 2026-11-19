@@ -20,8 +20,14 @@ import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ColorField;
+import org.glavo.m3fx.controls.M3ColorPicker;
+import org.glavo.m3fx.controls.M3ColorSwatch;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3OverlayPane;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
+import org.glavo.m3fx.controls.M3RgbColor;
 import org.glavo.m3fx.controls.M3Slider;
 import org.glavo.m3fx.theme.M3Theme;
 import org.glavo.m3fx.theme.M3ThemeManager;
@@ -54,6 +60,71 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 @Isolated("Temporarily supplies settings while initializing the cached animation policy")
 public final class InteractionLayerTest {
+
+    /// Dismissing the editor discards its draft, and confirmation applies the setting's alpha policy once.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void colorDialogCommitsOnlyOnConfirmation(boolean allowAlpha) throws Exception {
+        onFxThread(() -> {
+            var choice = new ColorPickerButton("Color", allowAlpha, List.of(Color.RED));
+            var button = assertInstanceOf(M3Button.class, choice.getChildren().getFirst());
+            var swatch = assertInstanceOf(M3ColorSwatch.class, button.getGraphic());
+            var host = new M3OverlayPane();
+            host.setAnimationsEnabled(false);
+            var stage = new Stage();
+            try {
+                var scene = new Scene(host, 800, 600);
+                M3ThemeManager.install(scene, M3Theme.defaultTheme());
+                stage.setScene(scene);
+                stage.show();
+                var changes = new AtomicInteger();
+                choice.valueProperty().addListener((obs, old, next) -> changes.incrementAndGet());
+                var cancelled = choice.createDialog();
+                cancelled.getDialogPane().setAnimationsEnabled(false);
+                var handle = host.showDialog(cancelled);
+                host.applyCss();
+                host.layout();
+                var picker = assertInstanceOf(M3ColorPicker.class, cancelled.getDialogPane().getContent());
+                assertEquals(allowAlpha, picker.isShowAlpha());
+                assertEquals(List.of(new M3RgbColor(Color.RED)), picker.getPresets());
+                picker.setValue(new M3RgbColor(Color.RED));
+                assertNull(swatch.getColor());
+                cancelled.getDialogPane().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE,
+                        false, false, false, false));
+                assertFalse(handle.isShowing());
+                assertNull(choice.getValue());
+                assertEquals(0, changes.get());
+
+                choice.setValue(Color.BLUE);
+                var dialog = choice.createDialog();
+                dialog.getDialogPane().setAnimationsEnabled(false);
+                handle = host.showDialog(dialog);
+                host.applyCss();
+                host.layout();
+                picker = assertInstanceOf(M3ColorPicker.class, dialog.getDialogPane().getContent());
+                assertEquals(Color.BLUE, picker.getValue().toFxColor());
+                var field = assertInstanceOf(M3ColorField.class, picker.lookup(".m3-color-field"));
+                var ok = dialog.getDialogPane().getActions().getLast();
+                field.setText("#XYZ");
+                ok.fire();
+                assertTrue(field.isInvalid());
+                assertTrue(handle.isShowing());
+                assertEquals(Color.BLUE, choice.getValue());
+
+                field.setText("#33669980");
+                assertEquals(1, changes.get());
+                ok.fire();
+                String hex = allowAlpha ? "#33669980" : "#336699";
+                assertEquals(Color.web(hex), choice.getValue());
+                assertEquals(hex, button.getText());
+                assertEquals(choice.getValue(), Objects.requireNonNull(swatch.getColor()).toFxColor());
+                assertEquals(2, changes.get());
+                assertFalse(handle.isShowing());
+            } finally {
+                stage.close();
+            }
+        });
+    }
 
     /// Settings row labels must retain the slider indicator's inverse theme colors.
     @ParameterizedTest

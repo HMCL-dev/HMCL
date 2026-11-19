@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.*;
-import com.jfoenix.effects.JFXDepthManager;
-import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -33,6 +30,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.ScrollUtils;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.util.Holder;
@@ -51,6 +49,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -451,9 +450,8 @@ public class PersonalizationPage extends StackPane {
                 return ThemeColorType.DEFAULT;
             };
 
-            ColorPicker picker = new JFXColorPicker();
-            picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
-            Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
+            var picker = new ColorPickerButton(i18n("settings.launcher.theme_color"), false,
+                    ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
 
             var defaultColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
                     i18n("settings.launcher.theme_color_type.default"),
@@ -1282,7 +1280,9 @@ public class PersonalizationPage extends StackPane {
     /// Choice with a right-side paint picker.
     private static final class PaintChoice extends RadioChoiceList.Choice<BackgroundType> {
         /// The paint picker owned by this option.
-        private final ColorPicker colorPicker = new JFXColorPicker();
+        private final ColorPickerButton colorPicker;
+        /// Retains the fallback setting listener for the lifetime of the choice.
+        private final WeakListenerHolder listeners = new WeakListenerHolder();
 
         /// Creates a paint choice.
         ///
@@ -1290,6 +1290,7 @@ public class PersonalizationPage extends StackPane {
         /// @param value    the selected background type
         private PaintChoice(String title, BackgroundType value) {
             super(title, value);
+            colorPicker = new ColorPickerButton(title, true, List.of());
         }
 
         /// Creates a paint choice bound directly to a setting property.
@@ -1297,9 +1298,13 @@ public class PersonalizationPage extends StackPane {
         /// @param title    the choice title
         /// @param value    the selected background type
         /// @param property the paint property edited by this choice
-        private PaintChoice(String title, BackgroundType value, Property<Paint> property) {
+        private PaintChoice(String title, BackgroundType value, Property<@Nullable Paint> property) {
             this(title, value);
-            FXUtils.bindPaint(colorPicker, property);
+            listeners.onWeakChangeAndOperate(property, this::setPaint);
+            colorPicker.valueProperty().addListener((obs, old, color) -> {
+                if (color != null && !color.equals(property.getValue()))
+                    property.setValue(color);
+            });
         }
 
         /// Returns the displayed paint.
@@ -1313,7 +1318,7 @@ public class PersonalizationPage extends StackPane {
         }
 
         /// Returns the displayed color property.
-        private Property<Color> colorProperty() {
+        private Property<@Nullable Color> colorProperty() {
             return colorPicker.valueProperty();
         }
 
