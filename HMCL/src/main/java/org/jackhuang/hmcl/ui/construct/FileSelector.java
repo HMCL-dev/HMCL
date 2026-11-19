@@ -26,7 +26,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 @NotNullByDefault
 public class FileSelector extends HBox {
-    private final PathChooser selector = new PathChooser();
+    private final PathChooser chooser = new PathChooser();
     private final JFXTextField pathField = new JFXTextField();
     private final JFXButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
     private final ReadOnlyObjectWrapper<@Nullable Path> path = new ReadOnlyObjectWrapper<>(this, "validPath", null);
@@ -40,18 +40,18 @@ public class FileSelector extends HBox {
         FXUtils.setValidateWhileTextChanged(pathField, true);
 
         selectButton.setOnAction(e -> {
-            selector.setInitialDirectory(getText());
+            chooser.setInitialDirectory(getText());
             switch (selectionMode) {
-                case OPEN_FILE -> postOpen(selector.showOpen());
-                case DIRECTORY -> postOpen(selector.showOpenDirectory());
-                case SAVE_FILE -> postOpen(selector.showSave());
+                case OPEN_FILE -> postOpen(chooser.showOpen());
+                case DIRECTORY -> postOpen(chooser.showOpenDirectory());
+                case SAVE_FILE -> postOpen(chooser.showSave());
                 case FILE_OR_DIRECTORY -> {
                     PopupMenu selectPopupMenu = new PopupMenu();
                     JFXPopup selectModePopup = new JFXPopup(selectPopupMenu);
 
                     selectPopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> postOpen(selector.showOpen()), selectModePopup),
-                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> postOpen(selector.showOpenDirectory()), selectModePopup)
+                            new IconedMenuItem(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> postOpen(chooser.showOpen()), selectModePopup),
+                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> postOpen(chooser.showOpenDirectory()), selectModePopup)
                     );
 
                     selectModePopup.show(selectButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -selectButton.getWidth(), 0);
@@ -90,8 +90,8 @@ public class FileSelector extends HBox {
         return pathField.textProperty();
     }
 
-    public PathChooser getSelector() {
-        return selector;
+    public PathChooser getChooser() {
+        return chooser;
     }
 
     public void setExistingValidationEnabled(boolean enable) {

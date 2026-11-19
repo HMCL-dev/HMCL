@@ -652,7 +652,7 @@ public class PersonalizationPage extends StackPane {
 
             RadioChoiceList.FileChoice<BackgroundType> customBackgroundOption =
                     new RadioChoiceList.FileChoice<>(i18n("settings.custom"), BackgroundType.CUSTOM, FileSelector.SelectionMode.FILE_OR_DIRECTORY);
-            customBackgroundOption.getSelector().getSelector()
+            customBackgroundOption.getSelector().getChooser()
                     .setTitle(i18n("launcher.background.choose"))
                     .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE)
                     .setExtensionFilters(PathChooser.getImageExtensionFilter());

@@ -112,7 +112,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                     gameDirectorySelectPane.setTitle(i18n("game_directory.instance_directory"));
                     {
                         gameDir = new FileSelector(FileSelector.SelectionMode.DIRECTORY);
-                        gameDir.getSelector().setTitle(i18n("game_directory.instance_directory.choose"));
+                        gameDir.getChooser().setTitle(i18n("game_directory.instance_directory.choose"));
                         gameDir.setText(Optional.ofNullable(gameDirectory).map(GameDirectory::getPath).map(PortablePath::toPath).map(FileUtils::getAbsolutePath).orElse(".minecraft"));
                         gameDir.setPrefWidth(400);
                         gameDir.setExistingValidationEnabled(false);

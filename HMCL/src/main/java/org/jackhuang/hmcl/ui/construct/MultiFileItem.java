@@ -259,12 +259,12 @@ public final class MultiFileItem<T> extends VBox {
         }
 
         public FileOption<T> setChooserTitle(String chooserTitle) {
-            selector.getSelector().setTitle(chooserTitle);
+            selector.getChooser().setTitle(chooserTitle);
             return this;
         }
 
         public FileOption<T> setExtensionFilters(FileChooser.ExtensionFilter... filter) {
-            selector.getSelector().setExtensionFilters(filter);
+            selector.getChooser().setExtensionFilters(filter);
             return this;
         }
 

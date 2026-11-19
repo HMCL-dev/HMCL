@@ -90,10 +90,10 @@ public class OfflineAccountSkinPane extends StackPane {
         pane.setRight(skinOptionPane);
 
         skinSelector.setMaxWidth(Double.MAX_VALUE);
-        skinSelector.getSelector().setExtensionFilters(PathChooser.getImageExtensionFilter())
+        skinSelector.getChooser().setExtensionFilters(PathChooser.getImageExtensionFilter())
                 .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE);
         capeSelector.setMaxWidth(Double.MAX_VALUE);
-        capeSelector.getSelector().setExtensionFilters(PathChooser.getImageExtensionFilter())
+        capeSelector.getChooser().setExtensionFilters(PathChooser.getImageExtensionFilter())
                 .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE);
         modelCombobox.setMaxWidth(Double.MAX_VALUE);
         cslApiField.setMaxWidth(Double.MAX_VALUE);

@@ -216,14 +216,14 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                         GameSettings::customJavaVersionProperty);
 
                 javaCustomSelector = new FileSelector(FileSelector.SelectionMode.OPEN_FILE);
-                javaCustomSelector.getSelector().setTitle(i18n("settings.game.java_directory.choose"));
+                javaCustomSelector.getChooser().setTitle(i18n("settings.game.java_directory.choose"));
                 javaCustomOption = createJavaPayloadChoice(
                         i18n("settings.custom"),
                         pair(JavaVersionType.CUSTOM, null),
                         javaCustomSelector,
                         GameSettings::customJavaPathProperty);
                 if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
-                    javaCustomSelector.getSelector().setExtensionFilters(new FileChooser.ExtensionFilter(i18n("settings.game.java_directory"), "java.exe"));
+                    javaCustomSelector.getChooser().setExtensionFilters(new FileChooser.ExtensionFilter(i18n("settings.game.java_directory"), "java.exe"));
 
                 holder.add(FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), allJava -> {
                     var options = new ArrayList<RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>>>();
@@ -576,7 +576,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 runningDirPane.setTitle(i18n("settings.game.running_directory"));
                 {
                     var runningDirSelector = new FileSelector(FileSelector.SelectionMode.DIRECTORY);
-                    runningDirSelector.getSelector().setTitle(i18n("settings.game.working_directory.choose"))
+                    runningDirSelector.getChooser().setTitle(i18n("settings.game.working_directory.choose"))
                             .setChooserContext(PathChooser.ChooserContext.GAME(gameInstance::get));
                     runningDirSelector.setPrefWidth(400);
                     runningDirPane.setRight(runningDirSelector);
@@ -820,7 +820,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             nativesDirPane.setTitle(i18n("settings.advanced.natives_directory"));
             {
                 var nativesDirSelector = new FileSelector(FileSelector.SelectionMode.DIRECTORY);
-                nativesDirSelector.getSelector().setChooserContext(PathChooser.ChooserContext.GAME(gameInstance::get));
+                nativesDirSelector.getChooser().setChooserContext(PathChooser.ChooserContext.GAME(gameInstance::get));
                 nativesDirSelector.setPrefWidth(400);
                 nativesDirPane.setRight(nativesDirSelector);
                 bindInheritableStringProperty(
