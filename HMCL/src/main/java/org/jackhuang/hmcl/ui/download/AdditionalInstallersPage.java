@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
@@ -45,7 +44,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
             });
         }
 
-        installable.bind(Bindings.createBooleanBinding(() -> txtName.validate(), txtName.textProperty()));
+        installable.bind(txtName.errorProperty().not());
     }
 
     @Override

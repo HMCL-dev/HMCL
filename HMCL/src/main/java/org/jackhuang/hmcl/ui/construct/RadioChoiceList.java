@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXRadioButton;
-import com.jfoenix.controls.JFXTextField;
-import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
@@ -20,6 +17,10 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3RadioButton;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputLayout;
+import org.glavo.m3fx.controls.M3TextInputValidator;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -203,7 +204,7 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         protected @Nullable String tooltip;
 
         /// The radio button used by this choice.
-        protected final JFXRadioButton radioButton = new JFXRadioButton();
+        protected final M3RadioButton radioButton = new M3RadioButton();
 
         /// Creates a choice.
         public Choice(String title, T value) {
@@ -261,7 +262,7 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         }
 
         /// Returns the radio button owned by this choice.
-        protected final JFXRadioButton getRadioButton() {
+        protected final M3RadioButton getRadioButton() {
             return radioButton;
         }
 
@@ -279,7 +280,7 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         private Node createNode(ToggleGroup group) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(3));
-            FXUtils.setLimitHeight(pane, 30);
+            pane.setMinHeight(30);
 
             configureRadioButton(group);
             BorderPane.setAlignment(radioButton, Pos.CENTER_LEFT);
@@ -326,7 +327,9 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
     /// @param <T> the selected value type
     public static final class TextChoice<T extends @UnknownNullability Object> extends Choice<T> {
         /// The text field attached to this choice.
-        private final JFXTextField textField = new JFXTextField();
+        private final M3TextField textField = FXUtils.newTextField();
+        /// Presents validation errors for the editable choice.
+        private final M3TextInputLayout inputLayout = FXUtils.newValidatedTextField(textField);
 
         /// Creates a text choice.
         public TextChoice(String title, T value) {
@@ -334,7 +337,7 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         }
 
         /// Returns the attached text field.
-        public JFXTextField getTextField() {
+        public M3TextField getTextField() {
             return textField;
         }
 
@@ -360,18 +363,15 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         }
 
         /// Sets validators on the text field.
-        public TextChoice<T> setValidators(ValidatorBase... validators) {
-            textField.setValidators(validators);
+        public TextChoice<T> setValidators(M3TextInputValidator... validators) {
+            inputLayout.getValidators().addAll(validators);
             return this;
         }
 
         /// Creates the right-side text field.
         @Override
         protected Node createRightNode() {
-            if (!textField.getValidators().isEmpty()) {
-                FXUtils.setValidateWhileTextChanged(textField, true);
-            }
-            return textField;
+            return inputLayout;
         }
     }
 

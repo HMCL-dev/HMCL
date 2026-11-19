@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
@@ -22,6 +20,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.modpack.ModpackFile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -36,6 +38,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,9 +119,9 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
         {
             var descPane = new BorderPane();
             HBox selectionButtons = new HBox(8);
-            JFXButton btnSelectAll = FXUtils.newBorderButton(i18n("button.select_all"));
+            M3Button btnSelectAll = new M3Button(I18n.i18n("button.select_all"), M3ButtonVariant.OUTLINED);
             btnSelectAll.setOnAction(e -> excludedFiles.clear());
-            JFXButton btnClear = FXUtils.newBorderButton(i18n("button.clear"));
+            M3Button btnClear = new M3Button(I18n.i18n("button.clear"), M3ButtonVariant.OUTLINED);
             btnClear.setOnAction(e -> {
                 excludedFiles.clear();
                 for (ModpackFile file : optionalFiles) {
@@ -128,7 +131,7 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
             selectionButtons.getChildren().setAll(btnSelectAll, btnClear);
             descPane.setLeft(selectionButtons);
 
-            var btnInstall = FXUtils.newRaisedButton(i18n("button.install"));
+            var btnInstall = new M3Button(I18n.i18n("button.install"), M3ButtonVariant.FILLED);
             descPane.setRight(btnInstall);
             btnInstall.setOnAction(e -> install.run());
             tail.getChildren().add(descPane);
@@ -182,9 +185,9 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
 
     /// List cell for one optional file with checkbox and detail button.
     private final class OptionalFileEntry extends MDListCell<ModpackFile> {
-        private final JFXCheckBox checkBox = new JFXCheckBox();
+        private final M3CheckBox checkBox = new M3CheckBox();
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton infoButton = new JFXButton();
+        private final M3IconButton infoButton = new M3IconButton(SVG.INFO.createIcon());
         private final HBox container = new HBox(8);
 
         /// Currently bidirectionally bound selected property, or `null` when unbound.
@@ -201,8 +204,6 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
             setSelectable();
             container.getChildren().setAll(checkBox, content);
 
-            infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(SVG.INFO.createIcon());
             container.getChildren().add(infoButton);
             getContainer().getChildren().setAll(container);
         }
@@ -285,8 +286,7 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
             pageButton.setOnAction(e -> FXUtils.openLink(addon.pageUrl()));
             getActions().add(pageButton);
 
-            JFXButton okButton = new JFXButton();
-            okButton.getStyleClass().add("dialog-accept");
+            M3Button okButton = new M3Button("", M3ButtonVariant.TEXT);
             okButton.setText(i18n("button.ok"));
             okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
             getActions().add(okButton);

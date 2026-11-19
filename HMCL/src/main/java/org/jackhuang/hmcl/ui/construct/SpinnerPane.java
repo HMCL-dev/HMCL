@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXSpinner;
 import javafx.beans.property.*;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -197,7 +196,7 @@ public class SpinnerPane extends Control {
             Node nextContent;
             if (control.isLoading()) {
                 if (spinnerPane == null) {
-                    spinnerPane = new StackPane(new JFXSpinner());
+                    spinnerPane = new StackPane(FXUtils.newSpinner());
                     spinnerPane.getStyleClass().add("notice-pane");
                     TransitionPane.setCacheAllowed(spinnerPane, false);
                 }

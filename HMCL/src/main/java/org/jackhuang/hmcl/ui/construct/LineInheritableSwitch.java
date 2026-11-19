@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXSwitch;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -13,6 +11,8 @@ import javafx.css.PseudoClass;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3Switch;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -33,19 +33,19 @@ public final class LineInheritableSwitch extends LineButtonBase {
     private static final int INHERIT_BUTTON_ICON_SIZE = 12;
 
     /// The button that toggles between inherited and overridden mode.
-    private final JFXButton inheritButton;
+    private final M3IconButton inheritButton;
 
     /// The tooltip shown on the inheritance button.
     private final Tooltip inheritTooltip;
 
     /// The switch displaying the effective value.
-    private final JFXSwitch switchControl;
+    private final M3Switch switchControl;
 
     /// Creates an inheritable boolean switch row.
     public LineInheritableSwitch() {
         this.getStyleClass().addAll(DEFAULT_STYLE_CLASS, "line-switch");
 
-        this.inheritButton = new JFXButton();
+        this.inheritButton = new M3IconButton();
         inheritButton.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
         inheritButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         inheritButton.setGraphic(SVG.PUBLIC.createIcon(INHERIT_BUTTON_ICON_SIZE));
@@ -66,14 +66,13 @@ public final class LineInheritableSwitch extends LineButtonBase {
             event.consume();
         });
 
-        this.switchControl = new JFXSwitch();
+        this.switchControl = new M3Switch();
         switchControl.accessibleTextProperty().bind(titleProperty());
-        switchControl.setOnAction(event -> {
-            // Override listeners may refresh the switch synchronously; preserve the requested value.
-            boolean selected = switchControl.isSelected();
+        switchControl.selectedProperty().bind(effectiveValueProperty());
+        switchControl.setOnToggleRequest(event -> {
             event.consume();
             setOverridden(true);
-            setRawValue(selected);
+            setRawValue(event.getRequestedValue());
             super.fire();
         });
 
@@ -81,9 +80,7 @@ public final class LineInheritableSwitch extends LineButtonBase {
         setTrailing(switchControl);
 
         InvalidationListener refreshListener = observable -> refresh();
-        rawValue.addListener(refreshListener);
         overridden.addListener(refreshListener);
-        effectiveValue.addListener(refreshListener);
         inheritAvailable.addListener(refreshListener);
         inheritedTooltip.addListener(refreshListener);
         overriddenTooltip.addListener(refreshListener);
@@ -206,12 +203,10 @@ public final class LineInheritableSwitch extends LineButtonBase {
     /// Overrides the inherited value with its inverse and fires the row action.
     @Override
     public void fire() {
-        setOverridden(true);
-        setRawValue(!isEffectiveValue());
-        super.fire();
+        switchControl.fire();
     }
 
-    /// Refreshes the visual state from the raw and effective values.
+    /// Refreshes the inheritance icon and tooltip.
     private void refresh() {
         boolean inheritAvailable = isInheritAvailable();
         boolean inherited = inheritAvailable && !isOverridden();
@@ -222,7 +217,5 @@ public final class LineInheritableSwitch extends LineButtonBase {
         inheritButton.setVisible(inheritAvailable);
         inheritButton.setManaged(inheritAvailable);
         inheritTooltip.setText(inherited ? getInheritedTooltip() : getOverriddenTooltip());
-
-        switchControl.setSelected(isEffectiveValue());
     }
 }

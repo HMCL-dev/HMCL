@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.stage.Stage;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
@@ -23,8 +24,8 @@ import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
@@ -738,7 +739,7 @@ public final class LauncherHelper {
     /// Prompts for and downloads Java as a required child of this launch operation.
     private CompletableFuture<JavaRuntime> downloadJava(GameJavaVersion javaVersion, HMCLGameRepository repository) {
         CompletableFuture<JavaRuntime> future = new CompletableFuture<>();
-        Controllers.dialog(new MessageDialogPane.Builder(
+        Controllers.dialog(new MessageDialogBuilder(
                 i18n("launch.advice.require_newer_java_version", javaVersion.majorVersion()),
                 i18n("message.warning"),
                 MessageType.QUESTION)
@@ -782,7 +783,7 @@ public final class LauncherHelper {
 
                 CompletableFuture<Task<AuthInfo>> future = new CompletableFuture<>();
                 runInFX(() -> {
-                    JFXButton loginOfflineButton = new JFXButton(i18n("account.login.skip"));
+                    M3Button loginOfflineButton = new M3Button(i18n("account.login.skip"), M3ButtonVariant.TEXT);
                     loginOfflineButton.setOnAction(event -> {
                         try {
                             future.complete(Task.completed(account.playOffline()));
@@ -790,11 +791,11 @@ public final class LauncherHelper {
                             future.completeExceptionally(e2);
                         }
                     });
-                    JFXButton retryButton = new JFXButton(i18n("account.login.retry"));
+                    M3Button retryButton = new M3Button(i18n("account.login.retry"), M3ButtonVariant.TEXT);
                     retryButton.setOnAction(event -> {
                         future.complete(logIn(account));
                     });
-                    Controllers.dialog(new MessageDialogPane.Builder(i18n("account.failed.server_disconnected"), i18n("account.failed"), MessageType.ERROR)
+                    Controllers.dialog(new MessageDialogBuilder(i18n("account.failed.server_disconnected"), i18n("account.failed"), MessageType.ERROR)
                             .addAction(loginOfflineButton)
                             .addAction(retryButton)
                             .addCancel(() ->

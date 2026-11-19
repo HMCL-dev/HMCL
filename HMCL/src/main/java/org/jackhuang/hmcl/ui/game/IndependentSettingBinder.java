@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.game;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXSlider;
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
@@ -13,6 +11,8 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
@@ -48,10 +48,10 @@ final class IndependentSettingBinder {
             boolean presetSetting,
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             LineComponent line,
-            JFXTextField textField,
+            M3TextField textField,
             Function<GameSettings, SettingProperty<String>> propertyGetter,
-            Supplier<JFXButton> inheritanceButtonFactory,
-            BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
+            Supplier<M3IconButton> inheritanceButtonFactory,
+            BiConsumer<M3IconButton, Boolean> inheritanceButtonUpdater,
             WeakListenerHolder listenerHolder,
             Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
             Observable parentSettingsInvalidation) {
@@ -59,7 +59,7 @@ final class IndependentSettingBinder {
         ObjectProperty<@Nullable SettingProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton;
+        @Nullable M3IconButton inheritButton;
         if (presetSetting) {
             inheritButton = null;
         } else {
@@ -147,10 +147,10 @@ final class IndependentSettingBinder {
             boolean presetSetting,
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             LineComponent line,
-            JFXTextField textField,
+            M3TextField textField,
             Function<GameSettings, ? extends SettingProperty<Integer>> propertyGetter,
-            Supplier<JFXButton> inheritanceButtonFactory,
-            BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
+            Supplier<M3IconButton> inheritanceButtonFactory,
+            BiConsumer<M3IconButton, Boolean> inheritanceButtonUpdater,
             WeakListenerHolder listenerHolder,
             Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
             Observable parentSettingsInvalidation) {
@@ -158,7 +158,7 @@ final class IndependentSettingBinder {
         ObjectProperty<@Nullable SettingProperty<Integer>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton;
+        @Nullable M3IconButton inheritButton;
         if (presetSetting) {
             inheritButton = null;
         } else {
@@ -252,12 +252,12 @@ final class IndependentSettingBinder {
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             RadioChoiceList<Boolean> choiceList,
             JFXSlider maxMemorySlider,
-            JFXTextField maxMemoryTextField,
+            M3TextField maxMemoryTextField,
             MemoryStatusBar memoryStatusBar,
             BorderPane memoryStatusLabels,
-            @Nullable JFXButton autoMemoryButton,
-            @Nullable JFXButton maxMemoryButton,
-            BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
+            @Nullable M3IconButton autoMemoryButton,
+            @Nullable M3IconButton maxMemoryButton,
+            BiConsumer<M3IconButton, Boolean> inheritanceButtonUpdater,
             WeakListenerHolder listenerHolder,
             Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
             Observable parentSettingsInvalidation) {

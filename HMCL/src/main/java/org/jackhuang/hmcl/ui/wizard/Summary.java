@@ -3,8 +3,9 @@
 package org.jackhuang.hmcl.ui.wizard;
 
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXTextArea;
 import javafx.scene.Node;
+import org.glavo.m3fx.controls.M3TextArea;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 /**
  * @author huangyuhui
@@ -22,7 +23,9 @@ public final class Summary {
     }
 
     public Summary(String text, Object result) {
-        JFXTextArea area = new JFXTextArea(text);
+        M3TextArea area = new M3TextArea(text);
+        area.setWrapText(false);
+        FXUtils.useJFXContextMenu(area);
         area.setEditable(false);
 
         this.component = area;

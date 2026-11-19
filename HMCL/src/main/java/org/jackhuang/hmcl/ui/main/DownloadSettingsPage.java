@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXSlider;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -12,6 +13,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
+import org.glavo.m3fx.controls.M3PasswordField;
+import org.glavo.m3fx.controls.M3RadioButton;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.ProxyType;
@@ -116,8 +123,10 @@ public class DownloadSettingsPage extends StackPane {
                                     .orElse(i18n("launcher.cache_directory.disabled")),
                             settings().commonDirectoryProperty(), settings().commonDirectoryTypeProperty()));
 
-            JFXButton cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
-            cleanButton.setOnAction(e -> clearCacheDirectory(cleanButton));
+            M3Button cleanButton = new M3Button(I18n.i18n("launcher.cache_directory.clean"), M3ButtonVariant.OUTLINED);
+            var cleaningCache = FXUtils.newButtonLoadingProperty(cleanButton);
+            cleanButton.disableProperty().bind(cleaningCache);
+            cleanButton.setOnAction(e -> clearCacheDirectory(cleaningCache));
             fileCommonLocationSublist.setHeaderRight(cleanButton);
 
             ComponentSublist downloadThreadsSublist = new ComponentSublist(() -> {
@@ -136,12 +145,14 @@ public class DownloadSettingsPage extends StackPane {
                                 JFXSlider slider = new JFXSlider(1, 256, 64);
                                 HBox.setHgrow(slider, Priority.ALWAYS);
 
-                                JFXTextField threadsField = new JFXTextField();
-                                FXUtils.setLimitWidth(threadsField, 60);
-                                FXUtils.bind(threadsField, settings().downloadThreadsProperty(), SafeStringConverter.fromInteger()
+                                M3TextField threadsField = FXUtils.newTextField();
+                                var converter = SafeStringConverter.fromInteger()
                                         .restrict(it -> it > 0)
-                                        .fallbackTo(FetchTask.DEFAULT_CONCURRENCY)
-                                        .asPredicate(Validator.addTo(threadsField)));
+                                        .fallbackTo(FetchTask.DEFAULT_CONCURRENCY);
+                                var threadsLayout = FXUtils.newValidatedTextField(threadsField,
+                                        new Validator(i18n("input.number"), converter.asPredicate()));
+                                FXUtils.setLimitWidth(threadsLayout, 80);
+                                FXUtils.bind(threadsField, settings().downloadThreadsProperty(), converter);
 
                                 var changedByTextField = new Holder<>(false);
                                 FXUtils.onChangeAndOperate(settings().downloadThreadsProperty(), value -> {
@@ -154,7 +165,7 @@ public class DownloadSettingsPage extends StackPane {
                                     settings().downloadThreadsProperty().set(value.getValue().intValue());
                                 });
 
-                                hbox.getChildren().setAll(slider, threadsField);
+                                hbox.getChildren().setAll(slider, threadsLayout);
                                 return hbox;
                             }
                         }
@@ -187,20 +198,20 @@ public class DownloadSettingsPage extends StackPane {
 
                 ToggleGroup proxyConfigurationGroup = new ToggleGroup();
 
-                JFXRadioButton chkProxySystem = new JFXRadioButton(i18n("settings.launcher.proxy.default"));
+                M3RadioButton chkProxySystem = new M3RadioButton(i18n("settings.launcher.proxy.default"));
                 chkProxySystem.setUserData(ProxyType.SYSTEM);
                 chkProxySystem.setToggleGroup(proxyConfigurationGroup);
 
-                JFXRadioButton chkProxyNone = new JFXRadioButton(i18n("settings.launcher.proxy.none"));
+                M3RadioButton chkProxyNone = new M3RadioButton(i18n("settings.launcher.proxy.none"));
                 chkProxyNone.setUserData(ProxyType.DIRECT);
                 chkProxyNone.setToggleGroup(proxyConfigurationGroup);
 
-                JFXRadioButton chkProxyHttp = new JFXRadioButton(i18n("settings.launcher.proxy.http"));
+                M3RadioButton chkProxyHttp = new M3RadioButton(i18n("settings.launcher.proxy.http"));
                 chkProxyHttp.setUserData(ProxyType.HTTP);
                 chkProxyHttp.setToggleGroup(proxyConfigurationGroup);
 
 
-                JFXRadioButton chkProxySocks = new JFXRadioButton(i18n("settings.launcher.proxy.socks"));
+                M3RadioButton chkProxySocks = new M3RadioButton(i18n("settings.launcher.proxy.socks"));
                 chkProxySocks.setUserData(ProxyType.SOCKS);
                 chkProxySocks.setToggleGroup(proxyConfigurationGroup);
 
@@ -247,7 +258,7 @@ public class DownloadSettingsPage extends StackPane {
                     }
 
                     {
-                        JFXTextField txtProxyHost = new JFXTextField();
+                        M3TextField txtProxyHost = FXUtils.newTextField();
                         GridPane.setRowIndex(txtProxyHost, 1);
                         GridPane.setColumnIndex(txtProxyHost, 1);
                         gridPane.getChildren().add(txtProxyHost);
@@ -262,18 +273,19 @@ public class DownloadSettingsPage extends StackPane {
                     }
 
                     {
-                        JFXTextField txtProxyPort = new JFXTextField();
-                        GridPane.setFillWidth(txtProxyPort, false);
-                        txtProxyPort.setMaxWidth(200);
-                        GridPane.setRowIndex(txtProxyPort, 2);
-                        GridPane.setColumnIndex(txtProxyPort, 1);
-                        FXUtils.setValidateWhileTextChanged(txtProxyPort, true);
-                        gridPane.getChildren().add(txtProxyPort);
-
-                        FXUtils.bind(txtProxyPort, settings().proxyPortProperty(), SafeStringConverter.fromInteger()
+                        M3TextField txtProxyPort = FXUtils.newTextField();
+                        var converter = SafeStringConverter.fromInteger()
                                 .restrict(it -> it >= 0 && it <= 0xFFFF)
-                                .fallbackTo(0)
-                                .asPredicate(Validator.addTo(txtProxyPort)));
+                                .fallbackTo(0);
+                        var portLayout = FXUtils.newValidatedTextField(txtProxyPort,
+                                new Validator(i18n("input.number"), converter.asPredicate()));
+                        GridPane.setFillWidth(portLayout, false);
+                        portLayout.setMaxWidth(200);
+                        GridPane.setRowIndex(portLayout, 2);
+                        GridPane.setColumnIndex(portLayout, 1);
+                        gridPane.getChildren().add(portLayout);
+
+                        FXUtils.bind(txtProxyPort, settings().proxyPortProperty(), converter);
                     }
                     proxyPane.getChildren().add(gridPane);
                 }
@@ -282,7 +294,7 @@ public class DownloadSettingsPage extends StackPane {
                 {
                     chkProxyAuthenticationPane.setPadding(new Insets(20, 0, 20, 5));
 
-                    JFXCheckBox chkProxyAuthentication = new JFXCheckBox(i18n("settings.launcher.proxy.authentication"));
+                    M3CheckBox chkProxyAuthentication = new M3CheckBox(i18n("settings.launcher.proxy.authentication"));
                     chkProxyAuthenticationPane.getChildren().add(chkProxyAuthentication);
                     chkProxyAuthentication.selectedProperty().bindBidirectional(settings().hasProxyAuthProperty());
 
@@ -306,7 +318,7 @@ public class DownloadSettingsPage extends StackPane {
                     }
 
                     {
-                        JFXTextField txtProxyUsername = new JFXTextField();
+                        M3TextField txtProxyUsername = FXUtils.newTextField();
                         GridPane.setRowIndex(txtProxyUsername, 0);
                         GridPane.setColumnIndex(txtProxyUsername, 1);
                         authPane.getChildren().add(txtProxyUsername);
@@ -321,7 +333,7 @@ public class DownloadSettingsPage extends StackPane {
                     }
 
                     {
-                        JFXPasswordField txtProxyPassword = new JFXPasswordField();
+                        M3PasswordField txtProxyPassword = FXUtils.newPasswordField();
                         GridPane.setRowIndex(txtProxyPassword, 1);
                         GridPane.setColumnIndex(txtProxyPassword, 1);
                         authPane.getChildren().add(txtProxyPassword);
@@ -337,26 +349,15 @@ public class DownloadSettingsPage extends StackPane {
 
     }
 
+    /// Reports progress on the clean button until the cache operation completes.
     @FXThread
-    private boolean cleaningCache = false;
-
-    private void clearCacheDirectory(JFXButton cleanButton) {
-        if (cleaningCache) return;
+    private void clearCacheDirectory(BooleanProperty cleaningCache) {
         String commonDirectory = settings().getResolvedCommonDirectory();
         if (commonDirectory != null) {
-            cleaningCache = true;
-            cleanButton.setMinWidth(cleanButton.getWidth());
-            var txt = cleanButton.getText();
-            cleanButton.setText("");
-            var spinner = new JFXSpinner();
-            spinner.setRadius(8);
-            cleanButton.setGraphic(spinner);
+            cleaningCache.set(true);
             Task.runAsync("Clear Cache Directory", Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")))
-                    .whenComplete(Schedulers.javafx(), ignored -> {
-                        cleanButton.setGraphic(null);
-                        cleanButton.setText(txt);
-                        cleaningCache = false;
-                    }).setSignificance(Task.TaskSignificance.MINOR)
+                    .whenComplete(Schedulers.javafx(), ignored -> cleaningCache.set(false))
+                    .setSignificance(Task.TaskSignificance.MINOR)
                     .start();
         }
     }

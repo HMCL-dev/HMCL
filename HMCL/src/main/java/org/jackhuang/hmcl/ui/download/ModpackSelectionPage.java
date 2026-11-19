@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -12,6 +11,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.ModpackHelper;
@@ -70,8 +71,8 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         });
     }
 
-    private JFXButton createButton(String type, Runnable action) {
-        JFXButton button = new JFXButton();
+    private M3Button createButton(String type, Runnable action) {
+        M3Button button = new M3Button("", M3ButtonVariant.TEXT);
 
         button.getStyleClass().add("card");
         button.setStyle("-fx-cursor: HAND;");

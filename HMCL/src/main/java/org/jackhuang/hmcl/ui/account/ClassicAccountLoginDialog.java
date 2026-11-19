@@ -2,21 +2,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXPasswordField;
-import com.jfoenix.controls.JFXProgressBar;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3PasswordField;
+import org.glavo.m3fx.controls.M3ProgressBar;
+import org.glavo.m3fx.controls.M3TextInputLayout;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 
@@ -31,18 +35,22 @@ public class ClassicAccountLoginDialog extends StackPane {
     private final Consumer<AuthInfo> success;
     private final Runnable failed;
 
-    private final JFXPasswordField txtPassword;
+    /// Masked password submitted for reauthentication.
+    private final M3PasswordField txtPassword;
+    /// Displays the floating password label and required-field error.
+    private final M3TextInputLayout passwordLayout;
     private final Label lblCreationWarning = new Label();
-    private final JFXProgressBar progressBar;
+    /// Indicates that password authentication is in progress.
+    private final M3ProgressBar progressBar = new M3ProgressBar();
 
     public ClassicAccountLoginDialog(ClassicAccount oldAccount, Consumer<AuthInfo> success, Runnable failed) {
         this.oldAccount = oldAccount;
         this.success = success;
         this.failed = failed;
 
-        progressBar = new JFXProgressBar();
         StackPane.setAlignment(progressBar, Pos.TOP_CENTER);
         progressBar.setVisible(false);
+        progressBar.setMouseTransparent(true);
 
         JFXDialogLayout dialogLayout = new JFXDialogLayout();
 
@@ -56,34 +64,35 @@ public class ClassicAccountLoginDialog extends StackPane {
 
             Label usernameLabel = new Label(oldAccount.getLoginName());
 
-            txtPassword = new JFXPasswordField();
+            txtPassword = FXUtils.newPasswordField(M3TextInputVariant.FILLED);
             txtPassword.setOnAction(e -> onAccept());
-            txtPassword.getValidators().add(new RequiredValidator());
-            txtPassword.setLabelFloat(true);
-            txtPassword.setPromptText(i18n("account.password"));
+            passwordLayout = new M3TextInputLayout(txtPassword);
+            passwordLayout.setLabelText(i18n("account.password"));
+            passwordLayout.setValidator(new RequiredValidator());
 
-            body.getChildren().setAll(usernameLabel, txtPassword);
+            body.getChildren().setAll(usernameLabel, passwordLayout);
             dialogLayout.setBody(body);
         }
 
         {
-            JFXButton acceptButton = new JFXButton(i18n("button.ok"));
+            M3Button acceptButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
             acceptButton.setOnAction(e -> onAccept());
-            acceptButton.getStyleClass().add("dialog-accept");
 
-            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+            M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             cancelButton.setOnAction(e -> onCancel());
-            cancelButton.getStyleClass().add("dialog-cancel");
 
-            dialogLayout.setActions(lblCreationWarning, acceptButton, cancelButton);
+            dialogLayout.setActions(lblCreationWarning, cancelButton, acceptButton);
         }
 
-        getChildren().setAll(dialogLayout);
+        getChildren().setAll(dialogLayout, progressBar);
 
         onEscPressed(this, this::onCancel);
     }
 
+    /// Submits a non-blank password and displays the authentication result.
     private void onAccept() {
+        if (!passwordLayout.validate())
+            return;
         String password = txtPassword.getText();
         progressBar.setVisible(true);
         lblCreationWarning.setText("");

@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -31,13 +29,18 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -471,8 +474,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             body.setPadding(new Insets(10, 0, 0, 0));
             setBody(body);
 
-            JFXButton okButton = new JFXButton(i18n("button.ok"));
-            okButton.getStyleClass().add("dialog-accept");
+            M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
             okButton.setOnAction(event -> fireEvent(new DialogCloseEvent()));
             setActions(okButton);
             onEscPressed(this, okButton::fire);
@@ -496,7 +498,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
 
         /// Search input.
-        private final JFXTextField searchField = new JFXTextField();
+        private final M3TextField searchField = FXUtils.newTextField(M3TextInputVariant.FILLED);
 
         /// List of installed theme packs.
         private final JFXListView<ThemePackManager.InstalledThemePack> listView = new JFXListView<>();
@@ -538,7 +540,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 }
             });
 
-            JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
+            M3IconButton closeSearchBar = createToolbarButton2(SVG.CLOSE, () -> {
                 changeToolbar(toolbarNormal);
 
                 searchField.clear();
@@ -632,10 +634,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private final HBox right = new HBox();
 
         /// Shows the package file.
-        private final JFXButton revealButton;
+        private final M3IconButton revealButton;
 
         /// Deletes the package.
-        private final JFXButton deleteButton;
+        private final M3IconButton deleteButton;
 
         /// Creates a reusable theme-pack list cell.
         ///
@@ -665,7 +667,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             right.setPickOnBounds(false);
             content.setTrailing(right);
 
-            revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+            revealButton = new M3IconButton(SVG.FOLDER_OPEN.createIcon());
             revealButton.setOnAction(event -> {
                 ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {
@@ -674,7 +676,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             });
             FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
-            deleteButton = FXUtils.newToggleButton4(SVG.DELETE);
+            deleteButton = new M3IconButton(SVG.DELETE.createIcon());
             deleteButton.setOnAction(event -> {
                 ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {

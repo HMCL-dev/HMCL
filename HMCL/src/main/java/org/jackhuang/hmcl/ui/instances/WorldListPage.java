@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.BooleanProperty;
@@ -22,6 +20,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3CheckBox;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -235,7 +235,7 @@ public final class WorldListPage extends ListPageBase<World> {
 
         @Override
         protected List<Node> initializeToolbar(WorldListPage skinnable) {
-            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
+            M3CheckBox chkShowAll = new M3CheckBox(i18n("world.show_all"));
             chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
 
             return Arrays.asList(
@@ -261,7 +261,7 @@ public final class WorldListPage extends ListPageBase<World> {
         private final ImageContainer imageView;
         private final Tooltip leftTooltip;
         private final TwoLineListItem content;
-        private final JFXButton btnLaunch;
+        private final M3IconButton btnLaunch;
 
         /// Creates a world row with launch and management actions for the supplied page.
         public WorldListCell(WorldListPage page) {
@@ -292,7 +292,7 @@ public final class WorldListPage extends ListPageBase<World> {
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
+                btnLaunch = new M3IconButton(SVG.ROCKET_LAUNCH.createIcon());
                 btnLaunch.visibleProperty().bind(page.supportQuickPlayProperty());
                 btnLaunch.managedProperty().bind(btnLaunch.visibleProperty());
                 right.getChildren().add(btnLaunch);
@@ -303,7 +303,7 @@ public final class WorldListPage extends ListPageBase<World> {
                         page.launch(world);
                 });
 
-                JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
+                M3IconButton btnMore = new M3IconButton(SVG.MORE_VERT.createIcon());
                 right.getChildren().add(btnMore);
                 btnMore.setOnAction(event -> {
                     World world = getItem();

@@ -9,7 +9,8 @@ import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.InstallerItem;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -17,7 +18,6 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstallersPage extends AbstractInstallersPage {
@@ -27,11 +27,11 @@ public class InstallersPage extends AbstractInstallersPage {
     public InstallersPage(WizardController controller, HMCLGameRepository repository, GameVersionNumber gameVersion, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
 
-        txtName.getValidators().addAll(
+        nameLayout.getValidators().addAll(
                 new RequiredValidator(),
                 new Validator(i18n("install.new_game.already_exists"), str -> !repository.instanceIdConflicts(str)),
                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
-        installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
+        installable.bind(txtName.errorProperty().not());
 
         txtName.textProperty().addListener((obs, oldText, newText) -> isNameModifiedByUser = true);
     }
@@ -81,10 +81,10 @@ public class InstallersPage extends AbstractInstallersPage {
         GameInstanceID instanceId = new GameInstanceID(txtName.getText());
 
         if (!checkName(instanceId.id())) {
-            Controllers.dialog(new MessageDialogPane.Builder(
+            Controllers.dialog(new MessageDialogBuilder(
                     i18n("install.name.invalid"),
                     i18n("message.warning"),
-                    MessageDialogPane.MessageType.QUESTION)
+                    MessageType.QUESTION)
                     .yesOrNo(() -> {
                         controller.getSettings().put(INSTANCE_ID, instanceId);
                         controller.onFinish();

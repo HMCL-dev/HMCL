@@ -93,7 +93,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         tabController.onPageShown();
 
         if (SettingsManager.userState().terracottaAgreementVersionProperty().get() < TERRACOTTA_AGREEMENT_VERSION) {
-            Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5, MessageDialogPane.MessageType.INFO, () -> {
+            Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5, MessageType.INFO, () -> {
                 UserState userState = userState();
                 userState.terracottaAgreementVersionProperty().set(TERRACOTTA_AGREEMENT_VERSION);
             }, () -> fireEvent(new PageCloseEvent()));

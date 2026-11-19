@@ -22,6 +22,8 @@ import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
@@ -32,7 +34,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -95,8 +97,8 @@ public class PersonalizationPage extends StackPane {
     }
 
     /// Creates a compact button that toggles inherited or overridden state.
-    private static JFXButton createThemeAppearanceOverrideButton() {
-        var button = new JFXButton();
+    private static M3IconButton createThemeAppearanceOverrideButton() {
+        var button = new M3IconButton();
         button.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         Tooltip tooltip = new Tooltip();
@@ -107,7 +109,7 @@ public class PersonalizationPage extends StackPane {
     }
 
     /// Updates the icon and pseudo class of a theme appearance override button.
-    private static void updateThemeAppearanceOverrideButton(JFXButton button, boolean inherited) {
+    private static void updateThemeAppearanceOverrideButton(M3IconButton button, boolean inherited) {
         button.setGraphic((inherited ? SVG.STYLE : SVG.EDIT).createIcon(INHERIT_BUTTON_ICON_SIZE));
         button.pseudoClassStateChanged(PSEUDO_OVERRIDDEN, !inherited);
 
@@ -136,7 +138,7 @@ public class PersonalizationPage extends StackPane {
             String setting,
             Property<T> directProperty,
             Supplier<T> effectiveValueSupplier) {
-        JFXButton inheritButton = createThemeAppearanceOverrideButton();
+        M3IconButton inheritButton = createThemeAppearanceOverrideButton();
         button.setTitleTrailing(inheritButton);
 
         Holder<Boolean> updating = new Holder<>(false);
@@ -189,7 +191,7 @@ public class PersonalizationPage extends StackPane {
             String setting,
             BooleanProperty directProperty,
             Supplier<Boolean> effectiveValueSupplier) {
-        JFXButton inheritButton = createThemeAppearanceOverrideButton();
+        M3IconButton inheritButton = createThemeAppearanceOverrideButton();
         button.setTitleTrailing(inheritButton);
 
         Holder<Boolean> updating = new Holder<>(false);
@@ -499,7 +501,7 @@ public class PersonalizationPage extends StackPane {
                     customColorChoice,
                     backgroundColorChoice));
 
-            JFXButton themeColorOverrideButton = createThemeAppearanceOverrideButton();
+            M3IconButton themeColorOverrideButton = createThemeAppearanceOverrideButton();
             themeColorSublist.setTitleRight(themeColorOverrideButton);
             Holder<Boolean> updatingThemeColor = new Holder<>(false);
             InvalidationListener refreshThemeColor = ignored -> {
@@ -677,7 +679,7 @@ public class PersonalizationPage extends StackPane {
                     networkBackgroundOption,
                     paintBackgroundOption
             ));
-            JFXButton backgroundOverrideButton = createThemeAppearanceOverrideButton();
+            M3IconButton backgroundOverrideButton = createThemeAppearanceOverrideButton();
             backgroundSublist.setTitleRight(backgroundOverrideButton);
             Holder<Boolean> updatingBackground = new Holder<>(false);
             InvalidationListener refreshBackground = ignored -> {
@@ -998,7 +1000,7 @@ public class PersonalizationPage extends StackPane {
                 slider.setValueFactory(s -> valueBinding);
                 sliderBox.getChildren().setAll(slider, textOpacity);
 
-                JFXButton inheritButton = createThemeAppearanceOverrideButton();
+                M3IconButton inheritButton = createThemeAppearanceOverrideButton();
                 opacityPane.setTitleTrailing(inheritButton);
                 Holder<Boolean> updatingOpacity = new Holder<>(false);
                 InvalidationListener refreshOpacity = ignored -> {
@@ -1065,7 +1067,7 @@ public class PersonalizationPage extends StackPane {
             String setting = LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT;
             LineSwitch titleBarTransparentButton = new LineSwitch();
             titleBarTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
-            JFXButton inheritButton = createThemeAppearanceOverrideButton();
+            M3IconButton inheritButton = createThemeAppearanceOverrideButton();
             titleBarTransparentButton.setTitleTrailing(inheritButton);
 
             Holder<Boolean> updating = new Holder<>(false);
@@ -1188,7 +1190,7 @@ public class PersonalizationPage extends StackPane {
                         cboFont.setValue(settings().launcherFontFamilyProperty().get());
                         FXUtils.onChange(cboFont.valueProperty(), FontManager::setFontFamily);
 
-                        JFXButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                        M3IconButton clearButton = new M3IconButton(SVG.RESTORE.createIcon());
                         clearButton.setOnAction(e -> cboFont.setValue(null));
 
                         FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
@@ -1224,19 +1226,21 @@ public class PersonalizationPage extends StackPane {
                         FontComboBox cboLogFont = new FontComboBox();
                         cboLogFont.valueProperty().bindBidirectional(settings().logFontFamilyProperty());
 
-                        JFXTextField txtLogFontSize = new JFXTextField();
-                        FXUtils.setLimitWidth(txtLogFontSize, 50);
-                        FXUtils.bind(txtLogFontSize, settings().logFontSizeProperty(), SafeStringConverter.fromFiniteDouble()
+                        M3TextField txtLogFontSize = FXUtils.newTextField();
+                        var converter = SafeStringConverter.fromFiniteDouble()
                                 .restrict(it -> it > 0)
-                                .fallbackTo(12.0)
-                                .asPredicate(Validator.addTo(txtLogFontSize)));
+                                .fallbackTo(12.0);
+                        var fontSizeLayout = FXUtils.newValidatedTextField(txtLogFontSize,
+                                new Validator(i18n("input.number"), converter.asPredicate()));
+                        FXUtils.setLimitWidth(fontSizeLayout, 80);
+                        FXUtils.bind(txtLogFontSize, settings().logFontSizeProperty(), converter);
 
-                        JFXButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                        M3IconButton clearButton = new M3IconButton(SVG.RESTORE.createIcon());
                         clearButton.setOnAction(e -> cboLogFont.setValue(null));
 
                         FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
 
-                        hBox.getChildren().setAll(cboLogFont, txtLogFontSize, clearButton);
+                        hBox.getChildren().setAll(cboLogFont, fontSizeLayout, clearButton);
 
                         borderPane.setRight(hBox);
                     }

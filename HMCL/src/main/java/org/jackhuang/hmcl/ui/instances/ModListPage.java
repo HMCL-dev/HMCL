@@ -5,11 +5,8 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -30,6 +27,12 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3Switch;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -51,7 +54,6 @@ import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -231,7 +233,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         loadMods(modManager);
         if (!failed.isEmpty())
             Controllers.dialog(i18n("mods.delete.failed") + "\n" + String.join(",\n", failed),
-                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                    i18n("message.error"), MessageType.ERROR);
     }
 
     void setSelectedEnabled(ObservableList<ModInfoObject> selectedItems, boolean enabled) {
@@ -248,7 +250,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 });
         if (!failed.isEmpty())
             Controllers.dialog(i18n("mods.toggle.failed") + "\n" + String.join(",\n", failed),
-                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                    i18n("message.error"), MessageType.ERROR);
     }
 
     public void openModFolder() {
@@ -283,7 +285,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception instanceof CancellationException) return;
                             if (exception != null || result == null) {
-                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageType.ERROR);
                                 if (exception != null) LOG.warning("Failed to check for updates", exception);
                             } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
@@ -297,7 +299,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         if (gameInstance.isModpack()) {
             Controllers.confirm(
                     i18n("mods.update_modpack_mod.warning"), null,
-                    MessageDialogPane.MessageType.WARNING,
+                    MessageType.WARNING,
                     action, null);
         } else {
             action.run();
@@ -346,7 +348,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         /// Whether the search mechanism is currently active.
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
 
-        private final JFXTextField searchField;
+        private final M3TextField searchField;
 
         /// Timer for debouncing search input to avoid executing search on every keystroke.
         private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
@@ -374,7 +376,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 // Search Bar
                 searchBar.setAlignment(Pos.CENTER);
                 searchBar.setPadding(new Insets(0, 5, 0, 5));
-                searchField = new JFXTextField();
+                searchField = FXUtils.newTextField(M3TextInputVariant.FILLED);
                 searchField.setPromptText(i18n("search"));
                 HBox.setHgrow(searchField, Priority.ALWAYS);
                 searchPause.setOnFinished(e -> search());
@@ -385,7 +387,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     }
                 });
 
-                JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
+                M3IconButton closeSearchBar = createToolbarButton2(SVG.CLOSE,
                         () -> {
                             changeToolbar(toolbarNormal);
 
@@ -400,7 +402,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
                 searchBar.getChildren().setAll(searchField, closeSearchBar);
 
-                JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh);
+                M3Button refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh);
                 refreshButton.disableProperty().bind(skinnable.loadingProperty());
 
                 // Toolbar Normal
@@ -728,8 +730,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 getActions().add(mcmodButton);
             }
 
-            JFXButton okButton = new JFXButton();
-            okButton.getStyleClass().add("dialog-accept");
+            M3Button okButton = new M3Button("", M3ButtonVariant.TEXT);
             okButton.setText(i18n("button.ok"));
             okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
             getActions().add(okButton);
@@ -748,14 +749,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
-        private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
-        private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
-        private final JFXSwitch activeSwitch = new JFXSwitch();
-
-        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getModInfo().isActive());
-        private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
-        private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
+        private final M3IconButton restoreButton = new M3IconButton(SVG.RESTORE.createIcon());
+        private final M3IconButton revealButton = new M3IconButton(SVG.FOLDER.createIcon());
+        private final M3IconButton infoButton = new M3IconButton(SVG.INFO.createIcon());
+        private final M3Switch activeSwitch = new M3Switch();
 
         private Tooltip warningTooltip;
 
@@ -784,10 +781,18 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             actions.setAlignment(Pos.CENTER);
             actions.getChildren().setAll(restoreButton, revealButton, infoButton, activeSwitch);
 
-            activeSwitch.setSize(20);
-            activeSwitch.setMinSize(30, 30);
-            activeSwitch.setPrefSize(30, 30);
-            activeSwitch.setMaxSize(30, 30);
+            activeSwitch.setOnToggleRequest(event -> {
+                event.consume();
+                @Nullable ModInfoObject item = getItem();
+                if (item == null) return;
+                LocalModFile modInfo = item.getModInfo();
+                try {
+                    modInfo.setActive(event.getRequestedValue());
+                } catch (IOException e) {
+                    LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
+                    Controllers.showToast(i18n("mods.toggle.failed"));
+                }
+            });
             HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             container.getChildren().setAll(imageContainer, content, actions);
@@ -799,8 +804,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         /// Updates mod details, warnings, and tags while retaining reusable tag labels.
         @Override
         protected void updateControl(@Nullable ModInfoObject dataItem, boolean empty) {
-            if (observedActiveProperty != null)
-                observedActiveProperty.removeListener(weakActiveListener);
+            activeSwitch.selectedProperty().unbind();
 
             pseudoClassStateChanged(WARNING, false);
             if (warningTooltip != null) {
@@ -853,20 +857,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             content.getTags().setAll(tags);
 
-            (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
-            activeSwitch.setDisableAnimation(true);
-            activeSwitch.setSelected(modInfo.isActive());
-            activeSwitch.setOnAction(event -> {
-                try {
-                    modInfo.setActive(activeSwitch.isSelected());
-                } catch (IOException e) {
-                    LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
-                    Controllers.showToast(i18n("mods.toggle.failed"));
-                } finally {
-                    activeSwitch.setSelected(modInfo.isActive());
-                }
-            });
-            activeSwitch.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
+            activeSwitch.setAnimationsEnabled(false);
+            activeSwitch.selectedProperty().bind(modInfo.activeProperty());
+            activeSwitch.setAnimationsEnabled(true);
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()

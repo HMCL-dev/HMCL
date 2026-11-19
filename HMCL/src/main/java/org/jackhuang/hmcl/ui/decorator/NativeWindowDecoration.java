@@ -55,7 +55,7 @@ final class NativeWindowDecoration {
     /// Excludes a node and its descendants from native dragging.
     private final Object notDraggable;
 
-    /// Ignores an overlay and its descendants when testing underlying native header areas.
+    /// Ignores an overlay during native header hit testing, preserving exclusions on its content.
     private final Object transparentSubtree;
 
     /// Resolves all required public APIs and creates a detached header bar.
@@ -149,12 +149,8 @@ final class NativeWindowDecoration {
         }
     }
 
-    /// Lets native header hit testing pass through an overlay and its descendants.
-    ///
-    /// Ordinary mouse picking is unchanged. This does not create draggable areas outside the underlying
-    /// header. Descendants excluded with [#setDraggable(Node, boolean)] block native dragging instead.
-    ///
-    /// @param overlay the overlay above the header
+    /// Allows native dragging through an overlay only where the underlying header permits it.
+    /// Ordinary mouse picking is unchanged; explicitly non-draggable descendants still block dragging.
     void setDragTransparent(Node overlay) {
         try {
             setDragType.invokeExact(overlay, transparentSubtree);

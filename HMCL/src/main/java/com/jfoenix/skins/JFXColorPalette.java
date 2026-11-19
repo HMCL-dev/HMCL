@@ -19,7 +19,6 @@
 
 package com.jfoenix.skins;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXColorPicker;
 import com.jfoenix.utils.JFXNodeUtils;
 import javafx.collections.FXCollections;
@@ -43,6 +42,8 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeType;
 
 import java.util.List;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -55,7 +56,7 @@ final class JFXColorPalette extends Region {
 
     // package protected for testing purposes
     JFXColorGrid colorPickerGrid;
-    final JFXButton customColorLink = new JFXButton(i18n("color.custom"));
+    final M3Button customColorLink = new M3Button(i18n("color.custom"), M3ButtonVariant.TEXT);
     JFXCustomColorPickerDialog customColorDialog = null;
 
     private final JFXColorPicker colorPicker;

@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.application.Platform;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Scene;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
@@ -11,8 +12,11 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +42,62 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 @Isolated("Temporarily supplies settings while initializing the cached animation policy")
 public final class InteractionLayerTest {
+
+    /// File options fit their radio buttons and enable the editor only while its option is selected.
+    @Test
+    void fileOptionsFollowRadioSelection() throws Exception {
+        onFxThread(() -> {
+            var list = new MultiFileItem<String>();
+            var automatic = new MultiFileItem.Option<>("Automatic", "auto");
+            var custom = new MultiFileItem.StringOption<>("Custom", "custom");
+            list.loadChildren(List.of(automatic, custom));
+            var scene = new Scene(list);
+            scene.getRoot().applyCss();
+            list.autosize();
+            list.layout();
+            var row = assertInstanceOf(Region.class, list.getChildren().getFirst());
+            assertTrue(row.getHeight() >= automatic.left.getHeight() + row.getInsets().getTop() + row.getInsets().getBottom());
+
+            list.setSelectedData("auto");
+            assertTrue(automatic.isSelected());
+            assertTrue(custom.getCustomField().isDisabled());
+            custom.left.fire();
+            assertEquals("custom", list.getSelectedData());
+            assertFalse(automatic.isSelected());
+            assertFalse(custom.getCustomField().isDisabled());
+            custom.left.fire();
+            assertSame(custom.left, list.getGroup().getSelectedToggle());
+        });
+    }
+
+    /// Restores an action's icon without overriding permission changes made while the action was running.
+    @Test
+    void busyIconButtonRestoresGraphicAndHonorsAvailability() throws Exception {
+        onFxThread(() -> {
+            Region icon = new Region();
+            M3IconButton button = new M3IconButton(icon);
+            var available = new SimpleBooleanProperty(true);
+            var loading = FXUtils.newButtonLoadingProperty(button);
+            button.disableProperty().bind(loading.or(available.not()));
+            AtomicInteger actions = new AtomicInteger();
+            button.setOnAction(event -> {
+                actions.incrementAndGet();
+                loading.set(true);
+            });
+
+            button.fire();
+            assertInstanceOf(M3ProgressIndicator.class, button.getGraphic());
+            button.fire();
+            assertEquals(1, actions.get());
+            available.set(false);
+            loading.set(false);
+            assertSame(icon, button.getGraphic());
+            assertTrue(button.isDisabled());
+            available.set(true);
+            assertFalse(button.isDisabled());
+        });
+    }
+
     /// Initializes animation defaults without reading or changing persisted settings.
     @BeforeAll
     static void initializeAnimationPolicy() throws Exception {

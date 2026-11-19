@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
@@ -22,6 +20,10 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.AddonProjectInfo;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
@@ -299,7 +301,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                     rowIndex++;
                 }
 
-                JFXTextField nameField = new JFXTextField();
+                M3TextField nameField = FXUtils.newTextField(M3TextInputVariant.FILLED);
                 nameField.setPromptText(getSkinnable().supportChinese.get() ? i18n("search.hint.chinese") : i18n("search.hint.english"));
                 if (getSkinnable().supportChinese.get()) {
                     FXUtils.installFastTooltip(nameField, i18n("search.hint.chinese"));
@@ -406,14 +408,14 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
                     Holder<Runnable> changeButton = new Holder<>();
 
-                    JFXButton firstPageButton = FXUtils.newBorderButton(i18n("search.first_page"));
+                    M3Button firstPageButton = new M3Button(I18n.i18n("search.first_page"), M3ButtonVariant.OUTLINED);
                     firstPageButton.setOnAction(event -> {
                         control.pageOffset.set(0);
                         searchAction.handle(event);
                         changeButton.value.run();
                     });
 
-                    JFXButton previousPageButton = FXUtils.newBorderButton(i18n("search.previous_page"));
+                    M3Button previousPageButton = new M3Button(I18n.i18n("search.previous_page"), M3ButtonVariant.OUTLINED);
                     previousPageButton.setOnAction(event -> {
                         int pageOffset = control.pageOffset.get();
                         if (pageOffset > 0) {
@@ -429,7 +431,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                         return i18n("search.page_n", control.pageOffset.get() + 1, pageCount == -1 ? "-" : String.valueOf(pageCount));
                     }, control.pageOffset, control.pageCount));
 
-                    JFXButton nextPageButton = FXUtils.newBorderButton(i18n("search.next_page"));
+                    M3Button nextPageButton = new M3Button(I18n.i18n("search.next_page"), M3ButtonVariant.OUTLINED);
                     nextPageButton.setOnAction(event -> {
                         int nv = control.pageOffset.get() + 1;
                         if (nv < control.pageCount.get()) {
@@ -439,7 +441,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                         }
                     });
 
-                    JFXButton lastPageButton = FXUtils.newBorderButton(i18n("search.last_page"));
+                    M3Button lastPageButton = new M3Button(I18n.i18n("search.last_page"), M3ButtonVariant.OUTLINED);
                     lastPageButton.setOnAction(event -> {
                         control.pageOffset.set(control.pageCount.get() - 1);
                         searchAction.handle(event);
@@ -487,7 +489,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                     Pane placeholder = new Pane();
                     HBox.setHgrow(placeholder, Priority.SOMETIMES);
 
-                    JFXButton searchButton = FXUtils.newRaisedButton(i18n("search"));
+                    M3Button searchButton = new M3Button(I18n.i18n("search"), M3ButtonVariant.FILLED);
                     searchButton.setOnAction(searchAction);
 
                     actions.appendList(FXCollections.observableArrayList(firstPageButton, previousPageButton, pageDescription, nextPageButton, lastPageButton, placeholder, searchButton));

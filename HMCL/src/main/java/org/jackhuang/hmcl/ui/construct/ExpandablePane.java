@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
-
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -35,6 +33,8 @@ import javafx.util.Duration;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
@@ -93,7 +93,7 @@ public class ExpandablePane extends Control {
 
         private final VBox root = new VBox();
 
-        private final JFXButton button = new JFXButton();
+        private final M3Button button = new M3Button("", M3ButtonVariant.TEXT);
         private final VBox contentContainer = new VBox();
         private final VBox contentBox = new VBox();
 

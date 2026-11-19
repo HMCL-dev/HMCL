@@ -23,10 +23,10 @@ public class HintPane extends VBox {
     private final TextFlow flow = new TextFlow();
 
     public HintPane() {
-        this(MessageDialogPane.MessageType.INFO);
+        this(MessageType.INFO);
     }
 
-    public HintPane(MessageDialogPane.MessageType type) {
+    public HintPane(MessageType type) {
         setFillWidth(true);
         getStyleClass().addAll("hint", type.name().toLowerCase(Locale.ROOT));
 

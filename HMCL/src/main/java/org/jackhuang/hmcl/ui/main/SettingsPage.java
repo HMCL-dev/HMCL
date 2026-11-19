@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.ObjectProperty;
@@ -16,6 +15,9 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -23,7 +25,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.upgrade.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -72,7 +74,7 @@ public final class SettingsPage extends ScrollPane {
                 ObjectProperty<UpdateChannel> updateChannel;
                 {
 
-                    JFXButton updateButton = FXUtils.newToggleButton4(SVG.UPDATE, 20);
+                    M3IconButton updateButton = new M3IconButton(SVG.UPDATE.createIcon(20));
                     updateButton.setOnAction(e -> onUpdate());
                     updateButton.setPadding(Insets.EMPTY);
                     FXUtils.installFastTooltip(updateButton, i18n("update.tooltip"));
@@ -193,20 +195,18 @@ public final class SettingsPage extends ScrollPane {
                     BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                     debugPane.setLeft(left);
 
-                    JFXButton openLogFolderButton = new JFXButton(i18n("settings.launcher.launcher_log.reveal"));
+                    M3Button openLogFolderButton = new M3Button(I18n.i18n("settings.launcher.launcher_log.reveal"), M3ButtonVariant.OUTLINED);
                     openLogFolderButton.setOnAction(e -> openLogFolder());
-                    openLogFolderButton.getStyleClass().add("jfx-button-border");
                     if (LOG.getLogFile() == null)
                         openLogFolderButton.setDisable(true);
 
-                    SpinnerPane exportLogPane = new SpinnerPane();
-
-                    JFXButton logButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.export"));
-                    exportLogPane.setContent(logButton);
+                    M3Button logButton = new M3Button(I18n.i18n("settings.launcher.launcher_log.export"), M3ButtonVariant.OUTLINED);
+                    var exporting = FXUtils.newButtonLoadingProperty(logButton);
+                    logButton.disableProperty().bind(exporting);
                     logButton.setOnAction(e -> {
-                        exportLogPane.showSpinner();
+                        exporting.set(true);
                         onExportLogs().whenCompleteAsync((result, exception) -> {
-                            exportLogPane.hideSpinner();
+                            exporting.set(false);
                             if (exception == null) {
                                 Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", result));
                                 FXUtils.showFileInExplorer(result);
@@ -223,7 +223,7 @@ public final class SettingsPage extends ScrollPane {
 
                     HBox buttonBox = new HBox();
                     buttonBox.setSpacing(10);
-                    buttonBox.getChildren().addAll(openLogFolderButton, exportLogPane);
+                    buttonBox.getChildren().addAll(openLogFolderButton, logButton);
                     BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
                     debugPane.setRight(buttonBox);
 

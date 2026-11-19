@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.game;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
@@ -26,6 +24,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -99,7 +99,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaAutoDeterminedOption;
     private final RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaVersionOption;
     private final RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaCustomOption;
-    private final JFXTextField javaVersionTextField;
+    private final M3TextField javaVersionTextField;
     private final FileSelector javaCustomSelector;
     private final ObjectProperty<@Nullable InheritableProperty<JavaVersionType>> activeParentJavaTypeProperty = new SimpleObjectProperty<>();
     private final ObjectProperty<@Nullable InheritableProperty<String>> activeParentCustomJavaVersionProperty = new SimpleObjectProperty<>();
@@ -141,7 +141,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         rootPane.getStyleClass().add("card-list");
         scrollPane.setContent(rootPane);
 
-        readOnlySettingsHint = new HintPane(MessageDialogPane.MessageType.WARNING);
+        readOnlySettingsHint = new HintPane(MessageType.WARNING);
         readOnlySettingsHint.setVisible(false);
         readOnlySettingsHint.setManaged(false);
         rootPane.getChildren().add(readOnlySettingsHint);
@@ -205,14 +205,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 bindJavaInheritanceButton(javaSublist);
 
                 javaAutoDeterminedOption = new RadioChoiceList.Choice<>(i18n("settings.game.java_directory.auto"), pair(JavaVersionType.AUTO, null));
-                javaVersionTextField = new JFXTextField();
-                javaVersionTextField.setValidators(new NumberValidator(true));
-                FXUtils.setValidateWhileTextChanged(javaVersionTextField, true);
-                FXUtils.setLimitWidth(javaVersionTextField, 40);
+                javaVersionTextField = FXUtils.newTextField();
+                var javaVersionLayout = FXUtils.newValidatedTextField(javaVersionTextField, new NumberValidator(true));
+                FXUtils.setLimitWidth(javaVersionLayout, 72);
                 javaVersionOption = createJavaPayloadChoice(
                         i18n("settings.game.java_directory.version"),
                         pair(JavaVersionType.VERSION, null),
-                        javaVersionTextField,
+                        javaVersionLayout,
                         GameSettings::customJavaVersionProperty);
 
                 javaCustomSelector = new FileSelector()
@@ -356,7 +355,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             }
 
             // Memory Setting
-            @Nullable JFXButton autoMemoryButton = !isPresetSetting ? createInheritanceButton() : null;
+            @Nullable M3IconButton autoMemoryButton = !isPresetSetting ? createInheritanceButton() : null;
             ObjectProperty<Boolean> memorySelectedValue = new SimpleObjectProperty<>(true);
             var memorySublist = new ComponentSublist(() -> {
                 var memoryItem = new RadioChoiceList<Boolean>();
@@ -367,12 +366,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 HBox.setMargin(maxMemorySlider, new Insets(0, 0, 0, 8));
                 HBox.setHgrow(maxMemorySlider, Priority.ALWAYS);
 
-                var maxMemoryTextField = new JFXTextField();
-                FXUtils.setLimitWidth(maxMemoryTextField, 60);
-                FXUtils.setValidateWhileTextChanged(maxMemoryTextField, true);
-                maxMemoryTextField.setValidators(new NumberValidator(i18n("input.number"), false));
+                var maxMemoryTextField = FXUtils.newTextField();
+                var maxMemoryLayout = FXUtils.newValidatedTextField(maxMemoryTextField, new NumberValidator(i18n("input.number"), false));
+                FXUtils.setLimitWidth(maxMemoryLayout, 88);
 
-                @Nullable JFXButton maxMemoryButton = null;
+                @Nullable M3IconButton maxMemoryButton = null;
                 if (!isPresetSetting) {
                     maxMemoryButton = createInheritanceButton();
                 }
@@ -381,7 +379,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 manualMemoryEditor.setAlignment(Pos.CENTER_RIGHT);
                 manualMemoryEditor.getChildren().setAll(
                         maxMemorySlider,
-                        maxMemoryTextField,
+                        maxMemoryLayout,
                         new Label(i18n("settings.memory.unit.mib")));
                 memoryItem.setChoices(List.of(
                         new RadioChoiceList.Choice<>(i18n("settings.memory.auto_allocate"), true),
@@ -466,7 +464,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 cboWindowSize.setEditable(true);
                 cboWindowSize.setPromptText("854x480");
                 cboWindowSize.getItems().setAll(getSupportedResolutions());
-                @Nullable JFXButton windowSizeInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
+                @Nullable M3IconButton windowSizeInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
                 bindWindowSizeComboBox(cboWindowSize, windowSizeInheritanceButton);
 
                 for (GameWindowType type : GameWindowType.values()) {
@@ -511,8 +509,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
                 var noneOption = new RadioChoiceList.Choice<>(i18n("settings.game.quick_play.none"), QuickPlayType.NONE);
 
-                var multiplayerTextField = new JFXTextField();
-                multiplayerTextField.setValidators(new Validator(str -> {
+                var multiplayerTextField = FXUtils.newTextField();
+                var multiplayerLayout = FXUtils.newValidatedTextField(multiplayerTextField, new Validator(i18n("server.address.malformed"), str -> {
                     if (StringUtils.isBlank(str))
                         return true;
                     try {
@@ -522,30 +520,28 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                         return false;
                     }
                 }));
-                FXUtils.setValidateWhileTextChanged(multiplayerTextField, true);
-                @Nullable JFXButton multiplayerInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
+                @Nullable M3IconButton multiplayerInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
                 var multiplayerOption = new EditorChoice<>(
                         i18n("settings.game.quick_play.multiplayer"),
                         QuickPlayType.MULTIPLAYER,
-                        multiplayerTextField,
+                        multiplayerLayout,
                         multiplayerInheritanceButton);
 
-                var singleplayerTextField = new JFXTextField();
-                singleplayerTextField.setValidators(new Validator(str -> {
+                var singleplayerTextField = FXUtils.newTextField();
+                var singleplayerLayout = FXUtils.newValidatedTextField(singleplayerTextField, new Validator(i18n("install.new_game.malformed"), str -> {
                     if (StringUtils.isBlank(str))
                         return true;
                     return FileUtils.isNameValid(str);
                 }));
-                FXUtils.setValidateWhileTextChanged(singleplayerTextField, true);
-                @Nullable JFXButton singleplayerInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
+                @Nullable M3IconButton singleplayerInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
                 var singleplayerOption = new EditorChoice<>(
                         i18n("settings.game.quick_play.singleplayer"),
                         QuickPlayType.SINGLEPLAYER,
-                        singleplayerTextField,
+                        singleplayerLayout,
                         singleplayerInheritanceButton);
 
-                var realmsTextField = new JFXTextField();
-                @Nullable JFXButton realmsInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
+                var realmsTextField = FXUtils.newTextField();
+                @Nullable M3IconButton realmsInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
                 var realmsOption = new EditorChoice<>(
                         i18n("settings.game.quick_play.realms"),
                         QuickPlayType.REALMS,
@@ -586,7 +582,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var gameArgsPane = new LinePane();
                 gameArgsPane.setTitle(i18n("settings.advanced.minecraft_arguments"));
                 {
-                    var txtGameArgs = new JFXTextField();
+                    var txtGameArgs = FXUtils.newTextField();
                     txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));
                     txtGameArgs.setPrefWidth(400);
                     gameArgsPane.setRight(txtGameArgs);
@@ -597,7 +593,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 environmentVariablesPane.setTitle(i18n("settings.advanced.environment_variables"));
                 environmentVariablesPane.setSubtitle(i18n("settings.advanced.environment_variables.subtitle"));
                 {
-                    var txtEnvironmentVariables = new JFXTextField();
+                    var txtEnvironmentVariables = FXUtils.newTextField();
                     txtEnvironmentVariables.setPrefWidth(400);
                     environmentVariablesPane.setRight(txtEnvironmentVariables);
                     bindIndependentTextField(environmentVariablesPane, txtEnvironmentVariables, GameSettings::environmentVariablesProperty);
@@ -650,7 +646,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             jvmSettings.getContent().add(jvmArgsPane);
             jvmArgsPane.setTitle(i18n("settings.advanced.jvm_args"));
             {
-                var txtJVMArgs = new JFXTextField();
+                var txtJVMArgs = FXUtils.newTextField();
                 // txtJVMArgs.setPromptText(i18n("settings.advanced.jvm_args.prompt"));
                 txtJVMArgs.setPrefWidth(400);
                 jvmArgsPane.setRight(txtJVMArgs);
@@ -661,7 +657,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var minMemoryPane = new LinePane();
                 minMemoryPane.setTitle(i18n("settings.memory.lower_bound"));
                 {
-                    var txtMinMemory = new JFXTextField();
+                    var txtMinMemory = FXUtils.newTextField();
                     txtMinMemory.setPrefWidth(160);
                     txtMinMemory.setTextFormatter(new TextFormatter<>(change -> {
                         change.setText(change.getText().replaceAll("[^0-9]", ""));
@@ -678,7 +674,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var metaspacePane = new LinePane();
                 metaspacePane.setTitle(i18n("settings.advanced.java_permanent_generation_space"));
                 {
-                    var txtMetaspace = new JFXTextField();
+                    var txtMetaspace = FXUtils.newTextField();
                     txtMetaspace.setPrefWidth(160);
                     txtMetaspace.setTextFormatter(new TextFormatter<>(change -> {
                         change.setText(change.getText().replaceAll("[^0-9]", ""));
@@ -710,7 +706,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             customCommandSettings.getContent().add(preLaunchCommandPane);
             preLaunchCommandPane.setTitle(i18n("settings.advanced.precall_command"));
             {
-                var txtPreLaunchCommand = new JFXTextField();
+                var txtPreLaunchCommand = FXUtils.newTextField();
                 txtPreLaunchCommand.setPromptText(i18n("settings.advanced.precall_command.prompt"));
                 txtPreLaunchCommand.setPrefWidth(400);
                 preLaunchCommandPane.setRight(txtPreLaunchCommand);
@@ -721,7 +717,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             customCommandSettings.getContent().add(wrapperPane);
             wrapperPane.setTitle(i18n("settings.advanced.wrapper_launcher"));
             {
-                var txtWrapper = new JFXTextField();
+                var txtWrapper = FXUtils.newTextField();
                 txtWrapper.setPromptText(i18n("settings.advanced.wrapper_launcher.prompt"));
                 txtWrapper.setPrefWidth(400);
                 wrapperPane.setRight(txtWrapper);
@@ -732,7 +728,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             customCommandSettings.getContent().add(postExitCommandPane);
             postExitCommandPane.setTitle(i18n("settings.advanced.post_exit_command"));
             {
-                var txtPostExitCommand = new JFXTextField();
+                var txtPostExitCommand = FXUtils.newTextField();
                 txtPostExitCommand.setPromptText(i18n("settings.advanced.post_exit_command.prompt"));
                 txtPostExitCommand.setPrefWidth(400);
                 postExitCommandPane.setRight(txtPostExitCommand);
@@ -1004,7 +1000,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             @Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime> value,
             Node rightNode,
             Function<GameSettings, InheritableProperty<T>> propertyGetter) {
-        @Nullable JFXButton inheritButton = null;
+        @Nullable M3IconButton inheritButton = null;
         if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             bindJavaPayloadInheritanceButton(inheritButton, propertyGetter);
@@ -1014,7 +1010,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Binds an inheritance button to a Java selection payload property.
     private <T> void bindJavaPayloadInheritanceButton(
-            JFXButton button,
+            M3IconButton button,
             Function<GameSettings, InheritableProperty<T>> propertyGetter) {
         ObjectProperty<@Nullable InheritableProperty<T>> activeProperty = new SimpleObjectProperty<>();
 
@@ -1084,7 +1080,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// Binds a text field to a setting property with independent override state.
     private void bindIndependentTextField(
             LineComponent line,
-            JFXTextField textField,
+            M3TextField textField,
             Function<GameSettings, SettingProperty<String>> propertyGetter) {
         IndependentSettingBinder.bindTextField(
                 isPresetSetting,
@@ -1102,7 +1098,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// Binds an integer text field to a setting property with independent override state.
     private void bindIndependentIntegerTextField(
             LineComponent line,
-            JFXTextField textField,
+            M3TextField textField,
             Function<GameSettings, ? extends SettingProperty<Integer>> propertyGetter) {
         IndependentSettingBinder.bindIntegerTextField(
                 isPresetSetting,
@@ -1118,7 +1114,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     /// Binds the windowed resolution selector to the width and height settings.
-    private void bindWindowSizeComboBox(JFXComboBox<String> comboBox, @Nullable JFXButton inheritButton) {
+    private void bindWindowSizeComboBox(JFXComboBox<String> comboBox, @Nullable M3IconButton inheritButton) {
         ObjectProperty<@Nullable InheritableProperty<Double>> activeWidthProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<Double>> activeHeightProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<Double>> activeParentWidthProperty = new SimpleObjectProperty<>();
@@ -1344,8 +1340,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     /// Creates a compact button that displays inherited or overridden state.
-    private JFXButton createInheritanceButton() {
-        var button = new JFXButton();
+    private M3IconButton createInheritanceButton() {
+        var button = new M3IconButton();
         button.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         Tooltip tooltip = new Tooltip();
@@ -1356,7 +1352,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     /// Updates the icon and pseudo class of an inheritance state button.
-    private static void updateInheritanceButton(JFXButton button, boolean inherited) {
+    private static void updateInheritanceButton(M3IconButton button, boolean inherited) {
         button.setGraphic((inherited ? SVG.PUBLIC : SVG.TUNE).createIcon(INHERIT_BUTTON_ICON_SIZE));
         button.pseudoClassStateChanged(PSEUDO_OVERRIDDEN, !inherited);
 
@@ -1456,7 +1452,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// Binds a text field to an inheritable string setting.
     private void bindInheritableTextField(
             LineComponent line,
-            JFXTextField textField,
+            M3TextField textField,
             Function<GameSettings, InheritableProperty<String>> propertyGetter) {
         bindInheritableStringProperty(line, textField.textProperty(), propertyGetter);
     }
@@ -1470,12 +1466,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         ObjectProperty<@Nullable InheritableProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton = null;
+        @Nullable M3IconButton inheritButton = null;
         if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             line.setTitleTrailing(inheritButton);
         }
-        @Nullable JFXButton finalInheritButton = inheritButton;
+        @Nullable M3IconButton finalInheritButton = inheritButton;
 
         InvalidationListener refresh = observable -> {
             GameSettings setting = currentSetting.get();
@@ -1581,7 +1577,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private void bindInheritableStringValue(
             Property<String> textProperty,
             Function<GameSettings, InheritableProperty<String>> propertyGetter,
-            @Nullable JFXButton inheritButton) {
+            @Nullable M3IconButton inheritButton) {
         ObjectProperty<@Nullable InheritableProperty<String>> activeProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
@@ -1762,7 +1758,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         final Holder<Boolean> updating = new Holder<>(false);
         ObjectProperty<@Nullable InheritableProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        JFXButton inheritButton = createInheritanceButton();
+        M3IconButton inheritButton = createInheritanceButton();
         line.setTitleTrailing(inheritButton);
 
         InvalidationListener refresh = observable -> {
@@ -1991,12 +1987,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         ObjectProperty<@Nullable InheritableProperty<T>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton = null;
+        @Nullable M3IconButton inheritButton = null;
         if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             sublist.setTitleRight(inheritButton);
         }
-        @Nullable JFXButton finalInheritButton = inheritButton;
+        @Nullable M3IconButton finalInheritButton = inheritButton;
 
         InvalidationListener propertyListener = observable -> {
             GameSettings setting = currentSetting.get();
@@ -2103,12 +2099,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         ObjectProperty<@Nullable InheritableProperty<GameWindowType>> activeParentWindowTypeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton = null;
+        @Nullable M3IconButton inheritButton = null;
         if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             sublist.setTitleRight(inheritButton);
         }
-        @Nullable JFXButton finalInheritButton = inheritButton;
+        @Nullable M3IconButton finalInheritButton = inheritButton;
 
         InvalidationListener propertyListener = observable -> {
             GameSettings setting = currentSetting.get();
@@ -2291,7 +2287,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         private final Node rightNode;
 
         /// Creates an editor choice.
-        private EditorChoice(String title, T value, Node rightNode, @Nullable JFXButton inheritButton) {
+        private EditorChoice(String title, T value, Node rightNode, @Nullable M3IconButton inheritButton) {
             super(title, value);
             this.rightNode = rightNode;
             if (inheritButton != null) {
@@ -2353,12 +2349,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         ObjectProperty<@Nullable InheritableProperty<T>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton = null;
+        @Nullable M3IconButton inheritButton = null;
         if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             button.setTitleTrailing(inheritButton);
         }
-        @Nullable JFXButton finalInheritButton = inheritButton;
+        @Nullable M3IconButton finalInheritButton = inheritButton;
 
         InvalidationListener refresh = observable -> {
             GameSettings setting = currentSetting.get();

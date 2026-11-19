@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.nbt;
 
-import javafx.scene.control.TreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import org.glavo.m3fx.controls.M3TreeCell;
 import org.glavo.nbt.NBTElement;
 import org.glavo.nbt.chunk.Chunk;
 import org.glavo.nbt.chunk.ChunkRegion;
@@ -12,9 +12,8 @@ import org.glavo.nbt.tag.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jetbrains.annotations.Nullable;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
-public final class NBTTreeCell extends TreeCell<@Nullable NBTElement> {
+/// Displays a Material tree row with the icon for its NBT element type.
+public final class NBTTreeCell extends M3TreeCell<NBTTreeItem.Entry> {
 
     private static @Nullable Image getIcon(NBTElement element) {
         if (element instanceof Tag tag) {
@@ -54,61 +53,20 @@ public final class NBTTreeCell extends TreeCell<@Nullable NBTElement> {
             return null;
     }
 
-    private final ImageView imageView;
+    /// Reused type icon for the current row.
+    private final ImageView imageView = new ImageView();
 
+    /// Creates a row with a 16-pixel type icon.
     public NBTTreeCell() {
-        imageView = new ImageView();
         imageView.setFitHeight(16);
         imageView.setFitWidth(16);
-        setGraphic(imageView);
     }
 
-    private NBTTreeItem getNBTTreeItem() {
-        return (NBTTreeItem) getTreeItem();
-    }
-
+    /// Updates the type icon when the Material row is assigned a different entry.
     @Override
-    public void updateItem(@Nullable NBTElement item, boolean empty) {
+    public void updateItem(NBTTreeItem.@Nullable Entry item, boolean empty) {
         super.updateItem(item, empty);
-
-        if (empty || item == null) {
-            imageView.setImage(null);
-            setText(null);
-            return;
-        }
-
-        imageView.setImage(getIcon(item));
-
-        String name = getNBTTreeItem().getOverrideName();
-        if (name == null) {
-            NBTElement value = getNBTTreeItem().getValue();
-
-            if (value instanceof Tag tag) {
-                if (tag.getParent() instanceof ListTag<?>) {
-                    name = Integer.toString(tag.getIndex());
-                } else {
-                    name = tag.getName();
-                }
-            } else if (value instanceof Chunk chunk) {
-                name = "Chunk (" + chunk.getLocalX() + ", " + chunk.getLocalZ() + ")";
-            } else {
-                name = "";
-            }
-        }
-
-        String text;
-        if (item instanceof ParentTag<?> parentTag) {
-            text = i18n("nbt.entries", parentTag.size());
-        } else if (item instanceof ValueTag<?> valueTag) {
-            text = valueTag.getAsString();
-        } else {
-            text = null;
-        }
-
-        if (text == null) {
-            setText(name);
-        } else {
-            setText(name + ": " + text);
-        }
+        imageView.setImage(empty || item == null ? null : getIcon(item.element()));
+        setGraphic(imageView.getImage() == null ? null : imageView);
     }
 }

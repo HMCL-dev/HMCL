@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
@@ -13,11 +12,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3OverlayPane;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.launch.ProcessListener;
@@ -25,12 +26,13 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.Themes;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
@@ -68,10 +70,12 @@ public class GameCrashWindow extends Stage {
     private final ProcessListener.ExitType exitType;
     private final LaunchOptions launchOptions;
     private final View view;
-    private final StackPane stackPane;
+    /// Hosts crash details and modal dialogs.
+    private final M3OverlayPane overlayPane;
 
     private final List<Log> logs;
 
+    /// Creates a crash report window with export actions and an M3FX dialog host.
     public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, HMCLGameInstance gameInstance, LaunchOptions launchOptions, List<Log> logs) {
         Themes.applyNativeDarkMode(this);
 
@@ -91,10 +95,11 @@ public class GameCrashWindow extends Stage {
 
         this.view = new View();
 
-        this.stackPane = new StackPane(view);
+        this.overlayPane = new M3OverlayPane();
+        this.overlayPane.setContent(view);
         this.feedbackTextFlow.getChildren().addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
 
-        setScene(new Scene(stackPane, 800, 480));
+        setScene(new Scene(overlayPane, 800, 480));
         StyleSheets.init(getScene());
         setTitle(i18n("game.crash.title"));
         FXUtils.setIcon(this);
@@ -289,6 +294,7 @@ public class GameCrashWindow extends Stage {
 
     private final class View extends VBox {
 
+        /// Builds the crash summary and diagnostic actions.
         View() {
             this.getStyleClass().add("game-crash-window");
 
@@ -412,47 +418,47 @@ public class GameCrashWindow extends Stage {
             HBox toolBar = new HBox();
             VBox.setMargin(toolBar, new Insets(0, 0, 4, 0));
             {
-                SpinnerPane exportButtonPane = new SpinnerPane();
-                exportButtonPane.getStyleClass().add("small-spinner-pane");
-
-                JFXButton exportButton = FXUtils.newRaisedButton(i18n("logwindow.export_game_crash_logs"));
-                exportButtonPane.setContent(exportButton);
+                M3Button exportButton = new M3Button(I18n.i18n("logwindow.export_game_crash_logs"), M3ButtonVariant.FILLED);
+                var exporting = FXUtils.newButtonLoadingProperty(exportButton);
+                exportButton.disableProperty().bind(exporting);
                 exportButton.setOnAction(e -> {
-                    exportButtonPane.showSpinner();
+                    exporting.set(true);
                     exportGameCrashInfo().whenCompleteAsync((result, exception) -> {
-                        exportButtonPane.hideSpinner();
+                        exporting.set(false);
 
                         if (exception == null) {
                             FXUtils.showFileInExplorer(result);
-                            var dialog = new MessageDialogPane.Builder(
+                            var dialog = new MessageDialogBuilder(
                                     i18n("settings.launcher.launcher_log.export.success", result),
                                     i18n("message.success"),
-                                    MessageDialogPane.MessageType.SUCCESS
+                                    MessageType.SUCCESS
                             ).ok(null).build();
-                            DialogUtils.show(stackPane, dialog);
+                            if (GameCrashWindow.this.isShowing())
+                                overlayPane.showDialog(dialog);
                         } else {
                             LOG.warning("Failed to export game crash info", exception);
-                            var dialog = new MessageDialogPane.Builder(
+                            var dialog = new MessageDialogBuilder(
                                     i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception),
                                     i18n("message.error"),
-                                    MessageDialogPane.MessageType.ERROR
+                                    MessageType.ERROR
                             ).ok(null).build();
-                            DialogUtils.show(stackPane, dialog);
+                            if (GameCrashWindow.this.isShowing())
+                                overlayPane.showDialog(dialog);
                         }
                     }, Schedulers.javafx());
                 });
 
-                JFXButton logButton = FXUtils.newRaisedButton(i18n("logwindow.title"));
+                M3Button logButton = new M3Button(I18n.i18n("logwindow.title"), M3ButtonVariant.FILLED);
                 logButton.setOnAction(e -> showLogWindow());
 
-                JFXButton helpButton = FXUtils.newRaisedButton(i18n("help"));
+                M3Button helpButton = new M3Button(I18n.i18n("help"), M3ButtonVariant.FILLED);
                 helpButton.setOnAction(e -> FXUtils.openLink(Metadata.CONTACT_URL));
                 FXUtils.installFastTooltip(helpButton, i18n("logwindow.help"));
 
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportButtonPane, logButton, helpButton);
+                toolBar.getChildren().setAll(exportButton, logButton, helpButton);
             }
 
             getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);

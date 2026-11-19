@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.decorator;
 
-import com.jfoenix.controls.JFXDialog;
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
@@ -14,12 +13,15 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.PickResult;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.JavaFXLauncher;
-import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
+import org.glavo.m3fx.controls.M3Dialog;
+import org.glavo.m3fx.controls.M3DialogHandle;
+import org.glavo.m3fx.controls.M3OverlayPane;
+import org.glavo.m3fx.theme.M3Theme;
+import org.glavo.m3fx.theme.M3ThemeManager;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
@@ -39,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Exercises JavaFX's native header hit testing without requiring a desktop window manager.
 @NotNullByDefault
@@ -138,43 +140,51 @@ final class NativeWindowDecorationTest {
         });
     }
 
-    /// Verifies dialog overlays preserve native header dragging without allowing ordinary mouse clicks through.
+    /// Verifies a scrim preserves native title dragging while blocking content dragging and ordinary clicks.
     @Test
-    void picksHeaderThroughDialogOverlay() throws Exception {
+    void preservesHeaderDraggingThroughDialogOverlay() throws Exception {
         onFxThread(() -> {
             NativeWindowDecoration decoration = createDecoration();
             Rectangle title = new Rectangle(20, 20);
             Button headerAction = new Button("Header action");
             decoration.setContent(new BorderPane(new StackPane(title), null, headerAction, null, null));
             decoration.headerBar.setPrefHeight(40);
-            StackPane root = new StackPane(new BorderPane(new StackPane(), decoration.headerBar, null, null, null));
+            M3OverlayPane root = new M3OverlayPane();
+            root.setContent(new BorderPane(new StackPane(), decoration.headerBar, null, null, null));
+            root.setAnimationsEnabled(false);
             Scene scene = new Scene(root, 800, 400);
-            Button dialogAction = new Button("Dialog action");
-            JFXDialogPane pane = new JFXDialogPane();
-            pane.push(dialogAction);
-            JFXDialog dialog = new JFXDialog(root, pane, JFXDialog.DialogTransition.NONE, false);
-            // A nested overlay node must inherit transparency for header hit testing only.
-            Region shade = new Region();
-            dialog.getChildren().add(0, shade);
-            decoration.setDraggable(pane, false);
-            dialog.show();
-            root.resize(800, 400);
-            root.applyCss();
-            root.layout();
+            M3ThemeManager.install(scene, M3Theme.defaultTheme());
+            Stage stage = new Stage();
+            stage.setScene(scene);
+            try {
+                stage.show();
+                Button dialogAction = new Button("Dialog action");
+                M3Dialog dialog = new M3Dialog();
+                var pane = dialog.getDialogPane();
+                pane.setAnimationsEnabled(false);
+                pane.setContent(dialogAction);
+                decoration.setDraggable(pane, false);
+                M3DialogHandle handle = root.showDialog(dialog);
+                root.applyCss();
+                root.layout();
 
-            assertNotEquals("DRAGBAR", pick(scene, title));
-            decoration.setDragTransparent(dialog);
-            assertEquals("DRAGBAR", pick(scene, title));
-            assertNotEquals("DRAGBAR", pick(scene, headerAction));
-            assertNotEquals("DRAGBAR", pick(scene, 20, 200));
-            assertSame(shade, pickMouse(scene, title.localToScene(10, 10)).getIntersectedNode());
+                assertNotEquals("DRAGBAR", pick(scene, title));
+                decoration.setDragTransparent(pane.getParent());
+                assertEquals("DRAGBAR", pick(scene, title));
+                assertNotEquals("DRAGBAR", pick(scene, headerAction));
+                assertNotEquals("DRAGBAR", pick(scene, 20, 200));
+                @Nullable Node picked = pickMouse(scene, title.localToScene(10, 10)).getIntersectedNode();
+                assertTrue(picked != null && picked.getStyleClass().contains("m3-scrim"));
 
-            // Dialog controls must still block native dragging even when they overlap the header.
-            Point2D actionCenter = dialogAction.localToScene(dialogAction.getWidth() / 2, dialogAction.getHeight() / 2);
-            pane.getParent().setTranslateY(20 - actionCenter.getY());
-            assertNotEquals("DRAGBAR", pick(scene, dialogAction));
-            dialog.close();
-            assertEquals("DRAGBAR", pick(scene, title));
+                // Dialog controls must still block native dragging even when they overlap the header.
+                Point2D actionCenter = dialogAction.localToScene(dialogAction.getWidth() / 2, dialogAction.getHeight() / 2);
+                pane.setTranslateY(20 - actionCenter.getY());
+                assertNotEquals("DRAGBAR", pick(scene, dialogAction));
+                handle.requestClose();
+                assertEquals("DRAGBAR", pick(scene, title));
+            } finally {
+                stage.close();
+            }
             return null;
         });
     }

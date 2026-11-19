@@ -2,10 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.directory;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXTextField;
-import com.jfoenix.validation.RequiredFieldValidator;
-import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -20,6 +16,9 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -31,6 +30,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -56,7 +56,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
     private final @Nullable GameDirectory gameDirectory;
 
     /// Text field used to edit the game directory display name.
-    private final JFXTextField txtGameDirectoryName;
+    private final M3TextField txtGameDirectoryName;
 
     /// Directory chooser bound to [#location].
     private final LineFileChooserButton gameDir;
@@ -93,29 +93,17 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                         gameDirectoryNamePane.setLeft(label);
                         BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
-                        txtGameDirectoryName = new JFXTextField();
-                        gameDirectoryNamePane.setRight(txtGameDirectoryName);
-                        RequiredFieldValidator validator = new RequiredFieldValidator();
-                        validator.setMessage(i18n("input.not_empty"));
-                        txtGameDirectoryName.getValidators().add(validator);
-                        BorderPane.setMargin(txtGameDirectoryName, new Insets(8, 0, 8, 0));
-
+                        txtGameDirectoryName = FXUtils.newTextField();
                         txtGameDirectoryName.setText(gameDirectoryDisplayName);
-                        txtGameDirectoryName.getValidators().add(new ValidatorBase() {
-                            {
-                                setMessage(i18n("game_directory.already_exists"));
-                            }
-
-                            /// Rejects names used by other game directories, excluding the entry being edited.
-                            @Override
-                            protected void eval() {
-                                JFXTextField control = (JFXTextField) this.getSrcControl();
-                                hasErrors.set(GameDirectoryManager.getGameDirectories().stream()
-                                        .filter(existingGameDirectory -> existingGameDirectory != gameDirectory)
-                                        .anyMatch(existingGameDirectory -> Objects.equals(
-                                                GameDirectoryManager.getGameDirectoryCustomName(existingGameDirectory), control.getText())));
-                            }
-                        });
+                        var nameLayout = FXUtils.newValidatedTextField(txtGameDirectoryName,
+                                (input, text) -> text.isEmpty() ? i18n("input.not_empty") : null,
+                                new Validator(i18n("game_directory.already_exists"), text ->
+                                        GameDirectoryManager.getGameDirectories().stream()
+                                                .filter(existing -> existing != gameDirectory)
+                                                .noneMatch(existing -> Objects.equals(
+                                                        GameDirectoryManager.getGameDirectoryCustomName(existing), text))));
+                        BorderPane.setMargin(nameLayout, new Insets(8, 0, 8, 0));
+                        gameDirectoryNamePane.setRight(nameLayout);
                     }
 
                     gameDir = new LineFileChooserButton();
@@ -147,7 +135,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
         savePane.setStyle("-fx-padding: 20;");
         StackPane.setAlignment(savePane, Pos.BOTTOM_RIGHT);
         {
-            JFXButton saveButton = FXUtils.newRaisedButton(i18n("button.save"));
+            M3Button saveButton = new M3Button(I18n.i18n("button.save"), M3ButtonVariant.FILLED);
             savePane.setRight(saveButton);
             BorderPane.setAlignment(savePane, Pos.BOTTOM_RIGHT);
             StackPane.setAlignment(saveButton, Pos.BOTTOM_RIGHT);
@@ -156,12 +144,12 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
             String initialLocation = getLocation();
             boolean initialUseRelativePath = switchUseRelativePath.isSelected();
             saveButton.disableProperty().bind(Bindings.createBooleanBinding(
-                    () -> !txtGameDirectoryName.validate() || StringUtils.isBlank(getLocation())
+                    () -> txtGameDirectoryName.isError() || StringUtils.isBlank(getLocation())
                             || (gameDirectory != null
                             && Objects.equals(txtGameDirectoryName.getText(), gameDirectoryDisplayName)
                             && Objects.equals(getLocation(), initialLocation)
                             && switchUseRelativePath.isSelected() == initialUseRelativePath),
-                    txtGameDirectoryName.textProperty(), location, switchUseRelativePath.selectedProperty()));
+                    txtGameDirectoryName.textProperty(), txtGameDirectoryName.errorProperty(), location, switchUseRelativePath.selectedProperty()));
         }
 
         if (gameDirectory == null) {
@@ -258,7 +246,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
     @FXThread
     private void onSave() {
         if (Objects.equals(Path.of(getLocation()).getRoot(), Path.of(getLocation()))) {
-            Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, this::doSave, null);
+            Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageType.WARNING, this::doSave, null);
         } else doSave();
     }
 

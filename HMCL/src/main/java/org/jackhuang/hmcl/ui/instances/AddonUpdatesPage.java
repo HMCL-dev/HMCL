@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 
@@ -20,6 +18,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -43,6 +45,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jetbrains.annotations.Nullable;
@@ -118,11 +121,11 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             actions.setPadding(new Insets(8));
             actions.setAlignment(Pos.CENTER_RIGHT);
 
-            JFXCheckBox allEnabledBox = new JFXCheckBox();
+            M3CheckBox allEnabledBox = new M3CheckBox();
             allEnabledBox.setText(i18n("button.select_all"));
             FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
 
-            JFXCheckBox showPreviewCheck = new JFXCheckBox(i18n("addon.check_update.preview"));
+            M3CheckBox showPreviewCheck = new M3CheckBox(i18n("addon.check_update.preview"));
             {
                 List<Subscription> subscriptions = new ArrayList<>();
                 FXUtils.onChangeAndOperate(showPreviewCheck.selectedProperty(), preview -> {
@@ -137,13 +140,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
 
-            JFXButton exportListButton = FXUtils.newRaisedButton(i18n("button.export"));
+            M3Button exportListButton = new M3Button(I18n.i18n("button.export"), M3ButtonVariant.FILLED);
             exportListButton.setOnAction(e -> exportList());
 
-            JFXButton nextButton = FXUtils.newRaisedButton(i18n("addon.check_update.confirm"));
+            M3Button nextButton = new M3Button(I18n.i18n("addon.check_update.confirm"), M3ButtonVariant.FILLED);
             nextButton.setOnAction(e -> updateFiles());
 
-            JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
+            M3Button cancelButton = new M3Button(I18n.i18n("button.cancel"), M3ButtonVariant.FILLED);
             cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
             onEscPressed(this, cancelButton::fire);
             onEscPressed(listView, cancelButton::fire);
@@ -170,7 +173,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                         Controllers.dialog(i18n("addon.check_update.failed_download") + "\n" +
                                         task.getFailedAddons().stream().map(LocalAddonFile::getFileName).collect(Collectors.joining("\n")),
                                 i18n("install.failed"),
-                                MessageDialogPane.MessageType.ERROR);
+                                MessageType.ERROR);
                     }
 
                     if (exception == null) {
@@ -206,7 +209,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             if (exception == null) {
                 Controllers.dialog(path.toString(), i18n("message.success"));
             } else {
-                Controllers.dialog("", i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                Controllers.dialog("", i18n("message.error"), MessageType.ERROR);
             }
         }), i18n("button.export"), TaskCancellationAction.NORMAL);
     }
@@ -309,10 +312,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private final StackPane pane = new StackPane();
         private final RipplerContainer ripplerContainer;
 
-        private final JFXCheckBox enabledBox = new JFXCheckBox();
+        private final M3CheckBox enabledBox = new M3CheckBox();
         private final ImageContainer imageContainer = new ImageContainer(40);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton changelogButton = FXUtils.newToggleButton4(SVG.INFO);
+        private final M3IconButton changelogButton = new M3IconButton(SVG.INFO.createIcon());
 
         AddonUpdateListCell(ListView<AddonUpdatesPage.AddonUpdateObject> listView) {
             HBox hbox = new HBox(16);
@@ -429,8 +432,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             versionPageBtn.setDisable(true);
             loadVersionPageUrl(object, versionPageBtn);
 
-            JFXButton closeButton = new JFXButton(i18n("button.ok"));
-            closeButton.getStyleClass().add("dialog-accept");
+            M3Button closeButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
             closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             setActions(versionPageBtn, closeButton);

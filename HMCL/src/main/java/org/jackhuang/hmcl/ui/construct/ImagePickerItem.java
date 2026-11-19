@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -16,6 +15,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
@@ -35,10 +35,10 @@ public final class ImagePickerItem extends BorderPane {
         imageContainer = new ImageContainer(32);
         imageContainer.setSmooth(false);
 
-        JFXButton selectButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
+        M3IconButton selectButton = new M3IconButton(SVG.EDIT.createIcon(20));
         selectButton.onActionProperty().bind(onSelectButtonClicked);
 
-        JFXButton deleteButton = FXUtils.newToggleButton4(SVG.RESTORE, 20);
+        M3IconButton deleteButton = new M3IconButton(SVG.RESTORE.createIcon(20));
         deleteButton.onActionProperty().bind(onDeleteButtonClicked);
 
         FXUtils.installFastTooltip(selectButton, i18n("button.edit"));

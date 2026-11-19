@@ -50,6 +50,18 @@ if (buildNumber != null) {
 
 val embedResources = configurations.register("embedResources")
 
+// Set m3fxLocalVersion to use an org.glavo:m3fx publication from Maven Local.
+val m3fxLocalVersion = providers.gradleProperty("m3fxLocalVersion").orNull
+if (m3fxLocalVersion != null) {
+    require(m3fxLocalVersion.isNotBlank()) { "m3fxLocalVersion must not be blank" }
+    repositories {
+        exclusiveContent {
+            forRepository { mavenLocal() }
+            filter { includeModule("org.glavo", "m3fx") }
+        }
+    }
+}
+
 dependencies {
     implementation(project(":HMCLCore"))
     implementation(project(":HMCLBoot"))
@@ -58,6 +70,11 @@ dependencies {
     implementation(libs.fxsvgimage)
     implementation(libs.java.info)
     implementation(libs.monet.fx)
+    if (m3fxLocalVersion != null) {
+        implementation("org.glavo:m3fx:$m3fxLocalVersion")
+    } else {
+        implementation(libs.m3fx)
+    }
     implementation(libs.nayuki.qrcodegen)
     implementation(libs.uuid.tools)
 
@@ -159,6 +176,9 @@ tasks.shadowJar {
         exclude(dependency("com.google.code.gson:.*:.*"))
         exclude(dependency("net.java.dev.jna:jna:.*"))
         exclude(dependency("libs:JFoenix:.*"))
+        // M3FX skins can be loaded through CSS rather than direct class references.
+        exclude(dependency("com.github.Glavo:m3fx:.*"))
+        exclude(dependency("org.glavo:m3fx:.*"))
         exclude(project(":HMCLBoot"))
     }
 

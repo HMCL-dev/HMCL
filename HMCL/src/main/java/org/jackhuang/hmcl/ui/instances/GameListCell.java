@@ -2,12 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
-import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.NodeOrientation;
 import javafx.geometry.Point2D;
@@ -15,8 +12,11 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3RadioButton;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -37,14 +37,12 @@ public final class GameListCell extends ListCell<GameListItem> {
     /// Displays the instance title, subtitle, tag, and controls.
     private final TwoLineListItem content;
 
-    /// Reflects and changes the repository's selected instance.
-    private final JFXRadioButton chkSelected;
     /// Starts an update for an instance that supports updates.
-    private final JFXButton btnUpgrade;
+    private final M3IconButton btnUpgrade;
     /// Opens the settings for this cell's game instance.
-    private final JFXButton btnEditInstance;
+    private final M3IconButton btnEditInstance;
     /// Toggles the current instance's management menu.
-    private final JFXButton btnManage;
+    private final M3IconButton btnManage;
 
     /// Contains the actions available for the current instance.
     private final HBox right;
@@ -70,22 +68,18 @@ public final class GameListCell extends ListCell<GameListItem> {
         this.graphic = container;
 
         {
-            this.chkSelected = new JFXRadioButton() {
-                /// Selects this cell's game instance when the radio button is enabled and unselected.
-                @Override
-                public void fire() {
-                    if (!isDisable() && !isSelected()) {
-                        fireEvent(new ActionEvent());
-                        @Nullable GameListItem item = GameListCell.this.getItem();
-                        if (item != null) {
-                            item.getRepository().setSelectedInstance(item.getGameInstance());
-                        }
-                    }
-                }
-            };
-        }
+            M3RadioButton chkSelected = new M3RadioButton();
+            // Grouped radios ignore repeat activation of the selected instance.
+            chkSelected.setToggleGroup(new ToggleGroup());
+            var instanceSelected = itemProperty().flatMap(GameListItem::selectedProperty).orElse(false);
+            instanceSelected.subscribe(chkSelected::setSelected);
+            chkSelected.setOnAction(event -> {
+                @Nullable GameListItem item = getItem();
+                if (item != null)
+                    item.getRepository().setSelectedInstance(item.getGameInstance());
+                chkSelected.setSelected(instanceSelected.getValue());
+            });
 
-        {
             this.imageView = new ImageContainer(32);
             imageView.setMouseTransparent(true);
             HBox leading = new HBox(8, chkSelected, imageView);
@@ -108,7 +102,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             right.setAlignment(Pos.CENTER_RIGHT);
             right.setPickOnBounds(false);
 
-            this.btnUpgrade = FXUtils.newToggleButton4(SVG.UPDATE);
+            this.btnUpgrade = new M3IconButton(SVG.UPDATE.createIcon());
             btnUpgrade.setOnAction(e -> {
                 @Nullable GameListItem item = this.getItem();
                 if (item != null)
@@ -117,7 +111,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             FXUtils.installFastTooltip(btnUpgrade, i18n("instance.update"));
             right.getChildren().add(btnUpgrade);
 
-            this.btnEditInstance = FXUtils.newToggleButton4(SVG.SETTINGS);
+            this.btnEditInstance = new M3IconButton(SVG.SETTINGS.createIcon());
             btnEditInstance.setOnAction(e -> {
                 @Nullable GameListItem item = this.getItem();
                 if (item != null)
@@ -126,7 +120,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             FXUtils.installFastTooltip(btnEditInstance, i18n("instance.manage.manage"));
             right.getChildren().add(btnEditInstance);
 
-            this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
+            this.btnManage = new M3IconButton(SVG.MORE_VERT.createIcon());
             btnManage.setOnAction(e -> {
                 @Nullable GameListItem item = this.getItem();
                 if (item == null)
@@ -195,14 +189,12 @@ public final class GameListCell extends ListCell<GameListItem> {
         this.content.subtitleProperty().unbind();
         this.tag.unbind();
         this.right.getChildren().clear();
-        this.chkSelected.selectedProperty().unbind();
 
         if (empty || item == null) {
             setGraphic(null);
         } else {
             setGraphic(this.graphic);
 
-            this.chkSelected.selectedProperty().bind(item.selectedProperty());
             this.imageView.imageProperty().bind(item.imageProperty());
             this.content.titleProperty().bind(item.titleProperty());
             this.content.subtitleProperty().bind(item.subtitleProperty());

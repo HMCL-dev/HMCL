@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXSpinner;
 import io.nayuki.qrcodegen.QrCode;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.PseudoClass;
@@ -16,6 +15,8 @@ import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.shape.SVGPath;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -56,8 +57,9 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     private TaskExecutor browserTaskExecutor;
     private TaskExecutor deviceTaskExecutor;
 
-    private final JFXButton btnLogin;
-    private final SpinnerPane loginButtonSpinner;
+    private final M3Button btnLogin;
+    /// Shows progress until the current login step accepts another action.
+    private final BooleanProperty loggingIn;
 
     public MicrosoftAccountLoginPane() {
         this(false);
@@ -85,18 +87,18 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
         onEscPressed(this, this::onCancel);
 
-        btnLogin = new JFXButton(i18n("account.login"));
-        btnLogin.getStyleClass().add("dialog-accept");
+        btnLogin = new M3Button(i18n("account.login"), M3ButtonVariant.TEXT);
 
-        loginButtonSpinner = new SpinnerPane();
-        loginButtonSpinner.getStyleClass().add("small-spinner-pane");
-        loginButtonSpinner.setContent(btnLogin);
+        loggingIn = FXUtils.newButtonLoadingProperty(btnLogin);
+        if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty())
+            btnLogin.setDisable(true);
+        else
+            btnLogin.disableProperty().bind(loggingIn);
 
-        JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
-        btnCancel.getStyleClass().add("dialog-cancel");
+        M3Button btnCancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
         btnCancel.setOnAction(e -> onCancel());
 
-        setActions(loginButtonSpinner, btnCancel);
+        setActions(btnCancel, btnLogin);
 
         holder.registerWeak(Accounts.OAUTH_CALLBACK.onOpenBrowserAuthorizationCode, event -> Platform.runLater(() -> {
             if (step.get() instanceof Step.StartAuthorizationCodeLogin)
@@ -128,38 +130,33 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         rootContainer.getChildren().add(warningPane);
 
         if (!IntegrityChecker.isOfficial()) {
-            var unofficialHintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+            var unofficialHintPane = new HintPane(MessageType.WARNING);
             unofficialHintPane.setSegment(i18n("unofficial.hint"));
             warningPane.getChildren().setAll(unofficialHintPane);
         }
 
         if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
-            HintPane snapshotHint = new HintPane(MessageDialogPane.MessageType.ERROR);
+            HintPane snapshotHint = new HintPane(MessageType.ERROR);
             snapshotHint.setSegment(i18n("account.methods.microsoft.snapshot"));
             warningPane.getChildren().setAll(snapshotHint);
-            btnLogin.setDisable(true);
-            loginButtonSpinner.setLoading(false);
+            loggingIn.set(false);
         } else if (currentStep instanceof Step.Init) {
             btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
-            loginButtonSpinner.setLoading(false);
+            loggingIn.set(false);
 
-            var hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+            var hintPane = new HintPane(MessageType.INFO);
             hintPane.setText(i18n("account.methods.microsoft.hint"));
             rootContainer.getChildren().add(hintPane);
         } else if (currentStep instanceof Step.StartAuthorizationCodeLogin) {
-            loginButtonSpinner.setLoading(false);
+            loggingIn.set(true);
             cancelAllTasks();
-
-            rootContainer.getChildren().add(new JFXSpinner());
 
             browserTaskExecutor = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE))
                     .whenComplete(Schedulers.javafx(), this::onLoginCompleted)
                     .executor(true);
         } else if (currentStep instanceof Step.StartDeviceCodeLogin) {
-            loginButtonSpinner.setLoading(true);
+            loggingIn.set(true);
             cancelAllTasks();
-
-            rootContainer.getChildren().add(new JFXSpinner());
 
             deviceTaskExecutor = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE))
                     .whenComplete(Schedulers.javafx(), this::onLoginCompleted)
@@ -167,11 +164,11 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         } else if (currentStep instanceof Step.WaitForOpenBrowser wait) {
             btnLogin.setOnAction(e -> {
                 FXUtils.openLink(wait.url());
-                loginButtonSpinner.setLoading(true);
+                loggingIn.set(true);
             });
-            loginButtonSpinner.setLoading(false);
+            loggingIn.set(false);
 
-            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+            HintPane hintPane = new HintPane(MessageType.INFO);
             hintPane.setSegment(
                     i18n("account.methods.microsoft.methods.browser.hint", StringUtils.escapeXmlAttribute(wait.url()), wait.url()),
                     FXUtils::copyText
@@ -179,7 +176,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
             rootContainer.getChildren().add(hintPane);
         } else if (currentStep instanceof Step.WaitForScanQrCode wait) {
-            loginButtonSpinner.setLoading(true);
+            loggingIn.set(true);
 
             VBox leftVBox = new VBox(6);
             leftVBox.setAlignment(Pos.CENTER);
@@ -199,7 +196,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                     ? "https://www.microsoft.com/link?otc=" + wait.userCode()
                     : wait.verificationUri();
 
-            var deviceHint = new HintPane(MessageDialogPane.MessageType.INFO);
+            var deviceHint = new HintPane(MessageType.INFO);
             deviceHint.setSegment(i18n("account.methods.microsoft.methods.device.hint",
                     StringUtils.escapeXmlAttribute(scanUri),
                     wait.verificationUri(),
@@ -227,18 +224,18 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
             rootContainer.getChildren().setAll(hbox);
         } else if (currentStep instanceof Step.DeviceLoginCompleted) {
-            loginButtonSpinner.setLoading(true);
+            loggingIn.set(true);
 
-            var hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+            var hintPane = new HintPane(MessageType.INFO);
             hintPane.setSegment(i18n("account.methods.microsoft.methods.device.hint.completed"));
 
             rootContainer.getChildren().addAll(hintPane);
         } else if (currentStep instanceof Step.LoginFailed failed) {
             btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
-            loginButtonSpinner.setLoading(false);
+            loggingIn.set(false);
             cancelAllTasks();
 
-            HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
+            HintPane errHintPane = new HintPane(MessageType.ERROR);
             errHintPane.setSegment(failed.message());
             rootContainer.getChildren().add(errHintPane);
         }

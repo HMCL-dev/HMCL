@@ -2,34 +2,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.validation.base.ValidatorBase;
-import javafx.beans.NamedArg;
-import javafx.scene.control.TextInputControl;
-
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class RequiredValidator extends ValidatorBase {
+/// Requires non-blank input in a Material text field.
+@NotNullByDefault
+public final class RequiredValidator extends Validator {
 
+    /// Uses the localized required-field message.
     public RequiredValidator() {
         this(i18n("input.not_empty"));
     }
 
-    public RequiredValidator(@NamedArg("message") String message) {
-        super(message);
-    }
-
-    @Override
-    protected void eval() {
-        if (srcControl.get() instanceof TextInputControl) {
-            evalTextInputField();
-        }
-    }
-
-    private void evalTextInputField() {
-        TextInputControl textField = ((TextInputControl) srcControl.get());
-
-        hasErrors.set(StringUtils.isBlank(textField.getText()));
+    /// Uses the supplied validation message.
+    public RequiredValidator(String message) {
+        super(message, StringUtils::isNotBlank);
     }
 }

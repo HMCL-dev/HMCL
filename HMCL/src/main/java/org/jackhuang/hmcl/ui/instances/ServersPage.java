@@ -6,7 +6,6 @@ import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
@@ -23,6 +22,12 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.image.ImageLoaders;
@@ -341,14 +346,14 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
     }
 
     private void showModifiedErrorDialog(@NotNull ServersDatFile.FileModifiedExternalException e) {
-        Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.file.error.external"), null, MessageDialogPane.MessageType.ERROR)
+        Controllers.dialog(new MessageDialogBuilder(i18n("server.manage.file.error.external"), null, MessageType.ERROR)
                 .addCancel(i18n("button.refresh"), this::refresh)
                 .build()
         );
     }
 
     private void showModifiedErrorDialog(@NotNull IllegalStateException e) {
-        Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.file.error.state"), null, MessageDialogPane.MessageType.ERROR)
+        Controllers.dialog(new MessageDialogBuilder(i18n("server.manage.file.error.state"), null, MessageType.ERROR)
                 .addCancel(i18n("button.refresh"), this::refresh)
                 .build()
         );
@@ -457,13 +462,12 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         private final Server reference;
         private final Type type;
         private final GridPane body = new GridPane();
-        private final JFXTextField serverNameField = new JFXTextField();
-        private final JFXTextField serverIpField = new JFXTextField();
+        private final M3TextField serverNameField = FXUtils.newTextField();
+        private final M3TextField serverIpField = FXUtils.newTextField();
         private final JFXComboBox<Server.ServerPackStatus> serverPackStatusField = new JFXComboBox<>();
 
-        private final JFXButton btnAccept = new JFXButton();
-        private final JFXButton btnCancel = new JFXButton();
-        private final SpinnerPane spinner = new SpinnerPane();
+        private final M3Button btnAccept = new M3Button("", M3ButtonVariant.TEXT);
+        private final M3Button btnCancel = new M3Button("", M3ButtonVariant.TEXT);
 
         public EditServerDialog(Type type, @Nullable Server reference, Consumer<Server> handleCallback) {
             this.type = type;
@@ -537,7 +541,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 GridPane.setHalignment(label, HPos.LEFT);
                 body.add(label, 0, 1);
 
-                serverIpField.setValidators(
+                var addressLayout = FXUtils.newValidatedTextField(serverIpField,
                         new RequiredValidator(),
                         new Validator(i18n("server.address.malformed"), str -> {
                             if (StringUtils.isBlank(str))
@@ -550,9 +554,8 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                             }
                         })
                 );
-                setValidateWhileTextChanged(serverIpField, true);
 
-                body.add(serverIpField, 1, 1);
+                body.add(addressLayout, 1, 1);
 
                 if (referenceServerIP != null) {
                     serverIpField.setText(referenceServerIP);
@@ -587,26 +590,12 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 case EDIT -> i18n("server.manage.edit.accept");
                 case ADD -> i18n("server.manage.add.accept");
             });
-            btnAccept.getStyleClass().add("dialog-accept");
-            btnAccept.disableProperty().bind(new BooleanBinding() {
-                {
-                    bind(serverIpField.textProperty());
-                }
-
-                @Override
-                protected boolean computeValue() {
-                    return !serverIpField.validate();
-                }
-            });
+            btnAccept.disableProperty().bind(serverIpField.errorProperty());
 
             btnCancel.setText(i18n("button.cancel"));
-            btnCancel.getStyleClass().add("dialog-cancel");
             onEscPressed(this, btnCancel::fire);
 
-            spinner.getStyleClass().add("small-spinner-pane");
-            spinner.setContent(btnAccept);
-
-            HBox actions = new HBox(spinner, btnCancel);
+            HBox actions = new HBox(btnCancel, btnAccept);
             actions.setAlignment(Pos.CENTER_RIGHT);
 
             rootLayout.setActions(actions);
@@ -699,7 +688,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
             contentLine2AddressMaskPane.labelAddStyleClass("subtitle");
 
-            JFXButton editBtn = FXUtils.newToggleButton4(SVG.EDIT);
+            M3IconButton editBtn = new M3IconButton(SVG.EDIT.createIcon());
             FXUtils.installFastTooltip(editBtn, i18n("server.manage.edit"));
             editBtn.setOnAction(event -> {
                 ServerListItem item = getItem();
@@ -707,7 +696,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                     page.editServer(item);
             });
 
-            JFXButton launchBtn = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
+            M3IconButton launchBtn = new M3IconButton(SVG.ROCKET_LAUNCH.createIcon());
             FXUtils.installFastTooltip(launchBtn, i18n("instance.launch"));
             launchBtn.setOnAction(event -> {
                 ServerListItem item = getItem();
@@ -716,7 +705,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 }
             });
 
-            JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
+            M3IconButton btnMore = new M3IconButton(SVG.MORE_VERT.createIcon());
             btnMore.setOnAction(event -> {
                 ServerListItem item = getItem();
                 if (item != null) {
@@ -812,7 +801,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
     private final class ServerListPageSkin extends SkinBase<ServersPage> {
         private final JFXListView<ServersPage.ServerListItem> listView = new JFXListView<>();
-        private final JFXTextField searchField = new JFXTextField();
+        private final M3TextField searchField = FXUtils.newTextField(M3TextInputVariant.FILLED);
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
         private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
@@ -847,10 +836,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 toolbarNormal.setAlignment(Pos.CENTER_LEFT);
                 toolbarNormal.setPadding(toolbarPadding);
                 toolbarNormal.getChildren().setAll(
-                        createCheckBox(box -> {
-                            box.setText(i18n("server.manage.show_all"));
-                            box.selectedProperty().bindBidirectional(ServersPage.this.showAll);
-                        }),
+                        createShowAllCheckBox(),
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, ServersPage.this::refresh),
                         createToolbarButton2(i18n("server.manage.add"), SVG.ADD, ServersPage.this::addServer),
                         createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
@@ -869,7 +855,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                     }
                 });
 
-                JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
+                M3IconButton closeSearchBar = createToolbarButton2(SVG.CLOSE, () -> {
                     changeToolbar(toolbarNormal);
                     searchField.clear();
                     searchPause.stop();
@@ -878,10 +864,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 });
                 onEscPressed(searchField, closeSearchBar::fire);
                 searchBar.getChildren().setAll(
-                        createCheckBox(box -> {
-                            box.setText(i18n("server.manage.show_all"));
-                            box.selectedProperty().bindBidirectional(ServersPage.this.showAll);
-                        }),
+                        createShowAllCheckBox(),
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, ServersPage.this::refresh),
                         searchField,
                         closeSearchBar
@@ -941,10 +924,10 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             root.getContent().add(center);
         }
 
-        private JFXCheckBox createCheckBox(Consumer<JFXCheckBox> consumer) {
-            JFXCheckBox box = new JFXCheckBox();
-            // change style.
-            consumer.accept(box);
+        /// Keeps the normal and search toolbars in sync with the server filter.
+        private M3CheckBox createShowAllCheckBox() {
+            M3CheckBox box = new M3CheckBox(i18n("server.manage.show_all"));
+            box.selectedProperty().bindBidirectional(ServersPage.this.showAll);
             return box;
         }
 

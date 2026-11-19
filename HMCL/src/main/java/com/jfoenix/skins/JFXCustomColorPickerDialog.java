@@ -19,6 +19,7 @@
 
 package com.jfoenix.skins;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.*;
 import com.jfoenix.svg.SVGGlyph;
 import com.jfoenix.transitions.JFXFillTransition;
@@ -40,9 +41,13 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.*;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.monetfx.ColorScheme;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -96,9 +101,9 @@ public class JFXCustomColorPickerDialog extends StackPane {
 
         JFXTabPane tabs = new JFXTabPane();
 
-        JFXTextField rgbField = new JFXTextField();
-        JFXTextField hsbField = new JFXTextField();
-        JFXTextField hexField = new JFXTextField();
+        M3TextField rgbField = FXUtils.newTextField();
+        M3TextField hsbField = FXUtils.newTextField();
+        M3TextField hexField = FXUtils.newTextField();
 
         rgbField.getStyleClass().add("custom-color-field");
         rgbField.setPromptText("RGB Color");
@@ -162,15 +167,13 @@ public class JFXCustomColorPickerDialog extends StackPane {
         HBox actionsHBox = new HBox();
         actionsHBox.getStyleClass().add("jfx-color-dialog-actions");
 
-        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
+        M3Button acceptButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
         acceptButton.setOnAction(event -> updateColor());
-        acceptButton.getStyleClass().add("jfx-color-dialog-accept");
 
-        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+        M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
         cancelButton.setOnAction(event -> close());
-        cancelButton.getStyleClass().add("jfx-color-dialog-cancel");
 
-        actionsHBox.getChildren().addAll(acceptButton, cancelButton);
+        actionsHBox.getChildren().addAll(cancelButton, acceptButton);
         container.getChildren().add(actionsHBox);
 
         initRun = () -> {
@@ -242,16 +245,12 @@ public class JFXCustomColorPickerDialog extends StackPane {
                             Insets.EMPTY));
                 }, curvedColorPicker.selectedPath.get().fillProperty()));
 
-                // bind text field line color
-                rgbField.focusColorProperty().bind(Bindings.createObjectBinding(() -> {
-                    return pane.getBackground().getFills().get(0).getFill();
-                }, pane.backgroundProperty()));
-                hsbField.focusColorProperty().bind(Bindings.createObjectBinding(() -> {
-                    return pane.getBackground().getFills().get(0).getFill();
-                }, pane.backgroundProperty()));
-                hexField.focusColorProperty().bind(Bindings.createObjectBinding(() -> {
-                    return pane.getBackground().getFills().get(0).getFill();
-                }, pane.backgroundProperty()));
+                var fieldAccent = Bindings.createStringBinding(() ->
+                        "-m3-color-primary: " + FXUtils.toWeb((Color) pane.getBackground().getFills().get(0).getFill()) + ";",
+                        pane.backgroundProperty());
+                rgbField.styleProperty().bind(fieldAccent);
+                hsbField.styleProperty().bind(fieldAccent);
+                hexField.styleProperty().bind(fieldAccent);
                 acceptButton.textFillProperty().bind(Bindings.createObjectBinding(() -> {
                     Color fill = (Color) pane.getBackground().getFills().get(0).getFill();
                     return ColorScheme.newBuilder(Themes.getColorScheme())

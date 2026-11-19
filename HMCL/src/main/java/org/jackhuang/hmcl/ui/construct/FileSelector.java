@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -14,6 +12,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -30,7 +30,7 @@ public class FileSelector extends HBox {
     private SelectionMode selectionMode = SelectionMode.FILE;
     private final ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
 
-    JFXButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
+    M3IconButton selectButton = new M3IconButton(SVG.FOLDER_OPEN.createIcon(15));
 
     public enum SelectionMode {
         FILE,
@@ -73,7 +73,7 @@ public class FileSelector extends HBox {
     }
 
     public FileSelector() {
-        JFXTextField customField = new JFXTextField();
+        M3TextField customField = FXUtils.newTextField();
         customField.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(customField, Priority.ALWAYS);
         FXUtils.bindString(customField, valueProperty());
@@ -101,7 +101,7 @@ public class FileSelector extends HBox {
         getChildren().addAll(customField, selectButton);
     }
 
-    private void openFileChooser(JFXTextField customField) {
+    private void openFileChooser(M3TextField customField) {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().addAll(getExtensionFilters());
         chooser.setTitle(StringUtils.isBlank(chooserTitle) ? i18n("selector.choose_file") : chooserTitle);
@@ -113,7 +113,7 @@ public class FileSelector extends HBox {
         }
     }
 
-    private void openDirectoryChooser(JFXTextField customField) {
+    private void openDirectoryChooser(M3TextField customField) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle(StringUtils.isBlank(chooserTitle) ? i18n("selector.choose_directory") : chooserTitle);
         Path dir = Controllers.showDialog(chooser);

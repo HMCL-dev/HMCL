@@ -13,7 +13,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
@@ -95,7 +95,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
                 });
         if (!failed.isEmpty())
             Controllers.dialog(i18n("datapack.delete.failed") + "\n" + String.join(",\n", failed),
-                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                    i18n("message.error"), MessageType.ERROR);
     }
 
     void setSelectedEnabled(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems, boolean enabled) {
@@ -112,7 +112,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
                 });
         if (!failed.isEmpty())
             Controllers.dialog(i18n("datapack.toggle.failed") + "\n" + String.join(",\n", failed),
-                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                    i18n("message.error"), MessageType.ERROR);
     }
 
     void openDataPackFolder() {

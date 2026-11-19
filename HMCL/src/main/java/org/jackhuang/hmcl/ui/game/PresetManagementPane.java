@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.game;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -10,6 +9,7 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.layout.HBox;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -272,14 +272,14 @@ final class PresetManagementPane extends ComponentSublist {
         /// Creates the remove button shown on the right side of the option.
         @Override
         protected Node createRightNode() {
-            JFXButton renameButton = FXUtils.newToggleButton4(SVG.EDIT, 14);
+            M3IconButton renameButton = new M3IconButton(SVG.EDIT.createIcon(14));
             renameButton.setOnAction(event -> {
                 renamePreset(getValue());
                 event.consume();
             });
             FXUtils.installFastTooltip(renameButton, i18n("settings.type.global.preset.rename"));
 
-            JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER, 14);
+            M3IconButton removeButton = new M3IconButton(SVG.DELETE_FOREVER.createIcon(14));
             removeButton.disableProperty().bind(Bindings.createBooleanBinding(
                     () -> SettingsManager.getGameSettings().size() <= 1,
                     SettingsManager.getGameSettings()));

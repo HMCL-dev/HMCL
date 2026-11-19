@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.terracotta;
 
-import com.jfoenix.controls.JFXProgressBar;
 import javafx.beans.binding.Binding;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -10,18 +9,20 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.WeakChangeListener;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Cursor;
-import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
+import org.glavo.m3fx.controls.M3Banner;
+import org.glavo.m3fx.controls.M3ExpandableSettingItem;
+import org.glavo.m3fx.controls.M3ListItem;
+import org.glavo.m3fx.controls.M3ListPane;
+import org.glavo.m3fx.controls.M3ListSectionHeader;
+import org.glavo.m3fx.controls.M3ProgressBar;
+import org.glavo.m3fx.controls.M3Text;
+import org.glavo.m3fx.controls.M3TextRole;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -39,6 +40,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -46,7 +48,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
@@ -72,6 +73,9 @@ public class TerracottaControllerPage extends StackPane {
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
+    /// The player section for the active room, including when its list is empty.
+    private @Nullable PlayerProfileUI players;
+
     /* FIXME: It's sucked to have such a long logic, containing UI for all states defined in TerracottaState, with unclear control flows.
          Consider moving UI into multiple files for each state respectively. */
     public TerracottaControllerPage() {
@@ -88,7 +92,6 @@ public class TerracottaControllerPage extends StackPane {
 
         ObjectProperty<String> statusProperty = new SimpleObjectProperty<>();
         DoubleProperty progressProperty = new SimpleDoubleProperty();
-        ObservableList<Node> nodesProperty = FXCollections.observableList(new ArrayList<>());
 
         FXUtils.applyDragListener(this, path -> {
             TerracottaState state = UI_STATE.get();
@@ -108,7 +111,7 @@ public class TerracottaControllerPage extends StackPane {
                 Controllers.dialog(
                         i18n("terracotta.from_local.file_name_mismatch", TerracottaMetadata.PACKAGE_NAME, FileUtils.getName(path)),
                         i18n("message.error"),
-                        MessageDialogPane.MessageType.ERROR
+                        MessageType.ERROR
                 );
                 return;
             }
@@ -124,27 +127,35 @@ public class TerracottaControllerPage extends StackPane {
                 return;
             }
 
+            if (players != null && state.isForkOf(legacyState)) {
+                if (state instanceof TerracottaState.HostOK host)
+                    players.updateProfiles(host.getProfiles());
+                else if (state instanceof TerracottaState.GuestOK guest)
+                    players.updateProfiles(guest.getProfiles());
+                return;
+            }
+
+            players = null;
             progressProperty.unbind();
+            VBox stateContent = new VBox(8);
+            M3ListPane actions = createList();
+            var rows = actions.getItems();
 
             if (state instanceof TerracottaState.Bootstrap) {
                 statusProperty.set(i18n("terracotta.status.bootstrap"));
                 progressProperty.set(-1);
-                nodesProperty.setAll();
             } else if (state instanceof TerracottaState.Uninitialized uninitialized) {
                 String fork = uninitialized.hasLegacy() ? "update" : "not_exist";
 
                 statusProperty.set(i18n("terracotta.status.uninitialized." + fork));
                 progressProperty.set(0);
 
-                TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
-                body.getStyleClass().add("terracotta-hint");
-                body.setLineSpacing(4);
+                stateContent.getChildren().add(createHint(i18n("terracotta.confirm.desc")));
 
-                var download = createLargeTitleLineButton();
-                download.setLeading(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
-                download.setTitle(i18n(String.format("terracotta.status.uninitialized.%s.title", fork)));
-                download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
-                download.setTrailingIcon(SVG.ARROW_FORWARD, ICON_SIZE);
+                M3ListItem download = new M3ListItem(i18n(String.format("terracotta.status.uninitialized.%s.title", fork)));
+                download.setLeading(new ImageView(FXUtils.newBuiltinImage("/assets/img/terracotta.png")));
+                download.setSupportingText(i18n("terracotta.status.uninitialized.desc"));
+                download.setTrailing(SVG.ARROW_FORWARD.createIcon());
                 download.setOnAction(event -> {
                     TerracottaState.Preparing s = TerracottaManager.download();
                     if (s != null) {
@@ -163,32 +174,27 @@ public class TerracottaControllerPage extends StackPane {
                     }
                 });
 
-                nodesProperty.setAll(body, download, getThirdPartyDownloadNodes());
+                rows.addAll(download, createThirdPartyDownloads(actions));
             } else if (state instanceof TerracottaState.Preparing) {
                 statusProperty.set(i18n("terracotta.status.preparing"));
                 progressProperty.bind(((TerracottaState.Preparing) state).progressProperty());
-                nodesProperty.setAll(getThirdPartyDownloadNodes());
+                rows.add(createThirdPartyDownloads(actions));
             } else if (state instanceof TerracottaState.Launching) {
                 statusProperty.set(i18n("terracotta.status.launching"));
                 progressProperty.set(-1);
-                nodesProperty.setAll();
             } else if (state instanceof TerracottaState.Unknown) {
                 statusProperty.set(i18n("terracotta.status.unknown"));
                 progressProperty.set(-1);
-                nodesProperty.setAll();
             } else if (state instanceof TerracottaState.Waiting) {
                 statusProperty.set(i18n("terracotta.status.waiting"));
                 progressProperty.set(1);
 
-                TextFlow flow = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
-                flow.getStyleClass().add("terracotta-hint");
-                flow.setLineSpacing(4);
+                stateContent.getChildren().add(createHint(i18n("terracotta.confirm.desc")));
 
-                var host = createLargeTitleLineButton();
-                host.setLeading(SVG.HOST, ICON_SIZE);
-                host.setTitle(i18n("terracotta.status.waiting.host.title"));
-                host.setSubtitle(i18n("terracotta.status.waiting.host.desc"));
-                host.setTrailingIcon(SVG.ARROW_FORWARD, ICON_SIZE);
+                M3ListItem host = new M3ListItem(i18n("terracotta.status.waiting.host.title"));
+                host.setLeading(SVG.HOST.createIcon());
+                host.setSupportingText(i18n("terracotta.status.waiting.host.desc"));
+                host.setTrailing(SVG.ARROW_FORWARD.createIcon());
                 host.setOnAction(event -> {
                     if (LauncherHelper.countMangedProcesses() >= 1) {
                         TerracottaState.HostScanning s1 = TerracottaManager.setScanning();
@@ -196,10 +202,10 @@ public class TerracottaControllerPage extends StackPane {
                             UI_STATE.set(s1);
                         }
                     } else {
-                        Controllers.dialog(new MessageDialogPane.Builder(
+                        Controllers.dialog(new MessageDialogBuilder(
                                 i18n("terracotta.status.waiting.host.launch.desc"),
                                 i18n("terracotta.status.waiting.host.launch.title"),
-                                MessageDialogPane.MessageType.QUESTION
+                                MessageType.QUESTION
                         ).addAction(i18n("instance.launch"), () -> {
                             var repository = GameDirectoryManager.getSelectedRepository();
                             Instances.launch(repository.getSelectedInstance(), launcherHelper -> {
@@ -216,11 +222,10 @@ public class TerracottaControllerPage extends StackPane {
                     }
                 });
 
-                var guest = createLargeTitleLineButton();
-                guest.setLeading(SVG.ADD_CIRCLE, ICON_SIZE);
-                guest.setTitle(i18n("terracotta.status.waiting.guest.title"));
-                guest.setSubtitle(i18n("terracotta.status.waiting.guest.desc"));
-                guest.setTrailingIcon(SVG.ARROW_FORWARD, ICON_SIZE);
+                M3ListItem guest = new M3ListItem(i18n("terracotta.status.waiting.guest.title"));
+                guest.setLeading(SVG.ADD_CIRCLE.createIcon());
+                guest.setSupportingText(i18n("terracotta.status.waiting.guest.desc"));
+                guest.setTrailing(SVG.ARROW_FORWARD.createIcon());
                 guest.setOnAction(event -> {
                     Controllers.prompt(i18n("terracotta.status.waiting.guest.prompt.title"), (code, handler) -> {
                         Task<TerracottaState.GuestConnecting> task = TerracottaManager.setGuesting(code);
@@ -240,204 +245,104 @@ public class TerracottaControllerPage extends StackPane {
                 });
 
                 if (ThreadLocalRandom.current().nextDouble() < 0.02D) {
-                    var feedback = createLargeTitleLineButton();
-                    feedback.setLeading(SVG.FEEDBACK, ICON_SIZE);
-                    feedback.setTitle(i18n("terracotta.feedback.title"));
-                    feedback.setSubtitle(i18n("terracotta.feedback.desc"));
-                    feedback.setTrailingIcon(SVG.OPEN_IN_NEW, ICON_SIZE);
-                    FXUtils.onClicked(feedback, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
+                    M3ListItem feedback = new M3ListItem(i18n("terracotta.feedback.title"));
+                    feedback.setLeading(SVG.FEEDBACK.createIcon());
+                    feedback.setSupportingText(i18n("terracotta.feedback.desc"));
+                    feedback.setTrailing(SVG.OPEN_IN_NEW.createIcon());
+                    feedback.setOnAction(event -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
 
-                    nodesProperty.setAll(flow, host, guest, feedback);
+                    rows.addAll(host, guest, feedback);
                 } else {
-                    nodesProperty.setAll(flow, host, guest);
+                    rows.addAll(host, guest);
                 }
             } else if (state instanceof TerracottaState.HostScanning) {
                 statusProperty.set(i18n("terracotta.status.scanning"));
                 progressProperty.set(-1);
 
-                TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.status.scanning.desc"), Controllers::onHyperlinkAction);
-                body.getStyleClass().add("terracotta-hint");
-                body.setLineSpacing(4);
+                stateContent.getChildren().add(createHint(i18n("terracotta.status.scanning.desc")));
 
-                var room = createLargeTitleLineButton();
-                room.setLeading(SVG.ARROW_BACK, ICON_SIZE);
-                room.setTitle(i18n("terracotta.back"));
-                room.setSubtitle(i18n("terracotta.status.scanning.back"));
-                room.setOnAction(event -> {
-                    TerracottaState.Waiting s = TerracottaManager.setWaiting();
-                    if (s != null) {
-                        UI_STATE.set(s);
-                    }
-                });
+                M3ListItem room = createBackItem(i18n("terracotta.status.scanning.back"));
 
-                nodesProperty.setAll(body, room);
+                rows.add(room);
             } else if (state instanceof TerracottaState.HostStarting) {
                 statusProperty.set(i18n("terracotta.status.host_starting"));
                 progressProperty.set(-1);
 
-                var room = createLargeTitleLineButton();
-                room.setLeading(SVG.ARROW_BACK, ICON_SIZE);
-                room.setTitle(i18n("terracotta.back"));
-                room.setSubtitle(i18n("terracotta.status.host_starting.back"));
-                room.setOnAction(event -> {
-                    TerracottaState.Waiting s = TerracottaManager.setWaiting();
-                    if (s != null) {
-                        UI_STATE.set(s);
-                    }
-                });
+                M3ListItem room = createBackItem(i18n("terracotta.status.host_starting.back"));
 
-                nodesProperty.setAll(room);
+                rows.add(room);
             } else if (state instanceof TerracottaState.HostOK hostOK) {
-                if (hostOK.isForkOf(legacyState)) {
-                    if (nodesProperty.get(nodesProperty.size() - 1) instanceof PlayerProfileUI profileUI) {
-                        profileUI.updateProfiles(hostOK.getProfiles());
-                    } else { // Should NOT happen
-                        nodesProperty.add(new PlayerProfileUI(hostOK.getProfiles()));
-                    }
-                    return;
-                } else {
-                    String cs = hostOK.getCode();
-                    copyCode(cs);
+                String cs = hostOK.getCode();
+                copyCode(cs);
 
-                    statusProperty.set(i18n("terracotta.status.host_ok"));
-                    progressProperty.set(1);
+                statusProperty.set(i18n("terracotta.status.host_ok"));
+                progressProperty.set(1);
 
-                    VBox code = new VBox(4);
-                    code.setAlignment(Pos.CENTER);
-                    {
-                        Label desc = new Label(i18n("terracotta.status.host_ok.code"));
-                        desc.setMouseTransparent(true);
+                M3ListItem copy = new M3ListItem(cs);
+                copy.setOverlineText(i18n("terracotta.status.host_ok.code"));
+                copy.setSupportingText(i18n("terracotta.status.host_ok.code.desc"));
+                copy.setTrailing(SVG.CONTENT_COPY.createIcon());
+                copy.setAccessibleHelp(i18n("terracotta.status.host_ok.code.copy"));
+                copy.setOnAction(event -> copyCode(cs));
 
-                        Label label = new Label(cs);
-                        label.setMouseTransparent(true);
-                        label.setStyle("-fx-font-size: 24");
-                        label.setAlignment(Pos.CENTER);
-                        VBox.setMargin(label, new Insets(10, 0, 10, 0));
+                M3ListItem back = createBackItem(i18n("terracotta.status.host_ok.back"));
 
-                        code.getChildren().setAll(desc, label);
-                    }
-                    code.setCursor(Cursor.HAND);
-                    FXUtils.onClicked(code, () -> copyCode(cs));
-
-                    var copy = createLargeTitleLineButton();
-                    copy.setLeading(SVG.CONTENT_COPY, ICON_SIZE);
-                    copy.setTitle(i18n("terracotta.status.host_ok.code.copy"));
-                    copy.setSubtitle(i18n("terracotta.status.host_ok.code.desc"));
-                    FXUtils.onClicked(copy, () -> copyCode(cs));
-
-                    var back = createLargeTitleLineButton();
-                    back.setLeading(SVG.ARROW_BACK, ICON_SIZE);
-                    back.setTitle(i18n("terracotta.back"));
-                    back.setSubtitle(i18n("terracotta.status.host_ok.back"));
-                    back.setOnAction(event -> {
-                        TerracottaState.Waiting s = TerracottaManager.setWaiting();
-                        if (s != null) {
-                            UI_STATE.set(s);
-                        }
-                    });
-
-                    if (hostOK.getProfiles().isEmpty()) {
-                        nodesProperty.setAll(code, copy, back);
-                    } else {
-                        nodesProperty.setAll(code, copy, back, new PlayerProfileUI(hostOK.getProfiles()));
-                    }
-                }
+                rows.addAll(copy, back);
+                players = new PlayerProfileUI(hostOK.getProfiles());
             } else if (state instanceof TerracottaState.GuestConnecting || state instanceof TerracottaState.GuestStarting) {
                 statusProperty.set(i18n("terracotta.status.guest_starting"));
                 progressProperty.set(-1);
 
-                var room = createLargeTitleLineButton();
-                room.setLeading(SVG.ARROW_BACK, ICON_SIZE);
-                room.setTitle(i18n("terracotta.back"));
-                room.setSubtitle(i18n("terracotta.status.guest_starting.back"));
-                room.setOnAction(event -> {
-                    TerracottaState.Waiting s = TerracottaManager.setWaiting();
-                    if (s != null) {
-                        UI_STATE.set(s);
-                    }
-                });
+                M3ListItem room = createBackItem(i18n("terracotta.status.guest_starting.back"));
 
-                nodesProperty.clear();
                 if (state instanceof TerracottaState.GuestStarting) {
                     TerracottaState.GuestStarting.Difficulty difficulty = ((TerracottaState.GuestStarting) state).getDifficulty();
                     if (difficulty != null && difficulty != TerracottaState.GuestStarting.Difficulty.UNKNOWN) {
-                        var info = createLargeTitleLineButton();
-                        info.setLeading(switch (difficulty) {
+                        String difficultyID = difficulty.name().toLowerCase(Locale.ROOT);
+                        M3ListItem info = new M3ListItem(i18n("terracotta.difficulty." + difficultyID));
+                        info.setFocusTraversable(false);
+                        info.setMouseTransparent(true);
+                        info.setLeading((switch (difficulty) {
                             case UNKNOWN -> throw new AssertionError();
                             case EASIEST, SIMPLE -> SVG.INFO;
                             case MEDIUM, TOUGH -> SVG.WARNING;
-                        }, ICON_SIZE);
+                        }).createIcon());
 
-                        String difficultyID = difficulty.name().toLowerCase(Locale.ROOT);
-                        info.setTitle(i18n(String.format("terracotta.difficulty.%s", difficultyID)));
-                        info.setSubtitle(i18n("terracotta.difficulty.estimate_only"));
+                        info.setSupportingText(i18n("terracotta.difficulty.estimate_only"));
 
-                        nodesProperty.add(info);
+                        rows.add(info);
                     }
                 }
 
-                nodesProperty.add(room);
+                rows.add(room);
             } else if (state instanceof TerracottaState.GuestOK guestOK) {
-                if (guestOK.isForkOf(legacyState)) {
-                    if (nodesProperty.get(nodesProperty.size() - 1) instanceof PlayerProfileUI profileUI) {
-                        profileUI.updateProfiles(guestOK.getProfiles());
-                    } else { // Should NOT happen
-                        nodesProperty.add(new PlayerProfileUI(guestOK.getProfiles()));
-                    }
-                    return;
-                } else {
-                    statusProperty.set(i18n("terracotta.status.guest_ok"));
-                    progressProperty.set(1);
+                statusProperty.set(i18n("terracotta.status.guest_ok"));
+                progressProperty.set(1);
 
-                    var tutorial = createLargeTitleLineButton();
-                    tutorial.setTitle(i18n("terracotta.status.guest_ok.title"));
-                    tutorial.setSubtitle(i18n("terracotta.status.guest_ok.desc", guestOK.getUrl()));
+                M3ListItem tutorial = new M3ListItem(i18n("terracotta.status.guest_ok.title"));
+                tutorial.setFocusTraversable(false);
+                tutorial.setMouseTransparent(true);
+                tutorial.setSupportingText(i18n("terracotta.status.guest_ok.desc", guestOK.getUrl()));
 
-                    var back = createLargeTitleLineButton();
-                    back.setLeading(SVG.ARROW_BACK, ICON_SIZE);
-                    back.setTitle(i18n("terracotta.back"));
-                    back.setSubtitle(i18n("terracotta.status.guest_ok.back"));
-                    back.setOnAction(event -> {
-                        TerracottaState.Waiting s = TerracottaManager.setWaiting();
-                        if (s != null) {
-                            UI_STATE.set(s);
-                        }
-                    });
+                M3ListItem back = createBackItem(i18n("terracotta.status.guest_ok.back"));
 
-                    if (guestOK.getProfiles().isEmpty()) {
-                        nodesProperty.setAll(tutorial, back);
-                    } else {
-                        nodesProperty.setAll(tutorial, back, new PlayerProfileUI(guestOK.getProfiles()));
-                    }
-                }
+                rows.addAll(tutorial, back);
+                players = new PlayerProfileUI(guestOK.getProfiles());
             } else if (state instanceof TerracottaState.Exception exception) {
                 statusProperty.set(i18n("terracotta.status.exception.desc." + exception.getType().name().toLowerCase(Locale.ROOT)));
                 progressProperty.set(1);
-                nodesProperty.setAll();
 
-                var back = createLargeTitleLineButton();
-                back.setLeading(SVG.ARROW_BACK, ICON_SIZE);
-                back.setTitle(i18n("terracotta.back"));
-                back.setSubtitle(i18n("terracotta.status.exception.back"));
-                back.setOnAction(event -> {
-                    TerracottaState.Waiting s = TerracottaManager.setWaiting();
-                    if (s != null) {
-                        UI_STATE.set(s);
-                    }
-                });
+                M3ListItem back = createBackItem(i18n("terracotta.status.exception.back"));
 
-                SpinnerPane exportLog = new SpinnerPane();
-                var exportLogInner = createLargeTitleLineButton();
-                exportLogInner.setLeading(SVG.OUTPUT, ICON_SIZE);
-                exportLogInner.setTitle(i18n("terracotta.export_log"));
-                exportLogInner.setSubtitle(i18n("terracotta.export_log.desc"));
-                exportLog.setContent(exportLogInner);
-                ComponentList.setNoPadding(exportLog);
-                // FIXME: SpinnerPane loses its content width in loading state.
-                exportLog.minHeightProperty().bind(back.heightProperty());
+                M3ListItem exportLog = new M3ListItem(i18n("terracotta.export_log"));
+                exportLog.setLeading(SVG.OUTPUT.createIcon());
+                exportLog.setSupportingText(i18n("terracotta.export_log.desc"));
 
-                exportLogInner.setOnAction(event -> {
-                    exportLog.setLoading(true);
+                exportLog.setOnAction(event -> {
+                    exportLog.setDisable(true);
+                    var indicator = FXUtils.newSpinner();
+                    indicator.setIndicatorSize(24);
+                    exportLog.setLeading(indicator);
 
                     TerracottaManager.exportLogs().thenAcceptAsync(Schedulers.io(), data -> {
                         if (data == null || data.isEmpty()) {
@@ -458,11 +363,14 @@ public class TerracottaControllerPage extends StackPane {
                             () -> Thread.sleep(3000)
                     ).whenComplete(
                             Schedulers.javafx(),
-                            e -> exportLog.setLoading(false)
+                            e -> {
+                                exportLog.setLeading(SVG.OUTPUT.createIcon());
+                                exportLog.setDisable(false);
+                            }
                     ).start();
                 });
 
-                nodesProperty.setAll(back, exportLog);
+                rows.addAll(back, exportLog);
             } else if (state instanceof TerracottaState.Fatal fatal) {
                 String message = i18n("terracotta.status.fatal." + fatal.getType().name().toLowerCase(Locale.ROOT));
 
@@ -470,10 +378,9 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
 
                 if (fatal.isRecoverable()) {
-                    var retry = createLargeTitleLineButton();
-                    retry.setLeading(SVG.RESTORE, ICON_SIZE);
-                    retry.setTitle(i18n("terracotta.status.fatal.retry"));
-                    retry.setSubtitle(message);
+                    M3ListItem retry = new M3ListItem(i18n("terracotta.status.fatal.retry"));
+                    retry.setLeading(SVG.RESTORE.createIcon());
+                    retry.setSupportingText(message);
                     retry.setOnAction(event -> {
                         TerracottaState s = TerracottaManager.recover();
                         if (s != null) {
@@ -482,53 +389,44 @@ public class TerracottaControllerPage extends StackPane {
                     });
 
                     if (fatal.getType() == TerracottaState.Fatal.Type.NETWORK) {
-                        nodesProperty.setAll(retry, getThirdPartyDownloadNodes());
+                        rows.addAll(retry, createThirdPartyDownloads(actions));
                     } else {
-                        nodesProperty.setAll(retry);
+                        rows.add(retry);
                     }
-                } else {
-                    nodesProperty.setAll();
                 }
             } else {
                 throw new AssertionError(state.getClass().getName());
             }
 
-            ComponentList components = new ComponentList();
-            {
-                VBox statusPane = new VBox(8);
-                VBox.setMargin(statusPane, new Insets(0, 0, 0, 4));
-                {
-                    Label status = new Label();
-                    status.textProperty().bind(statusProperty);
-                    JFXProgressBar progress = new JFXProgressBar();
-                    progress.progressProperty().bind(progressProperty);
-                    progress.setMaxWidth(Double.MAX_VALUE);
-
-                    statusPane.getChildren().setAll(status, progress);
-                }
-
-                ObservableList<Node> children = components.getContent();
-                children.add(statusPane);
-                children.addAll(nodesProperty);
-            }
-            // Prevent the shadow of components from being clipped
-            StackPane.setMargin(components, new Insets(0, 0, 5, 0));
-            transition.setContent(components, TabController.TabAnimation.TAB_UP);
+            if (!rows.isEmpty())
+                stateContent.getChildren().add(actions);
+            if (players != null)
+                stateContent.getChildren().add(players);
+            transition.setContent(stateContent, TabController.TabAnimation.TAB_UP);
         };
         listener.changed(UI_STATE, null, UI_STATE.get());
         holder.add(listener);
         UI_STATE.addListener(new WeakChangeListener<>(listener));
 
-        VBox content = new VBox(10);
-        content.getChildren().add(ComponentList.createComponentListTitle(i18n("terracotta.status")));
-        if (!"CN".equals(RegionUtils.MACHINE_REGION)) {
-            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-            hintPane.setText(i18n("terracotta.unsupported.region"));
-            content.getChildren().add(hintPane);
-        }
-        content.getChildren().add(transition);
+        VBox content = new VBox();
         content.setPadding(new Insets(10));
-        content.setFillWidth(true);
+        content.getChildren().add(new M3ListSectionHeader(i18n("terracotta.status")));
+        if (!"CN".equals(RegionUtils.MACHINE_REGION)) {
+            M3Banner warning = new M3Banner(i18n("terracotta.unsupported.region"));
+            warning.setIcon(SVG.WARNING.createIcon());
+            content.getChildren().add(warning);
+        }
+
+        M3Text status = new M3Text();
+        status.setRole(M3TextRole.BODY_LARGE);
+        status.textProperty().bind(statusProperty);
+        status.setWrapText(true);
+        M3ProgressBar progress = new M3ProgressBar();
+        progress.progressProperty().bind(progressProperty);
+        progress.setMaxWidth(Double.MAX_VALUE);
+        VBox statusPane = new VBox(8, status, progress);
+        statusPane.setPadding(new Insets(8, 16, 16, 16));
+        content.getChildren().addAll(statusPane, transition);
 
         ScrollPane scrollPane = new ScrollPane(content);
         ScrollUtils.installSmoothScrolling(scrollPane);
@@ -537,71 +435,95 @@ public class TerracottaControllerPage extends StackPane {
         getChildren().setAll(scrollPane);
     }
 
-    /// Creates an expandable group of third-party download links with a mouse-transparent decorative icon.
-    private ComponentSublist getThirdPartyDownloadNodes() {
-        ComponentSublist locals = new ComponentSublist();
-        locals.setLargeTitle(true);
+    /// Returns to the multiplayer lobby from the current connection state.
+    private static M3ListItem createBackItem(String description) {
+        M3ListItem back = new M3ListItem(i18n("terracotta.back"));
+        back.setLeading(SVG.ARROW_BACK.createIcon());
+        back.setSupportingText(description);
+        back.setOnAction(event -> {
+            TerracottaState.Waiting waiting = TerracottaManager.setWaiting();
+            if (waiting != null)
+                UI_STATE.set(waiting);
+        });
+        return back;
+    }
+
+    /// Creates an expandable list of download links that show installation guidance before opening.
+    private static M3ExpandableSettingItem createThirdPartyDownloads(M3ListPane parent) {
+        M3ExpandableSettingItem group = new M3ExpandableSettingItem(i18n("terracotta.from_local.title"));
+        group.setSupportingText(i18n("terracotta.from_local.desc"));
+        // The list skin caches its preferred height across changes inside an expandable row.
+        group.expandedProperty().addListener(observable -> parent.requestLayout());
         ImageView icon = new ImageView(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
         icon.setMouseTransparent(true);
-        locals.setLeading(icon);
-        locals.setTitle(i18n("terracotta.from_local.title"));
-        locals.setSubtitle(i18n("terracotta.from_local.desc"));
+        group.setLeading(icon);
 
+        M3ListPane links = new M3ListPane();
         for (TerracottaMetadata.Link link : TerracottaMetadata.PACKAGE_LINKS) {
-            LineButton item = new LineButton();
-            item.setTrailingIcon(SVG.OPEN_IN_NEW);
-            item.setTitle(link.description().getText(I18n.getLocale().getCandidateLocales()));
+            M3ListItem item = new M3ListItem(link.description().getText(I18n.getLocale().getCandidateLocales()));
+            item.setTrailing(SVG.OPEN_IN_NEW.createIcon());
             item.setOnAction(event -> Controllers.dialog(
                     i18n("terracotta.from_local.guide", TerracottaMetadata.PACKAGE_NAME),
-                    i18n("message.info"), MessageDialogPane.MessageType.INFO,
+                    i18n("message.info"), MessageType.INFO,
                     () -> FXUtils.openLink(link.link())
             ));
-            locals.getContent().add(item);
+            links.getItems().add(item);
         }
-        return locals;
+        group.setContent(links);
+        return group;
     }
 
     private void copyCode(String code) {
         FXUtils.copyText(code, i18n("terracotta.status.host_ok.code.copy.toast"));
     }
 
-    private static final double ICON_SIZE = 28;
-
-    private static LineButton createLargeTitleLineButton() {
-        var lineButton = new LineButton();
-        lineButton.setLargeTitle(true);
-        return lineButton;
+    /// Keeps adjacent rows on a single rounded surface, including their interaction layers.
+    private static M3ListPane createList() {
+        M3ListPane list = new M3ListPane();
+        list.getStyleClass().add("terracotta-list");
+        FXUtils.setOverflowHidden(list, 32);
+        return list;
     }
 
+    /// Preserves inline help links and wraps the instructions to the available width.
+    private static TextFlow createHint(String text) {
+        TextFlow hint = FXUtils.segmentToTextFlow(text, Controllers::onHyperlinkAction);
+        hint.getStyleClass().add("terracotta-hint");
+        hint.setLineSpacing(4);
+        hint.setPadding(new Insets(0, 16, 8, 16));
+        return hint;
+    }
+
+    /// Shows the current room members and animates roster changes.
     private static final class PlayerProfileUI extends VBox {
-        private final TransitionPane transition;
+        /// Hosts the current player list.
+        private final TransitionPane transition = new TransitionPane();
 
-        public PlayerProfileUI(List<TerracottaProfile> profiles) {
-            super(8);
-            VBox.setMargin(this, new Insets(0, 0, 0, 4));
-            {
-                Label status = new Label();
-                status.setText(i18n("terracotta.player_list"));
-
-                transition = new TransitionPane();
-                getChildren().setAll(status, transition);
-
-                updateProfiles(profiles);
-            }
+        /// Creates a section that is hidden while the room has no player profiles.
+        PlayerProfileUI(List<TerracottaProfile> profiles) {
+            getChildren().setAll(new M3ListSectionHeader(i18n("terracotta.player_list")), transition);
+            managedProperty().bind(visibleProperty());
+            updateProfiles(profiles);
         }
 
+        /// Updates the displayed player names, vendors and room roles.
         private void updateProfiles(List<TerracottaProfile> profiles) {
-            VBox pane = new VBox(8);
-
-            for (TerracottaProfile profile : profiles) {
-                TwoLineListItem item = new TwoLineListItem();
-                item.setTitle(profile.getName());
-                item.setSubtitle(profile.getVendor());
-                item.addTag(i18n("terracotta.player_kind." + profile.getType().name().toLowerCase(Locale.ROOT)));
-                pane.getChildren().add(item);
+            setVisible(!profiles.isEmpty());
+            if (profiles.isEmpty()) {
+                transition.clearContent();
+                return;
             }
 
-            this.transition.setContent(pane, TabController.TabAnimation.TAB_UP);
+            M3ListPane list = createList();
+            for (TerracottaProfile profile : profiles) {
+                M3ListItem item = new M3ListItem(profile.getName());
+                item.setSupportingText(profile.getVendor());
+                item.setTrailingSupportingText(i18n("terracotta.player_kind." + profile.getType().name().toLowerCase(Locale.ROOT)));
+                item.setFocusTraversable(false);
+                item.setMouseTransparent(true);
+                list.getItems().add(item);
+            }
+            transition.setContent(list, TabController.TabAnimation.TAB_UP);
         }
     }
 }

@@ -12,18 +12,26 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3OverlayPane;
+import org.glavo.m3fx.controls.M3Snackbar;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.theme.Themes;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogBuilder;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -150,10 +158,11 @@ public final class LogWindow extends Stage {
         private final BooleanProperty wrapText = new SimpleBooleanProperty(true);
         private final StringProperty[] buttonText = new StringProperty[LEVELS.length];
         private final BooleanProperty[] showLevel = new BooleanProperty[LEVELS.length];
-        private final JFXButton btnAlwaysOnTop = FXUtils.newToggleButton4(SVG.KEEP, 20);
+        private final M3IconButton btnAlwaysOnTop = new M3IconButton(SVG.KEEP.createIcon(20));
         private final Stage stage = LogWindow.this;
         private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
-        private final StackPane stackPane = new StackPane();
+        /// Hosts log content, dialogs, and queued messages.
+        private final M3OverlayPane overlayPane = new M3OverlayPane();
 
         LogWindowImpl() {
             getStyleClass().add("log-window");
@@ -191,6 +200,7 @@ public final class LogWindow extends Stage {
             logs.clear();
         }
 
+        /// Exports the current logs and reports the saved path while this window remains visible.
         private void onExportLogs() {
             thread(() -> {
                 Path logFile = Paths.get("minecraft-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
@@ -202,18 +212,20 @@ public final class LogWindow extends Stage {
                 }
 
                 Platform.runLater(() -> {
-                    var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.success", logFile), i18n("message.success"), MessageDialogPane.MessageType.SUCCESS).ok(null).build();
-                    DialogUtils.show(stackPane, dialog);
+                    var dialog = new MessageDialogBuilder(i18n("settings.launcher.launcher_log.export.success", logFile), i18n("message.success"), MessageType.SUCCESS).ok(null).build();
+                    if (stage.isShowing())
+                        overlayPane.showDialog(dialog);
                 });
 
                 FXUtils.showFileInExplorer(logFile);
             });
         }
 
-        private void onExportDump(SpinnerPane pane) {
+        /// Exports a game dump, showing progress and reporting failure in this window.
+        private void onExportDump(BooleanProperty exporting) {
             assert SystemUtils.supportJVMAttachment();
 
-            pane.setLoading(true);
+            exporting.set(true);
 
             thread(() -> {
                 Path dumpFile = Paths.get("minecraft-exported-jstack-dump-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
@@ -227,12 +239,13 @@ public final class LogWindow extends Stage {
                     LOG.warning("Failed to create minecraft jstack dump", e);
 
                     Platform.runLater(() -> {
-                        var dialog = new MessageDialogPane.Builder(i18n("logwindow.export_dump") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR).ok(null).build();
-                        DialogUtils.show(stackPane, dialog);
+                        var dialog = new MessageDialogBuilder(i18n("logwindow.export_dump") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageType.ERROR).ok(null).build();
+                        if (stage.isShowing())
+                            overlayPane.showDialog(dialog);
                     });
                 }
 
-                Platform.runLater(() -> pane.setLoading(false));
+                Platform.runLater(() -> exporting.set(false));
             });
         }
 
@@ -254,16 +267,16 @@ public final class LogWindow extends Stage {
         private static final PseudoClass INFO = PseudoClass.getPseudoClass("info");
         private static final PseudoClass DEBUG = PseudoClass.getPseudoClass("debug");
         private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
-        private final JFXSnackbar snackbar = new JFXSnackbar();
 
+        /// Builds the log viewer with an M3FX overlay host for dialogs and messages.
         LogWindowSkin(LogWindowImpl control) {
             super(control);
 
             VBox vbox = new VBox(3);
             vbox.setPadding(new Insets(3, 0, 3, 0));
-            getSkinnable().stackPane.getChildren().setAll(vbox);
-            getChildren().setAll(getSkinnable().stackPane);
-            snackbar.registerSnackbarContainer(getSkinnable().stackPane);
+            getSkinnable().overlayPane.setContent(vbox);
+            getChildren().setAll(getSkinnable().overlayPane);
+            getSkinnable().overlayPane.setSnackbarDisplayDuration(Duration.seconds(1.5));
 
             {
                 BorderPane borderPane = new BorderPane();
@@ -373,7 +386,7 @@ public final class LogWindow extends Stage {
                         }
 
                         FXUtils.copyText(stringBuilder.toString(), null);
-                        snackbar.fireEvent(new JFXSnackbar.SnackbarEvent(new JFXSnackbarLayout(i18n("message.copied"))));
+                        getSkinnable().overlayPane.enqueueSnackbar(new M3Snackbar(i18n("message.copied")));
                     }
                 });
 
@@ -389,34 +402,35 @@ public final class LogWindow extends Stage {
                 hBox.setAlignment(Pos.CENTER_RIGHT);
                 hBox.setPadding(new Insets(0, 3, 0, 3));
 
-                JFXCheckBox autoScrollCheckBox = new JFXCheckBox(i18n("logwindow.autoscroll"));
+                M3CheckBox autoScrollCheckBox = new M3CheckBox(i18n("logwindow.autoscroll"));
                 autoScrollCheckBox.setSelected(true);
                 control.autoScroll.bind(autoScrollCheckBox.selectedProperty());
 
-                JFXCheckBox wrapTextCheckBox = new JFXCheckBox(i18n("logwindow.wrap_text"));
+                M3CheckBox wrapTextCheckBox = new M3CheckBox(i18n("logwindow.wrap_text"));
                 wrapTextCheckBox.setSelected(true);
                 control.wrapText.bind(wrapTextCheckBox.selectedProperty());
 
-                JFXButton exportLogsButton = new JFXButton(i18n("button.export"));
+                M3Button exportLogsButton = new M3Button(i18n("button.export"), M3ButtonVariant.TEXT);
                 exportLogsButton.setOnAction(e -> getSkinnable().onExportLogs());
 
-                JFXButton terminateButton = new JFXButton(i18n("logwindow.terminate_game"));
+                M3Button terminateButton = new M3Button(i18n("logwindow.terminate_game"), M3ButtonVariant.TEXT);
                 terminateButton.setOnAction(e -> getSkinnable().onTerminateGame());
 
-                SpinnerPane exportDumpPane = new SpinnerPane();
-                exportDumpPane.getStyleClass().add("small-spinner-pane");
-                JFXButton exportDumpButton = new JFXButton(i18n("logwindow.export_dump"));
+                M3Button exportDumpButton = new M3Button(i18n("logwindow.export_dump"), M3ButtonVariant.TEXT);
+                Node dumpAction = exportDumpButton;
                 if (SystemUtils.supportJVMAttachment()) {
-                    exportDumpButton.setOnAction(e -> getSkinnable().onExportDump(exportDumpPane));
+                    var exporting = FXUtils.newButtonLoadingProperty(exportDumpButton);
+                    exportDumpButton.disableProperty().bind(exporting);
+                    exportDumpButton.setOnAction(e -> getSkinnable().onExportDump(exporting));
                 } else {
-                    FXUtils.installFastTooltip(exportDumpPane, i18n("logwindow.export_dump.no_dependency"));
+                    dumpAction = new StackPane(exportDumpButton);
+                    FXUtils.installFastTooltip(dumpAction, i18n("logwindow.export_dump.no_dependency"));
                     exportDumpButton.setDisable(true);
                 }
-                exportDumpPane.setContent(exportDumpButton);
 
-                JFXButton clearButton = new JFXButton(i18n("button.clear"));
+                M3Button clearButton = new M3Button(i18n("button.clear"), M3ButtonVariant.TEXT);
                 clearButton.setOnAction(e -> getSkinnable().onClear());
-                hBox.getChildren().setAll(autoScrollCheckBox, wrapTextCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
+                hBox.getChildren().setAll(autoScrollCheckBox, wrapTextCheckBox, exportLogsButton, terminateButton, dumpAction, clearButton);
 
                 control.getGameProcess().getProcess()
                         .onExit()

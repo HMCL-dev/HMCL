@@ -5,7 +5,6 @@
 
 package com.jfoenix.skins;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDatePicker;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.svg.SVGGlyph;
@@ -32,6 +31,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
@@ -62,8 +64,8 @@ public class JFXDatePickerContent extends VBox {
     private static final String SPINNER_LABEL = "spinner-label";
     private static final String ROBOTO = "Roboto";
     protected JFXDatePicker datePicker;
-    private JFXButton backMonthButton;
-    private JFXButton forwardMonthButton;
+    private M3IconButton backMonthButton;
+    private M3IconButton forwardMonthButton;
     private Label selectedDateLabel;
     private Label selectedYearLabel;
     private Label monthYearLabel;
@@ -343,19 +345,17 @@ public class JFXDatePickerContent extends VBox {
         SVGGlyph rightChevron = new SVGGlyph(0, "CHEVRON_RIGHT", "m 1099,704 q 0,-52 -37,-91 L 410,-38 q -37,-37 -90,-37 -53,0 -90,37 l -76,75 q -37,39 -37,91 0,53 37,90 l 486,486 -486,485 q -37,39 -37,91 0,53 37,90 l 76,75 q 36,38 90,38 54,0 90,-38 l 652,-651 q 37,-37 37,-90 z", Color.GRAY);
         leftChevron.setSize(6.0F, 11.0F);
         rightChevron.setSize(6.0F, 11.0F);
-        this.backMonthButton = new JFXButton();
+        this.backMonthButton = new M3IconButton();
         this.backMonthButton.setMinSize(40.0F, 40.0F);
         this.backMonthButton.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, new CornerRadii(40.0F), Insets.EMPTY)));
         this.backMonthButton.getStyleClass().add("left-button");
         this.backMonthButton.setGraphic(leftChevron);
-        this.backMonthButton.setRipplerFill(this.datePicker.getDefaultColor());
         this.backMonthButton.setOnAction((t) -> this.forward(-1, ChronoUnit.MONTHS, false, true));
-        this.forwardMonthButton = new JFXButton();
+        this.forwardMonthButton = new M3IconButton();
         this.forwardMonthButton.setMinSize(40.0F, 40.0F);
         this.forwardMonthButton.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, new CornerRadii(40.0F), Insets.EMPTY)));
         this.forwardMonthButton.getStyleClass().add("right-button");
         this.forwardMonthButton.setGraphic(rightChevron);
-        this.forwardMonthButton.setRipplerFill(this.datePicker.getDefaultColor());
         this.forwardMonthButton.setOnAction((t) -> this.forward(1, ChronoUnit.MONTHS, false, true));
         BorderPane arrowsContainer = new BorderPane();
         arrowsContainer.setLeft(this.backMonthButton);
@@ -393,13 +393,11 @@ public class JFXDatePickerContent extends VBox {
     }
 
     protected HBox createActions() {
-        JFXButton cancelButton = new JFXButton(I18n.i18n("button.cancel"));
-        cancelButton.getStyleClass().add("dialog-cancel");
-        FXUtils.onClicked(cancelButton, () -> fireEvent(new DialogCloseEvent()));
+        M3Button cancelButton = new M3Button(I18n.i18n("button.cancel"), M3ButtonVariant.TEXT);
+        cancelButton.setOnAction(event -> fireEvent(new DialogCloseEvent()));
 
-        JFXButton acceptButton = new JFXButton(I18n.i18n("button.ok"));
-        acceptButton.getStyleClass().add("dialog-accept");
-        FXUtils.onClicked(acceptButton, () -> {
+        M3Button acceptButton = new M3Button(I18n.i18n("button.ok"), M3ButtonVariant.TEXT);
+        acceptButton.setOnAction(event -> {
             datePicker.setValue(valueProperty.get());
             fireEvent(new DialogCloseEvent());
         });

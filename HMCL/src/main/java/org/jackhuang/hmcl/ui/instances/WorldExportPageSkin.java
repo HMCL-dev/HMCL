@@ -2,19 +2,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LineFileChooserButton;
 import org.jackhuang.hmcl.ui.construct.LinePane;
 import org.jackhuang.hmcl.ui.construct.LineTextPane;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -41,7 +43,7 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
 
         var worldNamePane = new LinePane();
         worldNamePane.setTitle(i18n("world.name"));
-        JFXTextField txtWorldName = new JFXTextField();
+        M3TextField txtWorldName = FXUtils.newTextField();
         txtWorldName.textProperty().bindBidirectional(skinnable.worldNameProperty());
         txtWorldName.setPrefWidth(300);
         worldNamePane.setRight(txtWorldName);
@@ -57,7 +59,7 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
                 list
         );
 
-        JFXButton btnExport = FXUtils.newRaisedButton(i18n("button.export"));
+        M3Button btnExport = new M3Button(I18n.i18n("button.export"), M3ButtonVariant.FILLED);
         btnExport.disableProperty().bind(Bindings.createBooleanBinding(() -> txtWorldName.getText().isEmpty() || Files.exists(Paths.get(chooseFileButton.getLocation())),
                 txtWorldName.textProperty().isEmpty(), chooseFileButton.locationProperty()));
         btnExport.setOnAction(e -> skinnable.export());

@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -27,7 +28,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.CreateAccountPane;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
@@ -86,7 +87,7 @@ public final class Instances {
         } catch (IOException | IllegalArgumentException e) {
             Controllers.dialog(
                     i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
-                    i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
+                    i18n("download.failed.no_code"), MessageType.ERROR);
             return;
         }
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
@@ -109,7 +110,7 @@ public final class Instances {
                     } else if (!(e instanceof CancellationException)) {
                         Controllers.dialog(
                                 i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
-                                i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
+                                i18n("download.failed.no_code"), MessageType.ERROR);
                     }
                 }).executor();
         pane.setExecutor(executor);
@@ -125,18 +126,18 @@ public final class Instances {
         String message = isIndependent ? i18n("instance.manage.remove.confirm.independent", instanceId) :
                 i18n("instance.manage.remove.confirm.trash", instanceId, instanceId + "_removed");
 
-        JFXButton deleteButton = new JFXButton(i18n("button.delete"));
-        deleteButton.getStyleClass().add("dialog-error");
+        M3Button deleteButton = new M3Button(i18n("button.delete"), M3ButtonVariant.TEXT);
+        deleteButton.getStyleClass().add("m3-dialog-error");
         deleteButton.setOnAction(e -> {
             Task.supplyAsync(Schedulers.io(), () -> repository.removeInstanceFromDisk(instanceId))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null || !Boolean.TRUE.equals(result)) {
-                            Controllers.dialog(i18n("instance.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                            Controllers.dialog(i18n("instance.manage.remove.failed"), i18n("message.error"), MessageType.ERROR);
                         }
                     }).start();
         });
 
-        Controllers.confirmAction(message, i18n("message.warning"), MessageDialogPane.MessageType.WARNING, deleteButton);
+        Controllers.confirmAction(message, i18n("message.warning"), MessageType.WARNING, deleteButton);
     }
 
     public static CompletableFuture<String> renameInstance(HMCLGameInstance gameInstance) {
@@ -183,7 +184,7 @@ public final class Instances {
                 throw new IllegalArgumentException("Game manifest inherits from another manifest");
         } catch (Exception e) {
             LOG.warning("Failed to read game manifest from " + file, e);
-            Controllers.dialog(i18n("install.new_game.malformed_json"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            Controllers.dialog(i18n("install.new_game.malformed_json"), i18n("message.error"), MessageType.ERROR);
             return;
         }
 
@@ -237,7 +238,7 @@ public final class Instances {
                                     repository.setSelectedInstance(repository.getInstance(instanceId));
                                 } else {
                                     Controllers.dialog(
-                                            I18n.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
+                                            I18n.localizeErrorMessage(exception), i18n("install.failed"), MessageType.ERROR);
                                 }
                             }), i18n("install.new_game"), TaskCancellationAction.NORMAL);
         }, FileUtils.getNameWithoutExtension(file), new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId), new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName)));
@@ -352,12 +353,11 @@ public final class Instances {
     @SafeVarargs
     public static void launch(@Nullable HMCLGameInstance gameInstance, Consumer<LauncherHelper>... injecters) {
         if (gameInstance == null) {
-            JFXButton gotoDownload = new JFXButton(i18n("instance.empty.launch.goto_download"));
-            gotoDownload.getStyleClass().add("dialog-accept");
+            M3Button gotoDownload = new M3Button(i18n("instance.empty.launch.goto_download"), M3ButtonVariant.TEXT);
             gotoDownload.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
 
             Controllers.confirmAction(i18n("instance.empty.launch"), i18n("launch.failed"),
-                    MessageDialogPane.MessageType.ERROR,
+                    MessageType.ERROR,
                     gotoDownload,
                     null);
             return;

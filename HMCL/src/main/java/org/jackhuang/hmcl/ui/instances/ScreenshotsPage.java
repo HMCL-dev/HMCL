@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
@@ -18,6 +17,9 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.BackgroundType;
@@ -277,7 +279,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
 
             HBox.setHgrow(content, Priority.ALWAYS);
 
-            JFXButton copyButton = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
+            M3IconButton copyButton = new M3IconButton(SVG.CONTENT_COPY.createIcon());
             copyButton.setOnAction(e -> {
                 @Nullable Screenshot screenshot = getItem();
                 if (screenshot != null) {
@@ -286,7 +288,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
                 }
             });
 
-            JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
+            M3IconButton revealButton = new M3IconButton(SVG.FOLDER.createIcon());
             revealButton.setOnAction(e -> {
                 @Nullable Screenshot screenshot = getItem();
                 if (screenshot != null) {
@@ -294,7 +296,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
                 }
             });
 
-            JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
+            M3IconButton infoButton = new M3IconButton(SVG.INFO.createIcon());
             infoButton.setOnAction(e -> {
                 @Nullable Screenshot screenshot = getItem();
                 if (screenshot != null) {
@@ -303,7 +305,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             });
             FXUtils.onDoubleClicked(this, infoButton::fire);
 
-            JFXButton deleteButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
+            M3IconButton deleteButton = new M3IconButton(SVG.DELETE_FOREVER.createIcon());
             deleteButton.setOnAction(e -> {
                 @Nullable Screenshot screenshot = getItem();
                 if (screenshot != null) {
@@ -358,23 +360,20 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
                 else head.setSubtitle((int) image.getWidth() + " * " + (int) image.getHeight());
             }
 
-            JFXButton setAsBgButton = new JFXButton(i18n("screenshots.set_as_bg"));
-            setAsBgButton.getStyleClass().add("dialog-accept");
+            M3Button setAsBgButton = new M3Button(i18n("screenshots.set_as_bg"), M3ButtonVariant.TEXT);
             setAsBgButton.setOnAction(e -> {
                 SettingsManager.settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
                 SettingsManager.settings().backgroundTypeProperty().set(BackgroundType.CUSTOM);
                 SettingsManager.settings().customBackgroundImagePathProperty().set(screenshot.getPath().toString());
             });
 
-            JFXButton copyButton = new JFXButton(i18n("menu.copy"));
-            copyButton.getStyleClass().add("dialog-accept");
+            M3Button copyButton = new M3Button(i18n("menu.copy"), M3ButtonVariant.TEXT);
             copyButton.setDisable(image == null);
             copyButton.setOnAction(e -> {
                 if (image != null) FXUtils.copyImage(image);
             });
 
-            JFXButton okButton = new JFXButton(i18n("button.ok"));
-            okButton.getStyleClass().add("dialog-accept");
+            M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
             okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
             FXUtils.onEscPressed(this, okButton::fire);
             setActions(setAsBgButton, copyButton, okButton);

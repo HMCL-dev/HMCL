@@ -8,12 +8,14 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.WindowEvent;
@@ -23,6 +25,7 @@ import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.Tag;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,17 +38,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// @author Glavo
 public final class GameListPopupMenu extends StackPane {
 
+    /// Identifies the instance popup currently attached to an owner.
     private static final String KEY = GameListPopupMenu.class.getName() + ".popup";
-
-    public static boolean hideShowing(Node owner) {
-        JFXPopup popup = (JFXPopup) owner.getProperties().get(KEY);
-        if (popup != null && popup.isShowing()) {
-            popup.hide();
-            return true;
-        } else {
-            return false;
-        }
-    }
 
     /// Shows an instance selection popup relative to its owner.
     ///
@@ -58,48 +52,41 @@ public final class GameListPopupMenu extends StackPane {
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY,
                             List<HMCLGameInstance> instances) {
-        if (!hideShowing(owner)) {
-            showAndGetPopup(owner, vAlign, hAlign, initOffsetX, initOffsetY, instances);
+        @Nullable JFXPopup previous = (JFXPopup) owner.getProperties().get(KEY);
+        if (previous != null && previous.isShowing()) {
+            previous.hide();
+            return;
         }
-    }
 
-    /// Shows and returns an instance selection popup relative to its owner.
-    ///
-    /// @param owner       the node used to position the popup
-    /// @param vAlign      the popup's vertical alignment relative to `owner`
-    /// @param hAlign      the popup's horizontal alignment relative to `owner`
-    /// @param initOffsetX the horizontal offset from the aligned position
-    /// @param initOffsetY the vertical offset from the aligned position
-    /// @param instances   the instances to copy into the popup, in display order
-    /// @return the shown popup
-    public static JFXPopup showAndGetPopup(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
-                                           double initOffsetX, double initOffsetY,
-                                           List<HMCLGameInstance> instances) {
         GameListPopupMenu menu = new GameListPopupMenu();
-        menu.getItems().setAll(instances.stream()
-                .map(GameItem::new)
-                .toList());
+        menu.setInstances(instances);
         JFXPopup popup = new JFXPopup(menu);
+        menu.addEventHandler(ActionEvent.ACTION, event -> popup.hide());
         owner.getProperties().put(KEY, popup);
         popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, event -> owner.getProperties().remove(KEY, popup));
         popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY, true);
-
-        return popup;
     }
 
     private final JFXListView<GameItem> listView = new JFXListView<>();
     private final BooleanBinding isEmpty = Bindings.isEmpty(listView.getItems());
 
+    /// Creates a virtualized list that fires an action when the user chooses an instance.
     public GameListPopupMenu() {
         this.setMaxHeight(365);
         this.getStyleClass().add("popup-menu-content");
 
         listView.setCellFactory(Cell::new);
+        listView.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.ENTER || event.getCode() == KeyCode.SPACE) {
+                choose(listView.getSelectionModel().getSelectedItem(), listView);
+                event.consume();
+            }
+        });
 
         listView.setFixedCellSize(50);
         listView.setPrefWidth(300);
 
-        listView.prefHeightProperty().bind(Bindings.size(getItems()).multiply(50).add(2));
+        listView.prefHeightProperty().bind(Bindings.size(listView.getItems()).multiply(50).add(2));
 
         Label placeholder = new Label(i18n("instance.empty"));
         placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
@@ -107,8 +94,29 @@ public final class GameListPopupMenu extends StackPane {
         FXUtils.onChangeAndOperate(isEmpty, empty -> getChildren().setAll(empty ? placeholder : listView));
     }
 
-    public ObservableList<GameItem> getItems() {
-        return listView.getItems();
+    /// Replaces the instances in display order.
+    public void setInstances(List<HMCLGameInstance> instances) {
+        listView.getItems().setAll(instances.stream().map(GameItem::new).toList());
+    }
+
+    /// Focuses the list at the current instance for keyboard selection.
+    public void focusInstance(@Nullable HMCLGameInstance instance) {
+        if (listView.getItems().isEmpty())
+            return;
+
+        int index = Math.max(0, Lang.indexWhere(listView.getItems(),
+                item -> item.getGameInstance() == instance));
+        listView.getSelectionModel().select(index);
+        listView.scrollTo(index);
+        listView.requestFocus();
+    }
+
+    /// Applies a selection and lets the enclosing popup dismiss itself.
+    private static void choose(@Nullable GameItem item, Node source) {
+        if (item != null) {
+            item.getRepository().setSelectedInstance(item.getGameInstance());
+            source.fireEvent(new ActionEvent());
+        }
     }
 
     private static final class Cell extends ListCell<GameItem> {
@@ -145,14 +153,7 @@ public final class GameListPopupMenu extends StackPane {
             rootPane.getChildren().setAll(ripplerContainer);
             rootPane.maxWidthProperty().bind(listView.widthProperty().subtract(5));
 
-            FXUtils.onClicked(rootPane, () -> {
-                @Nullable GameItem item = getItem();
-                if (item != null) {
-                    item.getRepository().setSelectedInstance(item.getGameInstance());
-                    if (getScene().getWindow() instanceof JFXPopup popup)
-                        popup.hide();
-                }
-            });
+            FXUtils.onClicked(rootPane, () -> choose(getItem(), rootPane));
 
             this.graphic = rootPane;
         }

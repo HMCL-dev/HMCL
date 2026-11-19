@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.InvalidationListener;
@@ -17,6 +15,9 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.java.JavaDistribution;
 import org.jackhuang.hmcl.download.java.JavaPackageType;
@@ -35,7 +36,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Result;
@@ -101,7 +101,7 @@ public final class JavaDownloadDialog extends StackPane {
     }
 
     private final class DownloadMojangJava extends DialogPane {
-        private final List<JFXCheckBox> checkboxes = new ArrayList<>();
+        private final List<M3CheckBox> checkboxes = new ArrayList<>();
 
         DownloadMojangJava() {
             setTitle(i18n("java.download.title"));
@@ -112,7 +112,7 @@ public final class JavaDownloadDialog extends StackPane {
 
             setValid(false);
             InvalidationListener updateValidStatus = e -> {
-                for (JFXCheckBox box : checkboxes) {
+                for (M3CheckBox box : checkboxes) {
                     if (!box.isDisabled() && box.isSelected()) {
                         setValid(true);
                         return;
@@ -122,7 +122,7 @@ public final class JavaDownloadDialog extends StackPane {
             };
 
             for (GameJavaVersion version : supportedGameJavaVersions) {
-                JFXCheckBox button = new JFXCheckBox("Java " + version.majorVersion());
+                M3CheckBox button = new M3CheckBox("Java " + version.majorVersion());
                 button.setUserData(version);
 
                 if (JavaManager.REPOSITORY.isInstalled(platform, version)) {
@@ -141,9 +141,9 @@ public final class JavaDownloadDialog extends StackPane {
             if (!distributions.isEmpty()) {
                 JFXHyperlink more = new JFXHyperlink(i18n("java.download.more"));
                 more.setOnAction(event -> JavaDownloadDialog.this.getChildren().setAll(new DownloadDiscoJava()));
-                setActions(warningLabel, more, acceptPane, cancelButton);
+                setActions(warningLabel, more, cancelButton, acceptButton);
             } else
-                setActions(warningLabel, acceptPane, cancelButton);
+                setActions(warningLabel, cancelButton, acceptButton);
         }
 
         @Override
@@ -151,7 +151,7 @@ public final class JavaDownloadDialog extends StackPane {
             fireEvent(new DialogCloseEvent());
 
             List<GameJavaVersion> selectedVersions = new ArrayList<>();
-            for (JFXCheckBox box : checkboxes) {
+            for (M3CheckBox box : checkboxes) {
                 if (!box.isDisabled() && box.isSelected()) {
                     selectedVersions.add((GameJavaVersion) box.getUserData());
                 }
@@ -201,8 +201,7 @@ public final class JavaDownloadDialog extends StackPane {
         private final JFXComboBox<JavaPackageType> packageTypeBox;
         private final Label warningLabel = new Label();
 
-        private final JFXButton downloadButton;
-        private final StackPane downloadButtonPane = new StackPane();
+        private final M3Button downloadButton;
 
         private final DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
 
@@ -223,14 +222,13 @@ public final class JavaDownloadDialog extends StackPane {
             this.packageTypeBox.setConverter(FXUtils.stringConverter(JavaPackageType::getDisplayName));
             this.packageTypeBox.disableProperty().bind(Bindings.isNull(distributionBox.getSelectionModel().selectedItemProperty()));
 
-            this.downloadButton = new JFXButton(i18n("download"));
+            this.downloadButton = new M3Button(i18n("download"), M3ButtonVariant.TEXT);
             downloadButton.setOnAction(e -> onDownload());
-            downloadButton.getStyleClass().add("dialog-accept");
-            downloadButton.disableProperty().bind(Bindings.isNull(remoteVersionBox.getSelectionModel().selectedItemProperty()));
+            var loading = FXUtils.newButtonLoadingProperty(downloadButton);
+            downloadButton.disableProperty().bind(loading.or(remoteVersionBox.getSelectionModel().selectedItemProperty().isNull()));
 
-            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+            M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-            cancelButton.getStyleClass().add("dialog-cancel");
             onEscPressed(this, cancelButton::fire);
 
             GridPane body = new GridPane();
@@ -293,22 +291,17 @@ public final class JavaDownloadDialog extends StackPane {
                 remoteVersionBox.getSelectionModel().selectFirst();
             });
 
-            SpinnerPane spinnerPane = new SpinnerPane();
-            spinnerPane.getStyleClass().add("small-spinner-pane");
-            spinnerPane.setContent(downloadButton);
-            downloadButtonPane.getChildren().setAll(spinnerPane);
-
             Consumer<DiscoJavaVersionList> updateListStatus = list -> {
                 remoteVersionBox.setItems(null);
                 packageTypeBox.getItems().clear();
                 warningLabel.setText(null);
 
                 if (list == null || (list.versions != null && list.versions.isEmpty()))
-                    spinnerPane.hideSpinner();
+                    loading.set(false);
                 else if (list.status == DiscoJavaVersionList.Status.LOADING)
-                    spinnerPane.showSpinner();
+                    loading.set(true);
                 else {
-                    spinnerPane.hideSpinner();
+                    loading.set(false);
 
                     if (list.status == DiscoJavaVersionList.Status.SUCCESS) {
                         packageTypeBox.getItems().setAll(list.versions.keySet());
@@ -338,7 +331,7 @@ public final class JavaDownloadDialog extends StackPane {
 
             setHeading(new Label(i18n("java.download.title")));
             setBody(body);
-            setActions(warningLabel, downloadButtonPane, cancelButton);
+            setActions(warningLabel, cancelButton, downloadButton);
             if (platform.os() == OperatingSystem.LINUX && platform.arch() == Architecture.RISCV64) {
                 JFXHyperlink hyperlink = new JFXHyperlink(i18n("java.download.banshanjdk-8"));
                 hyperlink.setExternalLink("https://www.zthread.cn/#product");

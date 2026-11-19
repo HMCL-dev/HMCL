@@ -15,6 +15,12 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ProgressIndicator;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
@@ -159,13 +165,13 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             actions.setPickOnBounds(false);
             {
                 if (control.componentType == GameComponentType.GAME) {
-                    JFXButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
+                    M3IconButton wikiButton = new M3IconButton(SVG.GLOBE_BOOK.createIcon());
                     wikiButton.setOnAction(event -> onOpenWiki());
                     FXUtils.installFastTooltip(wikiButton, i18n("wiki.tooltip"));
                     actions.getChildren().add(wikiButton);
                 }
 
-                JFXButton actionButton = newToggleButton4(SVG.ARROW_FORWARD);
+                M3IconButton actionButton = new M3IconButton(SVG.ARROW_FORWARD.createIcon());
                 actionButton.setOnAction(e -> onAction());
                 actions.getChildren().add(actionButton);
             }
@@ -288,9 +294,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final JFXListView<ComponentRemoteVersion> list;
 
         private final TransitionPane transitionPane;
-        private final JFXSpinner spinner;
+        /// Indicates that the remote version list is loading.
+        private final M3ProgressIndicator spinner;
 
-        private final JFXTextField nameField;
+        private final M3TextField nameField;
         private final JFXComboBox<VersionTypeFilter> categoryField = new JFXComboBox<>();
 
         /// Creates the searchable version list with viewport-constrained cells and loading states.
@@ -324,7 +331,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 int rowIndex = 0;
 
                 {
-                    nameField = new JFXTextField();
+                    nameField = FXUtils.newTextField(M3TextInputVariant.FILLED);
                     nameField.setPromptText(i18n("instance.search.prompt"));
                     nameField.textProperty().addListener(o -> updateList());
 
@@ -348,7 +355,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     categoryField.setConverter(stringConverter(type -> i18n("instance.game." + type.name().toLowerCase(Locale.ROOT))));
                     categoryField.getSelectionModel().selectedItemProperty().addListener(o -> updateList());
 
-                    JFXButton refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
+                    M3Button refreshButton = new M3Button(I18n.i18n("button.refresh"), M3ButtonVariant.FILLED);
                     refreshButton.setOnAction(event -> control.onRefresh());
 
                     if (control.downloadProvider.hasType(control.componentType)) {
@@ -371,7 +378,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 root.setCenter(spinnerPane);
 
                 transitionPane = new TransitionPane();
-                spinner = new JFXSpinner();
+                spinner = FXUtils.newSpinner();
                 TransitionPane.setCacheAllowed(spinner, false);
 
                 StackPane centerWrapper = new StackPane();

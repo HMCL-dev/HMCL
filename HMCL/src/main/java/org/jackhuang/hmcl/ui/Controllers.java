@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -12,13 +10,18 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.stage.*;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3Dialog;
+import org.glavo.m3fx.controls.M3DialogPane;
+import org.glavo.m3fx.controls.M3TextInputValidator;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -35,7 +38,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
@@ -327,7 +330,7 @@ public final class Controllers {
 
         Lang.thread(JavaManager::initialize, "Search Java", true);
 
-        StyleSheets.init(mainScene);
+        StyleSheets.init(mainScene, decorator.getContentRoot());
 
         if (!SystemInfo.SYSTEM_ARCH.isX86() && SettingsManager.userState().platformPromptVersionProperty().get() < 1) {
             Runnable continueAction = () -> {
@@ -357,7 +360,7 @@ public final class Controllers {
                 LOG.warning("Invalid type for shown tips key: " + JAVA_VERSION_TIP, e);
             }
             if (shownTipVersion == null || shownTipVersion.intValue() < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
-                MessageDialogPane.Builder builder = new MessageDialogPane.Builder(i18n("fatal.deprecated_java_version"), null, MessageType.WARNING);
+                MessageDialogBuilder builder = new MessageDialogBuilder(i18n("fatal.deprecated_java_version"), null, MessageType.WARNING);
                 @Nullable String downloadLink = Metadata.getSuggestedJavaDownloadLink();
                 if (downloadLink != null)
                     builder.addHyperLink(
@@ -372,7 +375,7 @@ public final class Controllers {
 
         // Check whether JIT is enabled in the current environment
         if (!JavaRuntime.CURRENT_JIT_ENABLED && !Boolean.TRUE.equals(state().getShownTips().get(JAVA_INTERPRETED_MODE_TIP))) {
-            Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.java_interpreted_mode"), i18n("message.warning"), MessageType.WARNING)
+            Controllers.dialog(new MessageDialogBuilder(i18n("warning.java_interpreted_mode"), i18n("message.warning"), MessageType.WARNING)
                     .ok(null)
                     .addCancel(i18n("button.do_not_show_again"), () ->
                             state().getShownTips().put(JAVA_INTERPRETED_MODE_TIP, true))
@@ -381,7 +384,7 @@ public final class Controllers {
 
         // Check whether hardware acceleration is enabled
         if (!FXUtils.GPU_ACCELERATION_ENABLED && !Boolean.TRUE.equals(state().getShownTips().get(SOFTWARE_RENDERING))) {
-            Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.software_rendering"), i18n("message.warning"), MessageType.WARNING)
+            Controllers.dialog(new MessageDialogBuilder(i18n("warning.software_rendering"), i18n("message.warning"), MessageType.WARNING)
                     .ok(null)
                     .addCancel(i18n("button.do_not_show_again"), () ->
                             state().getShownTips().put(SOFTWARE_RENDERING, true))
@@ -394,17 +397,15 @@ public final class Controllers {
             agreementPane.setBody(new Label(i18n("launcher.agreement.hint")));
             JFXHyperlink agreementLink = new JFXHyperlink(i18n("launcher.agreement"));
             agreementLink.setExternalLink(Metadata.EULA_URL);
-            JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
-            yesButton.getStyleClass().add("dialog-accept");
+            M3Button yesButton = new M3Button(i18n("launcher.agreement.accept"), M3ButtonVariant.TEXT);
             yesButton.setOnAction(e -> {
                 UserState userState = userState();
                 userState.agreementVersionProperty().set(1);
                 agreementPane.fireEvent(new DialogCloseEvent());
             });
-            JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));
-            noButton.getStyleClass().add("dialog-cancel");
+            M3Button noButton = new M3Button(i18n("launcher.agreement.decline"), M3ButtonVariant.TEXT);
             noButton.setOnAction(e -> javafx.application.Platform.exit());
-            agreementPane.setActions(agreementLink, yesButton, noButton);
+            agreementPane.setActions(agreementLink, noButton, yesButton);
             Controllers.dialog(agreementPane);
         }
 
@@ -492,14 +493,48 @@ public final class Controllers {
 
     /// Shows the content in the main-window dialog stack without waiting for it to close.
     ///
-    /// Does nothing if no decorator exists. If the decorator has no scene, display is deferred
-    /// to the JavaFX application thread; otherwise this method must be called on that thread.
+    /// Does nothing if no decorator exists. Content is retained until the main window is shown.
+    /// Must be called on the JavaFX application thread.
     ///
     /// @param content the dialog content
-    /// @throws IllegalStateException if the decorator has a scene and the caller is not on the JavaFX application thread
+    /// @throws IllegalStateException if a decorator exists and the caller is not on the JavaFX application thread
     public static void dialog(Region content) {
         if (decorator != null)
             decorator.showDialog(content);
+    }
+
+    /// Shows a native Material dialog in the main window, or retains it until the window is visible.
+    public static void dialog(M3Dialog dialog) {
+        if (decorator != null)
+            decorator.showDialog(dialog);
+    }
+
+    /// Wraps existing dialog content, forwarding its close events and lifecycle callbacks to M3FX.
+    /// Content from a closing presentation can be reused immediately. Must be called on the JavaFX thread.
+    public static M3Dialog createDialog(Node content) {
+        FXUtils.checkFxUserThread();
+        for (@Nullable Node parent = content.getParent(); parent != null; parent = parent.getParent()) {
+            if (parent instanceof M3DialogPane pane && pane.getContent() == content) {
+                pane.setContent(null);
+                break;
+            }
+        }
+        M3Dialog dialog = new M3Dialog();
+        dialog.setDismissOnScrimClick(false);
+        dialog.getDialogPane().setContentPadding(0);
+        dialog.getDialogPane().setContent(content);
+        dialog.setOnShown(event -> {
+            EventHandler<DialogCloseEvent> closeHandler = close -> event.getHandle().requestClose();
+            content.addEventHandler(DialogCloseEvent.CLOSE, closeHandler);
+            dialog.setOnHiding(hiding -> {
+                content.removeEventHandler(DialogCloseEvent.CLOSE, closeHandler);
+                if (content instanceof DialogAware aware)
+                    aware.onDialogClosed();
+            });
+            if (content instanceof DialogAware aware)
+                aware.onDialogShown(event.getHandle());
+        });
+        return dialog;
     }
 
     /// Shows an informational message with the default title; see [#dialog(String, String)].
@@ -522,7 +557,7 @@ public final class Controllers {
     /// A null title uses the message type's default title. Activating OK, including through Escape,
     /// invokes the action if non-null. See [#dialog(Region)].
     public static void dialog(String text, @Nullable String title, MessageType type, @Nullable Runnable ok) {
-        dialog(new MessageDialogPane.Builder(text, title, type).ok(ok).build());
+        dialog(new MessageDialogBuilder(text, title, type).ok(ok).build());
     }
 
     /// Shows a question using [#confirm(String, String, MessageType, Runnable, Runnable)] with [MessageType#QUESTION].
@@ -535,7 +570,7 @@ public final class Controllers {
     /// A null title uses the message type's default title. Each button invokes its corresponding
     /// action if non-null; Escape activates No. See [#dialog(Region)].
     public static void confirm(String text, @Nullable String title, MessageType type, @Nullable Runnable yes, @Nullable Runnable no) {
-        dialog(new MessageDialogPane.Builder(text, title, type).yesOrNo(yes, no).build());
+        dialog(new MessageDialogBuilder(text, title, type).yesOrNo(yes, no).build());
     }
 
     /// Shows a warning that confirms backing up a read-only settings file before overwriting it.
@@ -543,7 +578,7 @@ public final class Controllers {
     /// @param text      the file-specific read-only warning
     /// @param overwrite the action that backs up and overwrites the file
     public static void confirmBackupAndOverwrite(String text, ExceptionalRunnable<?> overwrite) {
-        dialog(new MessageDialogPane.Builder(
+        dialog(new MessageDialogBuilder(
                 text + "\n\n" + i18n("settings.file.force_write.confirm"),
                 i18n("message.warning"),
                 MessageType.WARNING)
@@ -561,17 +596,17 @@ public final class Controllers {
                 .build());
     }
 
-    /// Shows a message using [#confirmAction(String, String, MessageType, ButtonBase, Runnable)] with no cancel action.
-    public static void confirmAction(String text, @Nullable String title, MessageType type, ButtonBase actionButton) {
-        dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, null).build());
+    /// Shows a message using [#confirmAction(String, String, MessageType, M3Button, Runnable)] with no cancel action.
+    public static void confirmAction(String text, @Nullable String title, MessageType type, M3Button actionButton) {
+        dialog(new MessageDialogBuilder(text, title, type).actionOrCancel(actionButton, null).build());
     }
 
     /// Shows a message with the supplied action button and a Cancel button.
     ///
     /// A null title uses the message type's default title. Cancel or Escape invokes the optional cancel action.
-    /// The action button keeps its handler and gains a dialog-close handler. See [#dialog(Region)].
-    public static void confirmAction(String text, @Nullable String title, MessageType type, ButtonBase actionButton, @Nullable Runnable cancel) {
-        dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, cancel).build());
+    /// The action button keeps its handler; M3FX closes the dialog after an unconsumed action event.
+    public static void confirmAction(String text, @Nullable String title, MessageType type, M3Button actionButton, @Nullable Runnable cancel) {
+        dialog(new MessageDialogBuilder(text, title, type).actionOrCancel(actionButton, cancel).build());
     }
 
     /// Shows a confirmation message whose OK button is enabled after a countdown.
@@ -587,10 +622,9 @@ public final class Controllers {
         if (seconds <= 0)
             throw new IllegalArgumentException("Seconds must be greater than 0");
 
-        JFXButton btnOk = new JFXButton(i18n("button.ok"));
-        btnOk.getStyleClass().add(messageType == MessageType.WARNING || messageType == MessageType.ERROR
-                ? "dialog-error"
-                : "dialog-accept");
+        M3Button btnOk = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
+        if (messageType == MessageType.WARNING || messageType == MessageType.ERROR)
+            btnOk.getStyleClass().add("m3-dialog-error");
 
         if (ok != null)
             btnOk.setOnAction(e -> ok.run());
@@ -622,7 +656,13 @@ public final class Controllers {
             decorator.showDialogLater(content);
     }
 
-    /// Shows a text prompt using [#prompt(String, FutureCallback, String, ValidatorBase...)] with empty input and no validators.
+    /// Queues a native Material dialog until all current main-window dialogs close.
+    public static void dialogLater(M3Dialog dialog) {
+        if (decorator != null)
+            decorator.showDialogLater(dialog);
+    }
+
+    /// Shows a text prompt using [#prompt(String, FutureCallback, String, M3TextInputValidator...)] with empty input and no validators.
     public static CompletableFuture<String> prompt(@Nullable String title, FutureCallback<String> onResult) {
         return prompt(title, onResult, "");
     }
@@ -632,16 +672,16 @@ public final class Controllers {
     /// Accepting invokes the callback. Resolving completes the future with the text at resolution time
     /// and closes the dialog; rejecting displays the reason without completing the future.
     /// Closing alone does not complete or cancel the future; a pending callback may still resolve it.
-    /// Without a decorator, the future remains incomplete. See [#dialog(Region)].
+    /// Without a decorator, the future remains incomplete. See [#dialog(M3Dialog)].
     ///
     /// @param title the prompt title, or null for no title text
     /// @param onResult the callback that accepts or rejects the entered text
     /// @param initialValue the initial text, or null for an empty field
     /// @param validators the input validators, or a null or empty array for none
-    public static CompletableFuture<String> prompt(@Nullable String title, FutureCallback<String> onResult, @Nullable String initialValue, ValidatorBase @Nullable ... validators) {
-        InputDialogPane pane = new InputDialogPane(title, initialValue, onResult, validators);
-        dialog(pane);
-        return pane.getCompletableFuture();
+    public static CompletableFuture<String> prompt(@Nullable String title, FutureCallback<String> onResult, @Nullable String initialValue, M3TextInputValidator @Nullable ... validators) {
+        InputDialog dialog = new InputDialog(title, initialValue, onResult, validators);
+        dialog(dialog);
+        return dialog.getCompletableFuture();
     }
 
     /// Shows questions that directly update the builder's question objects.
@@ -755,10 +795,10 @@ public final class Controllers {
     /// Offers to open the URI externally or copy it to the clipboard; does nothing for null.
     public static void openUriOrCopy(@Nullable String url) {
         if (url == null) return;
-        var dialog = new MessageDialogPane.Builder(
+        var dialog = new MessageDialogBuilder(
                 i18n("web.open_in_browser", url),
                 i18n("message.confirm"),
-                MessageDialogPane.MessageType.QUESTION
+                MessageType.QUESTION
         )
                 .addAction(i18n("button.copy"), () -> FXUtils.copyText(url))
                 .yesOrNo(() -> FXUtils.openLink(url), null)

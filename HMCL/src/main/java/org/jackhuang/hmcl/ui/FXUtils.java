@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.*;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -43,13 +42,20 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3PasswordField;
+import org.glavo.m3fx.controls.M3ProgressIndicator;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputLayout;
+import org.glavo.m3fx.controls.M3TextInputValidator;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
@@ -337,23 +343,38 @@ public final class FXUtils {
         });
     }
 
-    public static void setValidateWhileTextChanged(Node field, boolean validate) {
-        if (field instanceof JFXTextField) {
-            if (validate) {
-                addListener(field, "FXUtils.validation", ((JFXTextField) field).textProperty(), o -> ((JFXTextField) field).validate());
-            } else {
-                removeListener(field, "FXUtils.validation");
-            }
-            ((JFXTextField) field).validate();
-        } else if (field instanceof JFXPasswordField) {
-            if (validate) {
-                addListener(field, "FXUtils.validation", ((JFXPasswordField) field).textProperty(), o -> ((JFXPasswordField) field).validate());
-            } else {
-                removeListener(field, "FXUtils.validation");
-            }
-            ((JFXPasswordField) field).validate();
-        } else
-            throw new IllegalArgumentException("Only JFXTextField and JFXPasswordField allowed");
+    /// Creates an outlined text field with the launcher's localized editing menu.
+    public static M3TextField newTextField() {
+        return newTextField(M3TextInputVariant.OUTLINED);
+    }
+
+    /// Creates a text field with the given variant and the launcher's localized editing menu.
+    public static M3TextField newTextField(M3TextInputVariant variant) {
+        M3TextField field = new M3TextField();
+        field.setVariant(variant);
+        useJFXContextMenu(field);
+        return field;
+    }
+
+    /// Creates an outlined password field with the launcher's localized editing menu.
+    public static M3PasswordField newPasswordField() {
+        return newPasswordField(M3TextInputVariant.OUTLINED);
+    }
+
+    /// Creates a masked password field with the given variant and the launcher's localized editing menu.
+    public static M3PasswordField newPasswordField(M3TextInputVariant variant) {
+        M3PasswordField field = new M3PasswordField();
+        field.setVariant(variant);
+        useJFXContextMenu(field);
+        return field;
+    }
+
+    /// Displays validation errors below the field, including for its initial value.
+    public static M3TextInputLayout newValidatedTextField(TextField field, M3TextInputValidator... validators) {
+        M3TextInputLayout layout = new M3TextInputLayout(field);
+        layout.getValidators().addAll(validators);
+        layout.validate();
+        return layout;
     }
 
     public static Rectangle setOverflowHidden(Region region) {
@@ -622,7 +643,7 @@ public final class FXUtils {
         });
     }
 
-    public static <T> void bind(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
+    public static <T> void bind(M3TextField textField, Property<T> property, @Nullable StringConverter<T> converter) {
         TextFieldBinding<T> binding = new TextFieldBinding<>(textField, property, converter);
         binding.updateTextField();
         textField.getProperties().put("FXUtils.bind.binding", binding);
@@ -631,15 +652,15 @@ public final class FXUtils {
         property.addListener(binding.propertyListener);
     }
 
-    public static void bindInt(JFXTextField textField, Property<Number> property) {
+    public static void bindInt(M3TextField textField, Property<Number> property) {
         bind(textField, property, SafeStringConverter.fromInteger());
     }
 
-    public static void bindString(JFXTextField textField, Property<String> property) {
+    public static void bindString(M3TextField textField, Property<String> property) {
         bind(textField, property, null);
     }
 
-    public static void unbind(JFXTextField textField, Property<?> property) {
+    public static void unbind(M3TextField textField, Property<?> property) {
         TextFieldBinding<?> binding = (TextFieldBinding<?>) textField.getProperties().remove("FXUtils.bind.binding");
         if (binding != null) {
             textField.focusedProperty().removeListener(binding.focusedListener);
@@ -649,22 +670,22 @@ public final class FXUtils {
     }
 
     private static final class TextFieldBinding<T> {
-        private final JFXTextField textField;
+        private final M3TextField textField;
         private final Property<T> property;
-        private final StringConverter<T> converter;
+        private final @Nullable StringConverter<T> converter;
 
         public final ChangeListener<Boolean> focusedListener;
         public final ChangeListener<Scene> sceneListener;
         public final InvalidationListener propertyListener;
 
-        public TextFieldBinding(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
+        public TextFieldBinding(M3TextField textField, Property<T> property, @Nullable StringConverter<T> converter) {
             this.textField = textField;
             this.property = property;
             this.converter = converter;
 
             focusedListener = (observable, oldFocused, newFocused) -> {
                 if (oldFocused && !newFocused) {
-                    if (textField.validate()) {
+                    if (!textField.isError()) {
                         updateProperty();
                     } else {
                         // Rollback to old value
@@ -676,7 +697,7 @@ public final class FXUtils {
             sceneListener = (observable, oldScene, newScene) -> {
                 if (oldScene != null && newScene == null) {
                     // Component is being removed from scene
-                    if (textField.validate()) {
+                    if (!textField.isError()) {
                         updateProperty();
                     }
                 }
@@ -941,48 +962,27 @@ public final class FXUtils {
         return image;
     }
 
-    public static JFXButton newRaisedButton(String text) {
-        JFXButton button = new JFXButton(text);
-        button.getStyleClass().add("jfx-button-raised");
-        button.setButtonType(JFXButton.ButtonType.RAISED);
-        return button;
+    /// Creates an indeterminate circular indicator that keeps its preferred diameter in resizable layouts.
+    public static M3ProgressIndicator newSpinner() {
+        M3ProgressIndicator spinner = new M3ProgressIndicator();
+        spinner.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        return spinner;
     }
 
-    public static JFXButton newBorderButton(String text) {
-        JFXButton button = new JFXButton(text);
-        button.getStyleClass().add("jfx-button-border");
-        return button;
-    }
-
-    public static JFXButton newToggleButton4(SVG icon) {
-        JFXButton button = new JFXButton();
-        button.getStyleClass().add("toggle-icon4");
-        button.setGraphic(icon.createIcon());
-        return button;
-    }
-
-    public static JFXButton newToggleButton4(SVG icon, int size) {
-        JFXButton button = new JFXButton();
-        button.getStyleClass().add("toggle-icon4");
-        button.setGraphic(icon.createIcon(size));
-        return button;
-    }
-
-    public static void setOnActionWithCooldown(ButtonBase button, Runnable action) {
-        setOnActionWithCooldown(button, action, Motion.SHORT4);
-    }
-
-    public static void setOnActionWithCooldown(ButtonBase button, Runnable action, Duration cooldown) {
-        button.setOnAction(e -> {
-            button.setDisable(true);
-
-            var pause = new PauseTransition(cooldown);
-            pause.setOnFinished(event -> button.setDisable(false));
-            pause.play();
-
-            action.run();
-            e.consume();
-        });
+    /// Binds a button's graphic to a loading flag, restoring its initial graphic while idle.
+    /// Callers can combine the flag with their own validation when binding the disabled state.
+    public static BooleanProperty newButtonLoadingProperty(ButtonBase button) {
+        BooleanProperty loading = new SimpleBooleanProperty(false);
+        @Nullable Node idleGraphic = button.getGraphic();
+        button.graphicProperty().bind(loading.map(active -> {
+            if (!active)
+                return idleGraphic;
+            M3ProgressIndicator indicator = newSpinner();
+            indicator.setIndicatorSize(18);
+            indicator.setTrackThickness(2);
+            return indicator;
+        }));
+        return loading;
     }
 
     public static Label newSafeTruncatedLabel() {
@@ -1488,7 +1488,7 @@ public final class FXUtils {
                 Label fromLabel = new Label(i18n("button.select_date.from"));
                 this.fromPicker = new JFXDatePicker(LocalDate.now());
                 fromPicker.setOverLay(true);
-                fromPicker.setDialogParent(Controllers.getDecorator().getDialogContainer());
+                fromPicker.setDialogParent(Controllers.getDecorator().getContentRoot());
                 body.add(fromLabel, 0, 0);
                 body.add(fromPicker, 1, 0);
             }
@@ -1496,18 +1496,16 @@ public final class FXUtils {
                 Label toLabel = new Label(i18n("button.select_date.to"));
                 this.toPicker = new JFXDatePicker(LocalDate.now());
                 toPicker.setOverLay(true);
-                toPicker.setDialogParent(Controllers.getDecorator().getDialogContainer());
+                toPicker.setDialogParent(Controllers.getDecorator().getContentRoot());
                 body.add(toLabel, 0, 1);
                 body.add(toPicker, 1, 1);
             }
             setBody(body);
 
-            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-            cancelButton.getStyleClass().add("dialog-cancel");
+            M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
-            JFXButton okButton = new JFXButton(i18n("button.ok"));
-            okButton.getStyleClass().add("dialog-accept");
+            M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
             okButton.setOnAction(e -> {
                 if (onConfirm != null) onConfirm.accept(Pair.pair(fromPicker.getValue(), toPicker.getValue()));
                 fireEvent(new DialogCloseEvent());

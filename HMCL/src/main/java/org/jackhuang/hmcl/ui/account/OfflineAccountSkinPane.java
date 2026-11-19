@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -15,6 +13,9 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
@@ -41,7 +42,7 @@ public class OfflineAccountSkinPane extends StackPane {
     private final OfflineAccount account;
 
     private final MultiFileItem<Skin.Type> skinItem = new MultiFileItem<>();
-    private final JFXTextField cslApiField = new JFXTextField();
+    private final M3TextField cslApiField = FXUtils.newTextField();
     private final JFXComboBox<TextureModel> modelCombobox = new JFXComboBox<>();
     private final FileSelector skinSelector = new FileSelector();
     private final FileSelector capeSelector = new FileSelector();
@@ -95,8 +96,7 @@ public class OfflineAccountSkinPane extends StackPane {
         layout.setBody(pane);
 
         cslApiField.setPromptText(i18n("account.skin.type.csl_api.location.hint"));
-        cslApiField.setValidators(new URLValidator());
-        FXUtils.setValidateWhileTextChanged(cslApiField, true);
+        var cslApiLayout = FXUtils.newValidatedTextField(cslApiField, new URLValidator());
 
         skinItem.loadChildren(Arrays.asList(
                 new MultiFileItem.Option<>(i18n("message.default"), Skin.Type.DEFAULT),
@@ -153,7 +153,7 @@ public class OfflineAccountSkinPane extends StackPane {
             Skin.Type selectedType = skinItem.getSelectedData();
 
             if (selectedType == Skin.Type.CUSTOM_SKIN_LOADER_API) {
-                if (!cslApiField.validate()) {
+                if (cslApiField.isError()) {
                     pauseTransition.stop();
                     return;
                 }
@@ -188,7 +188,7 @@ public class OfflineAccountSkinPane extends StackPane {
                         break;
 
                     case LITTLE_SKIN:
-                        HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
+                        HintPane hint = new HintPane(MessageType.INFO);
                         hint.setText(i18n("account.skin.type.little_skin.hint"));
 
                         hint.setMaxWidth(Double.MAX_VALUE);
@@ -210,7 +210,7 @@ public class OfflineAccountSkinPane extends StackPane {
                     case CUSTOM_SKIN_LOADER_API:
                         right.getChildren().addAll(
                             new Label(i18n("account.skin.type.csl_api.location")),
-                            cslApiField
+                            cslApiLayout
                         );
                         break;
                 }
@@ -223,8 +223,7 @@ public class OfflineAccountSkinPane extends StackPane {
             }
         });
 
-        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
-        acceptButton.getStyleClass().add("dialog-accept");
+        M3Button acceptButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
         acceptButton.setOnAction(e -> {
             account.setSkin(getSkin());
             fireEvent(new DialogCloseEvent());
@@ -232,16 +231,15 @@ public class OfflineAccountSkinPane extends StackPane {
 
         JFXHyperlink littleSkinLink = new JFXHyperlink(i18n("account.skin.type.little_skin"));
         littleSkinLink.setOnAction(e -> FXUtils.openLink("https://littleskin.cn/"));
-        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-        cancelButton.getStyleClass().add("dialog-cancel");
+        M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 
         acceptButton.disableProperty().bind(
                 skinItem.selectedDataProperty().isEqualTo(Skin.Type.CUSTOM_SKIN_LOADER_API)
-                        .and(cslApiField.activeValidatorProperty().isNotNull()));
+                        .and(cslApiField.errorProperty()));
 
-        layout.setActions(littleSkinLink, acceptButton, cancelButton);
+        layout.setActions(littleSkinLink, cancelButton, acceptButton);
     }
 
     private Skin getSkin() {

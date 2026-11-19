@@ -2,17 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXSwitch;
-import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
@@ -28,12 +22,16 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3Switch;
+import org.glavo.m3fx.controls.M3TextField;
+import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.addon.datapack.DataPack;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -64,7 +62,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     /// Whether the search mechanism is currently active.
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
 
-    private final JFXTextField searchField;
+    private final M3TextField searchField;
 
     /// Timer for debouncing search input to avoid executing search on every keystroke.
     private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
@@ -100,12 +98,12 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
 
-            JFXButton removeButton = createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () ->
+            M3Button removeButton = createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () ->
                     Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
                             skinnable.removeSelected(listView.getSelectionModel().getSelectedItems()), null));
-            JFXButton enableButton = createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
+            M3Button enableButton = createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
                     skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true));
-            JFXButton disableButton = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
+            M3Button disableButton = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                     skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false));
             removeButton.disableProperty().bind(getSkinnable().readOnly);
             enableButton.disableProperty().bind(getSkinnable().readOnly);
@@ -124,7 +122,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
             searchBar.setAlignment(Pos.CENTER);
             searchBar.setPadding(new Insets(0, 5, 0, 5));
-            searchField = new JFXTextField();
+            searchField = FXUtils.newTextField(M3TextInputVariant.FILLED);
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
             searchPause.setOnFinished(e -> search());
@@ -134,7 +132,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     searchPause.playFromStart();
                 }
             });
-            JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
+            M3IconButton closeSearchBar = createToolbarButton2(SVG.CLOSE,
                     () -> {
                         changeToolbar(normalToolbar);
 
@@ -282,13 +280,9 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     }
 
     private static final class DataPackInfoListCell extends MDListCell<DataPackInfoObject> {
-        private final JFXSwitch activeSwitch = new JFXSwitch();
+        private final M3Switch activeSwitch = new M3Switch();
         ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
-
-        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getPackInfo().isActive());
-        private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
-        private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
         /// Creates a selectable data pack row whose switch follows the read-only state.
         DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
@@ -302,10 +296,18 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             setSelectable();
 
             activeSwitch.disableProperty().bind(isReadOnlyProperty);
-            activeSwitch.setSize(20);
-            activeSwitch.setMinSize(30, 30);
-            activeSwitch.setPrefSize(30, 30);
-            activeSwitch.setMaxSize(30, 30);
+            activeSwitch.setOnToggleRequest(event -> {
+                event.consume();
+                @Nullable DataPackInfoObject item = getItem();
+                if (item == null) return;
+                DataPack.Pack packInfo = item.getPackInfo();
+                try {
+                    packInfo.setActive(event.getRequestedValue());
+                } catch (IOException e) {
+                    LOG.warning("Unable to change state of datapack " + packInfo.getPath(), e);
+                    Controllers.showToast(i18n("datapack.toggle.failed"));
+                }
+            });
             HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             imageContainer.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
@@ -317,27 +319,15 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
         @Override
         protected void updateControl(@Nullable DataPackInfoObject dataItem, boolean empty) {
-            if (observedActiveProperty != null)
-                observedActiveProperty.removeListener(weakActiveListener);
+            activeSwitch.selectedProperty().unbind();
             if (empty || dataItem == null) return;
             content.setTitle(dataItem.getTitle());
             content.setSubtitle(dataItem.getSubtitle());
 
             DataPack.Pack packInfo = dataItem.getPackInfo();
-            (observedActiveProperty = packInfo.activeProperty()).addListener(weakActiveListener);
-            activeSwitch.setDisableAnimation(true);
-            activeSwitch.setSelected(packInfo.isActive());
-            activeSwitch.setOnAction(event -> {
-                try {
-                    packInfo.setActive(activeSwitch.isSelected());
-                } catch (IOException e) {
-                    LOG.warning("Unable to change state of datapack " + packInfo.getPath(), e);
-                    Controllers.showToast(i18n("datapack.toggle.failed"));
-                } finally {
-                    activeSwitch.setSelected(packInfo.isActive());
-                }
-            });
-            activeSwitch.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
+            activeSwitch.setAnimationsEnabled(false);
+            activeSwitch.selectedProperty().bind(packInfo.activeProperty());
+            activeSwitch.setAnimationsEnabled(true);
             dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
         }
     }
