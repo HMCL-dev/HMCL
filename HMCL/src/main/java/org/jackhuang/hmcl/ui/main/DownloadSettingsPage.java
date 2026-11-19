@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXSlider;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
@@ -16,6 +17,7 @@ import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3PasswordField;
+import org.glavo.m3fx.controls.M3RadioButton;
 import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
@@ -196,20 +198,20 @@ public class DownloadSettingsPage extends StackPane {
 
                 ToggleGroup proxyConfigurationGroup = new ToggleGroup();
 
-                JFXRadioButton chkProxySystem = new JFXRadioButton(i18n("settings.launcher.proxy.default"));
+                M3RadioButton chkProxySystem = new M3RadioButton(i18n("settings.launcher.proxy.default"));
                 chkProxySystem.setUserData(ProxyType.SYSTEM);
                 chkProxySystem.setToggleGroup(proxyConfigurationGroup);
 
-                JFXRadioButton chkProxyNone = new JFXRadioButton(i18n("settings.launcher.proxy.none"));
+                M3RadioButton chkProxyNone = new M3RadioButton(i18n("settings.launcher.proxy.none"));
                 chkProxyNone.setUserData(ProxyType.DIRECT);
                 chkProxyNone.setToggleGroup(proxyConfigurationGroup);
 
-                JFXRadioButton chkProxyHttp = new JFXRadioButton(i18n("settings.launcher.proxy.http"));
+                M3RadioButton chkProxyHttp = new M3RadioButton(i18n("settings.launcher.proxy.http"));
                 chkProxyHttp.setUserData(ProxyType.HTTP);
                 chkProxyHttp.setToggleGroup(proxyConfigurationGroup);
 
 
-                JFXRadioButton chkProxySocks = new JFXRadioButton(i18n("settings.launcher.proxy.socks"));
+                M3RadioButton chkProxySocks = new M3RadioButton(i18n("settings.launcher.proxy.socks"));
                 chkProxySocks.setUserData(ProxyType.SOCKS);
                 chkProxySocks.setToggleGroup(proxyConfigurationGroup);
 

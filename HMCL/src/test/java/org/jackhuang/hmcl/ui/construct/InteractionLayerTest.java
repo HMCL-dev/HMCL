@@ -43,6 +43,33 @@ import static org.junit.jupiter.api.Assertions.*;
 @Isolated("Temporarily supplies settings while initializing the cached animation policy")
 public final class InteractionLayerTest {
 
+    /// File options fit their radio buttons and enable the editor only while its option is selected.
+    @Test
+    void fileOptionsFollowRadioSelection() throws Exception {
+        onFxThread(() -> {
+            var list = new MultiFileItem<String>();
+            var automatic = new MultiFileItem.Option<>("Automatic", "auto");
+            var custom = new MultiFileItem.StringOption<>("Custom", "custom");
+            list.loadChildren(List.of(automatic, custom));
+            var scene = new Scene(list);
+            scene.getRoot().applyCss();
+            list.autosize();
+            list.layout();
+            var row = assertInstanceOf(Region.class, list.getChildren().getFirst());
+            assertTrue(row.getHeight() >= automatic.left.getHeight() + row.getInsets().getTop() + row.getInsets().getBottom());
+
+            list.setSelectedData("auto");
+            assertTrue(automatic.isSelected());
+            assertTrue(custom.getCustomField().isDisabled());
+            custom.left.fire();
+            assertEquals("custom", list.getSelectedData());
+            assertFalse(automatic.isSelected());
+            assertFalse(custom.getCustomField().isDisabled());
+            custom.left.fire();
+            assertSame(custom.left, list.getGroup().getSelectedToggle());
+        });
+    }
+
     /// Restores an action's icon without overriding permission changes made while the action was running.
     @Test
     void busyIconButtonRestoresGraphicAndHonorsAvailability() throws Exception {

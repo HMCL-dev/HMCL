@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXColorPicker;
-import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,6 +16,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3RadioButton;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputLayout;
 import org.glavo.m3fx.controls.M3TextInputValidator;
@@ -108,7 +108,8 @@ public final class MultiFileItem<T> extends VBox {
         protected String tooltip;
         protected final T data;
         protected final BooleanProperty selected = new SimpleBooleanProperty();
-        protected final JFXRadioButton left = new JFXRadioButton();
+        /// Selects this option in the enclosing group.
+        protected final M3RadioButton left = new M3RadioButton();
 
         public Option(String title, T data) {
             this.title = title;
@@ -152,7 +153,6 @@ public final class MultiFileItem<T> extends VBox {
         protected Node createItem(ToggleGroup group) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(3));
-            FXUtils.setLimitHeight(pane, 30);
 
             left.setText(title);
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
@@ -317,7 +317,6 @@ public final class MultiFileItem<T> extends VBox {
         protected Node createItem(ToggleGroup group) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(3));
-            FXUtils.setLimitHeight(pane, 30);
 
             left.setText(title);
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
@@ -17,6 +16,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3RadioButton;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -42,8 +42,9 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         root.setCursor(Cursor.HAND);
         FXUtils.onClicked(root, skinnable::fire);
 
-        JFXRadioButton chkSelected = new JFXRadioButton();
+        M3RadioButton chkSelected = new M3RadioButton();
         chkSelected.setMouseTransparent(true);
+        chkSelected.setFocusTraversable(false);
         BorderPane.setAlignment(chkSelected, Pos.CENTER);
         chkSelected.selectedProperty().bind(skinnable.selectedProperty());
         root.setLeft(chkSelected);

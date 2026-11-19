@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
@@ -18,6 +17,7 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3RadioButton;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputLayout;
 import org.glavo.m3fx.controls.M3TextInputValidator;
@@ -204,7 +204,7 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         protected @Nullable String tooltip;
 
         /// The radio button used by this choice.
-        protected final JFXRadioButton radioButton = new JFXRadioButton();
+        protected final M3RadioButton radioButton = new M3RadioButton();
 
         /// Creates a choice.
         public Choice(String title, T value) {
@@ -262,7 +262,7 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         }
 
         /// Returns the radio button owned by this choice.
-        protected final JFXRadioButton getRadioButton() {
+        protected final M3RadioButton getRadioButton() {
             return radioButton;
         }
 
