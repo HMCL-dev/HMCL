@@ -263,6 +263,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
     public void onAddFiles() {
         @Nullable @Unmodifiable List<Path> files = new PathChooser().setTitle(i18n("schematics.add.title"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.schematic"), "*.litematic", "*.nbt", "*.schematic", "*.schem"))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT)
                 .showMulti();
         if (files != null && !files.isEmpty()) {
             addFiles(files);

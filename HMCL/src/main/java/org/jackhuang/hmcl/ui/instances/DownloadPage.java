@@ -155,6 +155,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         Path dest = new PathChooser().setTitle(i18n("button.save_as"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("file"), "*." + extension))
                 .setInitialFileName(file.file().filename())
+                .setChooserContext(instanceReference.isPresent() ? PathChooser.ChooserContext.GAME(instanceReference::instance) : PathChooser.ChooserContext.EXPORT)
                 .showSave();
         if (dest == null) {
             return;

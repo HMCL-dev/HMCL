@@ -76,6 +76,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
     public void add() {
         @Nullable @Unmodifiable List<Path> res = new PathChooser().setTitle(i18n("datapack.add.title"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.datapack"), "*.zip"))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT)
                 .showMulti();
         if (res != null) {
             installMultiDataPack(res);

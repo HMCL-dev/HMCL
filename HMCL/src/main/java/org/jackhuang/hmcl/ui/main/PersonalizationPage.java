@@ -351,7 +351,9 @@ public class PersonalizationPage extends StackPane {
         Path output = new PathChooser().setTitle(i18n("theme_pack.export.title"))
                 .setInitialFileName((FileUtils.isNameValid(initialFileName) ? initialFileName : "theme-pack")
                         + (SystemInfo.CURRENT_OS == OperatingSystem.MACOS ? "" : ThemePackExporter.FILE_EXTENSION))
-                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION)).showSave();
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION))
+                .setChooserContext(PathChooser.ChooserContext.EXPORT)
+                .showSave();
         if (output == null) {
             return;
         }
@@ -649,9 +651,11 @@ public class PersonalizationPage extends StackPane {
                     };
 
             RadioChoiceList.FileChoice<BackgroundType> customBackgroundOption =
-                    new RadioChoiceList.FileChoice<>(i18n("settings.custom"), BackgroundType.CUSTOM, FileSelector.SelectionMode.FILE_OR_DIRECTORY)
-                            .setChooserTitle(i18n("launcher.background.choose"))
-                            .setExtensionFilters(PathChooser.getImageExtensionFilter());
+                    new RadioChoiceList.FileChoice<>(i18n("settings.custom"), BackgroundType.CUSTOM, FileSelector.SelectionMode.FILE_OR_DIRECTORY);
+            customBackgroundOption.getSelector().getSelector()
+                    .setTitle(i18n("launcher.background.choose"))
+                    .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE)
+                    .setExtensionFilters(PathChooser.getImageExtensionFilter());
             RadioChoiceList.TextChoice<BackgroundType> networkBackgroundOption =
                     new RadioChoiceList.TextChoice<>(i18n("launcher.background.network"), BackgroundType.NETWORK)
                             .setValidators(new URLValidator(true));

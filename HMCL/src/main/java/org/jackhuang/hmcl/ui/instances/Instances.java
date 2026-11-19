@@ -300,10 +300,6 @@ public final class Instances {
     @SafeVarargs
     public static void generateLaunchScript(HMCLGameInstance gameInstance, Consumer<LauncherHelper>... injecters) {
         ensureSelectedAccount(account -> {
-            Path runDirectory = gameInstance.getRunDirectory();
-            PathChooser selector = new PathChooser().setTitle(i18n("instance.launch_script.save"));
-            if (Files.isDirectory(runDirectory))
-                selector.setInitialDirectory(runDirectory);
             List<FileChooser.ExtensionFilter> filters = new ArrayList<>();
             if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
                 filters.add(new FileChooser.ExtensionFilter(i18n("extension.command"), "*.command"));
@@ -312,7 +308,10 @@ public final class Instances {
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
             filters.add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
-            Path file = selector.setExtensionFilters(filters).showSave();
+            Path file = new PathChooser().setTitle(i18n("instance.launch_script.save"))
+                    .setExtensionFilters(filters)
+                    .setChooserContext(PathChooser.ChooserContext.GAME(() -> gameInstance))
+                    .showSave();
             if (file != null) {
                 if (!isValidScriptExtension(FileUtils.getExtension(file))) {
                     String defaultExt = getDefaultScriptExtension();

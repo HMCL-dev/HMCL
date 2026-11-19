@@ -97,6 +97,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
     private void onChooseLocalFile() {
         Path selectedFile = new PathChooser().setTitle(i18n("modpack.choose"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip", "*.mrpack"))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT)
                 .showOpen();
         if (selectedFile == null) {
             return;

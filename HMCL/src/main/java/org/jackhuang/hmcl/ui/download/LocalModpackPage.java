@@ -9,7 +9,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.collections.transformation.FilteredList;
-import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
@@ -22,7 +21,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.WebPage;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
@@ -87,21 +85,9 @@ public final class LocalModpackPage extends ModpackPage {
 
         btnDescription.setVisible(false);
 
-        Path selectedFile;
-        Path filePath = controller.getSettings().get(MODPACK_FILE);
-        if (filePath != null) {
-            selectedFile = filePath;
-        } else {
-            selectedFile = new PathChooser().setTitle(i18n("modpack.choose"))
-                    .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"))
-                    .showOpen();
-            if (selectedFile == null) {
-                controller.onEnd();
-                return;
-            }
-
-            controller.getSettings().put(MODPACK_FILE, selectedFile);
-        }
+        Path selectedFile = controller.getSettings().get(MODPACK_FILE);
+        if (selectedFile == null)
+            throw new IllegalStateException("MODPACK_FILE should exist");
 
         showSpinner();
         Task.supplyAsync(() -> ModpackHelper.readModpackManifest(selectedFile))

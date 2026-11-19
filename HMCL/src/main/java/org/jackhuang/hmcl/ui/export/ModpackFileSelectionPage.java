@@ -214,7 +214,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
 
     private void onNext() {
         var info = Objects.requireNonNull(controller.getSettings().get(MODPACK_INFO));
-        PathChooser fileChooser = new PathChooser().setTitle(i18n("modpack.wizard.step.initialization.save"));
+        PathChooser fileChooser = new PathChooser().setTitle(i18n("modpack.wizard.step.initialization.save")).setChooserContext(PathChooser.ChooserContext.EXPORT);
         if (!info.isPackWithLauncher() && MODPACK_TYPE_MODRINTH.equals(controller.getSettings().get(MODPACK_TYPE))) {
             fileChooser.setExtensionFilters(new FileChooser.ExtensionFilter(i18n("modpack"), "*.mrpack"))
                     .setInitialFileName(info.getName() + (SystemInfo.CURRENT_OS == OperatingSystem.MACOS ? "" : ".mrpack"));

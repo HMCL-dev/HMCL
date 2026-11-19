@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.skin.SkinCanvas;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
@@ -89,7 +90,11 @@ public class OfflineAccountSkinPane extends StackPane {
         pane.setRight(skinOptionPane);
 
         skinSelector.setMaxWidth(Double.MAX_VALUE);
+        skinSelector.getSelector().setExtensionFilters(PathChooser.getImageExtensionFilter())
+                .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE);
         capeSelector.setMaxWidth(Double.MAX_VALUE);
+        capeSelector.getSelector().setExtensionFilters(PathChooser.getImageExtensionFilter())
+                .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE);
         modelCombobox.setMaxWidth(Double.MAX_VALUE);
         cslApiField.setMaxWidth(Double.MAX_VALUE);
 

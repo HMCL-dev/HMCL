@@ -576,7 +576,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 runningDirPane.setTitle(i18n("settings.game.running_directory"));
                 {
                     var runningDirSelector = new FileSelector(FileSelector.SelectionMode.DIRECTORY);
-                    runningDirSelector.getSelector().setTitle(i18n("settings.game.working_directory.choose"));
+                    runningDirSelector.getSelector().setTitle(i18n("settings.game.working_directory.choose"))
+                            .setChooserContext(PathChooser.ChooserContext.GAME(gameInstance::get));
                     runningDirSelector.setPrefWidth(400);
                     runningDirPane.setRight(runningDirSelector);
                     bindRunningDirectoryProperty(runningDirPane, runningDirSelector.textProperty(), runningDirSelector);
@@ -819,6 +820,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             nativesDirPane.setTitle(i18n("settings.advanced.natives_directory"));
             {
                 var nativesDirSelector = new FileSelector(FileSelector.SelectionMode.DIRECTORY);
+                nativesDirSelector.getSelector().setChooserContext(PathChooser.ChooserContext.GAME(gameInstance::get));
                 nativesDirSelector.setPrefWidth(400);
                 nativesDirPane.setRight(nativesDirSelector);
                 bindInheritableStringProperty(

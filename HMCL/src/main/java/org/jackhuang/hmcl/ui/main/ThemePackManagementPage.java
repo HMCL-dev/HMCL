@@ -145,6 +145,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     private void importThemePack() {
         @Nullable Path file = new PathChooser().setTitle(i18n("theme_pack.import.title"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT)
                 .showOpen();
         if (file == null) {
             return;

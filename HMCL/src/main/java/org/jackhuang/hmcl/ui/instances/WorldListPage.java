@@ -144,6 +144,7 @@ public final class WorldListPage extends ListPageBase<World> {
     public void add() {
         @Nullable @Unmodifiable List<Path> res = new PathChooser().setTitle(i18n("world.add.title"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.world"), "*.zip"))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT)
                 .showMulti();
 
         if (res == null || res.isEmpty()) return;

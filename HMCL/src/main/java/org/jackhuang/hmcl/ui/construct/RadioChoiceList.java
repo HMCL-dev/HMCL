@@ -15,7 +15,6 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -401,16 +400,9 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
             return this;
         }
 
-        /// Sets the chooser title.
-        public FileChoice<T> setChooserTitle(String chooserTitle) {
-            selector.getSelector().setTitle(chooserTitle);
-            return this;
-        }
-
-        /// Sets the extension filters to the chooser.
-        public FileChoice<T> setExtensionFilters(FileChooser.ExtensionFilter... filter) {
-            selector.getSelector().setExtensionFilters(filter);
-            return this;
+        /// Gets the selector.
+        public FileSelector getSelector() {
+            return selector;
         }
 
         /// Creates the right-side file selector.

@@ -180,6 +180,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     public void onAddFiles() {
         @Nullable @Unmodifiable List<Path> files = new PathChooser().setTitle(i18n("resourcepack.add"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT)
                 .showMulti();
         if (files != null && !files.isEmpty()) {
             addFiles(files);

@@ -6,6 +6,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -19,6 +21,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -35,14 +38,14 @@ public class PathChooser {
         return new FileChooser.ExtensionFilter(i18n("extension.png"), FXUtils.IMAGE_EXTENSIONS.stream().map(ext -> "*." + ext).toList());
     }
 
-    private Path getDir() {
-        var path = FileUtils.tryGetPath(SettingsManager.userSettings().getRecentFileChooserPaths().get(context.name()));
-        return path.orElseGet(ChooserContext.DEFAULT::getDefaultPath);
-    }
-
-    private void setDir(Path selected, boolean isDir) {
-        String path = FileUtils.getAbsolutePath(isDir ? selected : selected.getParent());
-        SettingsManager.userSettings().getRecentFileChooserPaths().put(context.name(), path);
+    private static @Nullable Path getExistingPath(@Nullable String pathString) {
+        return FileUtils.tryGetPath(pathString).filter(Files::exists).map(p -> {
+            if (Files.isRegularFile(p))
+                return p.getParent();
+            else if (Files.isDirectory(p))
+                return p;
+            return null;
+        }).orElse(null);
     }
 
     public PathChooser setChooserContext(ChooserContext context) {
@@ -50,24 +53,8 @@ public class PathChooser {
         return this;
     }
 
-    public PathChooser setInitialDirectory(@Nullable Path initialDirectory) {
-        this.initialDirectory = initialDirectory;
-        return this;
-    }
-
-    private static @Nullable Path getInitialDirectoryFromExisting(Path existingPath) {
-        if (Files.exists(existingPath)) {
-            if (Files.isRegularFile(existingPath))
-                return existingPath.getParent();
-            else if (Files.isDirectory(existingPath))
-                return existingPath;
-        }
-        return null;
-    }
-
-    public PathChooser setInitialDirectoryFromExisting(Path existingPath) {
-        initialDirectory = getInitialDirectoryFromExisting(existingPath);
-        return this;
+    public void setInitialDirectory(@Nullable String path) {
+        initialDirectory = getExistingPath(path);
     }
 
     public PathChooser setTitle(@Nullable String title) {
@@ -92,24 +79,14 @@ public class PathChooser {
 
     private DirectoryChooser getDirectoryChooser() {
         DirectoryChooser chooser = new DirectoryChooser();
-        if (initialDirectory == null) {
-            Path path = Objects.requireNonNullElseGet(getInitialDirectoryFromExisting(getDir()), ChooserContext.DEFAULT::getDefaultPath);
-            chooser.setInitialDirectory(path.toFile());
-        } else {
-            chooser.setInitialDirectory(initialDirectory.toFile());
-        }
+        chooser.setInitialDirectory(Objects.requireNonNullElseGet(initialDirectory, context::getDir).toFile());
         chooser.setTitle(StringUtils.isBlank(title) ? i18n("selector.choose_directory") : title);
         return chooser;
     }
 
     private FileChooser getFileChooser() {
         FileChooser chooser = new FileChooser();
-        if (initialDirectory == null) {
-            Path path = Objects.requireNonNullElseGet(getInitialDirectoryFromExisting(getDir()), ChooserContext.DEFAULT::getDefaultPath);
-            chooser.setInitialDirectory(path.toFile());
-        } else {
-            chooser.setInitialDirectory(initialDirectory.toFile());
-        }
+        chooser.setInitialDirectory(Objects.requireNonNullElseGet(initialDirectory, context::getDir).toFile());
         chooser.setTitle(StringUtils.isBlank(title) ? i18n("selector.choose_file") : title);
         chooser.getExtensionFilters().setAll(extensionFilter);
         chooser.setInitialFileName(initialFileName);
@@ -118,49 +95,72 @@ public class PathChooser {
 
     public @Nullable Path showOpenDirectory() {
         @Nullable Path result = FileUtils.toPath(getDirectoryChooser().showDialog(Controllers.getStage()));
-        if (result != null && initialDirectory == null) {
-            setDir(result, true);
-        }
+        context.postOpen(result, true);
         return result;
     }
 
     public @Nullable Path showOpen() {
         @Nullable Path result = FileUtils.toPath(getFileChooser().showOpenDialog(Controllers.getStage()));
-        if (result != null && initialDirectory == null) {
-            setDir(result, false);
-        }
+        context.postOpen(result, false);
         return result;
     }
 
     public @Nullable Path showSave() {
         @Nullable Path result = FileUtils.toPath(getFileChooser().showSaveDialog(Controllers.getStage()));
-        if (result != null && initialDirectory == null) {
-            setDir(result, false);
-        }
+        context.postOpen(result, false);
         return result;
     }
 
     public @Nullable @Unmodifiable List<Path> showMulti() {
         @Nullable List<File> result = getFileChooser().showOpenMultipleDialog(Controllers.getStage());
         if (result != null) {
-            if (initialDirectory == null)
-                setDir(result.get(result.size() - 1).toPath(), false);
+            context.postOpen(result.get(result.size() - 1).toPath(), false);
             return result.stream().map(File::toPath).toList();
         }
         return null;
     }
 
-    public enum ChooserContext {
-        DEFAULT(() -> "");
+    public sealed interface ChooserContext {
+        ChooserContext DEFAULT = new PersistentContext("default");
+        ChooserContext IMPORT = new PersistentContext("import");
+        ChooserContext IMPORT_IMAGE = new PersistentContext("import_image");
+        ChooserContext EXPORT = new PersistentContext("export");
 
-        private final Path defaultPath;
-
-        ChooserContext(Supplier<String> defaultPath) {
-            this.defaultPath = Path.of(defaultPath.get());
+        static ChooserContext GAME(Supplier<@Nullable HMCLGameInstance> supplier) {
+            return new ObjectContext<>(supplier, HMCLGameInstance::getRunDirectory);
         }
 
-        public Path getDefaultPath() {
-            return defaultPath;
+        static ChooserContext WORLD(Supplier<@Nullable World> supplier) {
+            return new ObjectContext<>(supplier, World::getFile);
+        }
+
+        Path getDir();
+
+        default void postOpen(@Nullable Path path, boolean isDir) {
+        }
+
+        record PersistentContext(String name) implements ChooserContext {
+            @Override
+            public Path getDir() {
+                var path = getExistingPath(SettingsManager.userSettings().getRecentFileChooserPaths().get(name));
+                return Objects.requireNonNullElse(path, Path.of("."));
+            }
+
+            @Override
+            public void postOpen(@Nullable Path path, boolean isDir) {
+                if (path != null) {
+                    String s = FileUtils.getAbsolutePath(isDir ? path : path.getParent());
+                    SettingsManager.userSettings().getRecentFileChooserPaths().put(name, s);
+                }
+            }
+        }
+
+        record ObjectContext<T>(Supplier<@Nullable T> supplier, Function<T, Path> func) implements ChooserContext {
+            @Override
+            public Path getDir() {
+                T instance = supplier.get();
+                return instance == null ? DEFAULT.getDir() : func.apply(instance);
+            }
         }
     }
 }

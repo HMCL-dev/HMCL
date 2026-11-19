@@ -40,22 +40,18 @@ public class FileSelector extends HBox {
         FXUtils.setValidateWhileTextChanged(pathField, true);
 
         selectButton.setOnAction(e -> {
-            if (getPath() != null) {
-                selector.setInitialDirectoryFromExisting(getPath());
-            } else {
-                selector.setInitialDirectory(null);
-            }
+            selector.setInitialDirectory(getText());
             switch (selectionMode) {
-                case OPEN_FILE -> postOpenProcess(selector.showOpen());
-                case DIRECTORY -> postOpenProcess(selector.showOpenDirectory());
-                case SAVE_FILE -> postOpenProcess(selector.showSave());
+                case OPEN_FILE -> postOpen(selector.showOpen());
+                case DIRECTORY -> postOpen(selector.showOpenDirectory());
+                case SAVE_FILE -> postOpen(selector.showSave());
                 case FILE_OR_DIRECTORY -> {
                     PopupMenu selectPopupMenu = new PopupMenu();
                     JFXPopup selectModePopup = new JFXPopup(selectPopupMenu);
 
                     selectPopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> postOpenProcess(selector.showOpen()), selectModePopup),
-                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> postOpenProcess(selector.showOpenDirectory()), selectModePopup)
+                            new IconedMenuItem(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> postOpen(selector.showOpen()), selectModePopup),
+                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> postOpen(selector.showOpenDirectory()), selectModePopup)
                     );
 
                     selectModePopup.show(selectButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -selectButton.getWidth(), 0);
@@ -119,7 +115,7 @@ public class FileSelector extends HBox {
         selectButton.fire();
     }
 
-    private void postOpenProcess(@Nullable Path path) {
+    private void postOpen(@Nullable Path path) {
         if (path != null)
             setText(processPath(path).toString());
     }

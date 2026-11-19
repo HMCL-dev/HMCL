@@ -66,7 +66,10 @@ public class GameInstanceIconDialog extends JFXDialogLayout {
     }
 
     private void exploreIcon() {
-        Path selectedFile = new PathChooser().setExtensionFilters(PathChooser.getImageExtensionFilter()).showOpen();
+        Path selectedFile = new PathChooser()
+                .setExtensionFilters(PathChooser.getImageExtensionFilter())
+                .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE)
+                .showOpen();
         if (selectedFile != null) {
             try {
                 gameInstance.setIconFile(selectedFile);

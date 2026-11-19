@@ -135,6 +135,7 @@ public class AccountListItem extends RadioButton {
 
         Path selectedFile = new PathChooser().setTitle(i18n("account.skin.upload"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("account.skin.file"), "*.png"))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE)
                 .showOpen();
         if (selectedFile == null) {
             return null;

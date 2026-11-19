@@ -185,6 +185,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     public void add() {
         @Nullable @Unmodifiable List<Path> res = new PathChooser().setTitle(i18n("mods.add.title"))
                 .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT)
                 .showMulti();
 
         if (res == null) return;
