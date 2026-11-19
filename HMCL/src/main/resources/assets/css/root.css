@@ -1450,11 +1450,11 @@
 
 /*******************************************************************************
  *                                                                             *
- * JFX Tree View                                                               *
+ * NBT Tree View                                                               *
  *                                                                             *
  ******************************************************************************/
 
-.tree-view {
+.nbt-tree-view {
     -fx-padding: 5;
     -fx-background-radius: 6;
     -fx-background-color: -monet-surface-container-low;
@@ -1462,7 +1462,7 @@
     -fx-border-radius: 6;
 }
 
-.tree-cell {
+.nbt-tree-view .tree-cell {
     -fx-padding: 5;
     -fx-background-radius: 6;
     -fx-background-color: transparent;
@@ -1470,23 +1470,19 @@
     -fx-border-radius: 6;
 }
 
-.tree-cell:focused {
+.nbt-tree-view .tree-cell:focused {
     -fx-background-color: -monet-secondary-container;
 }
 
-.tree-cell .arrow {
+.nbt-tree-view .tree-cell .arrow {
     -fx-background-color: -monet-on-surface;
 }
 
-.tree-cell .jfx-rippler {
-    -jfx-rippler-disabled: true;
-}
-
-.tree-view > .virtual-flow > .scroll-bar {
+.nbt-tree-view > .virtual-flow > .scroll-bar {
     -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
 }
 
-.tree-view > .virtual-flow > .scroll-bar .track {
+.nbt-tree-view > .virtual-flow > .scroll-bar .track {
     -fx-fill: transparent;
 }
 

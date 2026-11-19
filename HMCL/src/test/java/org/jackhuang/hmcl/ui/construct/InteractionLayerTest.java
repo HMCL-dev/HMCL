@@ -2,25 +2,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXCheckTreeCell;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Scene;
-import javafx.scene.control.CheckBoxTreeItem;
-import javafx.scene.control.TreeView;
 import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
-import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
-import org.glavo.m3fx.theme.M3Theme;
-import org.glavo.m3fx.theme.M3ThemeManager;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -49,45 +42,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 @Isolated("Temporarily supplies settings while initializing the cached animation policy")
 public final class InteractionLayerTest {
-
-    /// Recycling a checkbox between file tree items immediately reflects the new selection and releases the old binding.
-    @Test
-    void fileTreeCheckBoxFollowsReusedCell() throws Exception {
-        onFxThread(() -> {
-            var root = new CheckBoxTreeItem<>("Files");
-            var first = new CheckBoxTreeItem<>("First");
-            var second = new CheckBoxTreeItem<>("Second");
-            root.getChildren().addAll(List.of(first, second));
-            root.setExpanded(true);
-            first.setSelected(true);
-
-            var tree = new TreeView<>(root);
-            var cell = new JFXCheckTreeCell<String>();
-            cell.updateTreeView(tree);
-            cell.updateIndex(0);
-            var scene = new Scene(new StackPane(tree, cell));
-            M3ThemeManager.install(scene, M3Theme.defaultTheme());
-            scene.getRoot().applyCss();
-            var graphic = assertInstanceOf(HBox.class, cell.getGraphic());
-            var box = assertInstanceOf(M3CheckBox.class, graphic.getChildren().getFirst());
-            assertTrue(box.isIndeterminate());
-
-            cell.updateIndex(2);
-            assertFalse(box.isIndeterminate());
-            assertFalse(box.isSelected());
-            assertEquals(0.0, Objects.requireNonNull(box.lookup(".m3-checkbox-mark")).getOpacity());
-            box.fire();
-            assertTrue(second.isSelected());
-            assertTrue(root.isSelected());
-
-            cell.updateIndex(-1);
-            assertNull(cell.getGraphic());
-            assertTrue(second.isSelected());
-            second.setSelected(false);
-            second.setSelected(true);
-            assertFalse(box.isSelected());
-        });
-    }
 
     /// File options fit their radio buttons and enable the editor only while its option is selected.
     @Test

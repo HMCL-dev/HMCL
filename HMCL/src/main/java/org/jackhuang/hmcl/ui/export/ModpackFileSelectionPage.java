@@ -2,11 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.export;
 
-import com.jfoenix.controls.JFXCheckTreeCell;
-import com.jfoenix.controls.JFXTreeView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.CheckBoxTreeItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
@@ -16,6 +13,9 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
+import org.glavo.m3fx.controls.M3TreeCell;
+import org.glavo.m3fx.controls.M3TreeView;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -68,7 +68,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.gameInstance = gameInstance;
         this.adviser = adviser;
 
-        JFXTreeView<String> treeView = new JFXTreeView<>();
+        M3TreeView<String> treeView = new M3TreeView<>();
         treeView.setCellFactory(__ -> new ModpackFileTreeCell());
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
         onEscPressed(treeView, () -> controller.onPrev(true));
@@ -101,7 +101,8 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.setBottom(nextPane);
     }
 
-    private void loadRoot(JFXTreeView<String> treeView, StackPane placeholderPane, SpinnerPane spinnerPane, M3Button btnNext) {
+    /// Loads the export tree and enables the next step after the directory scan succeeds.
+    private void loadRoot(M3TreeView<String> treeView, StackPane placeholderPane, SpinnerPane spinnerPane, M3Button btnNext) {
         spinnerPane.setLoading(true);
         btnNext.setDisable(true);
         CompletableFuture
@@ -261,7 +262,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
 
     /// Stores a file name, optional explanation, and hierarchical selection state.
     @NotNullByDefault
-    private static final class ModpackFileTreeItem extends CheckBoxTreeItem<String> {
+    static final class ModpackFileTreeItem extends CheckBoxTreeItem<String> {
 
         /// The localized explanation for a recognized path, or `null` if none exists.
         private final @Nullable String comment;
@@ -276,10 +277,10 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
 
     /// Renders file names and localized explanations alongside the bound checkbox.
     @NotNullByDefault
-    private static final class ModpackFileTreeCell extends JFXCheckTreeCell<String> {
+    static final class ModpackFileTreeCell extends M3TreeCell<String> {
 
-        /// Contains the inherited checkbox graphic followed by the file labels.
-        private final HBox content = new HBox();
+        /// Edits the export selection independently of the tree's row selection.
+        private final M3CheckBox checkBox = new M3CheckBox();
 
         /// Displays the current file name.
         private final Label fileName = new Label();
@@ -287,41 +288,59 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         /// Displays the current path's optional explanation.
         private final Label comment = new Label();
 
-        /// Creates reusable labels whose mouse events pass through to the cell.
-        private ModpackFileTreeCell() {
+        /// Groups the checkbox, file name, and optional explanation.
+        private final HBox content = new HBox(4, checkBox, fileName, comment);
+
+        /// The file whose hierarchical check state is currently displayed.
+        private @Nullable ModpackFileTreeItem boundItem;
+
+        /// Creates a reusable row and tracks tree-item changes even when two files have the same name.
+        ModpackFileTreeCell() {
+            checkBox.setFocusTraversable(false);
+            checkBox.accessibleTextProperty().bind(fileName.textProperty());
+            accessibleTextProperty().bind(fileName.textProperty());
             fileName.setMouseTransparent(true);
-            comment.setStyle("-fx-text-fill: -monet-on-surface-variant;");
+            comment.setStyle("-fx-text-fill: -m3-color-on-surface-variant;");
             comment.setMouseTransparent(true);
             content.setAlignment(Pos.CENTER_LEFT);
             content.setPickOnBounds(false);
+            treeItemProperty().addListener(observable -> updateFileDisplay());
         }
 
-        /// Refreshes the file labels and removes content when the cell is cleared.
+        /// Refreshes the row after the Material skin updates its default content.
         @Override
-        protected void updateDisplay(@Nullable String item, boolean empty) {
-            content.getChildren().clear();
-            super.updateDisplay(item, empty);
+        protected void updateItem(@Nullable String item, boolean empty) {
+            super.updateItem(item, empty);
+            updateFileDisplay();
+        }
 
-            fileName.setText(null);
-            comment.setText(null);
-            if (empty || item == null) {
-                return;
+        /// Rebinds the checkbox on reuse and clears the content of empty rows.
+        private void updateFileDisplay() {
+            @Nullable ModpackFileTreeItem file = !isEmpty() && getTreeItem() instanceof ModpackFileTreeItem item ? item : null;
+            if (boundItem != file) {
+                // Suppress transitions between the states of unrelated files during scrolling.
+                checkBox.setVisible(false);
+                if (boundItem != null) {
+                    checkBox.selectedProperty().unbindBidirectional(boundItem.selectedProperty());
+                    checkBox.indeterminateProperty().unbindBidirectional(boundItem.indeterminateProperty());
+                }
+                boundItem = file;
+                if (file != null) {
+                    checkBox.selectedProperty().bindBidirectional(file.selectedProperty());
+                    checkBox.indeterminateProperty().bindBidirectional(file.indeterminateProperty());
+                    checkBox.setVisible(true);
+                } else {
+                    checkBox.setSelected(false);
+                    checkBox.setIndeterminate(false);
+                }
             }
-
-            // Updating the text makes the skin reattach the current graphic to the cell.
-            // Clear it before moving the checkbox graphic into the content container.
             setText(null);
-            @Nullable Node graphic = getGraphic();
-            if (graphic != null) {
-                content.getChildren().add(graphic);
-            }
-            fileName.setText(item);
-            content.getChildren().add(fileName);
-            if (getTreeItem() instanceof ModpackFileTreeItem treeItem && treeItem.comment != null) {
-                comment.setText(treeItem.comment);
-                content.getChildren().add(comment);
-            }
-            setGraphic(content);
+            fileName.setText(file == null ? null : file.getValue());
+            @Nullable String explanation = file == null ? null : file.comment;
+            comment.setText(explanation);
+            comment.setManaged(explanation != null);
+            comment.setVisible(explanation != null);
+            setGraphic(file == null ? null : content);
         }
     }
 }

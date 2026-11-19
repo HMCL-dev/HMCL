@@ -96,6 +96,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                                 };
                             }
                         };
+                        view.getStyleClass().add("nbt-tree-view");
                         view.setCellFactory(ignored -> new NBTTreeCell());
                         view.addEventHandler(TreeItem.<NBTElement>branchExpandedEvent(), event -> {
                             TreeItem<NBTElement> item = event.getTreeItem();
