@@ -450,7 +450,7 @@ public class PersonalizationPage extends StackPane {
                 return ThemeColorType.DEFAULT;
             };
 
-            var picker = new ColorPickerButton(i18n("settings.launcher.theme_color"), false,
+            var picker = new ColorPickerButton(i18n("settings.launcher.theme_color"),
                     ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
 
             var defaultColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
@@ -1290,7 +1290,7 @@ public class PersonalizationPage extends StackPane {
         /// @param value    the selected background type
         private PaintChoice(String title, BackgroundType value) {
             super(title, value);
-            colorPicker = new ColorPickerButton(title, true, List.of());
+            colorPicker = new ColorPickerButton(title, List.of());
         }
 
         /// Creates a paint choice bound directly to a setting property.
