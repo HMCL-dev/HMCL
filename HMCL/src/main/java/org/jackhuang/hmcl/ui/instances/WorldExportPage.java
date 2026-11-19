@@ -54,7 +54,7 @@ public class WorldExportPage extends WizardSinglePage {
         onFinish.run();
     }
 
-    public  World getWorld() {
+    public World getWorld() {
         return world;
     }
 
