@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.BooleanProperty;
@@ -21,6 +20,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.World;
@@ -235,7 +235,7 @@ public final class WorldListPage extends ListPageBase<World> {
 
         @Override
         protected List<Node> initializeToolbar(WorldListPage skinnable) {
-            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
+            M3CheckBox chkShowAll = new M3CheckBox(i18n("world.show_all"));
             chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
 
             return Arrays.asList(

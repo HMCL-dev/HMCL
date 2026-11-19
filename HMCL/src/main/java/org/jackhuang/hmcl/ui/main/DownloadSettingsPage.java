@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXSlider;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -16,6 +15,7 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3PasswordField;
 import org.glavo.m3fx.controls.M3RadioButton;
 import org.glavo.m3fx.controls.M3TextField;
@@ -294,7 +294,7 @@ public class DownloadSettingsPage extends StackPane {
                 {
                     chkProxyAuthenticationPane.setPadding(new Insets(20, 0, 20, 5));
 
-                    JFXCheckBox chkProxyAuthentication = new JFXCheckBox(i18n("settings.launcher.proxy.authentication"));
+                    M3CheckBox chkProxyAuthentication = new M3CheckBox(i18n("settings.launcher.proxy.authentication"));
                     chkProxyAuthenticationPane.getChildren().add(chkProxyAuthentication);
                     chkProxyAuthentication.selectedProperty().bindBidirectional(settings().hasProxyAuthProperty());
 

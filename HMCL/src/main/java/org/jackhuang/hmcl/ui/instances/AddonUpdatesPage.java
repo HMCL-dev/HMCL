@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 
@@ -21,6 +20,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
@@ -121,11 +121,11 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             actions.setPadding(new Insets(8));
             actions.setAlignment(Pos.CENTER_RIGHT);
 
-            JFXCheckBox allEnabledBox = new JFXCheckBox();
+            M3CheckBox allEnabledBox = new M3CheckBox();
             allEnabledBox.setText(i18n("button.select_all"));
             FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
 
-            JFXCheckBox showPreviewCheck = new JFXCheckBox(i18n("addon.check_update.preview"));
+            M3CheckBox showPreviewCheck = new M3CheckBox(i18n("addon.check_update.preview"));
             {
                 List<Subscription> subscriptions = new ArrayList<>();
                 FXUtils.onChangeAndOperate(showPreviewCheck.selectedProperty(), preview -> {
@@ -312,7 +312,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private final StackPane pane = new StackPane();
         private final RipplerContainer ripplerContainer;
 
-        private final JFXCheckBox enabledBox = new JFXCheckBox();
+        private final M3CheckBox enabledBox = new M3CheckBox();
         private final ImageContainer imageContainer = new ImageContainer(40);
         private final TwoLineListItem content = new TwoLineListItem();
         private final M3IconButton changelogButton = new M3IconButton(SVG.INFO.createIcon());

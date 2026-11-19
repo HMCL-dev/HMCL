@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
@@ -13,7 +12,7 @@ import javafx.geometry.VPos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
+import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputValidator;
 import org.glavo.m3fx.controls.M3TextInputVariant;
@@ -68,16 +67,12 @@ public class PromptDialogPane extends DialogPane {
                     body.addRow(rowIndex++, layout);
                 }
                 GridPane.setMargin(layout, new Insets(0, 0, 20, 0));
-            } else if (question instanceof Builder.BooleanQuestion) {
-                HBox hBox = new HBox();
-                GridPane.setColumnSpan(hBox, 1);
-                JFXCheckBox checkBox = new JFXCheckBox();
-                hBox.getChildren().setAll(checkBox);
-                HBox.setMargin(checkBox, new Insets(0, 0, 0, -10));
-                checkBox.setSelected(((Builder.BooleanQuestion) question).value);
-                checkBox.selectedProperty().addListener((a, b, newValue) -> ((Builder.BooleanQuestion) question).value = newValue);
-                checkBox.setText(question.question.get());
-                body.addRow(rowIndex++, hBox);
+            } else if (question instanceof Builder.BooleanQuestion booleanQuestion) {
+                M3CheckBox checkBox = new M3CheckBox(booleanQuestion.question.get());
+                checkBox.setSelected(booleanQuestion.value);
+                checkBox.selectedProperty().addListener((a, b, newValue) -> booleanQuestion.value = newValue);
+                GridPane.setColumnSpan(checkBox, 2);
+                body.addRow(rowIndex++, checkBox);
             } else if (question instanceof Builder.CandidatesQuestion) {
                 JFXComboBox<String> comboBox = new JFXComboBox<>();
                 comboBox.getItems().setAll(((Builder.CandidatesQuestion) question).candidates);

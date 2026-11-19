@@ -21,6 +21,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3OverlayPane;
 import org.glavo.m3fx.controls.M3Snackbar;
@@ -401,11 +402,11 @@ public final class LogWindow extends Stage {
                 hBox.setAlignment(Pos.CENTER_RIGHT);
                 hBox.setPadding(new Insets(0, 3, 0, 3));
 
-                JFXCheckBox autoScrollCheckBox = new JFXCheckBox(i18n("logwindow.autoscroll"));
+                M3CheckBox autoScrollCheckBox = new M3CheckBox(i18n("logwindow.autoscroll"));
                 autoScrollCheckBox.setSelected(true);
                 control.autoScroll.bind(autoScrollCheckBox.selectedProperty());
 
-                JFXCheckBox wrapTextCheckBox = new JFXCheckBox(i18n("logwindow.wrap_text"));
+                M3CheckBox wrapTextCheckBox = new M3CheckBox(i18n("logwindow.wrap_text"));
                 wrapTextCheckBox.setSelected(true);
                 control.wrapText.bind(wrapTextCheckBox.selectedProperty());
 

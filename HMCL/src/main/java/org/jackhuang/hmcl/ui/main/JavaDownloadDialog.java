@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.InvalidationListener;
@@ -18,6 +17,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.java.JavaDistribution;
 import org.jackhuang.hmcl.download.java.JavaPackageType;
@@ -101,7 +101,7 @@ public final class JavaDownloadDialog extends StackPane {
     }
 
     private final class DownloadMojangJava extends DialogPane {
-        private final List<JFXCheckBox> checkboxes = new ArrayList<>();
+        private final List<M3CheckBox> checkboxes = new ArrayList<>();
 
         DownloadMojangJava() {
             setTitle(i18n("java.download.title"));
@@ -112,7 +112,7 @@ public final class JavaDownloadDialog extends StackPane {
 
             setValid(false);
             InvalidationListener updateValidStatus = e -> {
-                for (JFXCheckBox box : checkboxes) {
+                for (M3CheckBox box : checkboxes) {
                     if (!box.isDisabled() && box.isSelected()) {
                         setValid(true);
                         return;
@@ -122,7 +122,7 @@ public final class JavaDownloadDialog extends StackPane {
             };
 
             for (GameJavaVersion version : supportedGameJavaVersions) {
-                JFXCheckBox button = new JFXCheckBox("Java " + version.majorVersion());
+                M3CheckBox button = new M3CheckBox("Java " + version.majorVersion());
                 button.setUserData(version);
 
                 if (JavaManager.REPOSITORY.isInstalled(platform, version)) {
@@ -151,7 +151,7 @@ public final class JavaDownloadDialog extends StackPane {
             fireEvent(new DialogCloseEvent());
 
             List<GameJavaVersion> selectedVersions = new ArrayList<>();
-            for (JFXCheckBox box : checkboxes) {
+            for (M3CheckBox box : checkboxes) {
                 if (!box.isDisabled() && box.isSelected()) {
                     selectedVersions.add((GameJavaVersion) box.getUserData());
                 }

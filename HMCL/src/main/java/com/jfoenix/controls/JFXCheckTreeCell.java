@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package com.jfoenix.controls;
 
-import com.jfoenix.skins.JFXCheckBoxSkin;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.CheckBoxTreeItem;
 import javafx.scene.layout.HBox;
+import org.glavo.m3fx.controls.M3CheckBox;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public class JFXCheckTreeCell<T> extends JFXTreeCell<T> {
 
     /// The checkbox bound to the currently displayed checkable tree item.
-    private final JFXCheckBox checkBox = new JFXCheckBox();
+    private final M3CheckBox checkBox = new M3CheckBox();
 
     /// Places the checkbox before the graphic supplied by the superclass.
     private final HBox graphic = new HBox();
@@ -38,15 +38,7 @@ public class JFXCheckTreeCell<T> extends JFXTreeCell<T> {
         checkBox.setFocusTraversable(false);
         graphic.setAlignment(Pos.CENTER_LEFT);
         graphic.setPickOnBounds(false);
-        checkBox.skinProperty().addListener(observable -> finishSelectionAnimation());
         treeItemProperty().addListener(observable -> updateDisplay(getItem(), isEmpty()));
-    }
-
-    /// Finishes animations from the previous item and immediately displays the current state.
-    private void finishSelectionAnimation() {
-        if (checkBox.getSkin() instanceof JFXCheckBoxSkin skin) {
-            skin.finishSelectionAnimation();
-        }
     }
 
     /// Adds the checkbox to the inherited display and updates its selection bindings.
@@ -59,6 +51,8 @@ public class JFXCheckTreeCell<T> extends JFXTreeCell<T> {
         @Nullable CheckBoxTreeItem<?> treeItem = !empty && item != null
                 && getTreeItem() instanceof CheckBoxTreeItem<?> checkTreeItem ? checkTreeItem : null;
         if (boundTreeItem != treeItem) {
+            // Settle selection marks while the recycled checkbox is hidden.
+            checkBox.setVisible(false);
             if (boundTreeItem != null) {
                 checkBox.selectedProperty().unbindBidirectional(boundTreeItem.selectedProperty());
                 checkBox.indeterminateProperty().unbindBidirectional(boundTreeItem.indeterminateProperty());
@@ -71,7 +65,7 @@ public class JFXCheckTreeCell<T> extends JFXTreeCell<T> {
                 checkBox.setSelected(false);
                 checkBox.setIndeterminate(false);
             }
-            finishSelectionAnimation();
+            checkBox.setVisible(treeItem != null);
         }
 
         if (treeItem != null) {

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
@@ -23,6 +22,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.modpack.ModpackFile;
@@ -185,7 +185,7 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
 
     /// List cell for one optional file with checkbox and detail button.
     private final class OptionalFileEntry extends MDListCell<ModpackFile> {
-        private final JFXCheckBox checkBox = new JFXCheckBox();
+        private final M3CheckBox checkBox = new M3CheckBox();
         private final TwoLineListItem content = new TwoLineListItem();
         private final M3IconButton infoButton = new M3IconButton(SVG.INFO.createIcon());
         private final HBox container = new HBox(8);

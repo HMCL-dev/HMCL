@@ -24,6 +24,7 @@ import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputVariant;
@@ -834,10 +835,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 toolbarNormal.setAlignment(Pos.CENTER_LEFT);
                 toolbarNormal.setPadding(toolbarPadding);
                 toolbarNormal.getChildren().setAll(
-                        createCheckBox(box -> {
-                            box.setText(i18n("server.manage.show_all"));
-                            box.selectedProperty().bindBidirectional(ServersPage.this.showAll);
-                        }),
+                        createShowAllCheckBox(),
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, ServersPage.this::refresh),
                         createToolbarButton2(i18n("server.manage.add"), SVG.ADD, ServersPage.this::addServer),
                         createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
@@ -865,10 +863,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 });
                 onEscPressed(searchField, closeSearchBar::fire);
                 searchBar.getChildren().setAll(
-                        createCheckBox(box -> {
-                            box.setText(i18n("server.manage.show_all"));
-                            box.selectedProperty().bindBidirectional(ServersPage.this.showAll);
-                        }),
+                        createShowAllCheckBox(),
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, ServersPage.this::refresh),
                         searchField,
                         closeSearchBar
@@ -928,10 +923,10 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             root.getContent().add(center);
         }
 
-        private JFXCheckBox createCheckBox(Consumer<JFXCheckBox> consumer) {
-            JFXCheckBox box = new JFXCheckBox();
-            // change style.
-            consumer.accept(box);
+        /// Keeps the normal and search toolbars in sync with the server filter.
+        private M3CheckBox createShowAllCheckBox() {
+            M3CheckBox box = new M3CheckBox(i18n("server.manage.show_all"));
+            box.selectedProperty().bindBidirectional(ServersPage.this.showAll);
             return box;
         }
 
