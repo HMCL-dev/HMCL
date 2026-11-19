@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.export;
 
-import com.jfoenix.controls.JFXSlider;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -245,10 +244,9 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         {
                             Label label = new Label(i18n("settings.memory.lower_bound"));
 
-                            JFXSlider slider = new JFXSlider(0, 1, 0);
+                            var slider = FXUtils.newPercentageSlider();
                             HBox.setMargin(slider, new Insets(0, 0, 0, 8));
                             HBox.setHgrow(slider, Priority.ALWAYS);
-                            slider.setValueFactory(self -> Bindings.createStringBinding(() -> (int) (self.getValue() * 100) + "%", self.valueProperty()));
                             AtomicBoolean changedByTextField = new AtomicBoolean(false);
                             FXUtils.onChangeAndOperate(skinnable.minMemory, minMemory -> {
                                 changedByTextField.set(true);

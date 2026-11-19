@@ -7,7 +7,6 @@ import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.StringBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.css.PseudoClass;
@@ -80,22 +79,6 @@ public class PersonalizationPage extends StackPane {
     /// Time format used by default exported theme names.
     private static final DateTimeFormatter EXPORTED_THEME_NAME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ROOT);
-
-    /// Snaps a percent value to the nearest 5% opacity tick.
-    private static double snapOpacity(double val) {
-        if (val <= 0) {
-            return 0.;
-        } else if (Double.isNaN(val) || val >= 100.) {
-            return 1.;
-        }
-
-        int prevTick = (int) (val / 5);
-        int prevTickValue = prevTick * 5;
-        int nextTickValue = (prevTick + 1) * 5;
-
-        int percent = (val - prevTickValue) > (nextTickValue - val) ? nextTickValue : prevTickValue;
-        return percent / 100.;
-    }
 
     /// Creates a compact button that toggles inherited or overridden state.
     private static M3IconButton createThemeAppearanceOverrideButton() {
@@ -982,23 +965,16 @@ public class PersonalizationPage extends StackPane {
                 HBox sliderBox = new HBox(8);
                 sliderBox.setAlignment(Pos.CENTER);
 
-                JFXSlider slider = new JFXSlider(0, 100, settings().backgroundOpacityProperty().get() * 100);
+                var slider = FXUtils.newPercentageSlider();
                 slider.setPrefWidth(220);
-                slider.setShowTickMarks(true);
-                slider.setMajorTickUnit(10);
-                slider.setMinorTickCount(1);
-                slider.setBlockIncrement(5);
-                slider.setSnapToTicks(true);
-                slider.setPadding(new Insets(9, 0, 0, 0));
+                slider.setStepSize(0.05);
+                slider.setBlockIncrement(0.05);
                 HBox.setHgrow(slider, Priority.ALWAYS);
 
                 Label textOpacity = new Label();
                 FXUtils.setLimitWidth(textOpacity, 50);
                 textOpacity.setAlignment(Pos.CENTER);
 
-                StringBinding valueBinding = Bindings.createStringBinding(() -> ((int) slider.getValue()) + "%", slider.valueProperty());
-                textOpacity.textProperty().bind(valueBinding);
-                slider.setValueFactory(s -> valueBinding);
                 sliderBox.getChildren().setAll(slider, textOpacity);
 
                 M3IconButton inheritButton = createThemeAppearanceOverrideButton();
@@ -1014,7 +990,9 @@ public class PersonalizationPage extends StackPane {
                         double opacity = overridden
                                 ? settings().backgroundOpacityProperty().get()
                                 : effectiveBackgroundOpacity.get();
-                        slider.setValue(Math.round(Math.max(0., Math.min(opacity, 1.)) * 100.));
+                        slider.setValue(opacity);
+                        // A theme can specify an opacity between the slider's five-percent stops.
+                        textOpacity.setText(Math.round(opacity * 100) + "%");
                         updateThemeAppearanceOverrideButton(inheritButton, !overridden);
                     } finally {
                         updatingOpacity.value = false;
@@ -1026,7 +1004,9 @@ public class PersonalizationPage extends StackPane {
                     if (updatingOpacity.value) {
                         return;
                     }
-                    double opacity = snapOpacity(newValue.doubleValue());
+                    long percent = Math.round(newValue.doubleValue() * 100);
+                    double opacity = percent / 100.0;
+                    textOpacity.setText(percent + "%");
                     updatingOpacity.value = true;
                     try {
                         settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);

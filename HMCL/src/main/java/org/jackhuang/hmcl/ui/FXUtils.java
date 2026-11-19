@@ -42,10 +42,12 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import javafx.util.converter.PercentageStringConverter;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3PasswordField;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
+import org.glavo.m3fx.controls.M3Slider;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputLayout;
 import org.glavo.m3fx.controls.M3TextInputValidator;
@@ -341,6 +343,28 @@ public final class FXUtils {
                 return oldDispatcher.dispatchEvent(event, tail);
             }
         });
+    }
+
+    /// Creates a continuous slider over [0, 1] with a whole-percent value indicator.
+    public static M3Slider newPercentageSlider() {
+        var slider = new M3Slider(0, 1, 0);
+        slider.setBlockIncrement(0.01);
+        slider.setShowValueIndicator(true);
+        slider.setLabelFormatter(new StringConverter<>() {
+            /// Displays the whole percentage of the normalized value.
+            @Override
+            public String toString(@Nullable Double value) {
+                return value == null ? "" : (int) (value * 100) + "%";
+            }
+
+            /// Parses a percentage label back into a normalized value.
+            @Override
+            public @Nullable Double fromString(@Nullable String text) {
+                @Nullable Number value = new PercentageStringConverter(Locale.ROOT).fromString(text);
+                return value == null ? null : value.doubleValue();
+            }
+        });
+        return slider;
     }
 
     /// Creates an outlined text field with the launcher's localized editing menu.

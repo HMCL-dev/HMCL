@@ -2,16 +2,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.game;
 
-import com.jfoenix.controls.JFXSlider;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3Slider;
 import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameSettings;
@@ -251,7 +250,7 @@ final class IndependentSettingBinder {
     static void bindMemoryChoiceList(
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             RadioChoiceList<Boolean> choiceList,
-            JFXSlider maxMemorySlider,
+            M3Slider maxMemorySlider,
             M3TextField maxMemoryTextField,
             MemoryStatusBar memoryStatusBar,
             BorderPane memoryStatusLabels,
@@ -271,9 +270,6 @@ final class IndependentSettingBinder {
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
 
         int totalMemoryMiB = Math.max(1, (int) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
-        maxMemorySlider.setValueFactory(slider -> Bindings.createStringBinding(
-                () -> (int) (slider.getValue() * 100) + "%",
-                slider.valueProperty()));
 
         InvalidationListener refresh = observable -> {
             GameSettings setting = currentSetting.get();

@@ -8,6 +8,8 @@ import javafx.scene.AccessibleAttribute;
 import javafx.scene.Scene;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -49,6 +51,25 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 @Isolated("Temporarily supplies settings while initializing the cached animation policy")
 public final class InteractionLayerTest {
+
+    /// Memory sliders retain fractional settings and their arrow keys advance by one percentage point.
+    @Test
+    void percentageSliderRetainsMemoryRatio() throws Exception {
+        onFxThread(() -> {
+            var slider = FXUtils.newPercentageSlider();
+            var scene = new Scene(new StackPane(slider), 280, 64);
+            M3ThemeManager.install(scene, M3Theme.defaultTheme());
+            scene.getRoot().applyCss();
+            slider.setValue(0.375);
+            assertEquals(0.375, slider.getValue());
+            assertTrue(slider.isShowValueIndicator());
+            var formatter = Objects.requireNonNull(slider.getLabelFormatter());
+            assertEquals("37%", formatter.toString(slider.getValue()));
+            slider.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.RIGHT, false, false, false, false));
+            assertEquals(0.385, slider.getValue(), 1e-12);
+            assertEquals("38%", formatter.toString(slider.getValue()));
+        });
+    }
 
     /// Font dropdown rows display their own font family when the virtualized menu opens.
     @Test

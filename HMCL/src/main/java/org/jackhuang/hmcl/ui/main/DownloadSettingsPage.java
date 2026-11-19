@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXSlider;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
@@ -18,6 +17,7 @@ import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3PasswordField;
 import org.glavo.m3fx.controls.M3RadioButton;
+import org.glavo.m3fx.controls.M3Slider;
 import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
@@ -142,7 +142,10 @@ public class DownloadSettingsPage extends StackPane {
                                 // hbox.setPadding(new Insets(0, 0, 0, 30));
                                 hbox.disableProperty().bind(settings().autoDownloadThreadsProperty());
 
-                                JFXSlider slider = new JFXSlider(1, 256, 64);
+                                var slider = new M3Slider(1, 256, 64);
+                                slider.setStepSize(1);
+                                slider.setBlockIncrement(1);
+                                slider.setShowValueIndicator(true);
                                 HBox.setHgrow(slider, Priority.ALWAYS);
 
                                 M3TextField threadsField = FXUtils.newTextField();
@@ -162,7 +165,7 @@ public class DownloadSettingsPage extends StackPane {
                                 });
                                 slider.valueProperty().addListener((value, oldVal, newVal) -> {
                                     if (changedByTextField.value) return;
-                                    settings().downloadThreadsProperty().set(value.getValue().intValue());
+                                    settings().downloadThreadsProperty().set(newVal.intValue());
                                 });
 
                                 hbox.getChildren().setAll(slider, threadsLayout);

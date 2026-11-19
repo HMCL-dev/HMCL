@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.game;
 
-import com.jfoenix.controls.JFXSlider;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
@@ -364,7 +363,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var memoryItem = new RadioChoiceList<Boolean>();
                 memoryItem.setFallbackValue(true);
 
-                var maxMemorySlider = new JFXSlider(0, 1, 0);
+                var maxMemorySlider = FXUtils.newPercentageSlider();
                 maxMemorySlider.setPrefWidth(220);
                 HBox.setMargin(maxMemorySlider, new Insets(0, 0, 0, 8));
                 HBox.setHgrow(maxMemorySlider, Priority.ALWAYS);
