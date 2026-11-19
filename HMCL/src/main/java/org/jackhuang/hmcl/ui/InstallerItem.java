@@ -16,7 +16,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.input.MouseButton;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
@@ -330,15 +330,16 @@ public class InstallerItem extends Control {
             });
             buttonsContainer.getChildren().add(removeButton);
 
-            JFXButton installButton = new JFXButton();
-            installButton.graphicProperty().bind(Bindings.createObjectBinding(() ->
+            Label installIcon = new Label();
+            installIcon.setMouseTransparent(true);
+            installIcon.graphicProperty().bind(Bindings.createObjectBinding(() ->
                             control.resolvedStateProperty.get() instanceof InstallableState ?
                                     SVG.ARROW_FORWARD.createIcon() :
                                     SVG.UPDATE.createIcon(),
                     control.resolvedStateProperty
             ));
-            installButton.getStyleClass().add("toggle-icon4");
-            installButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
+            installIcon.getStyleClass().add("toggle-icon4");
+            installIcon.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
                 if (control.getOnInstall() == null) {
                     return false;
                 }
@@ -353,26 +354,31 @@ public class InstallerItem extends Control {
 
                 return false;
             }, control.resolvedStateProperty, control.onInstall));
-            installButton.managedProperty().bind(installButton.visibleProperty());
-            installButton.setOnAction(e -> {
-                Runnable onInstall = control.getOnInstall();
-                if (onInstall != null)
-                    onInstall.run();
-            });
-            buttonsContainer.getChildren().add(installButton);
+            installIcon.managedProperty().bind(installIcon.visibleProperty());
+            buttonsContainer.getChildren().add(installIcon);
 
-            FXUtils.onChangeAndOperate(installButton.visibleProperty(), clickable -> {
+            container.focusTraversableProperty().bind(installIcon.visibleProperty());
+            container.setOnKeyPressed(event -> {
+                if (container.isFocused() && installIcon.isVisible()
+                        && (event.getCode() == KeyCode.ENTER || event.getCode() == KeyCode.SPACE)) {
+                    container.fire();
+                    event.consume();
+                }
+            });
+
+            FXUtils.onChangeAndOperate(installIcon.visibleProperty(), clickable -> {
+                container.setPressFeedbackEnabled(clickable);
                 if (clickable) {
-                    container.setOnMouseClicked(event -> {
+                    container.setOnAction(event -> {
                         Runnable onInstall = control.getOnInstall();
-                        if (onInstall != null && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
+                        if (onInstall != null) {
                             onInstall.run();
                             event.consume();
                         }
                     });
                     pane.setCursor(Cursor.HAND);
                 } else {
-                    container.setOnMouseClicked(null);
+                    container.setOnAction(null);
                     pane.setCursor(Cursor.DEFAULT);
                 }
             });
