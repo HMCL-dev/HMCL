@@ -804,6 +804,9 @@ final class TaskExecutorDialogPaneTest {
             var layout = assertInstanceOf(M3TextInputLayout.class, prompt.getBody().getFirst().lookup(".m3-text-input-layout"));
             var field = assertInstanceOf(M3TextField.class, layout.getInput());
             assertEquals(includeCheckbox ? M3TextInputVariant.OUTLINED : M3TextInputVariant.FILLED, field.getVariant());
+            StyleSheets.init(new Scene(prompt));
+            prompt.applyCss();
+            assertEquals(includeCheckbox ? 14.0 : 16.0, field.getFont().getSize());
             return true;
         });
     }

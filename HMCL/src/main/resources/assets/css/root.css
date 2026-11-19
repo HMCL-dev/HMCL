@@ -86,6 +86,12 @@
     -fx-pref-width: 200;
 }
 
+.m3-text-field.m3-outlined-field,
+.m3-password-field.m3-outlined-field,
+.m3-text-area.m3-outlined-field {
+    -fx-font-size: 14px;
+}
+
 .bold {
     -fx-font-weight: bold;
 }
