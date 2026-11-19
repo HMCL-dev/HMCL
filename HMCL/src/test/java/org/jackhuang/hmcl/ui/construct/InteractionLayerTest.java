@@ -6,6 +6,7 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.AccessibleAttribute;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.input.KeyCode;
@@ -21,8 +22,10 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
+import org.glavo.m3fx.controls.M3Slider;
 import org.glavo.m3fx.theme.M3Theme;
 import org.glavo.m3fx.theme.M3ThemeManager;
+import org.glavo.monetfx.Brightness;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -51,6 +54,31 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 @Isolated("Temporarily supplies settings while initializing the cached animation policy")
 public final class InteractionLayerTest {
+
+    /// Settings row labels must retain the slider indicator's inverse theme colors.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void sliderIndicatorUsesThemeColors(boolean dark) throws Exception {
+        onFxThread(() -> {
+            var slider = new M3Slider(1, 256, 120);
+            slider.setShowValueIndicator(true);
+            slider.setValueChanging(true);
+            var row = new StackPane(slider);
+            row.getStyleClass().add("options-list-item");
+            var scene = new Scene(row, 260, 100);
+            M3ThemeManager.install(scene, M3Theme.fromSeed(Color.ROYALBLUE, dark ? Brightness.DARK : Brightness.LIGHT));
+            row.applyCss();
+            var indicator = assertInstanceOf(Label.class, slider.lookup(".m3-slider-value-indicator"));
+            var expectedText = indicator.getTextFill();
+            var expectedBackground = indicator.getBackground().getFills().getFirst().getFill();
+            assertNotEquals(expectedBackground, expectedText);
+
+            scene.getStylesheets().addAll("/assets/css/blue.css", "/assets/css/root.css");
+            row.applyCss();
+            assertEquals(expectedText, indicator.getTextFill());
+            assertEquals(expectedBackground, indicator.getBackground().getFills().getFirst().getFill());
+        });
+    }
 
     /// Memory sliders retain fractional settings and their arrow keys advance by one percentage point.
     @Test

@@ -16,6 +16,10 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+.m3-slider .label.m3-slider-value-indicator {
+    -fx-text-fill: -m3-color-inverse-on-surface;
+}
+
 .scroll-bar .thumb {
     -fx-fill: -monet-surface-tint;
     -fx-arc-width: 6;
