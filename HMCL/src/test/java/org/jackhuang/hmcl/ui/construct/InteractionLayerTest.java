@@ -4,7 +4,13 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.scene.AccessibleAttribute;
+import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -12,8 +18,13 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
+import javafx.scene.text.Font;
+import javafx.stage.Stage;
+import org.glavo.m3fx.controls.M3ComboBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
+import org.glavo.m3fx.theme.M3Theme;
+import org.glavo.m3fx.theme.M3ThemeManager;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -42,6 +53,76 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 @Isolated("Temporarily supplies settings while initializing the cached animation policy")
 public final class InteractionLayerTest {
+
+    /// A dropdown choice commits once, while dismissing a preset list preserves arbitrary editor input.
+    @Test
+    void customTextAndPresetCommits() throws Exception {
+        onFxThread(() -> {
+            var field = new PresetTextField(List.of("854x480", "1280x720"), "Window size");
+            var editor = field.getEditor();
+            var choice = assertInstanceOf(M3ComboBox.class, field.getChildren().getFirst());
+            choice.setAnimationsEnabled(false);
+            var actions = new AtomicInteger();
+            editor.setOnAction(event -> actions.incrementAndGet());
+            var stage = new Stage();
+            try {
+                var scene = new Scene(field, 250, 60);
+                M3ThemeManager.install(scene, M3Theme.defaultTheme());
+                stage.setScene(scene);
+                stage.show();
+                editor.requestFocus();
+                editor.setText("1111x777");
+                fireKey(editor, KeyCode.DOWN);
+                assertTrue(choice.isShowing());
+                fireKey(editor, KeyCode.ESCAPE);
+                assertFalse(choice.isShowing());
+                assertEquals("1111x777", editor.getText());
+                assertEquals(0, actions.get());
+                for (int i = 0; i < 2; i++) {
+                    editor.setText("1111x777");
+                    fireKey(editor, KeyCode.DOWN);
+                    fireKey(editor, KeyCode.DOWN);
+                    fireKey(editor, KeyCode.ENTER);
+                    assertFalse(choice.isShowing());
+                    assertEquals("1280x720", editor.getText());
+                    assertEquals(i + 1, actions.get());
+                }
+            } finally {
+                stage.hide();
+            }
+        });
+    }
+
+    /// Font dropdown rows display their own font family when the virtualized menu opens.
+    @Test
+    void fontOptionPreview() throws Exception {
+        onFxThread(() -> {
+            var box = FontComboBox.create();
+            var stage = new Stage();
+            try {
+                var scene = new Scene(new StackPane(box), 320, 80);
+                M3ThemeManager.install(scene, M3Theme.defaultTheme());
+                stage.setScene(scene);
+                stage.show();
+                String family = box.getItems().stream().filter(name -> !name.equals(Font.getDefault().getFamily()))
+                        .findFirst().orElse(Font.getDefault().getFamily());
+                box.setValue(family);
+                box.show();
+                ListView<?> list = assertInstanceOf(ListView.class, box.queryAccessibleAttribute(AccessibleAttribute.FOCUS_NODE));
+                list.applyCss();
+                list.layout();
+                assertTrue(list.lookupAll(".list-cell").stream().anyMatch(node -> node instanceof ListCell<?> cell
+                        && family.equals(cell.getItem()) && family.equals(cell.getFont().getFamily())));
+            } finally {
+                stage.hide();
+            }
+        });
+    }
+
+    /// Delivers a keyboard press through the control's normal event filters.
+    private static void fireKey(Node target, KeyCode key) {
+        target.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", key, false, false, false, false));
+    }
 
     /// File options fit their radio buttons and enable the editor only while its option is selected.
     @Test

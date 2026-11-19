@@ -17,6 +17,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3ComboBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.glavo.m3fx.controls.M3TextField;
@@ -298,7 +299,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final M3ProgressIndicator spinner;
 
         private final M3TextField nameField;
-        private final JFXComboBox<VersionTypeFilter> categoryField = new JFXComboBox<>();
+        private final M3ComboBox<VersionTypeFilter> categoryField = new M3ComboBox<>();
 
         /// Creates the searchable version list with viewport-constrained cells and loading states.
         VersionsPageSkin(VersionsPage control) {
@@ -343,17 +344,17 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                                 VersionTypeFilter.APRIL_FOOLS,
                                 VersionTypeFilter.OLD
                         );
-                        categoryField.getSelectionModel().select(VersionTypeFilter.RELEASE);
+                        categoryField.setValue(VersionTypeFilter.RELEASE);
                     } else {
                         categoryField.getItems().setAll(
                                 VersionTypeFilter.ALL,
                                 VersionTypeFilter.RELEASE,
                                 VersionTypeFilter.SNAPSHOTS
                         );
-                        categoryField.getSelectionModel().select(VersionTypeFilter.ALL);
+                        categoryField.setValue(VersionTypeFilter.ALL);
                     }
-                    categoryField.setConverter(stringConverter(type -> i18n("instance.game." + type.name().toLowerCase(Locale.ROOT))));
-                    categoryField.getSelectionModel().selectedItemProperty().addListener(o -> updateList());
+                    categoryField.setConverter(type -> i18n("instance.game." + type.name().toLowerCase(Locale.ROOT)));
+                    categoryField.valueProperty().addListener(o -> updateList());
 
                     M3Button refreshButton = new M3Button(I18n.i18n("button.refresh"), M3ButtonVariant.FILLED);
                     refreshButton.setOnAction(event -> control.onRefresh());
@@ -458,7 +459,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private void updateList() {
             Stream<ComponentRemoteVersion> versions = getSkinnable().versions.stream();
 
-            VersionTypeFilter filter = categoryField.getSelectionModel().getSelectedItem();
+            VersionTypeFilter filter = categoryField.getValue();
             if (filter != null)
                 versions = versions.filter(it -> {
                     ComponentRemoteVersion.Type versionType = it.getVersionType();

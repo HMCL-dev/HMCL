@@ -25,6 +25,7 @@ import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3CheckBox;
+import org.glavo.m3fx.controls.M3ComboBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputVariant;
@@ -463,7 +464,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         private final GridPane body = new GridPane();
         private final M3TextField serverNameField = FXUtils.newTextField();
         private final M3TextField serverIpField = FXUtils.newTextField();
-        private final JFXComboBox<Server.ServerPackStatus> serverPackStatusField = new JFXComboBox<>();
+        private final M3ComboBox<Server.ServerPackStatus> serverPackStatusField = new M3ComboBox<>();
 
         private final M3Button btnAccept = new M3Button("", M3ButtonVariant.TEXT);
         private final M3Button btnCancel = new M3Button("", M3ButtonVariant.TEXT);
@@ -569,8 +570,8 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 GridPane.setHalignment(label, HPos.LEFT);
                 body.add(label, 0, 2);
 
-                serverPackStatusField.setConverter(stringConverter(status -> i18n("server.resourcepack." + status.name().toLowerCase(Locale.ROOT))));
-                serverPackStatusField.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+                serverPackStatusField.setConverter(status -> i18n("server.resourcepack." + status.name().toLowerCase(Locale.ROOT)));
+                serverPackStatusField.valueProperty().addListener((obs, oldVal, newVal) -> {
                     if (newVal == null && oldVal != null) {
                         serverPackStatusField.setValue(oldVal);
                     }

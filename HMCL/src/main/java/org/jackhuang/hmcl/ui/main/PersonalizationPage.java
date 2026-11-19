@@ -22,6 +22,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import javafx.stage.FileChooser;
+import org.glavo.m3fx.controls.M3ComboBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.monetfx.Brightness;
@@ -647,7 +648,7 @@ public class PersonalizationPage extends StackPane {
             backgroundSublist.setTitle(i18n("launcher.background"));
             backgroundSublist.setHasSubtitle(true);
 
-            JFXComboBox<String> builtinBackgroundComboBox = new JFXComboBox<>();
+            M3ComboBox<String> builtinBackgroundComboBox = new M3ComboBox<>();
             builtinBackgroundComboBox.getItems().setAll(BuiltinBackground.BUILTIN_BACKGROUND_IDS);
             FXUtils.setLimitWidth(builtinBackgroundComboBox, 160);
 
@@ -1186,7 +1187,7 @@ public class PersonalizationPage extends StackPane {
                         HBox hBox = new HBox();
                         hBox.setSpacing(8);
 
-                        FontComboBox cboFont = new FontComboBox();
+                        var cboFont = FontComboBox.create();
                         cboFont.setValue(settings().launcherFontFamilyProperty().get());
                         FXUtils.onChange(cboFont.valueProperty(), FontManager::setFontFamily);
 
@@ -1223,7 +1224,7 @@ public class PersonalizationPage extends StackPane {
                         HBox hBox = new HBox();
                         hBox.setSpacing(3);
 
-                        FontComboBox cboLogFont = new FontComboBox();
+                        var cboLogFont = FontComboBox.create();
                         cboLogFont.valueProperty().bindBidirectional(settings().logFontFamilyProperty());
 
                         M3TextField txtLogFontSize = FXUtils.newTextField();

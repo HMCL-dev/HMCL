@@ -22,6 +22,7 @@ import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3CheckBox;
+import org.glavo.m3fx.controls.M3ComboBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3OverlayPane;
 import org.glavo.m3fx.controls.M3Snackbar;
@@ -160,7 +161,7 @@ public final class LogWindow extends Stage {
         private final BooleanProperty[] showLevel = new BooleanProperty[LEVELS.length];
         private final M3IconButton btnAlwaysOnTop = new M3IconButton(SVG.KEEP.createIcon(20));
         private final Stage stage = LogWindow.this;
-        private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
+        private final M3ComboBox<Integer> cboLines = new M3ComboBox<>();
         /// Hosts log content, dialogs, and queued messages.
         private final M3OverlayPane overlayPane = new M3OverlayPane();
 
@@ -183,7 +184,7 @@ public final class LogWindow extends Stage {
 
             cboLines.getItems().setAll(500, 2000, 5000, 10000);
             cboLines.setValue(Log.getLogLines());
-            cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> settings().logLinesProperty().set(newValue));
+            cboLines.valueProperty().addListener((a, b, newValue) -> settings().logLinesProperty().set(newValue));
 
             for (int i = 0; i < LEVELS.length; ++i) {
                 buttonText[i].bind(Bindings.concat(levelCountMap.get(LEVELS[i]), " " + LEVELS[i].name().toLowerCase(Locale.ROOT) + "s"));

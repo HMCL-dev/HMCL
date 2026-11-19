@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXComboBox;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleStringProperty;
@@ -13,6 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import org.glavo.m3fx.controls.M3CheckBox;
+import org.glavo.m3fx.controls.M3ComboBox;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputValidator;
 import org.glavo.m3fx.controls.M3TextInputVariant;
@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
@@ -73,12 +74,12 @@ public class PromptDialogPane extends DialogPane {
                 checkBox.selectedProperty().addListener((a, b, newValue) -> booleanQuestion.value = newValue);
                 GridPane.setColumnSpan(checkBox, 2);
                 body.addRow(rowIndex++, checkBox);
-            } else if (question instanceof Builder.CandidatesQuestion) {
-                JFXComboBox<String> comboBox = new JFXComboBox<>();
-                comboBox.getItems().setAll(((Builder.CandidatesQuestion) question).candidates);
-                comboBox.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) ->
-                        ((Builder.CandidatesQuestion) question).value = newValue.intValue());
-                comboBox.getSelectionModel().select(0);
+            } else if (question instanceof Builder.CandidatesQuestion candidates) {
+                var comboBox = new M3ComboBox<Integer>();
+                comboBox.getItems().setAll(IntStream.range(0, candidates.candidates.size()).boxed().toList());
+                comboBox.setConverter(candidates.candidates::get);
+                comboBox.valueProperty().addListener((obs, old, index) -> candidates.value = index);
+                comboBox.setValue(0);
                 if (StringUtils.isNotBlank(question.question.get())) {
                     body.addRow(rowIndex++, createQuestionLabel(question.question.get()), comboBox);
                 } else {

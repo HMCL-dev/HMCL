@@ -16,6 +16,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3ComboBox;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3PasswordField;
 import org.glavo.m3fx.controls.M3TextField;
@@ -315,7 +316,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
         private final AccountFactory<?> factory;
         private @Nullable AuthlibInjectorServer server;
-        private @Nullable JFXComboBox<AuthlibInjectorServer> cboServers;
+        private @Nullable M3ComboBox<AuthlibInjectorServer> cboServers;
         private @Nullable M3TextField txtUsername;
         /// Validates the username against the selected account server.
         private @Nullable M3TextInputLayout usernameLayout;
@@ -375,13 +376,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 setHalignment(lblServers, HPos.LEFT);
                 add(lblServers, 0, rowIndex);
 
-                cboServers = new JFXComboBox<>();
-                cboServers.setConverter(stringConverter(it -> String.format("%s (%s)", it.getName(), it.getDisplayHostUrl())));
+                cboServers = new M3ComboBox<>();
+                cboServers.setConverter(it -> String.format("%s (%s)", it.getName(), it.getDisplayHostUrl()));
                 bindContent(cboServers.getItems(), getAuthlibInjectorServers());
-                cboServers.getItems().addListener(onInvalidating(
-                        () -> Platform.runLater( // the selection will not be updated as expected if we call it immediately
-                                cboServers.getSelectionModel()::selectFirst)));
-                cboServers.getSelectionModel().selectFirst();
+                Runnable selectFirstServer = () -> cboServers.setValue(
+                        cboServers.getItems().isEmpty() ? null : cboServers.getItems().getFirst());
+                cboServers.getItems().addListener(onInvalidating(selectFirstServer));
+                selectFirstServer.run();
 
                 Label noServersLabel = new Label(i18n("account.injector.empty"));
                 BooleanBinding noServers = createBooleanBinding(cboServers.getItems()::isEmpty, cboServers.getItems());

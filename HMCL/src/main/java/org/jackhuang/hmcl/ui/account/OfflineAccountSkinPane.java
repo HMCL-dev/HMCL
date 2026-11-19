@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -15,6 +14,7 @@ import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3ComboBox;
 import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.Skin;
@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -43,7 +42,7 @@ public class OfflineAccountSkinPane extends StackPane {
 
     private final MultiFileItem<Skin.Type> skinItem = new MultiFileItem<>();
     private final M3TextField cslApiField = FXUtils.newTextField();
-    private final JFXComboBox<TextureModel> modelCombobox = new JFXComboBox<>();
+    private final M3ComboBox<TextureModel> modelCombobox = new M3ComboBox<>();
     private final FileSelector skinSelector = new FileSelector();
     private final FileSelector capeSelector = new FileSelector();
 
@@ -107,7 +106,7 @@ public class OfflineAccountSkinPane extends StackPane {
                 new MultiFileItem.Option<>(i18n("account.skin.type.csl_api"), Skin.Type.CUSTOM_SKIN_LOADER_API)
         ));
 
-        modelCombobox.setConverter(stringConverter(model -> i18n("account.skin.model." + model.modelName)));
+        modelCombobox.setConverter(model -> i18n("account.skin.model." + model.modelName));
         modelCombobox.getItems().setAll(TextureModel.WIDE, TextureModel.SLIM);
 
         if (account.getSkin() == null) {

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.game;
 
-import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
@@ -18,7 +17,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -459,20 +457,18 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var windowTypeOptions = new ArrayList<RadioChoiceList.Choice<GameWindowType>>();
                 windowTypeItem.setFallbackValue(GameWindowType.WINDOWED);
 
-                var cboWindowSize = new JFXComboBox<String>();
-                cboWindowSize.setPrefWidth(150);
-                cboWindowSize.setEditable(true);
-                cboWindowSize.setPromptText("854x480");
-                cboWindowSize.getItems().setAll(getSupportedResolutions());
+                var windowSizeField = new PresetTextField(getSupportedResolutions(), i18n("settings.game.window_type.windowed"));
+                windowSizeField.setPrefWidth(150);
+                windowSizeField.getEditor().setPromptText("854x480");
                 @Nullable M3IconButton windowSizeInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
-                bindWindowSizeComboBox(cboWindowSize, windowSizeInheritanceButton);
+                bindWindowSizeField(windowSizeField.getEditor(), windowSizeInheritanceButton);
 
                 for (GameWindowType type : GameWindowType.values()) {
                     if (type == GameWindowType.WINDOWED) {
                         windowTypeOptions.add(new EditorChoice<>(
                                 getWindowTypeDisplayName(GameWindowType.WINDOWED),
                                 GameWindowType.WINDOWED,
-                                cboWindowSize,
+                                windowSizeField,
                                 windowSizeInheritanceButton));
                     } else {
                         windowTypeOptions.add(new RadioChoiceList.Choice<>(getWindowTypeDisplayName(type), type));
@@ -1114,7 +1110,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     /// Binds the windowed resolution selector to the width and height settings.
-    private void bindWindowSizeComboBox(JFXComboBox<String> comboBox, @Nullable M3IconButton inheritButton) {
+    private void bindWindowSizeField(TextField editor, @Nullable M3IconButton inheritButton) {
         ObjectProperty<@Nullable InheritableProperty<Double>> activeWidthProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<Double>> activeHeightProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<Double>> activeParentWidthProperty = new SimpleObjectProperty<>();
@@ -1139,11 +1135,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
             updating.value = true;
             try {
-                Double width = setting != null ? getEffectiveValue(setting, GameSettings::widthProperty) : widthProperty.getValue();
-                Double height = setting != null ? getEffectiveValue(setting, GameSettings::heightProperty) : heightProperty.getValue();
-                String value = isSpecifiedWindowSize(width, height) ? formatWindowSize(width, height) : null;
+                @Nullable Double width = setting != null ? getEffectiveValue(setting, GameSettings::widthProperty) : widthProperty.getValue();
+                @Nullable Double height = setting != null ? getEffectiveValue(setting, GameSettings::heightProperty) : heightProperty.getValue();
+                @Nullable String value = isSpecifiedWindowSize(width, height) ? formatWindowSize(width, height) : null;
                 committedValue.value = value;
-                comboBox.setValue(value);
+                editor.setText(value);
                 if (inheritButton != null) {
                     updateInheritanceButton(inheritButton, setting == null || !isWindowSizeOverridden(setting));
                 }
@@ -1155,32 +1151,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         refreshHolder.value = weakPropertyListener;
         activeParentSetting.addListener(weakPropertyListener);
 
-        ChangeListener<@Nullable Boolean> focusedListener = (observable, oldValue, newValue) -> {
-            if (!newValue) {
-                applyWindowSizeComboBoxValue(
-                        comboBox,
-                        currentSetting.get(),
-                        activeWidthProperty.get(),
-                        activeHeightProperty.get(),
-                        committedValue,
-                        updating);
-            }
-        };
-
-        ChangeListener<@Nullable Scene> sceneListener = (observable, oldValue, newValue) -> {
-            if (newValue == null) {
-                applyWindowSizeComboBoxValue(
-                        comboBox,
-                        currentSetting.get(),
-                        activeWidthProperty.get(),
-                        activeHeightProperty.get(),
-                        committedValue,
-                        updating);
-            }
-        };
-
-        comboBox.focusedProperty().addListener(focusedListener);
-        comboBox.sceneProperty().addListener(sceneListener);
+        Runnable commit = () -> applyWindowSizeValue(editor, currentSetting.get(),
+                activeWidthProperty.get(), activeHeightProperty.get(), committedValue, updating);
+        editor.setOnAction(event -> commit.run());
+        editor.focusedProperty().addListener((obs, old, focused) -> {
+            if (!focused) commit.run();
+        });
+        editor.sceneProperty().addListener((obs, old, scene) -> {
+            if (scene == null) commit.run();
+        });
         if (inheritButton != null) {
             inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
                 GameSettings setting = currentSetting.get();
@@ -1242,17 +1221,18 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         propertyListener.invalidated(setting);
     }
 
-    private void applyWindowSizeComboBoxValue(JFXComboBox<String> comboBox,
-                                              @Nullable GameSettings setting,
-                                              @Nullable InheritableProperty<Double> widthProperty,
-                                              @Nullable InheritableProperty<Double> heightProperty,
-                                              Holder<@Nullable String> committedValue,
-                                              Holder<Boolean> updating) {
+    /// Commits a custom or preset resolution and restores the last valid value on malformed input.
+    private void applyWindowSizeValue(TextField editor,
+                                     @Nullable GameSettings setting,
+                                     @Nullable InheritableProperty<Double> widthProperty,
+                                     @Nullable InheritableProperty<Double> heightProperty,
+                                     Holder<@Nullable String> committedValue,
+                                     Holder<Boolean> updating) {
         if (widthProperty == null || heightProperty == null || updating.value) {
             return;
         }
 
-        String value = comboBox.getValue();
+        @Nullable String value = editor.getText();
         if (Objects.equals(value, committedValue.value)) {
             return;
         }
@@ -1263,7 +1243,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 setWindowSizeOverridden(setting);
                 widthProperty.setValue(0.0);
                 heightProperty.setValue(0.0);
-                comboBox.setValue(null);
+                editor.setText(null);
                 committedValue.value = null;
                 return;
             }
@@ -1274,7 +1254,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             }
 
             if (idx < 0) {
-                comboBox.setValue(committedValue.value);
+                editor.setText(committedValue.value);
                 return;
             }
 
@@ -1284,11 +1264,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 setWindowSizeOverridden(setting);
                 widthProperty.setValue(width);
                 heightProperty.setValue(height);
-                String formattedValue = formatNullableWindowSize(width, height);
-                comboBox.setValue(formattedValue);
+                @Nullable String formattedValue = formatNullableWindowSize(width, height);
+                editor.setText(formattedValue);
                 committedValue.value = formattedValue;
             } catch (NumberFormatException e) {
-                comboBox.setValue(committedValue.value);
+                editor.setText(committedValue.value);
             }
         } finally {
             updating.value = false;

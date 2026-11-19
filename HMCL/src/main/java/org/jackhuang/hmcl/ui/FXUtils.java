@@ -1047,21 +1047,6 @@ public final class FXUtils {
         });
     }
 
-    public static <T> StringConverter<T> stringConverter(Function<T, String> func) {
-        return new StringConverter<T>() {
-
-            @Override
-            public String toString(T object) {
-                return object == null ? "" : func.apply(object);
-            }
-
-            @Override
-            public T fromString(String string) {
-                throw new UnsupportedOperationException();
-            }
-        };
-    }
-
     public static ColumnConstraints getColumnFillingWidth() {
         ColumnConstraints constraint = new ColumnConstraints();
         constraint.setFillWidth(true);

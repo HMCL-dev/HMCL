@@ -82,6 +82,19 @@
     -fx-text-fill: -fx-hyperlink-fill;
 }
 
+.preset-text-field > .m3-combo-box .label {
+    -fx-opacity: 0;
+}
+
+.preset-text-field > .text-field,
+.preset-text-field > .text-field:focused {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 0 16px;
+    -fx-font-size: 16px;
+    -fx-text-fill: -m3-color-on-surface;
+    -fx-prompt-text-fill: -m3-color-on-surface-variant;
+}
+
 .skin-pane .m3-text-field {
     -fx-pref-width: 200;
 }
@@ -861,10 +874,6 @@
     -fx-padding: 0;
 }
 
-.no-padding .combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
-    -fx-padding: 4 0 4 5;
-}
-
 .jfx-list-cell, .list-cell {
     -fx-background-color: transparent;
 }
@@ -1279,67 +1288,6 @@
 
 /*******************************************************************************
 *                                                                              *
-* JFX Combo Box                                                                *
-*                                                                              *
-*******************************************************************************/
-
-.jfx-combo-box {
-    -jfx-focus-color: transparent;
-    -jfx-unfocus-color: transparent;
-    -fx-background-color: -monet-surface-container-highest;
-    -fx-padding: 4;
-    -fx-max-width: 1000000000;
-}
-
-.jfx-combo-box .arrow {
-    -fx-background-color: -monet-on-surface-variant;
-    -fx-shape: "M12 15 7 10H17L12 15Z";
-}
-
-.jfx-combo-box .text {
-    -fx-fill: -monet-on-surface;
-}
-
-.jfx-combo-box .text-field {
-    -fx-text-fill: -monet-on-surface;
-}
-
-.combo-box-popup .list-view {
-    -fx-background-color: -monet-surface-container;
-}
-
-.combo-box-popup .list-view .jfx-list-cell {
-    -fx-background-color: -monet-surface-container;
-    -fx-text-fill: -monet-on-surface;
-    -fx-cursor: hand;
-    -fx-background-insets: 0.0;
-}
-
-.combo-box-popup .list-view .list-cell:odd:selected > .jfx-rippler > StackPane,
-.combo-box-popup .list-view .list-cell:even:selected > .jfx-rippler > StackPane {
-    -fx-background-color: -monet-secondary-container;
-    -fx-text-fill: -monet-on-secondary-container;
-}
-
-.combo-box-popup .list-view .list-cell:hover > .jfx-rippler > StackPane {
-    -fx-background-color: -monet-secondary-container-transparent-50;
-}
-
-.jfx-combo-box-warning {
-    -jfx-focus-color: #D34336;
-    -jfx-unfocus-color: #D34336;
-}
-
-.jfx-combo-box-warning .text {
-    -fx-fill: #D34336;
-}
-
-/*.combo-box-popup .list-view .jfx-list-cell .jfx-rippler {*/
-/*    -jfx-rippler-fill: -monet-primary-container;*/
-/*}*/
-
-/*******************************************************************************
-*                                                                              *
 * JFX Color Picker                                                             *
 *                                                                              *
 *******************************************************************************/
@@ -1516,14 +1464,6 @@
     -fx-shape: "M298 598l214-214 214 214h-428z";
 }
 
-.jfx-combo-box .scroll-bar {
-    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
-}
-
-.jfx-combo-box .scroll-bar .track {
-    -fx-fill: transparent;
-}
-
 /*******************************************************************************
  *                                                                             *
  * Scroll Pane			                                                       *
@@ -1572,11 +1512,6 @@
 .error-icon {
     -fx-fill: -monet-error;
     -fx-font-size: 1.0em;
-}
-
-.jfx-combo-box:error {
-    -jfx-focus-color: -monet-error;
-    -jfx-unfocus-color: -monet-error;
 }
 
 .fit-width {
