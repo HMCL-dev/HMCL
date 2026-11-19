@@ -10,44 +10,66 @@ import org.glavo.nbt.chunk.Chunk;
 import org.glavo.nbt.tag.*;
 import org.jetbrains.annotations.Nullable;
 
-/// @author Glavo
-public final class NBTTreeItem extends TreeItem<NBTElement> {
-    private final @Nullable String overrideName;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+/// Populates the children of an NBT node on first access.
+public final class NBTTreeItem extends TreeItem<NBTTreeItem.Entry> {
+
+    /// Creates a node with its NBT name.
     public NBTTreeItem(NBTElement value) {
         this(value, null);
     }
 
+    /// Creates a node with an optional display name, such as the root file name.
     public NBTTreeItem(NBTElement value, @Nullable String overrideName) {
-        super(value);
-        this.overrideName = overrideName;
+        super(new Entry(value, overrideName));
     }
 
     @Override
     public boolean isLeaf() {
-        return !(getValue() instanceof NBTParent<?> parent) || parent.isEmpty();
+        return !(getValue().element() instanceof NBTParent<?> parent) || parent.isEmpty();
     }
 
     private boolean needInitChildren = true;
 
     @Override
-    public ObservableList<TreeItem<NBTElement>> getChildren() {
-        ObservableList<TreeItem<NBTElement>> children = super.getChildren();
+    public ObservableList<TreeItem<Entry>> getChildren() {
+        ObservableList<TreeItem<Entry>> children = super.getChildren();
         if (needInitChildren) {
             needInitChildren = false;
 
-            if (getValue() instanceof Chunk chunk) {
+            NBTElement element = getValue().element();
+            if (element instanceof Chunk chunk) {
                 if (chunk.getRootTag() != null) {
                     children.setAll(chunk.getRootTag().stream().map(NBTTreeItem::new).toList());
                 }
-            } else if (getValue() instanceof NBTParent<?> parent) {
+            } else if (element instanceof NBTParent<?> parent) {
                 children.setAll(parent.stream().map(NBTTreeItem::new).toList());
             }
         }
         return children;
     }
 
-    public @Nullable String getOverrideName() {
-        return overrideName;
+    /// Supplies the same NBT label for the tree cell and its full-text tooltip.
+    public record Entry(NBTElement element, @Nullable String overrideName) {
+        /// Formats a tag name or list index with its value or child count.
+        @Override
+        public String toString() {
+            String name;
+            if (overrideName != null) {
+                name = overrideName;
+            } else if (element instanceof Tag tag) {
+                name = tag.getParent() instanceof ListTag<?> ? Integer.toString(tag.getIndex()) : tag.getName();
+            } else if (element instanceof Chunk chunk) {
+                name = "Chunk (" + chunk.getLocalX() + ", " + chunk.getLocalZ() + ")";
+            } else {
+                name = "";
+            }
+            if (element instanceof ParentTag<?> parent)
+                return name + ": " + i18n("nbt.entries", parent.size());
+            if (element instanceof ValueTag<?> tag)
+                return name + ": " + tag.getAsString();
+            return name;
+        }
     }
 }
