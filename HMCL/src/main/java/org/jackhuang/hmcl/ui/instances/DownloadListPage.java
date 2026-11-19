@@ -22,6 +22,7 @@ import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3ComboBox;
+import org.glavo.m3fx.controls.M3ComboBoxInputMode;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -48,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
@@ -307,8 +309,12 @@ public class DownloadListPage extends Control implements DecoratorPage {
                     FXUtils.installFastTooltip(nameField, i18n("search.hint.english"));
                 }
 
-                var gameVersionField = new PresetTextField(List.of(GameVersionNumber.getDefaultGameVersions()), i18n("world.game_version"));
-                var versionEditor = gameVersionField.getEditor();
+                var gameVersionField = new M3ComboBox<String>();
+                gameVersionField.setInputMode(M3ComboBoxInputMode.FREE_INPUT);
+                gameVersionField.setParser(Function.identity());
+                gameVersionField.getItems().setAll(GameVersionNumber.getDefaultGameVersions());
+                gameVersionField.setAccessibleText(i18n("world.game_version"));
+                gameVersionField.setMaxWidth(Double.MAX_VALUE);
                 Label lblGameVersion = new Label(i18n("world.game_version"));
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
 
@@ -377,7 +383,8 @@ public class DownloadListPage extends Control implements DecoratorPage {
                     currentFilterID.set(filterID.get());
 
                     int pageOffset = control.pageOffset.get();
-                    getSkinnable().search(StringUtils.isBlank(versionEditor.getText()) ? null : versionEditor.getText(),
+                    @Nullable String gameVersion = gameVersionField.getValue();
+                    getSkinnable().search(StringUtils.isBlank(gameVersion) ? null : gameVersion,
                             Optional.ofNullable(categoryComboBox.getValue())
                                     .map(CategoryIndented::category)
                                     .orElse(null),
@@ -390,7 +397,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                         () -> filterID.set(filterID.get() + 1),
 
                         control.downloadSource,
-                        versionEditor.textProperty(),
+                        gameVersionField.valueProperty(),
                         categoryComboBox.valueProperty(),
                         nameField.textProperty(),
                         sortComboBox.valueProperty()
@@ -497,7 +504,11 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
                 FXUtils.onChange(control.downloadSource, v -> searchAction.handle(null));
                 nameField.setOnAction(searchAction);
-                versionEditor.setOnAction(searchAction);
+                gameVersionField.valueProperty().addListener((obs, old, version) -> {
+                    // A focus-loss commit leaves the search to the newly activated control.
+                    if (gameVersionField.isFocusWithin()) searchAction.handle(null);
+                });
+                gameVersionField.addEventHandler(ActionEvent.ACTION, searchAction);
                 categoryComboBox.valueProperty().addListener(obs -> searchAction.handle(null));
                 sortComboBox.valueProperty().addListener(obs -> searchAction.handle(null));
             }

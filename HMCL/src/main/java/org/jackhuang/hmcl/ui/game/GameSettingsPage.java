@@ -13,6 +13,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
+import javafx.geometry.Dimension2D;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -22,6 +23,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
+import org.glavo.m3fx.controls.M3ComboBox;
+import org.glavo.m3fx.controls.M3ComboBoxInputMode;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.game.*;
@@ -66,6 +69,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private static final PseudoClass PSEUDO_OVERRIDDEN = PseudoClass.getPseudoClass("overridden");
     private static final String INHERIT_BUTTON_STYLE_CLASS = "toggle-icon-tiny";
     private static final int INHERIT_BUTTON_ICON_SIZE = 12;
+    /// The stored width and height when the launcher uses the game's default window size.
+    private static final Dimension2D DEFAULT_WINDOW_SIZE = new Dimension2D(0, 0);
 
     private final boolean isPresetSetting;
 
@@ -457,11 +462,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var windowTypeOptions = new ArrayList<RadioChoiceList.Choice<GameWindowType>>();
                 windowTypeItem.setFallbackValue(GameWindowType.WINDOWED);
 
-                var windowSizeField = new PresetTextField(getSupportedResolutions(), i18n("settings.game.window_type.windowed"));
-                windowSizeField.setPrefWidth(150);
-                windowSizeField.getEditor().setPromptText("854x480");
+                var windowSizeField = createWindowSizeField();
                 @Nullable M3IconButton windowSizeInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
-                bindWindowSizeField(windowSizeField.getEditor(), windowSizeInheritanceButton);
+                bindWindowSizeField(windowSizeField, windowSizeInheritanceButton);
 
                 for (GameWindowType type : GameWindowType.values()) {
                     if (type == GameWindowType.WINDOWED) {
@@ -1110,17 +1113,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     /// Binds the windowed resolution selector to the width and height settings.
-    private void bindWindowSizeField(TextField editor, @Nullable M3IconButton inheritButton) {
+    private void bindWindowSizeField(M3ComboBox<Dimension2D> field, @Nullable M3IconButton inheritButton) {
         ObjectProperty<@Nullable InheritableProperty<Double>> activeWidthProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<Double>> activeHeightProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<Double>> activeParentWidthProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<Double>> activeParentHeightProperty = new SimpleObjectProperty<>();
-        final Holder<@Nullable String> committedValue = new Holder<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
 
         InvalidationListener propertyListener = observable -> {
-            S setting = currentSetting.get();
+            @Nullable S setting = currentSetting.get();
             updateParentInheritablePropertyListener(setting, activeParentWidthProperty, GameSettings::widthProperty, refreshHolder.value);
             updateParentInheritablePropertyListener(setting, activeParentHeightProperty, GameSettings::heightProperty, refreshHolder.value);
 
@@ -1137,9 +1139,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             try {
                 @Nullable Double width = setting != null ? getEffectiveValue(setting, GameSettings::widthProperty) : widthProperty.getValue();
                 @Nullable Double height = setting != null ? getEffectiveValue(setting, GameSettings::heightProperty) : heightProperty.getValue();
-                @Nullable String value = isSpecifiedWindowSize(width, height) ? formatWindowSize(width, height) : null;
-                committedValue.value = value;
-                editor.setText(value);
+                Dimension2D size = width != null && height != null && width > 0 && height > 0
+                        ? new Dimension2D(width, height) : DEFAULT_WINDOW_SIZE;
+                if (!size.equals(field.getValue()))
+                    field.setValue(size);
                 if (inheritButton != null) {
                     updateInheritanceButton(inheritButton, setting == null || !isWindowSizeOverridden(setting));
                 }
@@ -1151,14 +1154,19 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         refreshHolder.value = weakPropertyListener;
         activeParentSetting.addListener(weakPropertyListener);
 
-        Runnable commit = () -> applyWindowSizeValue(editor, currentSetting.get(),
-                activeWidthProperty.get(), activeHeightProperty.get(), committedValue, updating);
-        editor.setOnAction(event -> commit.run());
-        editor.focusedProperty().addListener((obs, old, focused) -> {
-            if (!focused) commit.run();
-        });
-        editor.sceneProperty().addListener((obs, old, scene) -> {
-            if (scene == null) commit.run();
+        field.valueProperty().addListener((obs, old, size) -> {
+            @Nullable S setting = currentSetting.get();
+            if (updating.value || size == null || setting == null)
+                return;
+            updating.value = true;
+            try {
+                setWindowSizeOverridden(setting, true);
+                setting.widthProperty().setValue(size.getWidth());
+                setting.heightProperty().setValue(size.getHeight());
+            } finally {
+                updating.value = false;
+            }
+            propertyListener.invalidated(setting);
         });
         if (inheritButton != null) {
             inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
@@ -1179,12 +1187,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
+            field.hide();
             if (oldValue != null) {
                 oldValue.removeListener(weakPropertyListener);
             }
 
-            InheritableProperty<Double> oldWidthProperty = activeWidthProperty.get();
-            InheritableProperty<Double> oldHeightProperty = activeHeightProperty.get();
+            @Nullable InheritableProperty<Double> oldWidthProperty = activeWidthProperty.get();
+            @Nullable InheritableProperty<Double> oldHeightProperty = activeHeightProperty.get();
             if (oldWidthProperty != null) {
                 oldWidthProperty.removeListener(weakPropertyListener);
             }
@@ -1192,8 +1201,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 oldHeightProperty.removeListener(weakPropertyListener);
             }
 
-            InheritableProperty<Double> newWidthProperty = newValue != null ? newValue.widthProperty() : null;
-            InheritableProperty<Double> newHeightProperty = newValue != null ? newValue.heightProperty() : null;
+            @Nullable InheritableProperty<Double> newWidthProperty = newValue != null ? newValue.widthProperty() : null;
+            @Nullable InheritableProperty<Double> newHeightProperty = newValue != null ? newValue.heightProperty() : null;
             activeWidthProperty.set(newWidthProperty);
             activeHeightProperty.set(newHeightProperty);
             if (newValue != null) {
@@ -1221,67 +1230,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         propertyListener.invalidated(setting);
     }
 
-    /// Commits a custom or preset resolution and restores the last valid value on malformed input.
-    private void applyWindowSizeValue(TextField editor,
-                                     @Nullable GameSettings setting,
-                                     @Nullable InheritableProperty<Double> widthProperty,
-                                     @Nullable InheritableProperty<Double> heightProperty,
-                                     Holder<@Nullable String> committedValue,
-                                     Holder<Boolean> updating) {
-        if (widthProperty == null || heightProperty == null || updating.value) {
-            return;
-        }
-
-        @Nullable String value = editor.getText();
-        if (Objects.equals(value, committedValue.value)) {
-            return;
-        }
-
-        updating.value = true;
-        try {
-            if (StringUtils.isBlank(value)) {
-                setWindowSizeOverridden(setting);
-                widthProperty.setValue(0.0);
-                heightProperty.setValue(0.0);
-                editor.setText(null);
-                committedValue.value = null;
-                return;
-            }
-
-            int idx = value.indexOf('x');
-            if (idx < 0) {
-                idx = value.indexOf('*');
-            }
-
-            if (idx < 0) {
-                editor.setText(committedValue.value);
-                return;
-            }
-
-            try {
-                double width = Double.parseDouble(value.substring(0, idx).trim());
-                double height = Double.parseDouble(value.substring(idx + 1).trim());
-                setWindowSizeOverridden(setting);
-                widthProperty.setValue(width);
-                heightProperty.setValue(height);
-                @Nullable String formattedValue = formatNullableWindowSize(width, height);
-                editor.setText(formattedValue);
-                committedValue.value = formattedValue;
-            } catch (NumberFormatException e) {
-                editor.setText(committedValue.value);
-            }
-        } finally {
-            updating.value = false;
-        }
-    }
-
-    private void setWindowSizeOverridden(@Nullable GameSettings setting) {
-        if (setting == null) {
-            return;
-        }
-        setWindowSizeOverridden(setting, true);
-    }
-
     /// Returns whether the windowed resolution uses direct width or height values.
     private static boolean isWindowSizeOverridden(GameSettings setting) {
         return isPropertyOverridden(setting, setting.widthProperty())
@@ -1305,18 +1253,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         setPropertyOverridden(setting, setting.widthProperty(), overridden);
         setPropertyOverridden(setting, setting.heightProperty(), overridden);
-    }
-
-    private static boolean isSpecifiedWindowSize(@Nullable Double width, @Nullable Double height) {
-        return width != null && height != null && width > 0 && height > 0;
-    }
-
-    private static @Nullable String formatNullableWindowSize(@Nullable Double width, @Nullable Double height) {
-        return isSpecifiedWindowSize(width, height) ? formatWindowSize(width, height) : null;
-    }
-
-    private static String formatWindowSize(double width, double height) {
-        return Math.round(width) + "x" + Math.round(height);
     }
 
     /// Creates a compact button that displays inherited or overridden state.
@@ -2829,7 +2765,17 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         loadIcon();
     }
 
-    private static List<String> getSupportedResolutions() {
+    /// Creates the window size editor with suggestions that fit the available displays.
+    static M3ComboBox<Dimension2D> createWindowSizeField() {
+        var field = new M3ComboBox<Dimension2D>();
+        field.setInputMode(M3ComboBoxInputMode.FREE_INPUT);
+        field.setParser(GameSettingsPage::parseWindowSize);
+        field.setConverter(size -> size.equals(DEFAULT_WINDOW_SIZE) ? ""
+                : Math.round(size.getWidth()) + "x" + Math.round(size.getHeight()));
+        field.setAccessibleText(i18n("settings.game.window_type.windowed"));
+        field.setPromptText("854x480");
+        field.setPrefWidth(150);
+
         int maxScreenWidth = 0;
         int maxScreenHeight = 0;
 
@@ -2842,13 +2788,28 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             maxScreenHeight = Math.max(maxScreenHeight, screenHeight);
         }
 
-        List<String> resolutions = new ArrayList<>(List.of("854x480", "1280x720", "1600x900"));
+        var presets = field.getItems();
+        presets.setAll(new Dimension2D(854, 480), new Dimension2D(1280, 720), new Dimension2D(1600, 900));
 
-        if (maxScreenWidth >= 1920 && maxScreenHeight >= 1080) resolutions.add("1920x1080");
-        if (maxScreenWidth >= 2560 && maxScreenHeight >= 1440) resolutions.add("2560x1440");
-        if (maxScreenWidth >= 3840 && maxScreenHeight >= 2160) resolutions.add("3840x2160");
+        if (maxScreenWidth >= 1920 && maxScreenHeight >= 1080) presets.add(new Dimension2D(1920, 1080));
+        if (maxScreenWidth >= 2560 && maxScreenHeight >= 1440) presets.add(new Dimension2D(2560, 1440));
+        if (maxScreenWidth >= 3840 && maxScreenHeight >= 2160) presets.add(new Dimension2D(3840, 2160));
+        return field;
+    }
 
-        return resolutions;
+    /// Accepts positive, finite dimensions separated by 'x' or '*', or blank text for the game default.
+    private static @Nullable Dimension2D parseWindowSize(String text) {
+        if (text.isBlank())
+            return DEFAULT_WINDOW_SIZE;
+        int separator = text.indexOf('x');
+        if (separator < 0)
+            separator = text.indexOf('*');
+        if (separator < 0)
+            return null;
+        double width = Double.parseDouble(text.substring(0, separator));
+        double height = Double.parseDouble(text.substring(separator + 1));
+        return Double.isFinite(width) && width > 0 && Double.isFinite(height) && height > 0
+                ? new Dimension2D(width, height) : null;
     }
 
 }

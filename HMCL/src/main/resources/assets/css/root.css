@@ -82,19 +82,6 @@
     -fx-text-fill: -fx-hyperlink-fill;
 }
 
-.preset-text-field > .m3-combo-box .label {
-    -fx-opacity: 0;
-}
-
-.preset-text-field > .text-field,
-.preset-text-field > .text-field:focused {
-    -fx-background-color: transparent;
-    -fx-padding: 0 0 0 16px;
-    -fx-font-size: 16px;
-    -fx-text-fill: -m3-color-on-surface;
-    -fx-prompt-text-fill: -m3-color-on-surface-variant;
-}
-
 .skin-pane .m3-text-field {
     -fx-pref-width: 200;
 }
