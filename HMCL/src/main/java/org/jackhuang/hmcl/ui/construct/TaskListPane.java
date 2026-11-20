@@ -1,6 +1,5 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
-// SPDX-FileContributor: ganganjue
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXListView;

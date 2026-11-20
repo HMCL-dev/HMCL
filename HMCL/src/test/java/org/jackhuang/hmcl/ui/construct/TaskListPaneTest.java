@@ -1,6 +1,5 @@
 // SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
-// SPDX-FileContributor: ganganjue
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.application.Platform;
@@ -27,6 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Verifies lazy materialization of task details inside collapsible stages.
+///
+/// @author ganganjue
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 final class TaskListPaneTest {
