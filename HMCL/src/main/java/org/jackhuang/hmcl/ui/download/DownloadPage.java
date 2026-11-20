@@ -82,6 +82,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabItem<DownloadListPage> shaderTab;
     /// The tab for browsing downloadable worlds.
     private final TabItem<DownloadListPage> worldTab;
+    /// The tab for downloading official server jars.
+    private final TabItem<ServerDownloadPage> serverTab;
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 
@@ -115,6 +117,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         this.resourcePackTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true));
         this.shaderTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true));
         this.worldTab = newDownloadListTab(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance()));
+        this.serverTab = new TabItem<>(ServerDownloadPage::new);
 
         this.tabController = new TabController(transitionPane,
                 newGameTab,
@@ -122,7 +125,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 modTab,
                 resourcePackTab,
                 shaderTab,
-                worldTab
+                worldTab,
+                serverTab
         );
 
         GameDirectoryManager.registerVersionsListener(this::loadVersions);
@@ -137,7 +141,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .addNavigationDrawerTab(tabController, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                 .addNavigationDrawerTab(tabController, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tabController, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
-                .addNavigationDrawerTab(tabController, worldTab, i18n("world"), SVG.PUBLIC);
+                .addNavigationDrawerTab(tabController, worldTab, i18n("world"), SVG.PUBLIC)
+                .addNavigationDrawerTab(tabController, serverTab, i18n("download.server"), SVG.FOLDER, SVG.FOLDER_FILL);
 
         setContent(transitionPane);
     }
