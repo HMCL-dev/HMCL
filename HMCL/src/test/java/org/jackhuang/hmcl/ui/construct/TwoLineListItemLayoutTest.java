@@ -345,50 +345,6 @@ public final class TwoLineListItemLayoutTest {
         });
     }
 
-    /// Verifies composed line rows adapt their height to width and subtitle changes without fixed-height updates.
-    @Test
-    public void testLineComponentWrappingAndSizing() {
-        onFxThread(() -> {
-            LinePane line = new LinePane();
-            line.setTitle("Setting");
-            line.setSubtitle("A long explanation that must remain visible. ".repeat(20));
-            line.getTags().add(Tag.warning("Warning"));
-            Button trailing = new Button("Reset");
-            line.setTitleTrailing(trailing);
-            Button right = new Button("Open");
-            right.setMinWidth(Region.USE_PREF_SIZE);
-            line.setRight(right);
-            LineComponent.setMargin(right, new Insets(0, 5, 0, 19));
-            VBox parent = new VBox(line);
-            new Scene(parent);
-            layout(parent, 280);
-
-            TwoLineListItem content = (TwoLineListItem) requireNonNull(line.lookup(".line-component-container"));
-            assertSame(line, content.getParent());
-            assertSame(content, right.getParent());
-            Label subtitle = content.getSubtitleLabel();
-            assertEquals(content.getTitleLabel().prefWidth(-1), content.getTitleLabel().getWidth(), 1);
-            assertTrue(line.getHeight() >= 48);
-            assertTrue(subtitle.getHeight() > subtitle.prefHeight(-1));
-            assertTrue(subtitle.getLayoutY() + subtitle.getHeight() <= content.getHeight() + 0.001);
-            double narrowHeight = line.getHeight();
-            layout(parent, 600);
-            assertTrue(line.getHeight() < narrowHeight);
-            layout(parent, 280);
-            assertEquals(narrowHeight, line.getHeight(), 0.001);
-
-            line.setSubtitle("");
-            layout(parent, 280);
-            assertNull(subtitle.getParent());
-            assertEquals(48, line.getHeight(), 0.001);
-            assertFalse(content.isMouseTransparent());
-            line.setTitleTrailing(null);
-            assertFalse(content.isMouseTransparent());
-            line.setRight(null);
-            assertTrue(content.isMouseTransparent());
-        });
-    }
-
     /// Verifies binding, replacement, visibility, and managed-state changes for optional side nodes.
     @Test
     public void testSideNodeProperties() {

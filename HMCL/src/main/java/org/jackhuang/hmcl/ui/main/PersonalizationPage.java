@@ -4,14 +4,13 @@ package org.jackhuang.hmcl.ui.main;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.Property;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -19,7 +18,15 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import javafx.stage.FileChooser;
 import org.glavo.m3fx.controls.M3ComboBox;
+import org.glavo.m3fx.controls.M3ExpandableSettingItem;
+import org.glavo.m3fx.controls.M3FormRow;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListPane;
+import org.glavo.m3fx.controls.M3ListSectionHeader;
+import org.glavo.m3fx.controls.M3ListStyle;
+import org.glavo.m3fx.controls.M3SelectSettingItem;
+import org.glavo.m3fx.controls.M3SettingItem;
+import org.glavo.m3fx.controls.M3SwitchSettingItem;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
@@ -98,128 +105,68 @@ public class PersonalizationPage extends StackPane {
 
         Object tooltip = button.getProperties().get(INHERIT_BUTTON_TOOLTIP_KEY);
         if (tooltip instanceof Tooltip inheritTooltip) {
-            inheritTooltip.setText(i18n(inherited
+            String description = i18n(inherited
                     ? "theme_pack.appearance.follow_theme.tooltip"
-                    : "theme_pack.appearance.custom.tooltip"));
+                    : "theme_pack.appearance.custom.tooltip");
+            button.setAccessibleText(description);
+            inheritTooltip.setText(description);
         }
     }
 
     /// Adds listeners for state that can change effective inherited appearance values.
-    private static void addThemeAppearanceRefreshListener(InvalidationListener listener) {
-        settings().selectedThemeProperty().addListener(listener);
-        settings().getThemeAppearanceOverrides().addListener(listener);
-        settings().themeBrightnessModeProperty().addListener(listener);
-        settings().backgroundTypeProperty().addListener(listener);
+    private static void addThemeAppearanceRefreshListener(LauncherSettings preferences, InvalidationListener listener) {
+        preferences.selectedThemeProperty().addListener(listener);
+        preferences.getThemeAppearanceOverrides().addListener(listener);
+        preferences.themeBrightnessModeProperty().addListener(listener);
+        preferences.backgroundTypeProperty().addListener(listener);
         if (FXUtils.DARK_MODE != null) {
             FXUtils.DARK_MODE.addListener(listener);
         }
     }
 
-    /// Installs an inheritance button on a line select button.
-    private static <T> void bindThemeAppearanceLineSelectButton(
-            LineSelectButton<T> button,
-            String setting,
-            Property<T> directProperty,
-            Supplier<T> effectiveValueSupplier) {
-        M3IconButton inheritButton = createThemeAppearanceOverrideButton();
-        button.setTitleTrailing(inheritButton);
-
-        Holder<Boolean> updating = new Holder<>(false);
+    /// Follows the theme until an edit overrides it. The button toggles inheritance independently of the row.
+    static <T extends @Nullable Object> M3IconButton createAppearanceOverrideButton(
+            LauncherSettings preferences, String setting, Property<T> displayed, Property<T> direct,
+            Supplier<T> inherited) {
+        M3IconButton button = createThemeAppearanceOverrideButton();
+        var overrides = preferences.getThemeAppearanceOverrides();
+        Holder<Boolean> refreshing = new Holder<>(false);
         InvalidationListener refresh = ignored -> {
-            if (updating.value) {
-                return;
-            }
-            updating.value = true;
+            if (refreshing.value) return;
+            refreshing.value = true;
             try {
-                boolean overridden = settings().getThemeAppearanceOverrides().contains(setting);
-                button.setValue(overridden ? directProperty.getValue() : effectiveValueSupplier.get());
-                updateThemeAppearanceOverrideButton(inheritButton, !overridden);
+                boolean overridden = overrides.contains(setting);
+                displayed.setValue(overridden ? direct.getValue() : inherited.get());
+                updateThemeAppearanceOverrideButton(button, !overridden);
             } finally {
-                updating.value = false;
+                refreshing.value = false;
             }
         };
-
-        button.valueProperty().addListener((observable, oldValue, newValue) -> {
-            if (updating.value) {
-                return;
-            }
-            updating.value = true;
-            try {
-                directProperty.setValue(newValue);
-                settings().getThemeAppearanceOverrides().add(setting);
-                updateThemeAppearanceOverrideButton(inheritButton, false);
-            } finally {
-                updating.value = false;
+        displayed.addListener((observable, oldValue, newValue) -> {
+            if (!refreshing.value) {
+                // Store the edit before publishing the override so observers see the new value.
+                refreshing.value = true;
+                try {
+                    direct.setValue(newValue);
+                    overrides.add(setting);
+                } finally {
+                    refreshing.value = false;
+                }
+                refresh.invalidated(null);
             }
         });
-        directProperty.addListener(refresh);
-        addThemeAppearanceRefreshListener(refresh);
-
-        inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            if (!settings().getThemeAppearanceOverrides().contains(setting)) {
-                directProperty.setValue(effectiveValueSupplier.get());
-                settings().getThemeAppearanceOverrides().add(setting);
-            } else {
-                settings().getThemeAppearanceOverrides().remove(setting);
+        var weakRefresh = new WeakInvalidationListener(refresh);
+        direct.addListener(weakRefresh);
+        addThemeAppearanceRefreshListener(preferences, weakRefresh);
+        button.setOnAction(event -> {
+            if (!overrides.remove(setting)) {
+                direct.setValue(displayed.getValue());
+                overrides.add(setting);
             }
-            refresh.invalidated(null);
             event.consume();
         });
         refresh.invalidated(null);
-    }
-
-    /// Binds a switch row to an inheritable theme appearance setting.
-    private static void bindThemeAppearanceSwitch(
-            LineSwitch button,
-            String setting,
-            BooleanProperty directProperty,
-            Supplier<Boolean> effectiveValueSupplier) {
-        M3IconButton inheritButton = createThemeAppearanceOverrideButton();
-        button.setTitleTrailing(inheritButton);
-
-        Holder<Boolean> updating = new Holder<>(false);
-        InvalidationListener refresh = ignored -> {
-            if (updating.value) {
-                return;
-            }
-            updating.value = true;
-            try {
-                boolean overridden = settings().getThemeAppearanceOverrides().contains(setting);
-                button.setSelected(overridden ? directProperty.get() : effectiveValueSupplier.get());
-                updateThemeAppearanceOverrideButton(inheritButton, !overridden);
-            } finally {
-                updating.value = false;
-            }
-        };
-
-        button.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            if (updating.value) {
-                return;
-            }
-            updating.value = true;
-            try {
-                directProperty.set(Boolean.TRUE.equals(newValue));
-                settings().getThemeAppearanceOverrides().add(setting);
-                updateThemeAppearanceOverrideButton(inheritButton, false);
-            } finally {
-                updating.value = false;
-            }
-            refresh.invalidated(null);
-        });
-        directProperty.addListener(refresh);
-        addThemeAppearanceRefreshListener(refresh);
-
-        inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            if (!settings().getThemeAppearanceOverrides().contains(setting)) {
-                directProperty.set(button.isSelected());
-                settings().getThemeAppearanceOverrides().add(setting);
-            } else {
-                settings().getThemeAppearanceOverrides().remove(setting);
-            }
-            refresh.invalidated(null);
-            event.consume();
-        });
-        refresh.invalidated(null);
+        return button;
     }
 
     /// Returns the display name for the currently selected launcher theme.
@@ -380,38 +327,36 @@ public class PersonalizationPage extends StackPane {
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 
-        ComponentList themeList = new ComponentList();
+        var themeList = newSettingsList();
         {
-            LineButton currentThemeButton = LineButton.createNavigationButton();
-            currentThemeButton.setTitle(i18n("theme_pack.theme"));
-            Runnable updateCurrentThemeButton = () -> currentThemeButton.setSubtitle(getSelectedThemeTitle());
+            var currentThemeButton = new M3SettingItem(i18n("theme_pack.theme"));
+            currentThemeButton.setTrailing(SVG.ARROW_FORWARD.createIcon(20));
+            Runnable updateCurrentThemeButton = () -> currentThemeButton.setSupportingText(getSelectedThemeTitle());
             FXUtils.onChange(settings().selectedThemeProperty(), ignored -> updateCurrentThemeButton.run());
             updateCurrentThemeButton.run();
             currentThemeButton.setOnAction(event ->
                     Controllers.navigateForward(new ThemePackManagementPage(updateCurrentThemeButton)));
-            themeList.getContent().add(currentThemeButton);
+            themeList.getItems().add(currentThemeButton);
 
-            LineButton exportThemeButton = new LineButton();
-            exportThemeButton.setTitle(i18n("theme_pack.export"));
-            exportThemeButton.setSubtitle(i18n("theme_pack.export.subtitle"));
-            exportThemeButton.setTrailingIcon(SVG.ARCHIVE);
+            var exportThemeButton = new M3SettingItem(i18n("theme_pack.export"));
+            exportThemeButton.setSupportingText(i18n("theme_pack.export.subtitle"));
+            exportThemeButton.setTrailing(SVG.ARCHIVE.createIcon(20));
             exportThemeButton.setOnAction(event -> exportCurrentThemePack());
-            themeList.getContent().add(exportThemeButton);
+            themeList.getItems().add(exportThemeButton);
         }
-        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.theme")), themeList);
+        content.getChildren().addAll(new M3ListSectionHeader(i18n("settings.launcher.theme")), themeList);
 
-        ComponentList themeAppearanceList = new ComponentList();
-        ComponentList backgroundLoadingList = new ComponentList();
+        var themeAppearanceList = newSettingsList();
+        var backgroundLoadingList = newSettingsList();
 
         {
-            LineSelectButton<String> brightnessPane = new LineSelectButton<>();
-            brightnessPane.setTitle(i18n("settings.launcher.brightness"));
+            var brightnessPane = new M3SelectSettingItem<String>(i18n("settings.launcher.brightness"));
+            brightnessPane.setNullValueText(i18n("settings.launcher.brightness.auto"));
             brightnessPane.setConverter(name -> i18n("settings.launcher.brightness."
-                    + Objects.requireNonNullElse(name, "auto").trim().toLowerCase(Locale.ROOT)));
-            brightnessPane.setItems(Arrays.asList("auto", "light", "dark"));
-            bindThemeAppearanceLineSelectButton(
-                    brightnessPane,
-                    LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE,
+                    + name.trim().toLowerCase(Locale.ROOT)));
+            brightnessPane.getItems().setAll("auto", "light", "dark");
+            brightnessPane.setHeadlineTrailing(createAppearanceOverrideButton(
+                    settings(), LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE, brightnessPane.valueProperty(),
                     settings().themeBrightnessModeProperty(),
                     () -> {
                         try {
@@ -423,15 +368,13 @@ public class PersonalizationPage extends StackPane {
                         } catch (IOException | RuntimeException e) {
                             return "auto";
                         }
-                    });
+                    }));
 
-            themeAppearanceList.getContent().add(brightnessPane);
+            themeAppearanceList.getItems().add(brightnessPane);
         }
 
         {
-            ComponentSublist themeColorSublist = new ComponentSublist();
-            themeColorSublist.setTitle(i18n("settings.launcher.theme_color"));
-            themeColorSublist.setHasSubtitle(true);
+            var themeColorSublist = new M3ExpandableSettingItem(i18n("settings.launcher.theme_color"));
             Supplier<@Nullable ThemeColorSource> effectiveThemeColorSource = () -> {
                 try {
                     return ThemePackManager.resolveCurrentThemeColorSource(ThemePackManager.currentResolveContext());
@@ -484,7 +427,7 @@ public class PersonalizationPage extends StackPane {
                     backgroundColorChoice));
 
             M3IconButton themeColorOverrideButton = createThemeAppearanceOverrideButton();
-            themeColorSublist.setTitleRight(themeColorOverrideButton);
+            themeColorSublist.setHeadlineTrailing(themeColorOverrideButton);
             Holder<Boolean> updatingThemeColor = new Holder<>(false);
             InvalidationListener refreshThemeColor = ignored -> {
                 if (updatingThemeColor.value) {
@@ -550,8 +493,8 @@ public class PersonalizationPage extends StackPane {
             });
             settings().themeColorTypeProperty().addListener(refreshThemeColor);
             settings().customThemeColorProperty().addListener(refreshThemeColor);
-            addThemeAppearanceRefreshListener(refreshThemeColor);
-            themeColorOverrideButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            addThemeAppearanceRefreshListener(settings(), refreshThemeColor);
+            themeColorOverrideButton.setOnAction(event -> {
                 updatingThemeColor.value = true;
                 try {
                     if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_COLOR)) {
@@ -574,7 +517,7 @@ public class PersonalizationPage extends StackPane {
                 refreshThemeColor.invalidated(null);
                 event.consume();
             });
-            themeColorSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
+            themeColorSublist.trailingSupportingTextProperty().bind(Bindings.createStringBinding(() -> {
                         ThemeColorType type = Objects.requireNonNullElse(
                                 themeColorChoiceList.selectedValueProperty().get(),
                                 ThemeColorType.DEFAULT);
@@ -583,19 +526,19 @@ public class PersonalizationPage extends StackPane {
                     themeColorChoiceList.selectedValueProperty()));
             refreshThemeColor.invalidated(null);
 
-            themeColorSublist.getContent().setAll(themeColorChoiceList);
-            themeAppearanceList.getContent().add(themeColorSublist);
+            themeColorSublist.setContent(themeColorChoiceList);
+            themeAppearanceList.getItems().add(themeColorSublist);
         }
 
         {
-            LineSelectButton<ColorStyle> colorStylePane = new LineSelectButton<>();
-            colorStylePane.setTitle(i18n("settings.launcher.theme_color_style"));
+            var colorStylePane = new M3SelectSettingItem<ColorStyle>(i18n("settings.launcher.theme_color_style"));
+            colorStylePane.setNullValueText(i18n("settings.launcher.theme_color_style.fidelity"));
             colorStylePane.setConverter(style -> i18n("settings.launcher.theme_color_style."
-                    + Objects.requireNonNullElse(style, ColorStyle.FIDELITY).name().toLowerCase(Locale.ROOT)));
+                    + style.name().toLowerCase(Locale.ROOT)));
             colorStylePane.setDescriptionConverter(style -> i18n("settings.launcher.theme_color_style."
-                    + Objects.requireNonNullElse(style, ColorStyle.FIDELITY).name().toLowerCase(Locale.ROOT)
+                    + style.name().toLowerCase(Locale.ROOT)
                     + ".desc"));
-            colorStylePane.setItems(Arrays.asList(
+            colorStylePane.getItems().setAll(
                     ColorStyle.FIDELITY,
                     ColorStyle.TONAL_SPOT,
                     ColorStyle.VIBRANT,
@@ -604,10 +547,9 @@ public class PersonalizationPage extends StackPane {
 
                     ColorStyle.FRUIT_SALAD,
                     ColorStyle.RAINBOW
-            ));
-            bindThemeAppearanceLineSelectButton(
-                    colorStylePane,
-                    LauncherSettings.THEME_APPEARANCE_COLOR_STYLE,
+            );
+            colorStylePane.setHeadlineTrailing(createAppearanceOverrideButton(
+                    settings(), LauncherSettings.THEME_APPEARANCE_COLOR_STYLE, colorStylePane.valueProperty(),
                     settings().themeColorStyleProperty(),
                     () -> {
                         try {
@@ -617,17 +559,15 @@ public class PersonalizationPage extends StackPane {
                         } catch (IOException | RuntimeException e) {
                             return ColorStyle.FIDELITY;
                         }
-                    });
+                    }));
 
-            themeAppearanceList.getContent().add(colorStylePane);
+            themeAppearanceList.getItems().add(colorStylePane);
         }
 
         {
             RadioChoiceList<BackgroundType> backgroundItem = new RadioChoiceList<>();
             backgroundItem.setFallbackValue(BackgroundType.DEFAULT);
-            ComponentSublist backgroundSublist = new ComponentSublist();
-            backgroundSublist.setTitle(i18n("launcher.background"));
-            backgroundSublist.setHasSubtitle(true);
+            var backgroundSublist = new M3ExpandableSettingItem(i18n("launcher.background"));
 
             M3ComboBox<String> builtinBackgroundComboBox = new M3ComboBox<>();
             builtinBackgroundComboBox.getItems().setAll(BuiltinBackground.BUILTIN_BACKGROUND_IDS);
@@ -662,7 +602,7 @@ public class PersonalizationPage extends StackPane {
                     paintBackgroundOption
             ));
             M3IconButton backgroundOverrideButton = createThemeAppearanceOverrideButton();
-            backgroundSublist.setTitleRight(backgroundOverrideButton);
+            backgroundSublist.setHeadlineTrailing(backgroundOverrideButton);
             Holder<Boolean> updatingBackground = new Holder<>(false);
             InvalidationListener refreshBackground = ignored -> {
                 if (updatingBackground.value) {
@@ -814,12 +754,12 @@ public class PersonalizationPage extends StackPane {
                     updatingBackground.value = false;
                 }
             });
-            addThemeAppearanceRefreshListener(refreshBackground);
+            addThemeAppearanceRefreshListener(settings(), refreshBackground);
             settings().builtinBackgroundIdProperty().addListener(refreshBackground);
             settings().customBackgroundImagePathProperty().addListener(refreshBackground);
             settings().networkBackgroundImageUrlProperty().addListener(refreshBackground);
             settings().customBackgroundPaintProperty().addListener(refreshBackground);
-            backgroundOverrideButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            backgroundOverrideButton.setOnAction(event -> {
                 updatingBackground.value = true;
                 try {
                     if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
@@ -835,8 +775,7 @@ public class PersonalizationPage extends StackPane {
             });
             refreshBackground.invalidated(null);
 
-            LineSwitch networkBackgroundCacheButton = new LineSwitch();
-            networkBackgroundCacheButton.setTitle(i18n("launcher.background.network.cache"));
+            var networkBackgroundCacheButton = new M3SwitchSettingItem(i18n("launcher.background.network.cache"));
             networkBackgroundCacheButton.setSelected(Objects.requireNonNullElse(
                     settings().networkBackgroundImageCachePolicyProperty().get(),
                     NetworkBackgroundImageCachePolicy.ENABLED) == NetworkBackgroundImageCachePolicy.ENABLED);
@@ -849,9 +788,7 @@ public class PersonalizationPage extends StackPane {
                             newValue,
                             NetworkBackgroundImageCachePolicy.ENABLED) == NetworkBackgroundImageCachePolicy.ENABLED));
 
-            ComponentSublist backgroundFallbackSublist = new ComponentSublist();
-            backgroundFallbackSublist.setTitle(i18n("launcher.background.fallback"));
-            backgroundFallbackSublist.setHasSubtitle(true);
+            var backgroundFallbackSublist = new M3ExpandableSettingItem(i18n("launcher.background.fallback"));
 
             RadioChoiceList<BackgroundType> backgroundFallbackItem = new RadioChoiceList<>();
             backgroundFallbackItem.setFallbackValue(BackgroundType.BUILTIN);
@@ -861,8 +798,8 @@ public class PersonalizationPage extends StackPane {
                     new PaintChoice(i18n("launcher.background.fallback.paint"), BackgroundType.PAINT, settings().backgroundFallbackPaintProperty())
             ));
             backgroundFallbackItem.selectedValueProperty().bindBidirectional(settings().backgroundFallbackTypeProperty());
-            backgroundFallbackSublist.getContent().setAll(backgroundFallbackItem);
-            backgroundFallbackSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
+            backgroundFallbackSublist.setContent(backgroundFallbackItem);
+            backgroundFallbackSublist.trailingSupportingTextProperty().bind(Bindings.createStringBinding(() -> {
                         BackgroundType type = Objects.requireNonNullElse(
                                 backgroundFallbackItem.selectedValueProperty().get(),
                                 BackgroundType.BUILTIN);
@@ -880,18 +817,17 @@ public class PersonalizationPage extends StackPane {
                     backgroundFallbackItem.selectedValueProperty(),
                     settings().backgroundFallbackPaintProperty()));
 
-            LineSelectButton<BackgroundLoadPolicy> backgroundLoadPolicyButton = new LineSelectButton<>();
-            backgroundLoadPolicyButton.setTitle(i18n("launcher.background.load_policy"));
+            var backgroundLoadPolicyButton = new M3SelectSettingItem<BackgroundLoadPolicy>(i18n("launcher.background.load_policy"));
+            backgroundLoadPolicyButton.setNullValueText(i18n("launcher.background.load_policy.wait_for_background"));
             backgroundLoadPolicyButton.setConverter(policy -> i18n("launcher.background.load_policy."
-                    + Objects.requireNonNullElse(policy, BackgroundLoadPolicy.WAIT_FOR_BACKGROUND)
-                    .name()
+                    + policy.name()
                     .toLowerCase(Locale.ROOT)));
-            backgroundLoadPolicyButton.setItems(Arrays.asList(
+            backgroundLoadPolicyButton.getItems().setAll(
                     BackgroundLoadPolicy.WAIT_FOR_BACKGROUND,
-                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING));
+                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING);
             backgroundLoadPolicyButton.valueProperty().bindBidirectional(settings().backgroundLoadPolicyProperty());
 
-            backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
+            backgroundSublist.trailingSupportingTextProperty().bind(Bindings.createStringBinding(() -> {
                         if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
                             BackgroundType type = Objects.requireNonNullElse(
                                     backgroundItem.selectedValueProperty().get(),
@@ -948,9 +884,9 @@ public class PersonalizationPage extends StackPane {
                     settings().networkBackgroundImageUrlProperty(),
                     settings().customBackgroundPaintProperty()));
 
-            LinePane opacityPane = new LinePane();
+            var opacityPane = new M3FormRow();
             {
-                opacityPane.setTitle(i18n("settings.launcher.background.settings.opacity"));
+                opacityPane.setLabelText(i18n("settings.launcher.background.settings.opacity"));
                 Supplier<Double> effectiveBackgroundOpacity = () -> {
                     try {
                         return ThemePackManager.resolveCurrentBackground(
@@ -976,7 +912,7 @@ public class PersonalizationPage extends StackPane {
                 sliderBox.getChildren().setAll(slider, textOpacity);
 
                 M3IconButton inheritButton = createThemeAppearanceOverrideButton();
-                opacityPane.setTitleTrailing(inheritButton);
+                opacityPane.setLabelTrailing(inheritButton);
                 Holder<Boolean> updatingOpacity = new Holder<>(false);
                 InvalidationListener refreshOpacity = ignored -> {
                     if (updatingOpacity.value) {
@@ -997,7 +933,7 @@ public class PersonalizationPage extends StackPane {
                     }
                 };
                 settings().backgroundOpacityProperty().addListener(refreshOpacity);
-                addThemeAppearanceRefreshListener(refreshOpacity);
+                addThemeAppearanceRefreshListener(settings(), refreshOpacity);
                 slider.valueProperty().addListener((observable, oldValue, newValue) -> {
                     if (updatingOpacity.value) {
                         return;
@@ -1016,7 +952,7 @@ public class PersonalizationPage extends StackPane {
                         settings().backgroundOpacityProperty().set(opacity);
                     }
                 });
-                inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                inheritButton.setOnAction(event -> {
                     if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)) {
                         settings().backgroundOpacityProperty().set(effectiveBackgroundOpacity.get());
                         settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
@@ -1027,92 +963,38 @@ public class PersonalizationPage extends StackPane {
                     event.consume();
                 });
 
-                opacityPane.setRight(sliderBox);
+                opacityPane.setContent(sliderBox);
                 refreshOpacity.invalidated(null);
             }
 
-            backgroundSublist.getContent().setAll(backgroundItem);
-            themeAppearanceList.getContent().addAll(
+            backgroundSublist.setContent(backgroundItem);
+            themeAppearanceList.getItems().addAll(
                     backgroundSublist,
                     opacityPane);
-            backgroundLoadingList.getContent().setAll(
+            backgroundLoadingList.getItems().setAll(
                     networkBackgroundCacheButton,
                     backgroundFallbackSublist,
                     backgroundLoadPolicyButton
             );
         }
 
-        {
-            String setting = LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT;
-            LineSwitch titleBarTransparentButton = new LineSwitch();
-            titleBarTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
-            M3IconButton inheritButton = createThemeAppearanceOverrideButton();
-            titleBarTransparentButton.setTitleTrailing(inheritButton);
-
-            Holder<Boolean> updating = new Holder<>(false);
-            InvalidationListener refresh = ignored -> {
-                if (updating.value) {
-                    return;
-                }
-                updating.value = true;
-                try {
-                    boolean overridden = settings().getThemeAppearanceOverrides().contains(setting);
-                    boolean transparent;
-                    if (overridden) {
-                        transparent = settings().titleBarTransparentProperty().get();
-                    } else {
-                        try {
-                            transparent = Objects.requireNonNullElse(
-                                    ThemePackManager.resolveCurrentTitleBarTransparent(
-                                            ThemePackManager.currentResolveContext()),
-                                    false);
-                        } catch (IOException | RuntimeException e) {
-                            transparent = false;
-                        }
+        var titleBarTransparentButton = new M3SwitchSettingItem(i18n("settings.launcher.title_transparent"));
+        titleBarTransparentButton.setHeadlineTrailing(createAppearanceOverrideButton(
+                settings(), LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT, titleBarTransparentButton.selectedProperty(),
+                settings().titleBarTransparentProperty(),
+                () -> {
+                    try {
+                        return Boolean.TRUE.equals(ThemePackManager.resolveCurrentTitleBarTransparent(
+                                ThemePackManager.currentResolveContext()));
+                    } catch (IOException | RuntimeException e) {
+                        return false;
                     }
-                    titleBarTransparentButton.setSelected(transparent);
-                    updateThemeAppearanceOverrideButton(inheritButton, !overridden);
-                } finally {
-                    updating.value = false;
-                }
-            };
+                }));
+        themeAppearanceList.getItems().add(titleBarTransparentButton);
 
-            titleBarTransparentButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
-                if (updating.value) {
-                    return;
-                }
-                updating.value = true;
-                try {
-                    settings().titleBarTransparentProperty().set(Boolean.TRUE.equals(newValue));
-                    settings().getThemeAppearanceOverrides().add(setting);
-                    updateThemeAppearanceOverrideButton(inheritButton, false);
-                } finally {
-                    updating.value = false;
-                }
-                refresh.invalidated(null);
-            });
-            settings().titleBarTransparentProperty().addListener(refresh);
-            addThemeAppearanceRefreshListener(refresh);
-
-            inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                if (!settings().getThemeAppearanceOverrides().contains(setting)) {
-                    settings().titleBarTransparentProperty().set(titleBarTransparentButton.isSelected());
-                    settings().getThemeAppearanceOverrides().add(setting);
-                } else {
-                    settings().getThemeAppearanceOverrides().remove(setting);
-                }
-                refresh.invalidated(null);
-                event.consume();
-            });
-            refresh.invalidated(null);
-            themeAppearanceList.getContent().add(titleBarTransparentButton);
-        }
-
-        LineSwitch windowTransparentButton = new LineSwitch();
-        windowTransparentButton.setTitle(i18n("settings.launcher.window_transparent"));
-        bindThemeAppearanceSwitch(
-                windowTransparentButton,
-                LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT,
+        var windowTransparentButton = new M3SwitchSettingItem(i18n("settings.launcher.window_transparent"));
+        windowTransparentButton.setHeadlineTrailing(createAppearanceOverrideButton(
+                settings(), LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT, windowTransparentButton.selectedProperty(),
                 settings().windowTransparentProperty(),
                 () -> {
                     try {
@@ -1123,132 +1005,85 @@ public class PersonalizationPage extends StackPane {
                     } catch (IOException | RuntimeException e) {
                         return false;
                     }
-                });
-        themeAppearanceList.getContent().add(windowTransparentButton);
+                }));
+        themeAppearanceList.getItems().add(windowTransparentButton);
 
         content.getChildren().addAll(
-                ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")),
+                new M3ListSectionHeader(i18n("settings.launcher.appearance")),
                 themeAppearanceList,
-                ComponentList.createComponentListTitle(i18n("launcher.background.loading")),
+                new M3ListSectionHeader(i18n("launcher.background.loading")),
                 backgroundLoadingList);
 
         {
-            ComponentList appearanceList = new ComponentList();
+            var appearanceList = newSettingsList();
 
-            LineSwitch animationButton = new LineSwitch();
-            appearanceList.getContent().add(animationButton);
+            var animationButton = new M3SwitchSettingItem(i18n("settings.launcher.turn_off_animations"));
+            appearanceList.getItems().add(animationButton);
             animationButton.setSelected(settings().isAnimationDisabled());
             FXUtils.onChange(animationButton.selectedProperty(), value -> settings().animationDisabledProperty().set(value));
-            animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
-            animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
+            animationButton.setSupportingText(i18n("settings.take_effect_after_restart"));
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.animation")), appearanceList);
+            content.getChildren().addAll(new M3ListSectionHeader(i18n("settings.launcher.animation")), appearanceList);
         }
 
         {
-            ComponentList fontPane = new ComponentList();
+            var fontPane = newSettingsList();
 
             {
-                VBox vbox = new VBox();
-                vbox.setSpacing(5);
+                var family = FontComboBox.create();
+                family.setValue(settings().launcherFontFamilyProperty().get());
+                FXUtils.onChange(family.valueProperty(), FontManager::setFontFamily);
 
-                {
-                    BorderPane borderPane = new BorderPane();
-                    vbox.getChildren().add(borderPane);
-                    {
-                        Label left = new Label(i18n("settings.launcher.font"));
-                        BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                        borderPane.setLeft(left);
-                    }
+                var reset = new M3IconButton(SVG.RESTORE.createIcon());
+                reset.setOnAction(event -> family.setValue(null));
+                FXUtils.installFastTooltip(reset, i18n("button.reset"));
 
-                    {
-                        HBox hBox = new HBox();
-                        hBox.setSpacing(8);
-
-                        var cboFont = FontComboBox.create();
-                        cboFont.setValue(settings().launcherFontFamilyProperty().get());
-                        FXUtils.onChange(cboFont.valueProperty(), FontManager::setFontFamily);
-
-                        M3IconButton clearButton = new M3IconButton(SVG.RESTORE.createIcon());
-                        clearButton.setOnAction(e -> cboFont.setValue(null));
-
-                        FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
-
-                        hBox.getChildren().setAll(cboFont, clearButton);
-
-                        borderPane.setRight(hBox);
-                    }
-                }
-
-                vbox.getChildren().add(new Label("Hello Minecraft! Launcher"));
-
-                fontPane.getContent().add(vbox);
+                var row = new M3FormRow(i18n("settings.launcher.font"), family);
+                row.setTrailing(reset);
+                fontPane.getItems().add(new VBox(5, row, new Label("Hello Minecraft! Launcher")));
             }
 
             {
-                VBox logFontPane = new VBox();
-                logFontPane.setSpacing(5);
+                var family = FontComboBox.create();
+                family.setMinWidth(100);
+                family.valueProperty().bindBidirectional(settings().logFontFamilyProperty());
+                HBox.setHgrow(family, Priority.ALWAYS);
 
-                {
-                    BorderPane borderPane = new BorderPane();
-                    logFontPane.getChildren().add(borderPane);
-                    {
-                        Label left = new Label(i18n("settings.launcher.log.font"));
-                        BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                        borderPane.setLeft(left);
-                    }
+                M3TextField size = FXUtils.newTextField();
+                var converter = SafeStringConverter.fromFiniteDouble()
+                        .restrict(it -> it > 0)
+                        .fallbackTo(12.0);
+                var sizeLayout = FXUtils.newValidatedTextField(size,
+                        new Validator(i18n("input.number"), converter.asPredicate()));
+                FXUtils.setLimitWidth(sizeLayout, 80);
+                FXUtils.bind(size, settings().logFontSizeProperty(), converter);
 
-                    {
-                        HBox hBox = new HBox();
-                        hBox.setSpacing(3);
+                var reset = new M3IconButton(SVG.RESTORE.createIcon());
+                reset.setOnAction(event -> family.setValue(null));
+                FXUtils.installFastTooltip(reset, i18n("button.reset"));
 
-                        var cboLogFont = FontComboBox.create();
-                        cboLogFont.valueProperty().bindBidirectional(settings().logFontFamilyProperty());
-
-                        M3TextField txtLogFontSize = FXUtils.newTextField();
-                        var converter = SafeStringConverter.fromFiniteDouble()
-                                .restrict(it -> it > 0)
-                                .fallbackTo(12.0);
-                        var fontSizeLayout = FXUtils.newValidatedTextField(txtLogFontSize,
-                                new Validator(i18n("input.number"), converter.asPredicate()));
-                        FXUtils.setLimitWidth(fontSizeLayout, 80);
-                        FXUtils.bind(txtLogFontSize, settings().logFontSizeProperty(), converter);
-
-                        M3IconButton clearButton = new M3IconButton(SVG.RESTORE.createIcon());
-                        clearButton.setOnAction(e -> cboLogFont.setValue(null));
-
-                        FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
-
-                        hBox.getChildren().setAll(cboLogFont, fontSizeLayout, clearButton);
-
-                        borderPane.setRight(hBox);
-                    }
-                }
-
-                Label lblLogFontDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
-                lblLogFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
+                var row = new M3FormRow(i18n("settings.launcher.log.font"), new HBox(8, family, sizeLayout));
+                row.setTrailing(reset);
+                var preview = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
+                preview.fontProperty().bind(Bindings.createObjectBinding(
                         () -> Font.font(Objects.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT), settings().logFontSizeProperty().get()),
                         settings().logFontFamilyProperty(), settings().logFontSizeProperty()));
-
-                logFontPane.getChildren().add(lblLogFontDisplay);
-
-                fontPane.getContent().add(logFontPane);
+                fontPane.getItems().add(new VBox(5, row, preview));
             }
 
             {
-                var fontAntiAliasingPane = new LineSelectButton<Optional<FontSmoothingType>>();
-                fontAntiAliasingPane.setTitle(i18n("settings.launcher.font.anti_aliasing"));
-                fontAntiAliasingPane.setSubtitle(i18n("settings.take_effect_after_restart"));
-                fontAntiAliasingPane.setNullSafeConverter(value ->
+                var fontAntiAliasingPane = new M3SelectSettingItem<Optional<FontSmoothingType>>(i18n("settings.launcher.font.anti_aliasing"));
+                fontAntiAliasingPane.setSupportingText(i18n("settings.take_effect_after_restart"));
+                fontAntiAliasingPane.setConverter(value ->
                         value.isPresent()
                                 ? i18n("settings.launcher.font.anti_aliasing." + value.get().name().toLowerCase(Locale.ROOT))
                                 : i18n("settings.launcher.font.anti_aliasing.auto")
                 );
-                fontAntiAliasingPane.setItems(
+                fontAntiAliasingPane.getItems().setAll(List.of(
                         Optional.empty(),
                         Optional.of(FontSmoothingType.LCD),
                         Optional.of(FontSmoothingType.GRAY)
-                );
+                ));
 
                 @Nullable String fontAntiAliasing = SettingsManager.userSettings().fontAntiAliasingProperty().get();
                 if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
@@ -1270,11 +1105,18 @@ public class PersonalizationPage extends StackPane {
                             .orElse(null));
                 });
 
-                fontPane.getContent().add(fontAntiAliasingPane);
+                fontPane.getItems().add(fontAntiAliasingPane);
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.fonts")), fontPane);
+            content.getChildren().addAll(new M3ListSectionHeader(i18n("settings.launcher.fonts")), fontPane);
         }
+    }
+
+    /// Creates a segmented list for one group of appearance preferences.
+    private static M3ListPane newSettingsList() {
+        var list = new M3ListPane();
+        list.setListStyle(M3ListStyle.SEGMENTED);
+        return list;
     }
 
     /// Choice with a right-side paint picker.

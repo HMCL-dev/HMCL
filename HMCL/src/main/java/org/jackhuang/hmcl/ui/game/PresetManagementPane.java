@@ -10,6 +10,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.layout.HBox;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3SettingItem;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -18,7 +19,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.ComponentSublist;
-import org.jackhuang.hmcl.ui.construct.LineButton;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
 import org.jackhuang.hmcl.util.Holder;
@@ -62,9 +62,8 @@ final class PresetManagementPane extends ComponentSublist {
 
         setTitle(i18n("settings.type.global.preset.manage_all"));
 
-        LineButton createButton = new LineButton();
-        createButton.setTitle(i18n("settings.type.global.preset.create"));
-        createButton.setLeading(SVG.ADD, 20);
+        var createButton = new M3SettingItem(i18n("settings.type.global.preset.create"));
+        createButton.setLeading(SVG.ADD.createIcon(20));
         createButton.setOnAction(event -> createPreset());
         getContent().setAll(presetItem, createButton);
 

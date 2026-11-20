@@ -19,6 +19,7 @@ import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
 import javafx.event.EventType;
+import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -39,6 +40,9 @@ import javafx.util.Duration;
 import javafx.util.StringConverter;
 import javafx.util.converter.PercentageStringConverter;
 import org.glavo.m3fx.controls.M3Divider;
+import org.glavo.m3fx.controls.M3ListItem;
+import org.glavo.m3fx.controls.M3ListPane;
+import org.glavo.m3fx.controls.M3ListStyle;
 import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3MenuItem;
 import org.glavo.m3fx.controls.M3PasswordField;
@@ -85,6 +89,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.time.LocalDate;
@@ -907,6 +912,44 @@ public final class FXUtils {
         Label label = new Label();
         label.setTextOverrun(OverrunStyle.CENTER_WORD_ELLIPSIS);
         showTooltipWhenTruncated(label);
+        return label;
+    }
+
+    /// Creates a group of Material rows separated by narrow gaps.
+    public static M3ListPane newSegmentedList() {
+        var list = new M3ListPane();
+        list.setListStyle(M3ListStyle.SEGMENTED);
+        return list;
+    }
+
+    /// Creates a list action that opens the URL in the default browser.
+    public static M3ListItem newExternalLinkItem(String url) {
+        var item = new M3ListItem();
+        item.setTrailing(SVG.OPEN_IN_NEW.createIcon(20));
+        item.setOnAction(event -> openLink(url));
+        return item;
+    }
+
+    /// Returns an existing directory for initializing a native chooser from a stored path.
+    public static @Nullable File chooserDirectory(@Nullable String location) {
+        if (location == null) return null;
+        try {
+            Path path = FileUtils.toAbsolute(Path.of(location));
+            if (Files.isDirectory(path)) return path.toFile();
+            if (Files.isRegularFile(path)) return path.getParent().toFile();
+        } catch (InvalidPathException ignored) {
+            // A stale location should not prevent choosing a new path.
+        }
+        return null;
+    }
+
+    /// Displays a read-only form value with a truncation tooltip and double-click copying.
+    public static Label newCopyableLabel(@Nullable String text) {
+        Label label = newSafeTruncatedLabel();
+        label.setText(text);
+        label.setAlignment(Pos.CENTER_RIGHT);
+        label.setMaxWidth(Double.MAX_VALUE);
+        copyOnDoubleClick(label);
         return label;
     }
 

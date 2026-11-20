@@ -16,8 +16,11 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.DirectoryChooser;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3SettingItem;
+import org.glavo.m3fx.controls.M3SwitchSettingItem;
 import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.GameDirectory;
@@ -25,6 +28,7 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.FXThread;
@@ -36,6 +40,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -59,10 +64,10 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
     private final M3TextField txtGameDirectoryName;
 
     /// Directory chooser bound to [#location].
-    private final LineFileChooserButton gameDir;
+    private final M3SettingItem gameDir;
 
     /// Switch that controls whether a saved path is converted to a relative path when possible.
-    private final LineSwitch switchUseRelativePath;
+    private final M3SwitchSettingItem switchUseRelativePath;
 
     /// Creates a page for adding a new game directory or editing an existing game directory.
     ///
@@ -106,16 +111,27 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                         gameDirectoryNamePane.setRight(nameLayout);
                     }
 
-                    gameDir = new LineFileChooserButton();
-                    gameDir.setTitle(i18n("game_directory.instance_directory"));
-                    gameDir.setFileChooserTitle(i18n("game_directory.instance_directory.choose"));
-                    gameDir.setType(LineFileChooserButton.Type.OPEN_DIRECTORY);
-                    gameDir.locationProperty().bindBidirectional(location);
+                    gameDir = new M3SettingItem(i18n("game_directory.instance_directory"));
+                    gameDir.setTrailing(SVG.EDIT.createIcon(20));
+                    gameDir.trailingSupportingTextProperty().bind(location);
+                    gameDir.setOnAction(event -> {
+                        var chooser = new DirectoryChooser();
+                        chooser.setTitle(i18n("game_directory.instance_directory.choose"));
+                        chooser.setInitialDirectory(FXUtils.chooserDirectory(getLocation()));
+                        @Nullable File directory = chooser.showDialog(gameDir.getScene().getWindow());
+                        if (directory != null) setLocation(formatDirectory(directory.toPath()));
+                    });
 
-                    switchUseRelativePath = new LineSwitch();
-                    switchUseRelativePath.setTitle(i18n("game_directory.use_relative_path"));
-
-                    gameDir.convertToRelativePathProperty().bind(switchUseRelativePath.selectedProperty());
+                    switchUseRelativePath = new M3SwitchSettingItem(i18n("game_directory.use_relative_path"));
+                    switchUseRelativePath.selectedProperty().addListener(observable -> {
+                        @Nullable String path = getLocation();
+                        if (path == null) return;
+                        try {
+                            setLocation(formatDirectory(Path.of(path)));
+                        } catch (InvalidPathException ignored) {
+                            // Leave an invalid location available for correction.
+                        }
+                    });
                     if (gameDirectory != null) {
                         switchUseRelativePath.setSelected(!gameDirectory.getPath().isAbsolute());
                     }
@@ -250,19 +266,22 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
         } else doSave();
     }
 
-    /// Creates the portable path for the current location according to the relative-path switch.
-    private PortablePath createPortableLocation() {
+    /// Formats a directory for display, keeping an absolute path across filesystem roots.
+    private String formatDirectory(Path directory) {
+        Path absolute = FileUtils.toAbsolute(directory).normalize();
         if (switchUseRelativePath.isSelected()) {
-            Path path = Path.of(getLocation());
-            Path absolutePath = FileUtils.toAbsolute(path);
             try {
-                return PortablePath.fromPath(Metadata.CURRENT_DIRECTORY.relativize(absolutePath).normalize());
+                return Metadata.CURRENT_DIRECTORY.relativize(absolute).toString();
             } catch (IllegalArgumentException ignored) {
-                // Keep the original path when it cannot be expressed relative to the launcher directory.
+                // Different filesystem roots cannot be relativized.
             }
         }
+        return absolute.toString();
+    }
 
-        return PortablePath.of(getLocation());
+    /// Encodes the edited path according to the selected storage mode.
+    private PortablePath createPortableLocation() {
+        return PortablePath.of(switchUseRelativePath.isSelected() ? formatDirectory(Path.of(getLocation())) : getLocation());
     }
 
     /// Returns the decorator title state for this page.

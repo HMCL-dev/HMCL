@@ -75,7 +75,7 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
                     wrapper.getStyleClass().remove("no-padding");
 
                 Node node = element.getNode();
-                if (node instanceof NoPaddingComponent || node.getProperties().containsKey("ComponentList.noPadding"))
+                if (ComponentList.isNoPadding(node))
                     wrapper.getStyleClass().add("no-padding");
 
                 wrapper.getChildren().setAll(node);

@@ -25,13 +25,13 @@ import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import javafx.stage.Window;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ColorArea;
 import org.glavo.m3fx.controls.M3ColorChannel;
 import org.glavo.m3fx.controls.M3ColorSlider;
 import org.glavo.m3fx.controls.M3ColorSwatch;
 import org.glavo.m3fx.controls.M3ColorSwatchPicker;
+import org.glavo.m3fx.controls.M3ExpandableSettingItem;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3ListItem;
 import org.glavo.m3fx.controls.M3ListView;
@@ -39,6 +39,7 @@ import org.glavo.m3fx.controls.M3MenuItem;
 import org.glavo.m3fx.controls.M3OverlayPane;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.glavo.m3fx.controls.M3RgbColor;
+import org.glavo.m3fx.controls.M3SelectSettingItem;
 import org.glavo.m3fx.controls.M3Slider;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.theme.M3Theme;
@@ -112,12 +113,46 @@ public final class InteractionLayerTest {
         });
     }
 
+    /// Header actions leave expansion alone and reopening retains the initialized editors.
+    @Test
+    void expandableGroupKeepsEditorsAndIndependentActions() throws Exception {
+        onFxThread(() -> {
+            var loads = new AtomicInteger();
+            var child = new M3TextField();
+            var group = new ComponentSublist(() -> {
+                loads.incrementAndGet();
+                return List.of(child);
+            });
+            var action = new M3IconButton();
+            var calls = new AtomicInteger();
+            action.setOnAction(event -> calls.incrementAndGet());
+            group.setHeaderRight(action);
+            var scene = new Scene(new StackPane(group), 320, 240);
+            M3ThemeManager.install(scene, M3Theme.defaultTheme());
+            scene.getRoot().applyCss();
+            var row = assertInstanceOf(M3ExpandableSettingItem.class, group.lookup(".m3-expandable-setting-item"));
+            row.setAnimationsEnabled(false);
+            action.fire();
+            assertEquals(1, calls.get());
+            assertFalse(row.isExpanded());
+            assertEquals(0, loads.get());
+            row.fire();
+            assertTrue(row.isExpanded());
+            assertSame(child, group.getContent().getFirst());
+            child.setText("Edited");
+            row.fire();
+            row.fire();
+            assertEquals(1, loads.get());
+            assertEquals("Edited", child.getText());
+        });
+    }
+
     /// A live selector can replace its options while open and commit the next option by keyboard.
     @Test
     void selectionMenuTracksOptionsAndKeyboard() throws Exception {
         onFxThread(() -> {
-            var selector = new LineSelectButton<String>();
-            selector.setItems("First", "Second");
+            var selector = new M3SelectSettingItem<String>();
+            selector.getItems().setAll("First", "Second");
             selector.setValue("First");
             selector.setDescriptionConverter(item -> item + " description");
             var stage = new Stage();
@@ -128,16 +163,15 @@ public final class InteractionLayerTest {
                 stage.setScene(scene);
                 stage.show();
                 selector.fire();
-                var popup = Window.getWindows().stream().filter(PopupMenu.class::isInstance)
-                        .map(PopupMenu.class::cast).filter(p -> p.getOwnerNode() == selector).findFirst().orElseThrow();
-                selector.setItems("First", "Last");
-                var last = assertInstanceOf(M3MenuItem.class, popup.getItems().getLast());
+                assertTrue(selector.isShowing());
+                selector.getItems().setAll("First", "Last");
+                var last = assertInstanceOf(M3MenuItem.class, selector.getMenuItems().getLast());
                 assertEquals("Last description", last.getSupportingText());
-                last.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.DOWN, false, false, false, false));
+                selector.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.UP, false, false, false, false));
+                last.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER, false, false, false, false));
                 assertEquals("Last", selector.getValue());
                 assertTrue(last.isSelected());
-                last.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER, false, false, false, false));
-                assertFalse(popup.isShowing());
+                assertFalse(selector.isShowing());
             } finally {
                 stage.close();
             }

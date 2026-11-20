@@ -15,6 +15,8 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import org.glavo.m3fx.controls.M3FormRow;
+import org.glavo.m3fx.controls.M3ListItemBase;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -52,15 +54,7 @@ public class ComponentList extends Control implements NoPaddingComponent {
             super(control);
 
             list = MappedObservableList.create(control.getContent(), node -> {
-                Pane wrapper;
-                if (node instanceof ComponentSublist sublist) {
-                    sublist.getStyleClass().remove("options-list");
-                    sublist.getStyleClass().add("options-sublist");
-                    wrapper = new ComponentSublistWrapper(sublist);
-                } else {
-                    wrapper = new ItemWrapper(node);
-                }
-
+                var wrapper = new ItemWrapper(node);
                 wrapper.getStyleClass().add("options-list-item");
                 wrapper.visibleProperty().bind(node.visibleProperty());
                 wrapper.managedProperty().bind(node.managedProperty());
@@ -71,7 +65,7 @@ public class ComponentList extends Control implements NoPaddingComponent {
                     VBox.setVgrow(wrapper, priority);
                 }
 
-                if (node instanceof NoPaddingComponent || node.getProperties().containsKey("ComponentList.noPadding")) {
+                if (isNoPadding(node)) {
                     wrapper.getStyleClass().add("no-padding");
                 }
                 return wrapper;
@@ -149,6 +143,12 @@ public class ComponentList extends Control implements NoPaddingComponent {
 
     public static void setVgrow(Node node, Priority priority) {
         node.getProperties().put("ComponentList.vgrow", priority);
+    }
+
+    /// Whether a row already provides its own content padding.
+    static boolean isNoPadding(Node node) {
+        return node instanceof M3ListItemBase || node instanceof M3FormRow
+                || node instanceof NoPaddingComponent || node.getProperties().containsKey("ComponentList.noPadding");
     }
 
     public static void setNoPadding(Node node) {

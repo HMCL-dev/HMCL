@@ -9,14 +9,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3FormPane;
+import org.glavo.m3fx.controls.M3FormRow;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputLayout;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.LinePane;
-import org.jackhuang.hmcl.ui.construct.LineTextPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -48,36 +47,17 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
         borderPane.setAlignment(Pos.CENTER);
         FXUtils.setLimitWidth(borderPane, 500);
 
-        ComponentList componentList = new ComponentList();
+        var form = new M3FormPane();
         {
-            var archiveNamePane = new LinePane();
-            {
-                archiveNamePane.setMinHeight(75);
-                archiveNamePane.setTitle(i18n("instance.name"));
-
-                txtModpackName = FXUtils.newTextField();
-                nameLayout = FXUtils.newValidatedTextField(txtModpackName);
-                nameLayout.setPrefWidth(300);
-                archiveNamePane.setRight(nameLayout);
-            }
-
-            var modpackNamePane = new LineTextPane();
-            {
-                modpackNamePane.setTitle(i18n("modpack.name"));
-                nameProperty = modpackNamePane.textProperty();
-            }
-
-            var versionPane = new LineTextPane();
-            {
-                versionPane.setTitle(i18n("archive.version"));
-                versionProperty = versionPane.textProperty();
-            }
-
-            var authorPane = new LineTextPane();
-            {
-                authorPane.setTitle(i18n("archive.author"));
-                authorProperty = authorPane.textProperty();
-            }
+            txtModpackName = FXUtils.newTextField();
+            nameLayout = FXUtils.newValidatedTextField(txtModpackName);
+            nameLayout.setPrefWidth(300);
+            var name = FXUtils.newCopyableLabel(null);
+            var version = FXUtils.newCopyableLabel(null);
+            var author = FXUtils.newCopyableLabel(null);
+            nameProperty = name.textProperty();
+            versionProperty = version.textProperty();
+            authorProperty = author.textProperty();
 
             var descriptionPane = new BorderPane();
             {
@@ -100,11 +80,15 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
                 descriptionPane.setRight(installHBox);
             }
 
-            componentList.getContent().setAll(
-                    archiveNamePane, modpackNamePane, versionPane, authorPane, descriptionPane);
+            form.getItems().setAll(
+                    new M3FormRow(i18n("instance.name"), nameLayout),
+                    new M3FormRow(i18n("modpack.name"), name),
+                    new M3FormRow(i18n("archive.version"), version),
+                    new M3FormRow(i18n("archive.author"), author),
+                    descriptionPane);
         }
 
-        borderPane.getChildren().setAll(componentList);
+        borderPane.getChildren().setAll(form);
         this.setContent(borderPane);
     }
 

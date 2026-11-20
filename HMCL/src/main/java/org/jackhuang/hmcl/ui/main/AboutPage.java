@@ -6,6 +6,9 @@ import com.google.gson.*;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3ListItem;
+import org.glavo.m3fx.controls.M3ListPane;
+import org.glavo.m3fx.controls.M3ListSectionHeader;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -50,49 +53,45 @@ public final class AboutPage extends SpinnerPane {
         ScrollUtils.installSmoothScrolling(scrollPane);
         setContent(scrollPane);
 
-        ComponentList about = new ComponentList();
+        M3ListPane about = FXUtils.newSegmentedList();
         {
-            var launcher = LineButton.createExternalLinkButton(Metadata.REPOSITORY_URL);
-            launcher.setLargeTitle(true);
-            launcher.setLeading(FXUtils.newBuiltinImage("/assets/img/icon.png"));
-            launcher.setTitle("Hello Minecraft! Launcher");
-            launcher.setSubtitle(Metadata.VERSION);
+            var launcher = FXUtils.newExternalLinkItem(Metadata.REPOSITORY_URL);
+            launcher.setLeading(new ImageContainer(FXUtils.newBuiltinImage("/assets/img/icon.png"), 40, 40));
+            launcher.setHeadlineText("Hello Minecraft! Launcher");
+            launcher.setSupportingText(Metadata.VERSION);
 
-            about.getContent().setAll(launcher);
+            about.getItems().setAll(launcher);
         }
 
-        ComponentList systemInfo = new ComponentList();
+        M3ListPane systemInfo = FXUtils.newSegmentedList();
         {
-            var system = new LinePane();
-            system.setLargeTitle(true);
+            var system = newInfoItem();
             system.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
-            system.setTitle(i18n("about.system.os"));
-            system.setSubtitle(SystemInfo.getOperatingSystemDescription());
-            systemInfo.getContent().add(system);
+            system.setHeadlineText(i18n("about.system.os"));
+            system.setSupportingText(SystemInfo.getOperatingSystemDescription());
+            systemInfo.getItems().add(system);
 
             if (SystemInfo.isXdgPreferred() && SystemInfo.getDesktopEnvironment() != null) {
-                var desktop = new LinePane();
-                desktop.setLargeTitle(true);
+                var desktop = newInfoItem();
                 desktop.setLeading(SVG.LUCIDE_PANELS_TOP_LEFT.createIcon(32));
-                desktop.setTitle(i18n("about.system.desktop"));
-                desktop.setSubtitle(SystemInfo.getDesktopEnvironment());
-                systemInfo.getContent().add(desktop);
+                desktop.setHeadlineText(i18n("about.system.desktop"));
+                desktop.setSupportingText(SystemInfo.getDesktopEnvironment());
+                systemInfo.getItems().add(desktop);
             }
         }
 
-        ComponentList deviceInfo = new ComponentList();
+        M3ListPane deviceInfo = FXUtils.newSegmentedList();
         {
             @Nullable DeviceInfo deviceIdentity = SystemInfo.getDeviceInfo();
             if (deviceIdentity != null
                     && !"Virtual Machine".equals(deviceIdentity.name())
                     && SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS
                     && (SystemInfo.CURRENT_OS == OperatingSystem.MACOS || !SystemInfo.SYSTEM_ARCH.isX86())) {
-                var device = new LinePane();
-                device.setLargeTitle(true);
+                var device = newInfoItem();
                 device.setLeading(SVG.HOST.createIcon(32));
-                device.setTitle(i18n("about.device.model"));
-                device.setSubtitle(getTranslator().formatDeviceName(deviceIdentity));
-                deviceInfo.getContent().add(device);
+                device.setHeadlineText(i18n("about.device.model"));
+                device.setSupportingText(getTranslator().formatDeviceName(deviceIdentity));
+                deviceInfo.getItems().add(device);
             }
 
             @Unmodifiable List<CentralProcessor> processors = SystemInfo.getCentralProcessors();
@@ -116,13 +115,12 @@ public final class AboutPage extends SpinnerPane {
                             : i18n("about.device.cpu.name.cores.threads", name, cores.physical(), cores.logical());
                 }
 
-                var pane = new LinePane();
-                pane.setLargeTitle(true);
-                pane.setTitle(title);
-                pane.setSubtitle(subtitle);
+                var pane = newInfoItem();
+                pane.setHeadlineText(title);
+                pane.setSupportingText(subtitle);
                 pane.setLeading(SVG.LUCIDE_CPU.createIcon(32));
-                pane.getTags().add(new Tag(SystemInfo.SYSTEM_ARCH.getDisplayName()));
-                deviceInfo.getContent().add(pane);
+                pane.setTrailingSupportingText(SystemInfo.SYSTEM_ARCH.getDisplayName());
+                deviceInfo.getItems().add(pane);
             }
 
             @Unmodifiable List<GraphicsCard> visibleGraphicsCards = SystemInfo.getGraphicsCards().stream()
@@ -137,10 +135,9 @@ public final class AboutPage extends SpinnerPane {
                         ? i18n("about.device.gpu")
                         : i18n("about.device.gpu.n", i + 1);
 
-                var button = new LinePane();
-                button.setLargeTitle(true);
+                var button = newInfoItem();
                 button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
-                button.setTitle(title);
+                button.setHeadlineText(title);
 
                 StringBuilder subtitle = new StringBuilder(graphicsCard.getName());
 
@@ -158,15 +155,15 @@ public final class AboutPage extends SpinnerPane {
                     subtitle.append(')');
                 }
 
-                button.setSubtitle(subtitle.toString());
+                button.setSupportingText(subtitle.toString());
 
                 switch (graphicsCard.getType()) {
-                    case INTEGRATED -> button.getTags().add(new Tag(i18n("about.device.gpu.type.integrated")));
-                    case DISCRETE -> button.getTags().add(new Tag(i18n("about.device.gpu.type.discrete")));
-                    case VIRTUAL -> button.getTags().add(new Tag(i18n("about.device.gpu.type.virtual")));
+                    case INTEGRATED -> button.setTrailingSupportingText(i18n("about.device.gpu.type.integrated"));
+                    case DISCRETE -> button.setTrailingSupportingText(i18n("about.device.gpu.type.discrete"));
+                    case VIRTUAL -> button.setTrailingSupportingText(i18n("about.device.gpu.type.virtual"));
                 }
 
-                deviceInfo.getContent().add(button);
+                deviceInfo.getItems().add(button);
             }
 
             if (SystemInfo.getTotalMemorySize() > 0) {
@@ -189,71 +186,73 @@ public final class AboutPage extends SpinnerPane {
                     }
                 }
 
-                var memory = new LinePane();
-                memory.setLargeTitle(true);
+                var memory = newInfoItem();
                 memory.setLeading(SVG.LUCIDE_MEMORY_STICK.createIcon(32));
-                memory.setTitle(i18n("about.device.memory"));
-                memory.setSubtitle(subtitle);
-                deviceInfo.getContent().add(memory);
+                memory.setHeadlineText(i18n("about.device.memory"));
+                memory.setSupportingText(subtitle);
+                deviceInfo.getItems().add(memory);
             }
         }
 
-        ComponentList runtimeInfo = new ComponentList();
+        M3ListPane runtimeInfo = FXUtils.newSegmentedList();
         {
-            var java = new LinePane();
-            java.setLargeTitle(true);
+            var java = newInfoItem();
             java.setLeading(SVG.LOCAL_CAFE.createIcon(32));
-            java.setTitle("Java");
-            java.setSubtitle("%s, %s, %s".formatted(
+            java.setHeadlineText("Java");
+            java.setSupportingText("%s, %s, %s".formatted(
                     Runtime.version().toString(),
                     System.getProperty("java.vm.name"),
                     System.getProperty("java.vendor")));
-            runtimeInfo.getContent().add(java);
+            runtimeInfo.getItems().add(java);
 
-            var javaFX = new LinePane();
-            javaFX.setLargeTitle(true);
+            var javaFX = newInfoItem();
             javaFX.setLeading(SVG.LOCAL_CAFE.createIcon(32));
-            javaFX.setTitle("JavaFX");
-            javaFX.setSubtitle(System.getProperty("javafx.runtime.version"));
-            runtimeInfo.getContent().add(javaFX);
+            javaFX.setHeadlineText("JavaFX");
+            javaFX.setSupportingText(System.getProperty("javafx.runtime.version"));
+            runtimeInfo.getItems().add(javaFX);
         }
 
-        ComponentList deps = loadIconedTwoLineList("/assets/about/deps.json");
+        M3ListPane deps = loadIconedTwoLineList("/assets/about/deps.json");
 
-        ComponentList legal = new ComponentList();
+        M3ListPane legal = FXUtils.newSegmentedList();
         {
-            var copyright = new LinePane();
-            copyright.setLargeTitle(true);
-            copyright.setTitle(i18n("about.copyright"));
-            copyright.setSubtitle(i18n("about.copyright.statement"));
+            var copyright = newInfoItem();
+            copyright.setHeadlineText(i18n("about.copyright"));
+            copyright.setSupportingText(i18n("about.copyright.statement"));
 
-            var claim = LineButton.createExternalLinkButton(Metadata.EULA_URL);
-            claim.setLargeTitle(true);
-            claim.setTitle(i18n("about.claim"));
-            claim.setSubtitle(i18n("about.claim.statement"));
+            var claim = FXUtils.newExternalLinkItem(Metadata.EULA_URL);
+            claim.setHeadlineText(i18n("about.claim"));
+            claim.setSupportingText(i18n("about.claim.statement"));
 
-            var openSource = LineButton.createExternalLinkButton("https://github.com/HMCL-dev/HMCL");
-            openSource.setLargeTitle(true);
-            openSource.setTitle(i18n("about.open_source"));
-            openSource.setSubtitle(i18n("about.open_source.statement"));
+            var openSource = FXUtils.newExternalLinkItem("https://github.com/HMCL-dev/HMCL");
+            openSource.setHeadlineText(i18n("about.open_source"));
+            openSource.setSupportingText(i18n("about.open_source.statement"));
 
-            legal.getContent().setAll(copyright, claim, openSource);
+            legal.getItems().setAll(copyright, claim, openSource);
         }
 
         content.getChildren().setAll(
-                ComponentList.createComponentListTitle(i18n("about")),
+                new M3ListSectionHeader(i18n("about")),
                 about,
-                ComponentList.createComponentListTitle(i18n("about.system")),
+                new M3ListSectionHeader(i18n("about.system")),
                 systemInfo,
-                ComponentList.createComponentListTitle(i18n("about.device")),
+                new M3ListSectionHeader(i18n("about.device")),
                 deviceInfo,
-                ComponentList.createComponentListTitle(i18n("about.runtime")),
+                new M3ListSectionHeader(i18n("about.runtime")),
                 runtimeInfo,
-                ComponentList.createComponentListTitle(i18n("about.dependency")),
+                new M3ListSectionHeader(i18n("about.dependency")),
                 deps,
-                ComponentList.createComponentListTitle(i18n("about.legal")),
+                new M3ListSectionHeader(i18n("about.legal")),
                 legal
         );
+    }
+
+    /// Creates a passive row for read-only system and legal information.
+    private static M3ListItem newInfoItem() {
+        var item = new M3ListItem();
+        item.setFocusTraversable(false);
+        item.setMouseTransparent(true);
+        return item;
     }
 
     private static Image loadImage(String url) {
@@ -262,8 +261,9 @@ public final class AboutPage extends SpinnerPane {
                 : new Image(url);
     }
 
-    private ComponentList loadIconedTwoLineList(String path) {
-        ComponentList componentList = new ComponentList();
+    /// Builds the dependency list from its bundled descriptions, links, and themed icons.
+    private M3ListPane loadIconedTwoLineList(String path) {
+        M3ListPane componentList = FXUtils.newSegmentedList();
 
         InputStream input = FXUtils.class.getResourceAsStream(path);
         if (input == null) {
@@ -277,15 +277,9 @@ public final class AboutPage extends SpinnerPane {
             for (JsonElement element : array) {
                 JsonObject obj = element.getAsJsonObject();
 
-                var button = new LineButton();
-                button.setLargeTitle(true);
-
-                if (obj.get("externalLink") instanceof JsonPrimitive externalLink) {
-                    button.setTrailingIcon(SVG.OPEN_IN_NEW);
-
-                    String link = externalLink.getAsString();
-                    button.setOnAction(event -> FXUtils.openLink(link));
-                }
+                var button = obj.get("externalLink") instanceof JsonPrimitive externalLink
+                        ? FXUtils.newExternalLinkItem(externalLink.getAsString())
+                        : newInfoItem();
 
                 if (obj.has("image")) {
                     JsonElement image = obj.get("image");
@@ -296,24 +290,24 @@ public final class AboutPage extends SpinnerPane {
 
                         button.setLeading(imageView);
                     } else if (image.isJsonObject()) {
-                        holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> button.setLeading(darkMode
-                                ? loadImage(image.getAsJsonObject().get("dark").getAsString())
-                                : loadImage(image.getAsJsonObject().get("light").getAsString())
-                        )));
+                        var imageView = new ImageContainer(32);
+                        button.setLeading(imageView);
+                        holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode ->
+                                imageView.setImage(loadImage(image.getAsJsonObject().get(darkMode ? "dark" : "light").getAsString()))));
                     }
                 }
 
                 if (obj.get("title") instanceof JsonPrimitive title)
-                    button.setTitle(title.getAsString());
+                    button.setHeadlineText(title.getAsString());
                 else if (obj.get("titleLocalized") instanceof JsonPrimitive titleLocalized)
-                    button.setTitle(i18n(titleLocalized.getAsString()));
+                    button.setHeadlineText(i18n(titleLocalized.getAsString()));
 
                 if (obj.get("subtitle") instanceof JsonPrimitive subtitle)
-                    button.setSubtitle(subtitle.getAsString());
+                    button.setSupportingText(subtitle.getAsString());
                 else if (obj.get("subtitleLocalized") instanceof JsonPrimitive subtitleLocalized)
-                    button.setSubtitle(i18n(subtitleLocalized.getAsString()));
+                    button.setSupportingText(i18n(subtitleLocalized.getAsString()));
 
-                componentList.getContent().add(button);
+                componentList.getItems().add(button);
             }
         } catch (IOException | JsonParseException e) {
             LOG.warning("Failed to load list: " + path, e);

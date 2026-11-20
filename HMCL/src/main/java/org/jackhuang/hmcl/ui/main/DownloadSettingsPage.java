@@ -4,23 +4,27 @@ package org.jackhuang.hmcl.ui.main;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3CheckBox;
+import org.glavo.m3fx.controls.M3ListPane;
+import org.glavo.m3fx.controls.M3ListStyle;
 import org.glavo.m3fx.controls.M3PasswordField;
 import org.glavo.m3fx.controls.M3RadioButton;
+import org.glavo.m3fx.controls.M3SelectSettingItem;
 import org.glavo.m3fx.controls.M3Slider;
 import org.glavo.m3fx.controls.M3TextField;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
+import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.ProxyType;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -39,7 +43,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -57,49 +60,8 @@ public class DownloadSettingsPage extends StackPane {
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 
-        {
-            var gameContent = new ComponentList();
-            gameContent.getStyleClass().add("card-non-transparent");
-            {
-                Function<DownloadSource, String> converter = source -> switch (source) {
-                    case DEFAULT -> i18n("settings.launcher.download_source.auto");
-                    case OFFICIAL -> i18n("download.provider.official");
-                    case MIRROR -> i18n("download.provider.mirror");
-                };
-                Function<DownloadSource, String> descriptionConverter = source -> {
-                    String bundleKey = switch (source) {
-                        case DEFAULT -> "download.provider.balanced.desc";
-                        case OFFICIAL -> "download.provider.official.desc";
-                        case MIRROR -> "download.provider.mirror.desc";
-                    };
-                    return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
-                };
-
-                var versionListSourcePane = new LineSelectButton<DownloadSource>();
-                versionListSourcePane.setTitle(i18n("settings.launcher.version_list_source"));
-                versionListSourcePane.setNullSafeConverter(converter);
-                versionListSourcePane.setDescriptionConverter(descriptionConverter);
-                versionListSourcePane.setItems(DownloadSource.values());
-                versionListSourcePane.valueProperty().bindBidirectional(settings().versionListSourceProperty());
-
-                var downloadSourcePane = new LineSelectButton<DownloadSource>();
-                downloadSourcePane.setTitle(i18n("settings.launcher.download_source"));
-                downloadSourcePane.setNullSafeConverter(converter);
-                downloadSourcePane.setDescriptionConverter(descriptionConverter);
-                downloadSourcePane.setItems(DownloadSource.values());
-                downloadSourcePane.valueProperty().bindBidirectional(settings().fileDownloadSourceProperty());
-
-                var defaultAddonSourcePane = new LineSelectButton<String>();
-                defaultAddonSourcePane.setTitle(i18n("settings.launcher.default_addon_source"));
-                defaultAddonSourcePane.setNullSafeConverter(key -> I18n.i18n("addon." + key));
-                defaultAddonSourcePane.setItems("modrinth", "curseforge");
-                defaultAddonSourcePane.valueProperty().bindBidirectional(settings().defaultAddonSourceProperty());
-
-                gameContent.getContent().setAll(versionListSourcePane, downloadSourcePane, defaultAddonSourcePane);
-            }
-
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.game_content")), gameContent);
-        }
+        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.game_content")),
+                createGameContentGroup(settings()));
 
         {
             var downloadList = new ComponentList();
@@ -350,6 +312,43 @@ public class DownloadSettingsPage extends StackPane {
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.proxy")), proxyList);
         }
 
+    }
+
+    /// Creates the settings rows for version lists, game files, and add-ons.
+    static M3ListPane createGameContentGroup(LauncherSettings settings) {
+        var versionListSource = createDownloadSourceItem(i18n("settings.launcher.version_list_source"), settings.versionListSourceProperty());
+        var fileDownloadSource = createDownloadSourceItem(i18n("settings.launcher.download_source"), settings.fileDownloadSourceProperty());
+
+        var addonSource = new M3SelectSettingItem<String>(i18n("settings.launcher.default_addon_source"));
+        addonSource.setConverter(key -> i18n("addon." + key));
+        addonSource.getItems().setAll("modrinth", "curseforge");
+        addonSource.valueProperty().bindBidirectional(settings.defaultAddonSourceProperty());
+
+        var group = new M3ListPane();
+        group.setListStyle(M3ListStyle.SEGMENTED);
+        group.getItems().setAll(versionListSource, fileDownloadSource, addonSource);
+        return group;
+    }
+
+    /// Binds a source selector to its preference and describes each available provider.
+    private static M3SelectSettingItem<DownloadSource> createDownloadSourceItem(String title, ObjectProperty<DownloadSource> preference) {
+        var item = new M3SelectSettingItem<DownloadSource>(title);
+        item.setConverter(source -> switch (source) {
+            case DEFAULT -> i18n("settings.launcher.download_source.auto");
+            case OFFICIAL -> i18n("download.provider.official");
+            case MIRROR -> i18n("download.provider.mirror");
+        });
+        item.setDescriptionConverter(source -> {
+            String key = switch (source) {
+                case DEFAULT -> "download.provider.balanced.desc";
+                case OFFICIAL -> "download.provider.official.desc";
+                case MIRROR -> "download.provider.mirror.desc";
+            };
+            return I18n.hasKey(key) ? i18n(key) : null;
+        });
+        item.getItems().setAll(DownloadSource.values());
+        item.valueProperty().bindBidirectional(preference);
+        return item;
     }
 
     /// Reports progress on the clean button until the cache operation completes.

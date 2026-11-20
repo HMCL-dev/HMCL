@@ -3,16 +3,16 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.annotations.SerializedName;
-
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3ListPane;
+import org.glavo.m3fx.controls.M3ListSectionHeader;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ScrollUtils;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.LineButton;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.io.HttpRequest;
@@ -36,13 +36,13 @@ public class HelpPage extends SpinnerPane {
         ScrollUtils.installSmoothScrolling(scrollPane);
         setContent(scrollPane);
 
-        var docPane = LineButton.createExternalLinkButton(Metadata.DOCS_URL);
-        docPane.setLargeTitle(true);
-        docPane.setTitle(i18n("help.doc"));
-        docPane.setSubtitle(i18n("help.detail"));
+        var docPane = FXUtils.newExternalLinkItem(Metadata.DOCS_URL);
 
-        ComponentList doc = new ComponentList();
-        doc.getContent().setAll(docPane);
+        docPane.setHeadlineText(i18n("help.doc"));
+        docPane.setSupportingText(i18n("help.detail"));
+
+        M3ListPane doc = FXUtils.newSegmentedList();
+        doc.getItems().setAll(docPane);
         content.getChildren().add(doc);
 
         loadHelp();
@@ -62,18 +62,18 @@ public class HelpPage extends SpinnerPane {
                     List<Node> nodes = new ArrayList<>();
 
                     for (HelpCategory category : helpCategories) {
-                        ComponentList categoryPane = new ComponentList();
+                        M3ListPane categoryPane = FXUtils.newSegmentedList();
 
                         for (Help help : category.items()) {
-                            var item = LineButton.createExternalLinkButton(help.url());
-                            item.setLargeTitle(true);
-                            item.setTitle(help.title());
-                            item.setSubtitle(help.subtitle());
+                            var item = FXUtils.newExternalLinkItem(help.url());
 
-                            categoryPane.getContent().add(item);
+                            item.setHeadlineText(help.title());
+                            item.setSupportingText(help.subtitle());
+
+                            categoryPane.getItems().add(item);
                         }
 
-                        nodes.add(ComponentList.createComponentListTitle(category.title()));
+                        nodes.add(new M3ListSectionHeader(category.title()));
                         nodes.add(categoryPane);
                     }
 

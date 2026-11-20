@@ -2,24 +2,37 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.ObservableList;
-import javafx.css.PseudoClass;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import org.glavo.m3fx.controls.M3ExpandableSettingItem;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
-public class ComponentSublist extends Control implements NoPaddingComponent {
+/// A collapsible group that retains its child settings between expansions.
+public class ComponentSublist extends StackPane implements NoPaddingComponent {
 
+    /// The nested rows displayed while expanded.
     private final ComponentList contentList = new ComponentList();
-    Supplier<List<? extends Node>> lazyInitializer;
+    /// The deferred rows, cleared after their first use.
+    private @Nullable Supplier<List<? extends Node>> lazyInitializer;
 
+    /// Creates an initially collapsed group with an editable list of child rows.
     public ComponentSublist() {
         contentList.getStyleClass().remove("options-list");
         contentList.getStyleClass().add("options-sublist");
+        getChildren().setAll(createExpandableItem());
     }
 
     public ComponentSublist(Supplier<List<? extends Node>> lazyInitializer) {
@@ -36,19 +49,46 @@ public class ComponentSublist extends Control implements NoPaddingComponent {
         return Orientation.HORIZONTAL;
     }
 
-    @Override
-    protected javafx.scene.control.Skin<?> createDefaultSkin() {
-        return new Skin(this);
+    /// Builds a Material header and initializes the nested controls on first expansion.
+    private M3ExpandableSettingItem createExpandableItem() {
+        var item = new M3ExpandableSettingItem();
+        item.headlineTextProperty().bind(titleProperty());
+        item.supportingTextProperty().bind(subtitleProperty());
+        item.leadingProperty().bind(leadingProperty());
+        item.trailingSupportingTextProperty().bind(descriptionProperty());
+        item.expandedProperty().addListener((observable, wasExpanded, expanded) -> {
+            if (expanded && item.getContent() == null) {
+                doLazyInit();
+                item.setContent(contentList);
+            }
+        });
+
+        item.headlineTrailingProperty().bind(Bindings.createObjectBinding(() -> {
+            @Nullable Node action = getTitleTrailing();
+            @Nullable String tip = getTip();
+            if (StringUtils.isBlank(tip)) return action;
+            var info = new StackPane(SVG.INFO.createIcon(16));
+            FXUtils.installFastTooltip(info, tip);
+            if (action == null) return info;
+            var group = new HBox(4, action, info);
+            group.setAlignment(Pos.CENTER_LEFT);
+            return group;
+        }, titleTrailingProperty(), tipProperty()));
+
+        Node disclosure = Objects.requireNonNull(item.getTrailing());
+        var actions = new HBox(12);
+        actions.setAlignment(Pos.CENTER_LEFT);
+        actions.setPickOnBounds(false);
+        item.setTrailing(actions);
+        FXUtils.onChangeAndOperate(trailingProperty(), action -> {
+            if (action == null) actions.getChildren().setAll(disclosure);
+            else actions.getChildren().setAll(action, disclosure);
+        });
+        return item;
     }
 
-    private static final class Skin extends ControlSkinBase<ComponentSublist> {
-        Skin(ComponentSublist control) {
-            super(control);
-            node = control.contentList;
-        }
-    }
-
-    void doLazyInit() {
+    /// Populates deferred rows once.
+    private void doLazyInit() {
         if (lazyInitializer != null) {
             this.getContent().setAll(lazyInitializer.get());
             setNeedsLayout(true);
@@ -213,31 +253,5 @@ public class ComponentSublist extends Control implements NoPaddingComponent {
 
     public void setTip(String tip) {
         this.tip.set(tip);
-    }
-
-    /// Whether the sublist header should use a larger title font.
-    private static final PseudoClass PSEUDO_LARGE_TITLE = PseudoClass.getPseudoClass("large-title");
-
-    /// The property controlling whether the sublist header uses a larger title font.
-    private final BooleanProperty largeTitle = new SimpleBooleanProperty(this, "largeTitle", false) {
-        @Override
-        protected void invalidated() {
-            pseudoClassStateChanged(PSEUDO_LARGE_TITLE, get());
-        }
-    };
-
-    /// Returns the property controlling whether the sublist header uses a larger title font.
-    public BooleanProperty largeTitleProperty() {
-        return largeTitle;
-    }
-
-    /// Returns whether the sublist header uses a larger title font.
-    public final boolean isLargeTitle() {
-        return largeTitle.get();
-    }
-
-    /// Sets whether the sublist header uses a larger title font.
-    public final void setLargeTitle(boolean value) {
-        largeTitle.set(value);
     }
 }

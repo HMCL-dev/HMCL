@@ -17,7 +17,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3SelectSettingItem;
+import org.glavo.m3fx.controls.M3SwitchSettingItem;
 import org.glavo.m3fx.controls.M3TextArea;
+import org.glavo.m3fx.controls.M3FormRow;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputValidator;
 import org.glavo.m3fx.controls.M3TextInputVariant;
@@ -177,28 +180,23 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     BorderPane.setMargin(list, componentListMargin);
                     borderPane.setCenter(list);
 
-                    var instanceNamePane = new LineTextPane();
-                    {
-                        instanceNamePane.setTitle(i18n("modpack.wizard.step.initialization.exported_version"));
-                        instanceNamePane.setText(skinnable.gameInstance.getId().toString());
-
-                        list.getContent().add(instanceNamePane);
-                    }
-
+                    var instanceName = new M3FormRow(i18n("modpack.wizard.step.initialization.exported_version"),
+                            FXUtils.newCopyableLabel(skinnable.gameInstance.getId().toString()));
+                    list.getContent().add(instanceName);
 
                     list.getContent().addAll(
-                            createTextFieldLinePane(i18n("modpack.name"), skinnable.name, new RequiredValidator()),
-                            createTextFieldLinePane(i18n("archive.version"), skinnable.version, new RequiredValidator())
+                            createTextFieldRow(i18n("modpack.name"), skinnable.name, new RequiredValidator()),
+                            createTextFieldRow(i18n("archive.version"), skinnable.version, new RequiredValidator())
                     );
 
                     if (skinnable.options.isRequireAuthor()) {
                         list.getContent().add(
-                                createTextFieldLinePane(i18n("archive.author"), skinnable.author, new RequiredValidator())
+                                createTextFieldRow(i18n("archive.author"), skinnable.author, new RequiredValidator())
                         );
                     }
 
                     if (skinnable.options.isRequireFileApi()) {
-                        list.getContent().add(createTextFieldLinePane(
+                        list.getContent().add(createTextFieldRow(
                                 i18n("modpack.file_api"), skinnable.fileApi,
                                 (input, text) -> skinnable.options.isValidateFileApi() && StringUtils.isBlank(text)
                                         ? i18n("input.not_empty") : null,
@@ -207,25 +205,25 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireLaunchArguments()) {
-                        list.getContent().add(createTextFieldLinePane(
+                        list.getContent().add(createTextFieldRow(
                                 i18n("settings.advanced.minecraft_arguments"), skinnable.launchArguments
                         ));
                     }
 
                     if (skinnable.options.isRequireJavaArguments()) {
-                        list.getContent().add(createTextFieldLinePane(
+                        list.getContent().add(createTextFieldRow(
                                 i18n("settings.advanced.jvm_args"), skinnable.javaArguments
                         ));
                     }
 
                     if (skinnable.options.isRequireUrl()) {
-                        list.getContent().add(createTextFieldLinePane(
+                        list.getContent().add(createTextFieldRow(
                                 i18n("modpack.origin.url"), skinnable.url
                         ));
                     }
 
                     if (skinnable.options.isRequireOrigins()) {
-                        list.getContent().add(createTextFieldLinePane(
+                        list.getContent().add(createTextFieldRow(
                                 i18n("modpack.origin.mcbbs"), skinnable.mcbbsThreadId,
                                 new NumberValidator(i18n("input.number"), true)
                         ));
@@ -284,9 +282,9 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireAuthlibInjectorServer()) {
-                        var serversSelectButton = new LineSelectButton<AuthlibInjectorServer>();
-                        serversSelectButton.setTitle(i18n("account.injector.server"));
-                        serversSelectButton.setNullSafeConverter(AuthlibInjectorServer::getName);
+                        var serversSelectButton = new M3SelectSettingItem<AuthlibInjectorServer>();
+                        serversSelectButton.setHeadlineText(i18n("account.injector.server"));
+                        serversSelectButton.setConverter(AuthlibInjectorServer::getName);
                         serversSelectButton.setDescriptionConverter(AuthlibInjectorServer::getUrl);
                         serversSelectButton.itemsProperty().set(getAuthlibInjectorServers());
 
@@ -299,16 +297,16 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireForceUpdate()) {
-                        var requireForceUpdateButton = new LineSwitch();
-                        requireForceUpdateButton.setTitle(i18n("modpack.wizard.step.initialization.force_update"));
+                        var requireForceUpdateButton = new M3SwitchSettingItem();
+                        requireForceUpdateButton.setHeadlineText(i18n("modpack.wizard.step.initialization.force_update"));
                         requireForceUpdateButton.selectedProperty().bindBidirectional(skinnable.forceUpdate);
 
                         list.getContent().add(requireForceUpdateButton);
                     }
 
                     {
-                        var canIncludeLauncherButton = new LineSwitch();
-                        canIncludeLauncherButton.setTitle(i18n("modpack.wizard.step.initialization.include_launcher"));
+                        var canIncludeLauncherButton = new M3SwitchSettingItem();
+                        canIncludeLauncherButton.setHeadlineText(i18n("modpack.wizard.step.initialization.include_launcher"));
                         canIncludeLauncherButton.setDisable(!skinnable.canIncludeLauncher);
                         canIncludeLauncherButton.selectedProperty().bindBidirectional(skinnable.packWithLauncher);
 
@@ -316,16 +314,16 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireNoCreateRemoteFiles()) {
-                        var requireNoCreateRemoteFilesButton = new LineSwitch();
-                        requireNoCreateRemoteFilesButton.setTitle(i18n("modpack.wizard.step.initialization.no_create_remote_files"));
+                        var requireNoCreateRemoteFilesButton = new M3SwitchSettingItem();
+                        requireNoCreateRemoteFilesButton.setHeadlineText(i18n("modpack.wizard.step.initialization.no_create_remote_files"));
                         requireNoCreateRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.noCreateRemoteFiles);
 
                         list.getContent().add(requireNoCreateRemoteFilesButton);
                     }
 
                     if (skinnable.options.isRequireSkipCurseForgeRemoteFiles()) {
-                        var skipCurseForgeRemoteFilesButton = new LineSwitch();
-                        skipCurseForgeRemoteFilesButton.setTitle(i18n("modpack.wizard.step.initialization.skip_curseforge_remote_files"));
+                        var skipCurseForgeRemoteFilesButton = new M3SwitchSettingItem();
+                        skipCurseForgeRemoteFilesButton.setHeadlineText(i18n("modpack.wizard.step.initialization.skip_curseforge_remote_files"));
                         skipCurseForgeRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.skipCurseForgeRemoteFiles);
 
                         list.getContent().add(skipCurseForgeRemoteFilesButton);
@@ -351,21 +349,22 @@ public final class ModpackInfoPage extends Control implements WizardPage {
             ScrollUtils.installSmoothScrolling(scroll);
         }
 
-        private LinePane createTextFieldLinePane(String title, StringProperty property, M3TextInputValidator... validators) {
-            LinePane linePane = new LinePane();
+        /// Creates a bound text editor and registers its optional validation.
+        private M3FormRow createTextFieldRow(String title, StringProperty property, M3TextInputValidator... validators) {
+            M3FormRow row = new M3FormRow();
             M3TextField textField = FXUtils.newTextField();
             textField.textProperty().bindBidirectional(property);
-            linePane.setTitle(title);
+            row.setLabelText(title);
             if (validators.length == 0) {
-                textField.setMinWidth(500);
-                linePane.setRight(textField);
+                textField.setPrefWidth(500);
+                row.setContent(textField);
             } else {
                 var layout = FXUtils.newValidatedTextField(textField, validators);
-                layout.setMinWidth(500);
-                linePane.setRight(layout);
+                layout.setPrefWidth(500);
+                row.setContent(layout);
                 validatingFields.add(textField);
             }
-            return linePane;
+            return row;
         }
     }
 }

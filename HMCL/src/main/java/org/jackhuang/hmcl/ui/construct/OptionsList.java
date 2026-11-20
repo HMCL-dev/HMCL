@@ -196,11 +196,7 @@ public final class OptionsList extends Control {
 
         @Override
         protected Node createNode() {
-            if (original instanceof ComponentSublist sublist) {
-                return new ComponentSublistWrapper(sublist);
-            } else {
-                return original;
-            }
+            return original;
         }
 
         @Override

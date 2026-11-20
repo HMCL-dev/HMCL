@@ -10,6 +10,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3FormPane;
+import org.glavo.m3fx.controls.M3FormRow;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputLayout;
 import org.jackhuang.hmcl.download.java.JavaRemoteVersion;
@@ -81,7 +83,8 @@ public final class JavaInstallPage extends WizardSinglePage {
 
     private static final class Skin extends SkinBase<JavaInstallPage> {
 
-        private final ComponentList componentList = new ComponentList();
+        /// Installation inputs and archive metadata.
+        private final M3FormPane form = new M3FormPane();
 
         private final M3TextField nameField;
         /// Rechecks the chosen name when another installation is discovered.
@@ -96,30 +99,23 @@ public final class JavaInstallPage extends WizardSinglePage {
             borderPane.setAlignment(Pos.CENTER);
             FXUtils.setLimitWidth(borderPane, 500);
 
-
             {
-                var namePane = new LinePane();
-                {
-                    namePane.setTitle(i18n("java.install.name"));
-
-                    nameField = FXUtils.newTextField();
-                    nameField.textProperty().bindBidirectional(control.nameProperty);
-                    nameLayout = FXUtils.newValidatedTextField(nameField,
-                            new RequiredValidator(),
-                            new Validator(i18n("java.install.warning.invalid_character"),
-                                    text -> !text.startsWith(HMCLJavaRepository.MOJANG_JAVA_PREFIX) && NAME_PATTERN.matcher(text).matches()),
-                            new Validator(i18n("java.install.failed.exists"), text -> !usedNames.contains(text))
-                    );
-                    String defaultName = control.nameProperty.get();
-                    if (JavaManager.REPOSITORY.isInstalled(control.info.getPlatform(), defaultName)) {
-                        usedNames.add(defaultName);
-                    }
-                    FXUtils.setLimitWidth(nameLayout, 200);
-                    namePane.setRight(nameLayout);
-                    nameLayout.validate();
-
-                    componentList.getContent().add(namePane);
+                nameField = FXUtils.newTextField();
+                nameField.textProperty().bindBidirectional(control.nameProperty);
+                nameLayout = FXUtils.newValidatedTextField(nameField,
+                        new RequiredValidator(),
+                        new Validator(i18n("java.install.warning.invalid_character"),
+                                text -> !text.startsWith(HMCLJavaRepository.MOJANG_JAVA_PREFIX) && NAME_PATTERN.matcher(text).matches()),
+                        new Validator(i18n("java.install.failed.exists"), text -> !usedNames.contains(text))
+                );
+                String defaultName = control.nameProperty.get();
+                if (JavaManager.REPOSITORY.isInstalled(control.info.getPlatform(), defaultName)) {
+                    usedNames.add(defaultName);
                 }
+                FXUtils.setLimitWidth(nameLayout, 200);
+                nameLayout.validate();
+
+                form.getItems().add(new M3FormRow(i18n("java.install.name"), nameLayout));
 
                 String vendor = JavaInfo.normalizeVendor(control.info.getVendor());
                 if (vendor != null)
@@ -150,19 +146,17 @@ public final class JavaInstallPage extends WizardSinglePage {
                     installButton.disableProperty().bind(nameField.errorProperty());
                     installPane.setRight(installButton);
 
-                    componentList.getContent().add(installPane);
+                    form.getItems().add(installPane);
                 }
             }
 
-            borderPane.getChildren().setAll(componentList);
+            borderPane.getChildren().setAll(form);
             this.getChildren().setAll(borderPane);
         }
 
+        /// Adds a copyable metadata value to the installation form.
         private void addInfo(String name, String value) {
-            LineTextPane pane = new LineTextPane();
-            pane.setTitle(name);
-            pane.setText(value);
-            this.componentList.getContent().add(pane);
+            form.getItems().add(new M3FormRow(name, FXUtils.newCopyableLabel(value)));
         }
     }
 }

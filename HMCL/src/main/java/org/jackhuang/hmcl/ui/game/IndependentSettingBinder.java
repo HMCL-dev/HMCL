@@ -7,8 +7,8 @@ import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.Label;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import org.glavo.m3fx.controls.M3FormRow;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3Slider;
 import org.glavo.m3fx.controls.M3TextField;
@@ -17,8 +17,6 @@ import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.MemoryStatusBar;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.construct.LineComponent;
-import org.jackhuang.hmcl.ui.construct.LineInheritableSwitch;
 import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -46,7 +44,7 @@ final class IndependentSettingBinder {
     static void bindTextField(
             boolean presetSetting,
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
-            LineComponent line,
+            M3FormRow line,
             M3TextField textField,
             Function<GameSettings, SettingProperty<String>> propertyGetter,
             Supplier<M3IconButton> inheritanceButtonFactory,
@@ -63,7 +61,7 @@ final class IndependentSettingBinder {
             inheritButton = null;
         } else {
             inheritButton = inheritanceButtonFactory.get();
-            line.setTitleTrailing(inheritButton);
+            line.setLabelTrailing(inheritButton);
         }
 
         InvalidationListener refresh = observable -> {
@@ -115,7 +113,7 @@ final class IndependentSettingBinder {
         });
 
         if (inheritButton != null) {
-            inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            inheritButton.setOnAction(event -> {
                 GameSettings setting = currentSetting.get();
                 SettingProperty<String> property = activeProperty.get();
                 if (setting == null || property == null || updating.value) {
@@ -145,7 +143,7 @@ final class IndependentSettingBinder {
     static void bindIntegerTextField(
             boolean presetSetting,
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
-            LineComponent line,
+            M3FormRow line,
             M3TextField textField,
             Function<GameSettings, ? extends SettingProperty<Integer>> propertyGetter,
             Supplier<M3IconButton> inheritanceButtonFactory,
@@ -162,7 +160,7 @@ final class IndependentSettingBinder {
             inheritButton = null;
         } else {
             inheritButton = inheritanceButtonFactory.get();
-            line.setTitleTrailing(inheritButton);
+            line.setLabelTrailing(inheritButton);
         }
 
         InvalidationListener refresh = observable -> {
@@ -215,7 +213,7 @@ final class IndependentSettingBinder {
         });
 
         if (inheritButton != null) {
-            inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            inheritButton.setOnAction(event -> {
                 GameSettings setting = currentSetting.get();
                 SettingProperty<Integer> property = activeProperty.get();
                 if (setting == null || property == null || updating.value) {
@@ -396,7 +394,7 @@ final class IndependentSettingBinder {
         });
 
         if (autoMemoryButton != null) {
-            autoMemoryButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            autoMemoryButton.setOnAction(event -> {
                 GameSettings setting = currentSetting.get();
                 toggleOverride(
                         setting,
@@ -408,7 +406,7 @@ final class IndependentSettingBinder {
         }
 
         if (maxMemoryButton != null) {
-            maxMemoryButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            maxMemoryButton.setOnAction(event -> {
                 GameSettings setting = currentSetting.get();
                 toggleOverride(
                         setting,
@@ -479,7 +477,7 @@ final class IndependentSettingBinder {
     /// Binds an independent boolean setting to a switch editor.
     static void bindSwitch(
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
-            LineInheritableSwitch button,
+            SwitchOverrideBinding binding,
             Function<GameSettings, SettingProperty<Boolean>> propertyGetter,
             WeakListenerHolder listenerHolder,
             Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
@@ -506,11 +504,11 @@ final class IndependentSettingBinder {
             try {
                 boolean overridden = isOverridden(setting, property);
                 Boolean effectiveValue = getEffectiveValue(setting, propertyGetter, parentGetter);
-                button.setRawValue(overridden
+                binding.rawValue.set(overridden
                         ? getDirectValue(property)
                         : Boolean.TRUE.equals(effectiveValue));
-                button.setOverridden(overridden);
-                button.setEffectiveValue(Boolean.TRUE.equals(effectiveValue));
+                binding.overridden.set(overridden);
+                binding.row.setSelected(Boolean.TRUE.equals(effectiveValue));
             } finally {
                 updating.value = false;
             }
@@ -519,7 +517,7 @@ final class IndependentSettingBinder {
         refreshHolder.value = weakRefresh;
         parentSettingsInvalidation.addListener(weakRefresh);
 
-        button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
+        binding.rawValue.addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
             SettingProperty<Boolean> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
@@ -530,14 +528,14 @@ final class IndependentSettingBinder {
             try {
                 setOverridden(setting, property, true);
                 property.setValue(newValue);
-                button.setEffectiveValue(Boolean.TRUE.equals(
+                binding.row.setSelected(Boolean.TRUE.equals(
                         getEffectiveValue(setting, propertyGetter, parentGetter)));
             } finally {
                 updating.value = false;
             }
         });
 
-        button.overriddenProperty().addListener((observable, oldValue, newValue) -> {
+        binding.overridden.addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
             SettingProperty<Boolean> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
@@ -548,9 +546,9 @@ final class IndependentSettingBinder {
             try {
                 setOverridden(setting, property, newValue);
                 if (newValue) {
-                    property.setValue(button.getRawValue());
+                    property.setValue(binding.rawValue.get());
                 }
-                button.setEffectiveValue(Boolean.TRUE.equals(
+                binding.row.setSelected(Boolean.TRUE.equals(
                         getEffectiveValue(setting, propertyGetter, parentGetter)));
             } finally {
                 updating.value = false;
