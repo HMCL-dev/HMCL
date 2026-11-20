@@ -33,7 +33,6 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
         Label title = new Label(i18n("modpack.export.as"));
         VBox.setMargin(title, new Insets(8, 0, 8, 12));
 
-        this.getStyleClass().add("jfx-list-view");
         this.setMaxSize(400, 150);
         this.setSpacing(8);
 

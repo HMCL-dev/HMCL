@@ -19,6 +19,8 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.shape.Shape;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3ListItem;
+import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputLayout;
@@ -59,6 +61,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.reflect.Field;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -436,8 +439,8 @@ final class TaskExecutorDialogPaneTest {
                         .map(ButtonBase.class::cast)
                         .filter(button -> i18n("button.install").equals(button.getText()))
                         .findFirst().orElseThrow();
-                assertTrue(page.lookupAll(".label").stream().anyMatch(node -> node instanceof Label label
-                        && i18n("modpack.install.ready").equals(label.getText())));
+                assertTrue(page.lookupAll(".m3-list-item").stream().anyMatch(node -> node instanceof M3ListItem row
+                        && i18n("modpack.install.ready").equals(row.getSupportingText())));
                 assertTrue(page.lookupAll(".m3-progress-indicator").isEmpty());
                 install.fire();
                 pane.runPendingAction();
@@ -985,6 +988,7 @@ final class TaskExecutorDialogPaneTest {
         onFxThread(() -> {
             M3OverlayPane host = createDialogHost();
             com.jfoenix.controls.JFXDatePicker picker = new com.jfoenix.controls.JFXDatePicker();
+            picker.setValue(LocalDate.of(2024, 1, 15));
             picker.setOverLay(true);
             host.setContent(picker);
             host.applyCss();
@@ -996,9 +1000,29 @@ final class TaskExecutorDialogPaneTest {
             assertEquals(1, host.lookupAll(".m3-dialog-pane").size());
             @Nullable Node calendar = host.lookup(".date-picker-popup");
             assertNotNull(calendar);
+            M3ListView<?> years = assertInstanceOf(M3ListView.class, calendar.lookup(".m3-list-view"));
+            Runnable openYears = () -> calendar.lookup(".month-year-pane .spinner").fireEvent(
+                    new MouseEvent(MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, MouseButton.PRIMARY, 1,
+                            false, false, false, false, false, false, false, false, false, true, null));
+            openYears.run();
+            assertEquals(2024, years.getSelectedItem());
+            assertTrue(years.isVisible());
+            host.applyCss();
+            host.layout();
+            assertEquals(2024, years.getFocusedItem());
+            years.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.DOWN, false, false, false, false));
+            assertEquals(2025, years.getFocusedItem());
+            years.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER, false, false, false, false));
+            assertEquals(2025, years.getSelectedItem());
+            assertEquals(LocalDate.of(2024, 1, 15), picker.getValue());
             calendar.fireEvent(new DialogCloseEvent());
             assertFalse(picker.isShowing());
             assertTrue(host.lookupAll(".m3-dialog-pane").isEmpty());
+            picker.setValue(LocalDate.of(2022, 6, 1));
+            picker.show();
+            openYears.run();
+            assertEquals(2022, years.getSelectedItem());
+            picker.hide();
             return true;
         });
     }

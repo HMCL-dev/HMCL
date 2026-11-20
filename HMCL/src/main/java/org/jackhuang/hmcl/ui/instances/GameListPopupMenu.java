@@ -2,31 +2,24 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import org.glavo.m3fx.controls.M3ListCell;
+import org.glavo.m3fx.controls.M3ListItem;
+import org.glavo.m3fx.controls.M3ListView;
+import org.glavo.m3fx.controls.M3SelectionMode;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.Tag;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -49,25 +42,26 @@ public final class GameListPopupMenu extends StackPane {
         new PopupMenu(menu).showBeside(owner, alignment);
     }
 
-    private final JFXListView<GameItem> listView = new JFXListView<>();
+    private final M3ListView<GameItem> listView = new M3ListView<>();
     private final BooleanBinding isEmpty = Bindings.isEmpty(listView.getItems());
 
     /// Creates a virtualized list that fires an action when the user chooses an instance.
     public GameListPopupMenu() {
         this.setMaxHeight(365);
 
+        listView.setSelectionMode(M3SelectionMode.SINGLE);
         listView.setCellFactory(Cell::new);
         listView.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.ENTER || event.getCode() == KeyCode.SPACE) {
-                choose(listView.getSelectionModel().getSelectedItem(), listView);
+                choose(listView.getFocusedItem(), listView);
                 event.consume();
             }
         });
 
-        listView.setFixedCellSize(50);
+        listView.setFixedCellSize(72);
         listView.setPrefWidth(300);
 
-        listView.prefHeightProperty().bind(Bindings.size(listView.getItems()).multiply(50).add(2));
+        listView.prefHeightProperty().bind(Bindings.size(listView.getItems()).multiply(listView.fixedCellSizeProperty()));
 
         Label placeholder = new Label(i18n("instance.empty"));
         placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
@@ -87,8 +81,8 @@ public final class GameListPopupMenu extends StackPane {
 
         int index = Math.max(0, Lang.indexWhere(listView.getItems(),
                 item -> item.getGameInstance() == instance));
-        listView.getSelectionModel().select(index);
-        listView.scrollTo(index);
+        listView.selectIndex(index);
+        listView.focusIndex(index);
         listView.requestFocus();
     }
 
@@ -100,69 +94,43 @@ public final class GameListPopupMenu extends StackPane {
         }
     }
 
-    private static final class Cell extends ListCell<GameItem> {
+    private static final class Cell extends M3ListCell<GameItem> {
 
-        private final Region graphic;
-        private final RipplerContainer ripplerContainer;
+        /// Shows the instance icon for the current row.
+        private final ImageContainer icon = new ImageContainer(32);
 
-        private final ImageContainer imageView;
-        private final TwoLineListItem content;
-
-        private final StringProperty tag = new SimpleStringProperty();
-
-        /// Creates a popup row with a leading icon and the shared advanced-item text styling.
-        public Cell(ListView<GameItem> listView) {
-            this.setPadding(Insets.EMPTY);
-
-            this.imageView = new ImageContainer(32);
-            this.imageView.setMouseTransparent(true);
-
-            this.content = new TwoLineListItem();
-            content.getStyleClass().add("container");
-            content.setLeading(imageView);
-            FXUtils.onChangeAndOperate(tag, tag -> {
-                if (StringUtils.isNotBlank(tag))
-                    content.getTags().setAll(new Tag(tag));
-                else
-                    content.getTags().clear();
-            });
-
-            this.ripplerContainer = new RipplerContainer(content);
-
-            StackPane rootPane = new StackPane();
-            rootPane.getStyleClass().add("advanced-list-item");
-            rootPane.getChildren().setAll(ripplerContainer);
-            rootPane.maxWidthProperty().bind(listView.widthProperty().subtract(5));
-
-            FXUtils.onClicked(rootPane, () -> choose(getItem(), rootPane));
-
-            this.graphic = rootPane;
+        /// Creates a row owned by the popup list.
+        private Cell(M3ListView<GameItem> listView) {
+            super(listView);
         }
 
+        /// Chooses the current instance and lets the popup handle the resulting action.
         @Override
-        protected void updateItem(GameItem item, boolean empty) {
-            GameItem oldItem = getItem();
-            boolean oldEmpty = isEmpty();
+        protected M3ListItem createListItem() {
+            var row = new M3ListItem();
+            row.setLeading(icon);
+            row.setOnAction(event -> choose(getItem(), getListView()));
+            return row;
+        }
 
+        /// Binds the visible row to the instance currently assigned by the virtual flow.
+        @Override
+        protected void updateListItem(M3ListItem row, GameItem item) {
+            icon.imageProperty().bind(item.imageProperty());
+            row.headlineTextProperty().bind(item.titleProperty().orElse(""));
+            row.supportingTextProperty().bind(item.subtitleProperty().orElse(""));
+            row.trailingSupportingTextProperty().bind(item.tagProperty().orElse(""));
+        }
+
+        /// Releases bindings to instances that have left the list.
+        @Override
+        protected void updateItem(@Nullable GameItem item, boolean empty) {
             super.updateItem(item, empty);
-
-            if (oldItem == item && oldEmpty == empty) return;
-
-            this.ripplerContainer.resetFeedback();
-            this.imageView.imageProperty().unbind();
-            this.content.titleProperty().unbind();
-            this.content.subtitleProperty().unbind();
-            this.tag.unbind();
-
-            if (empty || item == null) {
-                setGraphic(null);
-            } else {
-                setGraphic(this.graphic);
-
-                this.imageView.imageProperty().bind(item.imageProperty());
-                this.content.titleProperty().bind(item.titleProperty());
-                this.content.subtitleProperty().bind(item.subtitleProperty());
-                this.tag.bind(item.tagProperty());
+            if (empty && getListItem() != null) {
+                icon.imageProperty().unbind();
+                getListItem().headlineTextProperty().unbind();
+                getListItem().supportingTextProperty().unbind();
+                getListItem().trailingSupportingTextProperty().unbind();
             }
         }
     }

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -16,8 +15,6 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -27,6 +24,9 @@ import javafx.scene.text.Text;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListCell;
+import org.glavo.m3fx.controls.M3ListItem;
+import org.glavo.m3fx.controls.M3ListView;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.mod.LocalMod;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
@@ -682,10 +682,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
         }
     }
 
-    private static final class Cell extends MDListCell<Item> {
+    private static final class Cell extends M3ListCell<Item> {
 
         private final StackPane left;
-        private final TwoLineListItem center;
         private final HBox right;
 
         private final ImageContainer iconImageView;
@@ -696,12 +695,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
         private final Tooltip tooltip = new Tooltip();
 
-        public Cell(JFXListView<Item> listView) {
+        public Cell(M3ListView<Item> listView) {
             super(listView);
 
-            var box = new HBox(8);
-            box.setAlignment(Pos.CENTER_LEFT);
-            box.setPickOnBounds(false);
 
             {
                 this.left = new StackPane();
@@ -709,10 +705,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
                 this.iconImageView = new ImageContainer(32);
                 this.iconSVGView = new SVGContainer(32);
-            }
-            {
-                this.center = new TwoLineListItem();
-                HBox.setHgrow(center, Priority.ALWAYS);
             }
             {
                 this.right = new HBox(8);
@@ -756,20 +748,24 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
                 right.getChildren().setAll(btnExplore, btnReveal, btnDelete);
             }
-
-            box.getChildren().setAll(left, center, right);
-            StackPane.setMargin(box, new Insets(8));
-            getContainer().getChildren().setAll(box);
-            onClicked(() -> {
-                var item = getItem();
-                if (item != null) item.onClick();
-            });
         }
 
+        /// Keeps the preview and file actions attached to the reusable row.
         @Override
-        protected void updateControl(Item item, boolean empty) {
-            if (empty || item == null) return;
+        protected M3ListItem createListItem() {
+            var row = new M3ListItem();
+            row.setLeading(left);
+            row.setTrailing(right);
+            row.setOnAction(event -> {
+                @Nullable Item item = getItem();
+                if (event.getTarget() == row && item != null) item.onClick();
+            });
+            return row;
+        }
 
+        /// Updates the schematic preview and available actions for this file or directory.
+        @Override
+        protected void updateListItem(M3ListItem row, Item item) {
             iconImageView.setImage(null);
 
             isFileProperty.set(item instanceof SchematicItem);
@@ -783,8 +779,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                 left.getChildren().setAll(iconSVGView);
             }
 
-            center.setTitle(item.getName());
-            center.setSubtitle(item.getDescription());
+            row.setHeadlineText(item.getName());
+            row.setSupportingText(Objects.toString(item.getDescription(), ""));
 
             Path path = item.getPath();
             if (path != null) {
@@ -798,7 +794,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     private static final class SchematicsPageSkin extends SkinBase<SchematicsPage> {
 
-        private final JFXListView<Item> listView;
+        private final M3ListView<Item> listView;
 
         SchematicsPageSkin(SchematicsPage skinnable) {
             super(skinnable);
@@ -809,16 +805,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
             ComponentList root = new ComponentList();
             root.getStyleClass().add("no-padding");
-            listView = new JFXListView<>();
-            listView.setSelectionModel(new NoneMultipleSelectionModel<>());
-
-            {
-                StackPane placeholderContainer = new StackPane();
-                placeholderContainer.getStyleClass().add("notice-pane");
-                Label placeholderLabel = new Label(i18n("schematics.empty"));
-                placeholderContainer.getChildren().add(placeholderLabel);
-                listView.setPlaceholder(placeholderContainer);
-            }
+            listView = new M3ListView<>();
 
             {
                 var toolbar = new HBox();
@@ -843,17 +830,14 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.loadingProperty().bind(skinnable.loadingProperty());
 
-                listView.setCellFactory(x -> new Cell(listView));
-                listView.setSelectionModel(new NoneMultipleSelectionModel<>());
+                listView.setCellFactory(Cell::new);
                 Bindings.bindContent(listView.getItems(), skinnable.getItems());
 
-                // ListViewBehavior would consume ESC pressed event, preventing us from handling it
-                // So we ignore it here
-                ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-                listView.getStyleClass().add("no-horizontal-scrollbar");
 
 
-                center.setContent(listView);
+                var placeholder = new StackPane(new Label(i18n("schematics.empty")));
+                placeholder.getStyleClass().add("notice-pane");
+                center.setContent(FXUtils.withListPlaceholder(listView, placeholder));
                 root.getContent().add(center);
             }
 

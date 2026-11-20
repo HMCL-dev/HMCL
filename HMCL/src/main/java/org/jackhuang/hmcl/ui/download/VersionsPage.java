@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.*;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -12,13 +11,12 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3ComboBox;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputVariant;
@@ -142,19 +140,17 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         OLD
     }
 
-    private static class RemoteVersionListCell extends ListCell<ComponentRemoteVersion> {
+    private static class RemoteVersionListCell extends GraphicListCell<ComponentRemoteVersion> {
         private final VersionsPage control;
 
         private final TwoLineListItem twoLineListItem = new TwoLineListItem();
         private final ImageView imageView = new ImageView();
         private final RipplerContainer ripplerContainer;
 
-        /// Creates a version row constrained to its list viewport; null creates a sizing-only row.
-        RemoteVersionListCell(VersionsPage control, @Nullable ListView<ComponentRemoteVersion> listView) {
+        /// Creates a version row for the supplied list.
+        RemoteVersionListCell(VersionsPage control, M3ListView<ComponentRemoteVersion> listView) {
+            super(listView);
             this.control = control;
-
-            if (listView != null)
-                FXUtils.limitCellWidth(listView, this);
 
             imageView.setMouseTransparent(true);
 
@@ -216,10 +212,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             ripplerContainer.resetFeedback();
 
             if (empty || remoteVersion == null) {
-                setGraphic(null);
+                setRowGraphic(null);
                 return;
             }
-            setGraphic(ripplerContainer);
+            setRowGraphic(ripplerContainer);
 
             twoLineListItem.setTitle(I18n.getDisplayVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
@@ -292,7 +288,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     }
 
     private static final class VersionsPageSkin extends SkinBase<VersionsPage> {
-        private final JFXListView<ComponentRemoteVersion> list;
+        private final M3ListView<ComponentRemoteVersion> list;
 
         private final TransitionPane transitionPane;
         /// Indicates that the remote version list is loading.
@@ -388,10 +384,9 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     ComponentList centrePane = new ComponentList();
                     centrePane.getStyleClass().add("no-padding");
                     {
-                        list = new JFXListView<>();
-                        list.getStyleClass().add("jfx-list-view-float");
+                        list = new M3ListView<>();
 
-                        RemoteVersionListCell dummyCell = new RemoteVersionListCell(control, null);
+                        RemoteVersionListCell dummyCell = new RemoteVersionListCell(control, list);
                         dummyCell.twoLineListItem.setTitle("Dummy");
                         dummyCell.twoLineListItem.setSubtitle("Dummy");
                         dummyCell.imageView.setImage(GameInstanceIconType.GRASS.getIcon());
@@ -408,9 +403,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         list.setCellFactory(listView -> new RemoteVersionListCell(control, listView));
 
                         ComponentList.setVgrow(list, Priority.ALWAYS);
-
-                        // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
-                        ignoreEvent(list, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
                         centrePane.getContent().setAll(list);
                     }
@@ -493,7 +485,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             //noinspection DataFlowIssue
             list.getItems().setAll(versions.toList());
-            list.scrollTo(0);
+            if (!list.getItems().isEmpty())
+                list.scrollTo(0, false);
         }
     }
 }

@@ -6,16 +6,12 @@
 package com.jfoenix.skins;
 
 import com.jfoenix.controls.JFXDatePicker;
-import com.jfoenix.controls.JFXListView;
 import com.jfoenix.svg.SVGGlyph;
 import com.jfoenix.transitions.CachedTransition;
 import javafx.animation.*;
 import javafx.animation.Animation.Status;
-import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -34,12 +30,14 @@ import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListCell;
+import org.glavo.m3fx.controls.M3ListItem;
+import org.glavo.m3fx.controls.M3ListView;
+import org.glavo.m3fx.controls.M3SelectionMode;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
-import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator_lzh;
@@ -80,72 +78,8 @@ public class JFXDatePickerContent extends VBox {
     protected List<DateCell> dayCells = new ArrayList<>();
     private LocalDate[] dayCellDates;
     private DateCell currentFocusedDayCell = null;
-    private final ListView<String> yearsListView = new JFXListView<>() {
-        {
-            this.getStyleClass().addAll("date-picker-list-view", "no-padding");
-            this.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-            this.setCellFactory((listView) -> new ListCell<>() {
-                static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
-
-                final Label label = new Label();
-                final StackPane root;
-                final RipplerContainer ripplerContainer;
-
-                final WeakListenerHolder holder = new WeakListenerHolder();
-
-                {
-                    label.getStyleClass().add(SPINNER_LABEL);
-                    label.setMaxWidth(Double.MAX_VALUE);
-                    label.textProperty().bind(Bindings.createStringBinding(() -> getItem() == null ? "" : formatYear(YearMonth.of(Integer.parseInt(getItem()), 1)), itemProperty()));
-                    StackPane pane = new StackPane(label);
-                    pane.setPadding(new Insets(7));
-                    ripplerContainer = new RipplerContainer(pane);
-                    root = new StackPane(ripplerContainer);
-                    root.getStyleClass().add("data-picker-list-cell");
-                    this.setGraphic(root);
-
-                    var selectedListenerWeak = holder.weak((InvalidationListener) observable -> {
-                        if (getItem() != null && getItem().equals(Integer.toString(selectedYearMonth.get().getYear())))
-                            updateSelected(true);
-                    });
-                    JFXDatePickerContent.this.selectedYearLabel.textProperty().addListener(selectedListenerWeak);
-                    itemProperty().addListener(selectedListenerWeak);
-
-                    FXUtils.onChangeAndOperate(selectedProperty(), selected -> {
-                        if (getListView() != null) {
-                            if (selected) {
-                                getListView().getSelectionModel().select(getIndex());
-                            } else {
-                                getListView().getSelectionModel().clearSelection(getIndex());
-                            }
-                        }
-                        root.pseudoClassStateChanged(SELECTED, selected);
-                        if (selected) {
-                            int offset = Integer.parseInt(getItem()) - JFXDatePickerContent.this.selectedYearMonth.get().getYear();
-                            JFXDatePickerContent.this.forward(offset, ChronoUnit.YEARS, false, false);
-                        }
-                    });
-                }
-
-                public void updateItem(String item, boolean empty) {
-                    String oldItem = getItem();
-                    boolean oldEmpty = isEmpty();
-
-                    super.updateItem(item, empty);
-                    setText(null);
-
-                    if (Objects.equals(oldItem, item) && oldEmpty == empty) return;
-                    ripplerContainer.resetFeedback();
-
-                    if (!empty && item != null) {
-                        setGraphic(root);
-                    } else {
-                        setGraphic(null);
-                    }
-                }
-            });
-        }
-    };
+    /// Virtualized year choices kept in sync with the displayed calendar month.
+    private final M3ListView<Integer> yearsListView = new M3ListView<>();
     final DateTimeFormatter fullFormatter = DateTimeFormatter.ofPattern("EEE, MMM yyyy");
     final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
     final DateTimeFormatter yearFormatter = DateTimeFormatter.ofPattern("y");
@@ -195,7 +129,23 @@ public class JFXDatePickerContent extends VBox {
         this.createWeekDaysCells();
         this.createDayCells();
 
-        this.yearsListView.getItems().addAll(IntStream.rangeClosed(1900, Year.now().getValue() + 100).mapToObj(Integer::toString).toList());
+        yearsListView.setSelectionMode(M3SelectionMode.SINGLE);
+        yearsListView.setCellFactory(view -> new M3ListCell<>(view) {
+            /// Formats the year using the calendar's locale and chronology.
+            @Override
+            protected void updateListItem(M3ListItem row, Integer year) {
+                row.setHeadlineText(formatYear(YearMonth.of(year, 1)));
+            }
+        });
+        yearsListView.getItems().setAll(IntStream.rangeClosed(1900, Year.now().getValue() + 100).boxed().toList());
+        selectedYearMonth.addListener((observable, previous, month) -> {
+            if (yearsListView.isVisible())
+                selectDisplayedYear();
+        });
+        yearsListView.selectedItemProperty().addListener((observable, previous, year) -> {
+            if (year != null && year != selectedYearMonth.get().getYear())
+                forward(year - selectedYearMonth.get().getYear(), ChronoUnit.YEARS, false, false);
+        });
 
         StackPane main = new StackPane();
         this.yearsListView.setVisible(false);
@@ -295,6 +245,26 @@ public class JFXDatePickerContent extends VBox {
 
     }
 
+    /// Selects the displayed year when it falls inside the available year range.
+    private void selectDisplayedYear() {
+        int index = yearsListView.getItems().indexOf(selectedYearMonth.get().getYear());
+        if (index >= 0)
+            yearsListView.selectIndex(index);
+        else
+            yearsListView.clearSelection();
+    }
+
+    /// Opens the year list at the displayed month and gives keyboard navigation a starting row.
+    private void showYears() {
+        hideTransition.stop();
+        showTransition.play();
+        selectDisplayedYear();
+        int index = Math.clamp(selectedYearMonth.get().getYear() - 1900, 0, yearsListView.getItems().size() - 1);
+        yearsListView.focusIndex(index);
+        yearsListView.scrollTo(Math.max(0, index - 2), false);
+        yearsListView.requestFocus();
+    }
+
     protected VBox createHeaderPane() {
         Label title = new Label(I18n.i18n("button.select_date"));
         title.getStyleClass().add("title");
@@ -312,10 +282,7 @@ public class JFXDatePickerContent extends VBox {
         yearLabelContainer.setFillHeight(false);
         yearLabelContainer.setOnMouseClicked((click) -> {
             if (!this.yearsListView.isVisible()) {
-                int yearIndex = this.selectedYearMonth.get().getYear() - 1900 - 2;
-                this.yearsListView.scrollTo(yearIndex >= 0 ? yearIndex : yearIndex + 2);
-                this.hideTransition.stop();
-                this.showTransition.play();
+                showYears();
             }
 
         });
@@ -376,10 +343,7 @@ public class JFXDatePickerContent extends VBox {
         FXUtils.onChangeAndOperate(this.yearsListView.visibleProperty(), b -> svgContainer.setIcon(b ? SVG.ARROW_DROP_UP : SVG.ARROW_DROP_DOWN));
         FXUtils.onClicked(box, () -> {
             if (!this.yearsListView.isVisible()) {
-                int yearIndex = this.selectedYearMonth.get().getYear() - 1900 - 2;
-                this.yearsListView.scrollTo(yearIndex >= 0 ? yearIndex : yearIndex + 2);
-                this.hideTransition.stop();
-                this.showTransition.play();
+                showYears();
             } else {
                 this.showTransition.stop();
                 this.hideTransition.play();
@@ -651,6 +615,8 @@ public class JFXDatePickerContent extends VBox {
     }
 
     void init() {
+        showTransition.stop();
+        hideTransition.stop();
         this.contentGrid.setOpacity(1.0F);
         this.yearsListView.setOpacity(0.0F);
         this.yearsListView.setVisible(false);

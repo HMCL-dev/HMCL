@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.scene.Node;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.skin.VirtualFlow;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
@@ -21,6 +22,14 @@ public final class ScrollUtils {
     public static void installSmoothScrolling(ScrollPane scrollPane) {
         if (AnimationUtils.isAnimationEnabled())
             addSmoothScrolling(scrollPane);
+    }
+
+    /// Installs launcher wheel scrolling on the virtual flow of each skin used by the desktop list.
+    public static void installSmoothScrolling(ListView<?> list) {
+        list.skinProperty().subscribe(skin -> {
+            if (skin != null && list.lookup(".virtual-flow") instanceof VirtualFlow<?> flow)
+                installSmoothScrolling(flow);
+        });
     }
 
     /// Installs smooth wheel scrolling for either flow orientation if animations are enabled at call time.

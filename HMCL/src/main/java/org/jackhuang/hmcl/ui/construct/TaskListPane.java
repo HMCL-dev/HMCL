@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.application.Platform;
 import javafx.beans.WeakListener;
 import javafx.beans.property.*;
@@ -11,9 +10,9 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3ProgressBar;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.task.Task;
@@ -40,20 +39,14 @@ public final class TaskListPane extends StackPane {
     private static final Insets STAGED_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 26);
 
     private TaskExecutor executor;
-    private final JFXListView<Node> listView = new JFXListView<>();
+    private final M3ListView<Node> listView = new M3ListView<>();
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     private final Map<String, StageNode> stageNodes = new HashMap<>();
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
-    private final DoubleProperty cellWidth = new SimpleDoubleProperty();
 
     public TaskListPane() {
         listView.setPadding(new Insets(12, 0, 0, 0));
-        listView.setCellFactory(l -> new Cell());
-        listView.setSelectionModel(null);
-        FXUtils.onChangeAndOperate(listView.widthProperty(), width -> {
-            double w = width.doubleValue();
-            cellWidth.set(w <= 12.0 ? w : w - 12.0);
-        });
+        listView.setCellFactory(Cell::new);
 
         getChildren().setAll(listView);
     }
@@ -188,7 +181,7 @@ public final class TaskListPane extends StackPane {
         });
     }
 
-    private final class Cell extends ListCell<Node> {
+    private final class Cell extends GraphicListCell<Node> {
         private static final double STATUS_ICON_SIZE = 14;
         private static final Insets PROGRESS_BAR_MARGIN = new Insets(2, 0, 0, 0);
 
@@ -202,10 +195,9 @@ public final class TaskListPane extends StackPane {
         private WeakReference<StageNode> prevStageNodeRef;
         private StatusChangeListener statusChangeListener;
 
-        private Cell() {
+        private Cell(M3ListView<Node> listView) {
+            super(listView);
             setPadding(new Insets(0, 0, 4, 0));
-
-            prefWidthProperty().bind(cellWidth);
 
             FXUtils.setLimitHeight(left, STATUS_ICON_SIZE);
             FXUtils.setLimitWidth(left, STATUS_ICON_SIZE);
@@ -218,7 +210,6 @@ public final class TaskListPane extends StackPane {
             bar.setMaxWidth(Double.MAX_VALUE);
             BorderPane.setMargin(bar, PROGRESS_BAR_MARGIN);
 
-            setGraphic(pane);
         }
 
         private void updateLeftIcon(StageNode.Status status) {
@@ -228,6 +219,7 @@ public final class TaskListPane extends StackPane {
         @Override
         protected void updateItem(Node item, boolean empty) {
             super.updateItem(item, empty);
+            setRowGraphic(empty ? null : pane);
 
             pane.paddingProperty().unbind();
             title.textProperty().unbind();

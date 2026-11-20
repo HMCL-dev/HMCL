@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
@@ -16,13 +15,12 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3ComboBox;
 import org.glavo.m3fx.controls.M3ComboBoxInputMode;
+import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -52,7 +50,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadListPage extends Control implements DecoratorPage {
@@ -233,13 +230,12 @@ public class DownloadListPage extends Control implements DecoratorPage {
     }
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
-        private final JFXListView<RemoteAddon> listView = new JFXListView<>();
+        private final M3ListView<RemoteAddon> listView = new M3ListView<>();
         private final RemoteImageLoader iconLoader;
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
 
-            listView.getStyleClass().add("no-horizontal-scrollbar");
 
             iconLoader = new RemoteImageLoader(control.downloadProvider) {
                 @Override
@@ -470,7 +466,8 @@ public class DownloadListPage extends Control implements DecoratorPage {
                         nextPageButton.setDisable(disableNext);
                         lastPageButton.setDisable(disableNext);
 
-                        listView.scrollTo(0);
+                        if (!listView.getItems().isEmpty())
+                            listView.scrollTo(0, false);
                     };
 
                     FXUtils.onChange(control.pageCount, pageCountN -> {
@@ -540,9 +537,6 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
-                listView.setSelectionModel(new NoneMultipleSelectionModel<>());
-                // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
-                ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
                 listView.setCellFactory(x -> new DownloadListCell(getSkinnable(), listView, iconLoader));
             }
 
@@ -561,9 +555,9 @@ public class DownloadListPage extends Control implements DecoratorPage {
         }
     }
 
-    private static final class DownloadListCell extends ListCell<RemoteAddon> {
+    private static final class DownloadListCell extends GraphicListCell<RemoteAddon> {
         private final DownloadListPage page;
-        private final JFXListView<RemoteAddon> listView;
+        private final M3ListView<RemoteAddon> listView;
         private final RemoteImageLoader iconLoader;
 
         private static final Insets PADDING = new Insets(9, 9, 0, 9);
@@ -576,7 +570,8 @@ public class DownloadListPage extends Control implements DecoratorPage {
         private final ImageContainer imageContainer = new ImageContainer(40);
 
         /// Creates a download card with its icon and text laid out by the same row.
-        private DownloadListCell(DownloadListPage page, JFXListView<RemoteAddon> listView, RemoteImageLoader iconLoader) {
+        private DownloadListCell(DownloadListPage page, M3ListView<RemoteAddon> listView, RemoteImageLoader iconLoader) {
+            super(listView);
             this.page = page;
             this.listView = listView;
             this.iconLoader = iconLoader;
@@ -600,9 +595,6 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 }
             });
 
-            setPrefWidth(0);
-
-            FXUtils.limitCellWidth(listView, this);
         }
 
         /// Updates addon text and replaces category tags together so their labels can be reused.
@@ -618,7 +610,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
             this.graphic.resetFeedback();
 
             if (empty || item == null) {
-                setGraphic(null);
+                setRowGraphic(null);
             } else {
                 setPadding(
                     getIndex() == listView.getItems().size() - 1
@@ -639,7 +631,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                         .map(category -> new Tag(page.getLocalizedCategory(category, null)))
                         .toList());
                 iconLoader.load(imageContainer.imageProperty(), item.iconUrl());
-                setGraphic(wrapper);
+                setRowGraphic(wrapper);
             }
         }
     }

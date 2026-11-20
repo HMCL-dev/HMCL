@@ -2,31 +2,38 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ListCell;
+import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListCell;
+import org.glavo.m3fx.controls.M3ListView;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.GraphicListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends SkinBase<P> {
 
-    protected final JFXListView<E> listView;
+    protected final M3ListView<E> listView;
 
+    /// Creates a toolbar list without an empty-state message.
     public ToolbarListPageSkin(P skinnable) {
+        this(skinnable, null);
+    }
+
+    /// Creates a toolbar list with an optional message shown while it has no items.
+    protected ToolbarListPageSkin(P skinnable, @Nullable String emptyMessage) {
         super(skinnable);
 
         ComponentList root = new ComponentList();
@@ -54,14 +61,18 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
         ComponentList.setVgrow(spinnerPane, Priority.ALWAYS);
 
         {
-            this.listView = new JFXListView<>();
+            this.listView = new M3ListView<>();
             this.listView.setPadding(Insets.EMPTY);
-            this.listView.setCellFactory(listView -> createListCell((JFXListView<E>) listView));
-            this.listView.getStyleClass().add("no-horizontal-scrollbar");
+            this.listView.setCellFactory(this::createListCell);
             Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
-            FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
-            spinnerPane.setContent(listView);
+            if (emptyMessage != null) {
+                var placeholder = new StackPane(new Label(emptyMessage));
+                placeholder.getStyleClass().add("notice-pane");
+                spinnerPane.setContent(FXUtils.withListPlaceholder(listView, placeholder));
+            } else {
+                spinnerPane.setContent(listView);
+            }
         }
 
         root.getContent().add(spinnerPane);
@@ -97,16 +108,16 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
 
     protected abstract List<Node> initializeToolbar(P skinnable);
 
-    protected ListCell<E> createListCell(JFXListView<E> listView) {
-        return new ListCell<>() {
+    protected M3ListCell<E> createListCell(M3ListView<E> listView) {
+        return new GraphicListCell<>(listView) {
             @Override
             protected void updateItem(E item, boolean empty) {
                 super.updateItem(item, empty);
                 if (!empty && item instanceof Node node) {
-                    setGraphic(node);
+                    setRowGraphic(node);
                     setText(null);
                 } else {
-                    setGraphic(null);
+                    setRowGraphic(null);
                     setText(null);
                 }
             }

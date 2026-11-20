@@ -751,7 +751,7 @@
 
 /*******************************************************************************
 *                                                                              *
-* JFX List View                                                                *
+* Desktop lists                                                                *
 *                                                                              *
 *******************************************************************************/
 
@@ -759,48 +759,26 @@
     -fx-padding: 0;
 }
 
-.jfx-list-cell, .list-cell {
+.list-cell {
     -fx-background-color: transparent;
 }
 
-.list-cell:selected, .jfx-list-cell:selected,
-.list-cell:hover, .jfx-list-cell:hover {
+.list-cell:selected,
+.list-cell:hover {
     -fx-text-fill: black;
 }
 
-.jfx-list-cell .jfx-rippler {
-    -jfx-rippler-fill: -monet-primary-container;
-}
-
-/*.list-cell:odd:selected > .jfx-rippler > StackPane,*/
-/*.list-cell:even:selected > .jfx-rippler > StackPane {*/
-/*    -fx-background-color: derive(-monet-primary, 30%);*/
-/*}*/
-
-.jfx-list-view {
-    -fx-background-insets: 0.0;
-    -jfx-cell-horizontal-margin: 0.0;
-    -jfx-cell-vertical-margin: 5.0;
-    -jfx-vertical-gap: 10.0;
-    -jfx-expanded: false;
+.launcher-list-view {
+    -fx-background-insets: 0;
     -fx-background-color: transparent;
 }
 
-.jfx-list-view .scroll-bar {
+.launcher-list-view .scroll-bar {
     -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
 }
 
-.jfx-list-view .scroll-bar .track {
+.launcher-list-view .scroll-bar .track {
     -fx-fill: transparent;
-}
-
-.jfx-list-view-float {
-    -fx-background-insets: 0.0;
-    -jfx-cell-horizontal-margin: 0.0;
-    -jfx-cell-vertical-margin: 5.0;
-    -jfx-vertical-gap: 10.0;
-    -jfx-expanded: false;
-    -fx-background-color: transparent;
 }
 
 .no-horizontal-scrollbar .scroll-bar:horizontal {
@@ -1532,14 +1510,6 @@
 }
 
 .date-picker-popup .content .spinner-label,
-.date-picker-popup .data-picker-list-cell .spinner-label {
-    -fx-text-fill: -monet-on-surface;
-}
-
-.date-picker-popup .data-picker-list-cell:selected {
-    -fx-background-color: -monet-secondary-container;
-}
-
 .date-picker-popup .date-cell {
     -fx-text-fill: -monet-on-surface;
 }

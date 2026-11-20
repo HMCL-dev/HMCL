@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -659,7 +658,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         private Subscription serverStatusResultValueSubscription;
         private Subscription serverStatusPingingValueSubscription;
 
-        public ServerListCell(JFXListView<ServerListItem> listView, ServersPage page) {
+        public ServerListCell(ListView<ServerListItem> listView, ServersPage page) {
             super(listView);
             this.page = page;
 
@@ -779,7 +778,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
     }
 
     private final class ServerListPageSkin extends SkinBase<ServersPage> {
-        private final JFXListView<ServersPage.ServerListItem> listView = new JFXListView<>();
+        private final ListView<ServersPage.ServerListItem> listView = new ListView<>();
         private final M3TextField searchField = FXUtils.newTextField(M3TextInputVariant.FILLED);
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
         private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
@@ -801,6 +800,8 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             rootStackPane.getChildren().setAll(root);
             root.getStyleClass().add("no-padding");
 
+            listView.getStyleClass().add("launcher-list-view");
+            ScrollUtils.installSmoothScrolling(listView);
             listView.getStyleClass().add("no-horizontal-scrollbar");
             listView.setCellFactory(param -> new ServerListCell(listView, ServersPage.this));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);

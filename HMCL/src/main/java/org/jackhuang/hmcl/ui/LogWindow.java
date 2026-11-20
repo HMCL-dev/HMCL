@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -154,7 +153,7 @@ public final class LogWindow extends Stage {
 
     private final class LogWindowImpl extends Control {
 
-        private final ListView<Log> listView = new JFXListView<>();
+        private final ListView<Log> listView = new ListView<>();
         private final BooleanProperty autoScroll = new SimpleBooleanProperty();
         private final BooleanProperty wrapText = new SimpleBooleanProperty(true);
         private final StringProperty[] buttonText = new StringProperty[LEVELS.length];
@@ -168,7 +167,7 @@ public final class LogWindow extends Stage {
         LogWindowImpl() {
             getStyleClass().add("log-window");
 
-            listView.getProperties().put("no-smooth-scrolling", true);
+            listView.getStyleClass().add("launcher-list-view");
             listView.setItems(FXCollections.observableList(new CircularArrayList<>(logs.size())));
 
             for (int i = 0; i < LEVELS.length; i++) {

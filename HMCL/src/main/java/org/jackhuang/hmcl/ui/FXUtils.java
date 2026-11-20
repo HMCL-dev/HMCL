@@ -42,6 +42,7 @@ import javafx.util.converter.PercentageStringConverter;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3Divider;
+import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3MenuItem;
 import org.glavo.m3fx.controls.M3PasswordField;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
@@ -431,18 +432,13 @@ public final class FXUtils {
         return region.getMaxHeight();
     }
 
-    public static void limitCellWidth(ListView<?> listView, ListCell<?> cell) {
-        ReadOnlyDoubleProperty widthProperty;
-
-        if (listView.lookup(".clipped-container") instanceof Region clippedContainer) {
-            widthProperty = clippedContainer.widthProperty();
-        } else {
-            widthProperty = listView.widthProperty();
-        }
-
-        cell.maxWidthProperty().bind(widthProperty);
-        cell.prefWidthProperty().bind(widthProperty);
-        cell.minWidthProperty().bind(widthProperty);
+    /// Shows the empty state in place of a virtualized list when its backing items are empty.
+    public static StackPane withListPlaceholder(M3ListView<?> list, Node placeholder) {
+        var empty = Bindings.isEmpty(list.getItems());
+        list.visibleProperty().bind(empty.not());
+        placeholder.visibleProperty().bind(empty);
+        placeholder.managedProperty().bind(empty);
+        return new StackPane(list, placeholder);
     }
 
     /// If the current environment is JavaFX 23 or higher, this method returns [Labeled#textTruncatedProperty()];

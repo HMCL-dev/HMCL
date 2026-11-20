@@ -2,23 +2,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXListView;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
-import javafx.scene.Cursor;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.util.Subscription;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3ListCell;
+import org.glavo.m3fx.controls.M3ListItem;
+import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.TaskManager;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -37,31 +35,26 @@ public final class TaskListPage extends StackPane {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
 
-        JFXListView<TaskExecutorDialogPane> list = new JFXListView<>();
-        list.setItems(TaskManager.getInstance().getTasks());
-        list.setCellFactory(view -> new TaskCell());
+        M3ListView<TaskExecutorDialogPane> list = new M3ListView<>();
+        Bindings.bindContent(list.getItems(), TaskManager.getInstance().getTasks());
+        list.setCellFactory(TaskCell::new);
         list.setPadding(Insets.EMPTY);
-        list.getStyleClass().add("no-horizontal-scrollbar");
-        FXUtils.ignoreEvent(list, KeyEvent.KEY_PRESSED, event -> event.getCode() == KeyCode.ESCAPE);
 
         StackPane placeholder = new StackPane(new Label(i18n("task.list.empty")));
         placeholder.getStyleClass().add("notice-pane");
-        list.setPlaceholder(placeholder);
+        var content = FXUtils.withListPlaceholder(list, placeholder);
 
-        ComponentList.setVgrow(list, Priority.ALWAYS);
-        root.getContent().setAll(list);
+        ComponentList.setVgrow(content, Priority.ALWAYS);
+        root.getContent().setAll(content);
         getChildren().setAll(root);
     }
 
     /// Displays a live task title and an action to restore progress or continue a completed task.
     @NotNullByDefault
-    private static final class TaskCell extends ListCell<@Nullable TaskExecutorDialogPane> {
+    private static final class TaskCell extends M3ListCell<TaskExecutorDialogPane> {
 
-        /// The list item whose title is bound to the current dialog.
-        private final TwoLineListItem content = new TwoLineListItem();
-
-        /// The row's shared hover and ripple feedback.
-        private final RipplerContainer graphic;
+        /// Observes changes to the displayed task until this cell is reused.
+        private Subscription statusSubscription = Subscription.EMPTY;
 
         /// Centers running and pending indicators in a fixed-size slot to keep row titles aligned.
         private final StackPane statusIcon = new StackPane();
@@ -73,26 +66,30 @@ public final class TaskListPage extends StackPane {
         private final Tooltip actionTooltip = new Tooltip();
 
         /// Creates a row that activates the current task through its body or trailing action.
-        private TaskCell() {
-            content.getStyleClass().add("md-list-cell");
-            content.setPadding(new Insets(8));
-
-            statusIcon.setMinSize(32, 32);
-            statusIcon.setPrefSize(32, 32);
-            statusIcon.setMaxSize(32, 32);
+        private TaskCell(M3ListView<TaskExecutorDialogPane> view) {
+            super(view);
+            FXUtils.setLimitWidth(statusIcon, 32);
+            FXUtils.setLimitHeight(statusIcon, 32);
             statusIcon.setMouseTransparent(true);
-            content.setMinWidth(0);
-            TwoLineListItem.setMargin(statusIcon, new Insets(0, 8, 0, 0));
-            content.setLeading(statusIcon);
-
             FXUtils.installFastTooltip(actionButton, actionTooltip);
-            actionButton.setOnAction(event -> activateTask());
-            TwoLineListItem.setMargin(actionButton, new Insets(0, 0, 0, 8));
-            content.setTrailing(actionButton);
+            actionButton.setOnAction(event -> {
+                event.consume();
+                activateTask();
+            });
+        }
 
-            graphic = new RipplerContainer(content);
-            graphic.setCursor(Cursor.HAND);
-            graphic.setOnAction(event -> activateTask());
+        /// Creates the shared row and its nested task action.
+        @Override
+        protected M3ListItem createListItem() {
+            var row = new M3ListItem();
+            row.setLeading(statusIcon);
+            row.setTrailing(actionButton);
+            row.headlineTextProperty().bind(itemProperty().flatMap(TaskExecutorDialogPane::titleProperty).orElse(""));
+            row.setOnAction(event -> {
+                if (event.getTarget() == row)
+                    activateTask();
+            });
+            return row;
         }
 
         /// Invokes a pending action or restores the current task's progress dialog.
@@ -106,44 +103,48 @@ public final class TaskListPage extends StackPane {
             }
         }
 
-        /// Rebinds a reused cell and updates its progress or pending-action presentation.
+        /// Releases listeners before the virtual flow assigns another task.
         @Override
         protected void updateItem(@Nullable TaskExecutorDialogPane pane, boolean empty) {
+            statusSubscription.unsubscribe();
             super.updateItem(pane, empty);
-            graphic.resetFeedback();
-            content.titleProperty().unbind();
-            content.setSubtitle(null);
-            if (empty || pane == null) {
-                content.setTitle("");
-                statusIcon.getChildren().clear();
-                setGraphic(null);
+        }
+
+        /// Observes changes to an existing task even when the list membership stays the same.
+        @Override
+        protected void updateListItem(M3ListItem row, TaskExecutorDialogPane pane) {
+            Runnable refresh = () -> updateStatus(row, pane);
+            statusSubscription = Subscription.combine(pane.pendingActionProperty().subscribe(refresh),
+                    pane.queuedProperty().subscribe(refresh));
+            refresh.run();
+        }
+
+        /// Shows the action and status of the current task.
+        private void updateStatus(M3ListItem row, TaskExecutorDialogPane pane) {
+            @Nullable TaskExecutorDialogPane.PendingAction action = pane.pendingActionProperty().get();
+            if (action != null) {
+                actionButton.setVariant(M3ButtonVariant.OUTLINED);
+                statusIcon.getChildren().setAll(SVG.PENDING.createIcon(24));
+                row.setSupportingText(action.description());
+                actionButton.setGraphic(null);
+                actionButton.setText(action.text());
+                actionButton.setAccessibleText(action.text());
+                actionTooltip.setText(action.text());
             } else {
-                content.titleProperty().bind(pane.titleProperty());
-                @Nullable TaskExecutorDialogPane.PendingAction action = pane.pendingActionProperty().get();
-                if (action != null) {
-                    actionButton.setVariant(M3ButtonVariant.OUTLINED);
+                row.setSupportingText("");
+                actionButton.setVariant(M3ButtonVariant.TEXT);
+                if (pane.queuedProperty().get()) {
                     statusIcon.getChildren().setAll(SVG.PENDING.createIcon(24));
-                    content.setSubtitle(action.description());
-                    actionButton.setGraphic(null);
-                    actionButton.setText(action.text());
-                    actionButton.setAccessibleText(action.text());
-                    actionTooltip.setText(action.text());
-                } else {
-                    actionButton.setVariant(M3ButtonVariant.TEXT);
-                    if (pane.queuedProperty().get()) {
-                        statusIcon.getChildren().setAll(SVG.PENDING.createIcon(24));
-                        content.setSubtitle(i18n("task.queued"));
-                    } else if (statusIcon.getChildren().isEmpty() || !(statusIcon.getChildren().get(0) instanceof M3ProgressIndicator)) {
-                        M3ProgressIndicator spinner = FXUtils.newSpinner();
-                        spinner.setIndicatorSize(24);
-                        statusIcon.getChildren().setAll(spinner);
-                    }
-                    actionButton.setGraphic(SVG.ARROW_FORWARD.createIcon());
-                    actionButton.setText(null);
-                    actionButton.setAccessibleText(i18n("task.show"));
-                    actionTooltip.setText(i18n("task.show"));
+                    row.setSupportingText(i18n("task.queued"));
+                } else if (statusIcon.getChildren().isEmpty() || !(statusIcon.getChildren().get(0) instanceof M3ProgressIndicator)) {
+                    M3ProgressIndicator spinner = FXUtils.newSpinner();
+                    spinner.setIndicatorSize(24);
+                    statusIcon.getChildren().setAll(spinner);
                 }
-                setGraphic(graphic);
+                actionButton.setGraphic(SVG.ARROW_FORWARD.createIcon());
+                actionButton.setText(null);
+                actionButton.setAccessibleText(i18n("task.show"));
+                actionTooltip.setText(i18n("task.show"));
             }
         }
     }

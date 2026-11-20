@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -16,13 +15,15 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListCell;
+import org.glavo.m3fx.controls.M3ListItem;
+import org.glavo.m3fx.controls.M3ListView;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.modpack.ModpackFile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -32,7 +33,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.construct.LauncherDialog;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -51,8 +52,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 @NotNullByDefault
 public class OptionalFilesPage extends SpinnerPane implements WizardPage {
 
-    /// Fixed row height used to size [#body] to its items.
-    private static final double CELL_HEIGHT = 48;
+    /// Height of a two-line Material row for the file name and optional project title.
+    private static final double CELL_HEIGHT = 72;
 
     /// Maximum list viewport height before scrolling.
     private static final double MAX_LIST_HEIGHT = 320;
@@ -67,7 +68,7 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
     private boolean updatingFromSet;
 
     /// List view showing optional files.
-    private final JFXListView<ModpackFile> body = new JFXListView<>();
+    private final M3ListView<ModpackFile> body = new M3ListView<>();
 
     /// Creates the optional-files selection page.
     ///
@@ -143,8 +144,8 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
                 () -> Math.min(MAX_LIST_HEIGHT, optionalFiles.size() * CELL_HEIGHT + 2),
                 optionalFiles));
         body.setMaxHeight(Region.USE_PREF_SIZE);
-        body.setCellFactory(it -> new OptionalFileEntry(body));
-        body.setItems(optionalFiles);
+        body.setCellFactory(OptionalFileEntry::new);
+        Bindings.bindContent(body.getItems(), optionalFiles);
 
         Runnable refreshContent = () -> {
             if (successful.get()) {
@@ -182,11 +183,9 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
     }
 
     /// List cell for one optional file with checkbox and detail button.
-    private final class OptionalFileEntry extends MDListCell<ModpackFile> {
+    private final class OptionalFileEntry extends M3ListCell<ModpackFile> {
         private final M3CheckBox checkBox = new M3CheckBox();
-        private final TwoLineListItem content = new TwoLineListItem();
         private final M3IconButton infoButton = new M3IconButton(SVG.INFO.createIcon());
-        private final HBox container = new HBox(8);
 
         /// Currently bidirectionally bound selected property, or `null` when unbound.
         private @Nullable BooleanProperty boundSelected = null;
@@ -194,45 +193,42 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
         /// Creates a cell bound to `listView`.
         ///
         /// @param listView the owning list view
-        public OptionalFileEntry(JFXListView<ModpackFile> listView) {
+        public OptionalFileEntry(M3ListView<ModpackFile> listView) {
             super(listView);
-            container.setPickOnBounds(false);
-            container.setAlignment(Pos.CENTER_LEFT);
-            HBox.setHgrow(content, Priority.ALWAYS);
-            setSelectable();
-            container.getChildren().setAll(checkBox, content);
-
-            container.getChildren().add(infoButton);
-            getContainer().getChildren().setAll(container);
+            infoButton.setOnAction(event -> {
+                @Nullable ModpackFile file = getItem();
+                if (file != null && file.remoteAddon() != null)
+                    Controllers.dialog(new ModInfo(file.remoteAddon()));
+            });
         }
 
+        /// Places the file checkbox before its name.
         @Override
-        protected void updateControl(ModpackFile item, boolean empty) {
-            if (empty) {
-                if (boundSelected != null) {
-                    checkBox.selectedProperty().unbindBidirectional(boundSelected);
-                    boundSelected = null;
-                }
-                return;
+        protected M3ListItem createListItem() {
+            var row = new M3ListItem();
+            row.setLeading(checkBox);
+
+            return row;
+        }
+
+        /// Releases the selection binding when the cell leaves the viewport.
+        @Override
+        protected void updateItem(@Nullable ModpackFile item, boolean empty) {
+            if (empty && boundSelected != null) {
+                checkBox.selectedProperty().unbindBidirectional(boundSelected);
+                boundSelected = null;
             }
-            String name = item.fileName();
-            if (name != null) {
-                content.setTitle(name);
-            } else {
-                content.setTitle(i18n("modpack.unknown_optional_file"));
-            }
-            RemoteAddon addon = item.remoteAddon();
-            if (addon != null) {
-                content.setSubtitle(addon.title());
-                infoButton.setOnMouseClicked(e -> Controllers.dialog(new ModInfo(addon)));
-                infoButton.setManaged(true);
-                infoButton.setVisible(true);
-            } else {
-                content.setSubtitle("");
-                infoButton.setOnMouseClicked(null);
-                infoButton.setManaged(false);
-                infoButton.setVisible(false);
-            }
+            super.updateItem(item, empty);
+        }
+
+        /// Updates the file details and binds its installation choice to the current checkbox.
+        @Override
+        protected void updateListItem(M3ListItem row, ModpackFile item) {
+            @Nullable String name = item.fileName();
+            row.setHeadlineText(name != null ? name : i18n("modpack.unknown_optional_file"));
+            @Nullable RemoteAddon addon = item.remoteAddon();
+            row.setSupportingText(addon != null ? Objects.toString(addon.title(), "") : "");
+            row.setTrailing(addon != null ? infoButton : null);
             BooleanProperty selected = OptionalFilesPage.this.selectedProperty(item.key());
             if (boundSelected != selected) {
                 if (boundSelected != null)

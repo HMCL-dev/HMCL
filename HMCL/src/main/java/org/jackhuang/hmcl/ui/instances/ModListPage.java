@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -343,7 +342,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final HBox toolbarNormal;
         private final HBox toolbarSelecting;
 
-        private final JFXListView<ModListPage.ModInfoObject> listView;
+        private final ListView<ModListPage.ModInfoObject> listView;
 
         /// Whether the search mechanism is currently active.
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
@@ -363,7 +362,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             ComponentList root = new ComponentList();
             pane.getChildren().setAll(root);
             root.getStyleClass().add("no-padding");
-            listView = new JFXListView<>();
+            listView = new ListView<>();
+            listView.getStyleClass().add("launcher-list-view");
+            ScrollUtils.installSmoothScrolling(listView);
             listView.getStyleClass().add("no-horizontal-scrollbar");
 
             {
@@ -755,7 +756,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private Tooltip warningTooltip;
 
         /// Creates a selectable mod row with file actions for the supplied page.
-        ModInfoListCell(JFXListView<ModInfoObject> listView, ModListPage page) {
+        ModInfoListCell(ListView<ModInfoObject> listView, ModListPage page) {
             super(listView);
             this.page = page;
 

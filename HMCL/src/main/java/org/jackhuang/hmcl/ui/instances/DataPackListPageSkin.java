@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -13,6 +12,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -57,7 +58,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     private final HBox normalToolbar;
     private final HBox selectingToolbar;
 
-    private final JFXListView<DataPackInfoObject> listView;
+    private final ListView<DataPackInfoObject> listView;
 
     /// Whether the search mechanism is currently active.
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
@@ -76,7 +77,9 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
-        listView = new JFXListView<>();
+        listView = new ListView<>();
+        listView.getStyleClass().add("launcher-list-view");
+        ScrollUtils.installSmoothScrolling(listView);
         listView.getStyleClass().add("no-horizontal-scrollbar");
 
         // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
@@ -285,7 +288,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         final TwoLineListItem content = new TwoLineListItem();
 
         /// Creates a selectable data pack row whose switch follows the read-only state.
-        DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
+        DataPackInfoListCell(ListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
             super(listView);
 
             HBox container = new HBox(8);

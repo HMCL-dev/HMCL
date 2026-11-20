@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -12,23 +11,22 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.glavo.m3fx.controls.M3ListView;
 
 /// @author Glavo
 public final class OptionsListSkin extends SkinBase<OptionsList> {
 
-    private final JFXListView<OptionsList.Element> listView;
+    private final M3ListView<OptionsList.Element> listView;
     private final ObjectBinding<ContentPaddings> contentPaddings;
 
     OptionsListSkin(OptionsList control) {
         super(control);
 
-        this.listView = new JFXListView<>();
-        listView.setItems(control.getElements());
-        listView.setCellFactory(listView1 -> new Cell());
+        this.listView = new M3ListView<>();
+        Bindings.bindContent(listView.getItems(), control.getElements());
+        listView.setCellFactory(Cell::new);
 
         this.contentPaddings = Bindings.createObjectBinding(() -> {
             Insets padding = control.getContentPadding();
@@ -46,7 +44,7 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
         static final ContentPaddings EMPTY = new ContentPaddings(Insets.EMPTY, Insets.EMPTY, Insets.EMPTY);
     }
 
-    private final class Cell extends ListCell<OptionsList.Element> {
+    private final class Cell extends GraphicListCell<OptionsList.Element> {
         private static final PseudoClass PSEUDO_CLASS_FIRST = PseudoClass.getPseudoClass("first");
         private static final PseudoClass PSEUDO_CLASS_LAST = PseudoClass.getPseudoClass("last");
 
@@ -55,18 +53,11 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
 
         private StackPane wrapper;
 
-        public Cell() {
-            FXUtils.limitCellWidth(listView, this);
+        public Cell(M3ListView<OptionsList.Element> listView) {
+            super(listView);
 
             WeakInvalidationListener weakListener = new WeakInvalidationListener(updateStyleListener);
-            listView.itemsProperty().addListener((o, oldValue, newValue) -> {
-                if (oldValue != null)
-                    oldValue.removeListener(weakListener);
-                if (newValue != null)
-                    newValue.addListener(weakListener);
-
-                weakListener.invalidated(o);
-            });
+            listView.getItems().addListener(weakListener);
             itemProperty().addListener(weakListener);
             contentPaddings.addListener(weakListener);
         }
@@ -76,7 +67,7 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
-                setGraphic(null);
+                setRowGraphic(null);
             } else if (item instanceof OptionsList.ListElement element) {
                 if (wrapper == null)
                     wrapper = createWrapper();
@@ -89,9 +80,9 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
 
                 wrapper.getChildren().setAll(node);
 
-                setGraphic(wrapper);
+                setRowGraphic(wrapper);
             } else {
-                setGraphic(item.getNode());
+                setRowGraphic(item.getNode());
             }
 
             updateStyle();

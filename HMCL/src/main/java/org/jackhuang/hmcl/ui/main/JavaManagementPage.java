@@ -2,14 +2,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
@@ -17,6 +15,8 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListCell;
+import org.glavo.m3fx.controls.M3ListView;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.construct.GraphicListCell;
 import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.Tag;
@@ -221,12 +222,12 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         }
 
         @Override
-        protected ListCell<JavaRuntime> createListCell(JFXListView<JavaRuntime> listView) {
+        protected M3ListCell<JavaRuntime> createListCell(M3ListView<JavaRuntime> listView) {
             return new JavaItemCell(listView);
         }
     }
 
-    private static final class JavaItemCell extends ListCell<JavaRuntime> {
+    private static final class JavaItemCell extends GraphicListCell<JavaRuntime> {
         private final RipplerContainer graphic;
         private final Label label = new Label();
         private final TwoLineListItem content;
@@ -237,7 +238,8 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         private final Tooltip removeTooltip = new Tooltip();
 
         /// Creates a Java runtime cell with interactive tags and independent removal controls.
-        JavaItemCell(JFXListView<JavaRuntime> listView) {
+        JavaItemCell(M3ListView<JavaRuntime> listView) {
+            super(listView);
             label.setAlignment(Pos.CENTER);
             label.setMouseTransparent(true);
             FXUtils.setLimitWidth(label, 32);
@@ -283,8 +285,6 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
             this.graphic = new RipplerContainer(content);
             graphic.setPressFeedbackEnabled(false);
-
-            FXUtils.limitCellWidth(listView, this);
         }
 
         /// Updates the runtime details and reuses the architecture tag when the item changes.
@@ -300,7 +300,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             this.graphic.resetFeedback();
 
             if (empty || item == null) {
-                setGraphic(null);
+                setRowGraphic(null);
             } else {
                 int parsedVersion = item.getParsedVersion();
                 label.setText(parsedVersion >= 0 ? String.valueOf(parsedVersion) : "?");
@@ -322,7 +322,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 }
                 removeButton.setDisable(!item.isManaged() && SettingsManager.isUserSettingsReadOnly());
 
-                setGraphic(graphic);
+                setRowGraphic(graphic);
             }
         }
 

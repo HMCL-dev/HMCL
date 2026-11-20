@@ -7,13 +7,12 @@ import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import org.glavo.m3fx.controls.M3Divider;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3RadioButton;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Displays a game instance with selection, update, settings, and management controls.
-public final class GameListCell extends ListCell<GameListItem> {
+public final class GameListCell extends GraphicListCell<GameListItem> {
 
     /// Provides ripple feedback around the cell content.
     private final RipplerContainer graphic;
@@ -54,8 +53,8 @@ public final class GameListCell extends ListCell<GameListItem> {
     private @Nullable GameListItem managementPopupItem;
 
     /// Creates a game instance cell constrained to the supplied list's viewport width.
-    public GameListCell(ListView<GameListItem> listView) {
-        FXUtils.limitCellWidth(listView, this);
+    public GameListCell(M3ListView<GameListItem> listView) {
+        super(listView);
 
         TwoLineListItem root = this.content = new TwoLineListItem();
         root.getStyleClass().add("md-list-cell");
@@ -177,9 +176,9 @@ public final class GameListCell extends ListCell<GameListItem> {
         this.right.getChildren().clear();
 
         if (empty || item == null) {
-            setGraphic(null);
+            setRowGraphic(null);
         } else {
-            setGraphic(this.graphic);
+            setRowGraphic(this.graphic);
 
             this.imageView.imageProperty().bind(item.imageProperty());
             this.content.titleProperty().bind(item.titleProperty());

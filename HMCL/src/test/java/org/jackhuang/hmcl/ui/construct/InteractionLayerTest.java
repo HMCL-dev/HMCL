@@ -33,6 +33,8 @@ import org.glavo.m3fx.controls.M3ColorSlider;
 import org.glavo.m3fx.controls.M3ColorSwatch;
 import org.glavo.m3fx.controls.M3ColorSwatchPicker;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListItem;
+import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3MenuItem;
 import org.glavo.m3fx.controls.M3OverlayPane;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
@@ -72,6 +74,43 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 @Isolated("Temporarily supplies settings while initializing the cached animation policy")
 public final class InteractionLayerTest {
+
+    /// Scrolling a virtualized options list preserves its interactive graphics and accessible row.
+    @Test
+    void optionsListReusesRowsWithLiveControls() throws Exception {
+        onFxThread(() -> {
+            var options = new OptionsList();
+            for (int index = 0; index < 50; index++)
+                options.addTitle("Group " + index);
+            var calls = new AtomicInteger();
+            var button = new M3Button("Apply");
+            button.setOnAction(event -> calls.incrementAndGet());
+            options.addListElement(button);
+
+            var stage = new Stage();
+            try {
+                var scene = new Scene(options, 320, 180);
+                M3ThemeManager.install(scene, M3Theme.defaultTheme());
+                stage.setScene(scene);
+                stage.show();
+                options.applyCss();
+                options.layout();
+                M3ListView<?> view = assertInstanceOf(M3ListView.class, options.lookup(".m3-list-view"));
+                view.scrollTo(50, false);
+                options.layout();
+                var row = assertInstanceOf(M3ListItem.class,
+                        view.queryAccessibleAttribute(AccessibleAttribute.ITEM_AT_INDEX, 50));
+                row.applyCss();
+                assertSame(button, row.lookup(".m3-button"));
+                button.fire();
+                assertEquals(1, calls.get());
+                options.getElements().clear();
+                assertTrue(view.getItems().isEmpty());
+            } finally {
+                stage.close();
+            }
+        });
+    }
 
     /// A live selector can replace its options while open and commit the next option by keyboard.
     @Test

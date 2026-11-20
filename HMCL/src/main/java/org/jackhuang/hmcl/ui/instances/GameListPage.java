@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -18,11 +17,10 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -193,8 +191,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
                 ComponentList root = new ComponentList();
                 root.getStyleClass().add("no-padding");
-                JFXListView<GameListItem> listView = new JFXListView<>();
-                listView.getStyleClass().add("no-horizontal-scrollbar");
+                M3ListView<GameListItem> listView = new M3ListView<>();
 
                 {
                     toolbarPane = new TransitionPane();
@@ -245,9 +242,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     center.failedReasonProperty().bind(skinnable.failedReasonProperty());
 
                     listView.setCellFactory(GameListCell::new);
-                    listView.setItems(skinnable.getItems());
+                    Bindings.bindContent(listView.getItems(), skinnable.getItems());
 
-                    ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
                     StackPane placeholderContainer = new StackPane();
                     placeholderContainer.getStyleClass().add("notice-pane");
@@ -256,9 +252,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                         Bindings.when(isSearching).then(i18n("search.no_results_found")).otherwise("")
                     );
                     placeholderContainer.getChildren().add(placeholderLabel);
-                    listView.setPlaceholder(placeholderContainer);
 
-                    center.setContent(listView);
+                    center.setContent(FXUtils.withListPlaceholder(listView, placeholderContainer));
                     root.getContent().add(center);
                 }
 

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXListView;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -21,6 +21,7 @@ import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListView;
 import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -70,7 +71,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
     private final Path localAddonDirectory;
     private final ObservableList<AddonUpdateObject> objects;
 
-    private final JFXListView<AddonUpdateObject> listView;
+    private final M3ListView<AddonUpdateObject> listView;
 
     public AddonUpdatesPage(DownloadProvider downloadProvider, Path localAddonDirectory, AddonUpdates updates) {
         this.downloadProvider = downloadProvider;
@@ -95,20 +96,17 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             Label placeholderLabel = new Label(i18n("addon.check_update.only_preview"));
             placeholderContainer.getChildren().add(placeholderLabel);
 
-            listView = new JFXListView<>();
-            listView.setItems(objects);
-            listView.getStyleClass().add("jfx-list-view-float");
-            listView.getStyleClass().add("no-horizontal-scrollbar");
-            listView.setPlaceholder(placeholderContainer);
+            listView = new M3ListView<>();
+            Bindings.bindContent(listView.getItems(), objects);
 
             setMargin(listView, new Insets(0, 10, 0, 10));
             VBox.setVgrow(listView, Priority.ALWAYS);
 
             listView.setCellFactory(AddonUpdateListCell::new);
 
-            ComponentList.setVgrow(listView, Priority.ALWAYS);
-
-            centrePane.getContent().setAll(listView);
+            var content = FXUtils.withListPlaceholder(listView, placeholderContainer);
+            ComponentList.setVgrow(content, Priority.ALWAYS);
+            centrePane.getContent().setAll(content);
 
             centerWrapper.getChildren().setAll(centrePane);
 
@@ -307,7 +305,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         }
     }
 
-    private static class AddonUpdateListCell extends ListCell<AddonUpdateObject> {
+    private static class AddonUpdateListCell extends GraphicListCell<AddonUpdateObject> {
         private final StackPane pane = new StackPane();
         private final RipplerContainer ripplerContainer;
 
@@ -316,7 +314,8 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private final TwoLineListItem content = new TwoLineListItem();
         private final M3IconButton changelogButton = new M3IconButton(SVG.INFO.createIcon());
 
-        AddonUpdateListCell(ListView<AddonUpdatesPage.AddonUpdateObject> listView) {
+        AddonUpdateListCell(M3ListView<AddonUpdatesPage.AddonUpdateObject> listView) {
+            super(listView);
             HBox hbox = new HBox(16);
             HBox.setHgrow(content, Priority.ALWAYS);
             hbox.setAlignment(Pos.CENTER);
@@ -346,8 +345,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     item.enabled.set(!item.isEnabled());
                 }
             });
-
-            FXUtils.limitCellWidth(listView, this);
         }
 
         /// Updates addon version information and replaces tags together, reusing their labels.
@@ -369,7 +366,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             }
 
             if (empty || item == null) {
-                setGraphic(null);
+                setRowGraphic(null);
                 return;
             }
 
@@ -394,7 +391,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             content.setSubtitle(item.getCurrentVersion() + " → " + item.getTargetVersion());
 
-            setGraphic(pane);
+            setRowGraphic(pane);
         }
     }
 

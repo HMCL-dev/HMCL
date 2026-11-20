@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -132,7 +131,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         refresh();
     }
 
-    private void selectDate(JFXListView<Screenshot> listView) {
+    private void selectDate(ListView<Screenshot> listView) {
         FXUtils.chooseDateRange(pair -> {
             Instant from = pair.key() != null ? pair.key().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant() : Instant.MIN;
             Instant to = pair.value() != null ? pair.value().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant() : Instant.MAX;
@@ -265,7 +264,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         private final TwoLineListItem content = new TwoLineListItem();
 
         /// Creates a cell whose file actions operate on the supplied page.
-        public ScreenshotCell(JFXListView<Screenshot> listView, ScreenshotsPage page) {
+        public ScreenshotCell(ListView<Screenshot> listView, ScreenshotsPage page) {
             super(listView);
 
             setSelectable();
@@ -399,7 +398,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         private final HBox toolbarNormal;
         private final HBox toolbarSelecting;
 
-        private final JFXListView<Screenshot> listView;
+        private final ListView<Screenshot> listView;
 
         public ScreenshotsPageSkin(ScreenshotsPage skinnable) {
             super(skinnable);
@@ -410,7 +409,9 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
 
             ComponentList root = new ComponentList();
             root.getStyleClass().add("no-padding");
-            listView = new JFXListView<>();
+            listView = new ListView<>();
+            listView.getStyleClass().add("launcher-list-view");
+            ScrollUtils.installSmoothScrolling(listView);
             listView.getStyleClass().add("no-horizontal-scrollbar");
 
             {

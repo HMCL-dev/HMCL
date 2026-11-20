@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -294,7 +293,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     @NotNullByDefault
     private static final class ResourcePackListPageSkin extends SkinBase<ResourcePackListPage> {
-        private final JFXListView<ResourcePackInfoObject> listView;
+        private final ListView<ResourcePackInfoObject> listView;
         private final M3TextField searchField = FXUtils.newTextField(M3TextInputVariant.FILLED);
 
         private final TransitionPane toolbarPane = new TransitionPane();
@@ -318,7 +317,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             ComponentList root = new ComponentList();
             root.getStyleClass().add("no-padding");
 
-            listView = new JFXListView<>();
+            listView = new ListView<>();
 
             {
 
@@ -418,6 +417,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.loadingProperty().bind(control.loadingProperty());
 
+                listView.getStyleClass().add("launcher-list-view");
+                ScrollUtils.installSmoothScrolling(listView);
                 listView.setCellFactory(x -> new ResourcePackListCell(listView, control));
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
@@ -548,7 +549,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final M3Switch activeSwitch = new M3Switch();
 
         /// Creates a selectable pack row with compatibility confirmation and file actions.
-        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
+        public ResourcePackListCell(ListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
             super(listView);
 
             getStyleClass().add("resource-pack-list-cell");

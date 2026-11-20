@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.wizard;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.scene.Node;
+import org.glavo.m3fx.controls.M3ListView;
+import org.glavo.m3fx.controls.M3SelectionMode;
 import org.glavo.m3fx.controls.M3TextArea;
 import org.jackhuang.hmcl.ui.FXUtils;
 
@@ -15,7 +16,8 @@ public final class Summary {
     private final Object result;
 
     public Summary(String[] items, Object result) {
-        JFXListView<String> view = new JFXListView<>();
+        M3ListView<String> view = new M3ListView<>();
+        view.setSelectionMode(M3SelectionMode.SINGLE);
         view.getItems().addAll(items);
 
         this.component = view;

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -18,19 +17,17 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.image.ImageLoaders;
@@ -499,7 +496,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private final M3TextField searchField = FXUtils.newTextField(M3TextInputVariant.FILLED);
 
         /// List of installed theme packs.
-        private final JFXListView<ThemePackManager.InstalledThemePack> listView = new JFXListView<>();
+        private final M3ListView<ThemePackManager.InstalledThemePack> listView = new M3ListView<>();
 
         /// Creates the management page skin.
         ///
@@ -575,10 +572,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             center.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
 
             listView.setPadding(Insets.EMPTY);
-            listView.setCellFactory(x -> new ThemePackItemCell(skinnable));
-            listView.setItems(skinnable.getItems());
-            listView.getStyleClass().add("no-horizontal-scrollbar");
-            ignoreEvent(listView, KeyEvent.KEY_PRESSED, event -> event.getCode() == KeyCode.ESCAPE);
+            listView.setCellFactory(x -> new ThemePackItemCell(x, skinnable));
+            Bindings.bindContent(listView.getItems(), skinnable.getItems());
 
             StackPane placeholderContainer = new StackPane();
             placeholderContainer.getStyleClass().add("notice-pane");
@@ -587,9 +582,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 Bindings.when(isSearching).then(i18n("search.no_results_found")).otherwise("")
             );
             placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
 
-            center.setContent(listView);
+            center.setContent(FXUtils.withListPlaceholder(listView, placeholderContainer));
             root.getContent().add(center);
         }
 
@@ -609,7 +603,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
     /// List cell that renders one installed theme pack.
     @NotNullByDefault
-    private static final class ThemePackItemCell extends ListCell<ThemePackManager.@Nullable InstalledThemePack> {
+    private static final class ThemePackItemCell extends GraphicListCell<ThemePackManager.InstalledThemePack> {
         /// The owning management page.
         private final ThemePackManagementPage page;
 
@@ -640,7 +634,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Creates a reusable theme-pack list cell.
         ///
         /// @param page the owning management page
-        private ThemePackItemCell(ThemePackManagementPage page) {
+        private ThemePackItemCell(M3ListView<ThemePackManager.InstalledThemePack> listView, ThemePackManagementPage page) {
+            super(listView);
             this.page = page;
 
             content.getStyleClass().add("md-list-cell");
@@ -692,7 +687,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             super.updateItem(themePack, empty);
 
-            if (Objects.equals(getItem(), currentItem) && oldEmpty == empty) return;
+            if (themePack == currentItem && oldEmpty == empty) return;
 
             this.graphic.resetFeedback();
             iconImage.setImage(null);
@@ -700,10 +695,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             if (empty || themePack == null) {
                 content.getTags().clear();
-                setGraphic(null);
+                setRowGraphic(null);
                 return;
             }
-            setGraphic(graphic);
+            setRowGraphic(graphic);
 
             ThemePackManifest manifest = themePack.manifest();
             page.updateIcon(iconImage, iconFallback, themePack, manifest.icon());

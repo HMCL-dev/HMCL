@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -10,8 +9,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
@@ -22,6 +19,8 @@ import javafx.stage.FileChooser;
 import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3Divider;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3ListCell;
+import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3MenuItem;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.World;
@@ -224,13 +223,7 @@ public final class WorldListPage extends ListPageBase<World> {
     private final class WorldListPageSkin extends ToolbarListPageSkin<World, WorldListPage> {
 
         WorldListPageSkin() {
-            super(WorldListPage.this);
-
-            StackPane placeholderContainer = new StackPane();
-            placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label(i18n("world.empty"));
-            placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
+            super(WorldListPage.this, i18n("world.empty"));
         }
 
         @Override
@@ -248,12 +241,12 @@ public final class WorldListPage extends ListPageBase<World> {
         }
 
         @Override
-        protected ListCell<World> createListCell(JFXListView<World> listView) {
-            return new WorldListCell(getSkinnable());
+        protected M3ListCell<World> createListCell(M3ListView<World> listView) {
+            return new WorldListCell(listView, getSkinnable());
         }
     }
 
-    private static final class WorldListCell extends ListCell<World> {
+    private static final class WorldListCell extends GraphicListCell<World> {
 
         private final WorldListPage page;
 
@@ -264,7 +257,8 @@ public final class WorldListPage extends ListPageBase<World> {
         private final M3IconButton btnLaunch;
 
         /// Creates a world row with launch and management actions for the supplied page.
-        public WorldListCell(WorldListPage page) {
+        public WorldListCell(M3ListView<World> listView, WorldListPage page) {
+            super(listView);
             this.page = page;
 
             var root = new BorderPane();
@@ -342,7 +336,7 @@ public final class WorldListPage extends ListPageBase<World> {
 
             if (empty || world == null) {
                 content.getTags().clear();
-                setGraphic(null);
+                setRowGraphic(null);
                 imageView.setImage(null);
                 leftTooltip.setText("");
                 content.setTitle("");
@@ -365,7 +359,7 @@ public final class WorldListPage extends ListPageBase<World> {
                 content.getTags().setAll(tags);
                 content.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
-                setGraphic(graphic);
+                setRowGraphic(graphic);
             }
         }
 
