@@ -491,9 +491,9 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             }
 
             getDialogPane().setHeadline(switch (type) {
-                    case EDIT -> i18n("server.manage.edit.head");
-                    case ADD -> i18n("server.manage.add.head");
-                });
+                case EDIT -> i18n("server.manage.edit.head");
+                case ADD -> i18n("server.manage.add.head");
+            });
 
             VBox bodyVbox = new VBox();
             bodyVbox.setSpacing(8);

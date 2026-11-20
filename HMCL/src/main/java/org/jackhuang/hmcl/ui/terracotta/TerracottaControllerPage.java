@@ -302,11 +302,13 @@ public class TerracottaControllerPage extends StackPane {
                         M3ListItem info = new M3ListItem(i18n("terracotta.difficulty." + difficultyID));
                         info.setFocusTraversable(false);
                         info.setMouseTransparent(true);
-                        info.setLeading((switch (difficulty) {
+
+                        var icon = switch (difficulty) {
                             case UNKNOWN -> throw new AssertionError();
                             case EASIEST, SIMPLE -> SVG.INFO;
                             case MEDIUM, TOUGH -> SVG.WARNING;
-                        }).createIcon());
+                        };
+                        info.setLeading(icon.createIcon());
 
                         info.setSupportingText(i18n("terracotta.difficulty.estimate_only"));
 
