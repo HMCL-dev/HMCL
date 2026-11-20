@@ -531,7 +531,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
             activeSwitch = new JFXSwitch() {
                 @Override
                 public void fire() {
-                    if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !ResourcePackCell.this.isSelected() && getItem() != null && !getItem().getFile().isCompatible()) {
+                    if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !isSelected() && getItem() != null && !getItem().getFile().isCompatible()) {
                         Controllers.confirm(
                                 i18n("resourcepack.warning.manipulate"),
                                 i18n("message.info"),
