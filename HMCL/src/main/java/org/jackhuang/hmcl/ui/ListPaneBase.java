@@ -61,7 +61,7 @@ public abstract class ListPaneBase<T> extends StackPane {
 
     /// Owns the graphic and ripple feedback shared by successive items in one virtual cell.
     @NotNullByDefault
-    public abstract static class ItemCell<T> extends ListCell<T> {
+    public abstract static class ItemCell<T> extends ListCell<@Nullable T> {
         /// Marks the row whose item is last in the list.
         private static final PseudoClass LAST = PseudoClass.getPseudoClass("last");
         /// Marks selected rows on pages that enable selection feedback.
