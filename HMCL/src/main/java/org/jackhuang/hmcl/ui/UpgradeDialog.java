@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXDialogLayout;
-import javafx.geometry.Insets;
-import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 
 import org.glavo.m3fx.controls.M3Button;
@@ -13,8 +10,7 @@ import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
+import org.jackhuang.hmcl.ui.construct.LauncherDialog;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -24,17 +20,14 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 
 import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class UpgradeDialog extends JFXDialogLayout {
+public final class UpgradeDialog extends LauncherDialog {
 
     public UpgradeDialog(RemoteVersion remoteVersion, Runnable updateRunnable) {
-        Label heading = new Label(i18n("update.changelog"));
-        heading.setPadding(new Insets(0, 0, 8, 0));
-        setHeading(heading);
-        setBody(FXUtils.newSpinner());
+        getDialogPane().setHeadline(i18n("update.changelog"));
+        getDialogPane().setContent(FXUtils.newSpinner());
 
         String url = CHANGELOG_URL + remoteVersion.channel().channelName + ".html";
 
@@ -79,27 +72,31 @@ public final class UpgradeDialog extends JFXDialogLayout {
                     ScrollPane scrollPane = new ScrollPane(result);
                     scrollPane.setFitToWidth(true);
                     ScrollUtils.installSmoothScrolling(scrollPane);
-                    setBody(scrollPane);
+                    getDialogPane().setContent(scrollPane);
                 } else {
-                    setBody();
+                    getDialogPane().setContent(null);
                 }
             } else {
                 LOG.warning("Failed to load update log, trying to open it in browser");
                 FXUtils.openLink(url);
-                setBody();
+                getDialogPane().setContent(null);
             }
         }).start();
 
-        JFXHyperlink openInBrowser = new JFXHyperlink(i18n("web.view_in_browser"));
-        openInBrowser.setExternalLink(url);
+        var openInBrowser = new M3Button(i18n("web.view_in_browser"), M3ButtonVariant.TEXT);
+        openInBrowser.setOnAction(event -> {
+            event.consume();
+            FXUtils.openLink(url);
+        });
 
         M3Button updateButton = new M3Button(i18n("update.accept"), M3ButtonVariant.TEXT);
-        updateButton.setOnAction(e -> updateRunnable.run());
+        updateButton.setOnAction(event -> {
+            event.consume();
+            updateRunnable.run();
+        });
 
         M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
-        cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-
-        setActions(openInBrowser, cancelButton, updateButton);
-        onEscPressed(this, cancelButton::fire);
+        getDialogPane().getActions().setAll(openInBrowser, cancelButton, updateButton);
+        cancelButton.setCancelButton(true);
     }
 }

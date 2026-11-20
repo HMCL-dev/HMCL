@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.property.BooleanProperty;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
@@ -25,19 +24,28 @@ import javax.net.ssl.SSLException;
 import java.io.IOException;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class AddAuthlibInjectorServerPane extends TransitionPane implements DialogAware {
+public final class AddAuthlibInjectorServerPane extends LauncherDialog {
 
     private final Label lblServerUrl;
     private final Label lblServerName;
     private final Label lblCreationWarning;
     private final Label lblServerWarning;
     private final M3TextField txtServerUrl;
-    private final JFXDialogLayout addServerPane;
-    private final JFXDialogLayout confirmServerPane;
+    /// Animates navigation between the URL form and the resolved server details.
+    private final TransitionPane pages = new TransitionPane();
+    /// Editable URL and validation feedback.
+    private final VBox addServerPane = new VBox(8);
+    /// Metadata displayed before the server is added.
+    private final GridPane confirmServerPane = new GridPane();
+    /// Cancels either step.
+    private final M3Button cancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
+    /// Returns to the URL form.
+    private final M3Button prevButton = new M3Button(i18n("wizard.prev"), M3ButtonVariant.TEXT);
+    /// Saves the confirmed server.
+    private final M3Button finishButton = new M3Button(i18n("wizard.finish"), M3ButtonVariant.TEXT);
     /// Tracks the pending server metadata request.
     private final BooleanProperty checkingServer;
     private final M3Button btnAddNext;
@@ -51,8 +59,9 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
     }
 
     public AddAuthlibInjectorServerPane() {
-        addServerPane = new JFXDialogLayout();
-        addServerPane.setHeading(new Label(i18n("account.injector.add")));
+        getDialogPane().setHeadline(i18n("account.injector.add"));
+        setFormContent(pages);
+        cancel.setCancelButton(true);
         {
             txtServerUrl = FXUtils.newTextField(M3TextInputVariant.FILLED);
             txtServerUrl.setPromptText(i18n("account.injector.server_url"));
@@ -60,42 +69,29 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
             lblCreationWarning = new Label();
             lblCreationWarning.setWrapText(true);
-            HBox actions = new HBox();
-            {
-                M3Button cancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
-                cancel.setOnAction(e -> onAddCancel());
-
-                btnAddNext = new M3Button(i18n("wizard.next"), M3ButtonVariant.TEXT);
-                btnAddNext.setOnAction(e -> onAddNext());
-                checkingServer = FXUtils.newButtonLoadingProperty(btnAddNext);
-
-                actions.getChildren().setAll(cancel, btnAddNext);
-            }
-
-            VBox body = new VBox();
-            body.setSpacing(8);
+            btnAddNext = new M3Button(i18n("wizard.next"), M3ButtonVariant.TEXT);
+            btnAddNext.setOnAction(event -> {
+                event.consume();
+                onAddNext();
+            });
+            checkingServer = FXUtils.newButtonLoadingProperty(btnAddNext);
 
             lblCreationWarning.setMinWidth(0);
             lblCreationWarning.setPrefWidth(0);
-            lblCreationWarning.maxWidthProperty().bind(body.widthProperty());
+            lblCreationWarning.maxWidthProperty().bind(addServerPane.widthProperty());
             lblCreationWarning.visibleProperty().bind(lblCreationWarning.textProperty().isNotEmpty());
             lblCreationWarning.managedProperty().bind(lblCreationWarning.visibleProperty());
 
-            body.getChildren().addAll(
+            addServerPane.getChildren().addAll(
                 FXUtils.newValidatedTextField(txtServerUrl, new RequiredValidator(), new URLValidator()),
                 lblCreationWarning
             );
 
-            addServerPane.setBody(body);
-            addServerPane.setActions(actions);
-
             btnAddNext.disableProperty().bind(checkingServer.or(txtServerUrl.errorProperty()));
         }
 
-        confirmServerPane = new JFXDialogLayout();
-        confirmServerPane.setHeading(new Label(i18n("account.injector.add")));
         {
-            GridPane body = new GridPane();
+            GridPane body = confirmServerPane;
             body.setStyle("-fx-padding: 15 0 0 0;");
             body.setVgap(15);
             body.setHgap(15);
@@ -133,27 +129,19 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 );
             }
 
-            M3Button prevButton = new M3Button(i18n("wizard.prev"), M3ButtonVariant.TEXT);
-            prevButton.setOnAction(e -> onAddPrev());
-
-            M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
-            cancelButton.setOnAction(e -> onAddCancel());
-
-            M3Button finishButton = new M3Button(i18n("wizard.finish"), M3ButtonVariant.TEXT);
-            finishButton.setOnAction(e -> onAddFinish());
-
-            confirmServerPane.setBody(body);
-            confirmServerPane.setActions(prevButton, cancelButton, finishButton);
+            prevButton.setOnAction(event -> {
+                event.consume();
+                onAddPrev();
+            });
+            finishButton.setOnAction(event -> {
+                event.consume();
+                onAddFinish();
+            });
         }
 
-        this.setContent(addServerPane, ContainerAnimations.NONE);
-
-        onEscPressed(this, this::onAddCancel);
-    }
-
-    @Override
-    public void onDialogShown() {
-        txtServerUrl.requestFocus();
+        pages.setContent(addServerPane, ContainerAnimations.NONE);
+        getDialogPane().getActions().setAll(cancel, btnAddNext);
+        setOnShown(event -> txtServerUrl.requestFocus());
     }
 
     private String resolveFetchExceptionMessage(Throwable exception) {
@@ -170,10 +158,6 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
         } else {
             return exception.getClass().getName() + ": " + exception.getLocalizedMessage();
         }
-    }
-
-    private void onAddCancel() {
-        fireEvent(new DialogCloseEvent());
     }
 
     private void onAddNext() {
@@ -200,7 +184,8 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 //noinspection HttpUrlsUsage
                 lblServerWarning.setVisible(serverBeingAdded.getUrl().startsWith("http://"));
 
-                this.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT);
+                pages.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT);
+                getDialogPane().getActions().setAll(prevButton, cancel, finishButton);
             } else {
                 LOG.warning("Failed to resolve auth server: " + url, exception);
                 lblCreationWarning.setText(resolveFetchExceptionMessage(exception));
@@ -210,7 +195,8 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
     }
 
     private void onAddPrev() {
-        this.setContent(addServerPane, ContainerAnimations.SWIPE_RIGHT);
+        pages.setContent(addServerPane, ContainerAnimations.SWIPE_RIGHT);
+        getDialogPane().getActions().setAll(cancel, btnAddNext);
     }
 
     private void onAddFinish() {
@@ -230,7 +216,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
         if (!getAuthlibInjectorServers().contains(serverBeingAdded)) {
             getAuthlibInjectorServers().add(serverBeingAdded);
         }
-        fireEvent(new DialogCloseEvent());
+        closeDialog();
     }
 
 }

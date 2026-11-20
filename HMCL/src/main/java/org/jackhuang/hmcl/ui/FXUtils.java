@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXDatePicker;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.application.Platform;
@@ -56,7 +56,7 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
+import org.jackhuang.hmcl.ui.construct.LauncherDialog;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
@@ -1292,14 +1292,14 @@ public final class FXUtils {
         Controllers.dialog(new DateRangeDialog(onConfirm));
     }
 
-    private static class DateRangeDialog extends JFXDialogLayout {
+    private static class DateRangeDialog extends LauncherDialog {
 
         private final JFXDatePicker fromPicker, toPicker;
 
         public DateRangeDialog(Consumer<Pair<LocalDate, LocalDate>> onConfirm) {
             super();
 
-            setHeading(new Label(i18n("button.select_date")));
+            getDialogPane().setHeadline(i18n("button.select_date"));
 
             GridPane body = new GridPane();
             body.setHgap(4);
@@ -1320,19 +1320,16 @@ public final class FXUtils {
                 body.add(toLabel, 0, 1);
                 body.add(toPicker, 1, 1);
             }
-            setBody(body);
+            getDialogPane().setContent(body);
 
             M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
-            cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-
             M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
             okButton.setOnAction(e -> {
                 if (onConfirm != null) onConfirm.accept(Pair.pair(fromPicker.getValue(), toPicker.getValue()));
-                fireEvent(new DialogCloseEvent());
             });
 
-            setActions(cancelButton, okButton);
-            onEscPressed(this, cancelButton::fire);
+            getDialogPane().getActions().setAll(cancelButton, okButton);
+            cancelButton.setCancelButton(true);
         }
 
     }

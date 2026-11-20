@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -39,7 +38,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -494,7 +492,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    private static final class AddonVersion extends JFXDialogLayout {
+    private static final class AddonVersion extends LauncherDialog {
         /// Creates version details with dependency downloads and a non-navigating summary.
         public AddonVersion(RemoteAddon mod, RemoteAddon.Version version, DownloadPage selfPage) {
             RemoteAddon.Type type = selfPage.type;
@@ -506,7 +504,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 case SHADER_PACK -> "shaderpack.download.title";
                 default -> "mods.download.title";
             };
-            this.setHeading(new HBox(new Label(i18n(title, version.name()))));
+            getDialogPane().setHeadline(i18n(title, version.name()));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
@@ -540,14 +538,15 @@ public class DownloadPage extends Control implements DecoratorPage {
             box.getChildren().add(spinnerPane);
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
-            this.setBody(box);
+            getDialogPane().setContent(box);
 
             @Nullable M3Button downloadButton = null;
             if (selfPage.callback != null) {
                 downloadButton = new M3Button(type == RemoteAddon.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"), M3ButtonVariant.TEXT);
                 downloadButton.setOnAction(e -> {
+                    e.consume();
                     if (type == RemoteAddon.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
-                        fireEvent(new DialogCloseEvent());
+                        closeDialog();
                     }
                     selfPage.download(mod, version);
                 });
@@ -555,22 +554,21 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             M3Button saveAsButton = new M3Button(i18n("mods.save_as"), M3ButtonVariant.TEXT);
             saveAsButton.setOnAction(e -> {
+                e.consume();
                 if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
-                    fireEvent(new DialogCloseEvent());
+                    closeDialog();
                 }
                 selfPage.saveAs(version);
             });
 
             M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
-            cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-
             if (downloadButton == null) {
-                this.setActions(cancelButton, saveAsButton);
+                getDialogPane().getActions().setAll(cancelButton, saveAsButton);
             } else {
-                this.setActions(saveAsButton, cancelButton, downloadButton);
+                getDialogPane().getActions().setAll(saveAsButton, cancelButton, downloadButton);
             }
 
-            onEscPressed(this, cancelButton::fire);
+            cancelButton.setCancelButton(true);
         }
 
         private void loadDependencies(RemoteAddon.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
@@ -655,13 +653,13 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     /// Displays an add-on version's changelog in a scrollable dialog.
-    private static final class AddonChangelog extends JFXDialogLayout {
+    private static final class AddonChangelog extends LauncherDialog {
 
         /// Creates a changelog dialog with a preferred height that follows the window height.
         public AddonChangelog(RemoteAddon.Version version, RemoteAddonRepository repo, DownloadProvider provider) {
-            prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
+            getDialogPane().prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
 
-            setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + version.name())));
+            getDialogPane().setHeadline(i18n("addon.changelog") + " - " + version.name());
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
@@ -679,14 +677,11 @@ public class DownloadPage extends Control implements DecoratorPage {
             box.getChildren().add(spinnerPane);
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
-            this.setBody(box);
+            getDialogPane().setContent(box);
 
             M3Button closeButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
-            closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-
-            setActions(closeButton);
-
-            onEscPressed(this, closeButton::fire);
+            getDialogPane().getActions().setAll(closeButton);
+            closeButton.setCancelButton(true);
         }
 
         private void loadChangelog(RemoteAddon.Version version, RemoteAddonRepository repo, DownloadProvider provider, SpinnerPane spinnerPane, ScrollPane scrollPane) {

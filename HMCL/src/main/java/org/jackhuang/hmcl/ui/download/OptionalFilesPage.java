@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -31,8 +30,8 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
+import org.jackhuang.hmcl.ui.construct.LauncherDialog;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -46,7 +45,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Wizard page that lets the user choose which optional modpack files to install.
@@ -246,7 +244,7 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
     }
 
     /// Dialog showing remote addon details for an optional file.
-    private static final class ModInfo extends JFXDialogLayout {
+    private static final class ModInfo extends LauncherDialog {
         /// Creates a detail dialog for `addon`.
         ///
         /// @param addon the remote addon
@@ -275,23 +273,20 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
             title.setTitle(addon.title());
             title.setSubtitle(addon.author());
             container.getChildren().add(title);
-            setHeading(container);
+            getDialogPane().setGraphic(container);
 
             Label description = new Label(addon.description());
             description.setWrapText(true);
             description.setPadding(new Insets(8, 0, 0, 0));
-            setBody(description);
 
             JFXHyperlink pageButton = new JFXHyperlink(i18n("mods.url"));
             pageButton.setOnAction(e -> FXUtils.openLink(addon.pageUrl()));
-            getActions().add(pageButton);
+            getDialogPane().setContent(new VBox(8, description, pageButton));
 
-            M3Button okButton = new M3Button("", M3ButtonVariant.TEXT);
-            okButton.setText(i18n("button.ok"));
-            okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-            getActions().add(okButton);
+            M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
 
-            onEscPressed(this, okButton::fire);
+            getDialogPane().getActions().add(okButton);
+            okButton.setCancelButton(true);
         }
     }
 

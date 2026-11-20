@@ -34,10 +34,10 @@ public final class DialogController {
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<AuthInfo> res = new AtomicReference<>(null);
             runInFX(() -> {
-                MicrosoftAccountLoginPane pane = new MicrosoftAccountLoginPane(account, it -> {
+                var pane = MicrosoftAccountLoginPane.createDialog(account, it -> {
                     res.set(it);
                     latch.countDown();
-                }, latch::countDown, false);
+                }, latch::countDown);
                 Controllers.dialog(pane);
             });
             latch.await();

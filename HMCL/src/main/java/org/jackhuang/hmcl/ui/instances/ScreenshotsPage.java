@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
@@ -12,6 +11,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -337,20 +337,32 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         }
     }
 
-    private static final class ScreenshotDialog extends JFXDialogLayout {
+    private static final class ScreenshotDialog extends LauncherDialog {
 
         public ScreenshotDialog(Screenshot screenshot) {
             TwoLineListItem head = new TwoLineListItem();
             head.setTitle(screenshot.getFileName());
-            setHeading(head);
+            getDialogPane().setGraphic(head);
 
             var image = screenshot.getFullImage();
             if (image == null) {
-                setBody(SVG.SCREENSHOT_MONITOR.createIcon(360));
+                getDialogPane().setContent(SVG.SCREENSHOT_MONITOR.createIcon(360));
                 if (screenshot.getAttributes() != null)
                     head.setSubtitle(I18n.formatDateTime(screenshot.getCreationTime()) + "    " + FileUtils.parseFileSize(screenshot.getFileSize()));
             } else {
-                setBody(new ImageContainer(image, Math.min(Controllers.getDecorator().contentWidthProperty().get() * 0.8, image.getWidth()), Controllers.getDecorator().contentHeightProperty().get() * 0.57));
+                var preview = new ImageView(image);
+                preview.setPreserveRatio(true);
+                var viewport = new StackPane(preview);
+                viewport.setMinSize(0, 0);
+                var decorator = Controllers.getDecorator();
+                var width = Bindings.min(decorator.contentWidthProperty().multiply(0.7), image.getWidth());
+                viewport.prefHeightProperty().bind(Bindings.min(decorator.contentHeightProperty().multiply(0.57),
+                        width.multiply(image.getHeight() / image.getWidth())));
+                preview.fitWidthProperty().bind(viewport.widthProperty());
+                preview.fitHeightProperty().bind(viewport.heightProperty());
+                getDialogPane().containerMaxWidthProperty().bind(decorator.contentWidthProperty().multiply(0.8));
+                getDialogPane().prefWidthProperty().bind(width.add(48));
+                getDialogPane().setContent(viewport);
                 if (screenshot.getAttributes() != null)
                     head.setSubtitle(
                             I18n.formatDateTime(screenshot.getCreationTime())
@@ -362,6 +374,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
 
             M3Button setAsBgButton = new M3Button(i18n("screenshots.set_as_bg"), M3ButtonVariant.TEXT);
             setAsBgButton.setOnAction(e -> {
+                e.consume();
                 SettingsManager.settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
                 SettingsManager.settings().backgroundTypeProperty().set(BackgroundType.CUSTOM);
                 SettingsManager.settings().customBackgroundImagePathProperty().set(screenshot.getPath().toString());
@@ -370,13 +383,13 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             M3Button copyButton = new M3Button(i18n("menu.copy"), M3ButtonVariant.TEXT);
             copyButton.setDisable(image == null);
             copyButton.setOnAction(e -> {
+                e.consume();
                 if (image != null) FXUtils.copyImage(image);
             });
 
             M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
-            okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-            FXUtils.onEscPressed(this, okButton::fire);
-            setActions(setAsBgButton, copyButton, okButton);
+            okButton.setCancelButton(true);
+            getDialogPane().getActions().setAll(setAsBgButton, copyButton, okButton);
         }
     }
 

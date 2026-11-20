@@ -19,6 +19,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -610,7 +611,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     /// Displays mod metadata with a scrollable description.
-    private static final class ModInfoDialog extends JFXDialogLayout {
+    private static final class ModInfoDialog extends LauncherDialog {
 
         /// Creates a dialog whose description viewport follows its content and the window height.
         ModInfoDialog(ModInfoObject modInfo) {
@@ -654,7 +655,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             details.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(details, Priority.ALWAYS);
             titleContainer.getChildren().setAll(imageContainer, details);
-            setHeading(titleContainer);
+            getDialogPane().setGraphic(titleContainer);
 
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
             description.setWrapText(true);
@@ -670,7 +671,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     description.heightProperty(),
                     Controllers.getDecorator().contentHeightProperty().multiply(0.5)));
 
-            setBody(descriptionPane);
+            var links = new FlowPane(8, 4);
+            getDialogPane().setContent(new VBox(8, descriptionPane, links));
+            VBox.setVgrow(descriptionPane, Priority.ALWAYS);
 
             Set<String> displayedLoaders = new LinkedHashSet<>();
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
@@ -704,14 +707,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         }
                     }).start();
                     button.setDisable(true);
-                    getActions().add(button);
+                    links.getChildren().add(button);
                 }
             }
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getUrl())) {
                 JFXHyperlink officialPageButton = new JFXHyperlink(i18n("mods.url"));
                 officialPageButton.setExternalLink(modInfo.getModInfo().getUrl());
-                getActions().add(officialPageButton);
+                links.getChildren().add(officialPageButton);
             }
 
             @Nullable String mcmodUrl = modInfo.getProjectInfo() != null ? modInfo.getProjectInfo().mcmodUrl() : null;
@@ -722,19 +725,17 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         pair("site", "all"),
                         pair("filter", "0")
                 )));
-                getActions().add(searchButton);
+                links.getChildren().add(searchButton);
             } else {
                 JFXHyperlink mcmodButton = new JFXHyperlink(i18n("mods.mcmod.page"));
                 mcmodButton.setExternalLink(mcmodUrl);
-                getActions().add(mcmodButton);
+                links.getChildren().add(mcmodButton);
             }
 
-            M3Button okButton = new M3Button("", M3ButtonVariant.TEXT);
-            okButton.setText(i18n("button.ok"));
-            okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-            getActions().add(okButton);
+            M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
 
-            onEscPressed(this, okButton::fire);
+            getDialogPane().getActions().add(okButton);
+            okButton.setCancelButton(true);
         }
     }
 

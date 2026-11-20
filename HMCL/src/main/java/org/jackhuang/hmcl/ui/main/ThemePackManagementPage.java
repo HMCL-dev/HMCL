@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
@@ -401,7 +400,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
     /// Dialog showing all themes declared by one installed theme pack.
     @NotNullByDefault
-    private static final class ThemePackInfoDialog extends JFXDialogLayout {
+    private static final class ThemePackInfoDialog extends LauncherDialog {
         /// Creates the theme-pack information dialog.
         ///
         /// @param themePack the installed theme pack to display
@@ -420,7 +419,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             }
             TwoLineListItem.setMargin(icon, new Insets(0, 8, 0, 0));
             title.setLeading(icon);
-            setHeading(title);
+            getDialogPane().setGraphic(title);
 
             ComponentList themes = new ComponentList();
             themes.getStyleClass().add("no-padding");
@@ -455,7 +454,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 ComponentList.setNoPadding(rowRippler);
 
                 FXUtils.onClicked(rowRippler, () -> {
-                    fireEvent(new DialogCloseEvent());
+                    closeDialog();
                     page.confirmApplyTheme(themePack, theme);
                 });
 
@@ -472,12 +471,11 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             StackPane body = new StackPane(scrollPane);
             body.setPadding(new Insets(10, 0, 0, 0));
-            setBody(body);
+            getDialogPane().setContent(body);
 
             M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
-            okButton.setOnAction(event -> fireEvent(new DialogCloseEvent()));
-            setActions(okButton);
-            onEscPressed(this, okButton::fire);
+            getDialogPane().getActions().setAll(okButton);
+            okButton.setCancelButton(true);
         }
 
     }

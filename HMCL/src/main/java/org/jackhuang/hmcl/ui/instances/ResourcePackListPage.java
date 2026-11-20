@@ -18,9 +18,11 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
@@ -613,7 +615,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     /// Displays resource pack metadata with a scrollable description.
-    private static final class ResourcePackInfoDialog extends JFXDialogLayout {
+    private static final class ResourcePackInfoDialog extends LauncherDialog {
 
         /// Creates a dialog whose description viewport follows its content and the window height.
         ResourcePackInfoDialog(ResourcePackInfoObject packInfoObject) {
@@ -634,7 +636,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             }
 
             titleContainer.getChildren().setAll(imageContainer, title);
-            setHeading(titleContainer);
+            getDialogPane().setGraphic(titleContainer);
 
             Label description = new Label(Objects.requireNonNullElse(pack.getDescription(), "").toString());
             description.setWrapText(true);
@@ -650,7 +652,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     description.heightProperty(),
                     Controllers.getDecorator().contentHeightProperty().multiply(0.5)));
 
-            setBody(descriptionPane);
+            var links = new FlowPane(8, 4);
+            getDialogPane().setContent(new VBox(8, descriptionPane, links));
+            VBox.setVgrow(descriptionPane, Priority.ALWAYS);
 
             for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
                     pair("addon.curseforge", CurseForgeRemoteAddonRepository.getInstance()),
@@ -669,15 +673,13 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     }
                 }).start();
                 button.setDisable(true);
-                getActions().add(button);
+                links.getChildren().add(button);
             }
 
-            M3Button okButton = new M3Button("", M3ButtonVariant.TEXT);
-            okButton.setText(i18n("button.ok"));
-            okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-            getActions().add(okButton);
+            M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
 
-            onEscPressed(this, okButton::fire);
+            getDialogPane().getActions().add(okButton);
+            okButton.setCancelButton(true);
         }
     }
 }

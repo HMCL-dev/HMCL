@@ -498,35 +498,6 @@
     -fx-font-size: 14.0px;
 }
 
-.jfx-dialog-layout {
-    -fx-background-radius: 4px;
-    -fx-padding: 24px 24px 16px 24px;
-    -fx-background-color: -monet-surface-container-high;
-    -fx-text-fill: -monet-on-surface;
-}
-
-.jfx-layout-heading {
-    -fx-font-weight: BOLD;
-    -fx-font-size: 20.0px;
-    -fx-alignment: center-left;
-    -fx-padding: 5.0 0.0 5.0 0.0;
-}
-
-.jfx-layout-body {
-    -fx-pref-width: 400px;
-    -fx-wrap-text: true;
-}
-
-.jfx-layout-body Text {
-    -fx-fill: -monet-on-surface;
-}
-
-.jfx-layout-actions {
-    -fx-pref-width: 400;
-    -fx-padding: 10.0px 0.0 0.0 0.0;
-    -fx-alignment: center-right;
-}
-
 .dialog-error {
     -fx-text-fill: -monet-error;
     -fx-padding: 0.7em 0.8em;
@@ -555,7 +526,6 @@
 }
 
 /* M3FX owns the dialog surface and its shape; legacy content only supplies layout. */
-.m3-dialog-pane .jfx-dialog-layout,
 .m3-dialog-pane .task-executor-dialog-layout {
     -fx-background-color: transparent;
 }
@@ -565,10 +535,6 @@
  * Microsoft Login Dialog                                                      *
  *                                                                             *
  ******************************************************************************/
-
-.microsoft-login-dialog:bodyonly {
-    -fx-padding: 0px 0px 0px 0px;
-}
 
 .method-title {
     -fx-text-fill: -monet-on-surface;

@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
@@ -11,6 +12,9 @@ import javafx.geometry.VPos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import org.glavo.m3fx.controls.M3Button;
+import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3ComboBox;
 import org.glavo.m3fx.controls.M3TextField;
@@ -27,22 +31,31 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class PromptDialogPane extends DialogPane {
+public class PromptDialogPane extends LauncherDialog {
     private final CompletableFuture<List<Builder.Question<?>>> future = new CompletableFuture<>();
 
     private final Builder builder;
+    /// Shows the rejection message below the form until the next submission.
+    private final Label warningLabel = new Label();
+    /// Prevents duplicate submissions until the pending callback completes.
+    private final BooleanProperty submitting;
 
     public PromptDialogPane(Builder builder) {
         this.builder = builder;
-        setTitle(builder.title);
-        setPrefWidth(560);
+        getDialogPane().setHeadline(builder.title);
+        getDialogPane().setPrefWidth(560);
 
         GridPane body = new GridPane();
         body.setVgap(8);
         body.setHgap(16);
         body.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
-        setBody(body);
+        warningLabel.setWrapText(true);
+        warningLabel.getStyleClass().add("input-dialog-error");
+        warningLabel.visibleProperty().bind(warningLabel.textProperty().isNotEmpty());
+        warningLabel.managedProperty().bind(warningLabel.visibleProperty());
+        setFormContent(new VBox(8, body, warningLabel));
         List<BooleanBinding> bindings = new ArrayList<>();
         long inputCount = builder.questions.stream().filter(question -> !(question instanceof Builder.HintQuestion)).count();
         M3TextInputVariant variant = inputCount == 1 ? M3TextInputVariant.FILLED : M3TextInputVariant.OUTLINED;
@@ -94,10 +107,20 @@ public class PromptDialogPane extends DialogPane {
             }
         }
 
-        validProperty().bind(Bindings.createBooleanBinding(
+        var valid = Bindings.createBooleanBinding(
                 () -> bindings.stream().allMatch(BooleanBinding::get),
                 bindings.toArray(new BooleanBinding[0])
-        ));
+        );
+        var cancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
+        cancel.setCancelButton(true);
+        var accept = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
+        submitting = FXUtils.newButtonLoadingProperty(accept);
+        accept.disableProperty().bind(submitting.or(valid.not()));
+        accept.setOnAction(event -> {
+            event.consume();
+            onAccept();
+        });
+        getDialogPane().getActions().setAll(cancel, accept);
     }
 
     private static Label createQuestionLabel(String text) {
@@ -106,20 +129,27 @@ public class PromptDialogPane extends DialogPane {
         return label;
     }
 
-    @Override
-    protected void onAccept() {
-        setLoading();
+    /// Closes the dialog on successful submission and displays errors for another attempt.
+    private void onAccept() {
+        submitting.set(true);
+        warningLabel.setText("");
 
         builder.callback.call(builder.questions, new FutureCallback.ResultHandler() {
             @Override
             public void resolve() {
                 future.complete(builder.questions);
-                runInFX(() -> onSuccess());
+                runInFX(() -> {
+                    submitting.set(false);
+                    closeDialog();
+                });
             }
 
             @Override
             public void reject(String reason) {
-                runInFX(() -> onFailure(reason));
+                runInFX(() -> {
+                    submitting.set(false);
+                    warningLabel.setText(reason);
+                });
             }
         });
     }

@@ -2,13 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXDialogLayout;
 import io.nayuki.qrcodegen.QrCode;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
@@ -17,6 +15,7 @@ import javafx.scene.layout.*;
 import javafx.scene.shape.SVGPath;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3DialogPane;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -35,19 +34,19 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.QrCodeUtils;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class MicrosoftAccountLoginPane extends JFXDialogLayout implements DialogAware {
-    private final Account accountToRelogin;
-    private final Consumer<AuthInfo> loginCallback;
-    private final Runnable cancelCallback;
+public class MicrosoftAccountLoginPane extends StackPane {
+    private final @Nullable Account accountToRelogin;
+    private final @Nullable Consumer<AuthInfo> loginCallback;
+    private final @Nullable Runnable cancelCallback;
 
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
@@ -61,31 +60,26 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     /// Shows progress until the current login step accepts another action.
     private final BooleanProperty loggingIn;
 
-    public MicrosoftAccountLoginPane() {
-        this(false);
+    /// Creates a standalone Microsoft account login dialog.
+    public static LauncherDialog createDialog() {
+        return createDialog(null, null, null);
     }
 
-    public MicrosoftAccountLoginPane(boolean bodyonly) {
-        this(null, null, null, bodyonly);
+    /// Creates a login dialog with optional reauthentication and completion callbacks.
+    public static LauncherDialog createDialog(@Nullable Account account, @Nullable Consumer<AuthInfo> callback, @Nullable Runnable onCancel) {
+        var dialog = new LauncherDialog();
+        var pane = dialog.getDialogPane();
+        pane.setHeadline(i18n(account != null ? "account.login.refresh" : "account.create.microsoft"));
+        pane.setPrefWidth(560);
+        dialog.setFormContent(new MicrosoftAccountLoginPane(pane, account, callback, onCancel));
+        return dialog;
     }
 
-    public MicrosoftAccountLoginPane(Account account, Consumer<AuthInfo> callback, Runnable onCancel, boolean bodyonly) {
+    /// Installs the login actions on the dialog containing this form.
+    MicrosoftAccountLoginPane(M3DialogPane pane, @Nullable Account account, @Nullable Consumer<AuthInfo> callback, @Nullable Runnable onCancel) {
         this.accountToRelogin = account;
         this.loginCallback = callback;
         this.cancelCallback = onCancel;
-
-        getStyleClass().add("microsoft-login-dialog");
-        if (bodyonly) {
-            this.pseudoClassStateChanged(PseudoClass.getPseudoClass("bodyonly"), true);
-        } else {
-            Label heading = new Label(accountToRelogin != null ? i18n("account.login.refresh") : i18n("account.create.microsoft"));
-            heading.getStyleClass().add("header-label");
-            setHeading(heading);
-        }
-
-        this.setMaxWidth(650);
-
-        onEscPressed(this, this::onCancel);
 
         btnLogin = new M3Button(i18n("account.login"), M3ButtonVariant.TEXT);
 
@@ -98,7 +92,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         M3Button btnCancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
         btnCancel.setOnAction(e -> onCancel());
 
-        setActions(btnCancel, btnLogin);
+        btnCancel.setCancelButton(true);
+        pane.getActions().setAll(btnCancel, btnLogin);
 
         holder.registerWeak(Accounts.OAUTH_CALLBACK.onOpenBrowserAuthorizationCode, event -> Platform.runLater(() -> {
             if (step.get() instanceof Step.StartAuthorizationCodeLogin)
@@ -123,7 +118,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
     private void onStep(Step currentStep) {
         VBox rootContainer = new VBox(10);
-        setBody(rootContainer);
         rootContainer.setAlignment(Pos.TOP_CENTER);
 
         StackPane warningPane = new StackPane();
@@ -141,7 +135,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             warningPane.getChildren().setAll(snapshotHint);
             loggingIn.set(false);
         } else if (currentStep instanceof Step.Init) {
-            btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
+            btnLogin.setOnAction(e -> {
+                e.consume();
+                this.step.set(new Step.StartAuthorizationCodeLogin());
+            });
             loggingIn.set(false);
 
             var hintPane = new HintPane(MessageType.INFO);
@@ -163,6 +160,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                     .executor(true);
         } else if (currentStep instanceof Step.WaitForOpenBrowser wait) {
             btnLogin.setOnAction(e -> {
+                e.consume();
                 FXUtils.openLink(wait.url());
                 loggingIn.set(true);
             });
@@ -231,7 +229,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
             rootContainer.getChildren().addAll(hintPane);
         } else if (currentStep instanceof Step.LoginFailed failed) {
-            btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
+            btnLogin.setOnAction(e -> {
+                e.consume();
+                this.step.set(new Step.StartAuthorizationCodeLogin());
+            });
             loggingIn.set(false);
             cancelAllTasks();
 
@@ -265,7 +266,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         linkBox.getChildren().addAll(profileLink, purchaseLink);
         rootContainer.getChildren().add(linkBox);
 
-        setBody(rootContainer);
+        getChildren().setAll(rootContainer);
     }
 
     private void cancelAllTasks() {

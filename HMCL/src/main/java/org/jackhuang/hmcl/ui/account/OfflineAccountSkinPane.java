@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXDialogLayout;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -33,11 +32,10 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.UUID;
 
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class OfflineAccountSkinPane extends StackPane {
+public class OfflineAccountSkinPane extends LauncherDialog {
     private final OfflineAccount account;
 
     private final MultiFileItem<Skin.Type> skinItem = new MultiFileItem<>();
@@ -51,11 +49,11 @@ public class OfflineAccountSkinPane extends StackPane {
     public OfflineAccountSkinPane(OfflineAccount account) {
         this.account = account;
 
-        getStyleClass().add("skin-pane");
+        getDialogPane().getStyleClass().add("skin-pane");
 
-        JFXDialogLayout layout = new JFXDialogLayout();
-        getChildren().setAll(layout);
-        layout.setHeading(new Label(i18n("account.skin")));
+        getDialogPane().setContainerMaxWidth(740);
+        getDialogPane().setPrefWidth(740);
+        getDialogPane().setHeadline(i18n("account.skin"));
 
         BorderPane pane = new BorderPane();
 
@@ -91,8 +89,6 @@ public class OfflineAccountSkinPane extends StackPane {
         capeSelector.setMaxWidth(Double.MAX_VALUE);
         modelCombobox.setMaxWidth(Double.MAX_VALUE);
         cslApiField.setMaxWidth(Double.MAX_VALUE);
-
-        layout.setBody(pane);
 
         cslApiField.setPromptText(i18n("account.skin.type.csl_api.location.hint"));
         var cslApiLayout = FXUtils.newValidatedTextField(cslApiField, new URLValidator());
@@ -223,22 +219,19 @@ public class OfflineAccountSkinPane extends StackPane {
         });
 
         M3Button acceptButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
-        acceptButton.setOnAction(e -> {
-            account.setSkin(getSkin());
-            fireEvent(new DialogCloseEvent());
-        });
+        acceptButton.setOnAction(e -> account.setSkin(getSkin()));
 
         JFXHyperlink littleSkinLink = new JFXHyperlink(i18n("account.skin.type.little_skin"));
         littleSkinLink.setOnAction(e -> FXUtils.openLink("https://littleskin.cn/"));
         M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
-        cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-        onEscPressed(this, cancelButton::fire);
+        cancelButton.setCancelButton(true);
 
         acceptButton.disableProperty().bind(
                 skinItem.selectedDataProperty().isEqualTo(Skin.Type.CUSTOM_SKIN_LOADER_API)
                         .and(cslApiField.errorProperty()));
 
-        layout.setActions(littleSkinLink, cancelButton, acceptButton);
+        setFormContent(new VBox(8, pane, littleSkinLink));
+        getDialogPane().getActions().setAll(cancelButton, acceptButton);
     }
 
     private Skin getSkin() {

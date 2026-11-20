@@ -2,11 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXDialogLayout;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
@@ -21,16 +18,15 @@ import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
+import org.jackhuang.hmcl.ui.construct.LauncherDialog;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 
 import java.util.function.Consumer;
 
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ClassicAccountLoginDialog extends StackPane {
+public class ClassicAccountLoginDialog extends LauncherDialog {
     private final ClassicAccount oldAccount;
     private final Consumer<AuthInfo> success;
     private final Runnable failed;
@@ -48,15 +44,11 @@ public class ClassicAccountLoginDialog extends StackPane {
         this.success = success;
         this.failed = failed;
 
-        StackPane.setAlignment(progressBar, Pos.TOP_CENTER);
+        progressBar.managedProperty().bind(progressBar.visibleProperty());
         progressBar.setVisible(false);
         progressBar.setMouseTransparent(true);
 
-        JFXDialogLayout dialogLayout = new JFXDialogLayout();
-
-        {
-            dialogLayout.setHeading(new Label(i18n("login.enter_password")));
-        }
+        getDialogPane().setHeadline(i18n("login.enter_password"));
 
         {
             VBox body = new VBox(15);
@@ -70,23 +62,25 @@ public class ClassicAccountLoginDialog extends StackPane {
             passwordLayout.setLabelText(i18n("account.password"));
             passwordLayout.setValidator(new RequiredValidator());
 
-            body.getChildren().setAll(usernameLabel, passwordLayout);
-            dialogLayout.setBody(body);
+            lblCreationWarning.visibleProperty().bind(lblCreationWarning.textProperty().isNotEmpty());
+            lblCreationWarning.managedProperty().bind(lblCreationWarning.visibleProperty());
+            body.getChildren().setAll(usernameLabel, passwordLayout, lblCreationWarning, progressBar);
+            setFormContent(body);
         }
 
         {
             M3Button acceptButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
-            acceptButton.setOnAction(e -> onAccept());
+            acceptButton.setOnAction(e -> {
+                e.consume();
+                onAccept();
+            });
 
             M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             cancelButton.setOnAction(e -> onCancel());
 
-            dialogLayout.setActions(lblCreationWarning, cancelButton, acceptButton);
+            cancelButton.setCancelButton(true);
+            getDialogPane().getActions().setAll(cancelButton, acceptButton);
         }
-
-        getChildren().setAll(dialogLayout, progressBar);
-
-        onEscPressed(this, this::onCancel);
     }
 
     /// Submits a non-blank password and displays the authentication result.
@@ -99,12 +93,12 @@ public class ClassicAccountLoginDialog extends StackPane {
         Task.supplyAsync(() -> oldAccount.logInWithPassword(password))
                 .whenComplete(Schedulers.javafx(), authInfo -> {
                     success.accept(authInfo);
-                    fireEvent(new DialogCloseEvent());
+                    closeDialog();
                     progressBar.setVisible(false);
                 }, e -> {
                     LOG.info("Failed to login with password: " + oldAccount, e);
                     if (e instanceof NoSelectedCharacterException) {
-                        fireEvent(new DialogCloseEvent());
+                        onCancel();
                     } else {
                         lblCreationWarning.setText(Accounts.localizeErrorMessage(e));
                     }
@@ -114,6 +108,6 @@ public class ClassicAccountLoginDialog extends StackPane {
 
     private void onCancel() {
         failed.run();
-        fireEvent(new DialogCloseEvent());
+        closeDialog();
     }
 }

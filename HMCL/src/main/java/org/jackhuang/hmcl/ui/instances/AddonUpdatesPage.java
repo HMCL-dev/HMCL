@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 
 import javafx.beans.property.*;
@@ -400,15 +399,15 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
     }
 
     /// Displays the target add-on version's changelog in a scrollable dialog.
-    private static final class AddonChangelog extends JFXDialogLayout {
+    private static final class AddonChangelog extends LauncherDialog {
 
         /// Creates a changelog dialog with a preferred height that follows the window height.
         public AddonChangelog(AddonUpdateObject object) {
-            prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
+            getDialogPane().prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
 
             RemoteAddon.Version targetVersion = object.data.targetVersion();
 
-            this.setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + targetVersion.name())));
+            getDialogPane().setHeadline(i18n("addon.changelog") + " - " + targetVersion.name());
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
@@ -426,18 +425,16 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             box.getChildren().add(spinnerPane);
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
-            this.setBody(box);
+            getDialogPane().setContent(box);
 
             JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
             versionPageBtn.setDisable(true);
             loadVersionPageUrl(object, versionPageBtn);
 
             M3Button closeButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
-            closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-
-            setActions(versionPageBtn, closeButton);
-
-            onEscPressed(this, closeButton::fire);
+            box.getChildren().add(versionPageBtn);
+            getDialogPane().getActions().setAll(closeButton);
+            closeButton.setCancelButton(true);
         }
 
         private void loadChangelog(AddonUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {

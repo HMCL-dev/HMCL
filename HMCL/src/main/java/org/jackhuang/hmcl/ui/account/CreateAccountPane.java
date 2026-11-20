@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.*;
 import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
@@ -49,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import static java.util.Collections.emptyList;
@@ -60,7 +60,7 @@ import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
+public class CreateAccountPane extends LauncherDialog {
     private static final Pattern USERNAME_CHECKER_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
 
     private boolean showMethodSwitcher;
@@ -71,7 +71,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     /// Tracks the pending account submission, including username confirmation.
     private final BooleanProperty submitting;
     private final Node body;
-    private final HBox actions;
+    /// Cancels account creation and any pending login task.
+    private final M3Button btnCancel;
     private Node detailsPane; // AccountDetailsInputPane for Offline / Mojang / authlib-injector, Label for Microsoft
     private final Pane detailsContainer;
 
@@ -107,7 +108,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             } else {
                 title = "account.create." + Accounts.getLoginType(factory);
             }
-            setHeading(new Label(i18n(title)));
+            getDialogPane().setHeadline(i18n(title));
         }
 
         {
@@ -116,18 +117,19 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             lblErrorMessage.setMaxWidth(400);
 
             btnAccept = new M3Button(i18n("account.login"), M3ButtonVariant.TEXT);
-            btnAccept.setOnAction(e -> onAccept());
+            btnAccept.setOnAction(e -> {
+                e.consume();
+                onAccept();
+            });
 
             submitting = FXUtils.newButtonLoadingProperty(btnAccept);
 
-            M3Button btnCancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
+            btnCancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
             btnCancel.setOnAction(e -> onCancel());
-            onEscPressed(this, btnCancel::fire);
+            btnCancel.setCancelButton(true);
 
-            actions = new HBox(btnCancel, btnAccept);
-            actions.setAlignment(Pos.CENTER_RIGHT);
-
-            setActions(lblErrorMessage, actions);
+            lblErrorMessage.visibleProperty().bind(lblErrorMessage.textProperty().isNotEmpty());
+            lblErrorMessage.managedProperty().bind(lblErrorMessage.visibleProperty());
         }
 
         if (showMethodSwitcher) {
@@ -149,8 +151,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             TabHeader tabHeader = new TabHeader(tabs);
             tabHeader.getStyleClass().add("add-account-tab-header");
-            tabHeader.setMinWidth(USE_PREF_SIZE);
-            tabHeader.setMaxWidth(USE_PREF_SIZE);
+            tabHeader.setMinWidth(Region.USE_PREF_SIZE);
+            tabHeader.setMaxWidth(Region.USE_PREF_SIZE);
             if (selected != null)
                 tabHeader.getController().selectTab(selected);
             onChange(tabHeader.getController().selectedTabProperty(),
@@ -169,17 +171,20 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             VBox boxBody = new VBox(tabHeader, detailsContainer);
             boxBody.setAlignment(Pos.CENTER);
             body = boxBody;
-            setBody(body);
 
         } else {
             detailsContainer = new StackPane();
             detailsContainer.setPadding(new Insets(10, 0, 0, 0));
             body = detailsContainer;
-            setBody(body);
         }
         initDetailsPane();
 
-        setPrefWidth(560);
+        getDialogPane().setPrefWidth(560);
+        setFormContent(new VBox(8, body, lblErrorMessage));
+        setOnShown(event -> {
+            if (detailsPane instanceof AccountDetailsInputPane input)
+                input.focus();
+        });
     }
 
     public CreateAccountPane(AuthlibInjectorServer authServer) {
@@ -224,7 +229,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         completeLogin(account);
                     }, exception -> {
                         if (exception instanceof NoSelectedCharacterException) {
-                            fireEvent(new DialogCloseEvent());
+                            closeDialog();
                         } else {
                             lblErrorMessage.setText(Accounts.localizeErrorMessage(exception));
                         }
@@ -259,14 +264,14 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         Accounts.setSelectedAccount(account);
 
         submitting.set(false);
-        fireEvent(new DialogCloseEvent());
+        closeDialog();
     }
 
     private void onCancel() {
         if (loginTask != null) {
             loginTask.cancel();
         }
-        fireEvent(new DialogCloseEvent());
+        closeDialog();
     }
 
     private void initDetailsPane() {
@@ -274,16 +279,14 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             btnAccept.disableProperty().unbind();
             detailsContainer.getChildren().remove(detailsPane);
             lblErrorMessage.setText("");
-            setActions(lblErrorMessage, actions);
         }
 
         if (factory == Accounts.FACTORY_MICROSOFT) {
-            detailsPane = new MicrosoftAccountLoginPane(true);
-            setActions();
+            detailsPane = new MicrosoftAccountLoginPane(getDialogPane(), null, null, null);
         } else {
             detailsPane = new AccountDetailsInputPane(factory, btnAccept::fire);
             btnAccept.disableProperty().bind(submitting.or(((AccountDetailsInputPane) detailsPane).validProperty().not()));
-            setActions(lblErrorMessage, actions);
+            getDialogPane().getActions().setAll(btnCancel, btnAccept);
         }
 
         detailsContainer.getChildren().add(detailsPane);
@@ -577,52 +580,43 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
     }
 
-    public static class DialogCharacterSelector extends JFXDialogLayout implements CharacterSelector {
-
-        private final AdvancedListBox listBox = new AdvancedListBox();
-        private final M3Button cancel = new M3Button("", M3ButtonVariant.TEXT);
-
-        private final CountDownLatch latch = new CountDownLatch(1);
-        private GameProfile selectedProfile = null;
-
-        public DialogCharacterSelector() {
-            setStyle("-fx-padding: 8px;");
-
-            cancel.setText(i18n("button.cancel"));
-            cancel.setOnAction(e -> latch.countDown());
-
-            listBox.startCategory(i18n("account.choose").toUpperCase(Locale.ROOT));
-
-            setBody(listBox);
-
-            HBox hbox = new HBox();
-            hbox.setAlignment(Pos.CENTER_RIGHT);
-            hbox.getChildren().add(cancel);
-            setActions(hbox);
-
-            onEscPressed(this, cancel::fire);
-        }
-
+    /// Prompts for a Yggdrasil profile while the authentication worker waits for the selection.
+    public static class DialogCharacterSelector implements CharacterSelector {
+        /// Shows the profiles on the FX thread and dismisses the chooser if the worker is interrupted.
         @Override
         public GameProfile select(YggdrasilService service, List<GameProfile> profiles) throws NoSelectedCharacterException {
+            var latch = new CountDownLatch(1);
+            var selected = new AtomicReference<@Nullable GameProfile>();
+            var chooser = new AtomicReference<@Nullable LauncherDialog>();
             Platform.runLater(() -> {
+                var dialog = new LauncherDialog();
+                chooser.set(dialog);
+                var listBox = new AdvancedListBox();
+                dialog.getDialogPane().setHeadline(i18n("account.choose"));
+                dialog.setFormContent(listBox);
+                var cancel = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
+                cancel.setCancelButton(true);
+                cancel.setOnAction(e -> latch.countDown());
+                dialog.getDialogPane().getActions().add(cancel);
+
                 for (GameProfile profile : profiles) {
                     Canvas portraitCanvas = new Canvas(32, 32);
                     TexturesLoader.bindAvatar(portraitCanvas, service, profile.getId());
 
                     IconedItem accountItem = new IconedItem(portraitCanvas, profile.getName());
                     FXUtils.onClicked(accountItem, () -> {
-                        selectedProfile = profile;
+                        selected.set(profile);
                         latch.countDown();
                     });
                     listBox.add(accountItem);
                 }
-                Controllers.dialog(this);
+                Controllers.dialog(dialog);
             });
 
             try {
                 latch.await();
 
+                @Nullable GameProfile selectedProfile = selected.get();
                 if (selectedProfile == null)
                     throw new NoSelectedCharacterException();
 
@@ -630,15 +624,12 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             } catch (InterruptedException ignored) {
                 throw new NoSelectedCharacterException();
             } finally {
-                Platform.runLater(() -> fireEvent(new DialogCloseEvent()));
+                Platform.runLater(() -> {
+                    @Nullable LauncherDialog dialog = chooser.get();
+                    if (dialog != null)
+                        dialog.closeDialog();
+                });
             }
-        }
-    }
-
-    @Override
-    public void onDialogShown() {
-        if (detailsPane instanceof AccountDetailsInputPane) {
-            ((AccountDetailsInputPane) detailsPane).focus();
         }
     }
 

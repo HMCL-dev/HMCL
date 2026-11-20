@@ -801,12 +801,48 @@ final class TaskExecutorDialogPaneTest {
             if (includeCheckbox)
                 builder.addQuestion(new PromptDialogPane.Builder.BooleanQuestion("Copy settings", false));
             var prompt = new PromptDialogPane(builder);
-            var layout = assertInstanceOf(M3TextInputLayout.class, prompt.getBody().getFirst().lookup(".m3-text-input-layout"));
+            var pane = prompt.getDialogPane();
+            StyleSheets.init(new Scene(pane));
+            pane.applyCss();
+            var layout = assertInstanceOf(M3TextInputLayout.class, pane.lookup(".m3-text-input-layout"));
             var field = assertInstanceOf(M3TextField.class, layout.getInput());
             assertEquals(includeCheckbox ? M3TextInputVariant.OUTLINED : M3TextInputVariant.FILLED, field.getVariant());
-            StyleSheets.init(new Scene(prompt));
-            prompt.applyCss();
             assertEquals(includeCheckbox ? 14.0 : 16.0, field.getFont().getSize());
+            return true;
+        });
+    }
+
+    /// A tall form keeps its actions visible while a submission is pending or rejected.
+    @Test
+    void promptKeepsActionsAvailableUntilSubmissionResolves() throws Exception {
+        onFxThread(() -> {
+            var host = createDialogHost();
+            var callbacks = new ArrayList<FutureCallback.ResultHandler>();
+            var builder = new PromptDialogPane.Builder("Settings", (questions, handler) -> callbacks.add(handler));
+            for (int index = 0; index < 12; index++)
+                builder.addQuestion(new PromptDialogPane.Builder.StringQuestion("Setting " + index, ""));
+            var dialog = new PromptDialogPane(builder);
+            var pane = dialog.getDialogPane();
+            pane.setMaxHeight(300);
+            var handle = host.showDialog(dialog);
+            host.applyCss();
+            host.layout();
+
+            var accept = pane.getActions().getLast();
+            var form = assertInstanceOf(ScrollPane.class, pane.getContent());
+            assertTrue(form.getViewportBounds().getHeight() < form.getContent().getLayoutBounds().getHeight());
+            assertTrue(pane.localToScene(pane.getLayoutBounds()).contains(accept.localToScene(accept.getLayoutBounds())));
+            accept.fire();
+            assertTrue(handle.isShowing());
+            assertTrue(accept.isDisabled());
+            callbacks.getFirst().reject("Try again");
+            assertTrue(handle.isShowing());
+            assertFalse(accept.isDisabled());
+            assertEquals("Try again", assertInstanceOf(Label.class, pane.lookup(".input-dialog-error")).getText());
+            accept.fire();
+            callbacks.getLast().resolve();
+            assertTrue(dialog.getCompletableFuture().isDone());
+            assertFalse(handle.isShowing());
             return true;
         });
     }

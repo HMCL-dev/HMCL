@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXDialogLayout;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -15,6 +14,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.*;
 import javafx.util.Duration;
 import org.glavo.m3fx.controls.M3Button;
@@ -392,21 +392,24 @@ public final class Controllers {
         }
 
         if (SettingsManager.userState().agreementVersionProperty().get() < 1) {
-            JFXDialogLayout agreementPane = new JFXDialogLayout();
-            agreementPane.setHeading(new Label(i18n("launcher.agreement")));
-            agreementPane.setBody(new Label(i18n("launcher.agreement.hint")));
+            var agreement = new M3Dialog();
+            agreement.setDismissOnScrimClick(false);
+            var agreementPane = agreement.getDialogPane();
+            agreementPane.setHeadline(i18n("launcher.agreement"));
+            var hint = new Label(i18n("launcher.agreement.hint"));
+            hint.setWrapText(true);
             JFXHyperlink agreementLink = new JFXHyperlink(i18n("launcher.agreement"));
             agreementLink.setExternalLink(Metadata.EULA_URL);
             M3Button yesButton = new M3Button(i18n("launcher.agreement.accept"), M3ButtonVariant.TEXT);
             yesButton.setOnAction(e -> {
                 UserState userState = userState();
                 userState.agreementVersionProperty().set(1);
-                agreementPane.fireEvent(new DialogCloseEvent());
             });
             M3Button noButton = new M3Button(i18n("launcher.agreement.decline"), M3ButtonVariant.TEXT);
             noButton.setOnAction(e -> javafx.application.Platform.exit());
-            agreementPane.setActions(agreementLink, noButton, yesButton);
-            Controllers.dialog(agreementPane);
+            agreementPane.setContent(new VBox(8, hint, agreementLink));
+            agreementPane.getActions().setAll(noButton, yesButton);
+            Controllers.dialog(agreement);
         }
 
         aprilFools:

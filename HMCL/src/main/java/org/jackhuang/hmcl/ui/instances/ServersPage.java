@@ -458,7 +458,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         }
     }
 
-    public static class EditServerDialog extends TransitionPane implements DialogAware {
+    public static class EditServerDialog extends LauncherDialog {
         private final Consumer<Server> handleCallback;
 
         private final Server reference;
@@ -476,7 +476,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             this.reference = reference;
             this.handleCallback = handleCallback;
 
-            getStyleClass().add("skin-pane");
+            getDialogPane().getStyleClass().add("skin-pane");
 
             String referenceServerName;
             String referenceServerIP;
@@ -491,13 +491,10 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 referenceServerPackStatus = null;
             }
 
-            JFXDialogLayout rootLayout = new JFXDialogLayout();
-            getChildren().setAll(rootLayout);
-
-            rootLayout.setHeading(new Label(switch (type) {
+            getDialogPane().setHeadline(switch (type) {
                     case EDIT -> i18n("server.manage.edit.head");
                     case ADD -> i18n("server.manage.add.head");
-                }));
+                });
 
             VBox bodyVbox = new VBox();
             bodyVbox.setSpacing(8);
@@ -508,7 +505,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             body.setAlignment(Pos.CENTER);
 
             ColumnConstraints col0 = new ColumnConstraints();
-            col0.setMinWidth(USE_PREF_SIZE);
+            col0.setMinWidth(Region.USE_PREF_SIZE);
             body.getColumnConstraints().add(col0);
             ColumnConstraints col1 = new ColumnConstraints();
             col1.setHgrow(Priority.ALWAYS);
@@ -586,7 +583,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             }
 
             bodyVbox.getChildren().add(body);
-            rootLayout.setBody(bodyVbox);
+            setFormContent(bodyVbox);
 
             btnAccept.setText(switch (type) {
                 case EDIT -> i18n("server.manage.edit.accept");
@@ -595,15 +592,11 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             btnAccept.disableProperty().bind(serverIpField.errorProperty());
 
             btnCancel.setText(i18n("button.cancel"));
-            onEscPressed(this, btnCancel::fire);
-
-            HBox actions = new HBox(btnCancel, btnAccept);
-            actions.setAlignment(Pos.CENTER_RIGHT);
-
-            rootLayout.setActions(actions);
-
-            btnCancel.setOnAction(e -> onCancel());
-            btnAccept.setOnAction(ignored -> {
+            btnCancel.setCancelButton(true);
+            getDialogPane().getActions().setAll(btnCancel, btnAccept);
+            setOnShown(event -> serverNameField.requestFocus());
+            btnAccept.setOnAction(event -> {
+                event.consume();
                 String serverName;
                 String serverIP = serverIpField.getText();
                 Server.ServerPackStatus serverPackStatus = serverPackStatusField.getValue();
@@ -614,7 +607,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                     serverName = serverNameField.getText();
                 }
 
-                fireEvent(new DialogCloseEvent());
+                closeDialog();
                 if (reference != null) {
                     handleCallback.accept(reference
                             .withName(serverName)
@@ -625,15 +618,6 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                     handleCallback.accept(Server.createServer(serverPackStatus, serverName, serverIP));
                 }
             });
-        }
-
-        private void onCancel() {
-            fireEvent(new DialogCloseEvent());
-        }
-
-        @Override
-        public void onDialogShown() {
-            serverNameField.requestFocus();
         }
 
         public enum Type {

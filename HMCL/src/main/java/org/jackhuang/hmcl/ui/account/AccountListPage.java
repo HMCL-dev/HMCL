@@ -81,9 +81,9 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
         microsoftItem.setLeftIcon(SVG.MICROSOFT);
         microsoftItem.setOnAction(e -> {
             if (SettingsManager.isUserGameAccountsReadOnly()) {
-                confirmOverwriteUserAccounts(() -> Controllers.dialog(new MicrosoftAccountLoginPane()));
+                confirmOverwriteUserAccounts(() -> Controllers.dialog(MicrosoftAccountLoginPane.createDialog()));
             } else {
-                Controllers.dialog(new MicrosoftAccountLoginPane());
+                Controllers.dialog(MicrosoftAccountLoginPane.createDialog());
             }
         });
 

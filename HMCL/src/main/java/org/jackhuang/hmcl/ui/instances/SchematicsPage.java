@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -604,7 +603,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
             }
         }
 
-        private final class SchematicInfoDialog extends JFXDialogLayout {
+        private final class SchematicInfoDialog extends LauncherDialog {
             private final ComponentList details;
 
             private void addDetailItem(String key, Object detail) {
@@ -655,7 +654,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                     title.setSubtitle(path.getFileName().toString());
 
                     titleBox.getChildren().setAll(icon, title);
-                    setHeading(titleBox);
+                    getDialogPane().setGraphic(titleBox);
                 }
 
                 {
@@ -668,16 +667,14 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                     FXUtils.setOverflowHidden(scrollPane, 8);
                     ScrollUtils.installSmoothScrolling(scrollPane);
                     StackPane.setMargin(scrollPane, new Insets(10, 0, 0, 0));
-                    setBody(scrollPane);
+                    getDialogPane().setContent(scrollPane);
                 }
 
                 {
-                    M3Button okButton = new M3Button("", M3ButtonVariant.TEXT);
-                    okButton.setText(i18n("button.ok"));
-                    okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-                    getActions().add(okButton);
+                    M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
 
-                    onEscPressed(this, okButton::fire);
+                    getDialogPane().getActions().add(okButton);
+                    okButton.setCancelButton(true);
                 }
 
                 updateContent(file);

@@ -401,7 +401,7 @@ public final class Instances {
         if (SettingsManager.isNewlyCreated() && !AuthlibInjectorServers.getServers().isEmpty() &&
                 !(account instanceof AuthlibInjectorAccount && AuthlibInjectorServers.getServers().contains(((AuthlibInjectorAccount) account).getServer()))) {
             CreateAccountPane dialog = new CreateAccountPane(AuthlibInjectorServers.getServers().iterator().next());
-            dialog.addEventHandler(DialogCloseEvent.CLOSE, e -> {
+            dialog.getDialogPane().addEventHandler(DialogCloseEvent.CLOSE, e -> {
                 Account newAccount = Accounts.getSelectedAccount();
                 if (newAccount == null) {
                     // user cancelled operation
@@ -412,7 +412,7 @@ public final class Instances {
             Controllers.dialog(dialog);
         } else if (account == null) {
             CreateAccountPane dialog = new CreateAccountPane();
-            dialog.addEventHandler(DialogCloseEvent.CLOSE, e -> {
+            dialog.getDialogPane().addEventHandler(DialogCloseEvent.CLOSE, e -> {
                 Account newAccount = Accounts.getSelectedAccount();
                 if (newAccount == null) {
                     // user cancelled operation
