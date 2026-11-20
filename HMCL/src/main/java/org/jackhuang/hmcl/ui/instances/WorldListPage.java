@@ -58,11 +58,6 @@ public final class WorldListPage extends ListPaneBase<World> {
 
     private int refreshCount = 0;
 
-    @Override
-    protected ItemCell<World> createItemCell(ListView<World> listView) {
-        return new WorldCell(listView, this);
-    }
-
     /// Creates a world list that reloads when `instanceContext` changes.
     ///
     /// @param instanceContext the parent page's instance property
@@ -98,6 +93,11 @@ public final class WorldListPage extends ListPaneBase<World> {
                 createToolbarButton(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, this::openSavesFolder),
                 createToolbarButton(i18n("world.download"), SVG.DOWNLOAD, this::download)
         ));
+    }
+
+    @Override
+    protected ItemCell<World> createItemCell(ListView<World> listView) {
+        return new WorldCell(listView, this);
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {

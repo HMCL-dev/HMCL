@@ -128,11 +128,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         private final ObservableList<GameListItem> sourceList = FXCollections.observableArrayList();
         private final FilteredList<GameListItem> filteredList = new FilteredList<>(sourceList);
 
-        @Override
-        protected ItemCell<GameListItem> createItemCell(ListView<GameListItem> listView) {
-            return new GameListCell(listView);
-        }
-
         public GameList() {
             getListView().setItems(filteredList);
 
@@ -141,6 +136,11 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             setOnFailedAction(e -> Instances.addNewGame());
 
             initializeView();
+        }
+
+        @Override
+        protected ItemCell<GameListItem> createItemCell(ListView<GameListItem> listView) {
+            return new GameListCell(listView);
         }
 
         /// Configures the list and its page actions.

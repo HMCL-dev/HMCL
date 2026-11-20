@@ -52,11 +52,6 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
 
     private final Runnable onInstallJava;
 
-    @Override
-    protected ItemCell<JavaRuntime> createItemCell(ListView<JavaRuntime> listView) {
-        return new JavaRuntimeCell(listView);
-    }
-
     public JavaManagementPage() {
         var listView = getListView();
         listView.setPadding(Insets.EMPTY);
@@ -116,6 +111,11 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
         res.add(disableJava);
 
         setToolbarButtons(res);
+    }
+
+    @Override
+    protected ItemCell<JavaRuntime> createItemCell(ListView<JavaRuntime> listView) {
+        return new JavaRuntimeCell(listView);
     }
 
     void onAddJava() {

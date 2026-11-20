@@ -83,21 +83,6 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
         }
     });
 
-    private static String translateAuthorName(String author) {
-        if (I18n.isUseChinese() && "hsds".equals(author)) {
-            return "黑山大叔";
-        }
-        return author;
-    }
-
-    private static String translateType(SchematicType type) {
-        return switch (type) {
-            case SCHEM -> i18n("schematics.info.type.schem");
-            case NBT_STRUCTURE -> i18n("schematics.info.type.nbt_structure");
-            case LITEMATIC -> i18n("schematics.info.type.litematic");
-        };
-    }
-
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private @Nullable HMCLGameInstance gameInstance;
@@ -106,11 +91,6 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
     private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
     private final BooleanProperty isRootProperty = new SimpleBooleanProperty(this, "isRoot", true);
     private final ObjectProperty<RemoteAddon> downloadTarget = new SimpleObjectProperty<>(this, "downloadTarget");
-
-    @Override
-    protected ItemCell<Item> createItemCell(ListView<Item> listView) {
-        return new SchematicCell(listView);
-    }
 
     /// Creates a schematics list that reloads when `instanceContext` changes.
     ///
@@ -129,6 +109,26 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
         }));
 
         initializeView();
+    }
+
+    @Override
+    protected ItemCell<Item> createItemCell(ListView<Item> listView) {
+        return new SchematicCell(listView);
+    }
+
+    private static String translateAuthorName(String author) {
+        if (I18n.isUseChinese() && "hsds".equals(author)) {
+            return "黑山大叔";
+        }
+        return author;
+    }
+
+    private static String translateType(SchematicType type) {
+        return switch (type) {
+            case SCHEM -> i18n("schematics.info.type.schem");
+            case NBT_STRUCTURE -> i18n("schematics.info.type.nbt_structure");
+            case LITEMATIC -> i18n("schematics.info.type.litematic");
+        };
     }
 
     /// Configures the list and its page actions.

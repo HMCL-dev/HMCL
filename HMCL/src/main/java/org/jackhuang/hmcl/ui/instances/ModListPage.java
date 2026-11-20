@@ -116,11 +116,6 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
 
     private long modLoadRequestId;
 
-    @Override
-    protected ItemCell<ModInfoObject> createItemCell(ListView<ModInfoObject> listView) {
-        return new ModListPage.ModCell(listView, this);
-    }
-
     /// Creates a mod list that reloads when `instanceContext` changes.
     ///
     /// @param instanceContext the parent page's instance property
@@ -144,6 +139,11 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
         }));
 
         initializeView();
+    }
+
+    @Override
+    protected ItemCell<ModInfoObject> createItemCell(ListView<ModInfoObject> listView) {
+        return new ModListPage.ModCell(listView, this);
     }
 
     /// Configures the list and its page actions.

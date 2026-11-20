@@ -86,11 +86,6 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
     private final DataPack dataPack;
     final BooleanProperty readOnly;
 
-    @Override
-    protected ItemCell<DataPackInfoObject> createItemCell(ListView<DataPackInfoObject> listView) {
-        return new DataPackCell(listView, readOnly);
-    }
-
     public DataPackListPage(WorldManagePage worldManagePage) {
         world = worldManagePage.getWorld();
         dataPack = new DataPack(world.getFile().resolve("datapacks"));
@@ -102,6 +97,11 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         refresh();
 
         initializeView();
+    }
+
+    @Override
+    protected ItemCell<DataPackInfoObject> createItemCell(ListView<DataPackInfoObject> listView) {
+        return new DataPackCell(listView, readOnly);
     }
 
     /// Configures the list and its page actions.

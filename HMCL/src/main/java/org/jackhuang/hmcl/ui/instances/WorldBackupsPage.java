@@ -55,11 +55,6 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
     private final BooleanProperty readOnly;
     private final Pattern backupFileNamePattern;
 
-    @Override
-    protected ItemCell<BackupInfo> createItemCell(ListView<BackupInfo> listView) {
-        return ItemCell.forNode(listView);
-    }
-
     public WorldBackupsPage(WorldManagePage worldManagePage) {
         this.world = worldManagePage.getWorld();
         this.backupsDir = worldManagePage.getBackupsDir();
@@ -83,6 +78,11 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
                 createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refresh),
                 createBackup
         ));
+    }
+
+    @Override
+    protected ItemCell<BackupInfo> createItemCell(ListView<BackupInfo> listView) {
+        return ItemCell.forNode(listView);
     }
 
     public void refresh() {

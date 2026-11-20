@@ -89,11 +89,6 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
 
     private int refreshCount = 0;
 
-    @Override
-    protected ItemCell<ServerListItem> createItemCell(ListView<ServerListItem> listView) {
-        return new ServerCell(listView, this);
-    }
-
     public ServersPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
         Objects.requireNonNull(instanceContext, "instanceContext");
 
@@ -106,6 +101,11 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
         }));
 
         initializeView();
+    }
+
+    @Override
+    protected ItemCell<ServerListItem> createItemCell(ListView<ServerListItem> listView) {
+        return new ServerCell(listView, this);
     }
 
     /// Configures the list and its page actions.

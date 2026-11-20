@@ -27,20 +27,6 @@ public class InstallerListPage extends ListPaneBase<InstallerItem> {
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private @Nullable HMCLGameInstance gameInstance;
 
-    /// Styles the cell surface and forwards single clicks to the current installer item.
-    @Override
-    protected ItemCell<InstallerItem> createItemCell(ListView<InstallerItem> listView) {
-        var cell = ItemCell.forNode(listView);
-        var feedback = cell.getFeedbackContainer();
-        feedback.getStyleClass().add("installer-item-wrapper");
-        feedback.setOnMouseClicked(event -> {
-            @Nullable InstallerItem item = cell.getItem();
-            if (item != null)
-                item.handleInstallClick(event);
-        });
-        return cell;
-    }
-
     /// Creates an installer list that reloads when `instanceContext` changes.
     ///
     /// @param instanceContext the parent page's instance property
@@ -61,6 +47,20 @@ public class InstallerListPage extends ListPaneBase<InstallerItem> {
         setToolbarButtons(Collections.singletonList(
                 createToolbarButton(i18n("install.installer.install_offline"), SVG.ADD, this::installOffline)
         ));
+    }
+
+    /// Styles the cell surface and forwards single clicks to the current installer item.
+    @Override
+    protected ItemCell<InstallerItem> createItemCell(ListView<InstallerItem> listView) {
+        var cell = ItemCell.forNode(listView);
+        var feedback = cell.getFeedbackContainer();
+        feedback.getStyleClass().add("installer-item-wrapper");
+        feedback.setOnMouseClicked(event -> {
+            @Nullable InstallerItem item = cell.getItem();
+            if (item != null)
+                item.handleInstallClick(event);
+        });
+        return cell;
     }
 
     /// Rebuilds the component controls for the selected instance, or clears them if none is selected.

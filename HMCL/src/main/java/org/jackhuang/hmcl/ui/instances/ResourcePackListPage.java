@@ -85,17 +85,6 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
     private final FilteredList<ResourcePackInfoObject> filteredItems = new FilteredList<>(sourceItems);
 
     private static final String TIP_KEY = "resourcePackWarning";
-    private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
-        return switch (compatibility) {
-            case TOO_NEW -> i18n("resourcepack.warning.too_new");
-            case TOO_OLD -> i18n("resourcepack.warning.too_old");
-            case INVALID -> i18n("resourcepack.warning.invalid");
-            case MISSING_PACK_META -> i18n("resourcepack.warning.missing_pack_meta");
-            case MISSING_GAME_META -> i18n("resourcepack.warning.missing_game_meta");
-            default -> null;
-        };
-    }
-
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private @Nullable HMCLGameInstance gameInstance;
 
@@ -103,11 +92,6 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
     private ResourcePackManager resourcePackManager;
 
     private final ReentrantLock lock = new ReentrantLock();
-
-    @Override
-    protected ItemCell<ResourcePackInfoObject> createItemCell(ListView<ResourcePackInfoObject> listView) {
-        return new ResourcePackCell(listView, this);
-    }
 
     /// Creates a resource-pack list that reloads when `instanceContext` changes.
     ///
@@ -123,6 +107,22 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
         }));
 
         initializeView();
+    }
+
+    @Override
+    protected ItemCell<ResourcePackInfoObject> createItemCell(ListView<ResourcePackInfoObject> listView) {
+        return new ResourcePackCell(listView, this);
+    }
+
+    private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
+        return switch (compatibility) {
+            case TOO_NEW -> i18n("resourcepack.warning.too_new");
+            case TOO_OLD -> i18n("resourcepack.warning.too_old");
+            case INVALID -> i18n("resourcepack.warning.invalid");
+            case MISSING_PACK_META -> i18n("resourcepack.warning.missing_pack_meta");
+            case MISSING_GAME_META -> i18n("resourcepack.warning.missing_game_meta");
+            default -> null;
+        };
     }
 
     /// Configures the list and its page actions.

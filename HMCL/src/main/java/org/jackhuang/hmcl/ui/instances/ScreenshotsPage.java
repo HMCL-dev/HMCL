@@ -60,11 +60,6 @@ public final class ScreenshotsPage extends ListPaneBase<ScreenshotsPage.Screensh
 
     private @Nullable Path screenshotsDir;
 
-    @Override
-    protected ItemCell<Screenshot> createItemCell(ListView<Screenshot> listView) {
-        return new ScreenshotCell(listView, this);
-    }
-
     public ScreenshotsPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
         Objects.requireNonNull(instanceContext, "instanceContext");
 
@@ -75,6 +70,11 @@ public final class ScreenshotsPage extends ListPaneBase<ScreenshotsPage.Screensh
         }));
 
         initializeView();
+    }
+
+    @Override
+    protected ItemCell<Screenshot> createItemCell(ListView<Screenshot> listView) {
+        return new ScreenshotCell(listView, this);
     }
 
     /// Configures the list and its page actions.

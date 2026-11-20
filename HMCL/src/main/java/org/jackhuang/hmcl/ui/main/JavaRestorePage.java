@@ -40,11 +40,6 @@ public final class JavaRestorePage extends ListPaneBase<JavaRestorePage.Disabled
     @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener listener;
 
-    @Override
-    protected ItemCell<DisabledJavaItem> createItemCell(ListView<DisabledJavaItem> listView) {
-        return ItemCell.forNode(listView);
-    }
-
     public JavaRestorePage(ObservableSet<String> disabledJava) {
         getListView().setPadding(Insets.EMPTY);
         this.listener = o -> {
@@ -74,6 +69,11 @@ public final class JavaRestorePage extends ListPaneBase<JavaRestorePage.Disabled
         };
         disabledJava.addListener(new WeakInvalidationListener(listener));
         listener.invalidated(disabledJava);
+    }
+
+    @Override
+    protected ItemCell<DisabledJavaItem> createItemCell(ListView<DisabledJavaItem> listView) {
+        return ItemCell.forNode(listView);
     }
 
     @Override

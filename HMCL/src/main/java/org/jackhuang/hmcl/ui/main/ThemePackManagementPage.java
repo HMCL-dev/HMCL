@@ -86,11 +86,6 @@ public final class ThemePackManagementPage extends ListPaneBase<ThemePackManager
     /// Callback invoked after the installed theme-pack set changes.
     private final Runnable onThemePacksChanged;
 
-    @Override
-    protected ItemCell<ThemePackManager.InstalledThemePack> createItemCell(ListView<ThemePackManager.InstalledThemePack> listView) {
-        return new ThemePackCell(listView, this);
-    }
-
     /// Creates the theme-pack management page and loads installed packages.
     ///
     /// @param onThemePacksChanged callback invoked after importing or deleting a theme pack
@@ -108,6 +103,11 @@ public final class ThemePackManagementPage extends ListPaneBase<ThemePackManager
 
         initializeToolbar();
         initializeList();
+    }
+
+    @Override
+    protected ItemCell<ThemePackManager.InstalledThemePack> createItemCell(ListView<ThemePackManager.InstalledThemePack> listView) {
+        return new ThemePackCell(listView, this);
     }
 
     /// Returns the decorator title state for this page.
