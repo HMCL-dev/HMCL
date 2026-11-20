@@ -17,7 +17,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPaneBase.ItemCell;
+import org.jackhuang.hmcl.ui.ListPaneBase;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -27,7 +27,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Displays a game instance with selection, update, settings, and management controls.
-public final class GameListCell extends ItemCell<GameListItem> {
+public final class GameListCell extends ListPaneBase.ItemCell<GameListItem> {
 
     /// Displays the current instance's icon.
     private final ImageContainer imageView;
