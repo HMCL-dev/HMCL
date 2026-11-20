@@ -10,7 +10,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LineButton;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
@@ -33,7 +33,7 @@ public class HelpPage extends SpinnerPane {
         content.getStyleClass().add("spinner-pane-content");
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
-        FXUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         setContent(scrollPane);
 
         var docPane = LineButton.createExternalLinkButton(Metadata.DOCS_URL);

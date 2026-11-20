@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.Holder;
@@ -37,6 +38,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -353,7 +355,7 @@ public class PersonalizationPage extends StackPane {
         String initialFileName = sanitizeThemePackFileName(packName);
         chooser.setInitialFileName(
                 (FileUtils.isNameValid(initialFileName) ? initialFileName : "theme-pack")
-                + (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ? "" : ThemePackExporter.FILE_EXTENSION)
+                + (SystemInfo.CURRENT_OS == OperatingSystem.MACOS ? "" : ThemePackExporter.FILE_EXTENSION)
         );
         chooser.getExtensionFilters().setAll(
                 new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION));
@@ -389,7 +391,7 @@ public class PersonalizationPage extends StackPane {
         content.setPadding(new Insets(10));
         content.setFillWidth(true);
         ScrollPane scrollPane = new ScrollPane(content);
-        FXUtils.smoothScrolling(scrollPane);
+        ScrollUtils.installSmoothScrolling(scrollPane);
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 

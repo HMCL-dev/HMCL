@@ -4,49 +4,47 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXSpinner;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.glavo.monetfx.ColorRole;
-import org.glavo.monetfx.ColorScheme;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.TaskManager;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_DURATION;
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_INTERPOLATOR;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Renders the clipped background, title bar, and navigation content owned by a [Decorator].
 @NotNullByDefault
 final class MainWindowPane extends StackPane {
     /// The diameter, in pixels, of the rounded window corners.
-    private static final double ARC = 8.0;
+    private static final double ARC = SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS
+            ? 8.0
+            : 32.0;
+
+    /// Selects the title-bar colors used over the launcher background.
+    private static final PseudoClass TRANSPARENT = PseudoClass.getPseudoClass("transparent");
 
     /// The decorator whose state and actions are represented by this pane.
     private final Decorator decorator;
@@ -105,7 +103,7 @@ final class MainWindowPane extends StackPane {
         windowButtons = createWindowButtons();
         titleBar = new BorderPane();
         titleBar.setPickOnBounds(false);
-        titleBar.getStyleClass().add("jfx-tool-bar");
+        titleBar.getStyleClass().addAll("jfx-tool-bar", "background");
         titleBar.setRight(windowButtons);
 
         navBarPane = new TransitionPane();
@@ -113,12 +111,10 @@ final class MainWindowPane extends StackPane {
         decorator.capableDraggingWindow(navBarPane);
         frame.setTop(titleBar);
 
-        updateTitleBarBackground();
-        InvalidationListener titleBarBackgroundListener = observable -> updateTitleBarBackground();
-        Themes.colorSchemeProperty().addListener(holder.weak(titleBarBackgroundListener));
-        Themes.titleBarTransparentProperty().addListener(holder.weak(titleBarBackgroundListener));
+        holder.onWeakChangeAndOperate(Themes.titleBarTransparentProperty(),
+                transparent -> titleBar.pseudoClassStateChanged(TRANSPARENT, transparent));
 
-        InvalidationListener navBarListener = observable -> updateNavBar();
+        ChangeListener<DecoratorPage.@Nullable State> navBarListener = (observable, oldValue, newValue) -> updateNavBar();
         decorator.stateProperty().addListener(holder.weak(navBarListener));
         updateNavBar();
 
@@ -190,12 +186,12 @@ final class MainWindowPane extends StackPane {
         });
         decorator.forbidDraggingWindow(tasksButton);
 
-        SVGPath tasksEmptyIcon = SVG.LIST_ALT.createIcon(Themes.titleFillProperty());
+        SVGPath tasksEmptyIcon = SVG.LIST_ALT.createIcon();
 
         holder.onWeakChangeAndOperate(TaskManager.getInstance().statusProperty(), status -> {
             switch (status) {
                 case IDLE -> tasksButton.setGraphic(tasksEmptyIcon);
-                case PENDING -> tasksButton.setGraphic(SVG.PENDING.createIcon(Themes.titleFillProperty()));
+                case PENDING -> tasksButton.setGraphic(SVG.PENDING.createIcon());
                 case RUNNING -> {
                     JFXSpinner tasksSpinner = new JFXSpinner();
                     tasksSpinner.getStyleClass().add("small-spinner");
@@ -210,46 +206,27 @@ final class MainWindowPane extends StackPane {
 
         JFXButton helpButton = new JFXButton();
         helpButton.setFocusTraversable(false);
-        helpButton.setGraphic(SVG.HELP.createIcon(Themes.titleFillProperty()));
+        helpButton.setGraphic(SVG.HELP.createIcon());
         helpButton.getStyleClass().add("jfx-decorator-button");
         helpButton.setOnAction(event -> FXUtils.openLink(Metadata.CONTACT_URL));
         decorator.forbidDraggingWindow(helpButton);
 
         JFXButton minimizeButton = new JFXButton();
         minimizeButton.setFocusTraversable(false);
-        minimizeButton.setGraphic(SVG.MINIMIZE_CENTER.createIcon(Themes.titleFillProperty()));
+        minimizeButton.setGraphic(SVG.MINIMIZE_CENTER.createIcon());
         minimizeButton.getStyleClass().add("jfx-decorator-button");
         minimizeButton.setOnAction(event -> decorator.minimizeWindow());
         decorator.forbidDraggingWindow(minimizeButton);
 
         JFXButton closeButton = new JFXButton();
         closeButton.setFocusTraversable(false);
-        closeButton.setGraphic(SVG.CLOSE.createIcon(Themes.titleFillProperty()));
+        closeButton.setGraphic(SVG.CLOSE.createIcon());
         closeButton.getStyleClass().add("jfx-decorator-button");
         closeButton.setOnAction(event -> decorator.closeWindow());
         decorator.forbidDraggingWindow(closeButton);
 
         buttons.getChildren().setAll(tasksButton, helpButton, minimizeButton, closeButton);
         return buttons;
-    }
-
-    /// Recomputes the title-bar background for the current theme and transparency preference.
-    private void updateTitleBarBackground() {
-        @Nullable ColorScheme colorScheme = Themes.getColorScheme();
-        if (colorScheme == null) {
-            titleBar.setBackground(null);
-        } else if (Themes.titleBarTransparentProperty().get()) {
-            Color surface = colorScheme.getSurface();
-            titleBar.setBackground(new Background(new BackgroundFill(
-                    new Color(surface.getRed(), surface.getGreen(), surface.getBlue(), 0.5),
-                    CornerRadii.EMPTY,
-                    Insets.EMPTY)));
-        } else {
-            titleBar.setBackground(new Background(new BackgroundFill(
-                    colorScheme.getPrimaryContainer(),
-                    CornerRadii.EMPTY,
-                    Insets.EMPTY)));
-        }
     }
 
     /// Rebuilds the navigation bar from the current page state.
@@ -269,7 +246,7 @@ final class MainWindowPane extends StackPane {
                 default -> ContainerAnimations.FADE;
             };
             decorator.setNavigationDirection(Navigation.NavigationDirection.START);
-            navBarPane.setContent(navBar, animation, Motion.SHORT4);
+            navBarPane.setContent(navBar, animation);
         } else {
             navBarPane.getChildren().setAll(navBar);
         }
@@ -288,7 +265,7 @@ final class MainWindowPane extends StackPane {
         if (state.backable()) {
             JFXButton backButton = new JFXButton();
             backButton.setFocusTraversable(false);
-            backButton.setGraphic(SVG.ARROW_BACK.createIcon(Themes.titleFillProperty()));
+            backButton.setGraphic(SVG.ARROW_BACK.createIcon());
             backButton.getStyleClass().add("jfx-decorator-button");
             backButton.setOnAction(event -> decorator.back());
             decorator.forbidDraggingWindow(backButton);
@@ -300,7 +277,7 @@ final class MainWindowPane extends StackPane {
 
             JFXButton closeButton = new JFXButton();
             closeButton.setFocusTraversable(false);
-            closeButton.setGraphic((showCloseAsHome ? SVG.HOME : SVG.CLOSE).createIcon(Themes.titleFillProperty()));
+            closeButton.setGraphic((showCloseAsHome ? SVG.HOME : SVG.CLOSE).createIcon());
             closeButton.getStyleClass().add("jfx-decorator-button");
             closeButton.setOnAction(event -> decorator.closeCurrentPage());
             decorator.forbidDraggingWindow(closeButton);
@@ -318,7 +295,6 @@ final class MainWindowPane extends StackPane {
             StackPane.setMargin(state.titleNode(), new Insets(0, 0, 0, 8));
         } else if (state.title() != null) {
             Label titleLabel = new Label(state.title());
-            titleLabel.textFillProperty().bind(Themes.titleFillProperty());
             titleLabel.getStyleClass().add("jfx-decorator-title");
             titleLabel.setMinWidth(0);
             titleLabel.setMouseTransparent(true);
@@ -339,7 +315,7 @@ final class MainWindowPane extends StackPane {
         if (state.refreshable()) {
             JFXButton refreshButton = new JFXButton();
             refreshButton.setFocusTraversable(false);
-            refreshButton.setGraphic(SVG.REFRESH.createIcon(Themes.titleFillProperty()));
+            refreshButton.setGraphic(SVG.REFRESH.createIcon());
             refreshButton.getStyleClass().add("jfx-decorator-button");
             refreshButton.setOnAction(event -> decorator.refresh());
             decorator.forbidDraggingWindow(refreshButton);
@@ -365,13 +341,8 @@ final class MainWindowPane extends StackPane {
 
             /// {@inheritDoc}
             @Override
-            public Timeline animate(
-                    Pane container,
-                    Node previousNode,
-                    Node nextNode,
-                    Duration duration,
-                    Interpolator interpolator) {
-                return createTimeline(previousNode, nextNode, 50, -50, duration, interpolator);
+            public Timeline animate(Pane container, Node previousNode, Node nextNode) {
+                return createTimeline(previousNode, nextNode, 50, -50);
             }
 
             /// {@inheritDoc}
@@ -394,13 +365,8 @@ final class MainWindowPane extends StackPane {
 
             /// {@inheritDoc}
             @Override
-            public Timeline animate(
-                    Pane container,
-                    Node previousNode,
-                    Node nextNode,
-                    Duration duration,
-                    Interpolator interpolator) {
-                return createTimeline(previousNode, nextNode, -50, 50, duration, interpolator);
+            public Timeline animate(Pane container, Node previousNode, Node nextNode) {
+                return createTimeline(previousNode, nextNode, -50, 50);
             }
 
             /// {@inheritDoc}
@@ -416,27 +382,23 @@ final class MainWindowPane extends StackPane {
         /// @param nextNode       the title being shown
         /// @param nextOffset     the initial offset of the next title
         /// @param previousOffset the final offset of the previous title
-        /// @param duration       the transition duration
-        /// @param interpolator   the transition interpolator
         /// @return the unstarted transition timeline
         private static Timeline createTimeline(
                 Node previousNode,
                 Node nextNode,
                 double nextOffset,
-                double previousOffset,
-                Duration duration,
-                Interpolator interpolator) {
+                double previousOffset) {
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
-                            new KeyValue(nextNode.translateXProperty(), nextOffset, interpolator),
-                            new KeyValue(previousNode.translateXProperty(), 0, interpolator),
-                            new KeyValue(nextNode.opacityProperty(), 0, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 1, interpolator)),
-                    new KeyFrame(duration,
-                            new KeyValue(nextNode.translateXProperty(), 0, interpolator),
-                            new KeyValue(previousNode.translateXProperty(), previousOffset, interpolator),
-                            new KeyValue(nextNode.opacityProperty(), 1, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 0, interpolator)));
+                            new KeyValue(nextNode.translateXProperty(), nextOffset, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR)),
+                    new KeyFrame(DEFAULT_DURATION,
+                            new KeyValue(nextNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.translateXProperty(), previousOffset, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR)));
         }
     }
 }

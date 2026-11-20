@@ -7,6 +7,7 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -33,7 +34,7 @@ public final class LogExporter {
             Path zipFile, DefaultGameInstance instance, LaunchOptions options, String logs, String launchScript,
             PathMatcher logMatcher) {
         DefaultGameRepositorySnapshot repositorySnapshot = instance.getSnapshot();
-        Path runDirectory = options.getGameDir();
+        Path runDirectory = instance.getRunDirectory();
         List<GameInstanceID> instances = new ArrayList<>();
 
         GameInstanceID currentInstanceId = instance.id;
@@ -62,7 +63,7 @@ public final class LogExporter {
 
                 zipper.putTextFile(LOG.getLogs(), "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
-                zipper.putTextFile(Logger.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
+                zipper.putTextFile(Logger.filterForbiddenToken(launchScript), SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
 
                 for (GameInstanceID id : instances) {
                     @Nullable DefaultGameInstance currentInstance = repositorySnapshot.get(id);

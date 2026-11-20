@@ -43,20 +43,17 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
-import org.jackhuang.hmcl.ui.image.ImageLoader;
-import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
@@ -66,7 +63,9 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
@@ -84,10 +83,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLConnection;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -219,7 +216,7 @@ public final class FXUtils {
         FOCUS_VISIBLE_PROPERTY = focusVisibleProperty;
     }
 
-    public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
+    public static final String DEFAULT_MONOSPACE_FONT = SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
 
     public static final List<String> IMAGE_EXTENSIONS = List.of(
             "png", "jpg", "jpeg", "bmp", "gif", "webp", "svg", "apng"
@@ -408,16 +405,6 @@ public final class FXUtils {
         cell.minWidthProperty().bind(widthProperty);
     }
 
-    public static void smoothScrolling(ScrollPane scrollPane) {
-        if (AnimationUtils.isAnimationEnabled())
-            ScrollUtils.addSmoothScrolling(scrollPane);
-    }
-
-    public static void smoothScrolling(VirtualFlow<?> virtualFlow) {
-        if (AnimationUtils.isAnimationEnabled())
-            ScrollUtils.addSmoothScrolling(virtualFlow);
-    }
-
     /// If the current environment is JavaFX 23 or higher, this method returns [Labeled#textTruncatedProperty()];
     /// Otherwise, it returns `null`.
     public static @Nullable ReadOnlyBooleanProperty textTruncatedProperty(Labeled labeled) {
@@ -505,11 +492,11 @@ public final class FXUtils {
         String path = FileUtils.getAbsolutePath(file);
 
         String openCommand;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommand = "explorer.exe";
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+        else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS)
             openCommand = "/usr/bin/open";
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && Files.exists(Path.of("/usr/bin/xdg-open")))
+        else if (SystemInfo.isXdgPreferred() && Files.exists(Path.of("/usr/bin/xdg-open")))
             openCommand = "/usr/bin/xdg-open";
         else
             openCommand = null;
@@ -520,7 +507,7 @@ public final class FXUtils {
                     int exitCode = SystemUtils.callExternalProcess(openCommand, path);
 
                     // explorer.exe always return 1
-                    if (exitCode == 0 || (exitCode == 1 && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS))
+                    if (exitCode == 0 || (exitCode == 1 && SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS))
                         return;
                     else
                         LOG.warning("Open " + path + " failed with code " + exitCode);
@@ -542,11 +529,11 @@ public final class FXUtils {
         String path = file.toAbsolutePath().toString();
 
         String[] openCommands;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommands = new String[]{"explorer.exe", "/select,", path};
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+        else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemUtils.which("dbus-send") != null)
+        else if (SystemInfo.isXdgPreferred() && SystemUtils.which("dbus-send") != null)
             openCommands = new String[]{
                     "dbus-send",
                     "--print-reply",
@@ -565,7 +552,7 @@ public final class FXUtils {
                     int exitCode = SystemUtils.callExternalProcess(openCommands);
 
                     // explorer.exe always return 1
-                    if (exitCode == 0 || (exitCode == 1 && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS))
+                    if (exitCode == 0 || (exitCode == 1 && SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS))
                         return;
                     else
                         LOG.warning("Show " + path + " in explorer failed with code " + exitCode);
@@ -604,10 +591,10 @@ public final class FXUtils {
         String url = NetworkUtils.encodeLocation(link);
         thread(() -> {
             try {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", url});
                     return;
-                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
                     Runtime.getRuntime().exec(new String[]{"open", url});
                     return;
                 } else {
@@ -864,9 +851,9 @@ public final class FXUtils {
 
     public static void setIcon(Stage stage) {
         String icon;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
             icon = "/assets/img/icon.png";
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+        } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
             icon = "/assets/img/icon-mac.png";
         } else {
             icon = "/assets/img/icon@4x.png";
@@ -874,69 +861,14 @@ public final class FXUtils {
         stage.getIcons().add(newBuiltinImage(icon));
     }
 
-    public static Image loadImage(Path path) throws Exception {
-        return loadImage(path, 0, 0, false, false);
+    @Contract("null -> false")
+    public static boolean isValidImage(@Nullable Image image) {
+        return image != null && !image.isError() && image.getWidth() > 0 && image.getHeight() > 0 && Math.abs(image.getWidth() - image.getHeight()) < 1;
     }
 
-    public static Image loadImage(Path path,
-                                  int requestedWidth, int requestedHeight,
-                                  boolean preserveRatio, boolean smooth) throws Exception {
-        String fileName = path.getFileName().toString();
-        return loadImage(
-                Files.newInputStream(path),
-                fileName,
-                requestedWidth,
-                requestedHeight,
-                preserveRatio,
-                smooth);
-    }
-
-    public static Image loadImage(InputStream input, String fileName) throws Exception {
-        return loadImage(input, fileName, 0, 0, false, false);
-    }
-
-    public static Image loadImage(InputStream input, String fileName,
-                                  int requestedWidth, int requestedHeight,
-                                  boolean preserveRatio, boolean smooth) throws Exception {
-        try (var bufferedInput = new BufferedInputStream(input)) {
-            String ext = FileUtils.getExtension(fileName).toLowerCase(Locale.ROOT);
-            ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
-            if (loader == null && !ImageUtils.DEFAULT_EXTS.contains(ext)) {
-                bufferedInput.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = bufferedInput.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
-                bufferedInput.reset();
-                loader = ImageUtils.guessLoader(headerBuffer);
-            }
-            if (loader == null)
-                loader = ImageUtils.DEFAULT;
-            return loader.load(bufferedInput, requestedWidth, requestedHeight, preserveRatio, smooth);
-        }
-    }
-
-    public static Image loadImage(WebURL url) throws Exception {
-        URLConnection connection = NetworkUtils.createConnection(url);
-        if (connection instanceof HttpURLConnection httpConnection)
-            connection = NetworkUtils.resolveConnection(httpConnection);
-
-        try (BufferedInputStream input = new BufferedInputStream(connection.getInputStream())) {
-            String contentType = Objects.requireNonNull(connection.getContentType(), "");
-            Matcher matcher = ImageUtils.CONTENT_TYPE_PATTERN.matcher(contentType);
-            if (matcher.find())
-                contentType = matcher.group("type");
-
-            ImageLoader loader = ImageUtils.CONTENT_TYPE_TO_LOADER.get(contentType);
-            if (loader == null && !ImageUtils.DEFAULT_CONTENT_TYPES.contains(contentType)) {
-                input.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
-                input.reset();
-                loader = ImageUtils.guessLoader(headerBuffer);
-            }
-
-            if (loader == null)
-                loader = ImageUtils.DEFAULT;
-
-            return loader.load(input, 0, 0, false, false);
-        }
+    @Contract("null -> false")
+    public static boolean isValidIcon(@Nullable Image image) {
+        return isValidImage(image) && Math.abs(image.getWidth() - image.getHeight()) < 1;
     }
 
     /**
@@ -982,7 +914,7 @@ public final class FXUtils {
     public static Task<Image> getRemoteImageTask(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(url)
                 .setSignificance(Task.TaskSignificance.MINOR)
-                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .thenApplyAsync(file -> ImageLoaders.DEFAULT.load(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
@@ -990,7 +922,7 @@ public final class FXUtils {
     public static Task<Image> getRemoteImageTask(DownloadCandidates candidates, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(candidates)
                 .setSignificance(Task.TaskSignificance.MINOR)
-                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .thenApplyAsync(file -> ImageLoaders.DEFAULT.load(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
@@ -1193,7 +1125,7 @@ public final class FXUtils {
 
     public static void addMacOSCloseWindowHandler(Window window, @Nullable Supplier<Boolean> restriction) {
         window.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+            if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS
                     && event.isMetaDown()
                     && event.getCode() == KeyCode.W
                     && (restriction == null || restriction.get())) {

@@ -57,8 +57,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
         // second item in left sidebar
-        GameAdvancedListItem gameListItem = new GameAdvancedListItem();
-        gameListItem.setOnAction(e -> {
+        GameAdvancedListItem gameInstanceItem = new GameAdvancedListItem();
+        gameInstanceItem.setOnAction(e -> {
             @Nullable HMCLGameInstance instance = GameDirectoryManager.getSelectedRepository().getSelectedInstance();
             if (instance == null) {
                 Controllers.navigate(Controllers.getGameListPage());
@@ -66,23 +66,27 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 Instances.modifyGameSettings(instance);
             }
         });
-        FXUtils.onScroll(gameListItem, getMainPage().getInstances(), list -> {
+        FXUtils.onScroll(gameInstanceItem, getMainPage().getInstances(), list -> {
             @Nullable HMCLGameInstance currentGame = getMainPage().getCurrentGame();
             @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
             return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
         }, instance -> instance.getRepository().setSelectedInstance(instance));
-        FXUtils.onSecondaryButtonClicked(gameListItem, () -> showGameListPopupMenu(gameListItem));
+        FXUtils.onSecondaryButtonClicked(gameInstanceItem, () -> showGameListPopupMenu(gameInstanceItem));
 
         if (AnimationUtils.isAnimationEnabled()) {
-            gameListItem.setPrepareAction(Controllers::prepareGameInstancePage);
+            gameInstanceItem.setPrepareAction(Controllers::prepareGameInstancePage);
         }
 
         // third item in left sidebar
-        AdvancedListItem gameItem = new AdvancedListItem();
-        gameItem.setLeftIcon(SVG.FORMAT_LIST_BULLETED);
-        gameItem.setTitle(i18n("instance.manage"));
-        gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
-        FXUtils.onSecondaryButtonClicked(gameItem, () -> showGameListPopupMenu(gameItem));
+        AdvancedListItem gameListItem = new AdvancedListItem();
+        gameListItem.setLeftIcon(SVG.FORMAT_LIST_BULLETED);
+        gameListItem.setTitle(i18n("instance.manage"));
+        gameListItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
+        FXUtils.onSecondaryButtonClicked(gameListItem, () -> showGameListPopupMenu(gameListItem));
+
+        if (AnimationUtils.isAnimationEnabled()) {
+            gameListItem.setPrepareAction(Controllers::prepareGameListPage);
+        }
 
         // forth item in left sidebar
         AdvancedListItem downloadItem = new AdvancedListItem();
@@ -116,12 +120,12 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 Controllers.navigate(Controllers.getTerracottaPage());
             } else {
                 String message;
-                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                if (SystemInfo.SYSTEM_ARCH.getBits() == Bits.BIT_32)
                     message = i18n("terracotta.unsupported.arch.32bit");
-                else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                        && !OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
+                else if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS
+                        && !SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
                     message = i18n("terracotta.unsupported.os.windows.old");
-                else if (Platform.SYSTEM_PLATFORM.equals(OperatingSystem.LINUX, Architecture.LOONGARCH64_OW))
+                else if (SystemInfo.SYSTEM_PLATFORM.equals(NativePlatform.LINUX_LOONGARCH64_OW))
                     message = i18n("terracotta.unsupported.arch.loongarch64_ow");
                 else
                     message = i18n("terracotta.unsupported");
@@ -135,8 +139,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 .startCategory(i18n("account").toUpperCase(Locale.ROOT))
                 .add(accountListItem)
                 .startCategory(i18n("instance").toUpperCase(Locale.ROOT))
+                .add(gameInstanceItem)
                 .add(gameListItem)
-                .add(gameItem)
                 .add(downloadItem)
                 .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                 .add(launcherSettingsItem)

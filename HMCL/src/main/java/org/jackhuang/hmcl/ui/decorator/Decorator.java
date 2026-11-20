@@ -6,7 +6,6 @@ import com.jfoenix.controls.JFXSnackbar;
 import com.jfoenix.controls.JFXSnackbarLayout;
 import com.jfoenix.skins.JFXDatePickerContent;
 import com.jfoenix.skins.JFXDatePickerSkin;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -65,6 +64,7 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -337,14 +337,10 @@ public final class Decorator {
     ///
     /// @param node              the page to push
     /// @param animationProducer the transition used to reveal the page
-    /// @param duration          the transition duration
-    /// @param interpolator      the transition interpolator
     public void navigate(
             Node node,
-            TransitionPane.AnimationProducer animationProducer,
-            Duration duration,
-            Interpolator interpolator) {
-        navigator.navigate(node, animationProducer, duration, interpolator);
+            TransitionPane.AnimationProducer animationProducer) {
+        navigator.navigate(node, animationProducer);
     }
 
     /// Returns whether the navigation stack contains a page before the current page.
@@ -392,9 +388,7 @@ public final class Decorator {
         FXUtils.checkFxUserThread();
         navigator.navigate(
                 new DecoratorWizardDisplayer(wizardProvider, category),
-                ContainerAnimations.FORWARD,
-                Motion.SHORT4,
-                Motion.EASE);
+                ContainerAnimations.FORWARD);
     }
 
     /// Marks `node` as an area from which a primary-button drag may move the stage.
@@ -862,7 +856,7 @@ public final class Decorator {
         }
 
         if (stage != newStage) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
                 Themes.applyNativeDarkMode(newStage);
             }
             playRestoreMinimizeAnimation = false;
@@ -1007,7 +1001,7 @@ public final class Decorator {
             return;
         }
 
-        if (!nativeDecorationEnabled && AnimationUtils.playWindowAnimation() && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
+        if (!nativeDecorationEnabled && AnimationUtils.playWindowAnimation() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS) {
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(root.opacityProperty(), 1, Motion.EASE),
@@ -1113,7 +1107,7 @@ public final class Decorator {
                 return;
             }
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+            if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS
                     && event.getEventType() == KeyEvent.KEY_PRESSED
                     && event.isMetaDown()
                     && event.getCode() == KeyCode.Q) {
@@ -1152,7 +1146,7 @@ public final class Decorator {
 
         onEscPressed(navigator, this::back);
 
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
+        if (SystemInfo.CURRENT_OS != OperatingSystem.MACOS) {
             navigator.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
                 @Nullable Stage currentStage = getStage();
                 if (currentStage != null && event.getCode() == KeyCode.F11) {

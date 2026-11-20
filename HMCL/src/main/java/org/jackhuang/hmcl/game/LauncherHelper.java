@@ -23,8 +23,8 @@ import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
@@ -59,7 +59,7 @@ import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.logging.Logger.TIME_FORMATTER;
-import static org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM;
+import static org.jackhuang.hmcl.util.platform.SystemInfo.SYSTEM_PLATFORM;
 
 public final class LauncherHelper {
 
@@ -80,7 +80,7 @@ public final class LauncherHelper {
         this.setting = gameInstance.getEffectiveSettings();
         this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
         this.showLogs = setting.getInheritable(GameSettings::showLogsProperty);
-        this.launchingStepsPane.setTitle(i18n("instance.launch"));
+        this.launchingStepsPane.setTitle(i18n("instance.launch.title", this.gameInstance.id.id()));
     }
 
     public HMCLGameInstance getGameInstance() {
@@ -189,12 +189,12 @@ public final class LauncherHelper {
                                 }
                             }),
                             Task.composeAsync(() -> {
-                                if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
+                                if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS
                                         || !(setting.getRenderer(gameInstance.getVersion()) instanceof Renderer.Driver renderer)
                                         || renderer.mesaDriverName() == null)
                                     return null;
 
-                                Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
+                                Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, SystemInfo.SYSTEM_VERSION);
                                 if (lib == null)
                                     return null;
                                 Path file = gameInstance.getLayout().getLibraryFile(gameInstance.getId(), lib);
@@ -254,7 +254,7 @@ public final class LauncherHelper {
                         launchOptionsBuilder.setQuickPlayOption(quickPlayOption);
                     }
 
-                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && setting.getInheritable(GameSettings::highPerformanceProperty)) {
+                    if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS && setting.getInheritable(GameSettings::highPerformanceProperty)) {
                         @Nullable String javaPathGpuReg = FileUtils.getAbsolutePath(context.javaExecutable);
                         try {
                             WinReg reg = WinReg.INSTANCE;
@@ -303,6 +303,7 @@ public final class LauncherHelper {
                     } else {
                         return Task.supplyAsync(() -> {
                             launcher.makeLaunchScript(scriptFile);
+                            launchingLatch.countDown();
                             return null;
                         });
                     }
@@ -621,7 +622,7 @@ public final class LauncherHelper {
 
                 List<String> suggestions = new ArrayList<>();
 
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64 && java.getPlatform().getArchitecture() == Architecture.X86) {
+                if (SystemInfo.SYSTEM_ARCH == Architecture.X86_64 && java.getPlatform().arch() == Architecture.X86) {
                     suggestions.add(i18n("launch.advice.different_platform"));
                 }
 
@@ -674,7 +675,7 @@ public final class LauncherHelper {
                             break;
                         case VANILLA_X86:
                             if (!setting.getInheritable(GameSettings::useCustomNativesProperty)
-                                    && Platform.isSupportedTranslationX86_64()) {
+                                    && SystemInfo.isSupportedTranslationX86_64()) {
                                 suggestions.add(i18n("launch.advice.vanilla_x86.translation"));
                             }
                             break;
