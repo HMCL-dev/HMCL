@@ -20,9 +20,9 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
@@ -85,6 +85,11 @@ public final class ThemePackManagementPage extends ListPaneBase<ThemePackManager
 
     /// Callback invoked after the installed theme-pack set changes.
     private final Runnable onThemePacksChanged;
+
+    @Override
+    protected ItemCell<ThemePackManager.InstalledThemePack> createItemCell(ListView<ThemePackManager.InstalledThemePack> listView) {
+        return new ThemePackCell(listView, this);
+    }
 
     /// Creates the theme-pack management page and loads installed packages.
     ///
@@ -533,7 +538,6 @@ public final class ThemePackManagementPage extends ListPaneBase<ThemePackManager
     private void initializeList() {
         var listView = getListView();
         listView.setPadding(Insets.EMPTY);
-        listView.setCellFactory(x -> new ThemePackItemCell(this));
 
         StackPane placeholderContainer = new StackPane();
         placeholderContainer.getStyleClass().add("notice-pane");
@@ -560,12 +564,9 @@ public final class ThemePackManagementPage extends ListPaneBase<ThemePackManager
 
     /// List cell that renders one installed theme pack.
     @NotNullByDefault
-    private static final class ThemePackItemCell extends ListCell<ThemePackManager.@Nullable InstalledThemePack> {
+    private static final class ThemePackCell extends ItemCell<ThemePackManager.InstalledThemePack> {
         /// The owning management page.
         private final ThemePackManagementPage page;
-
-        /// Root graphic reused by this cell.
-        private final RipplerContainer graphic;
 
         /// The text content shown for the current theme pack.
         private final TwoLineListItem content = new TwoLineListItem();
@@ -588,24 +589,25 @@ public final class ThemePackManagementPage extends ListPaneBase<ThemePackManager
         /// Deletes the package.
         private final JFXButton deleteButton;
 
-        /// Creates a reusable theme-pack list cell.
+        /// Creates reusable theme-pack controls for the supplied list.
         ///
         /// @param page the owning management page
-        private ThemePackItemCell(ThemePackManagementPage page) {
+        private ThemePackCell(ListView<ThemePackManager.InstalledThemePack> listView, ThemePackManagementPage page) {
+            super(listView);
             this.page = page;
 
-            content.getStyleClass().add("md-list-cell");
             content.setPadding(new Insets(8));
             content.setCursor(Cursor.HAND);
 
-            var ripplerContainer = new RipplerContainer(content);
-            this.graphic = ripplerContainer;
+            content.setPickOnBounds(false);
+
+            setContent(content);
 
             icon.setMouseTransparent(true);
             icon.getChildren().setAll(iconImage, iconFallback);
             TwoLineListItem.setMargin(icon, new Insets(0, 8, 0, 0));
             content.setLeading(icon);
-            FXUtils.onClicked(ripplerContainer, () -> {
+            FXUtils.onClicked(getFeedbackContainer(), () -> {
                 ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {
                     page.selectThemePack(themePack);
@@ -637,24 +639,14 @@ public final class ThemePackManagementPage extends ListPaneBase<ThemePackManager
 
         /// Updates this cell for one installed theme pack.
         @Override
-        protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
-            ThemePackManager.@Nullable InstalledThemePack currentItem = getItem();
-            boolean oldEmpty = isEmpty();
-
-            super.updateItem(themePack, empty);
-
-            if (Objects.equals(getItem(), currentItem) && oldEmpty == empty) return;
-
-            this.graphic.resetFeedback();
+        protected void updateListItem(ThemePackManager.@Nullable InstalledThemePack themePack) {
             iconImage.setImage(null);
             iconFallback.setVisible(false);
 
-            if (empty || themePack == null) {
+            if (themePack == null) {
                 content.getTags().clear();
-                setGraphic(null);
                 return;
             }
-            setGraphic(graphic);
 
             ThemePackManifest manifest = themePack.manifest();
             page.updateIcon(iconImage, iconFallback, themePack, manifest.icon());

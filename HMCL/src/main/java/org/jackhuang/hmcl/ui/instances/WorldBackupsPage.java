@@ -9,6 +9,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
@@ -21,7 +22,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -55,6 +55,11 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
     private final Path backupsDir;
     private final BooleanProperty readOnly;
     private final Pattern backupFileNamePattern;
+
+    @Override
+    protected ItemCell<BackupInfo> createItemCell(ListView<BackupInfo> listView) {
+        return ItemCell.forNode(listView);
+    }
 
     public WorldBackupsPage(WorldManagePage worldManagePage) {
         this.world = worldManagePage.getWorld();
@@ -202,8 +207,9 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
 
             World world = skinnable.getBackupWorld();
 
+            skinnable.setPickOnBounds(false);
             BorderPane root = new BorderPane();
-            root.getStyleClass().add("md-list-cell");
+            root.setPickOnBounds(false);
             root.setPadding(new Insets(8));
 
             {
@@ -244,7 +250,7 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
                 btnDelete.setOnAction(event -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::onDelete, null));
             }
 
-            getChildren().setAll(new RipplerContainer(root));
+            getChildren().setAll(root);
         }
     }
 }

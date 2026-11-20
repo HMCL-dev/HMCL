@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXListView;
-import javafx.beans.binding.DoubleBinding;
+import javafx.beans.value.ObservableNumberValue;
 import javafx.css.PseudoClass;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class MDListCell<T> extends ListCell<T> {
     private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
@@ -19,7 +19,7 @@ public abstract class MDListCell<T> extends ListCell<T> {
     private final StackPane root = new StackPane();
     private final RipplerContainer ripplerContainer = new RipplerContainer(container);
 
-    public MDListCell(JFXListView<T> listView) {
+    public MDListCell(ListView<T> listView) {
 
         setText(null);
         setGraphic(null);
@@ -27,26 +27,23 @@ public abstract class MDListCell<T> extends ListCell<T> {
         root.getStyleClass().add("md-list-cell");
         root.getChildren().setAll(ripplerContainer);
 
-        Region clippedContainer = (Region) listView.lookup(".clipped-container");
-        setPrefWidth(0);
-        if (clippedContainer != null) {
-            DoubleBinding converted = clippedContainer.widthProperty().subtract(1);
-
-            maxWidthProperty().bind(converted);
-            prefWidthProperty().bind(converted);
-            minWidthProperty().bind(converted);
-        }
+        ObservableNumberValue width = listView.lookup(".clipped-container") instanceof Region viewport
+                ? viewport.widthProperty().subtract(1) : listView.widthProperty();
+        maxWidthProperty().bind(width);
+        prefWidthProperty().bind(width);
+        minWidthProperty().bind(width);
     }
 
+    /// Resets feedback and updates the graphic when JavaFX reassigns this cell.
     @Override
-    protected void updateItem(T item, boolean empty) {
-        T oldItem = getItem();
+    protected final void updateItem(@Nullable T item, boolean empty) {
+        @Nullable T oldItem = getItem();
         boolean oldEmpty = isEmpty();
 
         super.updateItem(item, empty);
 
         if (oldItem == item && oldEmpty == empty) {
-            updateLastPseudoClass(empty);
+            updateLastPseudoClass(empty || item == null);
             return;
         }
 
@@ -71,6 +68,11 @@ public abstract class MDListCell<T> extends ListCell<T> {
                 && getIndex() >= 0
                 && getIndex() == listView.getItems().size() - 1;
         root.pseudoClassStateChanged(LAST, last);
+    }
+
+    /// Returns the feedback layer around the reusable content pane.
+    public final RipplerContainer getFeedbackContainer() {
+        return ripplerContainer;
     }
 
     protected StackPane getContainer() {

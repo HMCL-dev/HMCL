@@ -406,8 +406,6 @@
 
 .installer-item-wrapper .installer-item:list-item {
     -fx-padding: 8px;
-    -fx-border-color: -monet-outline-variant;
-    -fx-border-width: 0 0 1 0;
     -fx-alignment: center-left;
 }
 

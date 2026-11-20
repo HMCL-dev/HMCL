@@ -60,6 +60,11 @@ public final class ScreenshotsPage extends ListPaneBase<ScreenshotsPage.Screensh
 
     private @Nullable Path screenshotsDir;
 
+    @Override
+    protected ItemCell<Screenshot> createItemCell(ListView<Screenshot> listView) {
+        return new ScreenshotCell(listView, this);
+    }
+
     public ScreenshotsPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
         Objects.requireNonNull(instanceContext, "instanceContext");
 
@@ -125,7 +130,6 @@ public final class ScreenshotsPage extends ListPaneBase<ScreenshotsPage.Screensh
         }
 
         {
-            listView.setCellFactory(x -> new ScreenshotCell(listView, this));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
             listView.setOnContextMenuRequested(event -> {
@@ -319,7 +323,7 @@ public final class ScreenshotsPage extends ListPaneBase<ScreenshotsPage.Screensh
     }
 
     /// Displays a screenshot thumbnail, metadata, and file actions in a reusable cell.
-    private static final class ScreenshotCell extends MDListCell<Screenshot> {
+    private static final class ScreenshotCell extends ItemCell<Screenshot> {
 
         /// Holds the thumbnail or the placeholder icon when no thumbnail is available.
         private final StackPane imagePane = new StackPane();
@@ -329,7 +333,7 @@ public final class ScreenshotsPage extends ListPaneBase<ScreenshotsPage.Screensh
         private final TwoLineListItem content = new TwoLineListItem();
 
         /// Creates a cell whose file actions operate on the supplied page.
-        public ScreenshotCell(JFXListView<Screenshot> listView, ScreenshotsPage page) {
+        public ScreenshotCell(ListView<Screenshot> listView, ScreenshotsPage page) {
             super(listView);
 
             setSelectable();
@@ -381,14 +385,14 @@ public final class ScreenshotsPage extends ListPaneBase<ScreenshotsPage.Screensh
             container.getChildren().setAll(imagePane, content, copyButton, revealButton, infoButton, deleteButton);
 
             StackPane.setMargin(container, new Insets(8));
-            getContainer().getChildren().setAll(container);
+            setContent(container);
         }
 
         /// Attaches the current item's cached thumbnail and updates its metadata.
         /// Clears the displayed thumbnail when the cell becomes empty.
         @Override
-        protected void updateControl(@Nullable Screenshot item, boolean empty) {
-            if (item == null || empty) {
+        protected void updateListItem(@Nullable Screenshot item) {
+            if (item == null) {
                 thumbnail.set(null);
                 return;
             }

@@ -3,15 +3,14 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
@@ -24,7 +23,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.Tag;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
@@ -53,6 +51,11 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
     private final ChangeListener<Collection<JavaRuntime>> listener;
 
     private final Runnable onInstallJava;
+
+    @Override
+    protected ItemCell<JavaRuntime> createItemCell(ListView<JavaRuntime> listView) {
+        return new JavaRuntimeCell(listView);
+    }
 
     public JavaManagementPage() {
         var listView = getListView();
@@ -113,7 +116,6 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
         res.add(disableJava);
 
         setToolbarButtons(res);
-        listView.setCellFactory(view -> new JavaItemCell(listView));
     }
 
     void onAddJava() {
@@ -207,8 +209,7 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
         this.setLoading(false);
     }
 
-    private static final class JavaItemCell extends ListCell<JavaRuntime> {
-        private final RipplerContainer graphic;
+    private static final class JavaRuntimeCell extends ItemCell<JavaRuntime> {
         private final Label label = new Label();
         private final TwoLineListItem content;
 
@@ -218,7 +219,8 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
         private final Tooltip removeTooltip = new Tooltip();
 
         /// Creates a Java runtime cell with interactive tags and independent removal controls.
-        JavaItemCell(JFXListView<JavaRuntime> listView) {
+        JavaRuntimeCell(ListView<JavaRuntime> listView) {
+            super(listView);
             label.setAlignment(Pos.CENTER);
             label.setMouseTransparent(true);
             FXUtils.setLimitWidth(label, 32);
@@ -260,30 +262,18 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
             }
             right.setPickOnBounds(false);
             content.setTrailing(right);
-            content.getStyleClass().add("md-list-cell");
             content.setPadding(new Insets(8));
 
-            this.graphic = new RipplerContainer(content);
-            graphic.setPressFeedbackEnabled(false);
+            content.setPickOnBounds(false);
 
-            FXUtils.limitCellWidth(listView, this);
+            setContent(content);
+            getFeedbackContainer().setPressFeedbackEnabled(false);
         }
 
-        /// Updates the runtime details and reuses the architecture tag when the item changes.
+        /// Updates the version, architecture tag and removal action for the current runtime.
         @Override
-        protected void updateItem(@Nullable JavaRuntime item, boolean empty) {
-            @Nullable JavaRuntime oldItem = getItem();
-            boolean oldEmpty = isEmpty();
-
-            super.updateItem(item, empty);
-
-            if (oldItem == item && oldEmpty == empty) return;
-
-            this.graphic.resetFeedback();
-
-            if (empty || item == null) {
-                setGraphic(null);
-            } else {
+        protected void updateListItem(@Nullable JavaRuntime item) {
+            if (item != null) {
                 int parsedVersion = item.getParsedVersion();
                 label.setText(parsedVersion >= 0 ? String.valueOf(parsedVersion) : "?");
 
@@ -292,9 +282,7 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
                 content.setTitle((vendor != null ? vendor : i18n("message.unknown")) + " " + (item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
                 content.setSubtitle(item.getBinary().toString());
 
-                if (oldItem != item) {
-                    content.getTags().setAll(new Tag(item.getArchitecture().getDisplayName()));
-                }
+                content.getTags().setAll(new Tag(item.getArchitecture().getDisplayName()));
 
                 SVG newRemoveIcon = item.isManaged() ? SVG.DELETE_FOREVER : SVG.DELETE;
                 if (removeIcon != newRemoveIcon) {
@@ -303,8 +291,6 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
                     removeTooltip.setText(item.isManaged() ? i18n("java.uninstall") : i18n("java.disable"));
                 }
                 removeButton.setDisable(!item.isManaged() && SettingsManager.isUserSettingsReadOnly());
-
-                setGraphic(graphic);
             }
         }
 

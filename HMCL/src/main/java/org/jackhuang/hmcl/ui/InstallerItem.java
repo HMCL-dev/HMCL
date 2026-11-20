@@ -16,7 +16,9 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
+import javafx.scene.Node;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
@@ -24,6 +26,7 @@ import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -87,6 +90,21 @@ public class InstallerItem extends Control {
 
     public Runnable getOnInstall() {
         return onInstall.get();
+    }
+
+    /// Returns whether the current installation action is available for this component.
+    private boolean canInstall() {
+        return getOnInstall() != null && (resolvedStateProperty.get() instanceof InstallableState
+                || resolvedStateProperty.get() instanceof InstalledState installed && !installed.external);
+    }
+
+    /// Invokes an available installation action on a single primary click.
+    public void handleInstallClick(MouseEvent event) {
+        @Nullable Runnable action = getOnInstall();
+        if (action != null && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1 && canInstall()) {
+            action.run();
+            event.consume();
+        }
     }
 
     public void setOnInstall(Runnable onInstall) {
@@ -244,8 +262,15 @@ public class InstallerItem extends Control {
                 holder = null;
             }
             pane.getStyleClass().add("installer-item");
-            RipplerContainer container = new RipplerContainer(pane);
-            container.getStyleClass().add("installer-item-wrapper");
+            Node container;
+            if (control.style == Style.CARD) {
+                container = new RipplerContainer(pane);
+                container.getStyleClass().add("installer-item-wrapper");
+            } else {
+                control.setPickOnBounds(false);
+                pane.setPickOnBounds(false);
+                container = pane;
+            }
             getChildren().setAll(container);
 
             pane.pseudoClassStateChanged(LIST_ITEM, control.style == Style.LIST_ITEM);
@@ -338,21 +363,8 @@ public class InstallerItem extends Control {
                     control.resolvedStateProperty
             ));
             installButton.getStyleClass().add("toggle-icon4");
-            installButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
-                if (control.getOnInstall() == null) {
-                    return false;
-                }
-
-                State state = control.resolvedStateProperty.get();
-                if (state instanceof InstallableState) {
-                    return true;
-                }
-                if (state instanceof InstalledState) {
-                    return !((InstalledState) state).external;
-                }
-
-                return false;
-            }, control.resolvedStateProperty, control.onInstall));
+            installButton.visibleProperty().bind(Bindings.createBooleanBinding(
+                    control::canInstall, control.resolvedStateProperty, control.onInstall));
             installButton.managedProperty().bind(installButton.visibleProperty());
             installButton.setOnAction(e -> {
                 Runnable onInstall = control.getOnInstall();
@@ -363,13 +375,7 @@ public class InstallerItem extends Control {
 
             FXUtils.onChangeAndOperate(installButton.visibleProperty(), clickable -> {
                 if (clickable) {
-                    container.setOnMouseClicked(event -> {
-                        Runnable onInstall = control.getOnInstall();
-                        if (onInstall != null && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
-                            onInstall.run();
-                            event.consume();
-                        }
-                    });
+                    container.setOnMouseClicked(control::handleInstallClick);
                     pane.setCursor(Cursor.HAND);
                 } else {
                     container.setOnMouseClicked(null);

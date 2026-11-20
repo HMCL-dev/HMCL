@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.instances;
 
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
+import javafx.scene.control.ListView;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentType;
@@ -25,6 +26,20 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class InstallerListPage extends ListPaneBase<InstallerItem> {
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private @Nullable HMCLGameInstance gameInstance;
+
+    /// Styles the cell surface and forwards single clicks to the current installer item.
+    @Override
+    protected ItemCell<InstallerItem> createItemCell(ListView<InstallerItem> listView) {
+        var cell = ItemCell.forNode(listView);
+        var feedback = cell.getFeedbackContainer();
+        feedback.getStyleClass().add("installer-item-wrapper");
+        feedback.setOnMouseClicked(event -> {
+            @Nullable InstallerItem item = cell.getItem();
+            if (item != null)
+                item.handleInstallClick(event);
+        });
+        return cell;
+    }
 
     /// Creates an installer list that reloads when `instanceContext` changes.
     ///

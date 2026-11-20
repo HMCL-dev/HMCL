@@ -20,7 +20,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
 import java.io.IOException;
@@ -41,6 +40,11 @@ public final class JavaRestorePage extends ListPaneBase<JavaRestorePage.Disabled
 
     @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener listener;
+
+    @Override
+    protected ItemCell<DisabledJavaItem> createItemCell(ListView<DisabledJavaItem> listView) {
+        return ItemCell.forNode(listView);
+    }
 
     public JavaRestorePage(ObservableSet<String> disabledJava) {
         getListView().setPadding(Insets.EMPTY);
@@ -131,6 +135,7 @@ public final class JavaRestorePage extends ListPaneBase<JavaRestorePage.Disabled
         DisabledJavaItemSkin(DisabledJavaItem skinnable) {
             super(skinnable);
 
+            skinnable.setPickOnBounds(false);
             BorderPane root = new BorderPane();
 
             Label label = new Label(skinnable.path);
@@ -163,10 +168,10 @@ public final class JavaRestorePage extends ListPaneBase<JavaRestorePage.Disabled
             }
             root.setRight(right);
 
-            root.getStyleClass().add("md-list-cell");
+            root.setPickOnBounds(false);
             root.setPadding(new Insets(8));
 
-            this.getChildren().setAll(new RipplerContainer(root));
+            this.getChildren().setAll(root);
         }
     }
 

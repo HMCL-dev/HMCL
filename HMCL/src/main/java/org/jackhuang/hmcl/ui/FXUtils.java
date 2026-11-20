@@ -15,6 +15,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableNumberValue;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WeakChangeListener;
 import javafx.collections.ObservableList;
@@ -391,13 +392,18 @@ public final class FXUtils {
         return region.getMaxHeight();
     }
 
+    /// Binds the cell's minimum, preferred and maximum widths to the viewport width,
+    /// or to the list width if the viewport is unavailable when called.
     public static void limitCellWidth(ListView<?> listView, ListCell<?> cell) {
-        ReadOnlyDoubleProperty widthProperty;
+        limitCellWidth(listView, cell, 0);
+    }
 
-        if (listView.lookup(".clipped-container") instanceof Region clippedContainer) {
-            widthProperty = clippedContainer.widthProperty();
-        } else {
-            widthProperty = listView.widthProperty();
+    /// Binds the cell widths like [#limitCellWidth(ListView, ListCell)], subtracting
+    /// `viewportInset` logical pixels only when a viewport is available.
+    static void limitCellWidth(ListView<?> listView, ListCell<?> cell, double viewportInset) {
+        ObservableNumberValue widthProperty = listView.widthProperty();
+        if (listView.lookup(".clipped-container") instanceof Region viewport) {
+            widthProperty = viewportInset == 0 ? viewport.widthProperty() : viewport.widthProperty().subtract(viewportInset);
         }
 
         cell.maxWidthProperty().bind(widthProperty);

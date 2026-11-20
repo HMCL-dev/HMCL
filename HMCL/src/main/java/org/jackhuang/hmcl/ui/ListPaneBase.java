@@ -7,18 +7,21 @@ import com.jfoenix.controls.JFXListView;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -39,24 +42,92 @@ public abstract class ListPaneBase<T> extends StackPane {
     /// The node currently installed above the list.
     private @Nullable Node toolbar;
 
-    /// Creates an empty list. Node items are displayed as cell graphics by default.
+    /// Creates an empty list that obtains cells from [#createItemCell(ListView)].
     protected ListPaneBase() {
         content.getStyleClass().add("no-padding");
         StackPane.setMargin(content, new Insets(10));
         getChildren().add(content);
         listView.getStyleClass().add("no-horizontal-scrollbar");
-        listView.setCellFactory(view -> new ListCell<>() {
-            @Override
-            protected void updateItem(@Nullable T item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(!empty && item instanceof Node node ? node : null);
-            }
-        });
+        listView.setCellFactory(this::createItemCell);
         listView.setItems(items);
         FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
         spinner.setContent(listView);
         ComponentList.setVgrow(spinner, Priority.ALWAYS);
         content.getContent().add(spinner);
+    }
+
+    /// Creates a new reusable cell for the supplied list.
+    protected abstract ItemCell<T> createItemCell(ListView<T> listView);
+
+    /// Owns the graphic and ripple feedback shared by successive items in one virtual cell.
+    @NotNullByDefault
+    public abstract static class ItemCell<T> extends ListCell<T> {
+        /// Marks the row whose item is last in the list.
+        private static final PseudoClass LAST = PseudoClass.getPseudoClass("last");
+        /// Marks selected rows on pages that enable selection feedback.
+        private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+
+        /// Holds the page-specific row content.
+        private final StackPane contentPane = new StackPane();
+        /// Carries row styles and interaction feedback across item changes.
+        private final RipplerContainer feedback = new RipplerContainer(contentPane);
+
+        /// Creates a reusable cell sized to the list viewport.
+        protected ItemCell(ListView<T> listView) {
+            setText(null);
+            feedback.getStyleClass().add("md-list-cell");
+            FXUtils.limitCellWidth(listView, this, 1);
+        }
+
+        /// Creates a cell that displays each node item directly as its content.
+        public static <N extends Node> ItemCell<N> forNode(ListView<N> listView) {
+            return new ItemCell<>(listView) {
+                @Override
+                protected void updateListItem(@Nullable N item) {
+                    setContent(item);
+                }
+            };
+        }
+
+        /// Replaces the row content while retaining the cell's feedback container.
+        protected final void setContent(@Nullable Node content) {
+            if (content == null)
+                contentPane.getChildren().clear();
+            else
+                contentPane.getChildren().setAll(content);
+        }
+
+        /// Returns the reusable feedback container for this row.
+        public final RipplerContainer getFeedbackContainer() {
+            return feedback;
+        }
+
+        /// Mirrors the cell's selection state on the styled row.
+        protected final void setSelectable() {
+            FXUtils.onChangeAndOperate(selectedProperty(), selected -> feedback.pseudoClassStateChanged(SELECTED, selected));
+        }
+
+        /// Rebinds changed items and refreshes the trailing divider even when only the index changes.
+        @Override
+        protected final void updateItem(@Nullable T item, boolean empty) {
+            boolean changed = item != getItem() || empty != isEmpty();
+            super.updateItem(item, empty);
+
+            boolean hasItem = !empty && item != null;
+            if (changed) {
+                feedback.resetFeedback();
+                updateListItem(hasItem ? item : null);
+                setGraphic(hasItem ? feedback : null);
+            }
+
+            @Nullable ListView<T> list = getListView();
+            feedback.pseudoClassStateChanged(LAST, hasItem && list != null && getIndex() >= 0
+                    && getIndex() == list.getItems().size() - 1);
+        }
+
+        /// Updates the row for the current item, or releases item-specific bindings when cleared.
+        /// The cell has already received its new item. The same cell may be reused after clearing.
+        protected abstract void updateListItem(@Nullable T item);
     }
 
     /// Returns the list view configured by this page.

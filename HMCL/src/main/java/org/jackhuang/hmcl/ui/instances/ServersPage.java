@@ -84,6 +84,11 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
 
     private int refreshCount = 0;
 
+    @Override
+    protected ItemCell<ServerListItem> createItemCell(ListView<ServerListItem> listView) {
+        return new ServerCell(listView, this);
+    }
+
     public ServersPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
         Objects.requireNonNull(instanceContext, "instanceContext");
 
@@ -104,7 +109,6 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
         var listView = getListView();
         listView.setItems(filteredItems);
 
-        listView.setCellFactory(param -> new ServerListCell(listView, this));
         listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         {
@@ -780,7 +784,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
         }
     }
 
-    private final class ServerListCell extends MDListCell<ServerListItem> {
+    private final class ServerCell extends ItemCell<ServerListItem> {
 
         private final ServersPage page;
 
@@ -793,11 +797,11 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
         private Subscription serverStatusResultValueSubscription;
         private Subscription serverStatusPingingValueSubscription;
 
-        public ServerListCell(JFXListView<ServerListItem> listView, ServersPage page) {
+        public ServerCell(ListView<ServerListItem> listView, ServersPage page) {
             super(listView);
             this.page = page;
 
-            this.getStyleClass().add("server-list-cell");
+            getStyleClass().add("server-list-cell");
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
@@ -811,7 +815,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             JFXButton editBtn = FXUtils.newToggleButton4(SVG.EDIT);
             FXUtils.installFastTooltip(editBtn, i18n("server.manage.edit"));
             editBtn.setOnAction(event -> {
-                ServerListItem item = getItem();
+                @Nullable ServerListItem item = getItem();
                 if (item != null)
                     page.editServer(item);
             });
@@ -819,7 +823,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             JFXButton launchBtn = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
             FXUtils.installFastTooltip(launchBtn, i18n("instance.launch"));
             launchBtn.setOnAction(event -> {
-                ServerListItem item = getItem();
+                @Nullable ServerListItem item = getItem();
                 if (item != null) {
                     page.launchAndEnterServer(item);
                 }
@@ -827,7 +831,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
 
             JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
             btnMore.setOnAction(event -> {
-                ServerListItem item = getItem();
+                @Nullable ServerListItem item = getItem();
                 if (item != null) {
                     showPopupMenu(item, JFXPopup.PopupHPosition.RIGHT, 0, getHeight());
                 }
@@ -842,11 +846,11 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             );
 
             StackPane.setMargin(container, new Insets(8));
-            getContainer().getChildren().setAll(container);
+            setContent(container);
         }
 
         @Override
-        protected void updateControl(ServerListItem item, boolean empty) {
+        protected void updateListItem(@Nullable ServerListItem item) {
             if (serverStatusPingingValueSubscription != null) {
                 serverStatusPingingValueSubscription.unsubscribe();
                 serverStatusPingingValueSubscription = null;
@@ -858,8 +862,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
 
             this.contentLine1.getTags().clear();
 
-            if (empty || item == null) {
-                setGraphic(null);
+            if (item == null) {
                 serverIcon.setImage(null);
                 contentLine1.setTitle("");
                 statusBtnTooltip.setText("");

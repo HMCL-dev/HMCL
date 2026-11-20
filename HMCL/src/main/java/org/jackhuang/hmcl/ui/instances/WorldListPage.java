@@ -12,8 +12,8 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -58,6 +58,11 @@ public final class WorldListPage extends ListPaneBase<World> {
 
     private int refreshCount = 0;
 
+    @Override
+    protected ItemCell<World> createItemCell(ListView<World> listView) {
+        return new WorldCell(listView, this);
+    }
+
     /// Creates a world list that reloads when `instanceContext` changes.
     ///
     /// @param instanceContext the parent page's instance property
@@ -93,7 +98,6 @@ public final class WorldListPage extends ListPaneBase<World> {
                 createToolbarButton(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, this::openSavesFolder),
                 createToolbarButton(i18n("world.download"), SVG.DOWNLOAD, this::download)
         ));
-        listView.setCellFactory(view -> new WorldListCell(this));
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
@@ -233,22 +237,21 @@ public final class WorldListPage extends ListPaneBase<World> {
         return supportQuickPlay;
     }
 
-    private static final class WorldListCell extends ListCell<World> {
+    private static final class WorldCell extends ItemCell<World> {
 
         private final WorldListPage page;
 
-        private final RipplerContainer graphic;
         private final ImageContainer imageView;
         private final Tooltip leftTooltip;
         private final TwoLineListItem content;
         private final JFXButton btnLaunch;
 
         /// Creates a world row with launch and management actions for the supplied page.
-        public WorldListCell(WorldListPage page) {
+        public WorldCell(ListView<World> listView, WorldListPage page) {
+            super(listView);
             this.page = page;
 
             var root = new BorderPane();
-            root.getStyleClass().add("md-list-cell");
             root.setPadding(new Insets(8));
 
             {
@@ -278,7 +281,7 @@ public final class WorldListPage extends ListPaneBase<World> {
                 right.getChildren().add(btnLaunch);
                 FXUtils.installFastTooltip(btnLaunch, i18n("instance.launch"));
                 btnLaunch.setOnAction(event -> {
-                    World world = getItem();
+                    @Nullable World world = getItem();
                     if (world != null)
                         page.launch(world);
                 });
@@ -286,18 +289,20 @@ public final class WorldListPage extends ListPaneBase<World> {
                 JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
                 right.getChildren().add(btnMore);
                 btnMore.setOnAction(event -> {
-                    World world = getItem();
+                    @Nullable World world = getItem();
                     if (world != null)
                         showPopupMenu(world, page.supportQuickPlayProperty().get(), JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
                 });
             }
 
-            this.graphic = new RipplerContainer(root);
-            graphic.setOnMouseClicked(event -> {
+            root.setPickOnBounds(false);
+
+            setContent(root);
+            getFeedbackContainer().setOnMouseClicked(event -> {
                 if (event.getClickCount() != 1)
                     return;
 
-                World world = getItem();
+                @Nullable World world = getItem();
                 if (world == null)
                     return;
 
@@ -310,19 +315,9 @@ public final class WorldListPage extends ListPaneBase<World> {
 
         /// Updates world details and replaces version and lock tags together.
         @Override
-        protected void updateItem(@Nullable World world, boolean empty) {
-            @Nullable World oldWorld = getItem();
-            boolean oldEmpty = isEmpty();
-
-            super.updateItem(world, empty);
-
-            if (oldWorld == world && oldEmpty == empty) return;
-
-            this.graphic.resetFeedback();
-
-            if (empty || world == null) {
+        protected void updateListItem(@Nullable World world) {
+            if (world == null) {
                 content.getTags().clear();
-                setGraphic(null);
                 imageView.setImage(null);
                 leftTooltip.setText("");
                 content.setTitle("");
@@ -345,7 +340,6 @@ public final class WorldListPage extends ListPaneBase<World> {
                 content.getTags().setAll(tags);
                 content.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
-                setGraphic(graphic);
             }
         }
 

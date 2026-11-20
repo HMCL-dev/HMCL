@@ -99,6 +99,11 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
 
     private final ReentrantLock lock = new ReentrantLock();
 
+    @Override
+    protected ItemCell<ResourcePackInfoObject> createItemCell(ListView<ResourcePackInfoObject> listView) {
+        return new ResourcePackCell(listView, this);
+    }
+
     /// Creates a resource-pack list that reloads when `instanceContext` changes.
     ///
     /// @param instanceContext the parent page's instance property
@@ -214,7 +219,6 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
         }
 
         {
-            listView.setCellFactory(x -> new ResourcePackListCell(listView, this));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
             StackPane placeholderContainer = new StackPane();
@@ -493,7 +497,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
         }
     }
 
-    private static final class ResourcePackListCell extends MDListCell<ResourcePackInfoObject> {
+    private static final class ResourcePackCell extends ItemCell<ResourcePackInfoObject> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
         private final ResourcePackListPage page;
@@ -504,10 +508,11 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
         private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXSwitch activeSwitch;
 
-        private BooleanProperty booleanProperty = null;
+        /// The current item property bound to the switch, or null while the cell is empty.
+        private @Nullable BooleanProperty boundEnabled;
 
         /// Creates a selectable pack row with compatibility confirmation and file actions.
-        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
+        public ResourcePackCell(ListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
             super(listView);
             this.page = page;
 
@@ -521,7 +526,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
             activeSwitch = new JFXSwitch() {
                 @Override
                 public void fire() {
-                    if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !isSelected() && getItem() != null && !getItem().getFile().isCompatible()) {
+                    if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !ResourcePackCell.this.isSelected() && getItem() != null && !getItem().getFile().isCompatible()) {
                         Controllers.confirm(
                                 i18n("resourcepack.warning.manipulate"),
                                 i18n("message.info"),
@@ -555,15 +560,19 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
             setSelectable();
 
             StackPane.setMargin(root, new Insets(8));
-            getContainer().getChildren().add(root);
+            setContent(root);
         }
 
         /// Updates pack details and reuses the compatibility tag when a warning remains.
         @Override
-        protected void updateControl(@Nullable ResourcePackInfoObject item, boolean empty) {
+        protected void updateListItem(@Nullable ResourcePackInfoObject item) {
             pseudoClassStateChanged(WARNING, false);
 
-            if (empty || item == null) return;
+            if (boundEnabled != null) {
+                activeSwitch.selectedProperty().unbindBidirectional(boundEnabled);
+                boundEnabled = null;
+            }
+            if (item == null) return;
 
             ResourcePackFile file = item.getFile();
             item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
@@ -579,10 +588,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
 
             btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(item)));
 
-            if (booleanProperty != null) {
-                activeSwitch.selectedProperty().unbindBidirectional(booleanProperty);
-            }
-            activeSwitch.selectedProperty().bindBidirectional(booleanProperty = item.enabledProperty());
+            activeSwitch.selectedProperty().bindBidirectional(boundEnabled = item.enabledProperty());
 
             {
                 var compatibility = file.getCompatibility();

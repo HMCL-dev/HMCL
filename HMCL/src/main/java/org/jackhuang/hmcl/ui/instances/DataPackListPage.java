@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSwitch;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
@@ -23,6 +22,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.image.Image;
+import javafx.scene.control.ListView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -85,6 +85,11 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
     private final World world;
     private final DataPack dataPack;
     final BooleanProperty readOnly;
+
+    @Override
+    protected ItemCell<DataPackInfoObject> createItemCell(ListView<DataPackInfoObject> listView) {
+        return new DataPackCell(listView, readOnly);
+    }
 
     public DataPackListPage(WorldManagePage worldManagePage) {
         world = worldManagePage.getWorld();
@@ -186,7 +191,6 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         }
 
         {
-            listView.setCellFactory(x -> new DataPackInfoListCell(listView, readOnly));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
             StackPane placeholderContainer = new StackPane();
@@ -350,7 +354,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         }
     }
 
-    private static final class DataPackInfoListCell extends MDListCell<DataPackInfoObject> {
+    private static final class DataPackCell extends ItemCell<DataPackInfoObject> {
         private final JFXSwitch activeSwitch = new JFXSwitch();
         ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
@@ -360,7 +364,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
         /// Creates a selectable data pack row whose switch follows the read-only state.
-        DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
+        DataPackCell(ListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
             super(listView);
 
             HBox container = new HBox(8);
@@ -381,14 +385,14 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
 
             StackPane.setMargin(container, new Insets(8));
             container.getChildren().setAll(imageContainer, content, activeSwitch);
-            getContainer().getChildren().setAll(container);
+            setContent(container);
         }
 
         @Override
-        protected void updateControl(@Nullable DataPackInfoObject dataItem, boolean empty) {
+        protected void updateListItem(@Nullable DataPackInfoObject dataItem) {
             if (observedActiveProperty != null)
                 observedActiveProperty.removeListener(weakActiveListener);
-            if (empty || dataItem == null) return;
+            if (dataItem == null) return;
             content.setTitle(dataItem.getTitle());
             content.setSubtitle(dataItem.getSubtitle());
 
@@ -407,7 +411,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
                 }
             });
             activeSwitch.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
-            dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
+            dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
         }
     }
 }

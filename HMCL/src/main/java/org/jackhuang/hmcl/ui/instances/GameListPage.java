@@ -18,6 +18,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -127,6 +128,11 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         private final ObservableList<GameListItem> sourceList = FXCollections.observableArrayList();
         private final FilteredList<GameListItem> filteredList = new FilteredList<>(sourceList);
 
+        @Override
+        protected ItemCell<GameListItem> createItemCell(ListView<GameListItem> listView) {
+            return new GameListCell(listView);
+        }
+
         public GameList() {
             setItems(filteredList);
 
@@ -180,7 +186,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             }
 
             {
-                listView.setCellFactory(GameListCell::new);
 
                 StackPane placeholderContainer = new StackPane();
                 placeholderContainer.getStyleClass().add("notice-pane");

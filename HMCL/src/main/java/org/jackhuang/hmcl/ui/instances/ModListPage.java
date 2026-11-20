@@ -112,6 +112,11 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
 
     private long modLoadRequestId;
 
+    @Override
+    protected ItemCell<ModInfoObject> createItemCell(ListView<ModInfoObject> listView) {
+        return new ModListPage.ModCell(listView, this);
+    }
+
     /// Creates a mod list that reloads when `instanceContext` changes.
     ///
     /// @param instanceContext the parent page's instance property
@@ -251,7 +256,6 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
         }
 
         {
-            listView.setCellFactory(x -> new ModListPage.ModInfoListCell(listView, this));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
             StackPane placeholderContainer = new StackPane();
@@ -697,7 +701,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
     private static final Lazy<PopupMenu> menu = new Lazy<>(PopupMenu::new);
     private static final Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
 
-    private static final class ModInfoListCell extends MDListCell<ModInfoObject> {
+    private static final class ModCell extends ItemCell<ModInfoObject> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
         private final ModListPage page;
@@ -716,11 +720,11 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
         private Tooltip warningTooltip;
 
         /// Creates a selectable mod row with file actions for the supplied page.
-        ModInfoListCell(JFXListView<ModInfoObject> listView, ModListPage page) {
+        ModCell(ListView<ModInfoObject> listView, ModListPage page) {
             super(listView);
             this.page = page;
 
-            this.getStyleClass().add("mod-info-list-cell");
+            getStyleClass().add("mod-info-list-cell");
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
@@ -749,12 +753,12 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
             container.getChildren().setAll(imageContainer, content, actions);
 
             StackPane.setMargin(container, new Insets(8));
-            getContainer().getChildren().setAll(container);
+            setContent(container);
         }
 
         /// Updates mod details, warnings, and tags while retaining reusable tag labels.
         @Override
-        protected void updateControl(@Nullable ModInfoObject dataItem, boolean empty) {
+        protected void updateListItem(@Nullable ModInfoObject dataItem) {
             if (observedActiveProperty != null)
                 observedActiveProperty.removeListener(weakActiveListener);
 
@@ -764,7 +768,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
                 warningTooltip = null;
             }
 
-            if (empty || dataItem == null) return;
+            if (dataItem == null) return;
 
             List<String> warning = new ArrayList<>();
 
@@ -775,7 +779,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
-            dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
+            dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
 
             String displayName = modInfo.getName();
             if (projectInfo != null && I18n.isUseChinese()) {

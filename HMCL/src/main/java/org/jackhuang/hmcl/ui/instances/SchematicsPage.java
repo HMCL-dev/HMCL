@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -108,6 +107,11 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
     private final BooleanProperty isRootProperty = new SimpleBooleanProperty(this, "isRoot", true);
     private final ObjectProperty<RemoteAddon> downloadTarget = new SimpleObjectProperty<>(this, "downloadTarget");
 
+    @Override
+    protected ItemCell<Item> createItemCell(ListView<Item> listView) {
+        return new SchematicCell(listView);
+    }
+
     /// Creates a schematics list that reloads when `instanceContext` changes.
     ///
     /// @param instanceContext the parent page's instance property
@@ -158,10 +162,6 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
             );
             FXUtils.setOverflowHidden(toolbar, 8);
             setToolbar(toolbar);
-        }
-
-        {
-            listView.setCellFactory(x -> new Cell(listView));
         }
 
         {
@@ -745,7 +745,7 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
         }
     }
 
-    private static final class Cell extends MDListCell<Item> {
+    private static final class SchematicCell extends ItemCell<Item> {
 
         private final StackPane left;
         private final TwoLineListItem center;
@@ -759,7 +759,7 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
 
         private final Tooltip tooltip = new Tooltip();
 
-        public Cell(JFXListView<Item> listView) {
+        public SchematicCell(ListView<Item> listView) {
             super(listView);
 
             var box = new HBox(8);
@@ -792,13 +792,13 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
                     FXUtils.installFastTooltip(btnReveal, tooltip);
                 }
                 btnReveal.setOnAction(event -> {
-                    Item item = getItem();
+                    @Nullable Item item = getItem();
                     if (item != null) item.onReveal();
                 });
 
                 JFXButton btnExplore = FXUtils.newToggleButton4(SVG.EXPLORE); // Change the icon if allows editing
                 btnExplore.setOnAction(event -> {
-                    Item item = getItem();
+                    @Nullable Item item = getItem();
                     if (item instanceof SchematicItem) {
                         try {
                             Controllers.navigate(new NBTEditorPage(item.getPath()));
@@ -810,7 +810,7 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
 
                 JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                 btnDelete.setOnAction(event -> {
-                    Item item = getItem();
+                    @Nullable Item item = getItem();
                     if (item != null) {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
                                 item::onDelete, null);
@@ -822,16 +822,16 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
 
             box.getChildren().setAll(left, center, right);
             StackPane.setMargin(box, new Insets(8));
-            getContainer().getChildren().setAll(box);
-            onClicked(() -> {
+            setContent(box);
+            FXUtils.onClicked(getFeedbackContainer(), () -> {
                 var item = getItem();
                 if (item != null) item.onClick();
             });
         }
 
         @Override
-        protected void updateControl(Item item, boolean empty) {
-            if (empty || item == null) return;
+        protected void updateListItem(@Nullable Item item) {
+            if (item == null) return;
 
             iconImageView.setImage(null);
 
