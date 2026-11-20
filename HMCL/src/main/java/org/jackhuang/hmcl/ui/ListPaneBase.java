@@ -60,8 +60,6 @@ public abstract class ListPaneBase<T> extends StackPane {
     /// Owns the graphic and ripple feedback shared by successive items in one virtual cell.
     @NotNullByDefault
     public abstract static class ItemCell<T> extends ListCell<@Nullable T> {
-        /// Marks the row whose item is last in the list.
-        private static final PseudoClass LAST = PseudoClass.getPseudoClass("last");
         /// Marks selected rows on pages that enable selection feedback.
         private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
@@ -105,22 +103,18 @@ public abstract class ListPaneBase<T> extends StackPane {
             FXUtils.onChangeAndOperate(selectedProperty(), selected -> feedback.pseudoClassStateChanged(SELECTED, selected));
         }
 
-        /// Rebinds changed items and refreshes the trailing divider even when only the index changes.
+        /// Resets feedback and updates the graphic when the item or empty state changes.
         @Override
         protected final void updateItem(@Nullable T item, boolean empty) {
             boolean changed = item != getItem() || empty != isEmpty();
             super.updateItem(item, empty);
 
-            boolean hasItem = !empty && item != null;
             if (changed) {
+                boolean hasItem = !empty && item != null;
                 feedback.resetFeedback();
                 updateListItem(hasItem ? item : null);
                 setGraphic(hasItem ? feedback : null);
             }
-
-            @Nullable ListView<T> list = getListView();
-            feedback.pseudoClassStateChanged(LAST, hasItem && list != null && getIndex() >= 0
-                    && getIndex() == list.getItems().size() - 1);
         }
 
         /// Updates the row for the current item, or releases item-specific bindings when cleared.
