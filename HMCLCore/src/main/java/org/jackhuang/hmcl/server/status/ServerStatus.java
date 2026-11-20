@@ -48,14 +48,6 @@ public record ServerStatus(
 
         public PlayerList(
                 int max,
-                int online,
-                @NotNull List<@NotNull Sample> samples
-        ) {
-            this(max, online, true, samples);
-        }
-
-        public PlayerList(
-                int max,
                 int online
         ) {
             this(max, online, true, null);

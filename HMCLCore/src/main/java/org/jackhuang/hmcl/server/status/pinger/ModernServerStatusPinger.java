@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /// @see <a href="https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping">Java Edition protocol/Server List Ping</a>
 /// @see <a href="https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Minecraft_Forge_Handshake">JMinecraft Forge Handshake</a>
 // Supported Version 1.7+
@@ -122,8 +124,18 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
             return ServerStatus.ProtocolVersion.UNKNOWN;
         }
         JsonObject asJsonObject = protocolVersionElement.getAsJsonObject();
-        int protocolNumber = asJsonObject.getAsJsonPrimitive("protocol").getAsInt();
-        String specifiedProtocolName = asJsonObject.getAsJsonPrimitive("name").getAsString();
+        int protocolNumber = -1;
+        if (asJsonObject.get("protocol") instanceof JsonPrimitive primitive) {
+            try {
+                protocolNumber = primitive.getAsInt();
+            } catch (NumberFormatException e) {
+                LOG.error("Invalid protocol number: " + primitive);
+            }
+        }
+        String specifiedProtocolName = null;
+        if (asJsonObject.get("name") instanceof JsonPrimitive primitive) {
+            specifiedProtocolName = primitive.getAsString();
+        }
 
         if (protocolNumber >= 0 && protocolNumber < 0x40000000) {
             return new ServerStatus.ProtocolVersion(ServerStatus.ProtocolVersion.VersionType.RELEASE, specifiedProtocolName, protocolNumber);
@@ -140,21 +152,46 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
         }
 
         JsonObject asJsonObject = playerListElement.getAsJsonObject();
-        int playerMax = asJsonObject.getAsJsonPrimitive("max").getAsInt();
-        int playerOnline = asJsonObject.getAsJsonPrimitive("online").getAsInt();
+        boolean numbered = false;
+        int playerMax = -1;
+        int playerOnline = -1;
+
+        if (asJsonObject.get("max") instanceof JsonPrimitive maxPrimitive && asJsonObject.get("online") instanceof JsonPrimitive onlinePrimitive) {
+            numbered = true;
+            try {
+                playerMax = maxPrimitive.getAsInt();
+            } catch (NumberFormatException e) {
+                numbered = false;
+                LOG.error("Invalid max number: " + maxPrimitive);
+            }
+            try {
+                playerOnline = onlinePrimitive.getAsInt();
+            } catch (NumberFormatException e) {
+                numbered = false;
+                LOG.error("Invalid online number: " + onlinePrimitive);
+            }
+        }
 
         if (asJsonObject.get("sample") instanceof JsonArray sampleJsonArray) {
             List<ServerStatus.PlayerList.Sample> samples = new ArrayList<>();
             for (JsonElement element : sampleJsonArray) {
                 if (element instanceof JsonObject elementAsJsonObject) {
-                    samples.add(new ServerStatus.PlayerList.Sample(
-                            elementAsJsonObject.get("name").getAsString(),
-                            UUID.fromString(elementAsJsonObject.get("id").getAsString())
-                    ));
+                    if (elementAsJsonObject.get("name") instanceof JsonPrimitive namePrimitive) {
+                        if (elementAsJsonObject.get("id") instanceof JsonPrimitive idPrimitive) {
+                            try {
+                                samples.add(new ServerStatus.PlayerList.Sample(
+                                        namePrimitive.getAsString(),
+                                        UUID.fromString(idPrimitive.getAsString())
+                                ));
+                            } catch (IllegalArgumentException e) {
+                                LOG.error("Invalid sample id: " + idPrimitive);
+                            }
+                        }
+                    }
                 }
             }
 
-            return new ServerStatus.PlayerList(playerMax, playerOnline, samples);
+            return new ServerStatus.PlayerList(playerMax, playerOnline, numbered, samples);
         }
         return new ServerStatus.PlayerList(playerMax, playerOnline);
     }
