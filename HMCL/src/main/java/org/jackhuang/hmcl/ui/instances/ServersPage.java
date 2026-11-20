@@ -31,9 +31,14 @@ import javafx.scene.layout.*;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.image.apng.Png;
 import org.jackhuang.hmcl.image.apng.argb8888.Argb8888Bitmap;
+import org.jackhuang.hmcl.image.apng.argb8888.Argb8888Processor;
+import org.jackhuang.hmcl.image.apng.argb8888.DefaultImageArgb8888Director;
+import org.jackhuang.hmcl.image.apng.chunks.PngHeader;
+import org.jackhuang.hmcl.image.apng.error.PngException;
+import org.jackhuang.hmcl.image.apng.reader.DefaultPngChunkReader;
+import org.jackhuang.hmcl.image.apng.reader.PngReadHelper;
+import org.jackhuang.hmcl.image.apng.reader.PngSource;
 import org.jackhuang.hmcl.server.Server;
 import org.jackhuang.hmcl.server.ServersDatFile;
 import org.jackhuang.hmcl.server.status.ServerStatus;
@@ -47,11 +52,7 @@ import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.MinecraftChatComponentUtils;
-import org.jackhuang.hmcl.util.Base64Utils;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.ServerAddress;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,13 +155,21 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         if (imageBase64String != null && !imageBase64String.isEmpty()) {
             try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64Utils.decode(imageBase64String))) {
                 // png format.
-                Argb8888Bitmap bitmap = Png.readArgb8888Bitmap(bais);
-                if (bitmap.width() != 64) {
-                    throw new IOException("Bad width, expected 64, actual " + bitmap.width());
-                }
-                if (bitmap.height() != 64) {
-                    throw new IOException("Bad height, expected 64, actual " + bitmap.height());
-                }
+                Argb8888Processor<Argb8888Bitmap> processor = new Argb8888Processor<>(new DefaultImageArgb8888Director());
+                Argb8888Bitmap bitmap = PngReadHelper.read(bais, new DefaultPngChunkReader<>(processor) {
+                    @Override
+                    public void readHeaderChunk(PngSource source, int dataLength) throws IOException, PngException {
+                        PngHeader header = PngHeader.from(source.getDis());
+                        if (header.height != 64) {
+                            throw new IOException("Bad height, expected 64, actual " + header.height);
+                        }
+                        if (header.width != 64) {
+                            throw new IOException("Bad width, expected 64, actual " + header.width);
+                        }
+                        seenHeader = true;
+                        processor.processHeader(header);
+                    }
+                });
 
                 WritableImage image = new WritableImage(64, 64);
                 image.getPixelWriter().setPixels(0, 0, 64, 64,
@@ -420,18 +429,17 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
     }
 
     private void addServer() {
-        runInFX(() -> Controllers.dialog(new EditServerDialog(EditServerDialog.Type.ADD, null, (server, statusResult) -> {
-            ObservableServerStatus observableServerStatus = new ObservableServerStatus(server.getIp());
-            if (statusResult != null) {
-                observableServerStatus.resultProperty.set(statusResult);
-            }
+        HMCLGameInstance gameInstance = this.gameInstance;
+        if (gameInstance != null) {
+            runInFX(() -> Controllers.dialog(new EditServerDialog(EditServerDialog.Type.ADD, null, (server, statusResult) -> {
+                ObservableServerStatus observableServerStatus = new ObservableServerStatus(server.getIp());
+                if (statusResult != null) {
+                    observableServerStatus.resultProperty.set(statusResult);
+                }
 
-            HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-            HMCLGameInstance instance = repository.getSelectedInstance();
-            if (instance != null) {
-                addServerToInstance(server, instance, observableServerStatus);
-            }
-        })));
+                addServerToInstance(server, gameInstance, observableServerStatus);
+            })));
+        }
     }
 
     public static class ServerAddressMaskPane extends HBox {
