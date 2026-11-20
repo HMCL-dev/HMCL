@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXDatePicker;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.application.Platform;
@@ -39,8 +38,6 @@ import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import javafx.util.converter.PercentageStringConverter;
-import org.glavo.m3fx.controls.M3Button;
-import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3Divider;
 import org.glavo.m3fx.controls.M3ListView;
 import org.glavo.m3fx.controls.M3MenuItem;
@@ -57,7 +54,7 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.construct.LauncherDialog;
+import org.jackhuang.hmcl.ui.construct.DateRangeDialog;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
@@ -1284,49 +1281,8 @@ public final class FXUtils {
 
     }
 
-    public static void chooseDateRange(Consumer<@NotNull Pair<@Nullable LocalDate, @Nullable LocalDate>> onConfirm) {
+    /// Prompts for two inclusive dates, each of which may be left open.
+    public static void chooseDateRange(@Nullable Consumer<@NotNull Pair<@Nullable LocalDate, @Nullable LocalDate>> onConfirm) {
         Controllers.dialog(new DateRangeDialog(onConfirm));
-    }
-
-    private static class DateRangeDialog extends LauncherDialog {
-
-        private final JFXDatePicker fromPicker, toPicker;
-
-        public DateRangeDialog(Consumer<Pair<LocalDate, LocalDate>> onConfirm) {
-            super();
-
-            getDialogPane().setHeadline(i18n("button.select_date"));
-
-            GridPane body = new GridPane();
-            body.setHgap(4);
-            body.setVgap(8);
-            {
-                Label fromLabel = new Label(i18n("button.select_date.from"));
-                this.fromPicker = new JFXDatePicker(LocalDate.now());
-                fromPicker.setOverLay(true);
-                fromPicker.setDialogParent(Controllers.getDecorator().getContentRoot());
-                body.add(fromLabel, 0, 0);
-                body.add(fromPicker, 1, 0);
-            }
-            {
-                Label toLabel = new Label(i18n("button.select_date.to"));
-                this.toPicker = new JFXDatePicker(LocalDate.now());
-                toPicker.setOverLay(true);
-                toPicker.setDialogParent(Controllers.getDecorator().getContentRoot());
-                body.add(toLabel, 0, 1);
-                body.add(toPicker, 1, 1);
-            }
-            getDialogPane().setContent(body);
-
-            M3Button cancelButton = new M3Button(i18n("button.cancel"), M3ButtonVariant.TEXT);
-            M3Button okButton = new M3Button(i18n("button.ok"), M3ButtonVariant.TEXT);
-            okButton.setOnAction(e -> {
-                if (onConfirm != null) onConfirm.accept(Pair.pair(fromPicker.getValue(), toPicker.getValue()));
-            });
-
-            getDialogPane().getActions().setAll(cancelButton, okButton);
-            cancelButton.setCancelButton(true);
-        }
-
     }
 }

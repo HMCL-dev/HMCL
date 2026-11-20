@@ -14,13 +14,14 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.shape.Shape;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3ListItem;
-import org.glavo.m3fx.controls.M3ListView;
+import org.glavo.m3fx.controls.M3DatePickerField;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputLayout;
@@ -50,6 +51,7 @@ import org.jackhuang.hmcl.ui.TaskManagerPage;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.FutureCallback;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskManager;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +60,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.reflect.Field;
@@ -982,47 +985,46 @@ final class TaskExecutorDialogPaneTest {
                 false, false, false, false, false, false, new PickResult(target, sceneX + 50, sceneY + 50)));
     }
 
-    /// Verifies the legacy date picker closes and reopens through the M3FX modal host.
-    @Test
-    void datePickerUsesOverlayDialog() throws Exception {
+    /// Verifies each endpoint can be cleared independently, including after a failed edit.
+    @ParameterizedTest
+    @CsvSource({"false, false", "true, false", "false, true", "true, true"})
+    void confirmsOptionalDateRangeEndpoints(boolean includeStart, boolean includeEnd) throws Exception {
         onFxThread(() -> {
             M3OverlayPane host = createDialogHost();
-            com.jfoenix.controls.JFXDatePicker picker = new com.jfoenix.controls.JFXDatePicker();
-            picker.setValue(LocalDate.of(2024, 1, 15));
-            picker.setOverLay(true);
-            host.setContent(picker);
-            host.applyCss();
-            picker.show();
-            assertEquals(1, host.lookupAll(".m3-dialog-pane").size());
-            picker.hide();
-            assertTrue(host.lookupAll(".m3-dialog-pane").isEmpty());
-            picker.show();
-            assertEquals(1, host.lookupAll(".m3-dialog-pane").size());
-            @Nullable Node calendar = host.lookup(".date-picker-popup");
-            assertNotNull(calendar);
-            M3ListView<?> years = assertInstanceOf(M3ListView.class, calendar.lookup(".m3-list-view"));
-            Runnable openYears = () -> calendar.lookup(".month-year-pane .spinner").fireEvent(
-                    new MouseEvent(MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, MouseButton.PRIMARY, 1,
-                            false, false, false, false, false, false, false, false, false, true, null));
-            openYears.run();
-            assertEquals(2024, years.getSelectedItem());
-            assertTrue(years.isVisible());
+            List<Pair<@Nullable LocalDate, @Nullable LocalDate>> confirmed = new ArrayList<>();
+            var dialog = new DateRangeDialog(confirmed::add);
+            var handle = host.showDialog(dialog);
+            var pane = dialog.getDialogPane();
+            var form = (VBox) ((ScrollPane) pane.getContent()).getContent();
+            var from = (M3DatePickerField) form.getChildren().getFirst();
+            var to = (M3DatePickerField) form.getChildren().getLast();
+            assertEquals(LocalDate.now(), from.getValue());
+            assertEquals(from.getValue(), to.getValue());
             host.applyCss();
             host.layout();
-            assertEquals(2024, years.getFocusedItem());
-            years.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.DOWN, false, false, false, false));
-            assertEquals(2025, years.getFocusedItem());
-            years.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER, false, false, false, false));
-            assertEquals(2025, years.getSelectedItem());
-            assertEquals(LocalDate.of(2024, 1, 15), picker.getValue());
-            calendar.fireEvent(new DialogCloseEvent());
-            assertFalse(picker.isShowing());
-            assertTrue(host.lookupAll(".m3-dialog-pane").isEmpty());
-            picker.setValue(LocalDate.of(2022, 6, 1));
-            picker.show();
-            openYears.run();
-            assertEquals(2022, years.getSelectedItem());
-            picker.hide();
+            from.showPicker();
+            assertTrue(from.isShowing());
+            from.getPicker().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE,
+                    false, false, false, false));
+            assertFalse(from.isShowing());
+            assertTrue(handle.isShowing());
+
+            LocalDate start = LocalDate.of(2024, 2, 28);
+            LocalDate end = start.plusDays(1);
+            from.setText(includeStart ? from.getFormatter().format(start) : "");
+            to.setText("invalid");
+            pane.getActions().getLast().fire();
+            assertTrue(handle.isShowing());
+            assertTrue(confirmed.isEmpty());
+            to.setText(includeEnd ? to.getFormatter().format(end) : "");
+            pane.getActions().getLast().fire();
+            assertFalse(handle.isShowing());
+            assertEquals(List.of(Pair.pair(includeStart ? start : null, includeEnd ? end : null)), confirmed);
+
+            var reopened = host.showDialog(dialog);
+            pane.getActions().getFirst().fire();
+            assertFalse(reopened.isShowing());
+            assertEquals(1, confirmed.size());
             return true;
         });
     }

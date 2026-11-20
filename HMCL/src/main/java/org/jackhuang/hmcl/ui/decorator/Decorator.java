@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.decorator;
 
-import com.jfoenix.skins.JFXDatePickerContent;
-import com.jfoenix.skins.JFXDatePickerSkin;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -73,7 +71,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.SequencedMap;
-import java.util.Stack;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -1230,22 +1227,7 @@ public final class Decorator {
                 return;
             }
 
-            Node newTarget;
-            {
-                @SuppressWarnings("unchecked")
-                @Nullable Stack<JFXDatePickerContent> stack =
-                        (Stack<JFXDatePickerContent>) getContentRoot().getProperties()
-                        .get(JFXDatePickerSkin.PROPERTY_DATE_PICKER_CONTENTS);
-                if (stack != null && !stack.isEmpty()) {
-                    newTarget = stack.peek();
-                } else {
-                    if (!dialogs.isEmpty()) {
-                        newTarget = dialogs.lastEntry().getKey();
-                    } else {
-                        newTarget = navigator.getCurrentPage();
-                    }
-                }
-            }
+            Node newTarget = dialogs.isEmpty() ? navigator.getCurrentPage() : dialogs.lastEntry().getKey();
 
             for (@Nullable Node node = target; node != null; node = node.getParent()) {
                 if (node == newTarget) {
