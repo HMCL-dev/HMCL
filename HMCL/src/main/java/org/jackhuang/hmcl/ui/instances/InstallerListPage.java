@@ -70,13 +70,13 @@ public class InstallerListPage extends ListPaneBase<InstallerItem> {
         @Nullable HMCLGameInstance gameInstance = instance.instance();
         this.gameInstance = gameInstance;
         if (gameInstance == null) {
-            itemsProperty().clear();
+            getItems().clear();
             return;
         }
 
         HMCLGameRepository repository = gameInstance.getRepository();
 
-        itemsProperty().clear();
+        getItems().clear();
         InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameInstance.getVersion(), InstallerItem.Style.LIST_ITEM);
 
         // Conventional libraries: game, fabric, legacyfabric, forge, cleanroom, neoforge, liteloader, optifine
@@ -113,7 +113,7 @@ public class InstallerListPage extends ListPaneBase<InstallerItem> {
                     .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
                     .start());
 
-            itemsProperty().add(component);
+            getItems().add(component);
         }
 
         var currentItems = getItems().stream().map(InstallerItem::getComponentType).toList();
@@ -133,7 +133,7 @@ public class InstallerListPage extends ListPaneBase<InstallerItem> {
                     .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
                     .start());
 
-            itemsProperty().add(installerItem);
+            getItems().add(installerItem);
         }
     }
 

@@ -80,7 +80,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
     private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
     /// Source items matching the current search.
-    private final FilteredList<DataPackInfoObject> filteredItems = new FilteredList<>(itemsProperty());
+    private final FilteredList<DataPackInfoObject> filteredItems;
 
     private final World world;
     private final DataPack dataPack;
@@ -94,7 +94,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
     public DataPackListPage(WorldManagePage worldManagePage) {
         world = worldManagePage.getWorld();
         dataPack = new DataPack(world.getFile().resolve("datapacks"));
-        setItems(MappedObservableList.create(dataPack.getPacks(), DataPackInfoObject::new));
+        filteredItems = new FilteredList<>(MappedObservableList.create(dataPack.getPacks(), DataPackInfoObject::new));
         readOnly = worldManagePage.readOnlyProperty();
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 this::installMultiDataPack, this::refresh);

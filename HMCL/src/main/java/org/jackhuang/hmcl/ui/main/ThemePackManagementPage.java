@@ -98,7 +98,7 @@ public final class ThemePackManagementPage extends ListPaneBase<ThemePackManager
         getStyleClass().add("gray-background");
 
         this.onThemePacksChanged = Objects.requireNonNull(onThemePacksChanged);
-        setItems(filteredList);
+        getListView().setItems(filteredList);
         setOnFailedAction(event -> refreshThemePacks());
         refreshThemePacks();
 

@@ -134,7 +134,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         public GameList() {
-            setItems(filteredList);
+            getListView().setItems(filteredList);
 
             GameDirectoryManager.registerVersionsListener(this::loadVersions);
 

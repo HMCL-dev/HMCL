@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.BooleanProperty;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Control;
@@ -122,7 +121,7 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             this.setLoading(false);
             if (exception == null) {
-                this.setItems(FXCollections.observableList(result));
+                getItems().setAll(result);
             } else {
                 LOG.warning("Failed to load backups", exception);
             }

@@ -12,6 +12,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -99,8 +100,11 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
     /// Timer for debouncing search input to avoid executing search on every keystroke.
     private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
+    /// All loaded items before search filtering.
+    private final ObservableList<ModInfoObject> sourceItems = FXCollections.observableArrayList();
+
     /// Source items matching the current search.
-    private final FilteredList<ModInfoObject> filteredItems = new FilteredList<>(itemsProperty());
+    private final FilteredList<ModInfoObject> filteredItems = new FilteredList<>(sourceItems);
 
     private final ReentrantLock lock = new ReentrantLock();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
@@ -305,7 +309,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
         setLoading(true);
 
         if (this.modManager != modManager) {
-            getItems().clear();
+            sourceItems.clear();
         }
         this.modManager = modManager;
 
@@ -329,10 +333,10 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
                 supportedLoaders.addAll(modManager.getSupportedLoaders());
 
                 if (exception == null) {
-                    getItems().setAll(list);
+                    sourceItems.setAll(list);
                 } else {
                     LOG.warning("Failed to load mods", exception);
-                    getItems().clear();
+                    sourceItems.clear();
                 }
             } finally {
                 setLoading(false);

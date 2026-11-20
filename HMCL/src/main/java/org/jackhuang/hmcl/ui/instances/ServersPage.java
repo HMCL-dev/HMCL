@@ -10,7 +10,9 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
@@ -71,8 +73,11 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
     /// Delays filtering while the query is being edited.
     private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
+    /// All loaded items before search filtering.
+    private final ObservableList<ServerListItem> sourceItems = FXCollections.observableArrayList();
+
     /// Source items matching the current search.
-    private final FilteredList<ServerListItem> filteredItems = new FilteredList<>(itemsProperty());
+    private final FilteredList<ServerListItem> filteredItems = new FilteredList<>(sourceItems);
 
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
@@ -218,7 +223,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
 
     private void updateServerList() {
         if (serverListEntries == null || gameInstance == null) {
-            getItems().clear();
+            sourceItems.clear();
             return;
         }
 
@@ -227,7 +232,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             stream = stream.filter(entry -> entry.storageEntry.getServersDatFile().getFile().equals(gameInstance.getServersDatFilePath()));
         }
 
-        getItems().setAll(stream.toList());
+        sourceItems.setAll(stream.toList());
     }
 
     private void refresh() {

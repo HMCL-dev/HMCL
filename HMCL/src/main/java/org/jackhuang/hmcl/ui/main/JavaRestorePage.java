@@ -8,7 +8,6 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -67,7 +66,7 @@ public final class JavaRestorePage extends ListPaneBase<JavaRestorePage.Disabled
                     return 1;
                 return a.path.compareTo(b.path);
             });
-            this.setItems(FXCollections.observableList(result));
+            getItems().setAll(result);
 
             if (result.isEmpty()) {
                 fireEvent(new PageCloseEvent());

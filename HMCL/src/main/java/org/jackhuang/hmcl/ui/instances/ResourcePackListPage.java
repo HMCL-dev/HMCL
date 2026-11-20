@@ -9,7 +9,9 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -76,8 +78,11 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
     /// Timer for debouncing search input to avoid executing search on every keystroke.
     private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
+    /// All loaded items before search filtering.
+    private final ObservableList<ResourcePackInfoObject> sourceItems = FXCollections.observableArrayList();
+
     /// Source items matching the current search.
-    private final FilteredList<ResourcePackInfoObject> filteredItems = new FilteredList<>(itemsProperty());
+    private final FilteredList<ResourcePackInfoObject> filteredItems = new FilteredList<>(sourceItems);
 
     private static final String TIP_KEY = "resourcePackWarning";
     private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
@@ -252,7 +257,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
         if (gameInstance == null) {
             this.resourcePackManager = null;
             this.resourcePackDirectory = null;
-            getItems().clear();
+            sourceItems.clear();
             return;
         }
 
@@ -280,14 +285,14 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 if (result != null) {
-                    getItems().setAll(result);
+                    sourceItems.setAll(result);
                 } else { // Unsupported mc version
-                    getItems().clear();
+                    sourceItems.clear();
                     setDisable(true);
                 }
             } else {
                 LOG.warning("Failed to load resource packs", exception);
-                getItems().clear();
+                sourceItems.clear();
             }
             setLoading(false);
         }).start();

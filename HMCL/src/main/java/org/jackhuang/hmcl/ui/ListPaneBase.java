@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.property.*;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.event.Event;
@@ -49,7 +48,6 @@ public abstract class ListPaneBase<T> extends StackPane {
         getChildren().add(content);
         listView.getStyleClass().add("no-horizontal-scrollbar");
         listView.setCellFactory(this::createItemCell);
-        listView.setItems(items);
         FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
         spinner.setContent(listView);
         ComponentList.setVgrow(spinner, Priority.ALWAYS);
@@ -159,22 +157,9 @@ public abstract class ListPaneBase<T> extends StackPane {
         content.getContent().add(footer);
     }
 
-    /// The source items, including any items hidden by page-specific search.
-    private final ListProperty<T> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
-
-    /// Returns the observable source list property.
-    public final ListProperty<T> itemsProperty() {
-        return items;
-    }
-
-    /// Returns the current source list.
+    /// Returns the items currently displayed by the list view, including any active filtering.
     public final ObservableList<T> getItems() {
-        return items.get();
-    }
-
-    /// Replaces the source list.
-    public final void setItems(ObservableList<T> items) {
-        this.items.set(items);
+        return listView.getItems();
     }
 
     /// Returns the property controlling the loading indicator.
