@@ -3,8 +3,8 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import javafx.beans.value.ObservableValue;
-import javafx.scene.Node;
-import javafx.scene.control.Skin;
+import javafx.geometry.Insets;
+import javafx.scene.control.ListView;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentType;
@@ -23,7 +23,7 @@ import java.util.*;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class InstallerListPage extends ListPageBase<InstallerItem> {
+public class InstallerListPage extends ListPaneBase<InstallerItem> {
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private @Nullable HMCLGameInstance gameInstance;
 
@@ -31,6 +31,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     ///
     /// @param instanceContext the parent page's instance property
     public InstallerListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        getListView().setPadding(Insets.EMPTY);
         Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this, it -> Set.of("jar", "exe").contains(FileUtils.getExtension(it)), mods -> {
             if (!mods.isEmpty())
@@ -42,11 +43,24 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                 loadInstance(current);
             }
         }));
+
+        setToolbarButtons(Collections.singletonList(
+                createToolbarButton(i18n("install.installer.install_offline"), SVG.ADD, this::installOffline)
+        ));
     }
 
+    /// Styles the cell surface and forwards single clicks to the current installer item.
     @Override
-    protected Skin<?> createDefaultSkin() {
-        return new InstallerListPageSkin();
+    protected ItemCell<InstallerItem> createItemCell(ListView<InstallerItem> listView) {
+        var cell = ItemCell.forNode(listView);
+        var feedback = cell.getFeedbackContainer();
+        feedback.getStyleClass().add("installer-item-wrapper");
+        feedback.setOnMouseClicked(event -> {
+            @Nullable InstallerItem item = cell.getItem();
+            if (item != null)
+                item.handleInstallClick(event);
+        });
+        return cell;
     }
 
     /// Rebuilds the component controls for the selected instance, or clears them if none is selected.
@@ -56,13 +70,13 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         @Nullable HMCLGameInstance gameInstance = instance.instance();
         this.gameInstance = gameInstance;
         if (gameInstance == null) {
-            itemsProperty().clear();
+            getItems().clear();
             return;
         }
 
         HMCLGameRepository repository = gameInstance.getRepository();
 
-        itemsProperty().clear();
+        getItems().clear();
         InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameInstance.getVersion(), InstallerItem.Style.LIST_ITEM);
 
         // Conventional libraries: game, fabric, legacyfabric, forge, cleanroom, neoforge, liteloader, optifine
@@ -99,7 +113,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                     .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
                     .start());
 
-            itemsProperty().add(component);
+            getItems().add(component);
         }
 
         var currentItems = getItems().stream().map(InstallerItem::getComponentType).toList();
@@ -119,7 +133,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                     .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
                     .start());
 
-            itemsProperty().add(installerItem);
+            getItems().add(installerItem);
         }
     }
 
@@ -157,17 +171,4 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         }), i18n("install.installer.install_offline"), TaskCancellationAction.NO_CANCEL);
     }
 
-    private class InstallerListPageSkin extends ToolbarListPageSkin<InstallerItem, InstallerListPage> {
-
-        InstallerListPageSkin() {
-            super(InstallerListPage.this);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(InstallerListPage skinnable) {
-            return Collections.singletonList(
-                    createToolbarButton2(i18n("install.installer.install_offline"), SVG.ADD, skinnable::installOffline)
-            );
-        }
-    }
 }

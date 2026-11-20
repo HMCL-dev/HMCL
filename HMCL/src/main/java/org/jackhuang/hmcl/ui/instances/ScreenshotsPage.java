@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
@@ -45,13 +44,17 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Lists screenshots of the current game instance and provides preview and file actions.
-public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> {
+public final class ScreenshotsPage extends ListPaneBase<ScreenshotsPage.Screenshot> {
+    /// Switches between toolbar modes.
+    private final TransitionPane toolbarPane = new TransitionPane();
+    /// Actions available while browsing.
+    private final HBox toolbarNormal = new HBox();
+    /// Actions on the selected items.
+    private final HBox toolbarSelecting = new HBox();
 
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
@@ -65,11 +68,78 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
                 loadInstance(current);
             }
         }));
+
+        initializeView();
     }
 
     @Override
-    protected Skin<?> createDefaultSkin() {
-        return new ScreenshotsPageSkin(this);
+    protected ItemCell<Screenshot> createItemCell(ListView<Screenshot> listView) {
+        return new ScreenshotCell(listView, this);
+    }
+
+    /// Configures the list and its page actions.
+    private void initializeView() {
+        getStyleClass().add("notice-pane");
+        var listView = getListView();
+
+        {
+
+            // Toolbar Normal
+            toolbarNormal.getChildren().setAll(
+                    createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refresh),
+                    createToolbarButton(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, this::revealFolder),
+                    createToolbarButton(i18n("button.clear"), SVG.DELETE_FOREVER, () -> {
+                        Controllers.confirm(i18n("screenshots.clear.confirm"), i18n("button.clear"), this::clear, null);
+                    }),
+                    createToolbarButton(i18n("button.select_date"), SVG.DATE_RANGE, () -> selectDate(listView))
+            );
+
+            // Toolbar Selecting
+            toolbarSelecting.getChildren().setAll(
+                    createToolbarButton(i18n("menu.copy"), SVG.FOLDER_COPY, () -> {
+                        FXUtils.copyFiles(listView.getSelectionModel().getSelectedItems().stream().map(Screenshot::getPath).toList());
+                    }),
+                    createToolbarButton(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
+                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
+                                delete(listView.getSelectionModel().getSelectedItems()), null);
+                    }),
+                    createToolbarButton(i18n("button.select_all"), SVG.SELECT_ALL, () ->
+                            listView.getSelectionModel().selectAll()),
+                    createToolbarButton(i18n("button.cancel"), SVG.CANCEL, () ->
+                            listView.getSelectionModel().clearSelection())
+            );
+
+            FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
+                    selectedItem -> {
+                        if (selectedItem == null)
+                            changeToolbar(toolbarNormal);
+                        else
+                            changeToolbar(toolbarSelecting);
+                    });
+            setToolbar(toolbarPane);
+
+            // Clear selection when pressing ESC
+            addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+                if (e.getCode() == KeyCode.ESCAPE) {
+                    if (listView.getSelectionModel().getSelectedItem() != null) {
+                        listView.getSelectionModel().clearSelection();
+                        e.consume();
+                    }
+                }
+            });
+        }
+
+        {
+            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+            listView.setOnContextMenuRequested(event -> {
+                Screenshot selectedItem = listView.getSelectionModel().getSelectedItem();
+                if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
+                    listView.getSelectionModel().clearSelection();
+                    Controllers.dialog(new ScreenshotDialog(selectedItem));
+                }
+            });
+        }
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
@@ -253,7 +323,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
     }
 
     /// Displays a screenshot thumbnail, metadata, and file actions in a reusable cell.
-    private static final class ScreenshotCell extends MDListCell<Screenshot> {
+    private static final class ScreenshotCell extends ItemCell<Screenshot> {
 
         /// Holds the thumbnail or the placeholder icon when no thumbnail is available.
         private final StackPane imagePane = new StackPane();
@@ -263,7 +333,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         private final TwoLineListItem content = new TwoLineListItem();
 
         /// Creates a cell whose file actions operate on the supplied page.
-        public ScreenshotCell(JFXListView<Screenshot> listView, ScreenshotsPage page) {
+        public ScreenshotCell(ListView<Screenshot> listView, ScreenshotsPage page) {
             super(listView);
 
             setSelectable();
@@ -315,14 +385,14 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             container.getChildren().setAll(imagePane, content, copyButton, revealButton, infoButton, deleteButton);
 
             StackPane.setMargin(container, new Insets(8));
-            getContainer().getChildren().setAll(container);
+            setContent(container);
         }
 
         /// Attaches the current item's cached thumbnail and updates its metadata.
         /// Clears the displayed thumbnail when the cell becomes empty.
         @Override
-        protected void updateControl(@Nullable Screenshot item, boolean empty) {
-            if (item == null || empty) {
+        protected void updateListItem(@Nullable Screenshot item) {
+            if (item == null) {
                 thumbnail.set(null);
                 return;
             }
@@ -381,109 +451,9 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         }
     }
 
-    private static final class ScreenshotsPageSkin extends SkinBase<ScreenshotsPage> {
-
-        private final TransitionPane toolbarPane;
-        private final HBox toolbarNormal;
-        private final HBox toolbarSelecting;
-
-        private final JFXListView<Screenshot> listView;
-
-        public ScreenshotsPageSkin(ScreenshotsPage skinnable) {
-            super(skinnable);
-
-            StackPane pane = new StackPane();
-            pane.setPadding(new Insets(10));
-            pane.getStyleClass().addAll("notice-pane");
-
-            ComponentList root = new ComponentList();
-            root.getStyleClass().add("no-padding");
-            listView = new JFXListView<>();
-            listView.getStyleClass().add("no-horizontal-scrollbar");
-
-            {
-                toolbarPane = new TransitionPane();
-
-                toolbarNormal = new HBox();
-                toolbarSelecting = new HBox();
-
-                // Toolbar Normal
-                toolbarNormal.getChildren().setAll(
-                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                        createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::revealFolder),
-                        createToolbarButton2(i18n("button.clear"), SVG.DELETE_FOREVER, () -> {
-                            Controllers.confirm(i18n("screenshots.clear.confirm"), i18n("button.clear"), skinnable::clear, null);
-                        }),
-                        createToolbarButton2(i18n("button.select_date"), SVG.DATE_RANGE, () -> skinnable.selectDate(listView))
-                );
-
-                // Toolbar Selecting
-                toolbarSelecting.getChildren().setAll(
-                        createToolbarButton2(i18n("menu.copy"), SVG.FOLDER_COPY, () -> {
-                            FXUtils.copyFiles(listView.getSelectionModel().getSelectedItems().stream().map(Screenshot::getPath).toList());
-                        }),
-                        createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
-                                    skinnable.delete(listView.getSelectionModel().getSelectedItems()), null);
-                        }),
-                        createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
-                                listView.getSelectionModel().selectAll()),
-                        createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
-                                listView.getSelectionModel().clearSelection())
-                );
-
-                FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
-                        selectedItem -> {
-                            if (selectedItem == null)
-                                changeToolbar(toolbarNormal);
-                            else
-                                changeToolbar(toolbarSelecting);
-                        });
-                root.getContent().add(toolbarPane);
-
-                // Clear selection when pressing ESC
-                root.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
-                    if (e.getCode() == KeyCode.ESCAPE) {
-                        if (listView.getSelectionModel().getSelectedItem() != null) {
-                            listView.getSelectionModel().clearSelection();
-                            e.consume();
-                        }
-                    }
-                });
-            }
-
-            {
-                SpinnerPane center = new SpinnerPane();
-                ComponentList.setVgrow(center, Priority.ALWAYS);
-                center.loadingProperty().bind(skinnable.loadingProperty());
-
-                listView.setCellFactory(x -> new ScreenshotCell(listView, skinnable));
-                listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-                Bindings.bindContent(listView.getItems(), skinnable.getItems());
-
-                listView.setOnContextMenuRequested(event -> {
-                    Screenshot selectedItem = listView.getSelectionModel().getSelectedItem();
-                    if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
-                        listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ScreenshotDialog(selectedItem));
-                    }
-                });
-
-                // ListViewBehavior would consume ESC pressed event, preventing us from handling it
-                // So we ignore it here
-                ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-
-                center.setContent(listView);
-                root.getContent().add(center);
-            }
-
-            pane.getChildren().setAll(root);
-            getChildren().setAll(pane);
-        }
-
-        private void changeToolbar(HBox newToolbar) {
-            if (newToolbar != toolbarPane.getCurrentNode()) toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
-        }
+    /// Shows the requested toolbar and focuses the search input when appropriate.
+    private void changeToolbar(HBox newToolbar) {
+        if (newToolbar != toolbarPane.getCurrentNode()) toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
     }
 
 }
