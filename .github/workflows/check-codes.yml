@@ -25,20 +25,22 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
         with:
           cache-cleanup: never
-      - name: Check Codes
+      - id: check-codes
+        name: Check Codes
+        continue-on-error: true
         run: ./gradlew checkstyle checkTranslations --no-daemon --parallel --stacktrace
-      - if: (success() || failure()) && github.event_name == 'pull_request'
+      - if: github.event_name == 'pull_request'
         name: Prepare Artifact Directory
         run: |
           mkdir -p ${{ runner.temp }}/artifact
           echo "${{ github.event.number }}" > ${{ runner.temp }}/artifact/PULL_REQUEST_NUMBER
           touch ${{ runner.temp }}/artifact/ALL_REPORTS.jsonl
-      - if: failure() && github.event_name == 'pull_request'
+      - if: steps.check-codes.outcome == 'failure' && github.event_name == 'pull_request'
         name: Setup reviewdog
         uses: reviewdog/action-setup@d8edfce3dd5e1ec6978745e801f9c50b5ef80252 # v1.4.0
         with:
           reviewdog_version: v0.21.0
-      - if: failure() && github.event_name == 'pull_request'
+      - if: steps.check-codes.outcome == 'failure' && github.event_name == 'pull_request'
         name: Generate Artifact
         run: |
           find . -path "*/build/reports/checkstyle/*.xml" | while read -r xml_file; do
@@ -49,7 +51,7 @@ jobs:
               echo "Skipping empty or missing report: $xml_file"
             fi
           done
-      - if: (success() || failure()) && github.event_name == 'pull_request'
+      - if: github.event_name == 'pull_request'
         name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
