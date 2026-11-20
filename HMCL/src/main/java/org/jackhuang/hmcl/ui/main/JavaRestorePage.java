@@ -12,7 +12,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -29,8 +28,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -38,7 +35,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class JavaRestorePage extends ListPageBase<JavaRestorePage.DisabledJavaItem> implements DecoratorPage {
+public final class JavaRestorePage extends ListPaneBase<JavaRestorePage.DisabledJavaItem> implements DecoratorPage {
 
     private final ObjectProperty<State> state = new SimpleObjectProperty<>(State.fromTitle(i18n("java.disabled.management")));
 
@@ -46,6 +43,7 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
     private final InvalidationListener listener;
 
     public JavaRestorePage(ObservableSet<String> disabledJava) {
+        getListView().setPadding(Insets.EMPTY);
         this.listener = o -> {
             ArrayList<DisabledJavaItem> result = new ArrayList<>(disabledJava.size());
             for (String path : disabledJava) {
@@ -73,11 +71,6 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
         };
         disabledJava.addListener(new WeakInvalidationListener(listener));
         listener.invalidated(disabledJava);
-    }
-
-    @Override
-    protected Skin<?> createDefaultSkin() {
-        return new JavaRestorePageSkin(this);
     }
 
     @Override
@@ -177,14 +170,4 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
         }
     }
 
-    private static final class JavaRestorePageSkin extends ToolbarListPageSkin<DisabledJavaItem, JavaRestorePage> {
-        JavaRestorePageSkin(JavaRestorePage skinnable) {
-            super(skinnable);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(JavaRestorePage skinnable) {
-            return Collections.emptyList();
-        }
-    }
 }

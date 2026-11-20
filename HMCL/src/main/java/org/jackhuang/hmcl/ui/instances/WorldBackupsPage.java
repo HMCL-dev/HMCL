@@ -7,7 +7,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
@@ -37,7 +36,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -50,7 +48,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.BackupInfo> implements WorldManagePage.WorldRefreshable {
+public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.BackupInfo> implements WorldManagePage.WorldRefreshable {
     static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
     private final World world;
@@ -65,6 +63,22 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         this.backupFileNamePattern = Pattern.compile("(?<datetime>[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_" + Pattern.quote(world.getFileName()) + "( (?<count>[0-9]+))?\\.zip");
 
         refresh();
+
+        StackPane placeholderContainer = new StackPane();
+        placeholderContainer.getStyleClass().add("notice-pane");
+        var listView = getListView();
+        listView.setPadding(Insets.EMPTY);
+        Label placeholderLabel = new Label(i18n("world.backup.empty"));
+        placeholderContainer.getChildren().add(placeholderLabel);
+        listView.setPlaceholder(placeholderContainer);
+
+        JFXButton createBackup = createToolbarButton(i18n("world.backup.create.new_one"), SVG.ARCHIVE, this::createBackup);
+        createBackup.disableProperty().bind(readOnly);
+
+        setToolbarButtons(Arrays.asList(
+                createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refresh),
+                createBackup
+        ));
     }
 
     public void refresh() {
@@ -110,11 +124,6 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         }).start();
     }
 
-    @Override
-    protected Skin<?> createDefaultSkin() {
-        return new WorldBackupsPageSkin();
-    }
-
     void createBackup() {
         Controllers.taskDialog(new WorldBackupTask(world, backupsDir, false).setName(i18n("world.backup.processing")).thenApplyAsync(path -> {
             Matcher matcher = backupFileNamePattern.matcher(path.getFileName().toString());
@@ -142,30 +151,6 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 Controllers.dialog(i18n("world.backup.create.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
             }
         }), i18n("world.backup"), TaskCancellationAction.NO_CANCEL);
-    }
-
-    private final class WorldBackupsPageSkin extends ToolbarListPageSkin<BackupInfo, WorldBackupsPage> {
-
-        WorldBackupsPageSkin() {
-            super(WorldBackupsPage.this);
-
-            StackPane placeholderContainer = new StackPane();
-            placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label(i18n("world.backup.empty"));
-            placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(WorldBackupsPage skinnable) {
-            JFXButton createBackup = createToolbarButton2(i18n("world.backup.create.new_one"), SVG.ARCHIVE, skinnable::createBackup);
-            createBackup.disableProperty().bind(getSkinnable().readOnly);
-
-            return Arrays.asList(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createBackup
-            );
-        }
     }
 
     public final class BackupInfo extends Control implements Comparable<BackupInfo> {

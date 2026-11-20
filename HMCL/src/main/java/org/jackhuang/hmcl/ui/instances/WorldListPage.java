@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -12,10 +11,8 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
-import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
@@ -50,7 +47,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class WorldListPage extends ListPageBase<World> {
+public final class WorldListPage extends ListPaneBase<World> {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
@@ -77,11 +74,26 @@ public final class WorldListPage extends ListPageBase<World> {
                 loadInstance(current);
             }
         }));
-    }
 
-    @Override
-    protected Skin<WorldListPage> createDefaultSkin() {
-        return new WorldListPageSkin();
+        StackPane placeholderContainer = new StackPane();
+        placeholderContainer.getStyleClass().add("notice-pane");
+        var listView = getListView();
+        listView.setPadding(Insets.EMPTY);
+        Label placeholderLabel = new Label(i18n("world.empty"));
+        placeholderContainer.getChildren().add(placeholderLabel);
+        listView.setPlaceholder(placeholderContainer);
+
+        JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
+        chkShowAll.selectedProperty().bindBidirectional(showAllProperty());
+
+        setToolbarButtons(Arrays.asList(
+                chkShowAll,
+                createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refresh),
+                createToolbarButton(i18n("world.add"), SVG.ADD, this::add),
+                createToolbarButton(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, this::openSavesFolder),
+                createToolbarButton(i18n("world.download"), SVG.DOWNLOAD, this::download)
+        ));
+        listView.setCellFactory(view -> new WorldListCell(this));
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
@@ -219,38 +231,6 @@ public final class WorldListPage extends ListPageBase<World> {
 
     public ReadOnlyBooleanProperty supportQuickPlayProperty() {
         return supportQuickPlay;
-    }
-
-    private final class WorldListPageSkin extends ToolbarListPageSkin<World, WorldListPage> {
-
-        WorldListPageSkin() {
-            super(WorldListPage.this);
-
-            StackPane placeholderContainer = new StackPane();
-            placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label(i18n("world.empty"));
-            placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(WorldListPage skinnable) {
-            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
-            chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
-
-            return Arrays.asList(
-                    chkShowAll,
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
-                    createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openSavesFolder),
-                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download)
-            );
-        }
-
-        @Override
-        protected ListCell<World> createListCell(JFXListView<World> listView) {
-            return new WorldListCell(getSkinnable());
-        }
     }
 
     private static final class WorldListCell extends ListCell<World> {

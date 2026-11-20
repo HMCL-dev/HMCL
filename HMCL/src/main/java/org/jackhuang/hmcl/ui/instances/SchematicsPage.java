@@ -18,14 +18,12 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import javafx.stage.FileChooser;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.mod.LocalMod;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
@@ -40,8 +38,8 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
+import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SynchronizedExceptionalLazy;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -61,14 +59,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.*;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
  */
-public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
+public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
 
     private static final SynchronizedExceptionalLazy<RemoteAddon> litematicaLazy = new SynchronizedExceptionalLazy<>(() -> {
         try {
@@ -126,11 +123,75 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                 loadInstance(current);
             }
         }));
+
+        initializeView();
     }
 
-    @Override
-    protected Skin<?> createDefaultSkin() {
-        return new SchematicsPageSkin(this);
+    /// Configures the list and its page actions.
+    private void initializeView() {
+        getStyleClass().add("notice-pane");
+        var listView = getListView();
+
+        listView.setSelectionModel(new NoneMultipleSelectionModel<>());
+
+        {
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("schematics.empty"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+        }
+
+        {
+            var toolbar = new HBox();
+            JFXButton btnGoBack = createToolbarButton("", SVG.ARROW_BACK, this::navigateBack);
+            btnGoBack.disableProperty().bind(isRootProperty());
+            JFXButton btnDownload = createToolbarButton(i18n("schematics.install_mod"), SVG.DOWNLOAD, this::downloadLitematica);
+            FXUtils.onChangeAndOperate(downloadTarget, (t) -> btnDownload.setDisable(t == null));
+            toolbar.getChildren().setAll(
+                    btnGoBack,
+                    createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refresh),
+                    createToolbarButton(i18n("schematics.add"), SVG.ADD, this::onAddFiles),
+                    createToolbarButton(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, this::onCreateDirectory),
+                    createToolbarButton(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, this::onRevealSchematicsFolder),
+                    btnDownload
+            );
+            FXUtils.setOverflowHidden(toolbar, 8);
+            setToolbar(toolbar);
+        }
+
+        {
+            listView.setCellFactory(x -> new Cell(listView));
+        }
+
+        {
+            var relPath = new HBox();
+            relPath.getStyleClass().add("jfx-tool-bar-tip");
+            relPath.setAlignment(Pos.CENTER_LEFT);
+            FXUtils.onChangeAndOperate(currentDirectoryProperty(), currentDir -> {
+                relPath.getChildren().clear();
+                var d = currentDir;
+                while (d != null) {
+                    if (d != currentDir) {
+                        var box = new HBox(new Text(">"));
+                        box.setPadding(new Insets(3));
+                        relPath.getChildren().add(0, box);
+                    }
+                    var txt = new Text(d.getName());
+                    var box = new HBox(txt);
+                    box.setPadding(new Insets(3));
+                    box.setMouseTransparent(true);
+                    var rippler = new RipplerContainer(box);
+                    var finalD = d;
+                    FXUtils.onClicked(rippler, () -> navigateTo(finalD));
+                    relPath.getChildren().add(0, rippler);
+                    d = d.parent;
+                }
+            });
+            var relPathPane = new HBox(relPath);
+            relPathPane.setPadding(new Insets(2));
+            addFooter(relPathPane);
+        }
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
@@ -795,101 +856,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
             } else {
                 Tooltip.uninstall(left, tooltip);
             }
-        }
-    }
-
-    private static final class SchematicsPageSkin extends SkinBase<SchematicsPage> {
-
-        private final JFXListView<Item> listView;
-
-        SchematicsPageSkin(SchematicsPage skinnable) {
-            super(skinnable);
-
-            StackPane pane = new StackPane();
-            pane.setPadding(new Insets(10));
-            pane.getStyleClass().addAll("notice-pane");
-
-            ComponentList root = new ComponentList();
-            root.getStyleClass().add("no-padding");
-            listView = new JFXListView<>();
-            listView.setSelectionModel(new NoneMultipleSelectionModel<>());
-
-            {
-                StackPane placeholderContainer = new StackPane();
-                placeholderContainer.getStyleClass().add("notice-pane");
-                Label placeholderLabel = new Label(i18n("schematics.empty"));
-                placeholderContainer.getChildren().add(placeholderLabel);
-                listView.setPlaceholder(placeholderContainer);
-            }
-
-            {
-                var toolbar = new HBox();
-                JFXButton btnGoBack = createToolbarButton2("", SVG.ARROW_BACK, skinnable::navigateBack);
-                btnGoBack.disableProperty().bind(skinnable.isRootProperty());
-                JFXButton btnDownload = createToolbarButton2(i18n("schematics.install_mod"), SVG.DOWNLOAD, skinnable::downloadLitematica);
-                FXUtils.onChangeAndOperate(skinnable.downloadTarget, (t) -> btnDownload.setDisable(t == null));
-                toolbar.getChildren().setAll(
-                        btnGoBack,
-                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                        createToolbarButton2(i18n("schematics.add"), SVG.ADD, skinnable::onAddFiles),
-                        createToolbarButton2(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, skinnable::onCreateDirectory),
-                        createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::onRevealSchematicsFolder),
-                        btnDownload
-                );
-                FXUtils.setOverflowHidden(toolbar, 8);
-                root.getContent().add(toolbar);
-            }
-
-            {
-                SpinnerPane center = new SpinnerPane();
-                ComponentList.setVgrow(center, Priority.ALWAYS);
-                center.loadingProperty().bind(skinnable.loadingProperty());
-
-                listView.setCellFactory(x -> new Cell(listView));
-                listView.setSelectionModel(new NoneMultipleSelectionModel<>());
-                Bindings.bindContent(listView.getItems(), skinnable.getItems());
-
-                // ListViewBehavior would consume ESC pressed event, preventing us from handling it
-                // So we ignore it here
-                ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-                listView.getStyleClass().add("no-horizontal-scrollbar");
-
-
-                center.setContent(listView);
-                root.getContent().add(center);
-            }
-
-            {
-                var relPath = new HBox();
-                relPath.getStyleClass().add("jfx-tool-bar-tip");
-                relPath.setAlignment(Pos.CENTER_LEFT);
-                FXUtils.onChangeAndOperate(skinnable.currentDirectoryProperty(), currentDir -> {
-                    relPath.getChildren().clear();
-                    var d = currentDir;
-                    while (d != null) {
-                        if (d != currentDir) {
-                            var box = new HBox(new Text(">"));
-                            box.setPadding(new Insets(3));
-                            relPath.getChildren().add(0, box);
-                        }
-                        var txt = new Text(d.getName());
-                        var box = new HBox(txt);
-                        box.setPadding(new Insets(3));
-                        box.setMouseTransparent(true);
-                        var rippler = new RipplerContainer(box);
-                        var finalD = d;
-                        FXUtils.onClicked(rippler, () -> skinnable.navigateTo(finalD));
-                        relPath.getChildren().add(0, rippler);
-                        d = d.parent;
-                    }
-                });
-                var relPathPane = new HBox(relPath);
-                relPathPane.setPadding(new Insets(2));
-                root.getContent().add(relPathPane);
-            }
-
-            pane.getChildren().setAll(root);
-            getChildren().setAll(pane);
         }
     }
 
