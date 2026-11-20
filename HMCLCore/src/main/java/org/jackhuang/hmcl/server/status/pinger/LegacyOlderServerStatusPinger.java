@@ -14,7 +14,7 @@ import java.io.IOException;
 /// @see <a href="https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#Beta_1.8_to_1.3">Server_List_Ping#1.6</a>
 // Supported Version b1.8 to 1.5
 public final class LegacyOlderServerStatusPinger implements ServerStatusPinger {
-    static LegacyOlderServerStatusPinger INSTANCE = new LegacyOlderServerStatusPinger();
+    static final LegacyOlderServerStatusPinger INSTANCE = new LegacyOlderServerStatusPinger();
 
     private LegacyOlderServerStatusPinger() {
 

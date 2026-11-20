@@ -15,7 +15,7 @@ import java.io.IOException;
 /// @see <a href="https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#1.6">Server_List_Ping#1.6</a>
 // Supported Version 1.6
 public final class Legacy1_6ServerStatusPinger implements ServerStatusPinger {
-    static Legacy1_6ServerStatusPinger INSTANCE = new Legacy1_6ServerStatusPinger();
+    static final Legacy1_6ServerStatusPinger INSTANCE = new Legacy1_6ServerStatusPinger();
     private static final int PROTOCOL_NUMBER = 0x7F;
 
     private Legacy1_6ServerStatusPinger() {

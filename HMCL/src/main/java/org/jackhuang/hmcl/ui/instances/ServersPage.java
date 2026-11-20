@@ -197,7 +197,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
         this.gameInstance = instance.instance();
-        refresh();
+        refresh(true);
     }
 
     private void updateServerList() {
@@ -215,8 +215,14 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
     }
 
     private void refresh() {
-        if (gameInstance == null)
+        refresh(false);
+    }
+
+    private void refresh(boolean init) {
+        HMCLGameInstance gameInstance = this.gameInstance;
+        if (gameInstance == null) {
             return;
+        }
 
         int currentRefresh = ++refreshCount;
 
@@ -246,6 +252,16 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 updateServerList();
             }
 
+            if (init) {
+                if (dataStorage.failedExceptions.containsKey(gameInstance.getServersDatFilePath())) {
+                    Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.file.error.load"), null, MessageDialogPane.MessageType.ERROR)
+                            .addCancel(i18n("button.continue"), () -> {
+                                // NOP
+                            })
+                            .build()
+                    );
+                }
+            }
         }).start();
     }
 
@@ -257,7 +273,10 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 dataStorage.reload();
                 datFile = dataStorage.serversDatFileMap.get(toInstance.getServersDatFilePath());
                 if (datFile == null) {
-                    // todo 弹窗提示添加失败，没有对应的 ServersDatFile 只可能是 reload 时爆炸了
+                    runInFX(() -> Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.file.error.notexist"), null, MessageDialogPane.MessageType.ERROR)
+                            .addCancel(i18n("button.refresh"), this::refresh)
+                            .build()
+                    ));
                     return null;
                 }
             }
@@ -294,20 +313,15 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                     return;
                 }
 
-
                 Server oldServer = item.getServer();
                 Task.supplyAsync(Schedulers.io(), () -> {
                     dataStorage.withLock(() -> {
-                        if (item.storageEntry.isValid()) {
-                            item.storageEntry.modify(s -> s
-                                    .withServerPackStatus(newServer.getServerPackStatus())
-                                    .withIp(newServer.getIp())
-                                    .withName(newServer.getName())
-                                    .withIcon(newServer.getIcon())
-                            );
-                        } else {
-                            // todo 提示改动未能生效的消息，似乎不需要 isValid 让里面直接抛异常兜底处理的样子
-                        }
+                        item.storageEntry.modify(s -> s
+                                .withServerPackStatus(newServer.getServerPackStatus())
+                                .withIp(newServer.getIp())
+                                .withName(newServer.getName())
+                                .withIcon(newServer.getIcon())
+                        );
                         return null;
                     });
                     return item.storageEntry.getServer();
