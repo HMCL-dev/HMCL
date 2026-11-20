@@ -310,7 +310,7 @@ public final class Instances {
             filters.add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
             Path file = new PathChooser().setTitle(i18n("instance.launch_script.save"))
                     .setExtensionFilters(filters)
-                    .setChooserContext(PathChooser.ChooserContext.GAME(() -> gameInstance))
+                    .setChooserContext(PathChooser.ChooserContext.EXPORT)
                     .showSave();
             if (file != null) {
                 if (!isValidScriptExtension(FileUtils.getExtension(file))) {

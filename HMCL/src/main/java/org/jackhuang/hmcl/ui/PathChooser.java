@@ -20,42 +20,35 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+/// A wrapper of [FileChooser] & [DirectoryChooser]. Automatically sets initial directory according to context.
 @NotNullByDefault
 public class PathChooser {
     private final ObservableList<FileChooser.ExtensionFilter> extensionFilter = FXCollections.observableArrayList();
     private ChooserContext context = ChooserContext.DEFAULT;
-    private @Nullable Path initialDirectory;
+    private @Nullable String initialDirectory;
     private @Nullable String title;
     private @Nullable String initialFileName;
+    private @Nullable FileChooser fileChooser;
+    private @Nullable DirectoryChooser directoryChooser;
 
     public static FileChooser.ExtensionFilter getImageExtensionFilter() {
         return new FileChooser.ExtensionFilter(i18n("extension.png"), FXUtils.IMAGE_EXTENSIONS.stream().map(ext -> "*." + ext).toList());
     }
 
-    private static Optional<Path> getExistingPath(@Nullable String pathString) {
-        return FileUtils.tryGetPath(pathString).filter(Files::exists).map(p -> {
-            if (Files.isRegularFile(p))
-                return p.getParent();
-            else if (Files.isDirectory(p))
-                return p;
-            return null;
-        });
+    private static @Nullable Path toDirectory(Path path) {
+        if (Files.isDirectory(path))
+            return path;
+        return Files.isRegularFile(path) ? path.getParent() : null;
     }
 
     public PathChooser setChooserContext(ChooserContext context) {
         this.context = context;
         return this;
-    }
-
-    public void setInitialDirectory(@Nullable String path) {
-        initialDirectory = getExistingPath(path).orElse(null);
     }
 
     public PathChooser setTitle(@Nullable String title) {
@@ -78,16 +71,28 @@ public class PathChooser {
         return this;
     }
 
+    private Path getInitialDirectory() {
+        return FileUtils.tryGetPath(initialDirectory)
+                .map(PathChooser::toDirectory)
+                .or(() -> context.getDir().map(PathChooser::toDirectory))
+                .orElseGet(ChooserContext::getDefaultDir);
+    }
+
+    /// This overrides the initial directory of context. Only take effects when given path exists.
+    public void setInitialDirectory(@Nullable String path) {
+        initialDirectory = path;
+    }
+
     private DirectoryChooser getDirectoryChooser() {
-        DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setInitialDirectory(Objects.requireNonNullElseGet(initialDirectory, context::getDir).toFile());
+        DirectoryChooser chooser = directoryChooser == null ? (directoryChooser = new DirectoryChooser()) : directoryChooser;
+        chooser.setInitialDirectory(getInitialDirectory().toFile());
         chooser.setTitle(StringUtils.isBlank(title) ? i18n("selector.choose_directory") : title);
         return chooser;
     }
 
     private FileChooser getFileChooser() {
-        FileChooser chooser = new FileChooser();
-        chooser.setInitialDirectory(Objects.requireNonNullElseGet(initialDirectory, context::getDir).toFile());
+        FileChooser chooser = fileChooser == null ? (fileChooser = new FileChooser()) : fileChooser;
+        chooser.setInitialDirectory(getInitialDirectory().toFile());
         chooser.setTitle(StringUtils.isBlank(title) ? i18n("selector.choose_file") : title);
         chooser.getExtensionFilters().setAll(extensionFilter);
         chooser.setInitialFileName(initialFileName);
@@ -121,17 +126,23 @@ public class PathChooser {
         return null;
     }
 
+    /// The context for the automatic determination of initial directory.
     public sealed interface ChooserContext {
+        /// Persistent default context
         ChooserContext DEFAULT = new PersistentContext("default");
+        /// Persistent context for file (except image) imports. e.g. mod, resource pack...
         ChooserContext IMPORT = new PersistentContext("import");
+        /// Persistent context for image imports. e.g. icon, skin...
         ChooserContext IMPORT_IMAGE = new PersistentContext("import_image");
+        /// Persistent context for exports. e.g. world export, modpack export...
         ChooserContext EXPORT = new PersistentContext("export");
 
+        /// Context for related game directories. e.g. game setting, download...
         static ChooserContext GAME(Supplier<@Nullable GameInstance> supplier) {
-            return new ObjectContext<>(supplier, GameInstance::getRunDirectory);
+            return new SimpleContext(() -> Optional.ofNullable(supplier.get()).map(GameInstance::getRunDirectory));
         }
 
-        Path getDir();
+        Optional<Path> getDir();
 
         default void postOpen(@Nullable Path path, boolean isDir) {
         }
@@ -140,11 +151,11 @@ public class PathChooser {
             return GameDirectoryManager.getSelectedGameDirectory().getPath().toPath();
         }
 
+        /// The path most recently used will be saved persistently in user settings.
         record PersistentContext(String name) implements ChooserContext {
             @Override
-            public Path getDir() {
-                String path = SettingsManager.userSettings().getRecentFileChooserPaths().get(name);
-                return getExistingPath(path).orElseGet(ChooserContext::getDefaultDir);
+            public Optional<Path> getDir() {
+                return FileUtils.tryGetPath(SettingsManager.userSettings().getRecentFileChooserPaths().get(name));
             }
 
             @Override
@@ -156,14 +167,10 @@ public class PathChooser {
             }
         }
 
-        record ObjectContext<T>(Supplier<@Nullable T> supplier, Function<T, Path> func) implements ChooserContext {
+        record SimpleContext(Supplier<Optional<Path>> supplier) implements ChooserContext {
             @Override
-            public Path getDir() {
-                return Optional.ofNullable(supplier.get())
-                        .map(func)
-                        .map(Object::toString)
-                        .flatMap(PathChooser::getExistingPath)
-                        .orElseGet(ChooserContext::getDefaultDir);
+            public Optional<Path> getDir() {
+                return supplier.get();
             }
         }
     }
