@@ -5,90 +5,53 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTextField;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.*;
 import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+@NotNullByDefault
 public class FileSelector extends HBox {
-    private final StringProperty value = new SimpleStringProperty();
-    private String chooserTitle = "";
-    private SelectionMode selectionMode = SelectionMode.FILE;
-    private final ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
+    private final PathChooser chooser = new PathChooser();
+    private final JFXTextField pathField = new JFXTextField();
+    private final JFXButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
+    private final ReadOnlyObjectWrapper<@Nullable Path> path = new ReadOnlyObjectWrapper<>(this, "validPath", null);
+    private final BooleanProperty existingValidationEnabled = new SimpleBooleanProperty(this, "existingValidationEnabled", true);
+    private final BooleanProperty convertToRelativePath = new SimpleBooleanProperty(this, "convertToRelativePath", false);
 
-    JFXButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
-
-    public enum SelectionMode {
-        FILE,
-        DIRECTORY,
-        FILE_OR_DIRECTORY
-    }
-
-    public String getValue() {
-        return value.get();
-    }
-
-    public StringProperty valueProperty() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value.set(value);
-    }
-
-    public String getChooserTitle() {
-        return chooserTitle;
-    }
-
-    public FileSelector setChooserTitle(String chooserTitle) {
-        this.chooserTitle = chooserTitle;
-        return this;
-    }
-
-    public SelectionMode getSelectionMode() {
-        return selectionMode;
-    }
-
-    public FileSelector setSelectionMode(SelectionMode selectionMode) {
-        this.selectionMode = selectionMode;
-        return this;
-    }
-
-    public ObservableList<FileChooser.ExtensionFilter> getExtensionFilters() {
-        return extensionFilters;
-    }
-
-    public FileSelector() {
-        JFXTextField customField = new JFXTextField();
-        customField.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(customField, Priority.ALWAYS);
-        FXUtils.bindString(customField, valueProperty());
+    public FileSelector(SelectionMode selectionMode) {
+        pathField.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(pathField, Priority.ALWAYS);
+        pathField.setValidators(new Validator(i18n("selector.invalid_path"), s -> StringUtils.isBlank(s) || getPath() != null));
+        FXUtils.setValidateWhileTextChanged(pathField, true);
 
         selectButton.setOnAction(e -> {
+            chooser.setInitialDirectory(getText());
             switch (selectionMode) {
-                case FILE -> openFileChooser(customField);
-                case DIRECTORY -> openDirectoryChooser(customField);
+                case OPEN_FILE -> postOpen(chooser.showOpen());
+                case DIRECTORY -> postOpen(chooser.showOpenDirectory());
+                case SAVE_FILE -> postOpen(chooser.showSave());
                 case FILE_OR_DIRECTORY -> {
                     PopupMenu selectPopupMenu = new PopupMenu();
                     JFXPopup selectModePopup = new JFXPopup(selectPopupMenu);
 
                     selectPopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> openFileChooser(customField), selectModePopup),
-                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> openDirectoryChooser(customField), selectModePopup)
+                            new IconedMenuItem(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> postOpen(chooser.showOpen()), selectModePopup),
+                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> postOpen(chooser.showOpenDirectory()), selectModePopup)
                     );
 
                     selectModePopup.show(selectButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -selectButton.getWidth(), 0);
@@ -98,29 +61,82 @@ public class FileSelector extends HBox {
 
         setAlignment(Pos.CENTER_LEFT);
         setSpacing(3);
-        getChildren().addAll(customField, selectButton);
+        getChildren().addAll(pathField, selectButton);
+
+        path.bind(Bindings.createObjectBinding(() -> FileUtils.tryGetPath(getText())
+                .filter(path -> !StringUtils.isBlank(getText()))
+                .map(this::processPath)
+                .filter(path -> !existingValidationEnabled.get() || switch (selectionMode) {
+                    case DIRECTORY -> Files.isDirectory(path);
+                    case OPEN_FILE -> Files.isRegularFile(path);
+                    case SAVE_FILE -> true;
+                    case FILE_OR_DIRECTORY -> Files.exists(path);
+                }).orElse(null), textProperty(), existingValidationEnabled, convertToRelativePath));
+        convertToRelativePath.addListener(o -> {
+            if (getPath() != null)
+                setText(getPath().toString());
+        });
     }
 
-    private void openFileChooser(JFXTextField customField) {
-        FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().addAll(getExtensionFilters());
-        chooser.setTitle(StringUtils.isBlank(chooserTitle) ? i18n("selector.choose_file") : chooserTitle);
-        Path file = Controllers.showOpenDialog(chooser);
-        if (file != null) {
-            String path = FileUtils.getAbsolutePath(file);
-            customField.setText(path);
-            value.setValue(path);
-        }
+    public @Nullable String getText() {
+        return pathField.getText();
     }
 
-    private void openDirectoryChooser(JFXTextField customField) {
-        DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle(StringUtils.isBlank(chooserTitle) ? i18n("selector.choose_directory") : chooserTitle);
-        Path dir = Controllers.showDialog(chooser);
-        if (dir != null) {
-            String path = FileUtils.getAbsolutePath(dir);
-            customField.setText(path);
-            value.setValue(path);
-        }
+    public void setText(@Nullable String value) {
+        pathField.setText(value);
+    }
+
+    public StringProperty textProperty() {
+        return pathField.textProperty();
+    }
+
+    public PathChooser getChooser() {
+        return chooser;
+    }
+
+    public void setExistingValidationEnabled(boolean enable) {
+        existingValidationEnabled.set(enable);
+        pathField.validate();
+    }
+
+    public ReadOnlyObjectProperty<@Nullable Path> pathProperty() {
+        return path.getReadOnlyProperty();
+    }
+
+    public @Nullable Path getPath() {
+        return path.get();
+    }
+
+    public @Nullable String getPathString() {
+        return getPath() == null ? null : getPath().toString();
+    }
+
+    public void fire() {
+        selectButton.fire();
+    }
+
+    private void postOpen(@Nullable Path path) {
+        if (path != null)
+            setText(processPath(path).toString());
+    }
+
+    private Path processPath(Path path) {
+        Path absolutePath = FileUtils.toAbsolute(path);
+        if (!convertToRelativePath.get() || !Metadata.CURRENT_DIRECTORY.getRoot().equals(absolutePath.getRoot()))
+            return absolutePath;
+
+        Path relativePath = Metadata.CURRENT_DIRECTORY.relativize(absolutePath);
+        return relativePath.toString().isEmpty() ? Path.of(".") : relativePath;
+    }
+
+    public BooleanProperty convertToRelativePathProperty() {
+        return convertToRelativePath;
+    }
+
+    public enum SelectionMode {
+        OPEN_FILE,
+        SAVE_FILE,
+        DIRECTORY,
+        FILE_OR_DIRECTORY
     }
 }

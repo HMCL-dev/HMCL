@@ -27,10 +27,7 @@ import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.theme.*;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.ScrollUtils;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.Holder;
@@ -350,17 +347,13 @@ public class PersonalizationPage extends StackPane {
 
     /// Saves current launcher appearance as a theme-pack file with the given package metadata.
     private void exportCurrentThemePack(String packId, String version, String packName, String authorName) {
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("theme_pack.export.title"));
         String initialFileName = sanitizeThemePackFileName(packName);
-        chooser.setInitialFileName(
-                (FileUtils.isNameValid(initialFileName) ? initialFileName : "theme-pack")
-                + (SystemInfo.CURRENT_OS == OperatingSystem.MACOS ? "" : ThemePackExporter.FILE_EXTENSION)
-        );
-        chooser.getExtensionFilters().setAll(
-                new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION));
-
-        @Nullable Path output = Controllers.showSaveDialog(chooser);
+        Path output = new PathChooser().setTitle(i18n("theme_pack.export.title"))
+                .setInitialFileName((FileUtils.isNameValid(initialFileName) ? initialFileName : "theme-pack")
+                        + (SystemInfo.CURRENT_OS == OperatingSystem.MACOS ? "" : ThemePackExporter.FILE_EXTENSION))
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION))
+                .setChooserContext(PathChooser.ChooserContext.EXPORT)
+                .showSave();
         if (output == null) {
             return;
         }
@@ -658,10 +651,11 @@ public class PersonalizationPage extends StackPane {
                     };
 
             RadioChoiceList.FileChoice<BackgroundType> customBackgroundOption =
-                    new RadioChoiceList.FileChoice<>(i18n("settings.custom"), BackgroundType.CUSTOM)
-                            .setChooserTitle(i18n("launcher.background.choose"))
-                            .addExtensionFilter(FXUtils.getImageExtensionFilter())
-                            .setSelectionMode(FileSelector.SelectionMode.FILE_OR_DIRECTORY);
+                    new RadioChoiceList.FileChoice<>(i18n("settings.custom"), BackgroundType.CUSTOM, FileSelector.SelectionMode.FILE_OR_DIRECTORY);
+            customBackgroundOption.getSelector().getChooser()
+                    .setTitle(i18n("launcher.background.choose"))
+                    .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE)
+                    .setExtensionFilters(PathChooser.getImageExtensionFilter());
             RadioChoiceList.TextChoice<BackgroundType> networkBackgroundOption =
                     new RadioChoiceList.TextChoice<>(i18n("launcher.background.network"), BackgroundType.NETWORK)
                             .setValidators(new URLValidator(true));

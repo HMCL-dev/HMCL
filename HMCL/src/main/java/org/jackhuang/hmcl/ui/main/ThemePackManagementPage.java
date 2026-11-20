@@ -143,12 +143,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
     /// Opens a theme-pack file and installs it.
     private void importThemePack() {
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("theme_pack.import.title"));
-        chooser.getExtensionFilters().setAll(
-                new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION));
-
-        @Nullable Path file = Controllers.showOpenDialog(chooser);
+        @Nullable Path file = new PathChooser().setTitle(i18n("theme_pack.import.title"))
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT)
+                .showOpen();
         if (file == null) {
             return;
         }

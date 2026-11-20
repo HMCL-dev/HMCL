@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.Skin;
@@ -11,12 +13,11 @@ import org.jackhuang.hmcl.ui.wizard.WizardSinglePage;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class WorldExportPage extends WizardSinglePage {
-    private final StringProperty path = new SimpleStringProperty();
+    private final ObjectProperty<Path> path;
     private final StringProperty gameVersion = new SimpleStringProperty();
     private final StringProperty worldName = new SimpleStringProperty();
     private final World world;
@@ -26,7 +27,7 @@ public class WorldExportPage extends WizardSinglePage {
 
         this.world = world;
 
-        path.set(export.toString());
+        path = new SimpleObjectProperty<>(export);
         if (world.getGameVersion() != null)
             gameVersion.set(I18n.getDisplayVersion(world.getGameVersion()));
         worldName.set(world.getWorldName());
@@ -37,7 +38,7 @@ public class WorldExportPage extends WizardSinglePage {
         return new WorldExportPageSkin(this);
     }
 
-    public StringProperty pathProperty() {
+    public ObjectProperty<Path> pathProperty() {
         return path;
     }
 
@@ -53,6 +54,10 @@ public class WorldExportPage extends WizardSinglePage {
         onFinish.run();
     }
 
+    public World getWorld() {
+        return world;
+    }
+
     @Override
     public String getTitle() {
         return i18n("world.export.wizard", world.getFileName());
@@ -60,6 +65,6 @@ public class WorldExportPage extends WizardSinglePage {
 
     @Override
     protected Object finish() {
-        return Task.runAsync(i18n("world.export.wizard", worldName.get()), () -> world.export(Paths.get(path.get()), worldName.get()));
+        return Task.runAsync(i18n("world.export.wizard", worldName.get()), () -> world.export(path.get(), worldName.get()));
     }
 }

@@ -66,6 +66,7 @@ import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -180,11 +181,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }, Schedulers.javafx());
     }
 
+    /// Opens a mod chooser, installs the selected files, and reports the results.
     public void add() {
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("mods.add.title"));
-        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));
-        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
+        @Nullable @Unmodifiable List<Path> res = new PathChooser().setTitle(i18n("mods.add.title"))
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT)
+                .showMulti();
 
         if (res == null) return;
 

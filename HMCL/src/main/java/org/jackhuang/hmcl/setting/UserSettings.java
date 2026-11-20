@@ -7,6 +7,7 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -139,6 +140,13 @@ public final class UserSettings extends ObservableSetting implements JsonSchemaS
     /// Returns disabled Java executable paths.
     public ObservableSet<String> getDisabledJava() {
         return disabledJava;
+    }
+
+    @SerializedName("recentFileChooserPaths")
+    public final ObservableMap<String, String> recentFileChooserPaths = FXCollections.observableHashMap();
+
+    public ObservableMap<String, String> getRecentFileChooserPaths() {
+        return recentFileChooserPaths;
     }
 
     /// Gson adapter for observable user settings.

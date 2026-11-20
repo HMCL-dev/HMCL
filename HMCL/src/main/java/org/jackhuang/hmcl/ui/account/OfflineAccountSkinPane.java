@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.skin.SkinCanvas;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
@@ -43,9 +44,10 @@ public class OfflineAccountSkinPane extends StackPane {
     private final MultiFileItem<Skin.Type> skinItem = new MultiFileItem<>();
     private final JFXTextField cslApiField = new JFXTextField();
     private final JFXComboBox<TextureModel> modelCombobox = new JFXComboBox<>();
-    private final FileSelector skinSelector = new FileSelector();
-    private final FileSelector capeSelector = new FileSelector();
+    private final FileSelector skinSelector = new FileSelector(FileSelector.SelectionMode.OPEN_FILE);
+    private final FileSelector capeSelector = new FileSelector(FileSelector.SelectionMode.OPEN_FILE);
 
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private final InvalidationListener skinBinding;
 
     public OfflineAccountSkinPane(OfflineAccount account) {
@@ -78,7 +80,7 @@ public class OfflineAccountSkinPane extends StackPane {
             if (e.isAccepted()) {
                 Path skin = e.getDragboard().getFiles().get(0).toPath();
                 Platform.runLater(() -> {
-                    skinSelector.setValue(FileUtils.getAbsolutePath(skin));
+                    skinSelector.setText(FileUtils.getAbsolutePath(skin));
                     skinItem.setSelectedData(Skin.Type.LOCAL_FILE);
                 });
             }
@@ -88,7 +90,11 @@ public class OfflineAccountSkinPane extends StackPane {
         pane.setRight(skinOptionPane);
 
         skinSelector.setMaxWidth(Double.MAX_VALUE);
+        skinSelector.getChooser().setExtensionFilters(PathChooser.getImageExtensionFilter())
+                .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE);
         capeSelector.setMaxWidth(Double.MAX_VALUE);
+        capeSelector.getChooser().setExtensionFilters(PathChooser.getImageExtensionFilter())
+                .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE);
         modelCombobox.setMaxWidth(Double.MAX_VALUE);
         cslApiField.setMaxWidth(Double.MAX_VALUE);
 
@@ -117,35 +123,33 @@ public class OfflineAccountSkinPane extends StackPane {
             skinItem.setSelectedData(account.getSkin().type());
             cslApiField.setText(account.getSkin().cslApi());
             modelCombobox.setValue(account.getSkin().textureModel());
-            skinSelector.setValue(account.getSkin().localSkinPath());
-            capeSelector.setValue(account.getSkin().localCapePath());
+            skinSelector.setText(account.getSkin().localSkinPath());
+            capeSelector.setText(account.getSkin().localCapePath());
         }
 
         PauseTransition pauseTransition = new PauseTransition(Duration.seconds(1));
 
-        Runnable loadSkin = () -> {
-            getSkin().load(account.getProfileName())
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                        if (exception != null) {
-                            LOG.warning("Failed to load skin", exception);
-                            Controllers.showToast(i18n("message.failed"));
-                        } else {
-                            UUID uuid = this.account.getProfileID();
-                            if (result == null || result.skin() == null && result.cape() == null) {
-                                canvas.updateSkin(
-                                        TexturesLoader.getDefaultSkin(uuid).image(),
-                                        TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM,
-                                        null
-                                );
-                                return;
-                            }
+        Runnable loadSkin = () -> getSkin().load(account.getProfileName())
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception != null) {
+                        LOG.warning("Failed to load skin", exception);
+                        Controllers.showToast(i18n("message.failed"));
+                    } else {
+                        UUID uuid = this.account.getProfileID();
+                        if (result == null || result.skin() == null && result.cape() == null) {
                             canvas.updateSkin(
-                                    result.skin() != null ? result.skin().image() : TexturesLoader.getDefaultSkin(uuid).image(),
-                                    result.model() == TextureModel.SLIM,
-                                    result.cape() != null ? result.cape().image() : null);
+                                    TexturesLoader.getDefaultSkin(uuid).image(),
+                                    TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM,
+                                    null
+                            );
+                            return;
                         }
-                    }).start();
-        };
+                        canvas.updateSkin(
+                                result.skin() != null ? result.skin().image() : TexturesLoader.getDefaultSkin(uuid).image(),
+                                result.model() == TextureModel.SLIM,
+                                result.cape() != null ? result.cape().image() : null);
+                    }
+                }).start();
 
         pauseTransition.setOnFinished(e -> loadSkin.run());
 
@@ -162,7 +166,7 @@ public class OfflineAccountSkinPane extends StackPane {
                 pauseTransition.stop();
                 loadSkin.run();
             }
-        }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
+        }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.pathProperty(), capeSelector.pathProperty());
 
         VBox right = new VBox();
         right.setPadding(new Insets(0, 0, 0, 10));
@@ -247,7 +251,7 @@ public class OfflineAccountSkinPane extends StackPane {
     private Skin getSkin() {
         Skin.Type type = skinItem.getSelectedData();
         if (type == Skin.Type.LOCAL_FILE) {
-            return new Skin(type, cslApiField.getText(), modelCombobox.getValue(), skinSelector.getValue(), capeSelector.getValue());
+            return new Skin(type, cslApiField.getText(), modelCombobox.getValue(), skinSelector.getText(), capeSelector.getText());
         } else {
             String cslApi = type == Skin.Type.CUSTOM_SKIN_LOADER_API ? cslApiField.getText() : null;
             return new Skin(type, cslApi, null, null, null);

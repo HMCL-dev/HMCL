@@ -20,10 +20,7 @@ import org.glavo.nbt.tag.*;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.image.ImageLoaders;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.ScrollUtils;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -624,12 +621,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void changeWorldIcon() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("world.icon.choose.title"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png"));
-        fileChooser.setInitialFileName("icon.png");
-
-        Path iconPath = Controllers.showOpenDialog(fileChooser);
+        Path iconPath = new PathChooser().setTitle(i18n("world.icon.choose.title"))
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png"))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE)
+                .showOpen();
         if (iconPath == null) return;
 
         Image image;

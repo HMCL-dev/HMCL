@@ -8,12 +8,11 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
-import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -67,9 +66,10 @@ public class GameInstanceIconDialog extends JFXDialogLayout {
     }
 
     private void exploreIcon() {
-        FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(FXUtils.getImageExtensionFilter());
-        Path selectedFile = Controllers.showOpenDialog(chooser);
+        Path selectedFile = new PathChooser()
+                .setExtensionFilters(PathChooser.getImageExtensionFilter())
+                .setChooserContext(PathChooser.ChooserContext.IMPORT_IMAGE)
+                .showOpen();
         if (selectedFile != null) {
             try {
                 gameInstance.setIconFile(selectedFile);

@@ -13,9 +13,12 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -69,11 +72,12 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
                 .start();
     }
 
+    /// Opens a data pack chooser, installs the selected packs, and reloads the pack list.
     public void add() {
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("datapack.add.title"));
-        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.datapack"), "*.zip"));
-        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
+        @Nullable @Unmodifiable List<Path> res = new PathChooser().setTitle(i18n("datapack.add.title"))
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.datapack"), "*.zip"))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT)
+                .showMulti();
         if (res != null) {
             installMultiDataPack(res);
         }

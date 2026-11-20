@@ -11,13 +11,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.LineFileChooserButton;
+import org.jackhuang.hmcl.ui.construct.FileSelector;
 import org.jackhuang.hmcl.ui.construct.LinePane;
 import org.jackhuang.hmcl.ui.construct.LineTextPane;
 
 import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -33,11 +33,15 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
 
         ComponentList list = new ComponentList();
 
-        var chooseFileButton = new LineFileChooserButton();
-        chooseFileButton.setTitle(i18n("world.export.location"));
-        chooseFileButton.setType(LineFileChooserButton.Type.SAVE_FILE);
-        chooseFileButton.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
-        chooseFileButton.locationProperty().bindBidirectional(skinnable.pathProperty());
+        LinePane exportPathSelectPane = new LinePane();
+        exportPathSelectPane.setTitle(i18n("world.export.location"));
+        var exportPath = new FileSelector(FileSelector.SelectionMode.SAVE_FILE);
+        exportPath.getChooser().setChooserContext(PathChooser.ChooserContext.EXPORT)
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
+        exportPath.setPrefWidth(400);
+        exportPathSelectPane.setRight(exportPath);
+        exportPath.setText(skinnable.pathProperty().getValue().toString());
+        skinnable.pathProperty().bind(exportPath.pathProperty());
 
         var worldNamePane = new LinePane();
         worldNamePane.setTitle(i18n("world.name"));
@@ -50,7 +54,7 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
         gameVersionPane.setTitle(i18n("world.game_version"));
         gameVersionPane.textProperty().bind(skinnable.gameVersionProperty());
 
-        list.getContent().setAll(chooseFileButton, worldNamePane, gameVersionPane);
+        list.getContent().setAll(exportPathSelectPane, worldNamePane, gameVersionPane);
 
         container.getChildren().setAll(
                 ComponentList.createComponentListTitle(i18n("world.export")),
@@ -58,8 +62,13 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
         );
 
         JFXButton btnExport = FXUtils.newRaisedButton(i18n("button.export"));
-        btnExport.disableProperty().bind(Bindings.createBooleanBinding(() -> txtWorldName.getText().isEmpty() || Files.exists(Paths.get(chooseFileButton.getLocation())),
-                txtWorldName.textProperty().isEmpty(), chooseFileButton.locationProperty()));
+        btnExport.disableProperty().bind(Bindings.createBooleanBinding(() ->
+                        txtWorldName.getText().isEmpty()
+                                || exportPath.getPath() == null
+                                || Files.exists(exportPath.getPath())
+                                || !Files.isDirectory(exportPath.getPath().getParent())
+                                || exportPath.getPath().startsWith(skinnable.getWorld().getFile()),
+                txtWorldName.textProperty().isEmpty(), exportPath.pathProperty()));
         btnExport.setOnAction(e -> skinnable.export());
         HBox bottom = new HBox();
         bottom.setAlignment(Pos.CENTER_RIGHT);
