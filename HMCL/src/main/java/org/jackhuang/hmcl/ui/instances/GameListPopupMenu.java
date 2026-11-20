@@ -3,13 +3,13 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXPopup;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -18,10 +18,10 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import javafx.stage.WindowEvent;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.Tag;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -38,33 +38,15 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// @author Glavo
 public final class GameListPopupMenu extends StackPane {
 
-    /// Identifies the instance popup currently attached to an owner.
-    private static final String KEY = GameListPopupMenu.class.getName() + ".popup";
-
     /// Shows an instance selection popup relative to its owner.
     ///
-    /// @param owner       the node used to position the popup
-    /// @param vAlign      the popup's vertical alignment relative to `owner`
-    /// @param hAlign      the popup's horizontal alignment relative to `owner`
-    /// @param initOffsetX the horizontal offset from the aligned position
-    /// @param initOffsetY the vertical offset from the aligned position
-    /// @param instances   the instances to copy into the popup, in display order
-    public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
-                            double initOffsetX, double initOffsetY,
-                            List<HMCLGameInstance> instances) {
-        @Nullable JFXPopup previous = (JFXPopup) owner.getProperties().get(KEY);
-        if (previous != null && previous.isShowing()) {
-            previous.hide();
-            return;
-        }
-
+    /// @param owner     the node used to position the popup
+    /// @param alignment the sidebar corner where the menu opens
+    /// @param instances the instances to copy into the popup, in display order
+    public static void show(Node owner, Pos alignment, List<HMCLGameInstance> instances) {
         GameListPopupMenu menu = new GameListPopupMenu();
         menu.setInstances(instances);
-        JFXPopup popup = new JFXPopup(menu);
-        menu.addEventHandler(ActionEvent.ACTION, event -> popup.hide());
-        owner.getProperties().put(KEY, popup);
-        popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, event -> owner.getProperties().remove(KEY, popup));
-        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY, true);
+        new PopupMenu(menu).showBeside(owner, alignment);
     }
 
     private final JFXListView<GameItem> listView = new JFXListView<>();
@@ -73,7 +55,6 @@ public final class GameListPopupMenu extends StackPane {
     /// Creates a virtualized list that fires an action when the user chooses an instance.
     public GameListPopupMenu() {
         this.setMaxHeight(365);
-        this.getStyleClass().add("popup-menu-content");
 
         listView.setCellFactory(Cell::new);
         listView.addEventFilter(KeyEvent.KEY_PRESSED, event -> {

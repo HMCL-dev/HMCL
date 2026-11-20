@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.event.Event;
 import javafx.event.EventType;
+import javafx.geometry.Pos;
+import org.glavo.m3fx.controls.M3Divider;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -134,43 +135,43 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 .addNavigationDrawerTab(tabController, worldListTab, i18n("world.manage"), SVG.PUBLIC)
                 .addNavigationDrawerTab(tabController, schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
 
-        PopupMenu browseList = new PopupMenu();
-        JFXPopup browsePopup = new JFXPopup(browseList);
-        browseList.getContent().setAll(
-                new IconedMenuItem(SVG.STADIA_CONTROLLER, i18n("folder.game"), () -> onBrowse(""), browsePopup),
-                new IconedMenuItem(SVG.SETTINGS, i18n("folder.config"), () -> onBrowse("config"), browsePopup),
-                new MenuSeparator(),
-                new IconedMenuItem(SVG.EXTENSION, i18n("folder.mod"), () -> onBrowse("mods"), browsePopup),
-                new IconedMenuItem(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> onBrowse("resourcepacks"), browsePopup),
-                new IconedMenuItem(SVG.PUBLIC, i18n("folder.saves"), () -> onBrowse("saves"), browsePopup),
-                new IconedMenuItem(SVG.SCHEMA, i18n("folder.schematics"), this::onBrowseSchematics, browsePopup),
-                new IconedMenuItem(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> onBrowse("shaderpacks"), browsePopup),
-                new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("folder.screenshots"), () -> onBrowse("screenshots"), browsePopup),
-                new MenuSeparator(),
-                new IconedMenuItem(SVG.SCRIPT, i18n("folder.logs"), () -> onBrowse("logs"), browsePopup),
-                new IconedMenuItem(SVG.FRAME_BUG, i18n("folder.crash-reports"), () -> onBrowse("crash-reports"), browsePopup)
+        PopupMenu browsePopup = new PopupMenu();
+        browsePopup.getItems().setAll(
+                PopupMenu.item(SVG.STADIA_CONTROLLER, i18n("folder.game"), () -> onBrowse("")),
+                PopupMenu.item(SVG.SETTINGS, i18n("folder.config"), () -> onBrowse("config")),
+                new M3Divider(),
+                PopupMenu.item(SVG.EXTENSION, i18n("folder.mod"), () -> onBrowse("mods")),
+                PopupMenu.item(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> onBrowse("resourcepacks")),
+                PopupMenu.item(SVG.PUBLIC, i18n("folder.saves"), () -> onBrowse("saves")),
+                PopupMenu.item(SVG.SCHEMA, i18n("folder.schematics"), this::onBrowseSchematics),
+                PopupMenu.item(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> onBrowse("shaderpacks")),
+                PopupMenu.item(SVG.SCREENSHOT_MONITOR, i18n("folder.screenshots"), () -> onBrowse("screenshots")),
+                new M3Divider(),
+                PopupMenu.item(SVG.SCRIPT, i18n("folder.logs"), () -> onBrowse("logs")),
+                PopupMenu.item(SVG.FRAME_BUG, i18n("folder.crash-reports"), () -> onBrowse("crash-reports"))
         );
 
-        PopupMenu managementList = new PopupMenu();
-        JFXPopup managementPopup = new JFXPopup(managementList);
-        managementList.getContent().setAll(
-                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), this::testGame, managementPopup),
-                new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), this::generateLaunchScript, managementPopup),
-                new MenuSeparator(),
-                new IconedMenuItem(SVG.EDIT, i18n("instance.manage.rename"), this::rename, managementPopup),
-                new IconedMenuItem(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), this::duplicate, managementPopup),
-                new IconedMenuItem(SVG.DELETE, i18n("instance.manage.remove"), this::remove, managementPopup),
-                new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), this::export, managementPopup),
-                new MenuSeparator(),
+        PopupMenu managementPopup = new PopupMenu();
+        var cleanItem = PopupMenu.item(null, i18n("instance.manage.clean"), this::clearJunkFiles);
+        FXUtils.installFastTooltip(cleanItem, i18n("instance.manage.clean.tooltip"));
+        managementPopup.getItems().setAll(
+                PopupMenu.item(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), this::testGame),
+                PopupMenu.item(SVG.SCRIPT, i18n("instance.launch_script"), this::generateLaunchScript),
+                new M3Divider(),
+                PopupMenu.item(SVG.EDIT, i18n("instance.manage.rename"), this::rename),
+                PopupMenu.item(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), this::duplicate),
+                PopupMenu.item(SVG.DELETE, i18n("instance.manage.remove"), this::remove),
+                PopupMenu.item(SVG.OUTPUT, i18n("modpack.export"), this::export),
+                new M3Divider(),
                 // Due to the sidebar height limit, we temporarily place the entries for these tabs
                 // in the management menu; they will be moved back to the sidebar after a future UI refactor.
-                new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> tabController.selectTab(screenshotsTab), managementPopup),
-                new IconedMenuItem(SVG.DRESSER, i18n("server.manage"), () -> tabController.selectTab(serversTab), managementPopup),
-                new MenuSeparator(),
-                new IconedMenuItem(null, i18n("instance.manage.redownload_assets_index"), this::redownloadAssetIndex, managementPopup),
-                new IconedMenuItem(null, i18n("instance.manage.remove_assets"), this::clearAssets, managementPopup),
-                new IconedMenuItem(null, i18n("instance.manage.remove_libraries"), this::clearLibraries, managementPopup),
-                new IconedMenuItem(null, i18n("instance.manage.clean"), this::clearJunkFiles, managementPopup).addTooltip(i18n("instance.manage.clean.tooltip"))
+                PopupMenu.item(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> tabController.selectTab(screenshotsTab)),
+                PopupMenu.item(SVG.DRESSER, i18n("server.manage"), () -> tabController.selectTab(serversTab)),
+                new M3Divider(),
+                PopupMenu.item(null, i18n("instance.manage.redownload_assets_index"), this::redownloadAssetIndex),
+                PopupMenu.item(null, i18n("instance.manage.remove_assets"), this::clearAssets),
+                PopupMenu.item(null, i18n("instance.manage.remove_libraries"), this::clearLibraries),
+                cleanItem
         );
 
         AdvancedListBox toolbar = new AdvancedListBox()
@@ -183,7 +184,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         if (browsePopup.isShowing()) {
                             browsePopup.hide();
                         } else {
-                            browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0, true);
+                            browsePopup.showBeside(browseMenuItem, Pos.BOTTOM_RIGHT);
                         }
                     });
                 })
@@ -192,7 +193,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         if (managementPopup.isShowing()) {
                             managementPopup.hide();
                         } else {
-                            managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0, true);
+                            managementPopup.showBeside(managementItem, Pos.BOTTOM_RIGHT);
                         }
                     });
                 });

@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -21,7 +20,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.glavo.m3fx.controls.M3CheckBox;
+import org.glavo.m3fx.controls.M3Divider;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3MenuItem;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -44,7 +45,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -308,7 +308,7 @@ public final class WorldListPage extends ListPageBase<World> {
                 btnMore.setOnAction(event -> {
                     World world = getItem();
                     if (world != null)
-                        showPopupMenu(world, page.supportQuickPlayProperty().get(), JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
+                        createPopupMenu(world, page.supportQuickPlayProperty().get()).showBelow(btnMore, root);
                 });
             }
 
@@ -324,7 +324,7 @@ public final class WorldListPage extends ListPageBase<World> {
                 if (event.getButton() == MouseButton.PRIMARY)
                     page.showManagePage(world);
                 else if (event.getButton() == MouseButton.SECONDARY)
-                    showPopupMenu(world, page.supportQuickPlayProperty().get(), JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
+                    createPopupMenu(world, page.supportQuickPlayProperty().get()).showAt(this, event.getScreenX(), event.getScreenY());
             });
         }
 
@@ -369,64 +369,61 @@ public final class WorldListPage extends ListPageBase<World> {
             }
         }
 
-        // Popup Menu
-
-        public void showPopupMenu(World world, boolean supportQuickPlay, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
+        /// Builds the actions available for this world and its current lock state.
+        private PopupMenu createPopupMenu(World world, boolean supportQuickPlay) {
             boolean worldLocked = world.isLocked();
 
-            PopupMenu popupMenu = new PopupMenu();
-            JFXPopup popup = new JFXPopup(popupMenu);
+            PopupMenu popup = new PopupMenu();
 
             if (supportQuickPlay) {
 
-                IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch_and_enter_world"), () -> page.launch(world), popup);
+                M3MenuItem launchItem = PopupMenu.item(SVG.ROCKET_LAUNCH, i18n("instance.launch_and_enter_world"), () -> page.launch(world));
                 launchItem.setDisable(worldLocked);
 
-                popupMenu.getContent().addAll(
+                popup.getItems().addAll(
                         launchItem,
-                        new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), () -> page.generateLaunchScript(world), popup),
-                        new MenuSeparator()
+                        PopupMenu.item(SVG.SCRIPT, i18n("instance.launch_script"), () -> page.generateLaunchScript(world)),
+                        new M3Divider()
                 );
             }
 
-            popupMenu.getContent().add(new IconedMenuItem(SVG.SETTINGS, i18n("world.manage.button"), () -> page.showManagePage(world), popup));
+            popup.getItems().add(PopupMenu.item(SVG.SETTINGS, i18n("world.manage.button"), () -> page.showManagePage(world)));
 
             if (ChunkBaseApp.isSupported(world)) {
-                popupMenu.getContent().addAll(
-                        new MenuSeparator(),
-                        new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup),
-                        new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup),
-                        new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
+                popup.getItems().addAll(
+                        new M3Divider(),
+                        PopupMenu.item(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world)),
+                        PopupMenu.item(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world)),
+                        PopupMenu.item(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world))
                 );
 
                 if (ChunkBaseApp.supportEndCity(world)) {
-                    popupMenu.getContent().add(new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), popup));
+                    popup.getItems().add(PopupMenu.item(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world)));
                 }
             }
 
-            IconedMenuItem exportMenuItem = new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> page.export(world), popup);
+            M3MenuItem exportMenuItem = PopupMenu.item(SVG.OUTPUT, i18n("world.export"), () -> page.export(world));
             exportMenuItem.setDisable(worldLocked);
 
-            IconedMenuItem deleteMenuItem = new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> page.delete(world), popup);
+            M3MenuItem deleteMenuItem = PopupMenu.item(SVG.DELETE_FOREVER, i18n("world.delete"), () -> page.delete(world));
             deleteMenuItem.setDisable(worldLocked);
 
-            IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> page.copy(world), popup);
+            M3MenuItem duplicateMenuItem = PopupMenu.item(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> page.copy(world));
             duplicateMenuItem.setDisable(worldLocked);
 
-            popupMenu.getContent().addAll(
-                    new MenuSeparator(),
+            popup.getItems().addAll(
+                    new M3Divider(),
                     exportMenuItem,
                     deleteMenuItem,
                     duplicateMenuItem
             );
 
-            popupMenu.getContent().addAll(
-                    new MenuSeparator(),
-                    new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), () -> page.reveal(world), popup)
+            popup.getItems().addAll(
+                    new M3Divider(),
+                    PopupMenu.item(SVG.FOLDER_OPEN, i18n("folder.world"), () -> page.reveal(world))
             );
 
-            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
-            popup.show(this, vPosition, hPosition, initOffsetX, vPosition == JFXPopup.PopupVPosition.TOP ? initOffsetY : -initOffsetY);
+            return popup;
         }
     }
 }

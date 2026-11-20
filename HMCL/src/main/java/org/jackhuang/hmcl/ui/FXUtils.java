@@ -20,8 +20,6 @@ import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
 import javafx.event.EventType;
-import javafx.geometry.Bounds;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -43,6 +41,8 @@ import javafx.util.StringConverter;
 import javafx.util.converter.PercentageStringConverter;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
+import org.glavo.m3fx.controls.M3Divider;
+import org.glavo.m3fx.controls.M3MenuItem;
 import org.glavo.m3fx.controls.M3PasswordField;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.glavo.m3fx.controls.M3Slider;
@@ -57,8 +57,6 @@ import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
-import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
@@ -81,9 +79,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -100,6 +95,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -373,7 +371,7 @@ public final class FXUtils {
     public static M3TextField newTextField(M3TextInputVariant variant) {
         M3TextField field = new M3TextField();
         field.setVariant(variant);
-        useJFXContextMenu(field);
+        installTextContextMenu(field);
         return field;
     }
 
@@ -386,7 +384,7 @@ public final class FXUtils {
     public static M3PasswordField newPasswordField(M3TextInputVariant variant) {
         M3PasswordField field = new M3PasswordField();
         field.setVariant(variant);
-        useJFXContextMenu(field);
+        installTextContextMenu(field);
         return field;
     }
 
@@ -1200,113 +1198,24 @@ public final class FXUtils {
                 IMAGE_EXTENSIONS.stream().map(ext -> "*." + ext).toArray(String[]::new));
     }
 
-    /**
-     * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries,
-     * window boundaries, and clipping containers like ScrollPane.
-     *
-     * @param root          the root node to calculate position relative to
-     * @param popupInstance the popup instance to position
-     * @return the optimal vertical position for the popup menu
-     */
-    public static JFXPopup.PopupVPosition determineOptimalPopupPosition(Node root, JFXPopup popupInstance) {
-        // Get the screen bounds in screen coordinates
-        Bounds screenBounds = root.localToScreen(root.getBoundsInLocal());
-        if (screenBounds == null) {
-            return JFXPopup.PopupVPosition.TOP; // Fallback
-        }
-
-        Rectangle2D boundsRect = new Rectangle2D(
-                screenBounds.getMinX(), screenBounds.getMinY(),
-                screenBounds.getWidth(), screenBounds.getHeight()
-        );
-
-        // Find the screen that contains this component (supports multi-monitor)
-        List<Screen> screens = Screen.getScreensForRectangle(boundsRect);
-        Screen currentScreen = screens.isEmpty() ? Screen.getPrimary() : screens.get(0);
-        Rectangle2D visualBounds = currentScreen.getVisualBounds();
-
-        // 1. Initial bounds based on the physical Screen limits
-        double clipMinY = visualBounds.getMinY();
-        double clipMaxY = visualBounds.getMaxY();
-
-        // 2. Constrain by Window (Stage) bounds so it doesn't overflow the application window
-        if (root.getScene() != null && root.getScene().getWindow() != null) {
-            javafx.stage.Window window = root.getScene().getWindow();
-            clipMinY = Math.max(clipMinY, window.getY());
-            clipMaxY = Math.min(clipMaxY, window.getY() + window.getHeight());
-        }
-
-        // 3. Constrain by parent ScrollPanes to handle clipping within the UI layout
-        Node parent = root.getParent();
-        while (parent != null) {
-            if (parent instanceof ScrollPane) {
-                Bounds spBounds = parent.localToScreen(parent.getBoundsInLocal());
-                if (spBounds != null) {
-                    clipMinY = Math.max(clipMinY, spBounds.getMinY());
-                    clipMaxY = Math.min(clipMaxY, spBounds.getMaxY());
-                }
-            }
-            parent = parent.getParent();
-        }
-
-        double itemScreenY = screenBounds.getMinY();
-        double itemScreenMaxY = screenBounds.getMaxY();
-
-        // Calculate available space relative to the narrowest calculated clipping bounds
-        double availableSpaceAbove = itemScreenY - clipMinY;
-        double availableSpaceBelow = clipMaxY - itemScreenMaxY;
-
-        // Get popup content and ensure it's properly measured
-        Region popupContent = popupInstance.getPopupContent();
-
-        double menuHeight;
-        if (popupContent.getHeight() <= 0) {
-            // Force layout measurement if height is not yet available
-            popupContent.autosize();
-            popupContent.applyCss();
-            popupContent.layout();
-
-            // Get the measured height, or use a reasonable fallback
-            menuHeight = popupContent.getHeight();
-            if (menuHeight <= 0) {
-                // Fallback: estimate based on number of menu items
-                menuHeight = 300;
-            }
-        } else {
-            menuHeight = popupContent.getHeight();
-        }
-
-        // Add some margin for safety
-        menuHeight += 20;
-
-        // Logic: if there isn't enough space below, AND there is more space above, open upwards.
-        if (availableSpaceBelow < menuHeight && availableSpaceAbove > availableSpaceBelow) {
-            return JFXPopup.PopupVPosition.BOTTOM;  // Show menu above the button, expanding upward
-        } else {
-            return JFXPopup.PopupVPosition.TOP;     // Show menu below the button, expanding downward
-        }
-    }
-
-    public static void useJFXContextMenu(TextInputControl control) {
+    /// Installs the localized Material editing menu for a text input.
+    public static void installTextContextMenu(TextInputControl control) {
         control.setContextMenu(null);
 
-        PopupMenu menu = new PopupMenu();
-        JFXPopup popup = new JFXPopup(menu);
-        popup.setAutoHide(true);
-
         control.setOnContextMenuRequested(e -> {
+            PopupMenu popup = new PopupMenu();
             boolean hasNoSelection = control.getSelectedText().isEmpty();
             boolean isPassword = control instanceof PasswordField;
 
-            IconedMenuItem undo = new IconedMenuItem(SVG.UNDO, i18n("menu.undo"), control::undo, popup);
-            IconedMenuItem redo = new IconedMenuItem(SVG.REDO, i18n("menu.redo"), control::redo, popup);
-            IconedMenuItem cut = new IconedMenuItem(SVG.CONTENT_CUT, i18n("menu.cut"), control::cut, popup);
-            IconedMenuItem copy = new IconedMenuItem(SVG.CONTENT_COPY, i18n("menu.copy"), control::copy, popup);
-            IconedMenuItem paste = new IconedMenuItem(SVG.CONTENT_PASTE, i18n("menu.paste"), control::paste, popup);
-            IconedMenuItem delete = new IconedMenuItem(SVG.DELETE, i18n("menu.deleteselection"), () -> control.replaceSelection(""), popup);
-            IconedMenuItem selectall = new IconedMenuItem(SVG.SELECT_ALL, i18n("menu.selectall"), control::selectAll, popup);
+            M3MenuItem undo = PopupMenu.item(SVG.UNDO, i18n("menu.undo"), control::undo);
+            M3MenuItem redo = PopupMenu.item(SVG.REDO, i18n("menu.redo"), control::redo);
+            M3MenuItem cut = PopupMenu.item(SVG.CONTENT_CUT, i18n("menu.cut"), control::cut);
+            M3MenuItem copy = PopupMenu.item(SVG.CONTENT_COPY, i18n("menu.copy"), control::copy);
+            M3MenuItem paste = PopupMenu.item(SVG.CONTENT_PASTE, i18n("menu.paste"), control::paste);
+            M3MenuItem delete = PopupMenu.item(SVG.DELETE, i18n("menu.deleteselection"), () -> control.replaceSelection(""));
+            M3MenuItem selectall = PopupMenu.item(SVG.SELECT_ALL, i18n("menu.selectall"), control::selectAll);
 
-            menu.getContent().setAll(undo, redo, new MenuSeparator(), cut, copy, paste, delete, new MenuSeparator(), selectall);
+            popup.getItems().setAll(undo, redo, new M3Divider(), cut, copy, paste, delete, new M3Divider(), selectall);
 
             undo.setDisable(!control.isUndoable());
             redo.setDisable(!control.isRedoable());
@@ -1316,8 +1225,7 @@ public final class FXUtils {
             paste.setDisable(!Clipboard.getSystemClipboard().hasString());
             selectall.setDisable(control.getText() == null || control.getText().isEmpty());
 
-            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(control, popup);
-            popup.show(control, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - control.getHeight());
+            popup.showAt(control, e.getScreenX(), e.getScreenY());
 
             e.consume();
         });

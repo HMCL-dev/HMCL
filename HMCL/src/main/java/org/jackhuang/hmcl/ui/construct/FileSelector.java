@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -83,15 +82,14 @@ public class FileSelector extends HBox {
                 case FILE -> openFileChooser(customField);
                 case DIRECTORY -> openDirectoryChooser(customField);
                 case FILE_OR_DIRECTORY -> {
-                    PopupMenu selectPopupMenu = new PopupMenu();
-                    JFXPopup selectModePopup = new JFXPopup(selectPopupMenu);
+                    PopupMenu selectModePopup = new PopupMenu();
 
-                    selectPopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> openFileChooser(customField), selectModePopup),
-                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> openDirectoryChooser(customField), selectModePopup)
+                    selectModePopup.getItems().addAll(
+                            PopupMenu.item(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> openFileChooser(customField)),
+                            PopupMenu.item(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> openDirectoryChooser(customField))
                     );
 
-                    selectModePopup.show(selectButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -selectButton.getWidth(), 0);
+                    selectModePopup.showBeside(selectButton, Pos.TOP_LEFT);
                 }
             }
         });

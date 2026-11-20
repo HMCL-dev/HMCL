@@ -25,7 +25,7 @@ public final class Summary {
     public Summary(String text, Object result) {
         M3TextArea area = new M3TextArea(text);
         area.setWrapText(false);
-        FXUtils.useJFXContextMenu(area);
+        FXUtils.installTextContextMenu(area);
         area.setEditable(false);
 
         this.component = area;

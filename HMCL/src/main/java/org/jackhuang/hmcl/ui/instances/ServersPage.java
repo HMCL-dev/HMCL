@@ -26,7 +26,9 @@ import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ButtonVariant;
 import org.glavo.m3fx.controls.M3CheckBox;
 import org.glavo.m3fx.controls.M3ComboBox;
+import org.glavo.m3fx.controls.M3Divider;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3MenuItem;
 import org.glavo.m3fx.controls.M3TextField;
 import org.glavo.m3fx.controls.M3TextInputVariant;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
@@ -709,7 +711,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             btnMore.setOnAction(event -> {
                 ServerListItem item = getItem();
                 if (item != null) {
-                    showPopupMenu(item, JFXPopup.PopupHPosition.RIGHT, 0, getHeight());
+                    showPopupMenu(item, btnMore);
                 }
             });
 
@@ -762,40 +764,33 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             }
         }
 
-        private void showPopupMenu(ServersPage.ServerListItem holder, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
-            PopupMenu popupMenu = new PopupMenu();
-            JFXPopup popup = new JFXPopup(popupMenu);
+        /// Opens the server actions at the trailing edge of its row.
+        private void showPopupMenu(ServersPage.ServerListItem holder, Node owner) {
+            PopupMenu popup = new PopupMenu();
 
-            IconedMenuItem copyToInstanceMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("server.manage.copy.to.instance"),
-                    () -> page.copyToInstance(holder), popup
-            );
-            popupMenu.getContent().addAll(
-                    new IconedMenuItem(SVG.EDIT, i18n("server.manage.edit"), () ->
-                            page.editServer(holder), popup
-                    ),
-                    new MenuSeparator(),
-                    new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch_and_connect_server"), () ->
-                            page.launchAndEnterServer(holder), popup
-                    ),
-                    new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), () ->
-                            page.generateLaunchScript(holder), popup
-                    ),
-                    new MenuSeparator(),
-                    new IconedMenuItem(SVG.CONTENT_COPY, i18n("server.manage.ip.copy"), () ->
-                            page.copyServerIp(holder), popup
-                    ),
-                    new MenuSeparator(),
+            M3MenuItem copyToInstanceMenuItem = PopupMenu.item(SVG.CONTENT_COPY, i18n("server.manage.copy.to.instance"),
+                    () -> page.copyToInstance(holder));
+            popup.getItems().addAll(
+                    PopupMenu.item(SVG.EDIT, i18n("server.manage.edit"), () ->
+                            page.editServer(holder)),
+                    new M3Divider(),
+                    PopupMenu.item(SVG.ROCKET_LAUNCH, i18n("instance.launch_and_connect_server"), () ->
+                            page.launchAndEnterServer(holder)),
+                    PopupMenu.item(SVG.SCRIPT, i18n("instance.launch_script"), () ->
+                            page.generateLaunchScript(holder)),
+                    new M3Divider(),
+                    PopupMenu.item(SVG.CONTENT_COPY, i18n("server.manage.ip.copy"), () ->
+                            page.copyServerIp(holder)),
+                    new M3Divider(),
                     copyToInstanceMenuItem,
-                    new IconedMenuItem(SVG.DELETE_FOREVER, i18n("server.manage.file.delete"), () ->
-                            page.delete(holder), popup
-                    )
+                    PopupMenu.item(SVG.DELETE_FOREVER, i18n("server.manage.file.delete"), () ->
+                            page.delete(holder))
             );
             if (page.gameInstance != null) {
                 copyToInstanceMenuItem.setDisable(holder.storageEntry.getServersDatFile().getFile().equals(page.gameInstance.getServersDatFilePath()));
             }
 
-            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
-            popup.show(this, vPosition, hPosition, initOffsetX, vPosition == JFXPopup.PopupVPosition.TOP ? initOffsetY : -initOffsetY);
+            popup.showBelow(owner, this);
         }
     }
 

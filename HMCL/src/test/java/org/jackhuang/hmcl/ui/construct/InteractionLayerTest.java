@@ -6,11 +6,14 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
+import javafx.geometry.NodeOrientation;
+import javafx.geometry.Pos;
 import javafx.scene.AccessibleAttribute;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.CornerRadii;
@@ -22,6 +25,7 @@ import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import org.glavo.m3fx.controls.M3Button;
 import org.glavo.m3fx.controls.M3ColorArea;
 import org.glavo.m3fx.controls.M3ColorChannel;
@@ -29,6 +33,7 @@ import org.glavo.m3fx.controls.M3ColorSlider;
 import org.glavo.m3fx.controls.M3ColorSwatch;
 import org.glavo.m3fx.controls.M3ColorSwatchPicker;
 import org.glavo.m3fx.controls.M3IconButton;
+import org.glavo.m3fx.controls.M3MenuItem;
 import org.glavo.m3fx.controls.M3OverlayPane;
 import org.glavo.m3fx.controls.M3ProgressIndicator;
 import org.glavo.m3fx.controls.M3RgbColor;
@@ -67,6 +72,93 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 @Isolated("Temporarily supplies settings while initializing the cached animation policy")
 public final class InteractionLayerTest {
+
+    /// A live selector can replace its options while open and commit the next option by keyboard.
+    @Test
+    void selectionMenuTracksOptionsAndKeyboard() throws Exception {
+        onFxThread(() -> {
+            var selector = new LineSelectButton<String>();
+            selector.setItems("First", "Second");
+            selector.setValue("First");
+            selector.setDescriptionConverter(item -> item + " description");
+            var stage = new Stage();
+            try {
+                var scene = new Scene(new StackPane(selector), 800, 450);
+                M3ThemeManager.install(scene, M3Theme.defaultTheme());
+                scene.getStylesheets().addAll("/assets/css/blue.css", "/assets/css/root.css");
+                stage.setScene(scene);
+                stage.show();
+                selector.fire();
+                var popup = Window.getWindows().stream().filter(PopupMenu.class::isInstance)
+                        .map(PopupMenu.class::cast).filter(p -> p.getOwnerNode() == selector).findFirst().orElseThrow();
+                selector.setItems("First", "Last");
+                var last = assertInstanceOf(M3MenuItem.class, popup.getItems().getLast());
+                assertEquals("Last description", last.getSupportingText());
+                last.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.DOWN, false, false, false, false));
+                assertEquals("Last", selector.getValue());
+                assertTrue(last.isSelected());
+                last.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER, false, false, false, false));
+                assertFalse(popup.isShowing());
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    /// Short menus hug the anchor in either orientation and tall menus stay reachable in a compact window.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void popupMenuFitsAndDismisses(boolean rtl) throws Exception {
+        onFxThread(() -> {
+            var anchor = new M3Button("Actions");
+            var root = new StackPane(anchor);
+            root.setNodeOrientation(rtl ? NodeOrientation.RIGHT_TO_LEFT : NodeOrientation.LEFT_TO_RIGHT);
+            var stage = new Stage();
+            var called = new AtomicInteger();
+            var command = PopupMenu.item(null, "Run command", called::incrementAndGet);
+            var popup = new PopupMenu(command);
+            try {
+                var scene = new Scene(root, 800, 450);
+                M3ThemeManager.install(scene, M3Theme.defaultTheme());
+                scene.getStylesheets().addAll("/assets/css/blue.css", "/assets/css/root.css");
+                stage.setScene(scene);
+                stage.show();
+                Bounds anchorBounds = anchor.localToScreen(anchor.getLayoutBounds());
+                popup.showBelow(anchor, anchor);
+                assertTrue(popup.isShowing());
+                assertEquals(anchorBounds.getMaxY(), popup.getY(), 2);
+                assertEquals(rtl ? anchorBounds.getMinX() : anchorBounds.getMaxX() - popup.getWidth(), popup.getX(), 2);
+                assertEquals(command.getHeight(), popup.getHeight(), 24);
+                var menuSurface = (Region) popup.getScene().lookup(".m3-menu");
+                assertNotNull(menuSurface.getBackground(), "The Material menu must resolve its theme surface");
+                command.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER,
+                        false, false, false, false));
+                assertEquals(1, called.get());
+                assertFalse(popup.isShowing());
+
+                for (int i = 0; i < 24; i++)
+                    popup.getItems().add(PopupMenu.item(null, "Item " + i, called::incrementAndGet));
+                popup.showBeside(anchor, Pos.BOTTOM_RIGHT);
+                assertTrue(popup.isShowing());
+                assertTrue(popup.getY() >= stage.getY() - 1);
+                assertTrue(popup.getY() + popup.getHeight() <= stage.getY() + stage.getHeight() + 2,
+                        () -> "Popup " + popup.getY() + " + " + popup.getHeight() + ", stage " + stage.getY() + " + " + stage.getHeight());
+                var bar = assertInstanceOf(ScrollBar.class, popup.getScene().lookup(".scroll-bar:vertical"));
+                assertTrue(bar.isVisible());
+                popup.showBeside(anchor, Pos.BOTTOM_RIGHT);
+                assertFalse(popup.isShowing());
+
+                popup.getItems().setAll(command);
+                popup.showAt(anchor, anchorBounds.getMinX(), anchorBounds.getMinY());
+                assertEquals(anchorBounds.getMinX() - (rtl ? popup.getWidth() : 0), popup.getX(), 2);
+                assertEquals(anchorBounds.getMinY(), popup.getY(), 2);
+                assertEquals(command.getHeight(), popup.getHeight(), 24);
+            } finally {
+                popup.hide();
+                stage.close();
+            }
+        });
+    }
 
     /// The preset palette and actions fit within the dialog at the launcher's compact overlay size.
     @Test

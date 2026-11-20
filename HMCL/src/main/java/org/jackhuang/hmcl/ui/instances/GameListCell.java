@@ -2,12 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
-import javafx.geometry.NodeOrientation;
-import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
@@ -15,6 +12,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
+import org.glavo.m3fx.controls.M3Divider;
 import org.glavo.m3fx.controls.M3IconButton;
 import org.glavo.m3fx.controls.M3RadioButton;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -23,7 +21,6 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
-import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Displays a game instance with selection, update, settings, and management controls.
@@ -51,7 +48,7 @@ public final class GameListCell extends ListCell<GameListItem> {
     private final StringProperty tag = new SimpleStringProperty();
 
     /// Caches the management popup until the cell item or empty state changes.
-    private @Nullable JFXPopup managementPopup;
+    private @Nullable PopupMenu managementPopup;
 
     /// Identifies the item whose actions are captured by the cached popup, or is null if none is cached.
     private @Nullable GameListItem managementPopupItem;
@@ -126,22 +123,13 @@ public final class GameListCell extends ListCell<GameListItem> {
                 if (item == null)
                     return;
 
-                JFXPopup popup = getManagementPopup(item);
+                PopupMenu popup = getManagementPopup(item);
                 if (popup.isShowing()) {
                     popup.hide();
                     return;
                 }
 
-                JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
-                boolean below = vPosition == JFXPopup.PopupVPosition.TOP;
-                Point2D offset = root.localToScene(0, 0).subtract(btnManage.localToScene(0, 0));
-                double offsetX = offset.getX() + root.getWidth() - btnManage.getWidth();
-                double offsetY = offset.getY() + (below ? root.getHeight() : -btnManage.getHeight());
-                if (btnManage.getEffectiveNodeOrientation() == NodeOrientation.RIGHT_TO_LEFT)
-                    offsetX = -offsetX;
-                // Only this button bypasses auto-hide, so its action can toggle the menu.
-                // Keep the popup aligned to the cell while making the button its owner.
-                popup.show(btnManage, vPosition, JFXPopup.PopupHPosition.RIGHT, offsetX, offsetY, true);
+                popup.showBelow(btnManage, root);
             });
             FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
             right.getChildren().add(btnManage);
@@ -158,10 +146,8 @@ public final class GameListCell extends ListCell<GameListItem> {
                     item.getRepository().setSelectedInstance(item.getGameInstance());
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
-                JFXPopup popup = getManagementPopup(item);
-                JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
-                // Repeated right-clicks reopen and reposition even during the closing animation
-                popup.show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - root.getHeight());
+                PopupMenu popup = getManagementPopup(item);
+                popup.showAt(root, e.getScreenX(), e.getScreenY());
             }
         });
     }
@@ -206,7 +192,7 @@ public final class GameListCell extends ListCell<GameListItem> {
     }
 
     /// Returns the cached menu for the item, hiding and replacing a menu for a different item.
-    private JFXPopup getManagementPopup(GameListItem item) {
+    private PopupMenu getManagementPopup(GameListItem item) {
         if (managementPopup == null || managementPopupItem != item) {
             if (managementPopup != null) {
                 managementPopup.hide();
@@ -218,22 +204,21 @@ public final class GameListCell extends ListCell<GameListItem> {
     }
 
     /// Creates a management popup whose actions operate on the supplied instance item.
-    private static JFXPopup createPopup(GameListItem item) {
-        PopupMenu menu = new PopupMenu();
-        JFXPopup popup = new JFXPopup(menu);
+    private static PopupMenu createPopup(GameListItem item) {
+        PopupMenu popup = new PopupMenu();
 
-        menu.getContent().setAll(
-                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), item::testGame, popup),
-                new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), item::generateLaunchScript, popup),
-                new MenuSeparator(),
-                new IconedMenuItem(SVG.EDIT, i18n("instance.manage.rename"), item::rename, popup),
-                new IconedMenuItem(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), item::duplicate, popup),
-                new IconedMenuItem(SVG.DELETE, i18n("instance.manage.remove"), item::remove, popup),
-                new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), item::export, popup),
-                new MenuSeparator(),
-                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.game"), item::browse, popup),
-                new MenuSeparator(),
-                new IconedMenuItem(SVG.SETTINGS, i18n("instance.manage.manage"), item::modifyGameSettings, popup));
+        popup.getItems().setAll(
+                PopupMenu.item(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), item::testGame),
+                PopupMenu.item(SVG.SCRIPT, i18n("instance.launch_script"), item::generateLaunchScript),
+                new M3Divider(),
+                PopupMenu.item(SVG.EDIT, i18n("instance.manage.rename"), item::rename),
+                PopupMenu.item(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), item::duplicate),
+                PopupMenu.item(SVG.DELETE, i18n("instance.manage.remove"), item::remove),
+                PopupMenu.item(SVG.OUTPUT, i18n("modpack.export"), item::export),
+                new M3Divider(),
+                PopupMenu.item(SVG.FOLDER_OPEN, i18n("folder.game"), item::browse),
+                new M3Divider(),
+                PopupMenu.item(SVG.SETTINGS, i18n("instance.manage.manage"), item::modifyGameSettings));
         return popup;
     }
 }

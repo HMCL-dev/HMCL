@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXPopup;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -65,20 +64,17 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         gameDirectoryListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), gameDirectory -> {
             GameDirectoryListItem item = new GameDirectoryListItem(gameDirectory);
             FXUtils.onSecondaryButtonClicked(item, () -> {
-                PopupMenu menu = new PopupMenu();
-                JFXPopup popup = new JFXPopup(menu);
-                menu.getContent().addAll(
-                        new IconedMenuItem(
+                PopupMenu popup = new PopupMenu();
+                popup.getItems().addAll(
+                        PopupMenu.item(
                                 SVG.EDIT,
                                 i18n("button.edit"),
-                                () -> Controllers.navigate(new GameDirectoryPage(gameDirectory)),
-                                popup),
-                        new IconedMenuItem(
+                                () -> Controllers.navigate(new GameDirectoryPage(gameDirectory))),
+                        PopupMenu.item(
                                 SVG.FOLDER,
                                 i18n("button.reveal_dir"),
-                                () -> FXUtils.openFolder(gameDirectory.getPath().toPath()),
-                                popup));
-                popup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, item.getWidth(), 0);
+                                () -> FXUtils.openFolder(gameDirectory.getPath().toPath())));
+                popup.showBeside(item, Pos.TOP_RIGHT);
             });
             return item;
         });

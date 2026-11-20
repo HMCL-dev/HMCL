@@ -276,37 +276,15 @@
     -fx-alignment: CENTER_LEFT;
 }
 
-.iconed-menu-item {
-    -jfx-feedback-fill: -monet-on-surface;
-    -fx-cursor: hand;
+.menu-popup-scroll,
+.menu-popup-scroll > .viewport {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
 }
 
-.iconed-menu-item:disabled {
-    -fx-cursor: default;
-}
-
-.iconed-menu-item .iconed-item-container {
-    -fx-padding: 8 16 8 16;
-    -fx-spacing: 10;
-    -fx-font-size: 12;
-    -fx-alignment: CENTER_LEFT;
-}
-
-.menu-container {
-    -fx-padding: 8 16 8 16;
-}
-
-.popup-menu .scroll-bar .thumb {
-    -fx-fill: -monet-surface-tint;
-}
-
-.popup-menu .scroll-pane > .scroll-bar:vertical,
-.popup-menu .scroll-pane > .scroll-bar:horizontal {
-    -fx-opacity: 0;
-}
-
-.popup-menu-content {
-    -fx-padding: 4 0 4 0;
+.menu-popup-scroll > .scroll-bar,
+.menu-popup-scroll > .corner {
+    -fx-background-color: -m3-menu-container-color;
 }
 
 .two-line-list-item > .title {
@@ -623,15 +601,6 @@
  * JFX Pop Up                                                                  *
  *                                                                             *
  ******************************************************************************/
-
-.jfx-popup-overlay-pane {
-    -fx-background-color: transparent;
-}
-
-.jfx-popup-container {
-    -fx-background-color: -monet-surface-container;
-    -fx-background-radius: 4;
-}
 
 .popup-list-view {
     -fx-pref-width: 150.0px;
@@ -1514,26 +1483,6 @@
 
 .line-button .trailing-icon .svg:disabled {
     -fx-opacity: 0.4;
-}
-
-.line-select-button .menu-container .title-label {
-    -fx-font-size: 13px;
-}
-
-.line-select-button .menu-container .title-label {
-    -fx-text-fill: -monet-on-surface;
-}
-
-.line-select-button .menu-container .subtitle-label {
-    -fx-text-fill: -monet-on-surface-variant;
-}
-
-.line-select-button .menu-container:selected .title-label {
-    -fx-text-fill: -monet-primary;
-}
-
-.line-select-button .menu-container:selected .subtitle-label {
-    -fx-text-fill: -monet-primary-transparent-80;
 }
 
 .update-pane:active .subtitle-label {

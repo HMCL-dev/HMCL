@@ -2,40 +2,30 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXPopup;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.css.PseudoClass;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.input.*;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.glavo.m3fx.controls.M3MenuItem;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Function;
 
-import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
-
 /// @author Glavo
 public class LineSelectButton<T extends @UnknownNullability Object> extends LineButton {
 
     private static final String DEFAULT_STYLE_CLASS = "line-select-button";
-    private static final PseudoClass SELECTED_PSEUDO_CLASS = PseudoClass.getPseudoClass("selected");
 
-    private JFXPopup popup;
-    @SuppressWarnings({"FieldCanBeLocal", "unused"})
-    private ObservableList<Node> popupItems; // keep a reference
+    /// The lazily populated selection menu.
+    private @Nullable PopupMenu popup;
 
     public LineSelectButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
@@ -63,53 +53,27 @@ public class LineSelectButton<T extends @UnknownNullability Object> extends Line
     public void fire() {
         super.fire();
         if (popup == null) {
-            PopupMenu popupMenu = new PopupMenu();
-            this.popup = new JFXPopup(popupMenu);
-
-            popupMenu.addEventHandler(KeyEvent.KEY_PRESSED, this::handleKeyEvent);
-
-            ripplerContainer.addEventFilter(ScrollEvent.ANY, ignored -> popup.hide());
-
-            Bindings.bindContent(popupMenu.getContent(), popupItems = MappedObservableList.create(itemsProperty(), item -> {
-                VBox vbox = new VBox();
-
-                var itemTitleLabel = new Label();
-                itemTitleLabel.getStyleClass().add("title-label");
-                itemTitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                    Function<T, String> converter = getConverter();
+            var menu = new PopupMenu();
+            popup = menu;
+            menu.getScene().addEventFilter(KeyEvent.KEY_PRESSED, this::handleKeyEvent);
+            ripplerContainer.addEventFilter(ScrollEvent.ANY, ignored -> menu.hide());
+            var rows = MappedObservableList.create(itemsProperty(), item -> {
+                var row = new M3MenuItem();
+                row.headlineTextProperty().bind(Bindings.createStringBinding(() -> {
+                    var converter = getConverter();
                     return converter != null ? converter.apply(item) : Objects.toString(item, "");
                 }, converterProperty()));
-
-                var itemSubtitleLabel = new Label();
-                itemSubtitleLabel.getStyleClass().add("subtitle-label");
-                itemSubtitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                    Function<T, String> descriptionConverter = getDescriptionConverter();
-                    return descriptionConverter != null ? descriptionConverter.apply(item) : "";
+                row.supportingTextProperty().bind(Bindings.createStringBinding(() -> {
+                    var converter = getDescriptionConverter();
+                    return converter != null ? converter.apply(item) : "";
                 }, descriptionConverterProperty()));
-
-                FXUtils.onChangeAndOperate(itemSubtitleLabel.textProperty(), text -> {
-                    if (text == null || text.isEmpty()) {
-                        vbox.getChildren().setAll(itemTitleLabel);
-                    } else {
-                        vbox.getChildren().setAll(itemTitleLabel, itemSubtitleLabel);
-                    }
-                });
-
-                var wrapper = new StackPane(vbox);
-                wrapper.setAlignment(Pos.CENTER_LEFT);
-                wrapper.getStyleClass().add("menu-container");
-                wrapper.setMouseTransparent(true);
-                RipplerContainer ripplerContainer = new RipplerContainer(wrapper);
-                FXUtils.onClicked(ripplerContainer, () -> {
-                    setValue(item);
-                    popup.hide();
-                });
-
-                FXUtils.onChangeAndOperate(valueProperty(),
-                        value -> wrapper.pseudoClassStateChanged(SELECTED_PSEUDO_CLASS, Objects.equals(value, item)));
-
-                return ripplerContainer;
-            }));
+                row.setUserData(item);
+                row.setSelected(Objects.equals(getValue(), item));
+                row.setOnAction(event -> setValue(item));
+                return row;
+            });
+            Bindings.bindContent(menu.getItems(), rows);
+            valueProperty().subscribe(value -> rows.forEach(row -> row.setSelected(Objects.equals(value, row.getUserData()))));
 
             popup.showingProperty().addListener((observable, oldValue, newValue) ->
                     ripplerContainer.setPressFeedbackEnabled(!newValue));
@@ -118,11 +82,7 @@ public class LineSelectButton<T extends @UnknownNullability Object> extends Line
         if (popup.isShowing()) {
             popup.hide();
         } else {
-            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
-            popup.show(this, vPosition, JFXPopup.PopupHPosition.RIGHT,
-                    0,
-                    vPosition == JFXPopup.PopupVPosition.TOP ? this.getHeight() : -this.getHeight(),
-                    true);
+            popup.showBelow(this, this);
         }
     }
 

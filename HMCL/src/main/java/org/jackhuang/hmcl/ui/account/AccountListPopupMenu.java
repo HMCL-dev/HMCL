@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
@@ -15,15 +15,14 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class AccountListPopupMenu extends StackPane {
-    public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
-                            double initOffsetX, double initOffsetY) {
-        var menu = new AccountListPopupMenu();
-        JFXPopup popup = new JFXPopup(menu);
-        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
+    /// Opens the live account list beside the sidebar entry.
+    public static void show(Node owner, Pos alignment) {
+        new PopupMenu(new AccountListPopupMenu()).showBeside(owner, alignment);
     }
 
     @SuppressWarnings("FieldCanBeLocal")
@@ -44,11 +43,7 @@ public final class AccountListPopupMenu extends StackPane {
             for (Account account : Accounts.getAccounts()) {
                 AccountAdvancedListItem item = new AccountAdvancedListItem(account);
                 if (Accounts.getSelectedAccount() == account) item.setActive(true);
-                item.setOnAction(e -> {
-                    Accounts.setSelectedAccount(account);
-                    if (getScene().getWindow() instanceof JFXPopup popup)
-                        popup.hide();
-                });
+                item.setOnAction(e -> Accounts.setSelectedAccount(account));
                 box.add(item);
             }
 

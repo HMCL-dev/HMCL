@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.property.*;
+import javafx.geometry.Pos;
+import org.glavo.m3fx.controls.M3Divider;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -190,53 +191,47 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             }
 
             if (ChunkBaseApp.isSupported(world)) {
-                PopupMenu chunkBasePopupMenu = new PopupMenu();
-                JFXPopup chunkBasePopup = new JFXPopup(chunkBasePopupMenu);
+                PopupMenu chunkBasePopup = new PopupMenu();
 
-                chunkBasePopupMenu.getContent().addAll(
-                        new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), chunkBasePopup),
-                        new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), chunkBasePopup),
-                        new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), chunkBasePopup)
+                chunkBasePopup.getItems().addAll(
+                        PopupMenu.item(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world)),
+                        PopupMenu.item(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world)),
+                        PopupMenu.item(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world))
                 );
 
                 if (ChunkBaseApp.supportEndCity(world)) {
-                    chunkBasePopupMenu.getContent().add(
-                            new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), chunkBasePopup));
+                    chunkBasePopup.getItems().add(
+                            PopupMenu.item(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world)));
                 }
 
                 toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem ->
                         chunkBaseMenuItem.setOnAction(e ->
-                                chunkBasePopup.show(chunkBaseMenuItem,
-                                        JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
-                                        chunkBaseMenuItem.getWidth(), 0)));
+                                chunkBasePopup.showBeside(chunkBaseMenuItem, Pos.BOTTOM_RIGHT)));
             }
 
             toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(world.getFile()));
 
             {
-                PopupMenu managePopupMenu = new PopupMenu();
-                JFXPopup managePopup = new JFXPopup(managePopupMenu);
+                PopupMenu managePopup = new PopupMenu();
 
                 if (supportQuickPlay) {
-                    managePopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch"), () -> launch(), managePopup),
-                            new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), () -> generateLaunchScript(), managePopup),
-                            new MenuSeparator()
+                    managePopup.getItems().addAll(
+                            PopupMenu.item(SVG.ROCKET_LAUNCH, i18n("instance.launch"), () -> launch()),
+                            PopupMenu.item(SVG.SCRIPT, i18n("instance.launch_script"), () -> generateLaunchScript()),
+                            new M3Divider()
                     );
                 }
 
-                managePopupMenu.getContent().addAll(
-                        new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(world, sessionLockChannel), managePopup),
-                        new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> WorldManageUIUtils.delete(world, () -> fireEvent(new PageCloseEvent()), sessionLockChannel), managePopup),
-                        new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(world, null), managePopup)
+                managePopup.getItems().addAll(
+                        PopupMenu.item(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(world, sessionLockChannel)),
+                        PopupMenu.item(SVG.DELETE_FOREVER, i18n("world.delete"), () -> WorldManageUIUtils.delete(world, () -> fireEvent(new PageCloseEvent()), sessionLockChannel)),
+                        PopupMenu.item(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(world, null))
                 );
 
                 toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->
                 {
                     managePopupMenuItem.setOnAction(e ->
-                            managePopup.show(managePopupMenuItem,
-                                    JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
-                                    managePopupMenuItem.getWidth(), 0));
+                            managePopup.showBeside(managePopupMenuItem, Pos.BOTTOM_RIGHT));
                     managePopupMenuItem.disableProperty().bind(readOnlyProperty());
                 });
             }

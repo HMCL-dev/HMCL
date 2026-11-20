@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.geometry.Pos;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyEvent;
@@ -17,9 +17,9 @@ import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
@@ -56,7 +56,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         // first item in left sidebar
         AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
         accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
-        FXUtils.onSecondaryButtonClicked(accountListItem, () -> AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0));
+        FXUtils.onSecondaryButtonClicked(accountListItem, () -> AccountListPopupMenu.show(accountListItem, Pos.TOP_RIGHT));
         accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
         // second item in left sidebar
@@ -203,11 +203,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
     /// Opens the instance selection menu beside the sidebar entry.
     private void showGameListPopupMenu(Region gameListItem) {
-        GameListPopupMenu.show(gameListItem,
-                JFXPopup.PopupVPosition.TOP,
-                JFXPopup.PopupHPosition.LEFT,
-                gameListItem.getWidth(),
-                0,
-                getMainPage().getInstances());
+        GameListPopupMenu.show(gameListItem, Pos.TOP_RIGHT, getMainPage().getInstances());
     }
 }

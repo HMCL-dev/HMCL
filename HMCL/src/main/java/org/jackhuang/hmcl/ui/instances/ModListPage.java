@@ -57,7 +57,6 @@ import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -739,8 +738,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
     }
 
-    private static final Lazy<PopupMenu> menu = new Lazy<>(PopupMenu::new);
-    private static final Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
 
     private static final class ModInfoListCell extends MDListCell<ModInfoObject> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
@@ -862,14 +859,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             activeSwitch.setAnimationsEnabled(true);
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
-                menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()
-                        .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(),
-                                () -> page.rollback(modInfo, localModFile),
-                                popup.get()))
+                var popup = new PopupMenu();
+                popup.getItems().setAll(modInfo.getMod().getOldFiles().stream()
+                        .map(localModFile -> PopupMenu.item(null, localModFile.getVersion(),
+                                () -> page.rollback(modInfo, localModFile)))
                         .toList()
                 );
 
-                popup.get().show(restoreButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, restoreButton.getHeight());
+                popup.showBelow(restoreButton, restoreButton);
             });
             revealButton.setOnAction(e -> FXUtils.showFileInExplorer(modInfo.getFile()));
             infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));

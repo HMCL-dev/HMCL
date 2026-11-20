@@ -276,7 +276,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         M3TextArea area = new M3TextArea();
                         area.setVariant(M3TextInputVariant.OUTLINED);
                         area.setWrapText(false);
-                        FXUtils.useJFXContextMenu(area);
+                        FXUtils.installTextContextMenu(area);
                         area.textProperty().bindBidirectional(skinnable.description);
                         area.setMinHeight(400);
                         pane.getChildren().setAll(new Label(i18n("modpack.desc")), area);

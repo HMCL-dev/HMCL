@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.terracotta;
 
-import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
+import javafx.geometry.Pos;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.*;
@@ -19,9 +19,9 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.main.MainPage;
 import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.ui.main.MainPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +53,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
         accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
         accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
-        FXUtils.onSecondaryButtonClicked(accountListItem, () -> AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0));
+        FXUtils.onSecondaryButtonClicked(accountListItem, () -> AccountListPopupMenu.show(accountListItem, Pos.BOTTOM_RIGHT));
 
         AdvancedListBox toolbar = new AdvancedListBox()
                 .add(accountListItem)
@@ -75,12 +75,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                         return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
                     }, instance -> instance.getRepository().setSelectedInstance(instance));
 
-                    FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item,
-                            JFXPopup.PopupVPosition.BOTTOM,
-                            JFXPopup.PopupHPosition.LEFT,
-                            item.getWidth(),
-                            0,
-                            mainPage.getInstances()));
+                    FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item, Pos.BOTTOM_RIGHT, mainPage.getInstances()));
                 })
                 .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
         setSidebarBottom(toolbar);
