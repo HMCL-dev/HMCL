@@ -5,11 +5,6 @@
     "externalLink" : "https://openjfx.io"
   },
   {
-    "title" : "JFoenix",
-    "subtitle" : "Copyright © 2016 JFoenix.\nLicensed under the MIT License.",
-    "externalLink" : "https://github.com/sshahine/JFoenix"
-  },
-  {
     "title" : "Gson",
     "subtitle" : "Copyright © 2008 Google Inc.\nLicensed under the Apache 2.0 License.",
     "externalLink" : "https://github.com/google/gson"

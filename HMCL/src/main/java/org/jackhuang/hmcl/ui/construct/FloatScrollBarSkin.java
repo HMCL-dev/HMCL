@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.utils.JFXNodeUtils;
+import com.sun.javafx.scene.NodeHelper;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -250,7 +250,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 return;
             }
 
-            if (AnimationUtils.isAnimationEnabled() && JFXNodeUtils.isTreeVisible(thumb)) {
+            if (AnimationUtils.isAnimationEnabled() && NodeHelper.isTreeVisible(thumb)) {
                 thumbHoverAnimation = new Timeline(
                         new KeyFrame(Duration.ZERO, new KeyValue(thumb.opacityProperty(), currentOpacity)),
                         new KeyFrame(Motion.SHORT2, new KeyValue(thumb.opacityProperty(), targetOpacity))

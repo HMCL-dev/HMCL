@@ -20,11 +20,6 @@ subprojects {
     }
 
     repositories {
-        flatDir {
-            name = "libs"
-            dirs = setOf(rootProject.file("lib"))
-        }
-
         System.getenv("MAVEN_CENTRAL_REPO").let { repo ->
             if (repo.isNullOrBlank())
                 mavenCentral()

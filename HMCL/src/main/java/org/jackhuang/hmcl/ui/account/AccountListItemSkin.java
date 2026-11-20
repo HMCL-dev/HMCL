@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -155,7 +154,6 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
 
         root.getStyleClass().add("card");
         root.setStyle("-fx-padding: 8 8 8 0;");
-        JFXDepthManager.setDepth(root, 1);
 
         getChildren().setAll(root);
     }

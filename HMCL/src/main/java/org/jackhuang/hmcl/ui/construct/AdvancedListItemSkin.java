@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.utils.JFXNodeUtils;
+import com.sun.javafx.scene.NodeHelper;
 import javafx.animation.FadeTransition;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -59,7 +59,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         updateSelection(false);
         registerChangeListener(skinnable.activeProperty(), observable -> updateSelection(true));
         registerChangeListener(skinnable.sceneProperty(), observable -> updateSelection(false));
-        registerChangeListener(JFXNodeUtils.treeVisibleProperty(skinnable), observable -> updateSelection(false));
+        registerChangeListener(NodeHelper.treeVisibleProperty(skinnable), observable -> updateSelection(false));
         updateActionDisabled();
     }
 
@@ -80,7 +80,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         double current = selectionBackground.getOpacity();
         if (selectionTransition != null)
             selectionTransition.stop();
-        if (!animate || !AnimationUtils.isAnimationEnabled() || !JFXNodeUtils.isTreeShowing(item) || current == target) {
+        if (!animate || !AnimationUtils.isAnimationEnabled() || !NodeHelper.isTreeShowing(item) || current == target) {
             selectionBackground.setOpacity(target);
             return;
         }

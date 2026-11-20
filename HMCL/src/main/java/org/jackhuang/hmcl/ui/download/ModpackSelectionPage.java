@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -87,8 +86,6 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         graphic.setRight(arrow);
 
         button.setGraphic(graphic);
-
-        JFXDepthManager.setDepth(button, 1);
 
         return button;
     }

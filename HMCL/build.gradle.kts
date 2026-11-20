@@ -65,7 +65,6 @@ if (m3fxLocalVersion != null) {
 dependencies {
     implementation(project(":HMCLCore"))
     implementation(project(":HMCLBoot"))
-    implementation("libs:JFoenix")
     implementation(libs.jwebp)
     implementation(libs.fxsvgimage)
     implementation(libs.java.info)
@@ -110,6 +109,7 @@ val addOpens = listOf(
     "javafx.graphics/javafx.stage",
     "javafx.graphics/javafx.scene",
     "javafx.graphics/com.sun.glass.ui",
+    "javafx.graphics/com.sun.javafx.scene",
     "javafx.graphics/com.sun.javafx.stage",
     "javafx.graphics/com.sun.javafx.util",
     "javafx.graphics/com.sun.prism",
@@ -175,7 +175,6 @@ tasks.shadowJar {
     minimize {
         exclude(dependency("com.google.code.gson:.*:.*"))
         exclude(dependency("net.java.dev.jna:jna:.*"))
-        exclude(dependency("libs:JFoenix:.*"))
         // M3FX skins can be loaded through CSS rather than direct class references.
         exclude(dependency("com.github.Glavo:m3fx:.*"))
         exclude(dependency("org.glavo:m3fx:.*"))

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.utils.JFXNodeUtils;
+import com.sun.javafx.scene.NodeHelper;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
@@ -66,7 +66,7 @@ public class RipplerContainer extends StackPane {
     private final InteractionLayer interactionLayer = new InteractionLayer();
 
     /// Tracks visibility of this wrapper and its ancestors.
-    private final ObservableBooleanValue treeVisible = JFXNodeUtils.treeVisibleProperty(this);
+    private final ObservableBooleanValue treeVisible = NodeHelper.treeVisibleProperty(this);
 
     /// Updates feedback when control availability or window visibility changes.
     private final InvalidationListener availabilityListener = observable -> updateVisualState();

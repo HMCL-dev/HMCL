@@ -449,7 +449,7 @@
 
 /*******************************************************************************
  *                                                                             *
- * JFX Tab Pane                                                                *
+ * Tab Header                                                                  *
  *                                                                             *
  ******************************************************************************/
 
@@ -463,15 +463,6 @@
 
 .tab-header > .rippler-container {
     -jfx-feedback-fill: -monet-primary;
-}
-
-/* TODO: It seems not actually used */
-.tab-rippler {
-    -jfx-rippler-fill: derive(-monet-primary-container, 30%);
-}
-
-.jfx-tab-pane .jfx-rippler {
-    -jfx-rippler-fill: white;
 }
 
 .tab-label {
@@ -488,20 +479,9 @@
 
 /*******************************************************************************
  *                                                                             *
- * JFX Dialog Layout                                                           *
+ * Dialogs                                                                     *
  *                                                                             *
  ******************************************************************************/
-
-.dialog-trigger {
-    -fx-background-color: WHITE;
-    -jfx-button-type: RAISED;
-    -fx-font-size: 14.0px;
-}
-
-.dialog-error {
-    -fx-text-fill: -monet-error;
-    -fx-padding: 0.7em 0.8em;
-}
 
 .m3-dialog-pane .message-dialog-body > Text {
     -fx-fill: -m3-color-on-surface-variant;
@@ -564,17 +544,7 @@
 
 /*******************************************************************************
  *                                                                             *
- * JFX Pop Up                                                                  *
- *                                                                             *
- ******************************************************************************/
-
-.popup-list-view {
-    -fx-pref-width: 150.0px;
-}
-
-/*******************************************************************************
- *                                                                             *
- * JFX Icons                                                                   *
+ * Icons                                                                       *
  *                                                                             *
  ******************************************************************************/
 
@@ -586,7 +556,7 @@
 
 /*******************************************************************************
  *                                                                             *
- * JFX Tool Bar                                                                *
+ * Tool Bar                                                                    *
  *                                                                             *
  ******************************************************************************/
 
@@ -648,18 +618,6 @@
 
 }
 
-.jfx-tool-bar .jfx-options-burger {
-    -fx-padding: 22px;
-}
-
-.jfx-tool-bar .jfx-options-burger StackPane {
-    -fx-pref-width: 4px;
-}
-
-.jfx-tool-bar .jfx-rippler {
-    -fx-text-fill: -monet-on-surface;
-}
-
 .jfx-tool-bar-second {
     -fx-pref-height: 42;
     -fx-padding: 2 2 2 2;
@@ -674,10 +632,6 @@
     -fx-font-weight: bold;
 }
 
-.jfx-tool-bar-second .jfx-rippler {
-    -jfx-rippler-fill: -monet-on-surface;
-}
-
 .jfx-tool-bar-button {
     -m3-content-color: -monet-on-surface;
     -fx-font-size: 14px;
@@ -687,8 +641,6 @@
     -fx-min-height: -fx-tool-bar-button-height;
     -fx-background-radius: 5px;
     -fx-background-color: transparent;
-    -jfx-toggle-color: -monet-on-surface;
-    -jfx-untoggle-color: transparent;
 }
 
 .jfx-tool-bar-button .icon {
@@ -710,38 +662,6 @@
 
 .jfx-decorator-button .icon {
     -fx-fill: rgb(204.0, 204.0, 51.0);
-    -fx-padding: 0.0;
-}
-
-.jfx-decorator-button .jfx-rippler {
-    -jfx-mask-type: CIRCLE;
-    -fx-padding: 0.0;
-}
-
-/*******************************************************************************
-*                                                                              *
-* JFX Rippler                                                                  *
-*                                                                              *
-*******************************************************************************/
-
-.jfx-rippler:hover {
-    -fx-cursor: hand;
-}
-
-/*******************************************************************************
-*                                                                              *
-* JFX Button                                                                   *
-*                                                                              *
-*******************************************************************************/
-
-.jfx-button {
-    -jfx-disable-visual-focus: true;
-    -fx-cursor: hand;
-}
-
-.jfx-button .jfx-rippler {
-    -jfx-rippler-fill: -monet-on-surface;
-    -jfx-mask-type: CIRCLE;
     -fx-padding: 0.0;
 }
 
@@ -963,8 +883,6 @@
     -fx-padding: 0;
     -fx-background-radius: 25px;
     -fx-background-color: transparent;
-    -jfx-toggle-color: -monet-primary;
-    -jfx-untoggle-color: transparent;
 }
 
 .toggle-icon-tiny .icon {
@@ -986,11 +904,6 @@
     -fx-min-height: -fx-announcement-close-button-size;
     -fx-background-radius: 50px;
     -fx-background-color: transparent;
-}
-
-.announcement-close-button .jfx-rippler {
-    -jfx-rippler-fill: -monet-primary;
-    -jfx-mask-type: CIRCLE;
 }
 
 .transparent {
@@ -1208,7 +1121,7 @@
 
 /*******************************************************************************
 *                                                                              *
-* JFX Decorator                                                                *
+* Decorator                                                                    *
 *                                                                              *
 *******************************************************************************/
 
