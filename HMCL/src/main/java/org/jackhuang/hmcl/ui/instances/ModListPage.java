@@ -805,6 +805,9 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
 
             if (modLoaderType == ModLoaderType.UNKNOWN) {
                 tags.add(Tag.warning(i18n("mods.unknown")));
+            } else if (modLoaderType == ModLoaderType.CORRUPT) {
+                warning.add(i18n("mods.corrupt"));
+                tags.add(Tag.warning(i18n("mods.corrupt")));
             } else if (!page.supportedLoaders.contains(modLoaderType)) {
                 warning.add(i18n("mods.warning.loader_mismatch"));
                 tags.add(Tag.warning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType())));

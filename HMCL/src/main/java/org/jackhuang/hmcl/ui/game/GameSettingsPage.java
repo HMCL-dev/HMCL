@@ -500,6 +500,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             launcherSettings.getContent().add(enableDebugLogOutputPane);
             enableDebugLogOutputPane.setTitle(i18n("settings.enable_debug_log_output"));
 
+            var checkCorruptModsPane = createIndependentBooleanButton(GameSettings::checkCorruptModsProperty);
+            launcherSettings.getContent().add(checkCorruptModsPane);
+            checkCorruptModsPane.setTitle(i18n("settings.launcher.check_corrupt_mods"));
+
             var noGameCheckPane = createInheritableBooleanButton(GameSettings::notCheckGameProperty);
             launcherSettings.getContent().add(noGameCheckPane);
             noGameCheckPane.setTitle(i18n("settings.advanced.dont_check_game_completeness"));
