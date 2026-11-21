@@ -4,14 +4,12 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Skin;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -45,7 +43,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @author Calboot
 /// @see <a href="https://minecraft.wiki/w/Structure_file">Minecraft Wiki - Structure file</a>
 /// @see <a href="https://minecraft.wiki/w/Structure_Block">Minecraft Wiki - Structure Block</a>
-public class StructureListPage extends ListPageBase<StructureListPage.NBTStructureInfoObject> implements WorldManagePage.WorldRefreshable {
+public class StructureListPage extends ListPaneBase<StructureListPage.NBTStructureInfoObject> implements WorldManagePage.WorldRefreshable {
 
     private final World world;
     private final @Nullable Path directory;
@@ -71,6 +69,8 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         FXUtils.applyDragListener(this, p -> !readOnly.get() && SchematicType.getType(p) == SchematicType.NBT_STRUCTURE, this::addFiles);
 
         refresh();
+
+        initializeView();
     }
 
     private static @Unmodifiable List<NBTStructureInfoObject> listStructureFiles(Path dir, @Nullable String namespace) throws IOException {
@@ -109,8 +109,38 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
     }
 
     @Override
-    protected Skin<?> createDefaultSkin() {
-        return new StructureListPageSkin(this);
+    protected @NotNull ItemCell<NBTStructureInfoObject> createItemCell(@NotNull ListView<NBTStructureInfoObject> listView) {
+        return new StructureCell(this, listView);
+    }
+
+    private void initializeView() {
+        getStyleClass().add("notice-pane");
+        var listView = getListView();
+
+        listView.setSelectionModel(new NoneMultipleSelectionModel<>());
+
+        {
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("world.structure.empty"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+        }
+
+        {
+            var toolbar = new HBox();
+
+            var addBtn = createToolbarButton(i18n("world.structure.add"), SVG.ADD, this::chooseAndAdd);
+            addBtn.disableProperty().bind(this.readOnly);
+
+            toolbar.getChildren().setAll(
+                    createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refresh),
+                    createToolbarButton(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, this::reveal),
+                    addBtn
+            );
+            FXUtils.setOverflowHidden(toolbar, 8);
+            setToolbar(toolbar);
+        }
     }
 
     @Override
@@ -244,7 +274,7 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         }).start();
     }
 
-    public static final class NBTStructureInfoObject {
+    static final class NBTStructureInfoObject {
 
         private final @Nullable String namespace;
         private final NBTStructureFile structureFile;
@@ -267,32 +297,12 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         }
     }
 
-    private static final class StructureListPageSkin extends ToolbarListPageSkin<NBTStructureInfoObject, StructureListPage> {
-
-        public StructureListPageSkin(StructureListPage skinnable) {
-            super(skinnable);
-
-            listView.setCellFactory(x -> new StructureCell(skinnable, listView));
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(StructureListPage skinnable) {
-            var addBtn = ToolbarListPageSkin.createToolbarButton2(i18n("world.structure.add"), SVG.ADD, skinnable::chooseAndAdd);
-            addBtn.disableProperty().bind(skinnable.readOnly);
-            return List.of(
-                    ToolbarListPageSkin.createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    ToolbarListPageSkin.createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::reveal),
-                    addBtn
-            );
-        }
-    }
-
-    private static final class StructureCell extends MDListCell<NBTStructureInfoObject> {
+    private static final class StructureCell extends ListPaneBase.ItemCell<NBTStructureInfoObject> {
 
         private final int dataVersion;
         private final TwoLineListItem content = new TwoLineListItem();
 
-        public StructureCell(StructureListPage page, JFXListView<NBTStructureInfoObject> listView) {
+        public StructureCell(StructureListPage page, ListView<NBTStructureInfoObject> listView) {
             super(listView);
 
             this.dataVersion = page.dataVersion;
@@ -345,16 +355,16 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
             container.getChildren().setAll(content, renameButton, exploreButton, revealButton, deleteButton);
 
             StackPane.setMargin(container, new Insets(8, 8, 8, 16));
-            getContainer().getChildren().setAll(container);
+            setContent(container);
 
-            onClicked(() -> {
+            getFeedbackContainer().setOnAction(e -> {
                 if (getItem() != null && !isEmpty()) Controllers.dialog(new StructureInfoDialog(getItem()));
             });
         }
 
         @Override
-        protected void updateControl(NBTStructureInfoObject item, boolean empty) {
-            if (item == null || empty) return;
+        protected void updateListItem(NBTStructureInfoObject item) {
+            if (item == null) return;
 
             content.getTags().clear();
 
