@@ -48,7 +48,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         tabController.selectTab(statusPage);
 
         getSidebar()
-                .addNavigationDrawerTab(tabController, statusPage, i18n("terracotta.status"), SVG.TUNE);
+                .addNavigationDrawerTab(tabController, statusPage, i18n("terracotta.status"), SVG.TUNE, false);
 
         AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
         accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
