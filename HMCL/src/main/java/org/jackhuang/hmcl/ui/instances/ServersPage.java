@@ -273,6 +273,13 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
         placeholderContainer.getChildren().add(placeholderLabel);
         listView.setPlaceholder(placeholderContainer);
 
+        listView.setOnContextMenuRequested(event -> {
+            ServerListItem selectedItem = listView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
+                listView.getSelectionModel().clearSelection();
+                selectedItem.openServerStatusPane();
+            }
+        });
     }
 
     public static @NotNull Image parseServerFaviconImageOrDefault(@Nullable String imageBase64String) {
@@ -681,9 +688,9 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             getChildren().setAll(rootLayout);
 
             rootLayout.setHeading(new Label(switch (type) {
-                case EDIT -> i18n("server.manage.edit.head");
-                case ADD -> i18n("server.manage.add.head");
-            }));
+                    case EDIT -> i18n("server.manage.edit.head");
+                    case ADD -> i18n("server.manage.add.head");
+                }));
 
             VBox bodyVbox = new VBox();
             bodyVbox.setSpacing(8);
@@ -935,7 +942,6 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
         }
     }
 
-
     public static class ObservableServerStatus {
 
         private static final Semaphore PING_SEMAPHORE = new Semaphore(5);
@@ -1018,7 +1024,6 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             return observableServerStatus;
         }
     }
-
 
     private static class ServerNetworkLatencyPane extends StackPane {
         private static final SVG[] FRAMES = {
@@ -1612,7 +1617,6 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
                 serverStatusPingingValueSubscription = Subscription.subscribe(item.observableServerStatus.pingingProperty(), pinging -> applyServerPinging(item, pinging));
             }
         }
-
 
         private void applyServerPinging(ServerListItem item, boolean pinging) {
             if (pinging) {
