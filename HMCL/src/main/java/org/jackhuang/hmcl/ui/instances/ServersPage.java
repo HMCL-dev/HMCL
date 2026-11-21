@@ -1515,10 +1515,6 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             return new ServerListItem(storageEntry, holdInstances, specifiedObservableServerStatus);
         }
 
-        public ServerListItem renewIgnoreStatusWrapper() {
-            return renew(observableServerStatus.copy());
-        }
-
         public void openServerStatusPane() {
             Controllers.dialog(new ServerStatusDialog(observableServerStatus, getServer(), ServersPage.this.gameInstance));
         }
@@ -1528,6 +1524,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                     !Objects.equals(status.favicon(), getServer().getIcon())) {
                 // save latest icon
 
+                displayServerImageWrapper.set(parseServerFaviconImageOrDefault(status.favicon()));
                 Task.supplyAsync(Schedulers.io(), () -> {
                     Server result;
                     result = dataStorage.withLock(() -> {
@@ -1548,14 +1545,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
                     if (exception != null) {
                         LOG.warning("Failed to save server favicon.", exception);
-                        return;
                     }
-
-                    int index = serverListEntries.indexOf(this);
-                    if (index != -1) {
-                        serverListEntries.set(index, renewIgnoreStatusWrapper());
-                    }
-                    updateServerList();
                 }).start();
             }
         }
