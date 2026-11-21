@@ -28,7 +28,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.addon.datapack.DataPacks;
+import org.jackhuang.hmcl.addon.datapack.DataPack;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -250,10 +250,10 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     }
 
     static class DataPackInfoObject {
-        private final DataPacks.Pack packInfo;
+        private final DataPack.Pack packInfo;
         private final ItemPropertyAsyncCache<Image, DataPackInfoObject> iconCache;
 
-        DataPackInfoObject(DataPacks.Pack packInfo) {
+        DataPackInfoObject(DataPack.Pack packInfo) {
             this.packInfo = packInfo;
             this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
@@ -266,7 +266,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             return packInfo.getDescription().toStringSingleLine();
         }
 
-        DataPacks.Pack getPackInfo() {
+        DataPack.Pack getPackInfo() {
             return packInfo;
         }
 
@@ -323,7 +323,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             content.setTitle(dataItem.getTitle());
             content.setSubtitle(dataItem.getSubtitle());
 
-            DataPacks.Pack packInfo = dataItem.getPackInfo();
+            DataPack.Pack packInfo = dataItem.getPackInfo();
             (observedActiveProperty = packInfo.activeProperty()).addListener(weakActiveListener);
             activeSwitch.setDisableAnimation(true);
             activeSwitch.setSelected(packInfo.isActive());

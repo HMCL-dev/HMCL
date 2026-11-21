@@ -27,14 +27,14 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class DataPacks {
+public class DataPack {
     private static final String DISABLED_EXT = "disabled";
     private static final String ZIP_EXT = "zip";
 
     private final Path path;
     private final ObservableList<Pack> packs = FXCollections.observableArrayList();
 
-    public DataPacks(Path path) {
+    public DataPack(Path path) {
         this.path = path;
     }
 
@@ -236,14 +236,14 @@ public class DataPacks {
         private final ReadOnlyBooleanWrapper activeProperty;
         private final String id;
         private final LocalAddonFile.Description description;
-        private final DataPacks parentDataPacks;
+        private final DataPack parentDataPack;
 
-        public Pack(Path path, boolean isDirectory, String id, LocalAddonFile.Description description, DataPacks parentDataPacks) {
+        public Pack(Path path, boolean isDirectory, String id, LocalAddonFile.Description description, DataPack parentDataPack) {
             this.path = path;
             this.isDirectory = isDirectory;
             this.id = id;
             this.description = description;
-            this.parentDataPacks = parentDataPacks;
+            this.parentDataPack = parentDataPack;
 
             this.statusFile = initializeStatusFile(path, isDirectory);
             this.activeProperty = new ReadOnlyBooleanWrapper(this, "active", !FileUtils.getExtension(this.statusFile).equals(DISABLED_EXT));
@@ -265,8 +265,8 @@ public class DataPacks {
             return description;
         }
 
-        public DataPacks getParentDataPack() {
-            return parentDataPacks;
+        public DataPack getParentDataPack() {
+            return parentDataPack;
         }
 
         public ReadOnlyBooleanProperty activeProperty() {
