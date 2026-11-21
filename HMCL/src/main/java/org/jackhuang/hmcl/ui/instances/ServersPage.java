@@ -103,6 +103,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private @Nullable HMCLGameInstance gameInstance;
     private List<ServerListItem> serverListEntries = new ArrayList<>();
+    private boolean shouldNotifyDatFileBroken = false;
 
     private int refreshCount = 0;
 
@@ -171,11 +172,17 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             }
         }));
 
+        listenerHolder.add(FXUtils.onWeakChange(Controllers.getGameInstancePage().getSelectedTabProperty(), current -> {
+            if (gameInstance != null && current == this) {
+                refresh(true);
+            }
+        }));
+
         initializeView();
     }
 
     @Override
-    protected ItemCell<ServerListItem> createItemCell(ListView<ServerListItem> listView) {
+    protected @NotNull ItemCell<ServerListItem> createItemCell(@NotNull ListView<ServerListItem> listView) {
         return new ServerCell(listView, this);
     }
 
@@ -323,7 +330,6 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
         this.gameInstance = instance.instance();
-        refresh(true);
     }
 
     private void updateServerList() {

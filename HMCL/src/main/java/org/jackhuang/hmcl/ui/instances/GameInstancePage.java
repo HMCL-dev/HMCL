@@ -7,6 +7,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.Event;
 import javafx.event.EventType;
 import javafx.scene.Node;
@@ -437,5 +438,12 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
 
     public TabItem<ServersPage> getServersTab() {
         return serversTab;
+    }
+
+    public ObservableValue<Node> getSelectedTabProperty() {
+        return tabController.selectedTabProperty().map(tabItem -> {
+            if (tabItem == null) return null;
+            return tabItem.getNode();
+        });
     }
 }
