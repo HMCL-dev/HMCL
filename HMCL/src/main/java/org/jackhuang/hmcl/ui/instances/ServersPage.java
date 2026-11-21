@@ -98,6 +98,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
     /// Source items matching the current search.
     private final FilteredList<ServerListItem> filteredItems = new FilteredList<>(sourceItems);
 
+    private final ObservableValue<Node> gameInstancePageSelectedTabProperty = Controllers.getGameInstancePage().getSelectedTabProperty();
     private final DataStorage dataStorage = new DataStorage();
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
@@ -106,60 +107,6 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
     private boolean shouldNotifyDatFileBroken = false;
 
     private int refreshCount = 0;
-
-    public static class DataStorage {
-        private volatile Map<Path, ServersDatFile> serversDatFileMap = Map.of();
-        private volatile Map<Path, Set<HMCLGameInstance>> holdInstancesMap = Map.of();
-        private volatile Map<Path, Exception> failedExceptions = Map.of();
-        private final Lock handleLock = new ReentrantLock();
-
-        public <T> @Nullable T withLock(@NotNull Callable<@Nullable T> callable) throws Exception {
-            handleLock.lock();
-            try {
-                return callable.call();
-            } finally {
-                handleLock.unlock();
-            }
-        }
-
-        public void reload() throws Exception {
-            withLock(() -> {
-                Map<Path, ServersDatFile> serversDatFileMap = new LinkedHashMap<>();
-                Map<Path, Set<HMCLGameInstance>> holdInstancesMap = new LinkedHashMap<>();
-                Map<Path, Exception> failedExceptions = new HashMap<>();
-
-                for (HMCLGameInstance instance : GameDirectoryManager.getSelectedRepository().getSnapshot().getInstances()) {
-                    Path serversDatFilePath = instance.getServersDatFilePath();
-
-                    if (failedExceptions.containsKey(serversDatFilePath)) {
-                        continue;
-                    }
-
-                    Set<HMCLGameInstance> holdInstances = holdInstancesMap.computeIfAbsent(serversDatFilePath, key -> new LinkedHashSet<>());
-                    holdInstances.add(instance);
-                    if (!serversDatFileMap.containsKey(serversDatFilePath)) {
-                        try {
-                            var serversDatFile = this.serversDatFileMap.get(serversDatFilePath);
-                            if (serversDatFile != null) {
-                                serversDatFile.reload();
-                            } else {
-                                serversDatFile = new ServersDatFile(serversDatFilePath);
-                            }
-                            serversDatFileMap.put(serversDatFilePath, serversDatFile);
-                        } catch (IOException e) {
-                            failedExceptions.put(serversDatFilePath, e);
-                            LOG.error("Failed to load servers from dat file: " + serversDatFilePath, e);
-                        }
-                    }
-                }
-
-                this.serversDatFileMap = Collections.unmodifiableMap(serversDatFileMap);
-                this.holdInstancesMap = Collections.unmodifiableMap(holdInstancesMap);
-                this.failedExceptions = Collections.unmodifiableMap(failedExceptions);
-                return null;
-            });
-        }
-    }
 
     public ServersPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
         Objects.requireNonNull(instanceContext, "instanceContext");
@@ -172,13 +119,60 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             }
         }));
 
-        listenerHolder.add(FXUtils.onWeakChange(Controllers.getGameInstancePage().getSelectedTabProperty(), current -> {
+        listenerHolder.add(FXUtils.onWeakChange(gameInstancePageSelectedTabProperty, current -> {
             if (gameInstance != null && current == this) {
                 refresh(true);
             }
         }));
 
         initializeView();
+    }
+
+    private void refresh(boolean init) {
+        HMCLGameInstance gameInstance = this.gameInstance;
+        if (gameInstance == null) {
+            return;
+        }
+
+        int currentRefresh = ++refreshCount;
+
+        setLoading(true);
+        Task.supplyAsync(Schedulers.io(), () -> {
+            List<ServerListItem> result;
+            result = dataStorage.withLock(() -> {
+                dataStorage.reload(gameInstance.getRepository().getSnapshot().getInstances());
+                return dataStorage.serversDatFileMap.values().stream()
+                        .flatMap(e -> e.getEntries().stream())
+                        .filter(e -> !e.getServer().isHidden())
+                        .map(e -> new ServerListItem(e, dataStorage.holdInstancesMap.getOrDefault(e.getServersDatFile().getFile(), Set.of())))
+                        .toList();
+            });
+            return result;
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (refreshCount != currentRefresh) {
+                // A newer refresh task is running, discard this result
+                return;
+            }
+            setLoading(false);
+
+            if (exception != null) {
+                LOG.warning("Failed to load server list page", exception);
+            } else {
+                serverListEntries = new ArrayList<>(result);
+                updateServerList();
+            }
+
+            if (init) {
+                if (dataStorage.failedExceptions.containsKey(gameInstance.getServersDatFilePath())) {
+                    Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.file.error.load"), null, MessageDialogPane.MessageType.ERROR)
+                            .addCancel(i18n("button.continue"), () -> {
+                                // NOP
+                            })
+                            .build()
+                    );
+                }
+            }
+        }).start();
     }
 
     @Override
@@ -350,59 +344,12 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
         refresh(false);
     }
 
-    private void refresh(boolean init) {
-        HMCLGameInstance gameInstance = this.gameInstance;
-        if (gameInstance == null) {
-            return;
-        }
-
-        int currentRefresh = ++refreshCount;
-
-        setLoading(true);
-        Task.supplyAsync(Schedulers.io(), () -> {
-            List<ServerListItem> result;
-            result = dataStorage.withLock(() -> {
-                dataStorage.reload();
-                return dataStorage.serversDatFileMap.values().stream()
-                        .flatMap(e -> e.getEntries().stream())
-                        .filter(e -> !e.getServer().isHidden())
-                        .map(e -> new ServerListItem(e, dataStorage.holdInstancesMap.getOrDefault(e.getServersDatFile().getFile(), Set.of())))
-                        .toList();
-            });
-            return result;
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            if (refreshCount != currentRefresh) {
-                // A newer refresh task is running, discard this result
-                return;
-            }
-            setLoading(false);
-
-            if (exception != null) {
-                LOG.warning("Failed to load server list page", exception);
-            } else {
-                serverListEntries = new ArrayList<>(result);
-                updateServerList();
-            }
-
-            if (init) {
-                if (dataStorage.failedExceptions.containsKey(gameInstance.getServersDatFilePath())) {
-                    Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.file.error.load"), null, MessageDialogPane.MessageType.ERROR)
-                            .addCancel(i18n("button.continue"), () -> {
-                                // NOP
-                            })
-                            .build()
-                    );
-                }
-            }
-        }).start();
-    }
-
     public void addServerToInstance(Server server, @NotNull HMCLGameInstance toInstance, @NotNull ObservableServerStatus observableServerStatus) {
         Task.supplyAsync(Schedulers.io(), () -> dataStorage.withLock(() -> {
             ServersDatFile datFile = dataStorage.serversDatFileMap.get(toInstance.getServersDatFilePath());
             if (datFile == null) {
                 // try reload
-                dataStorage.reload();
+                dataStorage.reload(toInstance.getRepository().getSnapshot().getInstances());
                 datFile = dataStorage.serversDatFileMap.get(toInstance.getServersDatFilePath());
                 if (datFile == null) {
                     runInFX(() -> Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.file.error.notexist"), null, MessageDialogPane.MessageType.ERROR)
@@ -413,15 +360,15 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
                 }
             }
             ServersDatFile.ServerEntry serverEntry = datFile.addServer(server);
-            Set<HMCLGameInstance> instances = dataStorage.holdInstancesMap.get(serverEntry.getServersDatFile().getFile());
+            Set<HMCLGameInstance> instances = dataStorage.holdInstancesMap.getOrDefault(serverEntry.getServersDatFile().getFile(), new LinkedHashSet<>());
             instances.add(toInstance);
             return new Pair<>(serverEntry, instances);
         })).whenComplete(Schedulers.javafx(), (resultPair, exception) -> {
-            if (resultPair == null) return;
 
             if (exception != null) {
                 LOG.warning("Failed to save server data.", exception);
             }
+            if (resultPair == null) return;
 
             if (exception instanceof ServersDatFile.FileModifiedExternalException e) {
                 showModifiedErrorDialog(e);
@@ -436,6 +383,60 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             serverListEntries.add(new ServerListItem(resultPair.key(), resultPair.value(), observableServerStatus.copy()));
             updateServerList();
         }).start();
+    }
+
+    public static class DataStorage {
+        private volatile Map<Path, ServersDatFile> serversDatFileMap = Map.of();
+        private volatile Map<Path, Set<HMCLGameInstance>> holdInstancesMap = Map.of();
+        private volatile Map<Path, Exception> failedExceptions = Map.of();
+        private final Lock handleLock = new ReentrantLock();
+
+        public <T> @Nullable T withLock(@NotNull Callable<@Nullable T> callable) throws Exception {
+            handleLock.lock();
+            try {
+                return callable.call();
+            } finally {
+                handleLock.unlock();
+            }
+        }
+
+        public void reload(@NotNull Collection<HMCLGameInstance> currentGameInstances) throws Exception {
+            withLock(() -> {
+                Map<Path, ServersDatFile> serversDatFileMap = new LinkedHashMap<>();
+                Map<Path, Set<HMCLGameInstance>> holdInstancesMap = new LinkedHashMap<>();
+                Map<Path, Exception> failedExceptions = new HashMap<>();
+
+                for (HMCLGameInstance instance : currentGameInstances) {
+                    Path serversDatFilePath = instance.getServersDatFilePath();
+
+                    if (failedExceptions.containsKey(serversDatFilePath)) {
+                        continue;
+                    }
+
+                    Set<HMCLGameInstance> holdInstances = holdInstancesMap.computeIfAbsent(serversDatFilePath, key -> new LinkedHashSet<>());
+                    holdInstances.add(instance);
+                    if (!serversDatFileMap.containsKey(serversDatFilePath)) {
+                        try {
+                            var serversDatFile = this.serversDatFileMap.get(serversDatFilePath);
+                            if (serversDatFile != null) {
+                                serversDatFile.reload();
+                            } else {
+                                serversDatFile = new ServersDatFile(serversDatFilePath);
+                            }
+                            serversDatFileMap.put(serversDatFilePath, serversDatFile);
+                        } catch (IOException e) {
+                            failedExceptions.put(serversDatFilePath, e);
+                            LOG.error("Failed to load servers from dat file: " + serversDatFilePath, e);
+                        }
+                    }
+                }
+
+                this.serversDatFileMap = Collections.unmodifiableMap(serversDatFileMap);
+                this.holdInstancesMap = Collections.unmodifiableMap(holdInstancesMap);
+                this.failedExceptions = Collections.unmodifiableMap(failedExceptions);
+                return null;
+            });
+        }
     }
 
     public void editServer(ServerListItem item) {
@@ -1494,8 +1495,6 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
                     });
                     return result;
                 }).whenComplete(Schedulers.javafx(), (updated, exception) -> {
-                    if (updated == null) return;
-
                     if (exception != null) {
                         LOG.warning("Failed to save server favicon.", exception);
                     }

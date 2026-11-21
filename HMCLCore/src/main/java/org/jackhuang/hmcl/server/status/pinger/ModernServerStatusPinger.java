@@ -107,10 +107,13 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
         List<ServerStatus.ServerModList.Mod> modList = new ArrayList<>();
         if (asJsonObject.get("modList") instanceof JsonArray jArray) {
             for (JsonElement element : jArray) {
-                if (element instanceof JsonObject jsonObject) {
+                if (element instanceof JsonObject jsonObject
+                        && jsonObject.get("modid") instanceof JsonPrimitive modidPrimitive
+                        && jsonObject.get("version") instanceof JsonPrimitive versionPrimitive
+                ) {
                     modList.add(new ServerStatus.ServerModList.Mod(
-                            jsonObject.get("modid").getAsString(),
-                            jsonObject.get("version").getAsString()
+                            modidPrimitive.getAsString(),
+                            versionPrimitive.getAsString()
                     ));
                 }
             }
