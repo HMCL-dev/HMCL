@@ -40,6 +40,12 @@ public abstract class AddonProjectInfo {
         this.abbrName = abbrName;
     }
 
+    /// Returns the recorded mcmod identifier, or `0` when the project has no mcmod page.
+    @Range(from = 0, to = Integer.MAX_VALUE)
+    public int mcmodId() {
+        return mcmodId;
+    }
+
     /// Returns the recorded CurseForge identifier, possibly empty.
     public String curseforgeId() {
         return curseforgeId;
