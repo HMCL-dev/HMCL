@@ -354,7 +354,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
                 }
             }
             ServersDatFile.ServerEntry serverEntry = datFile.addServer(server);
-            Set<HMCLGameInstance> instances = dataStorage.holdInstancesMap.getOrDefault(serverEntry.getServersDatFile().getFile(), /* unreachable */Set.of());
+            Set<HMCLGameInstance> instances = dataStorage.holdInstancesMap.getOrDefault(serverEntry.getServersDatFile().getFile(), /* unreachable */new LinkedHashSet<>(0));
             instances.add(toInstance);
             return new Pair<>(serverEntry, instances);
         })).whenComplete(Schedulers.javafx(), (resultPair, exception) -> {
@@ -1413,7 +1413,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
 
                 modsTooltip = sb.toString();
             }
-            content.getChildren().add(createDescriptionRow(i18n("server.type"), modList != null ? i18n("server.type.mod", modList.type(), modList.modList().size()) : i18n("server.type.vanilla"), modsTooltip, new Insets(0, 4, 0, 4)));
+            content.getChildren().add(createDescriptionRow(i18n("server.type"), modList != null ? i18n("server.type.mod", modList.type() == null ? i18n("server.type.unknown") : modList.type(), modList.modList().size()) : i18n("server.type.vanilla"), modsTooltip, new Insets(0, 4, 0, 4)));
         }
 
         private void onClose() {

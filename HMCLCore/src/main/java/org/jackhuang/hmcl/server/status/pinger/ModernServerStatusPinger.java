@@ -118,8 +118,11 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
                 }
             }
         }
-
-        return new ServerStatus.ServerModList(asJsonObject.get("type").getAsString(), modList);
+        String type = null;
+        if (asJsonObject.get("type") instanceof JsonPrimitive primitive) {
+            type = primitive.getAsString();
+        }
+        return new ServerStatus.ServerModList(type, modList);
     }
 
     private @NotNull ServerStatus.ProtocolVersion parseProtocolVersion(@Nullable JsonElement protocolVersionElement) {

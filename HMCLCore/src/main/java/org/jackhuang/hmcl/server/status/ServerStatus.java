@@ -67,7 +67,7 @@ public record ServerStatus(
     }
 
     public record ServerModList(
-            @NotNull String type,
+            @Nullable String type,
             @NotNull List<Mod> modList
     ) {
         public record Mod(
