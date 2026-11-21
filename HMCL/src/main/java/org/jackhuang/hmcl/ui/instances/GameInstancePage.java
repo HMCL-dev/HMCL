@@ -7,8 +7,10 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.Event;
 import javafx.event.EventType;
+import javafx.scene.Node;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -60,6 +62,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =
             new SimpleObjectProperty<>(this, "instance");
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+    private final SimpleObjectProperty<Node> selectedTabProperty = new SimpleObjectProperty<>();
 
     /// Re-resolves the page context when its repository publishes a new snapshot.
     private final ChangeListener<? super HMCLGameRepositorySnapshot> repositorySnapshotListener =
@@ -203,6 +206,8 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         state.bind(Bindings.createObjectBinding(() ->
                         State.fromTitle(i18n("instance.manage.manage.title", getInstanceId()), -1),
                 instance));
+
+        selectedTabProperty.bind(Bindings.createObjectBinding(this::getSelectedTab, tabController.selectedTabProperty()));
 
         setContent(transitionPane);
     }
@@ -421,4 +426,24 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         return state.getReadOnlyProperty();
     }
 
+    public void showServerList() {
+        tabController.selectTab(serversTab, false);
+    }
+
+    public @Nullable Node getSelectedTab() {
+        TabItem<?> selectedTab = tabController.getSelectedTab();
+        if (selectedTab == null) {
+            return null;
+        }
+
+        return selectedTab.getNode();
+    }
+
+    public TabItem<ServersPage> getServersTab() {
+        return serversTab;
+    }
+
+    public ObservableValue<Node> getSelectedTabProperty() {
+        return selectedTabProperty;
+    }
 }

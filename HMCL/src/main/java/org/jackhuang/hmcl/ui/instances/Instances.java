@@ -26,11 +26,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.CreateAccountPane;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
-import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -435,6 +431,12 @@ public final class Instances {
         Controllers.getGameInstancePage().setInstance(gameInstance.getId(), gameInstance.getRepository());
         Controllers.getGameInstancePage().showInstanceSettings();
         // VersionPage.loadVersion will be invoked after navigation
+        Controllers.navigate(Controllers.getGameInstancePage());
+    }
+
+    public static void modifyServerList(HMCLGameInstance gameInstance) {
+        Controllers.getGameInstancePage().setInstance(gameInstance.getId(), gameInstance.getRepository());
+        Controllers.getGameInstancePage().showServerList();
         Controllers.navigate(Controllers.getGameInstancePage());
     }
 
