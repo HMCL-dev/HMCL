@@ -91,6 +91,8 @@ public final class DialogUtils {
                     ? JFXDialog.DialogTransition.CENTER
                     : JFXDialog.DialogTransition.NONE);
             dialogPane = new JFXDialogPane();
+            dialogPane.maxWidthProperty().bind(container.widthProperty().multiply(0.7));
+            dialogPane.maxHeightProperty().bind(container.heightProperty().multiply(0.7));
 
             dialog.setContent(dialogPane);
             dialog.setDialogContainer(container);

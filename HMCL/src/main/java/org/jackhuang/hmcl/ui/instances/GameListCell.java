@@ -2,18 +2,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
+import javafx.geometry.NodeOrientation;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ListPaneBase;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -22,33 +26,45 @@ import org.jetbrains.annotations.Nullable;
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class GameListCell extends ListCell<GameListItem> {
+/// Displays a game instance with selection, update, settings, and management controls.
+public final class GameListCell extends ListPaneBase.ItemCell<GameListItem> {
 
-    private final RipplerContainer graphic;
-
+    /// Displays the current instance's icon.
     private final ImageContainer imageView;
+    /// Displays the instance title, subtitle, tag, and controls.
     private final TwoLineListItem content;
 
+    /// Reflects and changes the repository's selected instance.
     private final JFXRadioButton chkSelected;
+    /// Starts an update for an instance that supports updates.
     private final JFXButton btnUpgrade;
     /// Opens the settings for this cell's game instance.
     private final JFXButton btnEditInstance;
+    /// Toggles the current instance's management menu.
     private final JFXButton btnManage;
 
+    /// Contains the actions available for the current instance.
     private final HBox right;
 
+    /// Holds the tag text bound to the current instance.
     private final StringProperty tag = new SimpleStringProperty();
 
-    /// Creates a game instance cell constrained to the supplied list's viewport width.
+    /// Caches the management popup until the cell item or empty state changes.
+    private @Nullable JFXPopup managementPopup;
+
+    /// Identifies the item whose actions are captured by the cached popup, or is null if none is cached.
+    private @Nullable GameListItem managementPopupItem;
+
+    /// Creates reusable game instance controls for the supplied list.
     public GameListCell(ListView<GameListItem> listView) {
-        FXUtils.limitCellWidth(listView, this);
+        super(listView);
 
         TwoLineListItem root = this.content = new TwoLineListItem();
-        root.getStyleClass().add("md-list-cell");
         root.setPadding(new Insets(8, 8, 8, 0));
 
-        RipplerContainer container = new RipplerContainer(root);
-        this.graphic = container;
+        root.setPickOnBounds(false);
+
+        setContent(root);
 
         {
             this.chkSelected = new JFXRadioButton() {
@@ -57,7 +73,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                 public void fire() {
                     if (!isDisable() && !isSelected()) {
                         fireEvent(new ActionEvent());
-                        @Nullable GameListItem item = GameListCell.this.getItem();
+                        @Nullable GameListItem item = getItem();
                         if (item != null) {
                             item.getRepository().setSelectedInstance(item.getGameInstance());
                         }
@@ -91,7 +107,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
             this.btnUpgrade = FXUtils.newToggleButton4(SVG.UPDATE);
             btnUpgrade.setOnAction(e -> {
-                @Nullable GameListItem item = this.getItem();
+                @Nullable GameListItem item = getItem();
                 if (item != null)
                     item.update();
             });
@@ -100,7 +116,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
             this.btnEditInstance = FXUtils.newToggleButton4(SVG.SETTINGS);
             btnEditInstance.setOnAction(e -> {
-                @Nullable GameListItem item = this.getItem();
+                @Nullable GameListItem item = getItem();
                 if (item != null)
                     item.modifyGameSettings();
             });
@@ -109,20 +125,33 @@ public final class GameListCell extends ListCell<GameListItem> {
 
             this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
             btnManage.setOnAction(e -> {
-                @Nullable GameListItem item = this.getItem();
+                @Nullable GameListItem item = getItem();
                 if (item == null)
                     return;
 
-                JFXPopup popup = getPopup(item);
+                JFXPopup popup = getManagementPopup(item);
+                if (popup.isShowing()) {
+                    popup.hide();
+                    return;
+                }
+
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
-                popup.show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
+                boolean below = vPosition == JFXPopup.PopupVPosition.TOP;
+                Point2D offset = root.localToScene(0, 0).subtract(btnManage.localToScene(0, 0));
+                double offsetX = offset.getX() + root.getWidth() - btnManage.getWidth();
+                double offsetY = offset.getY() + (below ? root.getHeight() : -btnManage.getHeight());
+                if (btnManage.getEffectiveNodeOrientation() == NodeOrientation.RIGHT_TO_LEFT)
+                    offsetX = -offsetX;
+                // Only this button bypasses auto-hide, so its action can toggle the menu.
+                // Keep the popup aligned to the cell while making the button its owner.
+                popup.show(btnManage, vPosition, JFXPopup.PopupHPosition.RIGHT, offsetX, offsetY, true);
             });
             FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
             right.getChildren().add(btnManage);
         }
 
         root.setCursor(Cursor.HAND);
-        container.setOnMouseClicked(e -> {
+        getFeedbackContainer().setOnMouseClicked(e -> {
             @Nullable GameListItem item = getItem();
             if (item == null)
                 return;
@@ -132,23 +161,22 @@ public final class GameListCell extends ListCell<GameListItem> {
                     item.getRepository().setSelectedInstance(item.getGameInstance());
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
-                JFXPopup popup = getPopup(item);
+                JFXPopup popup = getManagementPopup(item);
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
+                // Repeated right-clicks reopen and reposition even during the closing animation
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - root.getHeight());
             }
         });
     }
 
+    /// Rebinds the displayed instance and hides the cached menu when the item or empty state changes.
     @Override
-    public void updateItem(GameListItem item, boolean empty) {
-        GameListItem oldItem = getItem();
-        boolean oldEmpty = isEmpty();
-
-        super.updateItem(item, empty);
-
-        if (oldItem == item && oldEmpty == empty) return;
-
-        this.graphic.resetFeedback();
+    protected void updateListItem(@Nullable GameListItem item) {
+        if (managementPopup != null) {
+            managementPopup.hide();
+            managementPopup = null;
+            managementPopupItem = null;
+        }
 
         this.imageView.imageProperty().unbind();
         this.content.titleProperty().unbind();
@@ -157,10 +185,7 @@ public final class GameListCell extends ListCell<GameListItem> {
         this.right.getChildren().clear();
         this.chkSelected.selectedProperty().unbind();
 
-        if (empty || item == null) {
-            setGraphic(null);
-        } else {
-            setGraphic(this.graphic);
+        if (item != null) {
 
             this.chkSelected.selectedProperty().bind(item.selectedProperty());
             this.imageView.imageProperty().bind(item.imageProperty());
@@ -173,7 +198,20 @@ public final class GameListCell extends ListCell<GameListItem> {
         }
     }
 
-    private static JFXPopup getPopup(GameListItem item) {
+    /// Returns the cached menu for the item, hiding and replacing a menu for a different item.
+    private JFXPopup getManagementPopup(GameListItem item) {
+        if (managementPopup == null || managementPopupItem != item) {
+            if (managementPopup != null) {
+                managementPopup.hide();
+            }
+            managementPopup = createPopup(item);
+            managementPopupItem = item;
+        }
+        return managementPopup;
+    }
+
+    /// Creates a management popup whose actions operate on the supplied instance item.
+    private static JFXPopup createPopup(GameListItem item) {
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
 
@@ -186,7 +224,9 @@ public final class GameListCell extends ListCell<GameListItem> {
                 new IconedMenuItem(SVG.DELETE, i18n("instance.manage.remove"), item::remove, popup),
                 new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), item::export, popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.game"), item::browse, popup));
+                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.game"), item::browse, popup),
+                new MenuSeparator(),
+                new IconedMenuItem(SVG.SETTINGS, i18n("instance.manage.manage"), item::modifyGameSettings, popup));
         return popup;
     }
 }

@@ -8,8 +8,7 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -100,8 +99,8 @@ public record Library(
     static {
         String[] keys = {
                 "",
-                Architecture.SYSTEM_ARCH.name().toLowerCase(Locale.ROOT),
-                Architecture.SYSTEM_ARCH.getBits().getBit()
+                SystemInfo.SYSTEM_ARCH.name().toLowerCase(Locale.ROOT),
+                SystemInfo.SYSTEM_ARCH.getBits().getBit()
         };
         String[] variants = {"", "native", "natives"};
 
@@ -112,7 +111,7 @@ public record Library(
                 if (!variants[j].isEmpty()) {
                     builder.append(variants[j]).append('-');
                 }
-                builder.append(OperatingSystem.CURRENT_OS.getMojangName());
+                builder.append(SystemInfo.CURRENT_OS.getMojangName());
                 if (!keys[i].isEmpty()) {
                     builder.append('-').append(keys[i]);
                 }
@@ -166,7 +165,7 @@ public record Library(
                 for (String nativeDescriptor : POSSIBLE_NATIVE_DESCRIPTORS) {
                     String nd = natives.get(nativeDescriptor);
                     if (nd != null) {
-                        return nd.replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
+                        return nd.replace("${arch}", SystemInfo.SYSTEM_ARCH.getBits().getBit());
                     }
                 }
             } else if (downloads != null && downloads.classifiers() != null) {
