@@ -4,11 +4,11 @@ package org.jackhuang.hmcl.ui.instances;
 
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Task;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
@@ -18,21 +18,21 @@ import java.util.zip.ZipOutputStream;
 /**
  * @author Glavo
  */
+@NotNullByDefault
 public final class WorldBackupTask extends Task<Path> {
 
     private final World world;
     private final Path backupsDir;
-    private final boolean needLock;
 
-    public WorldBackupTask(World world, Path backupsDir, boolean needLock) {
+    public WorldBackupTask(World world, Path backupsDir) {
         this.world = world;
         this.backupsDir = backupsDir;
-        this.needLock = needLock;
     }
 
     @Override
     public void execute() throws Exception {
-        try (FileChannel lockChannel = needLock ? world.lock() : null) {
+        boolean needLock = !world.holdsLock();
+        try (World ignore = needLock ? world.lock() : null) {
             Files.createDirectories(backupsDir);
             String time = LocalDateTime.now().format(WorldBackupsPage.TIME_FORMATTER);
             String baseName = time + "_" + world.getFileName();
@@ -55,7 +55,7 @@ public final class WorldBackupTask extends Task<Path> {
             try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(outputStream))) {
                 String rootName = world.getFileName();
                 Path rootDir = this.world.getFile();
-                Files.walkFileTree(this.world.getFile(), new SimpleFileVisitor<Path>() {
+                Files.walkFileTree(this.world.getFile(), new SimpleFileVisitor<>() {
                     @Override
                     public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
                         if (path.endsWith("session.lock")) {
