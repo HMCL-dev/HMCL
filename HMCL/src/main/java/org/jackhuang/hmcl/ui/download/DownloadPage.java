@@ -26,15 +26,10 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.TabController;
-import org.jackhuang.hmcl.ui.construct.TabItem;
-import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.instances.DownloadListPage;
-import org.jackhuang.hmcl.ui.instances.HMCLLocalizedDownloadListPage;
-import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.ui.instances.*;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
@@ -82,6 +77,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabItem<DownloadListPage> shaderTab;
     /// The tab for browsing downloadable worlds.
     private final TabItem<DownloadListPage> worldTab;
+    /// The tab for browsing addon favorites.
+    private final TabItem<AddonFavoritesPage> favoritesTab;
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 
@@ -115,6 +112,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         this.resourcePackTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true));
         this.shaderTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true));
         this.worldTab = newDownloadListTab(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance()));
+        this.favoritesTab = newAddonFavoritesTab();
 
         this.tabController = new TabController(transitionPane,
                 newGameTab,
@@ -122,7 +120,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 modTab,
                 resourcePackTab,
                 shaderTab,
-                worldTab
+                worldTab,
+                favoritesTab
         );
 
         GameDirectoryManager.registerVersionsListener(this::loadVersions);
@@ -137,7 +136,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .addNavigationDrawerTab(tabController, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                 .addNavigationDrawerTab(tabController, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tabController, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
-                .addNavigationDrawerTab(tabController, worldTab, i18n("world"), SVG.PUBLIC);
+                .addNavigationDrawerTab(tabController, worldTab, i18n("world"), SVG.PUBLIC)
+                .addNavigationDrawerTab(tabController, favoritesTab, i18n("addon.favorites"), SVG.STAR, SVG.STAR_FILL);
 
         setContent(transitionPane);
     }
@@ -145,6 +145,14 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private static TabItem<DownloadListPage> newDownloadListTab(Supplier<DownloadListPage> pageSupplier) {
         return new TabItem<>(() -> {
             DownloadListPage page = pageSupplier.get();
+            page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
+            return page;
+        });
+    }
+
+    private static TabItem<AddonFavoritesPage> newAddonFavoritesTab() {
+        return new TabItem<>(() -> {
+            AddonFavoritesPage page = new AddonFavoritesPage();
             page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
             return page;
         });
@@ -206,6 +214,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     }
                     if (worldTab.isInitialized()) {
                         worldTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
+                    }
+                    if (favoritesTab.isInitialized()) {
+                        favoritesTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                 }));
             }

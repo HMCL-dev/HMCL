@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.addon;
 
+import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,10 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public record RemoteAddon(String slug, String author, String title, String description, List<String> categories,
-                          String pageUrl, String iconUrl, IAddon data, @Nullable Type type) {
+public record RemoteAddon(String projectId, String slug, String author, String title, String description, List<String> categories,
+                          String pageUrl, String iconUrl, IAddon data, @Nullable Type type, @Nullable Source source) {
 
-    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IAddon() {
+    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IAddon() {
         @Override
         public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
@@ -29,7 +31,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
         public Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
-    }, Type.MOD);
+    }, Type.MOD, null);
 
     public enum VersionType {
         Release,
@@ -123,8 +125,11 @@ public record RemoteAddon(String slug, String author, String title, String descr
         }
     }
 
+    @JsonSerializable
     public enum Source {
+        @SerializedName("curseforge")
         CURSEFORGE(CurseForgeRemoteAddonRepository.getInstance()),
+        @SerializedName("modrinth")
         MODRINTH(ModrinthRemoteAddonRepository.getInstance());
 
         private final RemoteAddonRepository repo;
