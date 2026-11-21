@@ -7,13 +7,17 @@ import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,6 +25,49 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests for user settings serialization and legacy migration.
 @NotNullByDefault
 public final class UserSettingsTest {
+
+    @Test
+    public void redirectLegacyLogRetention() {
+        var settings = UserSettings.fromJson(JsonUtils.GSON.toJson(Map.of(
+                "$schema", UserSettings.CURRENT_SCHEMA.toString(),
+                "logRetention", UserSettings.LOG_RETENTION_LEGACY_DEFAULT
+        )));
+        assertNotNull(settings);
+        var property = settings.logRetentionProperty();
+
+        assertEquals(UserSettings.LOG_RETENTION_DEFAULT, property.get());
+
+        property.set(UserSettings.LOG_RETENTION_LEGACY_DEFAULT);
+        assertEquals(UserSettings.LOG_RETENTION_DEFAULT, property.get());
+        assertEquals(UserSettings.LOG_RETENTION_DEFAULT, property.getValue());
+
+        // default value written because it's "dirty"
+        var json = JsonUtils.GSON.fromJson(settings.toJson(), JsonObject.class);
+        assertEquals(UserSettings.LOG_RETENTION_DEFAULT, json.get("logRetention").getAsInt());
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 20, 123, -1, -100})
+    public void notRedirectValidLogRetention(int value) {
+        var settings = new UserSettings();
+
+        var property = settings.logRetentionProperty();
+        property.set(value);
+        assertEquals(value, property.get());
+
+        var json = settings.toJson();
+        var parsed = JsonParser.parseString(json).getAsJsonObject();
+        if (value == UserSettings.LOG_RETENTION_DEFAULT) {
+            assertNull(parsed.get("logRetention")); // default value not written
+        } else {
+            assertEquals(value, parsed.get("logRetention").getAsInt());
+        }
+
+        var reloaded = UserSettings.fromJson(settings.toJson());
+        assertNotNull(reloaded);
+        assertEquals(value, reloaded.logRetentionProperty().get());
+    }
+
     /// Tests that legacy global config content is split without preserving unowned fields.
     @Test
     public void migratesLegacyGlobalConfigWithoutPreservingUnownedFields() throws IOException {
