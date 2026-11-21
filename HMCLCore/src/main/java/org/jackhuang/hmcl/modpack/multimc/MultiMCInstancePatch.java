@@ -8,6 +8,7 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -174,6 +175,21 @@ public final class MultiMCInstancePatch {
         return result;
     }
 
+    private static List<Library> dropDuplicateJarMods(List<Library> original) {
+        // TODO: Maybe new ArrayList(new LinkedHashSet(original)) ?
+
+        Set<Pair<Library, String>> values = new HashSet<>();
+        List<Library> result = new ArrayList<>();
+
+        for (Library item : original) {
+            if (values.add(Pair.pair(item, item.filename()))) {
+                result.add(item);
+            }
+        }
+
+        return result;
+    }
+
     public static MultiMCInstancePatch read(String componentID, String text) {
         try {
             return JsonUtils.fromNonNullJson(text, MultiMCInstancePatch.class);
@@ -278,7 +294,7 @@ public final class MultiMCInstancePatch {
 
         traits = dropDuplicate(traits);
         tweakers = dropDuplicate(tweakers);
-        jarModFiles = dropDuplicate(jarModFiles);
+        jarModFiles = dropDuplicateJarMods(jarModFiles);
 
         for (String tweaker : tweakers) {
             minecraftArguments.add("--tweakClass");
