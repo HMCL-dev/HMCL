@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -39,6 +39,7 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
     private final String url;
     private final String fileName;
     private final String logoPath;
+    private ModLocalization localization = ModLocalization.EMPTY;
     private final ReadOnlyBooleanWrapper activeProperty;
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
@@ -92,6 +93,14 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
 
     public String getName() {
         return name;
+    }
+
+    public ModLocalization getLocalization() {
+        return localization;
+    }
+
+    void setLocalization(ModLocalization localization) {
+        this.localization = localization;
     }
 
     public Description getDescription() {
