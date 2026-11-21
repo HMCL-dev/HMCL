@@ -8,13 +8,13 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -175,6 +175,21 @@ public final class MultiMCInstancePatch {
         return result;
     }
 
+    private static List<Library> dropDuplicateJarMods(List<Library> original) {
+        // TODO: Maybe new ArrayList(new LinkedHashSet(original)) ?
+
+        Set<Pair<Library, String>> values = new HashSet<>();
+        List<Library> result = new ArrayList<>();
+
+        for (Library item : original) {
+            if (values.add(Pair.pair(item, item.filename()))) {
+                result.add(item);
+            }
+        }
+
+        return result;
+    }
+
     public static MultiMCInstancePatch read(String componentID, String text) {
         try {
             return JsonUtils.fromNonNullJson(text, MultiMCInstancePatch.class);
@@ -183,43 +198,8 @@ public final class MultiMCInstancePatch {
         }
     }
 
-    public static final class ResolvedInstance {
-        private final GameInstanceManifest manifest;
-
-        private final String gameVersion;
-
-        private final Library mainJar;
-
-        private final List<String> jarModFileNames;
-        private final List<Library> mavenOnlyFiles;
-
-        public ResolvedInstance(GameInstanceManifest manifest, String gameVersion, Library mainJar, List<String> jarModFileNames, List<Library> mavenOnlyFiles) {
-            this.manifest = manifest;
-            this.gameVersion = gameVersion;
-            this.mainJar = mainJar;
-            this.jarModFileNames = jarModFileNames;
-            this.mavenOnlyFiles = mavenOnlyFiles;
-        }
-
-        public GameInstanceManifest getManifest() {
-            return manifest;
-        }
-
-        public String getGameVersion() {
-            return gameVersion;
-        }
-
-        public Library getMainJar() {
-            return mainJar;
-        }
-
-        public List<String> getJarModFileNames() {
-            return jarModFileNames;
-        }
-
-        public List<Library> getMavenOnlyFiles() {
-            return mavenOnlyFiles;
-        }
+    public record ResolvedInstance(GameInstanceManifest manifest, String gameVersion, Library mainJar,
+                                   List<Library> jarModFiles, List<Library> mavenOnlyFiles) {
     }
 
     /**
@@ -261,7 +241,7 @@ public final class MultiMCInstancePatch {
             Transforming them to Official Scheme might boost compatibility with other launchers. */
         List<Library> libraries;
         List<Library> mavenOnlyFiles;
-        List<String> jarModFileNames;
+        List<Library> jarModFiles;
 
         {
             MultiMCInstancePatch last = patches.get(patches.size() - 1);
@@ -274,7 +254,7 @@ public final class MultiMCInstancePatch {
             tweakers = last.getTweakers();
             libraries = last.getLibraries();
             mavenOnlyFiles = last.getMavenOnlyFiles();
-            jarModFileNames = last.getJarMods().stream().map(library -> library.filename()).collect(Collectors.toList());
+            jarModFiles = last.getJarMods();
         }
 
         for (int i = patches.size() - 2; i >= 0; i--) {
@@ -293,7 +273,7 @@ public final class MultiMCInstancePatch {
             tweakers = Lang.merge(patch.getTweakers(), tweakers);
             libraries = Lang.merge(patch.getLibraries(), libraries);
             mavenOnlyFiles = Lang.merge(patch.getMavenOnlyFiles(), mavenOnlyFiles);
-            jarModFileNames = Lang.merge(patch.getJarMods().stream().map(library -> library.filename()).collect(Collectors.toList()), jarModFileNames);
+            jarModFiles = Lang.merge(patch.getJarMods(), jarModFiles);
         }
 
         mainClass = Objects.requireNonNullElse(mainClass, "net.minecraft.client.Minecraft");
@@ -314,7 +294,7 @@ public final class MultiMCInstancePatch {
 
         traits = dropDuplicate(traits);
         tweakers = dropDuplicate(tweakers);
-        jarModFileNames = dropDuplicate(jarModFileNames);
+        jarModFiles = dropDuplicateJarMods(jarModFiles);
 
         for (String tweaker : tweakers) {
             minecraftArguments.add("--tweakClass");
@@ -410,6 +390,6 @@ public final class MultiMCInstancePatch {
             }
             LOG.warning("Cannot fully parse MultiMC modpack with following unsupported features: \n" + message);
         }
-        return new ResolvedInstance(version, gameVersion, mainJar, jarModFileNames, mavenOnlyFiles);
+        return new ResolvedInstance(version, gameVersion, mainJar, jarModFiles, mavenOnlyFiles);
     }
 }
