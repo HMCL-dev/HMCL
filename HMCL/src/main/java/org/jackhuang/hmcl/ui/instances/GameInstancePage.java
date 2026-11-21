@@ -62,6 +62,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =
             new SimpleObjectProperty<>(this, "instance");
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+    private final SimpleObjectProperty<Node> selectedTabProperty = new SimpleObjectProperty<>();
 
     /// Re-resolves the page context when its repository publishes a new snapshot.
     private final ChangeListener<? super HMCLGameRepositorySnapshot> repositorySnapshotListener =
@@ -205,6 +206,8 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         state.bind(Bindings.createObjectBinding(() ->
                         State.fromTitle(i18n("instance.manage.manage.title", getInstanceId()), -1),
                 instance));
+
+        selectedTabProperty.bind(Bindings.createObjectBinding(this::getSelectedTab, tabController.selectedTabProperty()));
 
         setContent(transitionPane);
     }
@@ -441,9 +444,6 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     public ObservableValue<Node> getSelectedTabProperty() {
-        SimpleObjectProperty<Node> property = new SimpleObjectProperty<>();
-        property.bind(Bindings.createObjectBinding(this::getSelectedTab, tabController.selectedTabProperty()));
-
-        return property;
+        return selectedTabProperty;
     }
 }

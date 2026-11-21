@@ -98,13 +98,11 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
     /// Source items matching the current search.
     private final FilteredList<ServerListItem> filteredItems = new FilteredList<>(sourceItems);
 
-    private final ObservableValue<Node> gameInstancePageSelectedTabProperty = Controllers.getGameInstancePage().getSelectedTabProperty();
     private final DataStorage dataStorage = new DataStorage();
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private @Nullable HMCLGameInstance gameInstance;
     private List<ServerListItem> serverListEntries = new ArrayList<>();
-    private boolean shouldNotifyDatFileBroken = false;
 
     private int refreshCount = 0;
 
@@ -119,7 +117,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             }
         }));
 
-        listenerHolder.add(FXUtils.onWeakChange(gameInstancePageSelectedTabProperty, current -> {
+        listenerHolder.add(FXUtils.onWeakChange(Controllers.getGameInstancePage().getSelectedTabProperty(), current -> {
             if (gameInstance != null && current == this) {
                 refresh(true);
             }
@@ -144,7 +142,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
                 return dataStorage.serversDatFileMap.values().stream()
                         .flatMap(e -> e.getEntries().stream())
                         .filter(e -> !e.getServer().isHidden())
-                        .map(e -> new ServerListItem(e, dataStorage.holdInstancesMap.getOrDefault(e.getServersDatFile().getFile(), Set.of())))
+                        .map(e -> new ServerListItem(e, dataStorage.holdInstancesMap.getOrDefault(e.getServersDatFile().getFile(), /* unreachable */Set.of())))
                         .toList();
             });
             return result;
@@ -352,15 +350,11 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
                 dataStorage.reload(toInstance.getRepository().getSnapshot().getInstances());
                 datFile = dataStorage.serversDatFileMap.get(toInstance.getServersDatFilePath());
                 if (datFile == null) {
-                    runInFX(() -> Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.file.error.notexist"), null, MessageDialogPane.MessageType.ERROR)
-                            .addCancel(i18n("button.refresh"), this::refresh)
-                            .build()
-                    ));
                     return null;
                 }
             }
             ServersDatFile.ServerEntry serverEntry = datFile.addServer(server);
-            Set<HMCLGameInstance> instances = dataStorage.holdInstancesMap.getOrDefault(serverEntry.getServersDatFile().getFile(), new LinkedHashSet<>());
+            Set<HMCLGameInstance> instances = dataStorage.holdInstancesMap.getOrDefault(serverEntry.getServersDatFile().getFile(), /* unreachable */Set.of());
             instances.add(toInstance);
             return new Pair<>(serverEntry, instances);
         })).whenComplete(Schedulers.javafx(), (resultPair, exception) -> {
@@ -368,7 +362,6 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             if (exception != null) {
                 LOG.warning("Failed to save server data.", exception);
             }
-            if (resultPair == null) return;
 
             if (exception instanceof ServersDatFile.FileModifiedExternalException e) {
                 showModifiedErrorDialog(e);
@@ -377,6 +370,14 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
 
             if (exception instanceof IllegalStateException e) {
                 showModifiedErrorDialog(e);
+                return;
+            }
+
+            if (resultPair == null) {
+                Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.file.error.notexist"), null, MessageDialogPane.MessageType.ERROR)
+                        .addCancel(i18n("button.refresh"), this::refresh)
+                        .build()
+                );
                 return;
             }
 
