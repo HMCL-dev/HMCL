@@ -28,6 +28,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return Versions.DEFAULT_GAME_VERSIONS;
     }
 
+    @NotNull
     public static GameVersionNumber asGameVersion(String version) {
         GameVersionNumber versionNumber = Versions.SPECIALS.get(version);
         if (versionNumber != null)
@@ -59,8 +60,9 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return new Special(version, version);
     }
 
+    @NotNull
     public static GameVersionNumber asGameVersion(Optional<String> version) {
-        return version.isPresent() ? asGameVersion(version.get()) : unknown();
+        return version.map(GameVersionNumber::asGameVersion).orElseGet(GameVersionNumber::unknown);
     }
 
     /// Detects a Minecraft version from a JAR's metadata, class constants, or known SHA-1 hash.
