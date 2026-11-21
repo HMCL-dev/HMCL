@@ -607,7 +607,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     TexturesLoader.bindAvatar(portraitCanvas, service, profile.getId());
 
                     IconedItem accountItem = new IconedItem(portraitCanvas, profile.getName());
-                    FXUtils.onClicked(accountItem, () -> {
+                    accountItem.setOnAction(event -> {
                         selectedProfile = profile;
                         latch.countDown();
                     });

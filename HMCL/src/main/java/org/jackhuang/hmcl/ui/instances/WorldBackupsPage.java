@@ -4,12 +4,11 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.BooleanProperty;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
@@ -22,7 +21,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -37,7 +35,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -50,7 +47,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.BackupInfo> implements WorldManagePage.WorldRefreshable {
+public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.BackupInfo> implements WorldManagePage.WorldRefreshable {
     static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
     private final World world;
@@ -65,6 +62,27 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         this.backupFileNamePattern = Pattern.compile("(?<datetime>[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_" + Pattern.quote(world.getFileName()) + "( (?<count>[0-9]+))?\\.zip");
 
         refresh();
+
+        StackPane placeholderContainer = new StackPane();
+        placeholderContainer.getStyleClass().add("notice-pane");
+        var listView = getListView();
+        listView.setPadding(Insets.EMPTY);
+        Label placeholderLabel = new Label(i18n("world.backup.empty"));
+        placeholderContainer.getChildren().add(placeholderLabel);
+        listView.setPlaceholder(placeholderContainer);
+
+        JFXButton createBackup = createToolbarButton(i18n("world.backup.create.new_one"), SVG.ARCHIVE, this::createBackup);
+        createBackup.disableProperty().bind(readOnly);
+
+        setToolbarButtons(Arrays.asList(
+                createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refresh),
+                createBackup
+        ));
+    }
+
+    @Override
+    protected ItemCell<BackupInfo> createItemCell(ListView<BackupInfo> listView) {
+        return ItemCell.forNode(listView);
     }
 
     public void refresh() {
@@ -103,16 +121,11 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             this.setLoading(false);
             if (exception == null) {
-                this.setItems(FXCollections.observableList(result));
+                getItems().setAll(result);
             } else {
                 LOG.warning("Failed to load backups", exception);
             }
         }).start();
-    }
-
-    @Override
-    protected Skin<?> createDefaultSkin() {
-        return new WorldBackupsPageSkin();
     }
 
     void createBackup() {
@@ -142,30 +155,6 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 Controllers.dialog(i18n("world.backup.create.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
             }
         }), i18n("world.backup"), TaskCancellationAction.NO_CANCEL);
-    }
-
-    private final class WorldBackupsPageSkin extends ToolbarListPageSkin<BackupInfo, WorldBackupsPage> {
-
-        WorldBackupsPageSkin() {
-            super(WorldBackupsPage.this);
-
-            StackPane placeholderContainer = new StackPane();
-            placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label(i18n("world.backup.empty"));
-            placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(WorldBackupsPage skinnable) {
-            JFXButton createBackup = createToolbarButton2(i18n("world.backup.create.new_one"), SVG.ARCHIVE, skinnable::createBackup);
-            createBackup.disableProperty().bind(getSkinnable().readOnly);
-
-            return Arrays.asList(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createBackup
-            );
-        }
     }
 
     public final class BackupInfo extends Control implements Comparable<BackupInfo> {
@@ -217,8 +206,9 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
             World world = skinnable.getBackupWorld();
 
+            skinnable.setPickOnBounds(false);
             BorderPane root = new BorderPane();
-            root.getStyleClass().add("md-list-cell");
+            root.setPickOnBounds(false);
             root.setPadding(new Insets(8));
 
             {
@@ -259,7 +249,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 btnDelete.setOnAction(event -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::onDelete, null));
             }
 
-            getChildren().setAll(new RipplerContainer(root));
+            getChildren().setAll(root);
         }
     }
 }

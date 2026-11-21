@@ -10,7 +10,10 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -18,8 +21,6 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.image.Image;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
@@ -35,6 +36,7 @@ import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.Base64Utils;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.Subscription;
@@ -51,12 +53,32 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static org.jackhuang.hmcl.ui.FXUtils.*;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
+public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
+    /// Switches between toolbar modes.
+    private final TransitionPane toolbarPane = new TransitionPane();
+    /// Actions available while browsing.
+    private final HBox toolbarNormal = new HBox();
+    /// Actions on the selected items.
+    private final HBox toolbarSelecting = new HBox();
+    /// Toolbar containing the search input.
+    private final HBox searchBar = new HBox();
+    /// Text used to filter the list.
+    private final JFXTextField searchField = new JFXTextField();
+    /// Whether search mode is active.
+    private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+    /// Delays filtering while the query is being edited.
+    private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
+
+    /// All loaded items before search filtering.
+    private final ObservableList<ServerListItem> sourceItems = FXCollections.observableArrayList();
+
+    /// Source items matching the current search.
+    private final FilteredList<ServerListItem> filteredItems = new FilteredList<>(sourceItems);
+
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private final Lock handleLock = new ReentrantLock();
@@ -77,11 +99,114 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 loadInstance(current);
             }
         }));
+
+        initializeView();
+    }
+
+    @Override
+    protected ItemCell<ServerListItem> createItemCell(ListView<ServerListItem> listView) {
+        return new ServerCell(listView, this);
+    }
+
+    /// Configures the list and its page actions.
+    private void initializeView() {
+        getStyleClass().add("notice-pane");
+        var listView = getListView();
+        listView.setItems(filteredItems);
+
+        listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        {
+            setToolbar(toolbarPane);
+            FXUtils.setOverflowHidden(toolbarPane, 8);
+            toolbarPane.setContent(toolbarNormal, ContainerAnimations.NONE);
+
+            Insets toolbarPadding = new Insets(0, 5, 0, 5);
+
+            toolbarNormal.setAlignment(Pos.CENTER_LEFT);
+            toolbarNormal.setPadding(toolbarPadding);
+            toolbarNormal.getChildren().setAll(
+                    createCheckBox(box -> {
+                        box.setText(i18n("server.manage.show_all"));
+                        box.selectedProperty().bindBidirectional(showAll);
+                    }),
+                    createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refresh),
+                    createToolbarButton(i18n("server.manage.add"), SVG.ADD, this::addServer),
+                    createToolbarButton(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
+            );
+
+            searchBar.setAlignment(Pos.CENTER);
+            searchBar.setPadding(toolbarPadding);
+            searchField.setPromptText(i18n("search"));
+            HBox.setHgrow(searchField, Priority.ALWAYS);
+            searchPause.setOnFinished(e -> search());
+            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                    searchPause.setRate(1);
+                    searchPause.playFromStart();
+                }
+            });
+
+            JFXButton closeSearchBar = createToolbarButton(null, SVG.CLOSE, () -> {
+                changeToolbar(toolbarNormal);
+                searchField.clear();
+                searchPause.stop();
+                isSearching.set(false);
+                filteredItems.setPredicate(null);
+            });
+            onEscPressed(searchField, closeSearchBar::fire);
+            searchBar.getChildren().setAll(
+                    createCheckBox(box -> {
+                        box.setText(i18n("server.manage.show_all"));
+                        box.selectedProperty().bindBidirectional(showAll);
+                    }),
+                    createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refresh),
+                    searchField,
+                    closeSearchBar
+            );
+
+            var selectAll = createToolbarButton(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
+            ListChangeListener<Object> listener = change -> {
+                selectAll.setDisable(!listView.getItems().isEmpty()
+                        && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+            };
+            listView.getSelectionModel().getSelectedItems().addListener(listener);
+            listView.getItems().addListener(listener);
+            toolbarSelecting.getChildren().setAll(
+                    createToolbarButton(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
+                        delete(listView.getSelectionModel().getSelectedItems().toArray(ServerListItem[]::new));
+                    }),
+                    selectAll,
+                    createToolbarButton(i18n("button.cancel"), SVG.CANCEL, () ->
+                            listView.getSelectionModel().clearSelection())
+            );
+            FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(), selectedItem -> {
+                if (selectedItem == null) {
+                    changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
+                } else {
+                    changeToolbar(toolbarSelecting);
+                }
+            });
+        }
+
+        StackPane placeholderContainer = new StackPane();
+        placeholderContainer.getStyleClass().add("notice-pane");
+        Label placeholderLabel = new Label(i18n("server.empty"));
+        placeholderLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+            if (isSearching.get()) {
+                return i18n("search.no_results_found");
+            } else {
+                return i18n("server.empty");
+            }
+        }, isSearching));
+        placeholderContainer.getChildren().add(placeholderLabel);
+        listView.setPlaceholder(placeholderContainer);
+
     }
 
     public static @NotNull Image parseServerFaviconImageOrDefault(@Nullable String imageBase64String) {
         if (imageBase64String != null && !imageBase64String.isEmpty()) {
-            try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(imageBase64String))) {
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64Utils.decode(imageBase64String))) {
                 // png format.
                 return ImageLoaders.DEFAULT.load(bais, "icon.png", 0, 0, true, true);
             } catch (Exception e) {
@@ -91,11 +216,6 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         return FXUtils.newBuiltinImage("/assets/img/unknown_server.png");
     }
 
-    @Override
-    protected Skin<?> createDefaultSkin() {
-        return new ServerListPageSkin();
-    }
-
     public void loadInstance(HMCLGameInstance.Optional instance) {
         this.gameInstance = instance.instance();
         refresh();
@@ -103,7 +223,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
     private void updateServerList() {
         if (serverListEntries == null || gameInstance == null) {
-            getItems().clear();
+            sourceItems.clear();
             return;
         }
 
@@ -112,7 +232,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             stream = stream.filter(entry -> entry.storageEntry.getServersDatFile().getFile().equals(gameInstance.getServersDatFilePath()));
         }
 
-        getItems().setAll(stream.toList());
+        sourceItems.setAll(stream.toList());
     }
 
     private void refresh() {
@@ -507,7 +627,6 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             col1.setHgrow(Priority.ALWAYS);
             body.getColumnConstraints().add(col1);
 
-
             // server name
             {
                 Label label = new Label();
@@ -670,7 +789,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         }
     }
 
-    private final class ServerListCell extends MDListCell<ServerListItem> {
+    private final class ServerCell extends ItemCell<ServerListItem> {
 
         private final ServersPage page;
 
@@ -683,11 +802,11 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         private Subscription serverStatusResultValueSubscription;
         private Subscription serverStatusPingingValueSubscription;
 
-        public ServerListCell(JFXListView<ServerListItem> listView, ServersPage page) {
+        public ServerCell(ListView<ServerListItem> listView, ServersPage page) {
             super(listView);
             this.page = page;
 
-            this.getStyleClass().add("server-list-cell");
+            getStyleClass().add("server-list-cell");
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
@@ -701,7 +820,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             JFXButton editBtn = FXUtils.newToggleButton4(SVG.EDIT);
             FXUtils.installFastTooltip(editBtn, i18n("server.manage.edit"));
             editBtn.setOnAction(event -> {
-                ServerListItem item = getItem();
+                @Nullable ServerListItem item = getItem();
                 if (item != null)
                     page.editServer(item);
             });
@@ -709,7 +828,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             JFXButton launchBtn = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
             FXUtils.installFastTooltip(launchBtn, i18n("instance.launch"));
             launchBtn.setOnAction(event -> {
-                ServerListItem item = getItem();
+                @Nullable ServerListItem item = getItem();
                 if (item != null) {
                     page.launchAndEnterServer(item);
                 }
@@ -717,7 +836,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
             JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
             btnMore.setOnAction(event -> {
-                ServerListItem item = getItem();
+                @Nullable ServerListItem item = getItem();
                 if (item != null) {
                     showPopupMenu(item, JFXPopup.PopupHPosition.RIGHT, 0, getHeight());
                 }
@@ -732,11 +851,11 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             );
 
             StackPane.setMargin(container, new Insets(8));
-            getContainer().getChildren().setAll(container);
+            setContent(container);
         }
 
         @Override
-        protected void updateControl(ServerListItem item, boolean empty) {
+        protected void updateListItem(@Nullable ServerListItem item) {
             if (serverStatusPingingValueSubscription != null) {
                 serverStatusPingingValueSubscription.unsubscribe();
                 serverStatusPingingValueSubscription = null;
@@ -748,8 +867,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
 
             this.contentLine1.getTags().clear();
 
-            if (empty || item == null) {
-                setGraphic(null);
+            if (item == null) {
                 serverIcon.setImage(null);
                 contentLine1.setTitle("");
                 statusBtnTooltip.setText("");
@@ -809,182 +927,47 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         }
     }
 
-    private final class ServerListPageSkin extends SkinBase<ServersPage> {
-        private final JFXListView<ServersPage.ServerListItem> listView = new JFXListView<>();
-        private final JFXTextField searchField = new JFXTextField();
-        private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
-        private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
+    private JFXCheckBox createCheckBox(Consumer<JFXCheckBox> consumer) {
+        JFXCheckBox box = new JFXCheckBox();
+        // change style.
+        consumer.accept(box);
+        return box;
+    }
 
-        private final TransitionPane toolbarPane = new TransitionPane();
-        private final HBox searchBar = new HBox();
-        private final HBox toolbarNormal = new HBox();
-        private final HBox toolbarSelecting = new HBox();
+    /// Shows the requested toolbar and focuses the search input when appropriate.
+    private void changeToolbar(HBox newToolbar) {
+        Node oldToolbar = toolbarPane.getCurrentNode();
+        if (newToolbar != oldToolbar) {
+            toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
+            if (newToolbar == searchBar) {
+                Platform.runLater(searchField::requestFocus);
+            }
+        }
+    }
 
-        ServerListPageSkin() {
-            super(ServersPage.this);
+    /// Applies the search text to the displayed items.
+    private void search() {
+        isSearching.set(true);
 
-            StackPane rootStackPane = new StackPane();
-            getChildren().setAll(rootStackPane);
-            rootStackPane.setPadding(new Insets(10));
-            rootStackPane.getStyleClass().addAll("notice-pane");
-
-            ComponentList root = new ComponentList();
-            rootStackPane.getChildren().setAll(root);
-            root.getStyleClass().add("no-padding");
-
-            listView.getStyleClass().add("no-horizontal-scrollbar");
-            listView.setCellFactory(param -> new ServerListCell(listView, ServersPage.this));
-            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-            {
-                root.getContent().add(toolbarPane);
-                FXUtils.setOverflowHidden(toolbarPane, 8);
-                toolbarPane.setContent(toolbarNormal, ContainerAnimations.NONE);
-
-                Insets toolbarPadding = new Insets(0, 5, 0, 5);
-
-                toolbarNormal.setAlignment(Pos.CENTER_LEFT);
-                toolbarNormal.setPadding(toolbarPadding);
-                toolbarNormal.getChildren().setAll(
-                        createCheckBox(box -> {
-                            box.setText(i18n("server.manage.show_all"));
-                            box.selectedProperty().bindBidirectional(ServersPage.this.showAll);
-                        }),
-                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, ServersPage.this::refresh),
-                        createToolbarButton2(i18n("server.manage.add"), SVG.ADD, ServersPage.this::addServer),
-                        createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
-                );
-
-
-                searchBar.setAlignment(Pos.CENTER);
-                searchBar.setPadding(toolbarPadding);
-                searchField.setPromptText(i18n("search"));
-                HBox.setHgrow(searchField, Priority.ALWAYS);
-                searchPause.setOnFinished(e -> search());
-                searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                    if (isSearching.get() || !StringUtils.isBlank(newValue)) {
-                        searchPause.setRate(1);
-                        searchPause.playFromStart();
-                    }
-                });
-
-                JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
-                    changeToolbar(toolbarNormal);
-                    searchField.clear();
-                    searchPause.stop();
-                    isSearching.set(false);
-                    Bindings.bindContent(listView.getItems(), ServersPage.this.getItems());
-                });
-                onEscPressed(searchField, closeSearchBar::fire);
-                searchBar.getChildren().setAll(
-                        createCheckBox(box -> {
-                            box.setText(i18n("server.manage.show_all"));
-                            box.selectedProperty().bindBidirectional(ServersPage.this.showAll);
-                        }),
-                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, ServersPage.this::refresh),
-                        searchField,
-                        closeSearchBar
-                );
-
-                var selectAll = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
-                ListChangeListener<Object> listener = change -> {
-                    selectAll.setDisable(!listView.getItems().isEmpty()
-                            && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
-                };
-                listView.getSelectionModel().getSelectedItems().addListener(listener);
-                listView.getItems().addListener(listener);
-                toolbarSelecting.getChildren().setAll(
-                        createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                            ServersPage.this.delete(listView.getSelectionModel().getSelectedItems().toArray(ServerListItem[]::new));
-                        }),
-                        selectAll,
-                        createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
-                                listView.getSelectionModel().clearSelection())
-                );
-                FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(), selectedItem -> {
-                    if (selectedItem == null) {
-                        changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
-                    } else {
-                        changeToolbar(toolbarSelecting);
-                    }
-                });
+        String queryString = searchField.getText();
+        if (StringUtils.isBlank(queryString)) {
+            filteredItems.setPredicate(null);
+        } else {
+            Predicate<@Nullable String> predicate;
+            try {
+                predicate = StringUtils.compileQuery(queryString);
+            } catch (Throwable e) {
+                LOG.warning("Illegal regular expression", e);
+                filteredItems.setPredicate(item -> false);
+                return;
             }
 
-            StackPane placeholderContainer = new StackPane();
-            placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label(i18n("server.empty"));
-            placeholderLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                if (isSearching.get()) {
-                    return i18n("search.no_results_found");
-                } else {
-                    return i18n("server.empty");
-                }
-            }, isSearching));
-            placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
+            filteredItems.setPredicate(item -> {
+                String serverIp = item.getServer().getIp();
+                String serverName = item.getServer().getName();
 
-            Bindings.bindContent(listView.getItems(), ServersPage.this.getItems());
-            ServersPage.this.getItems().addListener((ListChangeListener<? super ServerListItem>) c -> {
-                if (isSearching.get()) {
-                    search();
-                }
+                return predicate.test(serverIp) || predicate.test(serverName);
             });
-
-            SpinnerPane center = new SpinnerPane();
-            ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.loadingProperty().bind(ServersPage.this.loadingProperty());
-
-            ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-
-            center.setContent(listView);
-            root.getContent().add(center);
-        }
-
-        private JFXCheckBox createCheckBox(Consumer<JFXCheckBox> consumer) {
-            JFXCheckBox box = new JFXCheckBox();
-            // change style.
-            consumer.accept(box);
-            return box;
-        }
-
-        private void changeToolbar(HBox newToolbar) {
-            Node oldToolbar = toolbarPane.getCurrentNode();
-            if (newToolbar != oldToolbar) {
-                toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
-                if (newToolbar == searchBar) {
-                    Platform.runLater(searchField::requestFocus);
-                }
-            }
-        }
-
-        private void search() {
-            isSearching.set(true);
-
-            Bindings.unbindContent(listView.getItems(), ServersPage.this.getItems());
-
-            String queryString = searchField.getText();
-            if (StringUtils.isBlank(queryString)) {
-                listView.getItems().setAll(ServersPage.this.getItems());
-            } else {
-                listView.getItems().clear();
-
-                Predicate<@Nullable String> predicate;
-                try {
-                    predicate = StringUtils.compileQuery(queryString);
-                } catch (Throwable e) {
-                    LOG.warning("Illegal regular expression", e);
-                    return;
-                }
-
-                for (ServerListItem item : ServersPage.this.getItems()) {
-                    String serverIp = item.getServer().getIp();
-                    String serverName = item.getServer().getName();
-
-                    if (predicate.test(serverIp) || predicate.test(serverName)) {
-                        listView.getItems().add(item);
-                    }
-                }
-            }
         }
     }
 }
