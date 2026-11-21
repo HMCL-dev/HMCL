@@ -441,9 +441,9 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     public ObservableValue<Node> getSelectedTabProperty() {
-        return tabController.selectedTabProperty().map(tabItem -> {
-            if (tabItem == null) return null;
-            return tabItem.getNode();
-        });
+        SimpleObjectProperty<Node> property = new SimpleObjectProperty<>();
+        property.bind(Bindings.createObjectBinding(this::getSelectedTab, tabController.selectedTabProperty()));
+
+        return property;
     }
 }
