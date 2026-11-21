@@ -100,7 +100,7 @@ public class LineSelectButton<T extends @UnknownNullability Object> extends Line
                 wrapper.getStyleClass().add("menu-container");
                 wrapper.setMouseTransparent(true);
                 RipplerContainer ripplerContainer = new RipplerContainer(wrapper);
-                FXUtils.onClicked(ripplerContainer, () -> {
+                ripplerContainer.setOnAction(event -> {
                     setValue(item);
                     popup.hide();
                 });

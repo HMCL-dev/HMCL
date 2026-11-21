@@ -183,7 +183,7 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
                     box.setMouseTransparent(true);
                     var rippler = new RipplerContainer(box);
                     var finalD = d;
-                    FXUtils.onClicked(rippler, () -> navigateTo(finalD));
+                    rippler.setOnAction(event -> navigateTo(finalD));
                     relPath.getChildren().add(0, rippler);
                     d = d.parent;
                 }
@@ -769,6 +769,7 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
             {
                 this.left = new StackPane();
                 left.setPadding(new Insets(0, 8, 0, 0));
+                RipplerContainer.enableBackgroundMouseEvents(left);
 
                 this.iconImageView = new ImageContainer(32);
                 this.iconSVGView = new SVGContainer(32);
@@ -823,7 +824,7 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
             box.getChildren().setAll(left, center, right);
             StackPane.setMargin(box, new Insets(8));
             setContent(box);
-            FXUtils.onClicked(getFeedbackContainer(), () -> {
+            getFeedbackContainer().setOnAction(event -> {
                 var item = getItem();
                 if (item != null) item.onClick();
             });

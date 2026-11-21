@@ -53,9 +53,10 @@ public class RipplerContainer extends StackPane {
     /// Marks tooltip-bearing decorations whose mouse events still activate the surrounding row.
     private static final Object BACKGROUND_MOUSE_EVENTS = new Object();
 
-    /// Treats presses and clicks on this decoration as background input in its nearest rippler.
+    /// Treats mouse presses, releases, and clicks on the decoration and its descendants as
+    /// background input in its nearest enclosing rippler. Nested ripplers handle their own input.
     /// Hover events remain available for tooltips, and the original mouse event bubbles normally.
-    static void enableBackgroundMouseEvents(Node node) {
+    public static void enableBackgroundMouseEvents(Node node) {
         node.getProperties().put(BACKGROUND_MOUSE_EVENTS, Boolean.TRUE);
     }
 
