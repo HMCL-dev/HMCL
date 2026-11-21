@@ -29,6 +29,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 
 public class JFXButtonSkin extends ButtonSkin {
     private final StackPane buttonContainer = new StackPane();
@@ -64,6 +65,9 @@ public class JFXButtonSkin extends ButtonSkin {
 
     public JFXButtonSkin(JFXButton button) {
         super(button);
+        if (!AnimationUtils.isAnimationEnabled()) {
+            this.buttonRippler.setRipplerDisabled(true);
+        }
         this.getSkinnable().armedProperty().addListener((o, oldVal, newVal) -> {
             if (newVal) {
                 this.releaseManualRippler = this.buttonRippler.createManualRipple();
