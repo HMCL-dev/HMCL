@@ -126,6 +126,16 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
         }
     }
 
+    /// RFC 7232: entity-tag = [ weak ] opaque-tag; opaque-tag = DQUOTE *etagc DQUOTE。
+    /// 不带引号的 ETag（如 piston-data 的 0x8DF131C92002158）不是合法的强校验器。
+    static boolean isStrongETag(@Nullable String eTag) {
+        if (StringUtils.isBlank(eTag))
+            return false;
+        if (eTag.regionMatches(true, 0, "W/", 0, 2))
+            return false;
+        return eTag.length() >= 2 && eTag.charAt(0) == '"' && eTag.charAt(eTag.length() - 1) == '"';
+    }
+
     private static final class HttpResumeContext {
         private static final Pattern CONTENT_RANGE_PATTERN = Pattern.compile("bytes ([0-9]+)-([0-9]+)/([0-9]+)");
 
@@ -147,31 +157,32 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
 
             String eTag = response.headers().firstValue("etag").orElse(null);
             String strongETag = isStrongETag(eTag) ? eTag : null;
+            String entityTag = StringUtils.isNotBlank(eTag) ? eTag : null;
             String lastModified = response.headers().firstValue("last-modified").orElse(null);
+            // 没有强 ETag 也没有 Last-Modified 时无法安全续传（If-Range 无从取值）。
             if (strongETag == null && StringUtils.isBlank(lastModified))
                 return null;
 
-            return new HttpResumeContext(response.url(), contentLength, strongETag, lastModified);
+            return new HttpResumeContext(response.url(), contentLength, strongETag, entityTag, lastModified);
         }
 
         /// Final response URL whose partial content is retained for resumption.
         private final WebURL url;
         private final long contentLength;
         private final @Nullable String strongETag;
+        private final @Nullable String entityTag;
         private final @Nullable String lastModified;
 
         long countUncompressed;
 
         /// Records the response URL, total byte length, and available validators for resumption.
-        private HttpResumeContext(WebURL url, long contentLength, @Nullable String strongETag, @Nullable String lastModified) {
+        private HttpResumeContext(WebURL url, long contentLength, @Nullable String strongETag,
+                                  @Nullable String entityTag, @Nullable String lastModified) {
             this.url = url;
             this.contentLength = contentLength;
             this.strongETag = strongETag;
+            this.entityTag = entityTag;
             this.lastModified = lastModified;
-        }
-
-        private static boolean isStrongETag(@Nullable String eTag) {
-            return StringUtils.isNotBlank(eTag) && !eTag.regionMatches(true, 0, "W/", 0, 2);
         }
 
         String ifRange() {
@@ -190,11 +201,15 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
             if (this.contentLength != contentLength + this.countUncompressed)
                 return false;
 
-            if (strongETag != null) {
+            // RFC 7232: 即使 ETag 不是强校验器（如未加引号），也应在续传响应中保持一致，
+            // 避免同一时间窗口内的等长修改被拼接到旧内容后面。
+            if (entityTag != null) {
                 String eTag = response.headers().firstValue("etag").orElse(null);
-                if (!strongETag.equals(eTag))
+                if (!entityTag.equals(eTag))
                     return false;
-            } else {
+            }
+
+            if (strongETag == null) {
                 if (!url.equals(response.url()))
                     return false;
 
