@@ -260,6 +260,11 @@ public final class GameDirectoryManager {
         return repositories.computeIfAbsent(gameDirectory, HMCLGameRepository::new);
     }
 
+    /// Returns whether a repository still belongs to the game directories structure.
+    public static boolean hasRepository(HMCLGameRepository repository) {
+        return repositories.get(repository.getGameDirectory()) == repository;
+    }
+
     /// Adds a game directory to the per-workspace store.
     public static void addLocalGameDirectory(GameDirectory gameDirectory) {
         if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
