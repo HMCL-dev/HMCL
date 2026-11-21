@@ -193,6 +193,14 @@ public final class Lang {
         return pool;
     }
 
+    public static ThreadFactory daemonThreadFactory(String name) {
+        return r -> {
+            Thread t = new Thread(r, name);
+            t.setDaemon(true);
+            return t;
+        };
+    }
+
     public static ThreadFactory counterThreadFactory(String name, boolean daemon) {
         AtomicInteger counter = new AtomicInteger(1);
         return r -> {
