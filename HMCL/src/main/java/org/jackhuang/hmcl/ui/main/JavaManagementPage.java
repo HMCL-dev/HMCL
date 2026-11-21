@@ -3,29 +3,26 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.Tag;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
@@ -33,12 +30,9 @@ import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
+import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jetbrains.annotations.Nullable;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,7 +45,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
+public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
 
     @SuppressWarnings("FieldCanBeLocal")
     private final ChangeListener<Collection<JavaRuntime>> listener;
@@ -59,9 +53,11 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     private final Runnable onInstallJava;
 
     public JavaManagementPage() {
+        var listView = getListView();
+        listView.setPadding(Insets.EMPTY);
         this.listener = FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), this::loadJava);
 
-        if (Platform.SYSTEM_PLATFORM.equals(OperatingSystem.LINUX, Architecture.LOONGARCH64_OW)) {
+        if (SystemInfo.SYSTEM_PLATFORM.equals(NativePlatform.LINUX_LOONGARCH64_OW)) {
             onInstallJava = () -> FXUtils.openLink("https://www.loongnix.cn/zh/api/java/");
         } else {
             onInstallJava = JavaDownloadDialog.showDialogAction(DownloadProviders.getDownloadProvider());
@@ -69,7 +65,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         FXUtils.applyDragListener(this, it -> {
             String name = FileUtils.getName(it);
-            return Files.isDirectory(it) || name.endsWith(".zip") || name.endsWith(".tar.gz") || name.equals(OperatingSystem.CURRENT_OS.getJavaExecutable());
+            return Files.isDirectory(it) || name.endsWith(".zip") || name.endsWith(".tar.gz") || name.equals(SystemInfo.CURRENT_OS.getJavaExecutable());
         }, files -> {
             for (Path file : files) {
                 if (Files.isDirectory(file)) {
@@ -77,7 +73,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 } else {
                     String fileName = FileUtils.getName(file);
 
-                    if (fileName.equals(OperatingSystem.CURRENT_OS.getJavaExecutable())) {
+                    if (fileName.equals(SystemInfo.CURRENT_OS.getJavaExecutable())) {
                         onAddJavaBinary(file);
                     } else if (fileName.endsWith(".zip") || fileName.endsWith(".tar.gz")) {
                         onInstallArchive(file);
@@ -87,16 +83,44 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 }
             }
         });
+
+        ArrayList<Node> res = new ArrayList<>(4);
+
+        JFXButton refreshButton = createToolbarButton(i18n("button.refresh"), SVG.REFRESH, () -> {
+            if (isLoading()) return;
+
+            setLoading(true);
+            JavaManager.refresh(() -> setLoading(false));
+        });
+        refreshButton.disableProperty().bind(loadingProperty());
+        res.add(refreshButton);
+
+        if (onInstallJava != null) {
+            res.add(createToolbarButton(i18n("java.download"), SVG.DOWNLOAD, onInstallJava));
+        }
+        JFXButton addJava = createToolbarButton(i18n("java.add"), SVG.ADD, this::onAddJava);
+        addJava.setDisable(SettingsManager.isUserSettingsReadOnly());
+        res.add(addJava);
+
+        JFXButton disableJava = createToolbarButton(i18n("java.disabled.management"), SVG.FORMAT_LIST_BULLETED, this::onShowRestoreJavaPage);
+        if (SettingsManager.isUserSettingsReadOnly()) {
+            disableJava.setDisable(true);
+        } else {
+            disableJava.disableProperty().bind(Bindings.isEmpty(SettingsManager.userSettings().getDisabledJava()));
+        }
+        res.add(disableJava);
+
+        setToolbarButtons(res);
     }
 
     @Override
-    protected Skin<?> createDefaultSkin() {
-        return new JavaPageSkin(this);
+    protected ItemCell<JavaRuntime> createItemCell(ListView<JavaRuntime> listView) {
+        return new JavaRuntimeCell(listView);
     }
 
     void onAddJava() {
         FileChooser chooser = new FileChooser();
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe"));
         chooser.setTitle(i18n("settings.game.java_directory.choose"));
         Path file = Controllers.showOpenDialog(chooser);
@@ -131,7 +155,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             Path releaseFile = file.resolve("release");
             if (Files.notExists(releaseFile))
                 throw new IOException("Missing release file " + releaseFile);
-            return JavaManager.getAddJavaTask(file.resolve("bin").resolve(OperatingSystem.CURRENT_OS.getJavaExecutable()));
+            return JavaManager.getAddJavaTask(file.resolve("bin").resolve(SystemInfo.CURRENT_OS.getJavaExecutable()));
         }).whenComplete(Schedulers.javafx(), exception -> {
             if (exception != null) {
                 LOG.warning("Failed to add java", exception);
@@ -185,51 +209,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         this.setLoading(false);
     }
 
-    private static final class JavaPageSkin extends ToolbarListPageSkin<JavaRuntime, JavaManagementPage> {
-
-        JavaPageSkin(JavaManagementPage skinnable) {
-            super(skinnable);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(JavaManagementPage skinnable) {
-            ArrayList<Node> res = new ArrayList<>(4);
-
-            JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, () -> {
-                if (skinnable.isLoading()) return;
-
-                skinnable.setLoading(true);
-                JavaManager.refresh(() -> skinnable.setLoading(false));
-            });
-            refreshButton.disableProperty().bind(skinnable.loadingProperty());
-            res.add(refreshButton);
-
-            if (skinnable.onInstallJava != null) {
-                res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD, skinnable.onInstallJava));
-            }
-            JFXButton addJava = createToolbarButton2(i18n("java.add"), SVG.ADD, skinnable::onAddJava);
-            addJava.setDisable(SettingsManager.isUserSettingsReadOnly());
-            res.add(addJava);
-
-            JFXButton disableJava = createToolbarButton2(i18n("java.disabled.management"), SVG.FORMAT_LIST_BULLETED, skinnable::onShowRestoreJavaPage);
-            if (SettingsManager.isUserSettingsReadOnly()) {
-                disableJava.setDisable(true);
-            } else {
-                disableJava.disableProperty().bind(Bindings.isEmpty(SettingsManager.userSettings().getDisabledJava()));
-            }
-            res.add(disableJava);
-
-            return res;
-        }
-
-        @Override
-        protected ListCell<JavaRuntime> createListCell(JFXListView<JavaRuntime> listView) {
-            return new JavaItemCell(listView);
-        }
-    }
-
-    private static final class JavaItemCell extends ListCell<JavaRuntime> {
-        private final RipplerContainer graphic;
+    private static final class JavaRuntimeCell extends ItemCell<JavaRuntime> {
         private final Label label = new Label();
         private final TwoLineListItem content;
 
@@ -239,7 +219,8 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         private final Tooltip removeTooltip = new Tooltip();
 
         /// Creates a Java runtime cell with interactive tags and independent removal controls.
-        JavaItemCell(JFXListView<JavaRuntime> listView) {
+        JavaRuntimeCell(ListView<JavaRuntime> listView) {
+            super(listView);
             label.setAlignment(Pos.CENTER);
             label.setMouseTransparent(true);
             FXUtils.setLimitWidth(label, 32);
@@ -281,30 +262,18 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             }
             right.setPickOnBounds(false);
             content.setTrailing(right);
-            content.getStyleClass().add("md-list-cell");
             content.setPadding(new Insets(8));
 
-            this.graphic = new RipplerContainer(content);
-            graphic.setPressFeedbackEnabled(false);
+            content.setPickOnBounds(false);
 
-            FXUtils.limitCellWidth(listView, this);
+            setContent(content);
+            getFeedbackContainer().setPressFeedbackEnabled(false);
         }
 
-        /// Updates the runtime details and reuses the architecture tag when the item changes.
+        /// Updates the version, architecture tag and removal action for the current runtime.
         @Override
-        protected void updateItem(@Nullable JavaRuntime item, boolean empty) {
-            @Nullable JavaRuntime oldItem = getItem();
-            boolean oldEmpty = isEmpty();
-
-            super.updateItem(item, empty);
-
-            if (oldItem == item && oldEmpty == empty) return;
-
-            this.graphic.resetFeedback();
-
-            if (empty || item == null) {
-                setGraphic(null);
-            } else {
+        protected void updateListItem(@Nullable JavaRuntime item) {
+            if (item != null) {
                 int parsedVersion = item.getParsedVersion();
                 label.setText(parsedVersion >= 0 ? String.valueOf(parsedVersion) : "?");
 
@@ -313,9 +282,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 content.setTitle((vendor != null ? vendor : i18n("message.unknown")) + " " + (item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
                 content.setSubtitle(item.getBinary().toString());
 
-                if (oldItem != item) {
-                    content.getTags().setAll(new Tag(item.getArchitecture().getDisplayName()));
-                }
+                content.getTags().setAll(new Tag(item.getArchitecture().getDisplayName()));
 
                 SVG newRemoveIcon = item.isManaged() ? SVG.DELETE_FOREVER : SVG.DELETE;
                 if (removeIcon != newRemoveIcon) {
@@ -324,8 +291,6 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                     removeTooltip.setText(item.isManaged() ? i18n("java.uninstall") : i18n("java.disable"));
                 }
                 removeButton.setDisable(!item.isManaged() && SettingsManager.isUserSettingsReadOnly());
-
-                setGraphic(graphic);
             }
         }
 

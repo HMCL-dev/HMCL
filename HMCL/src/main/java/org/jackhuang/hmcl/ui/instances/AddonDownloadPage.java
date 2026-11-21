@@ -480,7 +480,7 @@ public class AddonDownloadPage extends Control implements DecoratorPage {
             RipplerContainer container = new RipplerContainer(pane);
             container.setPressFeedbackEnabled(interactive);
             if (interactive)
-                FXUtils.onClicked(container, () -> Controllers.dialog(new AddonVersion(mod, dataItem, selfPage)));
+                container.setOnAction(event -> Controllers.dialog(new AddonVersion(mod, dataItem, selfPage)));
             getChildren().setAll(container);
 
             // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129

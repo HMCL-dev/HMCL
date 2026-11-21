@@ -45,11 +45,10 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
+import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
-
-import org.jackhuang.hmcl.util.javafx.Subscription;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -281,7 +280,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             return source;
         }
 
-        private Image getDefaultIcon() {
+        private @Nullable Image getDefaultIcon() {
             if (data.localAddonFile() instanceof LocalModFile localModFile) {
                 return GameInstanceIconType
                     .getIconType(localModFile.getModLoaderType())
@@ -298,13 +297,11 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
         }
 
+        /// Loads the addon icon, falling back to the mod loader icon or null for other addons.
         private Image loadIcon() {
             Image icon = data.localAddonFile().loadIcon(ImageLoaders.DEFAULT, 80, 80, true, true);
-            if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1) {
-                return icon;
-            }
 
-            return getDefaultIcon();
+            return FXUtils.isValidIcon(icon) ? icon : this.getDefaultIcon();
         }
     }
 
@@ -341,7 +338,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 }
             });
 
-            FXUtils.onClicked(this, () -> {
+            ripplerContainer.setOnAction(event -> {
                 AddonUpdateObject item = getItem();
                 if (item != null) {
                     item.enabled.set(!item.isEnabled());

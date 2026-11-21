@@ -15,7 +15,6 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
@@ -68,12 +67,10 @@ public final class AboutPage extends SpinnerPane {
             system.setLargeTitle(true);
             system.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
             system.setTitle(i18n("about.system.os"));
-            system.setSubtitle((OperatingSystem.OS_RELEASE_PRETTY_NAME == null
-                    ? "%s %s".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion())
-                    : "%s (%s %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion())));
+            system.setSubtitle(SystemInfo.getOperatingSystemDescription());
             systemInfo.getContent().add(system);
 
-            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemInfo.getDesktopEnvironment() != null) {
+            if (SystemInfo.isXdgPreferred() && SystemInfo.getDesktopEnvironment() != null) {
                 var desktop = new LinePane();
                 desktop.setLargeTitle(true);
                 desktop.setLeading(SVG.LUCIDE_PANELS_TOP_LEFT.createIcon(32));
@@ -88,8 +85,8 @@ public final class AboutPage extends SpinnerPane {
             @Nullable DeviceInfo deviceIdentity = SystemInfo.getDeviceInfo();
             if (deviceIdentity != null
                     && !"Virtual Machine".equals(deviceIdentity.name())
-                    && OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
-                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS || !Architecture.SYSTEM_ARCH.isX86())) {
+                    && SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS
+                    && (SystemInfo.CURRENT_OS == OperatingSystem.MACOS || !SystemInfo.SYSTEM_ARCH.isX86())) {
                 var device = new LinePane();
                 device.setLargeTitle(true);
                 device.setLeading(SVG.HOST.createIcon(32));
@@ -124,7 +121,7 @@ public final class AboutPage extends SpinnerPane {
                 pane.setTitle(title);
                 pane.setSubtitle(subtitle);
                 pane.setLeading(SVG.LUCIDE_CPU.createIcon(32));
-                pane.getTags().add(new Tag(Architecture.SYSTEM_ARCH.getDisplayName()));
+                pane.getTags().add(new Tag(SystemInfo.SYSTEM_ARCH.getDisplayName()));
                 deviceInfo.getContent().add(pane);
             }
 
@@ -175,7 +172,7 @@ public final class AboutPage extends SpinnerPane {
             if (SystemInfo.getTotalMemorySize() > 0) {
                 String subtitle = i18n("about.device.memory.system",
                         "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     long pageFileSize = SystemInfo.getTotalPageFileSize();
                     if (pageFileSize < 0) {
                         subtitle = i18n("about.device.memory.page_files.unknown", subtitle);

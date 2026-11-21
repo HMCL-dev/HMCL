@@ -116,8 +116,22 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
         return url;
     }
 
-    public String getLogoPath() {
-        return logoPath;
+    public <I> @Nullable I loadIcon(ImageLoader<I> loader) {
+        if (StringUtils.isBlank(logoPath))
+            return null;
+
+        try (var zipFileTree = CompressingUtils.openZipTree(getFile())) {
+            @Nullable var iconEntry = zipFileTree.getEntry(logoPath);
+            if (iconEntry == null)
+                return null;
+
+            try (var inputStream = zipFileTree.getInputStream(iconEntry)) {
+                return loader.load(inputStream, name, 80, 80, true, true);
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to load mod icon: " + getFile(), e);
+            return null;
+        }
     }
 
     public ReadOnlyBooleanProperty activeProperty() {
