@@ -4,6 +4,11 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXProgressBar;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.RotateTransition;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.WeakListener;
 import javafx.beans.binding.Bindings;
@@ -21,12 +26,15 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +42,11 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,6 +58,15 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class TaskListPane extends StackPane {
     private static final Insets DEFAULT_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 0);
     private static final Insets STAGED_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 26);
+
+    /// Duration of the detail row fade-in when a stage expands.
+    private static final Duration DETAIL_EXPAND_DURATION = Motion.SHORT4;
+    /// Duration of the detail row fade-out that precedes their removal when a stage collapses.
+    private static final Duration DETAIL_COLLAPSE_DURATION = Motion.SHORT3;
+    /// Duration of the disclosure arrow rotation, matched to the detail row fades.
+    private static final Duration ARROW_ROTATION_DURATION = Motion.SHORT3;
+    /// Vertical distance, in pixels, that detail rows travel out of the stage header while fading in.
+    private static final double DETAIL_REVEAL_OFFSET = 8.0;
 
     private @Nullable TaskExecutor executor;
     private final JFXListView<Node> listView = new JFXListView<>();
@@ -81,6 +100,41 @@ public final class TaskListPane extends StackPane {
             }
             for (String stage : hint.aliases()) {
                 stageNodes.put(stage, node);
+            }
+        }
+
+        adoptPendingRows();
+    }
+
+    /// Moves detail rows that were materialized before their stage was registered under that stage.
+    ///
+    /// A task may start before the hint that declares its stage is delivered, in which case its row
+    /// is initially treated as a top-level row. As soon as the stage becomes known, the row is moved
+    /// below the stage header; a collapsed stage keeps only the task reference until it is expanded.
+    @FXThread
+    private void adoptPendingRows() {
+        List<ProgressListNode> pendingRows = new ArrayList<>();
+        for (Node item : listView.getItems()) {
+            if (item instanceof ProgressListNode row && row.stageNode == null) {
+                @Nullable String stage = row.task.getInheritedStage();
+                if (stage != null && stageNodes.containsKey(stage))
+                    pendingRows.add(row);
+            }
+        }
+
+        for (ProgressListNode row : pendingRows) {
+            @Nullable StageNode stageNode = stageNodes.get(row.task.getInheritedStage());
+            if (stageNode == null)
+                continue;
+
+            listView.getItems().remove(row);
+            row.stageNode = stageNode;
+            stageNode.activeTasks.add(row.task);
+            if (stageNode.isExpanded()) {
+                addProgressNode(stageNode, row);
+            } else {
+                row.unbind();
+                nodes.remove(row.task);
             }
         }
     }
@@ -135,30 +189,87 @@ public final class TaskListPane extends StackPane {
     }
 
     /// Expands or collapses a stage and lazily materializes only the rows needed by the new state.
+    ///
+    /// Expanding slides the detail rows down out of the stage header, where the disclosure arrow
+    /// sits, while fading them in. Collapsing slides them back up into that header before they are
+    /// removed. Disabled animations leave no pending work behind and perform the same transition
+    /// synchronously.
     @FXThread
     private void toggleStage(@NotNull StageNode stageNode) {
         boolean expanded = !stageNode.isExpanded();
         stageNode.setExpanded(expanded);
 
         if (expanded) {
-            int insertionIndex = listView.getItems().indexOf(stageNode) + 1;
-            for (Task<?> task : stageNode.activeTasks) {
-                if (!nodes.containsKey(task)) {
-                    ProgressListNode node = createProgressNode(task, stageNode);
-                    listView.getItems().add(insertionIndex++, node);
+            stageNode.stopCollapseAnimation();
+            boolean rowsPresent = hasDetailRows(stageNode);
+
+            if (!rowsPresent) {
+                stageNode.detailOpacity.set(0);
+                int insertionIndex = listView.getItems().indexOf(stageNode) + 1;
+                for (Task<?> task : stageNode.activeTasks) {
+                    if (!nodes.containsKey(task)) {
+                        ProgressListNode node = createProgressNode(task, stageNode);
+                        listView.getItems().add(insertionIndex++, node);
+                        rowsPresent = true;
+                    }
                 }
             }
+
+            if (rowsPresent && AnimationUtils.isAnimationEnabled())
+                playDetailFade(stageNode, 1, DETAIL_EXPAND_DURATION, Motion.STANDARD_DECELERATE, null);
+            else
+                stageNode.detailOpacity.set(1);
+        } else if (AnimationUtils.isAnimationEnabled() && hasDetailRows(stageNode)) {
+            stageNode.stopCollapseAnimation();
+            stageNode.collapseAnimation = playDetailFade(stageNode, 0, DETAIL_COLLAPSE_DURATION,
+                    Motion.STANDARD_ACCELERATE, () -> {
+                        stageNode.collapseAnimation = null;
+                        if (stageNode.isExpanded())
+                            return;
+
+                        removeDetailRows(stageNode);
+                        stageNode.detailOpacity.set(1);
+                    });
         } else {
-            listView.getItems().removeIf(item -> {
-                if (item instanceof ProgressListNode progressListNode
-                        && progressListNode.stageNode == stageNode) {
-                    progressListNode.unbind();
-                    nodes.remove(progressListNode.task);
-                    return true;
-                }
-                return false;
-            });
+            removeDetailRows(stageNode);
         }
+    }
+
+    /// Returns whether any detail row of the given stage is currently attached to the list.
+    @FXThread
+    private boolean hasDetailRows(@NotNull StageNode stageNode) {
+        for (Node item : listView.getItems()) {
+            if (item instanceof ProgressListNode progressListNode && progressListNode.stageNode == stageNode)
+                return true;
+        }
+        return false;
+    }
+
+    /// Removes and unbinds every detail row that belongs to the given stage.
+    @FXThread
+    private void removeDetailRows(@NotNull StageNode stageNode) {
+        listView.getItems().removeIf(item -> {
+            if (item instanceof ProgressListNode progressListNode
+                    && progressListNode.stageNode == stageNode) {
+                progressListNode.unbind();
+                nodes.remove(progressListNode.task);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    /// Animates the opacity shared by a stage's detail rows, optionally running an action afterwards.
+    @FXThread
+    private @NotNull Timeline playDetailFade(@NotNull StageNode stageNode, double target,
+                                             @NotNull Duration duration, @NotNull Interpolator interpolator,
+                                             @Nullable Runnable onFinished) {
+        Timeline timeline = new Timeline(new KeyFrame(duration,
+                new KeyValue(stageNode.detailOpacity, target, interpolator)));
+        if (onFinished != null)
+            timeline.setOnFinished(event -> onFinished.run());
+        timeline.play();
+        return timeline;
     }
 
     public void setExecutor(TaskExecutor executor) {
@@ -298,6 +409,8 @@ public final class TaskListPane extends StackPane {
         private final Label message = new Label();
         private final JFXProgressBar bar = new JFXProgressBar();
 
+        /// Running disclosure arrow rotation, stopped when the cell is rebound to another row.
+        private @Nullable RotateTransition arrowAnimation;
         private @Nullable WeakReference<StageNode> prevStageNodeRef;
         private @Nullable StatusChangeListener statusChangeListener;
 
@@ -317,7 +430,7 @@ public final class TaskListPane extends StackPane {
             setOnMouseClicked(event -> {
                 if (event.getButton() == MouseButton.PRIMARY && getItem() instanceof StageNode stageNode) {
                     toggleStage(stageNode);
-                    updateExpandArrow(stageNode);
+                    animateExpandArrow(stageNode);
                     event.consume();
                 }
             });
@@ -339,9 +452,25 @@ public final class TaskListPane extends StackPane {
             left.getChildren().setAll(status.svg.createIcon(STATUS_ICON_SIZE));
         }
 
-        /// Rotates the disclosure arrow: down when expanded, right when collapsed.
+        /// Rotates the disclosure arrow immediately: down when expanded, right when collapsed.
         private void updateExpandArrow(StageNode stageNode) {
             expandArrow.setRotate(stageNode.isExpanded() ? 0 : -90);
+        }
+
+        /// Rotates the disclosure arrow with the stage transition instead of snapping it.
+        private void animateExpandArrow(StageNode stageNode) {
+            double targetAngle = stageNode.isExpanded() ? 0 : -90;
+            if (!AnimationUtils.isAnimationEnabled()) {
+                expandArrow.setRotate(targetAngle);
+                return;
+            }
+
+            if (arrowAnimation != null)
+                arrowAnimation.stop();
+            arrowAnimation = new RotateTransition(ARROW_ROTATION_DURATION, expandArrow);
+            arrowAnimation.setToAngle(targetAngle);
+            arrowAnimation.setInterpolator(Motion.STANDARD);
+            arrowAnimation.play();
         }
 
         @Override
@@ -351,6 +480,14 @@ public final class TaskListPane extends StackPane {
             pane.paddingProperty().unbind();
             title.textProperty().unbind();
             message.textProperty().unbind();
+            opacityProperty().unbind();
+            translateYProperty().unbind();
+            setOpacity(1);
+            setTranslateY(0);
+            if (arrowAnimation != null) {
+                arrowAnimation.stop();
+                arrowAnimation = null;
+            }
 
             bar.setSmoothProgress(false);
             bar.progressProperty().unbind();
@@ -362,6 +499,13 @@ public final class TaskListPane extends StackPane {
                 title.setText(progressListNode.title);
                 message.textProperty().bind(progressListNode.message);
                 bar.progressProperty().bind(progressListNode.progress);
+
+                @Nullable StageNode stageNode = progressListNode.stageNode;
+                if (stageNode != null) {
+                    opacityProperty().bind(stageNode.detailOpacity);
+                    translateYProperty().bind(
+                            stageNode.detailOpacity.subtract(1).multiply(DETAIL_REVEAL_OFFSET));
+                }
 
                 pane.paddingProperty().bind(progressNodePadding);
                 pane.setLeft(null);
@@ -453,6 +597,10 @@ public final class TaskListPane extends StackPane {
         private final BooleanProperty expanded;
         /// Significant tasks still running in this stage, retained while the stage is collapsed.
         private final Set<Task<?>> activeTasks = new LinkedHashSet<>();
+        /// Opacity shared by this stage's detail rows while it animates between expanded and collapsed.
+        private final DoubleProperty detailOpacity = new SimpleDoubleProperty(1);
+        /// Running collapse animation that defers removing the detail rows, or `null` when idle.
+        private @Nullable Timeline collapseAnimation;
         private final String message;
         private int count = 0;
         private int total = 0;
@@ -506,6 +654,14 @@ public final class TaskListPane extends StackPane {
             this.expanded.set(expanded);
         }
 
+        /// Stops a pending collapse so the still-attached detail rows stay visible.
+        private void stopCollapseAnimation() {
+            if (collapseAnimation != null) {
+                collapseAnimation.stop();
+                collapseAnimation = null;
+            }
+        }
+
         private void begin() {
             runningTasksCount++;
             if (status.get() == Status.WAITING || status.get() == Status.SUCCESS) {
@@ -545,8 +701,8 @@ public final class TaskListPane extends StackPane {
 
     private static final class ProgressListNode extends Node {
         private final Task<?> task;
-        /// The stage that owns this row, or `null` for a top-level task.
-        private final @Nullable StageNode stageNode;
+        /// The stage that owns this row, or `null` for a row that has not been adopted by a stage yet.
+        private @Nullable StageNode stageNode;
         private final String title;
         private final StringProperty message = new SimpleStringProperty("");
         private final DoubleProperty progress = new SimpleDoubleProperty(0.0);
