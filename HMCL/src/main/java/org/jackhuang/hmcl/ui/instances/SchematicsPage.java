@@ -769,6 +769,7 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
             {
                 this.left = new StackPane();
                 left.setPadding(new Insets(0, 8, 0, 0));
+                RipplerContainer.enableBackgroundMouseEvents(left);
 
                 this.iconImageView = new ImageContainer(32);
                 this.iconSVGView = new SVGContainer(32);
