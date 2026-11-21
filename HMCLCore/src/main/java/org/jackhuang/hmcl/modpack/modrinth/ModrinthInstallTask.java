@@ -16,6 +16,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,8 +29,10 @@ public class ModrinthInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
-    private final Path zipFile;
-    private final Modpack modpack;
+    /// Source archive, absent when only changing installed optional files.
+    private final @Nullable Path zipFile;
+    /// Source metadata, absent when only changing installed optional files.
+    private final @Nullable Modpack modpack;
     private final ModrinthManifest manifest;
     private final GameInstanceID instanceId;
 
@@ -45,6 +48,9 @@ public class ModrinthInstallTask extends Task<Void> {
 
     /// Keys of optional files the user chose not to install; `null` or empty means install all.
     private final @Nullable Set<String> excludedFiles;
+
+    /// Previous exclusions limit downloads and skip archive/component installation; `null` means normal install/update.
+    private final @Nullable @Unmodifiable Set<String> previousExcludedFiles;
 
     /// Validated extension of the scheduled icon download, or `null` when no icon is scheduled.
     private @Nullable String iconExt;
@@ -74,7 +80,7 @@ public class ModrinthInstallTask extends Task<Void> {
             GameInstanceID instanceId,
             @Nullable String iconUrl,
             @Nullable Set<String> excludedFiles) {
-        this(dependencyManager, zipFile, modpack, manifest, instanceId, null, iconUrl, excludedFiles);
+        this(dependencyManager, zipFile, modpack, manifest, instanceId, null, iconUrl, excludedFiles, null);
     }
 
     /// Creates a task that updates an existing Modrinth modpack instance.
@@ -100,7 +106,13 @@ public class ModrinthInstallTask extends Task<Void> {
             DefaultGameInstance instance,
             @Nullable String iconUrl,
             @Nullable Set<String> excludedFiles) {
-        this(dependencyManager, zipFile, modpack, manifest, instance.getId(), instance, iconUrl, excludedFiles);
+        this(dependencyManager, zipFile, modpack, manifest, instance.getId(), instance, iconUrl, excludedFiles, null);
+    }
+
+    /// Changes optional files using the existing update/removal rules, without installing components or overrides.
+    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, ModrinthManifest manifest,
+                               DefaultGameInstance instance, Set<String> excludedFiles, Set<String> previousExcludedFiles) {
+        this(dependencyManager, null, null, manifest, instance.getId(), instance, null, excludedFiles, previousExcludedFiles);
     }
 
     /// Creates a Modrinth installation task in the mode selected by `updateTarget`.
@@ -114,19 +126,21 @@ public class ModrinthInstallTask extends Task<Void> {
     /// @param iconUrl           the optional icon URL, or `null`
     /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
     ///                          install all files. When non-null, must not contain `null` elements.
+    /// @param previousExcludedFiles previous exclusions for optional-only updates, or `null` for normal installation
     /// @throws IllegalArgumentException if an update target has no compatible configuration
     /// @throws IllegalStateException    if the manifest declares an unsupported mod loader, the
     ///                                  target cannot be reserved, an update target is not the exact
     ///                                  published object, or another draft is open
     private ModrinthInstallTask(
             DefaultDependencyManager dependencyManager,
-            Path zipFile,
-            Modpack modpack,
+            @Nullable Path zipFile,
+            @Nullable Modpack modpack,
             ModrinthManifest manifest,
             GameInstanceID instanceId,
             @Nullable DefaultGameInstance updateTarget,
             @Nullable String iconUrl,
-            @Nullable Set<String> excludedFiles) {
+            @Nullable Set<String> excludedFiles,
+            @Nullable Set<String> previousExcludedFiles) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -135,6 +149,7 @@ public class ModrinthInstallTask extends Task<Void> {
         this.updateTarget = updateTarget;
         this.iconUrl = iconUrl;
         this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
+        this.previousExcludedFiles = previousExcludedFiles == null ? null : Set.copyOf(previousExcludedFiles);
         this.repository = dependencyManager.getGameRepository();
         this.run = repository.getLayout().getInstanceRoot(instanceId);
 
@@ -153,6 +168,14 @@ public class ModrinthInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         this.config = config;
+
+        if (previousExcludedFiles != null) {
+            dependencyManager.validateGameInstance(Objects.requireNonNull(updateTarget));
+            if (config == null)
+                throw new IllegalArgumentException("Cannot read installed Modrinth modpack configuration");
+            return;
+        }
+        Objects.requireNonNull(zipFile);
 
         onDone().register(event -> {
             @Nullable Exception ex = event.getTask().getException();
@@ -226,7 +249,7 @@ public class ModrinthInstallTask extends Task<Void> {
             for (ModrinthManifest.File oldManifestFile : config.getManifest().getFiles()) {
                 Path oldFile = run.resolve(oldManifestFile.path());
                 if (!Files.exists(oldFile)) continue;
-                if (manifest.getFiles().stream().noneMatch(oldManifestFile::equals)) {
+                if (manifest.getFiles().stream().filter(f -> (excludedFiles == null || !excludedFiles.contains(f.key()))).noneMatch(oldManifestFile::equals)) {
                     Files.deleteIfExists(oldFile);
                 }
             }
@@ -249,6 +272,6 @@ public class ModrinthInstallTask extends Task<Void> {
         }
 
         // The game builder runs as a dependent and registers the instance before this phase.
-        dependencies.add(new ModrinthCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest, excludedFiles));
+        dependencies.add(new ModrinthCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest, excludedFiles, previousExcludedFiles));
     }
 }

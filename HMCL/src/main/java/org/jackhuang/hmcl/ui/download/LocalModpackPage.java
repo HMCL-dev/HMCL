@@ -10,6 +10,8 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.collections.transformation.FilteredList;
 import javafx.stage.FileChooser;
+
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
@@ -27,6 +29,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -42,26 +45,27 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class LocalModpackPage extends ModpackPage {
 
     private final BooleanProperty installAsVersion = new SimpleBooleanProperty(true);
-    private Modpack manifest = null;
+    private @Nullable Modpack manifest = null;
     private final ObservableList<ModpackFile> allFiles = FXCollections.observableList(new ArrayList<>());
     private final ObservableSet<String> excludedFiles = FXCollections.observableSet(new HashSet<>());
     private final BooleanProperty loadingOptionalFiles = new SimpleBooleanProperty(false);
     private final BooleanProperty loadedOptionalFiles = new SimpleBooleanProperty(true);
 
+    /// Shows basic information and optional-file choices for an archive or the original installed pack.
     public LocalModpackPage(WizardController controller) {
         super(controller);
-
-        btnOptionalFiles.setOnAction(ev -> controller.onNext(new OptionalFilesPage(
-                this::onInstall,
-                this::loadOptionalFiles,
-                loadingOptionalFiles,
-                loadedOptionalFiles,
-                new FilteredList<>(allFiles, ModpackFile::optional),
-                excludedFiles)));
 
         HMCLGameRepository repository = controller.getSettings().get(ModpackPage.REPOSITORY);
 
         String name = controller.getSettings().get(MODPACK_NAME);
+
+        btnOptionalFiles.setOnAction(ev -> controller.onNext(new OptionalFilesPage(
+                this::onInstall,
+                () -> loadOptionalFiles(name),
+                loadingOptionalFiles,
+                loadedOptionalFiles,
+                new FilteredList<>(allFiles, ModpackFile::optional),
+                excludedFiles)));
         if (name != null) {
             txtModpackName.setText(name);
             txtModpackName.setDisable(true);
@@ -104,7 +108,9 @@ public final class LocalModpackPage extends ModpackPage {
         }
 
         showSpinner();
-        Task.supplyAsync(() -> ModpackHelper.readModpackManifest(selectedFile))
+        Task.supplyAsync(() -> controller.getSettings().getOrDefault(ModpackSelectionPage.CHANGE_OPTIONAL_FILES, false)
+                ? Objects.requireNonNull(controller.getSettings().get(MODPACK_MANIFEST))
+                : ModpackHelper.readModpackManifest(selectedFile))
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
                     if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
@@ -147,7 +153,7 @@ public final class LocalModpackPage extends ModpackPage {
                         if (manifest.getManifest() instanceof ModpackManifest.SupportOptional supportOptional) {
                             allFiles.setAll(supportOptional.getFiles());
                             if (allFiles.stream().anyMatch(ModpackFile::optional)) {
-                                loadOptionalFiles();
+                                loadOptionalFiles(name);
                                 btnOptionalFiles.setVisible(true);
                                 btnOptionalFiles.setManaged(true);
                             }
@@ -156,27 +162,45 @@ public final class LocalModpackPage extends ModpackPage {
                 }).start();
     }
 
-    private void loadOptionalFiles() {
-        Objects.requireNonNull(manifest);
+    /// Loads optional-file metadata and the installed exclusions, reporting recovery failures.
+    private void loadOptionalFiles(@Nullable String instanceId) {
+        ModpackManifest.SupportOptional supportOptional = (ModpackManifest.SupportOptional) Objects.requireNonNull(manifest).getManifest();
         loadingOptionalFiles.set(true);
         loadedOptionalFiles.set(false);
-        Task.supplyAsync(() -> manifest.getManifest().getProvider().loadFiles(DownloadProviders.getDownloadProvider(), manifest.getManifest()))
-                .whenComplete(Schedulers.javafx(), (manifest1, exception) -> {
-                    loadingOptionalFiles.set(false);
-                    List<? extends ModpackFile> files = ((ModpackManifest.SupportOptional) manifest1).getFiles();
-                    manifest.setManifest(manifest1);
-                    allFiles.setAll(files);
-                    if (files.stream().anyMatch(s -> s.optional() && (!s.addonQueried() || s.fileName() == null))) {
-                        LOG.warning("Failed to load optional files");
-                    } else {
-                        loadedOptionalFiles.set(true);
-                    }
-                }).start();
+        @Nullable Path root;
+        if (instanceId != null) {
+            GameInstanceID instanceID = new GameInstanceID(instanceId);
+            HMCLGameRepository repository = controller.getSettings().get(ModpackPage.REPOSITORY);
+            root = repository.getLayout().getInstanceRoot(instanceID);
+        } else {
+            root = null;
+        }
+        Task.supplyAsync(() -> {
+                ModpackManifest.SupportOptional manifest1 = supportOptional.getProvider().loadFiles(DownloadProviders.getDownloadProvider(), supportOptional);
+                Set<String> excluded = root != null ? manifest1.getProvider().recoverExcludedFiles(root, manifest1).getValue() : Set.of();
+                return Pair.pair(manifest1, excluded);
+            })
+            .whenComplete(Schedulers.javafx(), (pair, exception) -> {
+                loadingOptionalFiles.set(false);
+                ModpackManifest.SupportOptional manifest1 = pair.getKey();
+                Set<String> excluded = pair.getValue();
+                List<? extends ModpackFile> files = manifest1.getFiles();
+                manifest.setManifest(manifest1);
+                allFiles.setAll(files);
+                excludedFiles.addAll(excluded);
+                if (files.stream().anyMatch(s -> s.optional() && (!s.addonQueried() || s.fileName() == null))) {
+                    LOG.warning("Failed to load optional files");
+                } else {
+                    loadedOptionalFiles.set(true);
+                }
+            }).start();
     }
 
+    /// Clears source and optional-only mode when returning to source selection.
     @Override
     public void cleanup(SettingsMap settings) {
         settings.remove(MODPACK_FILE);
+        settings.remove(ModpackSelectionPage.CHANGE_OPTIONAL_FILES);
     }
 
     protected void onInstall() {

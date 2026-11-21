@@ -17,13 +17,20 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /// Modrinth modpack index (`modrinth.index.json`).
 @NotNullByDefault
-public class ModrinthManifest implements ModpackManifest, ModpackManifest.SupportOptional, Validation {
+public class ModrinthManifest implements ModpackManifest.SupportOptional, Validation {
 
     /// The game id, typically `minecraft`.
     private final String game;
@@ -128,7 +135,7 @@ public class ModrinthManifest implements ModpackManifest, ModpackManifest.Suppor
     }
 
     @Override
-    public ModpackProvider getProvider() {
+    public ModpackProvider.SupportOptional getProvider() {
         return ModrinthModpackProvider.INSTANCE;
     }
 
@@ -214,6 +221,60 @@ public class ModrinthManifest implements ModpackManifest, ModpackManifest.Suppor
         public int hashCode() {
             return Objects.hash(path, hashes, env, downloads, fileSize);
         }
-    }
 
+        @Override
+        public boolean looksLike(ModpackFile other) {
+            if (!(other instanceof File file))
+                return false;
+            if (other == this)
+                return true;
+
+            // If the sha512 hashes match, or the download URLs intersect
+            // They are exactly the same file.
+            if (Objects.equals(hashes.get("sha512"), file.hashes.get("sha512")) || !Collections.disjoint(downloads, file.downloads))
+                return true;
+
+            // Otherwise, we are going to consider heuristics based on file name and urls
+
+            // If the file paths are identical, we guess they are similar files
+            if (path.equals(file.path))
+                return true;
+
+            // If the two files are in same mod project on Modrinth, Github, or Gitlab
+            // with the base file name matching and only version differing, we consider them similar
+            Set<Object> descriptions = downloads.stream()
+                .map(File::describeUrl)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+            if (file.downloads.stream().map(File::describeUrl).anyMatch(descriptions::contains))
+                return true;
+
+            return false;
+        }
+
+        /// Matches `<name>-<version>.<extension>`, retaining the first name segment and final extension.
+        /// Optional query strings and fragments are ignored.
+        private static final @Unmodifiable List<Pattern> URL_PATTERNS = Stream.of(
+            "^https://cdn\\.modrinth\\.com/data/([a-zA-Z0-9]+)/versions/[a-zA-Z0-9]+/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$",
+            "^https://github\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/releases/download/[^/?#]+/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$",
+            "^https://github\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/releases/latest/download/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$",
+            "^https://raw\\.githubusercontent\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/[^/?#]+/([^?#]+?)/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$",
+            "^https://gitlab\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/-/releases/[^/?#]+/downloads/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$",
+            "^https://gitlab\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/-/releases/permalink/latest/downloads/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$",
+            "^https://gitlab\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/-/raw/[^/?#]+/([^?#]+?)/([^/?#-]+)-[^/?#]+\\.([^./?#]+)(?:\\?[^#]*)?(?:#.*)?$"
+        ).map(Pattern::compile).toList();
+
+        // Strip the version infomation and describe the URL components
+        private static Object describeUrl(String url) {
+            // Format: [matched_url_pattern, captured_group_1, captured_group_2, ...]
+            return url == null ? null : URL_PATTERNS.stream()
+                .map(p -> p.matcher(url))
+                .filter(Matcher::matches)
+                .findFirst()
+                .map(m -> Stream.concat(
+                    Stream.of(m.pattern()),
+                    IntStream.rangeClosed(1, m.groupCount()).mapToObj(m::group)
+                ).toList()).orElse(null);
+        }
+    }
 }
