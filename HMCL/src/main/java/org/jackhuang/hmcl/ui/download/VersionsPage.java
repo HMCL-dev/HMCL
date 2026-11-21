@@ -176,7 +176,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             twoLineListItem.setPadding(new Insets(10, 16, 10, 16));
             ripplerContainer = new RipplerContainer(twoLineListItem);
 
-            FXUtils.onClicked(this, this::onAction);
+            ripplerContainer.setOnAction(event -> this.onAction());
         }
 
         private void onAction() {

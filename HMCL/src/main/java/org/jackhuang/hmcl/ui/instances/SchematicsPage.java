@@ -183,7 +183,7 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
                     box.setMouseTransparent(true);
                     var rippler = new RipplerContainer(box);
                     var finalD = d;
-                    FXUtils.onClicked(rippler, () -> navigateTo(finalD));
+                    rippler.setOnAction(event -> navigateTo(finalD));
                     relPath.getChildren().add(0, rippler);
                     d = d.parent;
                 }
@@ -823,7 +823,7 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
             box.getChildren().setAll(left, center, right);
             StackPane.setMargin(box, new Insets(8));
             setContent(box);
-            FXUtils.onClicked(getFeedbackContainer(), () -> {
+            getFeedbackContainer().setOnAction(event -> {
                 var item = getItem();
                 if (item != null) item.onClick();
             });

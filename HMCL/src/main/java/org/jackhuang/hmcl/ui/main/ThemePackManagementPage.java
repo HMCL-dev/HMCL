@@ -460,7 +460,7 @@ public final class ThemePackManagementPage extends ListPaneBase<ThemePackManager
                 rowRippler.setCursor(Cursor.HAND);
                 ComponentList.setNoPadding(rowRippler);
 
-                FXUtils.onClicked(rowRippler, () -> {
+                rowRippler.setOnAction(event -> {
                     fireEvent(new DialogCloseEvent());
                     page.confirmApplyTheme(themePack, theme);
                 });
@@ -607,7 +607,7 @@ public final class ThemePackManagementPage extends ListPaneBase<ThemePackManager
             icon.getChildren().setAll(iconImage, iconFallback);
             TwoLineListItem.setMargin(icon, new Insets(0, 8, 0, 0));
             content.setLeading(icon);
-            FXUtils.onClicked(getFeedbackContainer(), () -> {
+            getFeedbackContainer().setOnAction(event -> {
                 ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {
                     page.selectThemePack(themePack);
