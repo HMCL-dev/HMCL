@@ -83,6 +83,12 @@ public final class DefaultGameRepositoryDraftTest {
                 return Thread.currentThread().isInterrupted();
             }
 
+            /// Verifies the batch size reported before the simulated download failure.
+            @Override
+            public void notifyPropertiesChanged() {
+                assertEquals(1, task.getProperties().get("total"));
+            }
+
             /// Supplies the remote manifest without opening a connection.
             @Override
             @SuppressWarnings("unchecked")

@@ -7,6 +7,7 @@ import javafx.application.Platform;
 import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -90,59 +91,65 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         return Platform.isFxApplicationThread() ? Schedulers.javafx() : null;
     }
 
-    /// Resolves a task's executor once, before scheduling or entering its body.
-    private Executor resolveExecutor(@Nullable Context parent, Task<?> task) {
+    /// Announces the task's presentation hints and stage, then resolves its executor.
+    private <T extends @Nullable Object> Context<T> prepare(@Nullable Context<?> parent, Task<T> task) {
+        @Nullable TaskStage stage = parent == null ? null : parent.stage;
         try {
-            @Nullable Executor requested = task.getExecutor();
-            if (requested != null)
-                return requested;
-            return parent == null ? Schedulers.tasks() : parent.executor;
+            @Unmodifiable List<Task.StagesHint> hints = task.getStageHints();
+            if (!hints.isEmpty())
+                notifyListeners(listener -> listener.onStagesDeclared(hints));
+            @Nullable String id = task.getStage();
+            if (id != null) {
+                TaskStage declared = new TaskStage(task, id, stage);
+                stage = declared;
+                notifyListeners(listener -> listener.onStageStarted(declared));
+            }
+            @Nullable Executor executor = task.getExecutor();
+            if (executor == null)
+                executor = parent == null ? Schedulers.tasks() : parent.executor;
+            return new Context<>(task, executor, stage);
         } catch (RuntimeException | Error failure) {
-            fail(task, failure);
+            fail(task, stage, failure);
             throw failure;
         }
     }
 
     /// Runs a task inline when the caller already owns a worker of its effective executor.
-    private <T extends @Nullable Object> T runChild(@Nullable Context parent, Task<T> child) throws Exception {
-        Executor executor = resolveExecutor(parent, child);
-        if (executor == currentExecutor())
-            return execute(parent, child, executor);
-        return await(submitChild(parent, child, executor));
+    private <T extends @Nullable Object> T runChild(@Nullable Context<?> parent, Task<T> child) throws Exception {
+        Context<T> context = prepare(parent, child);
+        if (context.executor == currentExecutor())
+            return execute(context);
+        return await(submitChild(context));
     }
 
     /// Schedules a child and records task failure if the executor rejects the submission.
-    private <T extends @Nullable Object> Work<T> submitChild(@Nullable Context parent, Task<T> child, Executor executor) {
-        Work<T> work = new Work<>(executor, () -> execute(parent, child, executor));
+    private <T extends @Nullable Object> Work<T> submitChild(Context<T> context) {
+        Work<T> work = new Work<>(context.executor, () -> execute(context));
         try {
             checkCancellation();
             work.submit();
         } catch (RuntimeException | Error failure) {
-            fail(child, failure);
+            fail(context.task, context.stage, failure);
             work.reject(failure);
         }
         return work;
     }
 
     /// Executes the body and publishes its result before notifying listeners of success.
-    private <T extends @Nullable Object> T execute(@Nullable Context parent, Task<T> task, Executor executor) throws Exception {
+    private <T extends @Nullable Object> T execute(Context<T> context) throws Exception {
+        Task<T> task = context.task;
         T result;
         try {
             checkCancellation();
             task.setState(Task.TaskState.READY);
-            if (task.getStage() != null)
-                task.setInheritedStage(task.getStage());
-            else if (parent != null)
-                task.setInheritedStage(parent.task.getInheritedStage());
-            task.setNotifyPropertiesChanged(() -> notifyListeners(listener -> listener.onPropertiesUpdate(task)));
             if (task.getSignificance().shouldLog())
                 LOG.trace("Executing task: " + task.getName());
             notifyListeners(listener -> listener.onReady(task));
             checkCancellation();
             task.setState(Task.TaskState.RUNNING);
-            notifyListeners(listener -> listener.onRunning(task));
+            notifyListeners(listener -> listener.onRunning(task, context.stage));
             try {
-                result = task.execute(new Context(task, executor));
+                result = task.execute(context);
             } finally {
                 task.setState(Task.TaskState.EXECUTED);
             }
@@ -151,25 +158,33 @@ public final class AsyncTaskExecutor extends TaskExecutor {
             Throwable cause = Objects.requireNonNullElse(Lang.resolveException(failure), failure);
             if (cause instanceof InterruptedException)
                 cause = new CancellationException(cause.getMessage());
-            fail(task, cause);
+            fail(task, context.stage, cause);
             throw asException(cause);
         }
 
         task.publishResult(result);
         task.setState(Task.TaskState.SUCCEEDED);
         notifyListeners(listener -> listener.onFinished(task));
+        finishStage(task, context.stage, null);
         if (task.getSignificance().shouldLog())
             LOG.trace("Task finished: " + task.getName());
         return result;
     }
 
     /// Records the checked failure exposed by a task and delivers its terminal notifications.
-    private void fail(Task<?> task, Throwable cause) {
+    private void fail(Task<?> task, @Nullable TaskStage stage, Throwable cause) {
         Exception recorded = cause instanceof Exception e ? e : new Exception(cause);
         task.setException(recorded);
         exception = recorded;
         task.setState(Task.TaskState.FAILED);
         notifyListeners(listener -> listener.onFailed(task, cause));
+        finishStage(task, stage, cause);
+    }
+
+    /// Closes a declared stage when its owning task reaches its terminal state.
+    private void finishStage(Task<?> task, @Nullable TaskStage stage, @Nullable Throwable failure) {
+        if (stage != null && stage.task() == task)
+            notifyListeners(listener -> listener.onStageFinished(stage, failure));
     }
 
     /// Delivers a notification to each listener even if another listener fails.
@@ -214,22 +229,31 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
     /// Executes children under a single parent and shares this executor's listeners and cancellation.
     @NotNullByDefault
-    private final class Context implements TaskExecutionContext {
-        /// The running task, used for stage inheritance.
-        private final Task<?> task;
+    private final class Context<R extends @Nullable Object> implements TaskExecutionContext {
+        /// The task to execute and the source of its property notifications.
+        private final Task<R> task;
 
         /// Executor inherited by children that have no executor preference.
         private final Executor executor;
 
-        /// Binds child execution to the running task and its effective executor.
-        Context(Task<?> task, Executor executor) {
+        /// Stage declared by the running task or inherited from its parent.
+        private final @Nullable TaskStage stage;
+
+        /// Binds the task to its effective executor and stage for this execution.
+        Context(Task<R> task, Executor executor, @Nullable TaskStage stage) {
             this.task = task;
             this.executor = executor;
+            this.stage = stage;
         }
 
         @Override
         public boolean isCancelled() {
             return isCancelledOrInterrupted();
+        }
+
+        @Override
+        public void notifyPropertiesChanged() {
+            notifyListeners(listener -> listener.onPropertiesUpdate(task, stage));
         }
 
         @Override
@@ -244,7 +268,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
             @Nullable Throwable failure = null;
             for (Task<? extends T> child : List.copyOf(tasks)) {
                 try {
-                    children.add(submitChild(this, child, resolveExecutor(this, child)));
+                    children.add(submitChild(prepare(this, child)));
                 } catch (RuntimeException | Error e) {
                     failure = batchFailure(failure, e);
                 }

@@ -28,7 +28,6 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
     private final List<LocalAddonFile<?>> failedAddons = new ArrayList<>();
 
     public AddonUpdateTask(DownloadProvider downloadProvider, Path addonDirectory, List<AddonUpdate> addons) {
-        setStage("addon.check_update.confirm");
         getProperties().put("total", addons.size());
 
         for (AddonUpdate addon : addons) {
@@ -75,7 +74,7 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
                             LOG.warning("Failed to update addon", exception);
                             failedAddons.add(local);
                         }
-                    }).withCounter("addon.check_update.confirm"));
+                    }).withCounter());
         }
     }
 
@@ -83,10 +82,16 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
         return failedAddons;
     }
 
+    /// Returns the stage for addon updates.
+    @Override
+    public String getStage() {
+        return "addon.check_update.confirm";
+    }
+
     /// Downloads the selected updates and waits for each addon's cleanup to finish.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        notifyPropertiesChanged();
+        context.notifyPropertiesChanged();
         context.runAll(updates);
         return null;
     }

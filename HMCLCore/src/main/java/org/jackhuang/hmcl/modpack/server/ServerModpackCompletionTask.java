@@ -79,12 +79,17 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
             this.manifest = manifest;
         }
 
-        setStage("hmcl.modpack.download");
         setSignificance(TaskSignificance.MODERATE);
     }
 
     private Map<String, String> toMap(Collection<ServerModpackManifest.Addon> addons) {
         return addons.stream().collect(Collectors.toMap(ServerModpackManifest.Addon::getId, ServerModpackManifest.Addon::getVersion));
+    }
+
+    /// Returns the stage for modpack downloads.
+    @Override
+    public String getStage() {
+        return "hmcl.modpack.download";
     }
 
     /// Synchronizes game components and files against the remote manifest.
@@ -151,7 +156,7 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
                         remoteManifest.getFileApi() + "/overrides/" + file.getPath(),
                         actualPath,
                         new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
-                        .withCounter("hmcl.modpack.download"));
+                        .withCounter());
             }
         }
 
@@ -163,7 +168,7 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
         }
 
         getProperties().put("total", dependencies.size());
-        notifyPropertiesChanged();
+        context.notifyPropertiesChanged();
 
         try {
             context.runAll(dependencies);

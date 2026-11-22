@@ -48,8 +48,13 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
         this.assetIndexFile = gameRepository.getLayout().getAssetIndexFile(assetId);
         this.integrityCheck = integrityCheck;
 
-        setStage("hmcl.install.assets");
         indexTask = new GameAssetIndexDownloadTask(dependencyManager, this.manifest, forceDownloadingIndex);
+    }
+
+    /// Returns the stage for game asset downloads.
+    @Override
+    public String getStage() {
+        return "hmcl.install.assets";
     }
 
     /// Obtains the asset index, verifies existing assets and downloads the missing or invalid files in parallel.
@@ -86,7 +91,7 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
                         .resolve("assets").resolve("objects").resolve(assetObject.getLocation()));
                 task.setCacheRepository(dependencyManager.getCacheRepository());
                 task.setCaching(true);
-                dependencies.add(task.withCounter("hmcl.install.assets"));
+                dependencies.add(task.withCounter());
             } else {
                 dependencyManager.getCacheRepository().tryCacheFile(file, CacheRepository.SHA1, assetObject.hash());
             }
@@ -96,7 +101,7 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
 
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
-            notifyPropertiesChanged();
+            context.notifyPropertiesChanged();
         }
         context.runAll(dependencies);
         return null;

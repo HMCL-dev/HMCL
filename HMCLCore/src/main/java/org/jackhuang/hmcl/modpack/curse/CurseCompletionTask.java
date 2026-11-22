@@ -95,8 +95,13 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
                 LOG.warning("Unable to read CurseForge modpack manifest.json", e);
             }
 
-        setStage("hmcl.modpack.download");
         setSignificance(TaskSignificance.MODERATE);
+    }
+
+    /// Returns the stage for modpack downloads.
+    @Override
+    public String getStage() {
+        return "hmcl.modpack.download";
     }
 
     /// Resolves missing files and waits for all requested downloads to finish.
@@ -162,7 +167,7 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
                         var task = new FileDownloadTask(f.url(), path, f.getIntegrityCheck());
                         task.setCacheRepository(dependency.getCacheRepository());
                         task.setCaching(true);
-                        return Stream.<Task<?>>of(task.withCounter("hmcl.modpack.download"));
+                        return Stream.<Task<?>>of(task.withCounter());
                     } catch (IOException e) {
                         LOG.warning("Could not query api.curseforge.com for mod: " + f.projectID() + ", " + f.fileID(), e);
                         return Stream.empty(); // Ignore this file.
@@ -174,7 +179,7 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
 
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
-            notifyPropertiesChanged();
+            context.notifyPropertiesChanged();
         }
 
         try {

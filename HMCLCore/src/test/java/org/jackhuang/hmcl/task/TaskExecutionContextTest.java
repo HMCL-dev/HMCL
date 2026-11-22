@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.task;
 import javafx.application.Platform;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
@@ -12,7 +13,9 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -20,6 +23,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -329,6 +333,159 @@ final class TaskExecutionContextTest {
         assertNull(root.getException());
     }
 
+    /// A task owns its declared stage from the running notification onward. Children on other
+    /// workers inherit it, even when an enclosing task uses the same identifier.
+    @Test
+    void stagesBelongToTasksAcrossWorkerPools() {
+        Task<Thread> leaf = Task.supplyAsync(Schedulers.io(), Thread::currentThread);
+        Task<Thread> counted = leaf.withCounter();
+        Task<Thread> nested = task(null, "download", context -> {
+            context.notifyPropertiesChanged();
+            return context.runAll(List.of(counted)).get(0);
+        });
+        Task<Integer> sibling = Task.completed(7);
+        Task<Integer> outer = task(context -> {
+            assertNotSame(Thread.currentThread(), context.run(nested));
+            return context.run(sibling);
+        }).withStage("download");
+        Task<Integer> root = task(context -> context.run(outer));
+        Map<Task<?>, @Nullable TaskStage> running = new HashMap<>();
+        Map<Task<?>, @Nullable TaskStage> properties = new HashMap<>();
+        StageEvents events = new StageEvents() {
+            /// Captures the stage delivered with the running task itself.
+            @Override
+            public void onRunning(Task<?> task, @Nullable TaskStage stage) {
+                running.put(task, stage);
+            }
+
+            /// Captures the stage of explicit property changes and completed-item notifications.
+            @Override
+            public void onPropertiesUpdate(Task<?> task, @Nullable TaskStage stage) {
+                properties.put(task, stage);
+            }
+        };
+
+        assertTrue(root.executor(events).test());
+        assertEquals(7, root.getResult());
+        assertEquals(2, events.started.size());
+        TaskStage first = events.started.get(0);
+        TaskStage second = events.started.get(1);
+        assertSame(outer, first.task());
+        assertSame(nested, second.task());
+        assertEquals("download", first.id());
+        assertEquals("download", second.id());
+        assertNull(first.parent());
+        assertSame(first, second.parent());
+        assertSame(first, running.get(outer));
+        assertSame(second, running.get(nested));
+        assertSame(second, running.get(leaf));
+        assertSame(first, running.get(sibling));
+        assertTrue(running.containsKey(root));
+        assertNull(running.get(root));
+        assertNull(leaf.getStage());
+        assertNull(sibling.getStage());
+        assertEquals(Map.of(nested, second, counted, second), properties);
+        assertEquals(List.of(second, first), events.finished);
+        assertEquals(Arrays.asList(null, null), events.failures);
+    }
+
+    /// A parent that handles a child's exception, error or scheduling rejection can finish
+    /// its own stage successfully. Each child stage reports the original failure once.
+    @Test
+    void recoversFromFailedStages() {
+        IOException exception = new IOException("Download failed");
+        AssertionError error = new AssertionError("Unexpected failure");
+        RejectedExecutionException rejection = new RejectedExecutionException("Worker unavailable");
+        Task<?> failed = Task.failed(exception).withStage("checked");
+        Task<?> broken = task(null, "error", context -> {
+            throw error;
+        });
+        Task<?> rejected = task(command -> {
+            throw rejection;
+        }, "rejected", context -> fail("Unexpected execution"));
+        Task<Integer> root = task(null, "outer", context -> {
+            assertSame(exception, assertThrows(IOException.class, () -> context.run(failed)));
+            assertSame(error, assertThrows(AssertionError.class, () -> context.run(broken)));
+            assertSame(rejection, assertThrows(RejectedExecutionException.class, () -> context.runAll(List.of(rejected))));
+            return 42;
+        });
+
+        StageEvents events = new StageEvents();
+        assertTrue(root.executor(events).test());
+        assertEquals(42, root.getResult());
+        assertEquals(List.of(root, failed, broken, rejected), events.started.stream().map(TaskStage::task).toList());
+        TaskStage outer = events.started.get(0);
+        assertEquals(List.of(events.started.get(1), events.started.get(2), events.started.get(3), outer), events.finished);
+        assertEquals(Arrays.asList(exception, error, rejection, null), events.failures);
+    }
+
+    /// A root cancelled before dispatch still reports the start and cancellation of its stage.
+    @Test
+    void closesStageOfPreCancelledRoot() {
+        StageEvents events = new StageEvents();
+        Task<?> root = task(null, "cancelled", context -> fail("Unexpected execution"));
+        TaskExecutor executor = root.executor(events);
+        executor.cancel();
+        assertFalse(executor.test());
+        assertEquals(1, events.started.size());
+        assertSame(root, events.started.get(0).task());
+        assertEquals(events.started, events.finished);
+        assertEquals(List.of(assertInstanceOf(CancellationException.class, root.getException())), events.failures);
+    }
+
+    /// Hints declared during execution follow root hints and precede the staged task they describe.
+    @Test
+    void announcesNestedHintsWhenDispatched() {
+        Task.StagesHint check = new Task.StagesHint("check");
+        Task.StagesHint install = new Task.StagesHint("install", List.of("download"));
+        Task.StagesHint runtime = new Task.StagesHint("runtime");
+        Task<Integer> root = task(context ->
+                context.run(Task.completed(42).withStage("runtime").withStagesHints(runtime)))
+                .withStagesHints(check, install);
+        List<Task.StagesHint> declarations = new ArrayList<>();
+        List<Task.StagesHint> atStageStart = new ArrayList<>();
+        assertTrue(root.executor(new TaskListener() {
+            /// Preserves declaration order across callbacks.
+            @Override
+            public void onStagesDeclared(@Unmodifiable List<Task.StagesHint> hints) {
+                declarations.addAll(hints);
+            }
+
+            /// Records which declarations are already visible at stage entry.
+            @Override
+            public void onStageStarted(TaskStage stage) {
+                atStageStart.addAll(declarations);
+            }
+        }).test());
+        assertEquals(List.of(check, install, runtime), declarations);
+        assertEquals(declarations, atStageStart);
+    }
+
+    /// Records stage events from tests that dispatch one child at a time.
+    private static class StageEvents extends TaskListener {
+        /// Stages in dispatch order.
+        private final List<TaskStage> started = new ArrayList<>();
+
+        /// Stages in completion order.
+        private final List<TaskStage> finished = new ArrayList<>();
+
+        /// Outcomes in completion order, with null denoting success.
+        private final List<@Nullable Throwable> failures = new ArrayList<>();
+
+        /// Records the identity of the new stage.
+        @Override
+        public void onStageStarted(TaskStage stage) {
+            started.add(stage);
+        }
+
+        /// Records the stage identity and cause from the terminal notification.
+        @Override
+        public void onStageFinished(TaskStage stage, @Nullable Throwable failure) {
+            finished.add(stage);
+            failures.add(failure);
+        }
+    }
+
     /// Creates a task exposing its context to a test body.
     private static <T extends @Nullable Object> Task<T> task(Body<T> body) {
         return task(null, body);
@@ -336,12 +493,25 @@ final class TaskExecutionContextTest {
 
     /// Creates a task with an optional executor preference for its body.
     private static <T extends @Nullable Object> Task<T> task(@Nullable Executor executor, Body<T> body) {
+        return task(executor, null, body);
+    }
+
+    /// Creates a task declaring the given stage, or inheriting its parent's when null.
+    private static <T extends @Nullable Object> Task<T> task(@Nullable Executor executor, @Nullable String stage, Body<T> body) {
         return new Task<>() {
+            /// Returns the test task's stage declaration.
+            @Override
+            public @Nullable String getStage() {
+                return stage;
+            }
+
+            /// Returns the test task's executor preference.
             @Override
             public @Nullable Executor getExecutor() {
                 return executor;
             }
 
+            /// Invokes the test body on the selected worker.
             @Override
             public T execute(TaskExecutionContext context) throws Exception {
                 return body.execute(context);

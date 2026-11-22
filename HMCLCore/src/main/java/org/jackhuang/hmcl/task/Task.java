@@ -15,6 +15,7 @@ import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -60,55 +61,24 @@ public abstract class Task<T extends @Nullable Object> {
         return this;
     }
 
-    /// Stage explicitly assigned to this task, or `null` to inherit its parent's stage.
-    private @Nullable String stage = null;
-
-    /// Returns this task's explicitly assigned stage, or `null` if none was assigned.
+    /// Returns the identifier of the stage this task opens when dispatched, or `null` to
+    /// inherit its parent's stage. A root task returning `null` runs outside any stage.
+    /// The stage covers this task and is inherited by children until they declare their own.
+    /// The stage succeeds if this task succeeds, even if it recovers from a child failure.
+    ///
+    /// @implSpec The default implementation returns `null`.
     public @Nullable String getStage() {
-        return stage;
-    }
-
-    /// Assigns the stage used to group this task and its children during execution.
-    protected final void setStage(@Nullable String stage) {
-        this.stage = stage;
-    }
-
-    /// Effective stage resolved by the executor, or `null` when none is available.
-    private @Nullable String inheritedStage = null;
-
-    /// Returns the effective stage assigned by the executor, or `null` before stage resolution or if no stage applies.
-    public @Nullable String getInheritedStage() {
-        return inheritedStage;
-    }
-
-    /// Records the effective stage for this execution.
-    void setInheritedStage(@Nullable String inheritedStage) {
-        this.inheritedStage = inheritedStage;
+        return null;
     }
 
     /// Lazily allocated mutable properties shared with task observers.
-    @Nullable Map<String, Object> properties;
+    private @Nullable Map<String, Object> properties;
 
-    /// Returns the live, mutable property map for this task. Call [#notifyPropertiesChanged()]
+    /// Returns the live, mutable property map for this task. Call [TaskExecutionContext#notifyPropertiesChanged()]
     /// after updating values that should be reflected by execution listeners.
     public Map<String, Object> getProperties() {
         if (properties == null) properties = new HashMap<>();
         return properties;
-    }
-
-    /// Notifies the active execution listeners when task properties change.
-    private @Nullable Runnable notifyPropertiesChanged;
-
-    /// Installs the property-change notification for the current execution.
-    void setNotifyPropertiesChanged(Runnable runnable) {
-        this.notifyPropertiesChanged = runnable;
-    }
-
-    /// Notifies the execution listeners that the task properties may have changed.
-    protected void notifyPropertiesChanged() {
-        if (notifyPropertiesChanged != null) {
-            notifyPropertiesChanged.run();
-        }
     }
 
     /// Most recent execution state, initially [TaskState#READY].
@@ -519,7 +489,8 @@ public abstract class Task<T extends @Nullable Object> {
         return whenComplete(executor, () -> success.accept(getResult()), failure);
     }
 
-    /// Returns a wrapper that supplies `stage` to this task through stage inheritance.
+    /// Returns a task that declares `stage` and runs this task as its child.
+    /// If this task declares its own stage, that stage is nested inside `stage`.
     public Task<T> withStage(String stage) {
         return new StageTask(stage);
     }
@@ -532,15 +503,29 @@ public abstract class Task<T extends @Nullable Object> {
         return new FakeProgressTask(done, k).setName(name).setSignificance(TaskSignificance.MAJOR);
     }
 
-    /// Describes a stage and the alternate identifiers grouped with it.
+    /// Describes a stage row and the alternate identifiers displayed in that row.
     ///
     /// @param stage the primary stage identifier
-    /// @param aliases the alternate identifiers, retained by reference
-    public record StagesHint(String stage, List<String> aliases) {
+    /// @param aliases the alternate identifiers, copied at construction
+    public record StagesHint(String stage, @Unmodifiable List<String> aliases) {
+        /// Creates a hint with an immutable snapshot of the supplied aliases.
+        public StagesHint {
+            Objects.requireNonNull(stage);
+            aliases = List.copyOf(aliases);
+        }
+
         /// Creates a stage hint with no aliases.
         public StagesHint(String stage) {
             this(stage, List.of());
         }
+    }
+
+    /// Returns the stage rows this task declares for display, in presentation order.
+    /// A hint can declare a row before any task enters the corresponding stage.
+    ///
+    /// @implSpec The default implementation returns an empty list.
+    public @Unmodifiable List<StagesHint> getStageHints() {
+        return List.of();
     }
 
     /// Returns a wrapper with one stage hint per identifier, in argument order.
@@ -550,40 +535,30 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Returns a wrapper with an immutable snapshot of the supplied hints.
     public Task<T> withStagesHints(StagesHint... hints) {
-        return new StagesHintTask(List.of(hints));
+        return withStagesHints(List.of(hints));
     }
 
-    /// Returns a wrapper retaining the supplied list of stage hints.
+    /// Returns a wrapper that declares an immutable snapshot of the supplied stage rows.
     public Task<T> withStagesHints(List<StagesHint> hints) {
-        return new StagesHintTask(hints);
+        @Unmodifiable List<StagesHint> rows = List.copyOf(hints);
+        return new Task<T>() {
+            /// Returns the stage rows supplied to the wrapper.
+            @Override
+            public @Unmodifiable List<StagesHint> getStageHints() {
+                return rows;
+            }
+
+            /// Runs the wrapped task and returns its result.
+            @Override
+            public T execute(TaskExecutionContext context) throws Exception {
+                return context.run(Task.this);
+            }
+        }.setSignificance(TaskSignificance.MODERATE);
     }
 
-    /// Runs the enclosing task and exposes stage hints to listeners.
-    public class StagesHintTask extends Task<T> {
-        /// Stage hints supplied to the constructor.
-        private final List<StagesHint> hints;
-
-        /// Creates a wrapper that retains `hints` by reference.
-        public StagesHintTask(List<StagesHint> hints) {
-            this.hints = hints;
-            setSignificance(TaskSignificance.MODERATE);
-        }
-
-        /// {@inheritDoc}
-        @Override
-        public T execute(TaskExecutionContext context) throws Exception {
-            return context.run(Task.this);
-        }
-
-        /// Returns the supplied list of stage hints.
-        public List<StagesHint> getHints() {
-            return hints;
-        }
-    }
-
-    /// Returns a wrapper that signals a completed item for `countStage` after this task succeeds.
-    public Task<T> withCounter(String countStage) {
-        return new CountTask(countStage);
+    /// Returns a wrapper that reports one completed item in its inherited stage after this task succeeds.
+    public Task<T> withCounter() {
+        return new CountTask();
     }
 
     /// Creates a task with no executor preference that runs `closure` and returns `null`.
@@ -811,10 +786,19 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Provides an enclosing stage for the wrapped task.
     private final class StageTask extends Task<T> {
+        /// The stage declared by the wrapper.
+        private final String stage;
+
         /// Creates a stage wrapper for the enclosing task.
         private StageTask(String stage) {
-            this.setStage(stage);
+            this.stage = Objects.requireNonNull(stage);
             setSignificance(TaskSignificance.MODERATE);
+        }
+
+        /// Returns the stage enclosing the wrapped task.
+        @Override
+        public String getStage() {
+            return stage;
         }
 
         /// {@inheritDoc}
@@ -865,25 +849,16 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Identifies a completed item for a stage counter.
     public final class CountTask extends Task<T> {
-        /// Stage whose completed-item counter is advanced.
-        private final String countStage;
-
-        /// Creates a wrapper associated with the supplied counter stage.
-        private CountTask(String countStage) {
-            this.countStage = countStage;
+        /// Creates a wrapper that reports the wrapped task's success.
+        private CountTask() {
             setSignificance(TaskSignificance.MINOR);
-        }
-
-        /// Returns the stage whose completed items include this task.
-        public String getCountStage() {
-            return countStage;
         }
 
         /// {@inheritDoc}
         @Override
         public T execute(TaskExecutionContext context) throws Exception {
             T value = context.run(Task.this);
-            notifyPropertiesChanged();
+            context.notifyPropertiesChanged();
             return value;
         }
     }

@@ -11,8 +11,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
 /// Executes children within the current task's cancellation and listener scope.
-/// Children whose [Task#getExecutor()] returns null inherit the executor running the current
-/// task's body. Each child can in turn supply this executor to its own children.
+/// Children whose [Task#getExecutor()] returns `null` inherit the executor running the current
+/// task's body. Children whose [Task#getStage()] returns `null` inherit the current task's stage.
 /// A task must use its context only on the thread executing its body and before the body returns.
 /// While waiting, a worker may execute submissions from the awaited child's subtree on its
 /// own executor. Use the same executor instance for work requiring the same worker.
@@ -23,6 +23,10 @@ public interface TaskExecutionContext {
     /// Returns true if cancellation has been requested for this task tree or the calling thread
     /// is interrupted. This method preserves the thread's interrupted status.
     boolean isCancelled();
+
+    /// Notifies listeners that the running task's [properties][Task#getProperties()] may have
+    /// changed. Listeners receive the task and its effective stage.
+    void notifyPropertiesChanged();
 
     /// Runs a child to completion and returns its published result.
     ///

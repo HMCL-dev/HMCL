@@ -8,13 +8,17 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.SVGPath;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -31,6 +35,7 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -170,7 +175,7 @@ final class TaskExecutorDialogPaneTest {
             TaskListPane list = new TaskListPane();
             new Scene(list, 480, 240);
             TaskExecutor executor = Task.runAsync("Visible task", () -> {
-                throw new java.io.IOException(message);
+                throw new IOException(message);
             }).executor();
             list.setExecutor(executor);
             assertFalse(executor.test());
@@ -184,6 +189,145 @@ final class TaskExecutorDialogPaneTest {
                     .map(Label.class::cast)
                     .anyMatch(label -> message.equals(label.getText())));
             return true;
+        });
+    }
+
+    /// Places both a declaring task and its child between their stage heading and the next stage.
+    @Test
+    void groupsOwnerAndInheritingChildUnderTheirStage() throws Exception {
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        Task<?> owner = new Task<@Nullable Void>() {
+            @Override
+            public String getStage() {
+                return "update.checking";
+            }
+
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                return context.run(Task.runAsync("Child task", () -> {
+                    entered.countDown();
+                    assertTrue(release.await(10, TimeUnit.SECONDS));
+                }));
+            }
+        }.setName("Owner task");
+        TaskExecutor executor = owner.withStagesHints("update.checking", "launch.state.logging_in").executor();
+        TaskListPane pane = showTaskList(executor);
+        CompletableFuture<Boolean> result = CompletableFuture.supplyAsync(executor::test);
+        try {
+            assertTrue(entered.await(10, TimeUnit.SECONDS));
+            onFxThread(() -> {
+                int start = findRow(pane, i18n("update.checking")).getIndex();
+                int end = findRow(pane, i18n("launch.state.logging_in")).getIndex();
+                int ownerIndex = findRow(pane, "Owner task").getIndex();
+                int childIndex = findRow(pane, "Child task").getIndex();
+                assertTrue(start < ownerIndex && ownerIndex < end);
+                assertTrue(start < childIndex && childIndex < end);
+                return true;
+            });
+        } finally {
+            release.countDown();
+        }
+        assertTrue(result.get(10, TimeUnit.SECONDS));
+    }
+
+    /// Retains a failed independent stage when a sibling shares its row in either completion order.
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void retainsFailedStageAcrossSiblingCompletions(boolean failureFirst) throws Exception {
+        CountDownLatch bothStarted = new CountDownLatch(2);
+        CountDownLatch firstFinished = new CountDownLatch(1);
+        Task<?> first = Task.runAsync(() -> {
+            assertTrue(bothStarted.await(10, TimeUnit.SECONDS));
+            if (failureFirst)
+                throw new IOException("First stage failed");
+        }).withStage("first");
+        Task<?> second = Task.runAsync(() -> {
+            assertTrue(firstFinished.await(10, TimeUnit.SECONDS));
+            if (!failureFirst)
+                throw new IOException("Second stage failed");
+        }).withStage("second");
+        TaskExecutor executor = Task.allOf(first, second)
+                .withStagesHints(new Task.StagesHint("update.checking", List.of("first", "second")))
+                .executor();
+        TaskListPane pane = showTaskList(executor);
+        executor.addTaskListener(new TaskListener() {
+            @Override
+            public void onStageStarted(TaskStage stage) {
+                bothStarted.countDown();
+            }
+
+            @Override
+            public void onStageFinished(TaskStage stage, @Nullable Throwable failure) {
+                if (stage.id().equals("first"))
+                    firstFinished.countDown();
+            }
+        });
+
+        assertFalse(executor.test());
+        assertInstanceOf(IOException.class, (failureFirst ? first : second).getException());
+        assertEquals(Task.TaskState.SUCCEEDED, (failureFirst ? second : first).getState());
+        assertEquals(SVG.CLOSE.getPath(), stageIcon(pane, i18n("update.checking")));
+    }
+
+    /// Displays the enclosing stage's outcome on recovery and counts only successful items.
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void displaysRecoveredStageAndCompletedItemCount(boolean mergeStages) throws Exception {
+        Task<?> owner = new Task<@Nullable Void>() {
+            @Override
+            public String getStage() {
+                return "update.checking";
+            }
+
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                getProperties().put("total", 2);
+                context.notifyPropertiesChanged();
+                context.run(Task.completed(1).withCounter());
+                assertThrows(IOException.class, () -> context.run(Task.failed(new IOException("Check failed"))
+                        .withCounter().withStage("launch.state.logging_in")));
+                return null;
+            }
+        };
+        if (mergeStages)
+            owner = owner.withStagesHints(new Task.StagesHint("update.checking", List.of("launch.state.logging_in")));
+        TaskExecutor executor = owner.executor();
+        TaskListPane pane = showTaskList(executor);
+
+        assertTrue(executor.test());
+        assertEquals(SVG.CHECK.getPath(), stageIcon(pane, i18n("update.checking") + " - 1/2"));
+        if (!mergeStages)
+            assertEquals(SVG.CLOSE.getPath(), stageIcon(pane, i18n("launch.state.logging_in")));
+    }
+
+    /// Attaches a list to a scene so its stage rows are available for inspection.
+    private static TaskListPane showTaskList(TaskExecutor executor) throws Exception {
+        return onFxThread(() -> {
+            TaskListPane pane = new TaskListPane();
+            new Scene(pane, 480, 240);
+            pane.setExecutor(executor);
+            return pane;
+        });
+    }
+
+    /// Returns the visible row with the supplied title on the JavaFX thread.
+    private static ListCell<?> findRow(TaskListPane pane, String title) {
+        pane.applyCss();
+        pane.layout();
+        for (Node cell : pane.lookupAll(".list-cell")) {
+            if (cell instanceof ListCell<?> item && item.getGraphic() instanceof BorderPane row
+                    && row.getCenter() instanceof Label label && title.equals(label.getText()))
+                return item;
+        }
+        return fail("Missing task list row: " + title);
+    }
+
+    /// Returns the displayed status icon for the named stage.
+    private static String stageIcon(TaskListPane pane, String title) throws Exception {
+        return onFxThread(() -> {
+            BorderPane row = (BorderPane) findRow(pane, title).getGraphic();
+            return assertInstanceOf(SVGPath.class, row.getLeft().lookup("SVGPath")).getContent();
         });
     }
 

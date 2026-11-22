@@ -75,8 +75,13 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
         this.configurationFile = instance.getModpackConfigurationFile();
         this.configuration = configuration;
 
-        setStage("hmcl.modpack.download");
         setSignificance(TaskSignificance.MODERATE);
+    }
+
+    /// Returns the stage for modpack downloads.
+    @Override
+    public String getStage() {
+        return "hmcl.modpack.download";
     }
 
     /// Updates the manifest and completes downloads for its CurseForge entries.
@@ -248,14 +253,14 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
                         var task = new FileDownloadTask(curseFile.getUrl(), modManager.getSimpleModPath(curseFile.getFileName()));
                         task.setCacheRepository(dependency.getCacheRepository());
                         task.setCaching(true);
-                        dependencies.add(task.withCounter("hmcl.modpack.download"));
+                        dependencies.add(task.withCounter());
                     }
                 }
             }
 
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
-            notifyPropertiesChanged();
+            context.notifyPropertiesChanged();
         }
 
         context.runAll(dependencies);

@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.task;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -21,15 +22,9 @@ public abstract class TaskExecutor {
     /// The recorded task failure, if any.
     protected volatile @Nullable Exception exception;
 
-    /// Stage descriptions supplied with the root task.
-    private final List<Task.StagesHint> hints;
-
     /// Creates an executor for the task and its children.
     public TaskExecutor(Task<?> task) {
         this.firstTask = task;
-        this.hints = task instanceof Task<?>.StagesHintTask hintTask
-                ? hintTask.getHints()
-                : List.of();
     }
 
     /// Registers a listener for subsequent notifications. Register before starting to observe the entire execution.
@@ -58,8 +53,8 @@ public abstract class TaskExecutor {
         return cancelled;
     }
 
-    /// Returns the stage hints supplied with the root task, or an empty list if absent.
-    public List<Task.StagesHint> getHints() {
-        return hints;
+    /// Returns the root task's [stage hints][Task#getStageHints()].
+    public @Unmodifiable List<Task.StagesHint> getHints() {
+        return firstTask.getStageHints();
     }
 }

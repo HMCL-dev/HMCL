@@ -89,8 +89,13 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
                 LOG.warning("Unable to read Modrinth modpack manifest.json", e);
             }
 
-        setStage("hmcl.modpack.download");
         setSignificance(TaskSignificance.MODERATE);
+    }
+
+    /// Returns the stage for modpack downloads.
+    @Override
+    public String getStage() {
+        return "hmcl.modpack.download";
     }
 
     /// Resolves missing files and waits for all requested downloads to finish.
@@ -132,12 +137,12 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
                     filePath);
             task.setCacheRepository(dependency.getCacheRepository());
             task.setCaching(true);
-            dependencies.add(task.withCounter("hmcl.modpack.download"));
+            dependencies.add(task.withCounter());
         }
 
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
-            notifyPropertiesChanged();
+            context.notifyPropertiesChanged();
         }
 
         try {

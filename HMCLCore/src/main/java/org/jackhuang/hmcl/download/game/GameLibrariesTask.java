@@ -60,7 +60,6 @@ public final class GameLibrariesTask extends Task<@Nullable Void> {
         this.integrityCheck = integrityCheck;
         this.libraries = libraries;
 
-        setStage("hmcl.install.libraries");
         setSignificance(TaskSignificance.MODERATE);
     }
 
@@ -106,6 +105,12 @@ public final class GameLibrariesTask extends Task<@Nullable Void> {
         }
     }
 
+    /// Returns the stage for game library downloads.
+    @Override
+    public String getStage() {
+        return "hmcl.install.libraries";
+    }
+
     /// Checks applicable libraries and downloads missing or invalid files in parallel.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
@@ -131,7 +136,7 @@ public final class GameLibrariesTask extends Task<@Nullable Void> {
                             DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
                             DownloadCandidates urls = downloadProvider.getDownloadCandidates(fmlLib.downloadUrl());
                             dependencies.add(new FileDownloadTask(urls, file)
-                                    .withCounter("hmcl.install.libraries"));
+                                    .withCounter());
                         }
                     }
                 }
@@ -172,7 +177,7 @@ public final class GameLibrariesTask extends Task<@Nullable Void> {
             }
 
             if (shouldDownloadLibrary(gameRepository, manifest, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.groupId()))) {
-                dependencies.add(new LibraryDownloadTask(dependencyManager, file, library).withCounter("hmcl.install.libraries"));
+                dependencies.add(new LibraryDownloadTask(dependencyManager, file, library).withCounter());
             } else {
                 dependencyManager.getCacheRepository().tryCacheLibrary(library, file);
             }
@@ -182,7 +187,7 @@ public final class GameLibrariesTask extends Task<@Nullable Void> {
 
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
-            notifyPropertiesChanged();
+            context.notifyPropertiesChanged();
         }
         context.runAll(dependencies);
         return null;

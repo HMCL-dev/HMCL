@@ -52,17 +52,22 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
 
                     if (candidate == null) return null; // If there's no candidate for all channels, then no candidate for release channel
                     return Pair.pair(candidate, candidateRelease);
-                }).setName(addon.getFileName()).setSignificance(TaskSignificance.MAJOR).withCounter("update.checking")
+                }).setName(addon.getFileName()).setSignificance(TaskSignificance.MAJOR).withCounter()
         ).toList();
 
-        setStage("update.checking");
         getProperties().put("total", checks.size());
+    }
+
+    /// Returns the stage for addon update checks.
+    @Override
+    public String getStage() {
+        return "update.checking";
     }
 
     /// Collects available updates from all checks that completed successfully.
     @Override
     public AddonUpdates execute(TaskExecutionContext context) throws Exception {
-        notifyPropertiesChanged();
+        context.notifyPropertiesChanged();
         try {
             context.runAll(checks);
         } catch (Exception failure) {
