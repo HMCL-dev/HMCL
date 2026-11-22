@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.task;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -59,10 +58,5 @@ public abstract class TaskHandle {
     /// Returns whether cancellation has been requested.
     public boolean isCancelled() {
         return cancelled;
-    }
-
-    /// Returns the root task's [stage hints][Task#getStageHints()].
-    public @Unmodifiable List<Task.StagesHint> getHints() {
-        return firstTask.getStageHints();
     }
 }

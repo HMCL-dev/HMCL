@@ -46,7 +46,7 @@ public final class TaskListPane extends StackPane {
     private @Nullable TaskHandle handle;
     private final JFXListView<Node> listView = new JFXListView<>();
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
-    /// Maps identifiers and their display aliases to stage rows.
+    /// Maps each observed stage identifier to its row for the current execution.
     private final Map<String, StageNode> stageNodes = new HashMap<>();
     /// Tracks the outermost active stages contributing to each display row.
     private final Map<TaskStage, StageNode> activeStages = new HashMap<>();
@@ -76,13 +76,13 @@ public final class TaskListPane extends StackPane {
         });
     }
 
-    /// Appends planned stages in declaration order and retains aliases declared by enclosing tasks.
+    /// Appends new rows in declaration order. Each identifier keeps its first row.
     @FXThread
-    private void declareStages(@Unmodifiable List<Task.StagesHint> hints) {
-        for (Task.StagesHint hint : hints) {
-            StageNode node = stageNode(hint.stage());
-            for (String alias : hint.aliases())
-                stageNodes.putIfAbsent(alias, node);
+    private void declareStages(@Unmodifiable List<Task.StageHint> hints) {
+        for (Task.StageHint hint : hints) {
+            StageNode node = stageNode(hint.stageId());
+            for (String stageId : hint.groupedStageIds())
+                stageNodes.putIfAbsent(stageId, node);
         }
     }
 
@@ -133,7 +133,7 @@ public final class TaskListPane extends StackPane {
             }
 
             @Override
-            public void onStagesDeclared(@Unmodifiable List<Task.StagesHint> hints) {
+            public void onStagesDeclared(@Unmodifiable List<Task.StageHint> hints) {
                 update(() -> declareStages(hints));
             }
 

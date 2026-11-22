@@ -109,10 +109,10 @@ public class DefaultGameBuilder extends GameBuilder {
             if (gameVersion == null)
                 throw new IllegalStateException("GameBuilder.gameVersion must be set");
 
-            var hints = new ArrayList<Task.StagesHint>();
+            var hints = new ArrayList<Task.StageHint>();
 
             components.forEach((componentType, version) -> {
-                hints.add(new Task.StagesHint(
+                hints.add(new Task.StageHint(
                         "hmcl.install.%s:%s".formatted(
                                 componentType.getPatchId(),
                                 version instanceof ComponentRemoteVersion remoteVersion
@@ -120,8 +120,8 @@ public class DefaultGameBuilder extends GameBuilder {
                                         : (String) version)));
 
                 if (componentType == GameComponentType.GAME) {
-                    hints.add(new Task.StagesHint("hmcl.install.libraries"));
-                    hints.add(new Task.StagesHint("hmcl.install.assets"));
+                    hints.add(new Task.StageHint("hmcl.install.libraries"));
+                    hints.add(new Task.StageHint("hmcl.install.assets"));
                 }
             });
 
@@ -173,7 +173,7 @@ public class DefaultGameBuilder extends GameBuilder {
                             draft.abort();
                         }
                     })
-                    .withStagesHints(hints);
+                    .withStageHints(hints);
             draftTransferred = true;
             return buildTask;
         } catch (RuntimeException | Error failure) {

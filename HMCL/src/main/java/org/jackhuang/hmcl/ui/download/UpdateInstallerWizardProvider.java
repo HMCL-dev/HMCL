@@ -58,14 +58,14 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (settings1, exception, next) -> alertFailureMessage(exception, next));
 
-        var hints = new ArrayList<Task.StagesHint>();
+        var hints = new ArrayList<Task.StageHint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof ComponentRemoteVersion remoteVersion) {
-                hints.add(new Task.StagesHint("hmcl.install.libraries"));
+                hints.add(new Task.StageHint("hmcl.install.libraries"));
 
-                hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getComponentType().getPatchId(), remoteVersion.getSelfVersion())));
+                hints.add(new Task.StageHint(String.format("hmcl.install.%s:%s", remoteVersion.getComponentType().getPatchId(), remoteVersion.getSelfVersion())));
                 if (remoteVersion.getComponentType() == GameComponentType.GAME) {
-                    hints.add(new Task.StagesHint("hmcl.install.assets"));
+                    hints.add(new Task.StageHint("hmcl.install.assets"));
                 }
             }
         }
@@ -83,7 +83,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                 }
             }
             return update;
-        }).withStagesHints(hints);
+        }).withStageHints(hints);
     }
 
     @Override

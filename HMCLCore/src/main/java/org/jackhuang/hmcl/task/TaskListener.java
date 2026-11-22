@@ -45,7 +45,7 @@ public abstract class TaskListener implements EventListener {
 
     /// Announces ordered stage presentation hints when their declaring task is dispatched,
     /// before its stage starts.
-    public void onStagesDeclared(@Unmodifiable List<Task.StagesHint> hints) {
+    public void onStagesDeclared(@Unmodifiable List<Task.StageHint> hints) {
     }
 
     /// Called when the task declaring a stage is dispatched, before its body starts.

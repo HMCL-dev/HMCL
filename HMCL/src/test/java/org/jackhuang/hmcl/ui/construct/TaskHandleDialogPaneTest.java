@@ -202,7 +202,7 @@ final class TaskHandleDialogPaneTest {
             throw rejection;
         }, () -> fail("The rejected task ran"));
         TaskHandle handle = child.withStage("update.checking")
-                .withStagesHints("update.checking", "launch.state.logging_in")
+                .withStageHints("update.checking", "launch.state.logging_in")
                 .newHandle();
         TaskListPane pane = showTaskList(handle);
 
@@ -237,7 +237,7 @@ final class TaskHandleDialogPaneTest {
                 }));
             }
         }.setName("Owner task");
-        TaskHandle handle = owner.withStagesHints("update.checking", "launch.state.logging_in").newHandle();
+        TaskHandle handle = owner.withStageHints("update.checking", "launch.state.logging_in").newHandle();
         TaskListPane pane = showTaskList(handle);
         CompletableFuture<Boolean> result = CompletableFuture.supplyAsync(handle::test);
         try {
@@ -274,7 +274,7 @@ final class TaskHandleDialogPaneTest {
                 throw new IOException("Second stage failed");
         }).withStage("second");
         TaskHandle handle = Task.allOf(first, second)
-                .withStagesHints(new Task.StagesHint("update.checking", List.of("first", "second")))
+                .withStageHints(new Task.StageHint("update.checking", List.of("first", "second")))
                 .newHandle();
         TaskListPane pane = showTaskList(handle);
         handle.addTaskListener(new TaskListener() {
@@ -318,7 +318,7 @@ final class TaskHandleDialogPaneTest {
             }
         };
         if (mergeStages)
-            owner = owner.withStagesHints(new Task.StagesHint("update.checking", List.of("launch.state.logging_in")));
+            owner = owner.withStageHints(new Task.StageHint("update.checking", List.of("launch.state.logging_in")));
         TaskHandle handle = owner.newHandle();
         TaskListPane pane = showTaskList(handle);
 
@@ -326,6 +326,40 @@ final class TaskHandleDialogPaneTest {
         assertEquals(SVG.CHECK.getPath(), stageIcon(pane, i18n("update.checking") + " - 2/3"));
         if (!mergeStages)
             assertEquals(SVG.CLOSE.getPath(), stageIcon(pane, i18n("launch.state.logging_in")));
+    }
+
+    /// A grouping hint binds a stage to its row only if the stage has not already opened its own row.
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void groupsStageOnlyWhenHintArrivesFirst(boolean hintFirst) throws Exception {
+        String groupId = "update.checking";
+        String partId = "launch.state.logging_in";
+        Task.StageHint group = new Task.StageHint(groupId, List.of(partId));
+        Task<?> work = new Task<@Nullable Void>() {
+            /// Reports one complete item in the enclosing stage.
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) {
+                context.addStageItems(1);
+                context.completeStageItem();
+                return null;
+            }
+        };
+        TaskHandle handle = (hintFirst
+                ? work.withStage(partId).withStageHints(group)
+                : work.withStageHints(group).withStage(partId)).newHandle();
+        TaskListPane pane = showTaskList(handle);
+        assertTrue(handle.test());
+
+        String completedRow = i18n(hintFirst ? groupId : partId) + " - 1/1";
+        assertEquals(SVG.CHECK.getPath(), stageIcon(pane, completedRow));
+        onFxThread(() -> {
+            ListCell<?> first = findRow(pane, completedRow);
+            assertEquals(0, first.getIndex());
+            assertEquals(hintFirst ? 1 : 2, first.getListView().getItems().size());
+            if (!hintFirst)
+                assertEquals(1, findRow(pane, i18n(groupId)).getIndex());
+            return true;
+        });
     }
 
     /// Attaches a list to a scene so its stage rows are available for inspection.

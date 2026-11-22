@@ -534,20 +534,22 @@ public abstract class Task<T extends @Nullable Object> {
         return new FakeProgressTask(done, k).setName(name).setSignificance(TaskSignificance.MAJOR);
     }
 
-    /// Describes a stage row and the alternate identifiers displayed in that row.
+    /// Declares one row in the stage progress display. Each stage identifier keeps its first
+    /// assigned row for the entire execution. To group stages across children, declare the
+    /// hint on their common parent before it dispatches them.
     ///
-    /// @param stage the primary stage identifier
-    /// @param aliases the alternate identifiers, copied at construction
-    public record StagesHint(String stage, @Unmodifiable List<String> aliases) {
-        /// Creates a hint with an immutable snapshot of the supplied aliases.
-        public StagesHint {
-            Objects.requireNonNull(stage);
-            aliases = List.copyOf(aliases);
+    /// @param stageId the identifier used to find or create the row
+    /// @param groupedStageIds additional stage identifiers to display in the same row
+    public record StageHint(String stageId, @Unmodifiable List<String> groupedStageIds) {
+        /// Creates a hint with an immutable snapshot of the grouped stage identifiers.
+        public StageHint {
+            Objects.requireNonNull(stageId);
+            groupedStageIds = List.copyOf(groupedStageIds);
         }
 
-        /// Creates a stage hint with no aliases.
-        public StagesHint(String stage) {
-            this(stage, List.of());
+        /// Creates a hint for a single stage identifier.
+        public StageHint(String stageId) {
+            this(stageId, List.of());
         }
     }
 
@@ -555,27 +557,28 @@ public abstract class Task<T extends @Nullable Object> {
     /// A hint can declare a row before any task enters the corresponding stage.
     ///
     /// @implSpec The default implementation returns an empty list.
-    public @Unmodifiable List<StagesHint> getStageHints() {
+    public @Unmodifiable List<StageHint> getStageHints() {
         return List.of();
     }
 
     /// Returns a wrapper with one stage hint per identifier, in argument order.
-    public Task<T> withStagesHints(String... hints) {
-        return withStagesHints(Arrays.stream(hints).map(StagesHint::new).toList());
+    public Task<T> withStageHints(String... stageIds) {
+        return withStageHints(Arrays.stream(stageIds).map(StageHint::new).toList());
     }
 
     /// Returns a wrapper with an immutable snapshot of the supplied hints.
-    public Task<T> withStagesHints(StagesHint... hints) {
-        return withStagesHints(List.of(hints));
+    public Task<T> withStageHints(StageHint... hints) {
+        return withStageHints(List.of(hints));
     }
 
-    /// Returns a wrapper that declares an immutable snapshot of the supplied stage rows.
-    public Task<T> withStagesHints(List<StagesHint> hints) {
-        @Unmodifiable List<StagesHint> rows = List.copyOf(hints);
+    /// Returns a wrapper that declares the supplied rows in order before dispatching this task.
+    /// The wrapper takes an immutable snapshot of the hints.
+    public Task<T> withStageHints(List<StageHint> hints) {
+        @Unmodifiable List<StageHint> rows = List.copyOf(hints);
         return new Task<T>() {
             /// Returns the stage rows supplied to the wrapper.
             @Override
-            public @Unmodifiable List<StagesHint> getStageHints() {
+            public @Unmodifiable List<StageHint> getStageHints() {
                 return rows;
             }
 
