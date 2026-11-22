@@ -325,8 +325,11 @@ public final class DefaultTaskHandle extends TaskHandle {
                 if (work.isDone())
                     break;
                 next = work.availableFor(current);
-                if (next == null)
+                if (next == null) {
+                    if (work.changed == null)
+                        work.changed = lock.newCondition();
                     work.changed.await();
+                }
             } catch (InterruptedException e) {
                 interrupted = true;
             } finally {
@@ -352,8 +355,8 @@ public final class DefaultTaskHandle extends TaskHandle {
         /// Executor whose workers may run this submission.
         private final Executor executor;
 
-        /// Signals changes in the set of runnable descendants or the completion of this work.
-        private final Condition changed = lock.newCondition();
+        /// Created under the handle lock on the first wait for completion or runnable descendants.
+        private @Nullable Condition changed;
 
         /// Submission in this task tree that created this work.
         private final @Nullable Work<?> parent;
@@ -399,14 +402,14 @@ public final class DefaultTaskHandle extends TaskHandle {
             try {
                 if (!started) {
                     queued = true;
-                    changed.signal();
                     // Index only this work's ancestors. A waiting worker can then claim a
                     // descendant without scanning or recursively entering unrelated siblings.
                     for (@Nullable Work<?> node = parent; node != null; node = node.parent) {
                         if (node.pending == null)
                             node.pending = new IdentityHashMap<>();
                         node.pending.computeIfAbsent(executor, ignored -> new LinkedHashSet<>()).add(this);
-                        node.changed.signal();
+                        if (node.changed != null)
+                            node.changed.signal();
                     }
                 }
             } finally {
@@ -456,7 +459,8 @@ public final class DefaultTaskHandle extends TaskHandle {
         protected void done() {
             lock.lock();
             try {
-                changed.signal();
+                if (changed != null)
+                    changed.signal();
             } finally {
                 lock.unlock();
             }
