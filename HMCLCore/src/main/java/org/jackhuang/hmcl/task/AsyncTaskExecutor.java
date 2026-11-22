@@ -20,7 +20,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public final class AsyncTaskExecutor extends TaskExecutor {
     /// The framework submission currently using this thread.
-    private static final ThreadLocal<Work<?>> CURRENT_WORK = new ThreadLocal<>();
+    private static final ThreadLocal<@Nullable Work<?>> CURRENT_WORK = new ThreadLocal<>();
 
     /// Handler for unexpected runtime exceptions from a root task.
     private static volatile Thread.@Nullable UncaughtExceptionHandler uncaughtExceptionHandler;
@@ -92,14 +92,14 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
     /// Runs a child inline when its parent already owns a worker of the requested executor.
     private <T extends @Nullable Object> T runChild(@Nullable Task<?> parent, Task<T> child) throws Exception {
-        if (child.bodyExecutor() == currentExecutor())
+        if (child.getExecutor() == currentExecutor())
             return execute(parent, child);
         return await(submitChild(parent, child));
     }
 
     /// Schedules a child and records task failure if the executor rejects the submission.
     private <T extends @Nullable Object> Work<T> submitChild(@Nullable Task<?> parent, Task<T> child) {
-        Work<T> work = new Work<>(child.bodyExecutor(), () -> execute(parent, child));
+        Work<T> work = new Work<>(child.getExecutor(), () -> execute(parent, child));
         try {
             checkCancellation();
             work.submit();

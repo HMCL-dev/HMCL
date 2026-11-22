@@ -63,6 +63,19 @@ final class TaskExecutionContextTest {
         assertTrue(check.get(10, TimeUnit.SECONDS));
     }
 
+    /// A continuation targeting JavaFX leaves the event loop available while its source runs.
+    @Test
+    @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
+    void keepsJavaFxAvailableWhileWaitingForSource() throws Exception {
+        Task<Boolean> source = Task.supplyAsync(() -> {
+            FutureTask<Boolean> event = new FutureTask<>(Platform::isFxApplicationThread);
+            Platform.runLater(event);
+            return event.get(10, TimeUnit.SECONDS);
+        });
+        assertTrue(source.thenApplyAsync(Schedulers.javafx(),
+                processed -> processed && Platform.isFxApplicationThread()).run());
+    }
+
     /// Cancellation permits a running wrapper to clean up on the requested callback executor.
     @Test
     void cleanupAfterCancellation() throws Exception {
@@ -136,19 +149,21 @@ final class TaskExecutionContextTest {
         assertTrue(Task.allOf().run().isEmpty());
     }
 
-    /// Reconfiguring a continuation's executor moves its callback without moving its source.
+    /// Changing the body executor moves child dispatch and preserves the explicit callback executor.
     @Test
-    void honorsReconfiguredCallbackExecutor() throws Exception {
-        ExecutorService pool = Executors.newSingleThreadExecutor();
+    void separatesContinuationBodyAndCallbackExecutors() throws Exception {
+        Thread caller = Thread.currentThread();
+        ExecutorService callbacks = Executors.newSingleThreadExecutor();
         try {
-            Thread worker = pool.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
-            Thread actual = Task.supplyAsync(Thread::currentThread).thenApplyAsync(source -> {
-                assertNotSame(worker, source);
+            Thread worker = callbacks.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            Task<Thread> source = Task.supplyAsync(Runnable::run, Thread::currentThread);
+            Thread actual = source.thenApplyAsync(callbacks, dispatchThread -> {
+                assertSame(caller, dispatchThread);
                 return Thread.currentThread();
-            }).setExecutor(pool).run();
+            }).setExecutor(Runnable::run).run();
             assertSame(worker, actual);
         } finally {
-            pool.shutdownNow();
+            callbacks.shutdownNow();
         }
     }
 

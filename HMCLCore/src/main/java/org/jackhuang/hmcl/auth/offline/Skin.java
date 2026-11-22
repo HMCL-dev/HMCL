@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -27,6 +28,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 
 public record Skin(Type type, String cslApi, TextureModel textureModel, String localSkinPath, String localCapePath) {
 
@@ -72,10 +74,23 @@ public record Skin(Type type, String cslApi, TextureModel textureModel, String l
         return textureModel == null ? TextureModel.WIDE : textureModel;
     }
 
-    public Task<LoadedSkin> load(String username) {
+    /// Creates a task that loads textures using the default scheduler for decoding.
+    ///
+    /// @see #load(String, Executor)
+    public Task<@Nullable LoadedSkin> load(String username) {
+        return load(username, Schedulers.defaultScheduler());
+    }
+
+    /// Creates a task that loads the configured skin and cape, decoding images on the supplied executor.
+    ///
+    /// @param username the profile name used for remote skin lookups
+    /// @param textureExecutor the executor for loading local images and decoding downloaded textures
+    /// @return a task whose result is null for the default skin or a remote profile with a missing or blank username
+    /// @throws UnsupportedOperationException if the skin type is unsupported
+    public Task<@Nullable LoadedSkin> load(String username, Executor textureExecutor) {
         switch (type) {
             case DEFAULT:
-                return Task.supplyAsync(() -> null);
+                return Task.supplyAsync(textureExecutor, () -> null);
             case ALEX:
             case ARI:
             case EFE:
@@ -88,14 +103,14 @@ public record Skin(Type type, String cslApi, TextureModel textureModel, String l
                 TextureModel model = this.textureModel != null ? this.textureModel : type == Type.ALEX ? TextureModel.SLIM : TextureModel.WIDE;
                 String resource = (model == TextureModel.SLIM ? "/assets/img/skin/slim/" : "/assets/img/skin/wide/") + type.name().toLowerCase(Locale.ROOT) + ".png";
 
-                return Task.supplyAsync(() -> new LoadedSkin(
+                return Task.supplyAsync(textureExecutor, () -> new LoadedSkin(
                         model,
                         Texture.loadTexture(new Image(resource)),
                         null
                 ));
             case LOCAL_FILE:
-                return Task.supplyAsync(() -> {
-                    Texture skin = null, cape = null;
+                return Task.supplyAsync(textureExecutor, () -> {
+                    @Nullable Texture skin = null, cape = null;
                     Optional<Path> skinPath = FileUtils.tryGetPath(localSkinPath);
                     Optional<Path> capePath = FileUtils.tryGetPath(localCapePath);
                     if (skinPath.isPresent()) skin = Texture.loadTexture(Files.newInputStream(skinPath.get()));
@@ -120,12 +135,12 @@ public record Skin(Type type, String cslApi, TextureModel textureModel, String l
                                     result.getHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(String.format("%s/textures/%s", realCslApi, result.getHash())),
                                     result.getCapeHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(String.format("%s/textures/%s", realCslApi, result.getCapeHash()))
                             );
-                        }).thenApplyAsync(result -> {
+                        }).thenApplyAsync(textureExecutor, result -> {
                             if (result == null) {
                                 return null;
                             }
 
-                            Texture skin, cape;
+                            @Nullable Texture skin, cape;
                             if (result.get(1) != null) {
                                 skin = Texture.loadTexture((InputStream) result.get(1));
                             } else {
