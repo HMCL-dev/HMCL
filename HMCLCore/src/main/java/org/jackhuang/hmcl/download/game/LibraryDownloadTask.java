@@ -11,7 +11,9 @@ import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -21,15 +23,13 @@ import java.util.concurrent.CancellationException;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Downloads a library or restores it from the cache, then publishes successful downloads to the cache.
-public class LibraryDownloadTask extends Task<Void> {
-    private FileDownloadTask task;
+public class LibraryDownloadTask extends Task<@Nullable Void> {
     protected final Path jar;
     protected final DefaultCacheRepository cacheRepository;
     protected final AbstractDependencyManager dependencyManager;
     protected final Library library;
     protected final String url;
     private final Library originalLibrary;
-    private boolean cached = false;
 
     public LibraryDownloadTask(AbstractDependencyManager dependencyManager, Path file, Library library) {
         this.dependencyManager = dependencyManager;
@@ -47,47 +47,16 @@ public class LibraryDownloadTask extends Task<Void> {
         jar = file;
     }
 
+    /// Restores the library from the cache or downloads it and attempts to cache the verified file.
+    ///
+    /// @throws LibraryDownloadException if downloading the library fails
     @Override
-    public Collection<Task<?>> getPredecessors() {
-        if (cached) return Collections.emptyList();
-        else return Collections.singleton(task);
-    }
-
-    @Override
-    public boolean requiresPredecessorSuccess() {
-        return false;
-    }
-
-    @Override
-    public void execute() throws Exception {
-        if (cached) return;
-
-        if (!havePredecessorsSucceeded()) {
-            // Since FileDownloadTask wraps the actual exception with DownloadException.
-            // We should extract it letting the error message clearer.
-            Exception t = task.getException();
-            if (t instanceof DownloadException)
-                throw new LibraryDownloadException(library, t.getCause());
-            else if (t instanceof CancellationException)
-                throw new CancellationException();
-            else
-                throw new LibraryDownloadException(library, t);
-        }
-    }
-
-    @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         Optional<Path> libPath = cacheRepository.getLibrary(originalLibrary);
         if (libPath.isPresent()) {
             try {
                 FileUtils.copyFile(libPath.get(), jar);
-                cached = true;
-                return;
+                return null;
             } catch (IOException e) {
                 LOG.warning("Failed to copy file from cache", e);
                 // We cannot copy cached file to current location
@@ -95,29 +64,29 @@ public class LibraryDownloadTask extends Task<Void> {
             }
         }
 
-
         DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
         DownloadCandidates urls = downloadProvider.getDownloadCandidates(url);
-        task = new FileDownloadTask(urls, jar,
+        var task = new FileDownloadTask(urls, jar,
                 library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
         task.setCacheRepository(cacheRepository);
         task.setCaching(true);
         task.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
-    }
 
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    @Override
-    public void postExecute() throws Exception {
-        if (!cached) {
-            try {
-                cacheRepository.cacheLibrary(library, jar, false);
-            } catch (IOException e) {
-                LOG.warning("Failed to cache downloaded library " + library, e);
-            }
+        try {
+            context.run(task);
+        } catch (DownloadException e) {
+            throw new LibraryDownloadException(library, e.getCause());
+        } catch (CancellationException | InterruptedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new LibraryDownloadException(library, e);
         }
+
+        try {
+            cacheRepository.cacheLibrary(library, jar, false);
+        } catch (IOException e) {
+            LOG.warning("Failed to cache downloaded library " + library, e);
+        }
+        return null;
     }
 }

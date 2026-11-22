@@ -14,6 +14,7 @@ import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -33,7 +34,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Exports one registered game instance as a Modrinth modpack archive.
 @NotNullByDefault
-public class ModrinthModpackExportTask extends Task<Void> {
+public class ModrinthModpackExportTask extends Task<@Nullable Void> {
     /// The fixed instance snapshot exported by this task.
     private final DefaultGameInstance instance;
 
@@ -133,7 +134,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
     /// {@inheritDoc}
     @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         var instanceId = instance.getId();
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(instanceId + ".jar");
@@ -212,6 +213,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
             zip.putTextFile(JsonUtils.GSON.toJson(manifest), "modrinth.index.json");
         }
+        return null;
     }
 
     /// Export options supported by the Modrinth format.

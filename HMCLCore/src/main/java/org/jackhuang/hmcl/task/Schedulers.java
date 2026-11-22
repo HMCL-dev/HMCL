@@ -14,12 +14,14 @@ import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// @author huangyuhui
+/// Supplies executors used for task bodies, blocking I/O, computation, and JavaFX callbacks.
 public final class Schedulers {
 
+    /// Prevents instantiation.
     private Schedulers() {
     }
 
+    /// Virtual-thread executor factory, absent on runtimes older than Java 21.
     private static final @Nullable Function<String, ExecutorService> NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR;
 
     static {
@@ -54,7 +56,7 @@ public final class Schedulers {
     }
 
     /// @return Returns null if the Java version is below 21, otherwise always returns a non-null value.
-    public static ExecutorService newVirtualThreadPerTaskExecutor(String name) {
+    public static @Nullable ExecutorService newVirtualThreadPerTaskExecutor(String name) {
         if (NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR == null) {
             return null;
         }
@@ -71,9 +73,20 @@ public final class Schedulers {
         return Holder.IO_EXECUTOR;
     }
 
-    public static Executor javafx() {
-        return Platform::runLater;
+    /// Executes task bodies on virtual threads when available, or on a bounded pool of
+    /// platform threads. A worker waiting through [TaskExecutionContext] can execute
+    /// pending work from the child it is waiting for.
+    static Executor tasks() {
+        return Holder.TASK_EXECUTOR;
     }
+
+    /// Dispatches work to the JavaFX application thread.
+    public static Executor javafx() {
+        return JAVAFX_EXECUTOR;
+    }
+
+    /// The shared executor identity used when a JavaFX callback waits for a task.
+    private static final Executor JAVAFX_EXECUTOR = Platform::runLater;
 
     /// Default thread pool, equivalent to [ForkJoinPool#commonPool()].
     ///
@@ -82,6 +95,7 @@ public final class Schedulers {
         return ForkJoinPool.commonPool();
     }
 
+    /// Logs the application shutdown request.
     public static void shutdown() {
         LOG.info("Shutting down executor services.");
 
@@ -90,15 +104,31 @@ public final class Schedulers {
         // Sometimes it resolves the problem that the app does not exit.
     }
 
+    /// Initializes shared executors on first use.
     private static final class Holder {
-        private static final ExecutorService IO_EXECUTOR;
+        /// Workers used by tasks that perform blocking I/O.
+        private static final ExecutorService IO_EXECUTOR = newIoExecutor();
 
-        static {
-            //noinspection resource
-            ExecutorService vtExecutor = newVirtualThreadPerTaskExecutor("IO");
-            IO_EXECUTOR = vtExecutor != null
-                    ? vtExecutor
-                    : Executors.newCachedThreadPool(Lang.counterThreadFactory("IO", true));
+        /// Workers used by task bodies that synchronously coordinate child tasks.
+        private static final ExecutorService TASK_EXECUTOR = newTaskExecutor();
+
+        /// Bounds the number of platform threads used by parallel branches on older runtimes.
+        private static ExecutorService newTaskExecutor() {
+            @Nullable ExecutorService virtualThreads = newVirtualThreadPerTaskExecutor("Task");
+            if (virtualThreads != null)
+                return virtualThreads;
+
+            int workers = Math.min(64, Math.max(4, Runtime.getRuntime().availableProcessors() * 4));
+            ThreadPoolExecutor pool = new ThreadPoolExecutor(workers, workers, 60L, TimeUnit.SECONDS,
+                    new LinkedBlockingQueue<>(), Lang.counterThreadFactory("Task", true));
+            pool.allowCoreThreadTimeOut(true);
+            return pool;
+        }
+
+        /// Creates an executor in which a waiting parent does not occupy a child's only worker.
+        private static ExecutorService newIoExecutor() {
+            @Nullable ExecutorService virtualThreads = newVirtualThreadPerTaskExecutor("IO");
+            return virtualThreads != null ? virtualThreads : Executors.newCachedThreadPool(Lang.counterThreadFactory("IO", true));
         }
     }
 

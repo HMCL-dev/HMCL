@@ -13,13 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.util.*;
 
@@ -29,7 +26,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// A task that can download a file online.
 ///
 /// @author huangyuhui
-public class FileDownloadTask extends FetchTask<Void> {
+public class FileDownloadTask extends FetchTask<@Nullable Void> {
 
     public record IntegrityCheck(String algorithm, String checksum) {
         public IntegrityCheck(String algorithm, String checksum) {
@@ -123,23 +120,14 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected EnumCheckETag shouldCheckETag() {
-        // Check cache
-        if (integrityCheck != null && caching) {
-            Optional<Path> cache = repository.checkExistentFile(candidate, integrityCheck.algorithm(), integrityCheck.checksum());
-            if (cache.isPresent()) {
-                try {
-                    FileUtils.copyFile(cache.get(), file);
-                    LOG.trace("Successfully verified file " + file + " from " + candidates.getPrimaryCandidate().url());
-                    return EnumCheckETag.CACHED;
-                } catch (IOException e) {
-                    LOG.warning("Failed to copy cache files", e);
-                }
-            }
-            return EnumCheckETag.NOT_CHECK_E_TAG;
-        } else {
-            return EnumCheckETag.CHECK_E_TAG;
-        }
+    protected @Nullable Path findCachedFile() {
+        if (integrityCheck == null || !caching) return null;
+        return repository.checkExistentFile(candidate, integrityCheck.algorithm(), integrityCheck.checksum()).orElse(null);
+    }
+
+    @Override
+    protected boolean shouldCheckETag() {
+        return integrityCheck == null || !caching;
     }
 
     @Override
@@ -148,16 +136,15 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected void useCachedResult(Path cache) throws IOException {
+    protected @Nullable Void useCachedResult(Path cache) throws IOException {
         FileUtils.copyFile(cache, file);
+        return null;
     }
 
     @Override
-    protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
-        Path temp = Files.createTempFile(null, null);
-
-        String algorithm;
-        String checksum;
+    protected Context<@Nullable Void> getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
+        @Nullable String algorithm;
+        @Nullable String checksum;
         if (integrityCheck != null) {
             algorithm = integrityCheck.algorithm();
             checksum = integrityCheck.checksum();
@@ -169,97 +156,42 @@ public class FileDownloadTask extends FetchTask<Void> {
             checksum = null;
         }
 
-        MessageDigest digest = algorithm != null ? DigestUtils.getDigest(algorithm) : null;
+        @Nullable MessageDigest digest = algorithm != null ? DigestUtils.getDigest(algorithm) : null;
 
-        FileChannel fileOutput = FileChannel.open(temp,
-                StandardOpenOption.WRITE,
-                StandardOpenOption.TRUNCATE_EXISTING,
-                StandardOpenOption.CREATE);
-        return new Context() {
+        return new FileContext<>(digest) {
             @Override
-            public void reset() throws IOException {
-                if (digest != null) {
-                    digest.reset();
+            @Nullable Void commit(Path temp) throws IOException {
+                for (IntegrityCheckHandler handler : integrityCheckHandlers) {
+                    handler.checkIntegrity(temp, file);
                 }
 
-                fileOutput.truncate(0L);
-                fileOutput.position(0L);
-            }
-
-            @Override
-            public void write(byte[] buffer, int offset, int len) throws IOException {
-                if (digest != null) {
-                    digest.update(buffer, offset, len);
-                }
-
-                ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, offset, len);
-                while (byteBuffer.hasRemaining()) {
-                    //noinspection ResultOfMethodCallIgnored
-                    fileOutput.write(byteBuffer);
-                }
-            }
-
-            @Override
-            public void close() throws IOException {
-                try {
-                    fileOutput.close();
-                } catch (IOException e) {
-                    LOG.warning("Failed to close file: " + temp, e);
-                    deleteTempFile();
-                    throw e;
-                }
-
-                if (!isSuccess()) {
-                    deleteTempFile();
-                    return;
-                }
-
-                boolean moved = false;
-                try {
-                    for (IntegrityCheckHandler handler : integrityCheckHandlers) {
-                        handler.checkIntegrity(temp, file);
+                if (checksum != null && !checksum.isEmpty()) {
+                    String actualChecksum = HexFormat.of().formatHex(digest.digest());
+                    if (!checksum.equalsIgnoreCase(actualChecksum)) {
+                        throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
                     }
+                }
 
-                    if (checksum != null && !checksum.isEmpty()) {
-                        String actualChecksum = HexFormat.of().formatHex(digest.digest());
-                        if (!checksum.equalsIgnoreCase(actualChecksum)) {
-                            throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
-                        }
-                    }
+                Files.createDirectories(file.toAbsolutePath().getParent());
 
-                    Files.createDirectories(file.toAbsolutePath().getParent());
+                try {
+                    Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
+                } catch (Exception e) {
+                    throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
+                }
 
+                if (caching && algorithm != null) {
                     try {
-                        Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
-                        moved = true;
-                    } catch (Exception e) {
-                        throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
-                    }
-
-                    if (caching && algorithm != null) {
-                        try {
-                            repository.cacheFile(file, algorithm, checksum);
-                        } catch (IOException e) {
-                            LOG.warning("Failed to cache file", e);
-                        }
-                    }
-
-                    if (checkETag) {
-                        repository.cacheRemoteFile(response, file);
-                    }
-                } finally {
-                    if (!moved) {
-                        deleteTempFile();
+                        repository.cacheFile(file, algorithm, checksum);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to cache file", e);
                     }
                 }
-            }
 
-            private void deleteTempFile() {
-                try {
-                    Files.deleteIfExists(temp);
-                } catch (IOException e) {
-                    LOG.warning("Failed to delete file: " + temp, e);
+                if (checkETag) {
+                    repository.cacheRemoteFile(response, file);
                 }
+                return null;
             }
         };
     }

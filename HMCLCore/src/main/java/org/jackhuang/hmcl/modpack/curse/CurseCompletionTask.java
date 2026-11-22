@@ -12,6 +12,7 @@ import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -21,10 +22,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -33,7 +34,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Completes missing files for an installed CurseForge modpack.
 @NotNullByDefault
-public final class CurseCompletionTask extends Task<Void> {
+public final class CurseCompletionTask extends Task<@Nullable Void> {
 
     /// The dependency manager used to resolve and download remote files.
     private final DefaultDependencyManager dependency;
@@ -49,18 +50,6 @@ public final class CurseCompletionTask extends Task<Void> {
 
     /// Keys of optional files the user chose not to install; `null` means install all.
     private @Nullable Set<String> excludedFiles;
-
-    /// Download tasks produced during [#execute()].
-    private List<Task<?>> dependencies = List.of();
-
-    /// Whether every manifest file name could be resolved.
-    private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
-
-    /// The number of manifest entries processed in the current phase.
-    private final AtomicInteger finished = new AtomicInteger(0);
-
-    /// Whether a manifest entry refers to a deleted remote file.
-    private final AtomicBoolean notFound = new AtomicBoolean(false);
 
     /// Creates a task that completes the installed CurseForge modpack.
     ///
@@ -110,21 +99,15 @@ public final class CurseCompletionTask extends Task<Void> {
         setSignificance(TaskSignificance.MODERATE);
     }
 
+    /// Resolves missing files and waits for all requested downloads to finish.
     @Override
-    public Collection<Task<?>> getSuccessors() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean requiresSuccessorSuccess() {
-        return false;
-    }
-
-    @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         if (manifest == null)
-            return;
+            return null;
 
+        AtomicBoolean notFound = new AtomicBoolean();
+        AtomicBoolean allNameKnown = new AtomicBoolean(true);
+        AtomicInteger finished = new AtomicInteger();
         Path root = instance.getInstanceRoot();
 
         // Because in China, Curse is too difficult to visit,
@@ -165,7 +148,7 @@ public final class CurseCompletionTask extends Task<Void> {
         Path resourcePacksRoot = versionRoot.resolve("resourcepacks");
         Path shaderPacksRoot = versionRoot.resolve("shaderpacks");
         finished.set(0);
-        dependencies = newManifest.files()
+        List<Task<?>> dependencies = newManifest.files()
                 .stream().parallel()
                 .filter(f -> f.fileName() != null)
                 .filter(f -> excludedFiles == null || !excludedFiles.contains(f.key()))
@@ -193,6 +176,23 @@ public final class CurseCompletionTask extends Task<Void> {
             getProperties().put("total", dependencies.size());
             notifyPropertiesChanged();
         }
+
+        try {
+            context.runAll(dependencies);
+        } catch (InterruptedException | CancellationException cancelled) {
+            throw cancelled;
+        } catch (Exception failure) {
+            if (notFound.get())
+                throw new ModpackCompletionException(new FileNotFoundException());
+            ModpackCompletionException incomplete = new ModpackCompletionException();
+            incomplete.addSuppressed(failure);
+            throw incomplete;
+        }
+        if (notFound.get())
+            throw new ModpackCompletionException(new FileNotFoundException());
+        if (!allNameKnown.get())
+            throw new ModpackCompletionException();
+        return null;
     }
 
     /// Returns the destination for a missing CurseForge file based on its project class.
@@ -224,20 +224,5 @@ public final class CurseCompletionTask extends Task<Void> {
                 yield modManager.getSimpleModPath(fileName);
             }
         };
-    }
-
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    @Override
-    public void postExecute() throws Exception {
-        // Let this task fail if the curse manifest has not been completed.
-        // But continue other downloads.
-        if (notFound.get())
-            throw new ModpackCompletionException(new FileNotFoundException());
-        if (!allNameKnown.get() || !haveSuccessorsSucceeded())
-            throw new ModpackCompletionException();
     }
 }

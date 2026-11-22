@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.java;
 
 import kala.compress.archivers.ArchiveEntry;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -42,8 +43,9 @@ public final class JavaInstallTask extends Task<JavaManifest> {
         this.archiveFile = archiveFile;
     }
 
+    /// Installs the archived runtime and returns the manifest of installed files.
     @Override
-    public void execute() throws Exception {
+    public JavaManifest execute(TaskExecutionContext context) throws Exception {
         JavaInfo info;
 
         try (ArchiveFileTree<?, ?> tree = ArchiveFileTree.open(archiveFile)) {
@@ -51,7 +53,7 @@ public final class JavaInstallTask extends Task<JavaManifest> {
             copyDirContent(tree, targetDir);
         }
 
-        setResult(new JavaManifest(info, update, files));
+        return new JavaManifest(info, update, files);
     }
 
     private <F, E extends ArchiveEntry> void copyDirContent(ArchiveFileTree<F, E> tree, Path targetDir) throws IOException {

@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 /// Installs or updates a local server modpack using the mode selected at construction.
-public class ServerModpackLocalInstallTask extends Task<Void> {
+public class ServerModpackLocalInstallTask extends Task<@Nullable Void> {
 
     private final Path zipFile;
     private final Modpack modpack;
@@ -33,8 +34,8 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     private final @Nullable DefaultGameInstance updateTarget;
 
     private final DefaultGameRepository repository;
-    private final List<Task<?>> dependencies = new ArrayList<>();
-    private final List<Task<?>> dependents = new ArrayList<>(4);
+    /// The tasks that install the instance and prepare its modpack files.
+    private final List<Task<?>> preparation = new ArrayList<>(4);
 
     /// Creates a task that installs a new local server modpack instance.
     ///
@@ -120,8 +121,8 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
                 repository.removeInstanceFromDisk(instanceId);
         });
 
-        dependents.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+        preparation.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
+        preparation.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
         try (GameBuilder builder = this.updateTarget == null
                 ? dependencyManager.newGameBuilder(instanceId)
@@ -132,21 +133,14 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
                 if (componentType != null)
                     builder.component(componentType, addon.getVersion());
             }
-            dependents.add(0, builder.buildAsync());
+            preparation.add(0, builder.buildAsync());
         }
     }
 
+    /// Installs the game components and extracts the server modpack overrides.
     @Override
-    public List<Task<?>> getPredecessors() {
-        return dependents;
-    }
-
-    @Override
-    public List<Task<?>> getSuccessors() {
-        return dependencies;
-    }
-
-    @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        context.runAll(preparation);
+        return null;
     }
 }

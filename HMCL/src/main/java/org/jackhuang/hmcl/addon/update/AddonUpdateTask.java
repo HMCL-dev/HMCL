@@ -9,7 +9,9 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,8 +22,9 @@ import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class AddonUpdateTask extends Task<Void> {
-    private final Collection<Task<?>> dependents = new ArrayList<>();
+public class AddonUpdateTask extends Task<@Nullable Void> {
+    /// Independent per-add-on update tasks.
+    private final Collection<Task<?>> updates = new ArrayList<>();
     private final List<LocalAddonFile<?>> failedAddons = new ArrayList<>();
 
     public AddonUpdateTask(DownloadProvider downloadProvider, Path addonDirectory, List<AddonUpdate> addons) {
@@ -38,7 +41,7 @@ public class AddonUpdateTask extends Task<Void> {
             String newFileName = fileName;
             Path targetFile = addonDirectory.resolve(newFileName);
 
-            dependents.add(Task
+            updates.add(Task
                     .supplyAsync(Schedulers.io(), () -> Files.createTempFile("hmcl-addon-update-", ".tmp"))
                     .thenComposeAsync(tempFile ->
                             new FileDownloadTask(downloadProvider.getDownloadCandidates(remote.file().url()), tempFile)
@@ -80,29 +83,11 @@ public class AddonUpdateTask extends Task<Void> {
         return failedAddons;
     }
 
+    /// Downloads the selected updates and waits for each addon's cleanup to finish.
     @Override
-    public Collection<Task<?>> getPredecessors() {
-        return dependents;
-    }
-
-    @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         notifyPropertiesChanged();
-    }
-
-    @Override
-    public boolean requiresPredecessorSuccess() {
-        return false;
-    }
-
-    @Override
-    public void execute() throws Exception {
-        if (!havePredecessorsSucceeded())
-            throw getException();
+        context.runAll(updates);
+        return null;
     }
 }

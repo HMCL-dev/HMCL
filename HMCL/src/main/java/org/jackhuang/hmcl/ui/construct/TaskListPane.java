@@ -155,16 +155,16 @@ public final class TaskListPane extends StackPane {
 
             @Override
             public void onFailed(Task<?> task, Throwable throwable) {
-                if (task.getStage() != null) {
-                    Platform.runLater(() -> {
-                        StageNode stageNode = stageNodes.get(task.getStage());
+                Platform.runLater(() -> {
+                    if (task.getStage() != null) {
+                        @Nullable StageNode stageNode = stageNodes.get(task.getStage());
                         if (stageNode != null)
                             stageNode.fail();
-                    });
-                }
-                ProgressListNode node = nodes.remove(task);
-                if (node != null)
-                    Platform.runLater(() -> node.setThrowable(throwable));
+                    }
+                    @Nullable ProgressListNode node = nodes.remove(task);
+                    if (node != null)
+                        node.setThrowable(throwable);
+                });
             }
 
             @Override

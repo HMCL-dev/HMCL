@@ -8,18 +8,17 @@ import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 /// Installs or updates a remote server modpack using the mode selected at construction.
-public class ServerModpackRemoteInstallTask extends Task<Void> {
+public class ServerModpackRemoteInstallTask extends Task<@Nullable Void> {
 
     private final GameInstanceID instanceId;
 
@@ -28,8 +27,8 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
-    private final List<Task<?>> dependents = new ArrayList<>(1);
+    /// Installs the components listed in the server manifest.
+    private final Task<?> installGame;
     private final ServerModpackManifest manifest;
 
     /// Creates a task that installs a new remote server modpack instance.
@@ -110,26 +109,19 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
                 if (componentType != null)
                     builder.component(componentType, addon.getVersion());
             }
-            dependents.add(builder.buildAsync());
+            installGame = builder.buildAsync();
         }
     }
 
+    /// Installs the game components and synchronizes the remote server modpack.
     @Override
-    public List<Task<?>> getPredecessors() {
-        return dependents;
-    }
-
-    @Override
-    public List<Task<?>> getSuccessors() {
-        return dependencies;
-    }
-
-    @Override
-    public void execute() throws Exception {
-        dependencies.add(new ServerModpackCompletionTask(
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        context.run(installGame);
+        context.run(new ServerModpackCompletionTask(
                 dependency,
                 repository.getInstance(instanceId),
                 new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList())));
+        return null;
     }
 
     public static final String MODPACK_TYPE = "Server";

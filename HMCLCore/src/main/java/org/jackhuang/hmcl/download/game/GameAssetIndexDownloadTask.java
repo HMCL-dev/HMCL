@@ -8,15 +8,15 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -25,12 +25,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  *
  * @author huangyuhui
  */
-public final class GameAssetIndexDownloadTask extends Task<Void> {
+public final class GameAssetIndexDownloadTask extends Task<@Nullable Void> {
 
     private final AbstractDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final boolean forceDownloading;
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     /**
      * Constructor.
@@ -45,13 +44,9 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
         setSignificance(TaskSignificance.MODERATE);
     }
 
+    /// Validates the local asset index, downloading it when required.
     @Override
-    public List<Task<?>> getSuccessors() {
-        return dependencies;
-    }
-
-    @Override
-    public void execute() {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         AssetIndexInfo assetIndexInfo = manifest.getAssetIndex();
         GameRepository gameRepository = dependencyManager.getGameRepository();
         String assetId = assetIndexInfo.getId();
@@ -64,7 +59,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
                 try {
                     String actualSum = DigestUtils.digestToString("SHA-1", assetIndexFile);
                     if (actualSum.equalsIgnoreCase(assetIndexInfo.getSha1()))
-                        return;
+                        return null;
                 } catch (IOException e) {
                     LOG.warning("Failed to calculate sha1sum of file " + assetIndexInfo, e);
                     // continue downloading
@@ -72,7 +67,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
             } else {
                 try {
                     JsonUtils.fromNonNullJson(Files.readString(assetIndexFile), AssetIndex.class);
-                    return;
+                    return null;
                 } catch (IOException | JsonParseException ignore) {
                 }
             }
@@ -87,7 +82,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
                 verifyHashCode ? new FileDownloadTask.IntegrityCheck("SHA-1", assetIndexInfo.getSha1()) : null
         );
         task.setCacheRepository(dependencyManager.getCacheRepository());
-        dependencies.add(task);
+        return context.run(task);
     }
 
     public static class GameAssetIndexMalformedException extends IOException {

@@ -8,14 +8,15 @@ import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -24,15 +25,15 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  *
  * @author huangyuhui
  */
-public final class GameAssetDownloadTask extends Task<Void> {
+public final class GameAssetDownloadTask extends Task<@Nullable Void> {
 
     private final AbstractDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final AssetIndexInfo assetIndexInfo;
     private final Path assetIndexFile;
     private final boolean integrityCheck;
-    private final List<Task<?>> dependents = new ArrayList<>(1);
-    private final List<Task<?>> dependencies = new ArrayList<>();
+    /// The index that must be available before asset files can be enumerated.
+    private final GameAssetIndexDownloadTask indexTask;
 
     /// Constructor.
     ///
@@ -48,21 +49,14 @@ public final class GameAssetDownloadTask extends Task<Void> {
         this.integrityCheck = integrityCheck;
 
         setStage("hmcl.install.assets");
-        dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.manifest, forceDownloadingIndex));
+        indexTask = new GameAssetIndexDownloadTask(dependencyManager, this.manifest, forceDownloadingIndex);
     }
 
+    /// Obtains the asset index, verifies existing assets and downloads the missing or invalid files in parallel.
     @Override
-    public Collection<Task<?>> getPredecessors() {
-        return dependents;
-    }
-
-    @Override
-    public Collection<Task<?>> getSuccessors() {
-        return dependencies;
-    }
-
-    @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        context.run(indexTask);
+        List<Task<?>> dependencies = new ArrayList<>();
         AssetIndex index;
         try {
             index = JsonUtils.fromNonNullJson(Files.readString(assetIndexFile), AssetIndex.class);
@@ -104,6 +98,8 @@ public final class GameAssetDownloadTask extends Task<Void> {
             getProperties().put("total", dependencies.size());
             notifyPropertiesChanged();
         }
+        context.runAll(dependencies);
+        return null;
     }
 
     public static final boolean DOWNLOAD_INDEX_FORCIBLY = true;

@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -24,7 +25,7 @@ import java.util.regex.Matcher;
 
 /// Installs or updates an HMCL modpack by rebuilding its recognized game components.
 @NotNullByDefault
-public final class HMCLModpackInstallTask extends Task<Void> {
+public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
     private final Path zipFile;
     private final GameInstanceID instanceId;
 
@@ -34,8 +35,8 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependency;
     private final Modpack modpack;
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
-    private final List<Task<?>> dependents = new ArrayList<>(4);
+    /// The tasks that install the instance and prepare its modpack files.
+    private final List<Task<?>> preparation = new ArrayList<>(4);
 
     /// Creates a task that installs a new HMCL modpack instance.
     ///
@@ -114,18 +115,8 @@ public final class HMCLModpackInstallTask extends Task<Void> {
             }
         });
 
-        dependents.add(new ModpackInstallTask<>(zipFile, run, List.of("/minecraft"), it -> !"pack.json".equals(it), config));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, List.of("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(this.instanceId)).withStage("hmcl.modpack"));
-    }
-
-    @Override
-    public List<Task<?>> getSuccessors() {
-        return dependencies;
-    }
-
-    @Override
-    public List<Task<?>> getPredecessors() {
-        return dependents;
+        preparation.add(new ModpackInstallTask<>(zipFile, run, List.of("/minecraft"), it -> !"pack.json".equals(it), config));
+        preparation.add(new MinecraftInstanceTask<>(zipFile, List.of("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(this.instanceId)).withStage("hmcl.modpack"));
     }
 
     /// Reads the legacy pack manifest and schedules one builder for all recognized components.
@@ -133,13 +124,15 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     /// The pack manifest is used only for component detection. The builder creates a new
     /// patch-structured manifest instead of attempting to mutate the legacy flattened manifest.
     @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        context.runAll(preparation);
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
         GameInstanceManifest originalManifest = JsonUtils.fromNonNullJson(json, GameInstanceManifest.class)
                 .withId(instanceId)
                 .withJar(null);
         GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(originalManifest, null);
 
+        Task<?> install;
         try (GameBuilder builder = updateTarget == null
                 ? dependency.newGameBuilder(instanceId)
                 : dependency.newGameBuilder(updateTarget)) {
@@ -163,8 +156,10 @@ public final class HMCLModpackInstallTask extends Task<Void> {
                     builder.component(mark.componentType(), componentVersion);
                 }
             }
-            dependencies.add(builder.buildAsync());
+            install = builder.buildAsync();
         }
+        context.run(install);
+        return null;
     }
 
 }

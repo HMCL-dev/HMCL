@@ -13,12 +13,14 @@ import org.jackhuang.hmcl.modpack.curse.CurseManifest;
 import org.jackhuang.hmcl.modpack.curse.CurseManifestMinecraft;
 import org.jackhuang.hmcl.modpack.curse.CurseManifestModLoader;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +39,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Exports one registered game instance as an MCBBS modpack archive.
 @NotNullByDefault
-public class McbbsModpackExportTask extends Task<Void> {
+public class McbbsModpackExportTask extends Task<@Nullable Void> {
     /// The fixed instance snapshot exported by this task.
     private final DefaultGameInstance instance;
 
@@ -70,7 +72,7 @@ public class McbbsModpackExportTask extends Task<Void> {
 
     /// {@inheritDoc}
     @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         var instanceId = instance.getId();
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(instanceId + ".jar");
@@ -143,6 +145,7 @@ public class McbbsModpackExportTask extends Task<Void> {
             zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
         }
         updateProgress(1);
+        return null;
     }
 
     /// Export options supported by the MCBBS format.

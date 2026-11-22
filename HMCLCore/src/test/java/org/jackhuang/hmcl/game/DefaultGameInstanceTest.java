@@ -9,6 +9,7 @@ import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
 import org.jackhuang.hmcl.modpack.Modpack;
+import org.jackhuang.hmcl.modpack.ModpackUpdateTask;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
@@ -352,7 +353,7 @@ public final class DefaultGameInstanceTest {
 
     /// Legacy verification fixes the captured instance jar rather than a newer same-id snapshot.
     @Test
-    public void testVerificationFixKeepsCapturedInstance(@TempDir Path tempDirectory) throws IOException {
+    public void testVerificationFixKeepsCapturedInstance(@TempDir Path tempDirectory) throws Exception {
         TestRepository repository = new TestRepository(tempDirectory);
         GameInstanceID instanceId = new GameInstanceID("instance");
         GameInstanceManifest manifest = new GameInstanceManifest(instanceId).withLibraries(List.of(
@@ -370,7 +371,7 @@ public final class DefaultGameInstanceTest {
                 tempDirectory.resolve("versions/instance/current.json"));
         writeSignedJar(current.getInstanceJarFile());
 
-        new GameVerificationFixTask(captured, GameVersionNumber.asGameVersion("1.5.2"), manifest).execute();
+        new GameVerificationFixTask(captured, GameVersionNumber.asGameVersion("1.5.2"), manifest).run();
 
         assertFalse(hasZipEntry(captured.getInstanceJarFile(), "META-INF/MOJANG_C.DSA"));
         assertFalse(hasZipEntry(captured.getInstanceJarFile(), "META-INF/MOJANG_C.SF"));
@@ -518,6 +519,34 @@ public final class DefaultGameInstanceTest {
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
             assertTrue(draft.isOpen());
         }
+    }
+
+    /// A failed modpack update restores the original files before reporting the child failure.
+    @Test
+    public void testModpackUpdateRollsBackFailedChild(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Path root = repository.getLayout().getInstanceRoot(id);
+        Files.createDirectories(root);
+        Files.writeString(root.resolve("instance.json"), """
+                {"id":"instance","mainClass":"game.Main","libraries":[]}
+                """);
+        Path marker = root.resolve("marker.txt");
+        Files.writeString(marker, "original");
+        repository.refresh();
+
+        IOException failure = new IOException("Update failed");
+        Path partial = root.resolve("partial.txt");
+        ModpackUpdateTask update = new ModpackUpdateTask(repository.getInstance(id), Task.runAsync(() -> {
+            Files.writeString(marker, "modified");
+            Files.writeString(partial, "partial");
+            throw failure;
+        }));
+
+        assertSame(failure, assertThrows(IOException.class, update::run));
+        assertEquals("original", Files.readString(marker));
+        assertFalse(Files.exists(partial));
+        assertEquals(root, repository.getInstance(id).getInstanceRoot());
     }
 
     /// A MultiMC task declared as a new installation rejects an existing id without deleting it.

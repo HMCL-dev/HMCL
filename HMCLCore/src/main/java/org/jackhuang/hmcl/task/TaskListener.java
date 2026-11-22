@@ -4,66 +4,57 @@ package org.jackhuang.hmcl.task;
 
 import java.util.EventListener;
 
-/**
- *
- * @author huangyuhui
- */
+/// Observes execution of a root task and the children it dispatches.
+/// Notifications for concurrently executing tasks may arrive on different threads.
+///
+/// @see TaskExecutor#addTaskListener(TaskListener)
+/// @author huangyuhui
 public abstract class TaskListener implements EventListener {
 
-    /**
-     * Executed when a Task execution chain starts.
-     */
+    /// Called on the thread that starts the executor, before it starts the root task.
     public void onStart() {
     }
 
-    /**
-     * Executed before the task's pre-execution and dependents execution.
-     *
-     * TaskState of this task is READY.
-     *
-     * @param task the task that gets ready.
-     */
+    /// Called when the task is [ready][Task.TaskState#READY] and its inherited stage is available through [Task#getInheritedStage()].
+    ///
+    /// @param task the task about to run
     public void onReady(Task<?> task) {
     }
 
-    /**
-     * Executed when the task's execution starts.
-     *
-     * TaskState of this task is RUNNING.
-     *
-     * @param task the task which is being run.
-     */
+    /// Called after the task enters [Task.TaskState#RUNNING], before its body is invoked.
+    ///
+    /// @param task the task about to execute its body
     public void onRunning(Task<?> task) {
     }
 
-    /**
-     * Executed after the task's dependencies and post-execution finished.
-     *
-     * TaskState of the task is EXECUTED.
-     *
-     * @param task the task which finishes its work.
-     */
+    /// Called after the executor publishes a successful result and marks the task
+    /// [Task.TaskState#SUCCEEDED]. The default [#onFailed(Task, Throwable)] implementation
+    /// also invokes this method for failed tasks.
+    ///
+    /// @param task the completed task
     public void onFinished(Task<?> task) {
     }
 
-    /**
-     * Executed when an exception occurred during the task's execution.
-     *
-     * @param task the task which finishes its work.
-     */
+    /// Called after the executor marks the task [Task.TaskState#FAILED]. Cancellation or
+    /// rejection can cause this notification before the task's body starts.
+    ///
+    /// @implSpec The default implementation calls [#onFinished(Task)] with the same task.
+    /// @param task the failed task
+    /// @param throwable the cause of failure, including cancellation
     public void onFailed(Task<?> task, Throwable throwable) {
         onFinished(task);
     }
 
-    /**
-     * Executed when the task execution chain stopped.
-     *
-     * @param success true if no error occurred during task execution.
-     * @param executor the task executor with responsibility to the task execution.
-     */
+    /// Called when execution of the root task has ended.
+    ///
+    /// @param success whether the root task succeeded, including when it recovered from a child failure
+    /// @param executor the executor that ran the task tree
     public void onStop(boolean success, TaskExecutor executor) {
     }
 
+    /// Called when a task explicitly reports a change to its [properties][Task#getProperties()].
+    ///
+    /// @param task the task reporting the change
     public void onPropertiesUpdate(Task<?> task) {
     }
 }

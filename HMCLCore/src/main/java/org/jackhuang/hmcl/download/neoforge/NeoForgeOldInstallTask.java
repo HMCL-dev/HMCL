@@ -14,6 +14,7 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -24,7 +25,9 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -34,17 +37,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.zip.ZipException;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
 
-    private class ProcessorTask extends Task<Void> {
+    private class ProcessorTask extends Task<@Nullable Void> {
 
         private final Processor processor;
         private final Map<String, String> vars;
@@ -55,8 +57,9 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
             setSignificance(TaskSignificance.MODERATE);
         }
 
+        /// Checks existing artifacts and invokes this processor if its outputs are missing or invalid.
         @Override
-        public void execute() throws Exception {
+        public @Nullable Void execute(TaskExecutionContext context) throws Exception {
             Map<String, String> outputs = new HashMap<>();
             boolean miss = false;
 
@@ -92,7 +95,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
             }
 
             if (!processor.getOutputs().isEmpty() && !miss) {
-                return;
+                return null;
             }
 
             Path jar = gameRepository.getLayout().getArtifactFile(processor.getJar());
@@ -153,6 +156,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
                     throw new ChecksumMismatchException("SHA-1", entry.getValue(), code);
                 }
             }
+            return null;
         }
     }
 
@@ -162,16 +166,8 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
     /// Source vanilla client JAR copied before processors are invoked.
     private final Path minecraftJar;
     private final Path installer;
-    private final List<Task<?>> dependents = new ArrayList<>(1);
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    private ForgeNewInstallProfile profile;
-    private List<Processor> processors;
-    private GameInstanceManifest neoForgeVersion;
     private final String selfVersion;
-
-    private Path tempDir;
-    private AtomicInteger processorDoneCount = new AtomicInteger(0);
 
     /// Creates a legacy NeoForge processor installation task.
     ///
@@ -255,50 +251,6 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
         return parseLiteral(literal, var, ExceptionalFunction.identity());
     }
 
-    @Override
-    public Collection<Task<?>> getPredecessors() {
-        return dependents;
-    }
-
-    @Override
-    public Collection<Task<?>> getSuccessors() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() throws Exception {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
-            processors = profile.getProcessors();
-            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), GameInstanceManifest.class);
-
-            for (Library library : profile.getLibraries()) {
-                Path file = fs.getPath("maven").resolve(library.getPath());
-                if (Files.exists(file)) {
-                    Path dest = gameRepository.getLayout().getLibraryFile(manifest.id(), library);
-                    FileUtils.copyFile(file, dest);
-                }
-            }
-
-            if (profile.getPath().isPresent()) {
-                Path mainJar = profile.getPath().get().getPath(fs.getPath("maven"));
-                if (Files.exists(mainJar)) {
-                    Path dest = gameRepository.getLayout().getArtifactFile(profile.getPath().get());
-                    FileUtils.copyFile(mainJar, dest);
-                }
-            }
-        } catch (ZipException ex) {
-            throw new ArtifactMalformedException("Malformed forge installer file", ex);
-        }
-
-        dependents.add(new GameLibrariesTask(dependencyManager, manifest, true, profile.getLibraries()));
-    }
-
     private Map<String, String> parseOptions(List<String> args, Map<String, String> vars) {
         Map<String, String> options = new LinkedHashMap<>();
         String optionName = null;
@@ -323,7 +275,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
         return options;
     }
 
-    private Task<?> patchDownloadMojangMappingsTask(Processor processor, Map<String, String> vars) {
+    private @Nullable Task<?> patchDownloadMojangMappingsTask(Processor processor, Map<String, String> vars) {
         Map<String, String> options = parseOptions(processor.getArgs(), vars);
         if (!"DOWNLOAD_MOJMAPS".equals(options.get("task")) || !"client".equals(options.get("side")))
             return null;
@@ -353,77 +305,95 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
                 });
     }
 
+    /// Creates the processor task, substituting a download for a supported mappings operation.
     private Task<?> createProcessorTask(Processor processor, Map<String, String> vars) {
-        Task<?> task = patchDownloadMojangMappingsTask(processor, vars);
+        @Nullable Task<?> task = patchDownloadMojangMappingsTask(processor, vars);
         if (task == null) {
             task = new ProcessorTask(processor, vars);
         }
-        task.onDone().register(
-                () -> updateProgress(processorDoneCount.incrementAndGet(), processors.size()));
         return task;
     }
 
+    /// Resolves installer libraries, runs client processors in order, and returns the completed patch.
     @Override
-    public void execute() throws Exception {
+    public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
+        ForgeNewInstallProfile profile;
+        GameInstanceManifest neoForgeVersion;
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
+            profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
+            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), GameInstanceManifest.class);
+
+            for (Library library : profile.getLibraries()) {
+                Path file = fs.getPath("maven").resolve(library.getPath());
+                if (Files.exists(file)) {
+                    Path dest = gameRepository.getLayout().getLibraryFile(manifest.id(), library);
+                    FileUtils.copyFile(file, dest);
+                }
+            }
+
+            if (profile.getPath().isPresent()) {
+                Path mainJar = profile.getPath().get().getPath(fs.getPath("maven"));
+                if (Files.exists(mainJar)) {
+                    Path dest = gameRepository.getLayout().getArtifactFile(profile.getPath().get());
+                    FileUtils.copyFile(mainJar, dest);
+                }
+            }
+        } catch (ZipException ex) {
+            throw new ArtifactMalformedException("Malformed forge installer file", ex);
+        }
+
+        context.run(new GameLibrariesTask(dependencyManager, manifest, true, profile.getLibraries()));
+
         if (!Files.isRegularFile(minecraftJar)) {
             throw new FileNotFoundException("Minecraft client JAR not found: " + minecraftJar);
         }
-        tempDir = Files.createTempDirectory("neoforge_installer");
-        // External processors must not receive the shared cache path.
-        Path isolatedMinecraftJar = tempDir.resolve("minecraft.jar");
-        FileUtils.copyFile(minecraftJar, isolatedMinecraftJar);
+        Path tempDir = Files.createTempDirectory("neoforge_installer");
+        try (Closeable cleanup = () -> FileUtils.deleteDirectory(tempDir)) {
+            // External processors must not receive the shared cache path.
+            Path isolatedMinecraftJar = tempDir.resolve("minecraft.jar");
+            FileUtils.copyFile(minecraftJar, isolatedMinecraftJar);
 
-        Map<String, String> vars = new HashMap<>();
+            Map<String, String> vars = new HashMap<>();
 
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            for (Map.Entry<String, String> entry : profile.getData().entrySet()) {
-                String key = entry.getKey();
-                String value = entry.getValue();
+            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
+                for (Map.Entry<String, String> entry : profile.getData().entrySet()) {
+                    String key = entry.getKey();
+                    String value = entry.getValue();
 
-                vars.put(key, parseLiteral(value,
-                        Collections.emptyMap(),
-                        str -> {
-                            Path dest = Files.createTempFile(tempDir, null, null);
-                            FileUtils.copyFile(fs.getPath(str), dest);
-                            return dest.toString();
-                        }));
+                    vars.put(key, parseLiteral(value,
+                            Collections.emptyMap(),
+                            str -> {
+                                Path dest = Files.createTempFile(tempDir, null, null);
+                                FileUtils.copyFile(fs.getPath(str), dest);
+                                return dest.toString();
+                            }));
+                }
+            } catch (ZipException ex) {
+                throw new ArtifactMalformedException("Malformed neoforge installer file", ex);
             }
-        } catch (ZipException ex) {
-            throw new ArtifactMalformedException("Malformed neoforge installer file", ex);
+
+            vars.put("SIDE", "client");
+            vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(isolatedMinecraftJar));
+            vars.put("MINECRAFT_VERSION", profile.getMinecraft());
+            vars.put("ROOT", FileUtils.getAbsolutePath(gameRepository.getBaseDirectory()));
+            vars.put("INSTALLER", installer.toAbsolutePath().toString());
+            vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
+
+            List<Processor> processors = profile.getProcessors();
+            updateProgress(0, processors.size());
+
+            int completed = 0;
+            for (Processor processor : processors) {
+                context.run(createProcessorTask(processor, vars));
+                updateProgress(++completed, processors.size());
+            }
+            context.run(dependencyManager.checkComponentCompletionAsync(neoForgeVersion, true));
+
+            return GameInstancePatch.fromManifest(
+                    neoForgeVersion,
+                    GameComponentType.NEO_FORGE.getPatchId(),
+                    selfVersion,
+                    GameInstancePatch.PRIORITY_LOADER);
         }
-
-        vars.put("SIDE", "client");
-        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(isolatedMinecraftJar));
-        vars.put("MINECRAFT_VERSION", profile.getMinecraft());
-        vars.put("ROOT", FileUtils.getAbsolutePath(gameRepository.getBaseDirectory()));
-        vars.put("INSTALLER", installer.toAbsolutePath().toString());
-        vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
-
-        updateProgress(0, processors.size());
-
-        Task<?> processorsTask = Task.runSequentially(
-                processors.stream()
-                        .map(processor -> createProcessorTask(processor, vars))
-                        .toArray(Task<?>[]::new));
-
-        dependencies.add(
-                processorsTask.thenComposeAsync(
-                        dependencyManager.checkComponentCompletionAsync(neoForgeVersion, true)));
-
-        setResult(GameInstancePatch.fromManifest(
-                neoForgeVersion,
-                GameComponentType.NEO_FORGE.getPatchId(),
-                selfVersion,
-                GameInstancePatch.PRIORITY_LOADER));
-    }
-
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    @Override
-    public void postExecute() throws Exception {
-        FileUtils.deleteDirectory(tempDir);
     }
 }

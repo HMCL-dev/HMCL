@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -30,7 +31,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Synchronizes an installed server modpack with its remote manifest.
 @NotNullByDefault
-public class ServerModpackCompletionTask extends Task<Void> {
+public class ServerModpackCompletionTask extends Task<@Nullable Void> {
 
     /// The dependency manager used for downloads and game-component updates.
     private final DefaultDependencyManager dependencyManager;
@@ -43,15 +44,6 @@ public class ServerModpackCompletionTask extends Task<Void> {
 
     /// The installed configuration supplied by the caller or loaded from disk.
     private @Nullable ModpackConfiguration<ServerModpackManifest> manifest;
-
-    /// The remote-manifest request created during [#preExecute()].
-    private @Nullable GetTask dependent;
-
-    /// The remote manifest parsed during [#execute()].
-    private @Nullable ServerModpackManifest remoteManifest;
-
-    /// Download and game-builder tasks produced during [#execute()].
-    private final List<Task<?>> dependencies = new ArrayList<>();
 
     /// Creates a task that loads the installed configuration from disk.
     ///
@@ -91,41 +83,24 @@ public class ServerModpackCompletionTask extends Task<Void> {
         setSignificance(TaskSignificance.MODERATE);
     }
 
-    @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() throws Exception {
-        if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
-        dependent = new GetTask(WebURL.parse(manifest.getManifest().getFileApi() + "/server-manifest.json"));
-    }
-
-    @Override
-    public Collection<Task<?>> getSuccessors() {
-        return dependencies;
-    }
-
-    @Override
-    public Collection<Task<?>> getPredecessors() {
-        return dependent == null ? Collections.emptySet() : Collections.singleton(dependent);
-    }
-
     private Map<String, String> toMap(Collection<ServerModpackManifest.Addon> addons) {
         return addons.stream().collect(Collectors.toMap(ServerModpackManifest.Addon::getId, ServerModpackManifest.Addon::getVersion));
     }
 
+    /// Synchronizes game components and files against the remote manifest.
     @Override
-    public void execute() throws Exception {
-        if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return null;
 
+        String json = context.run(new GetTask(WebURL.parse(manifest.getManifest().getFileApi() + "/server-manifest.json")));
+        ServerModpackManifest remoteManifest;
         try {
-            remoteManifest = JsonUtils.fromNonNullJson(dependent.getResult(), ServerModpackManifest.class);
+            remoteManifest = JsonUtils.fromNonNullJson(json, ServerModpackManifest.class);
         } catch (JsonParseException e) {
             throw new IOException(e);
         }
 
+        List<Task<?>> dependencies = new ArrayList<>();
         Map<String, String> oldAddons = toMap(manifest.getManifest().getAddons());
         Map<String, String> newAddons = toMap(remoteManifest.getAddons());
         if (!Objects.equals(oldAddons, newAddons)) {
@@ -202,17 +177,14 @@ public class ServerModpackCompletionTask extends Task<Void> {
 
         getProperties().put("total", dependencies.size());
         notifyPropertiesChanged();
-    }
 
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    @Override
-    public void postExecute() throws Exception {
-        if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
-        Files.createDirectories(configurationFile.getParent());
-        JsonUtils.writeToJsonFile(configurationFile, new ModpackConfiguration<>(remoteManifest, this.manifest.getType(), this.manifest.getName(), this.manifest.getVersion(), remoteManifest.getFiles()));
+        try {
+            context.runAll(dependencies);
+        } finally {
+            // Record the remote manifest even when some downloads fail.
+            Files.createDirectories(configurationFile.getParent());
+            JsonUtils.writeToJsonFile(configurationFile, new ModpackConfiguration<>(remoteManifest, manifest.getType(), manifest.getName(), manifest.getVersion(), remoteManifest.getFiles()));
+        }
+        return null;
     }
 }

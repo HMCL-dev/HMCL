@@ -39,47 +39,35 @@ public final class GetTask extends FetchTask<String> {
     }
 
     @Override
-    protected EnumCheckETag shouldCheckETag() {
-        return EnumCheckETag.CHECK_E_TAG;
+    protected String useCachedResult(Path cachedFile) throws IOException {
+        return Files.readString(cachedFile);
     }
 
     @Override
-    protected void useCachedResult(Path cachedFile) throws IOException {
-        setResult(Files.readString(cachedFile));
-    }
-
-    @Override
-    protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) {
+    protected Context<String> getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) {
         long length = -1;
         if (response != null)
             length = response.headers().firstValueAsLong("content-length").orElse(-1L);
         final var baos = new ByteArrayOutputStream(length <= 0 ? 8192 : (int) length);
 
-        return new Context() {
-            @Override
-            public void reset() throws IOException {
-                baos.reset();
-            }
-
+        return new Context<>() {
             @Override
             public void write(byte[] buffer, int offset, int len) {
                 baos.write(buffer, offset, len);
             }
 
             @Override
-            public void close() throws IOException {
-                if (!isSuccess()) return;
-
+            public String finish() throws IOException {
                 Charset charset = StandardCharsets.UTF_8;
                 if (response != null)
                     charset = NetworkUtils.getCharsetFromContentType(response.headers().firstValue("content-type").orElse(null));
 
                 String result = baos.toString(charset);
-                setResult(result);
 
                 if (checkETag) {
                     repository.cacheText(response, result);
                 }
+                return result;
             }
         };
     }

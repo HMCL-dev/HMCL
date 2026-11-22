@@ -7,13 +7,15 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.Result;
+import org.jackhuang.hmcl.util.function.ExceptionalBiFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandles;
@@ -21,194 +23,171 @@ import java.lang.invoke.VarHandle;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * Disposable task.
- *
- * @author huangyuhui
- */
-public abstract class Task<T> {
+/// A single-use unit of work with a result, lifecycle notifications, and optional progress.
+/// Creating a task or composing it with another task does not start either body. Submit the
+/// outermost task using [#start()], [#run()], or a [TaskExecutor]. Each task instance in an
+/// execution must be used only once. Create a new instance to repeat an operation.
+///
+/// Cancellation is cooperative. A running body may check [#isCancelled()] and release its
+/// resources before returning. The executor also checks for cancellation before invoking
+/// a body and before publishing its result.
+///
+/// @param <T> the result type, which may be nullable
+@NotNullByDefault
+public abstract class Task<T extends @Nullable Object> {
 
-    /**
-     * True if not logging when executing this task.
-     */
+    /// Creates a task in the ready state with indeterminate progress.
+    public Task() {
+    }
+
+    /// Controls execution logging and visibility in the task list.
     private TaskSignificance significance = TaskSignificance.MAJOR;
 
+    /// Returns the logging and display policy for this task.
     public final TaskSignificance getSignificance() {
         return significance;
     }
 
+    /// Sets the logging and display policy and returns this task.
     public final Task<T> setSignificance(TaskSignificance significance) {
         this.significance = significance;
         return this;
     }
 
-    // cancel
-    private BooleanSupplier cancelled;
+    /// Supplies the executor's cancellation flag during execution.
+    private @Nullable BooleanSupplier cancelled;
 
+    /// Associates the task with its executor's cancellation flag.
     final void setCancelled(BooleanSupplier cancelled) {
         this.cancelled = cancelled;
     }
 
+    /// Returns whether cancellation was requested or the calling thread is interrupted.
+    /// Preserves the thread's interrupted status.
     protected final boolean isCancelled() {
-        if (Thread.interrupted()) {
-            Thread.currentThread().interrupt();
-            return true;
-        }
-
-        return cancelled != null && cancelled.getAsBoolean();
+        return Thread.currentThread().isInterrupted() || cancelled != null && cancelled.getAsBoolean();
     }
 
-    // stage
-    private String stage = null;
+    /// Stage explicitly assigned to this task, or `null` to inherit its parent's stage.
+    private @Nullable String stage = null;
 
-    /**
-     * Stage of task implies the goal of this task, for grouping tasks.
-     * Stage will inherit from the parent task.
-     */
-    public String getStage() {
+    /// Returns this task's explicitly assigned stage, or `null` if none was assigned.
+    public @Nullable String getStage() {
         return stage;
     }
 
-    /**
-     * You must initialize stage in constructor.
-     *
-     * @param stage the stage
-     */
-    protected final void setStage(String stage) {
+    /// Assigns the stage used to group this task and its children during execution.
+    protected final void setStage(@Nullable String stage) {
         this.stage = stage;
     }
 
-    private String inheritedStage = null;
+    /// Effective stage resolved by the executor, or `null` when none is available.
+    private @Nullable String inheritedStage = null;
 
-    public String getInheritedStage() {
+    /// Returns the effective stage assigned by the executor, or `null` before stage resolution or if no stage applies.
+    public @Nullable String getInheritedStage() {
         return inheritedStage;
     }
 
-    void setInheritedStage(String inheritedStage) {
+    /// Records the effective stage for this execution.
+    void setInheritedStage(@Nullable String inheritedStage) {
         this.inheritedStage = inheritedStage;
     }
 
-    // properties
-    Map<String, Object> properties;
+    /// Lazily allocated mutable properties shared with task observers.
+    @Nullable Map<String, Object> properties;
 
+    /// Returns the live, mutable property map for this task. Call [#notifyPropertiesChanged()]
+    /// after updating values that should be reflected by execution listeners.
     public Map<String, Object> getProperties() {
         if (properties == null) properties = new HashMap<>();
         return properties;
     }
 
-    private Runnable notifyPropertiesChanged;
+    /// Notifies the active execution listeners when task properties change.
+    private @Nullable Runnable notifyPropertiesChanged;
 
+    /// Installs the property-change notification for the current execution.
     void setNotifyPropertiesChanged(Runnable runnable) {
         this.notifyPropertiesChanged = runnable;
     }
 
+    /// Notifies the execution listeners that the task properties may have changed.
     protected void notifyPropertiesChanged() {
         if (notifyPropertiesChanged != null) {
             notifyPropertiesChanged.run();
         }
     }
 
-    // state
-    private TaskState state = TaskState.READY;
+    /// Most recent execution state, initially [TaskState#READY].
+    private volatile TaskState state = TaskState.READY;
 
+    /// Returns the current execution state.
     public final TaskState getState() {
         return state;
     }
 
+    /// Publishes a lifecycle transition.
     final void setState(TaskState state) {
         this.state = state;
     }
 
-    // last exception
-    private Exception exception;
+    /// Failure recorded by the executor, or `null` before a failure has been recorded.
+    private volatile @Nullable Exception exception;
 
-    /**
-     * When task has been cancelled, task.exception will be null.
-     *
-     * @return the exception thrown during execution, possibly from dependents or dependencies.
-     */
-    @Nullable
-    public final Exception getException() {
+    /// Returns the recorded failure, or `null` if none has been recorded. Cancellation is
+    /// recorded as a [CancellationException]. For an [Error], the recorded exception wraps the error.
+    public final @Nullable Exception getException() {
         return exception;
     }
 
-    final void setException(Exception e) {
+    /// Records the exception exposed to task observers.
+    final void setException(@Nullable Exception e) {
         exception = e;
     }
 
-    private Executor executor = Schedulers.defaultScheduler();
+    /// Executor configured for this task's work or continuation callback.
+    private Executor executor = Schedulers.tasks();
 
-    /**
-     * The executor that decides how this task runs.
-     */
+    /// Returns the executor configured for the task body or continuation callback.
     public final Executor getExecutor() {
         return executor;
     }
 
+    /// Returns the executor that runs the body, including orchestration of child tasks.
+    Executor bodyExecutor() {
+        return executor;
+    }
+
+    /// Sets the executor used for the body or continuation callback and returns this task.
     public final Task<T> setExecutor(Executor executor) {
         this.executor = executor;
         return this;
     }
 
-    // dependents succeeded
-    private boolean predecessorsSucceeded = false;
+    /// Optional name used for logging and display.
+    private @Nullable String name;
 
-    public boolean havePredecessorsSucceeded() {
-        return predecessorsSucceeded;
-    }
-
-    void setDependentsSucceeded() {
-        predecessorsSucceeded = true;
-    }
-
-    // dependencies succeeded
-    private boolean successorsSucceeded = false;
-
-    public boolean haveSuccessorsSucceeded() {
-        return successorsSucceeded;
-    }
-
-    void setDependenciesSucceeded() {
-        successorsSucceeded = true;
-    }
-
-    /**
-     * True if requires all {@link #getPredecessors} finishing successfully.
-     * <p>
-     * **Note** if this field is set false, you are not supposed to invoke [run]
-     */
-    public boolean requiresPredecessorSuccess() {
-        return true;
-    }
-
-    /**
-     * True if requires all {@link #getSuccessors} finishing successfully.
-     * <p>
-     * **Note** if this field is set false, you are not supposed to invoke [run]
-     */
-    public boolean requiresSuccessorSuccess() {
-        return true;
-    }
-
-    // name
-    private String name;
-
+    /// Returns the configured display name, or the class name if none was supplied.
     public String getName() {
         return name != null ? name : getClass().getName();
     }
 
-    public Task<T> setName(String name) {
+    /// Sets the display name and returns this task. Passing `null` restores the class name.
+    public Task<T> setName(@Nullable String name) {
         this.name = name;
         return this;
     }
 
+    /// Returns the class name and, when different, the display name.
     @Override
     public String toString() {
         if (getClass().getName().equals(getName()))
@@ -217,92 +196,38 @@ public abstract class Task<T> {
             return getClass().getName() + "[" + getName() + "]";
     }
 
-    // result
-    private T result;
-    private Consumer<T> resultConsumer;
+    /// Successful return value, or `null` until publication or for a successful null result.
+    private volatile @Nullable T result;
 
-    /**
-     * Returns the result of this task.
-     * <p>
-     * The result will be generated only if the execution is completed.
-     */
-    public T getResult() {
+    /// Returns the value published on success, or `null` before publication, after failure,
+    /// or for a successful null result. Consult [#getState()] to distinguish these cases.
+    /// The executor publishes the value before notifying successful completion listeners.
+    public final @Nullable T getResult() {
         return result;
     }
 
-    protected void setResult(T result) {
-        this.result = result;
-        if (resultConsumer != null)
-            resultConsumer.accept(result);
+    /// Publishes the value returned by the body after the final cancellation check.
+    final void publishResult(T value) {
+        result = value;
     }
 
-    /**
-     * Sync the result of this task by given action.
-     *
-     * @param action the action to perform when result of this task changed
-     * @return this Task
-     */
-    public Task<T> storeTo(Consumer<T> action) {
-        this.resultConsumer = action;
-        action.accept(getResult());
-        return this;
-    }
+    /// Runs the task body using the supplied context to execute children and obtain their results.
+    ///
+    /// @implSpec Implementations that need child work must use the context within this invocation
+    /// and on its calling thread. The executor publishes the returned value after its final
+    /// cancellation check and records an exception if execution fails.
+    /// @param context the execution scope for this invocation
+    /// @return the value to publish on success
+    /// @throws Exception if execution cannot complete
+    public abstract T execute(TaskExecutionContext context) throws Exception;
 
-    // execution
-    public boolean doPreExecute() {
-        return false;
-    }
+    /// Lazily created event manager for terminal notifications.
+    private volatile @Nullable EventManager<TaskEvent> onDone;
 
-    /**
-     * @throws InterruptedException if current thread is interrupted
-     * @see Thread#isInterrupted()
-     */
-    public void preExecute() throws Exception {
-    }
-
-    /**
-     * @throws InterruptedException if current thread is interrupted
-     * @see Thread#isInterrupted()
-     */
-    public abstract void execute() throws Exception;
-
-    public boolean doPostExecute() {
-        return false;
-    }
-
-    /**
-     * This method will be called after dependency tasks terminated all together.
-     * <p>
-     * You can check whether dependencies succeed in this method by calling
-     * {@link Task#haveSuccessorsSucceeded()} no matter when
-     * {@link Task#requiresSuccessorSuccess()} returns true or false.
-     *
-     * @throws InterruptedException if current thread is interrupted
-     * @see Thread#isInterrupted()
-     * @see Task#haveSuccessorsSucceeded()
-     */
-    public void postExecute() throws Exception {
-    }
-
-    /**
-     * The collection of sub-tasks that should execute **before** this task running.
-     */
-    public Collection<? extends Task<?>> getPredecessors() {
-        return Collections.emptySet();
-    }
-
-    /**
-     * The collection of sub-tasks that should execute **after** this task running.
-     * Will not be executed if execution fails.
-     */
-    public Collection<? extends Task<?>> getSuccessors() {
-        return Collections.emptySet();
-    }
-
-    private volatile EventManager<TaskEvent> onDone;
-
+    /// Returns the event manager notified when this task succeeds or fails. A listener must
+    /// register before completion to observe the event.
     public EventManager<TaskEvent> onDone() {
-        EventManager<TaskEvent> onDone = this.onDone;
+        @Nullable EventManager<TaskEvent> onDone = this.onDone;
         if (onDone == null) {
             synchronized (this) {
                 onDone = this.onDone;
@@ -315,20 +240,28 @@ public abstract class Task<T> {
         return onDone;
     }
 
+    /// Fires a terminal event when the event manager has been requested.
     void fireDoneEvent(Object source, boolean failed) {
-        EventManager<TaskEvent> onDone = this.onDone;
+        @Nullable EventManager<TaskEvent> onDone = this.onDone;
         if (onDone != null)
             onDone.fireEvent(new TaskEvent(source, this, failed));
     }
 
+    /// JavaFX progress property, initially `-1` to indicate indeterminate progress.
     private final DoubleProperty progress = new SimpleDoubleProperty(this, "progress", -1);
 
+    /// Returns the read-only progress property. Its initial value is `-1`.
     public ReadOnlyDoubleProperty progressProperty() {
         return progress;
     }
 
+    /// Wall-clock time in milliseconds of the latest accepted throttled progress update.
     private long lastUpdateProgressTime = 0L;
 
+    /// Updates progress using completed and total units. A zero total or a count at or above
+    /// the total denotes completion.
+    ///
+    /// @throws IllegalArgumentException if either argument is negative
     protected void updateProgress(long count, long total) {
         if (count < 0 || total < 0)
             throw new IllegalArgumentException("Invalid count or total: count=" + count + ", total=" + total);
@@ -336,6 +269,10 @@ public abstract class Task<T> {
         updateProgress(count < total ? (double) count / total : 1.0);
     }
 
+    /// Queues a progress update in the range zero to one. Intermediate updates are rate-limited
+    /// and multiple pending updates may be coalesced.
+    ///
+    /// @throws IllegalArgumentException if the value is outside the range or is NaN
     protected void updateProgress(double progress) {
         if (progress < 0 || progress > 1.0 || Double.isNaN(progress))
             throw new IllegalArgumentException("Invalid progress: " + progress);
@@ -347,12 +284,12 @@ public abstract class Task<T> {
         }
     }
 
-    //region Helpers for updateProgressImmediately
 
+    /// Latest queued progress value, or `-1` when no JavaFX update is pending.
     @SuppressWarnings("FieldMayBeFinal")
     private volatile double pendingProgress = -1.0;
 
-    /// @see Task#pendingProgress
+    /// Provides atomic access to [#pendingProgress].
     private static final VarHandle PENDING_PROGRESS_HANDLE;
 
     static {
@@ -363,8 +300,10 @@ public abstract class Task<T> {
             throw new ExceptionInInitializerError(e);
         }
     }
-    //endregion updateProgressImmediately
 
+    /// Queues an unthrottled JavaFX progress update, coalescing it with any pending value.
+    ///
+    /// @param progress a progress fraction in the range zero to one
     protected void updateProgressImmediately(double progress) {
         // assert progress >= 0 && progress <= 1.0;
         if ((double) PENDING_PROGRESS_HANDLE.getAndSet(this, progress) == -1.0) {
@@ -372,30 +311,22 @@ public abstract class Task<T> {
         }
     }
 
+    /// Runs this task and waits for its result. If interrupted while waiting on another worker,
+    /// the caller waits for the submitted work to finish before the interruption is reported.
+    /// A caller running directly on a custom executor must leave a worker available if the task
+    /// requires that executor. Use [TaskExecutionContext#run(Task)] from another task.
+    ///
+    /// @throws Exception if execution fails, is cancelled, or the wait is interrupted
     public final T run() throws Exception {
-        if (getSignificance().shouldLog())
-            LOG.trace("Executing task: " + getName());
-
-        for (Task<?> task : getPredecessors())
-            doSubTask(task);
-        execute();
-        for (Task<?> task : getSuccessors())
-            doSubTask(task);
-        fireDoneEvent(this, false);
-
-        return getResult();
+        return AsyncTaskExecutor.run(this);
     }
 
-    private void doSubTask(Task<?> task) throws Exception {
-        progress.bind(task.progress);
-        task.run();
-        progress.unbind();
-    }
-
+    /// Creates an executor for this task. Call [TaskExecutor#start()] to begin execution.
     public final TaskExecutor executor() {
         return new AsyncTaskExecutor(this);
     }
 
+    /// Creates an executor for this task and starts it if `start` is true.
     public final TaskExecutor executor(boolean start) {
         TaskExecutor executor = new AsyncTaskExecutor(this);
         if (start)
@@ -403,417 +334,218 @@ public abstract class Task<T> {
         return executor;
     }
 
+    /// Creates an executor with the supplied listener registered before execution starts.
     public final TaskExecutor executor(TaskListener taskListener) {
         TaskExecutor executor = new AsyncTaskExecutor(this);
         executor.addTaskListener(taskListener);
         return executor;
     }
 
+    /// Starts an asynchronous execution of this task.
     public final void start() {
         executor().start();
     }
 
+    /// Runs this task, waits for termination, and returns whether it succeeded.
     public final boolean test() {
         return executor().test();
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed using the default Executor, with this
-     * task's result as the argument to the supplied function.
-     *
-     * @param fn  the function to use to compute the value of the returned Task
-     * @param <U> the function's return type
-     * @return the new Task
-     */
-    public <U, E extends Exception> Task<U> thenApplyAsync(ExceptionalFunction<T, U, E> fn) {
+    /// Returns a task that applies `fn` to the successful result on the default scheduler.
+    public <U extends @Nullable Object, E extends Exception> Task<U> thenApplyAsync(ExceptionalFunction<T, U, E> fn) {
         return thenApplyAsync(Schedulers.defaultScheduler(), fn);
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed using the supplied Executor, with this
-     * task's result as the argument to the supplied function.
-     *
-     * @param executor the executor to use for asynchronous execution
-     * @param fn       the function to use to compute the value of the returned Task
-     * @param <U>      the function's return type
-     * @return the new Task
-     */
-    public <U, E extends Exception> Task<U> thenApplyAsync(Executor executor, ExceptionalFunction<T, U, E> fn) {
+    /// Returns a task that applies `fn` to the successful result on `executor`.
+    public <U extends @Nullable Object, E extends Exception> Task<U> thenApplyAsync(Executor executor, ExceptionalFunction<T, U, E> fn) {
         return thenApplyAsync(getCaller(), executor, fn).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed using the supplied Executor, with this
-     * task's result as the argument to the supplied function.
-     *
-     * @param name     the name of this new Task for displaying
-     * @param executor the executor to use for asynchronous execution
-     * @param fn       the function to use to compute the value of the returned Task
-     * @param <U>      the function's return type
-     * @return the new Task
-     */
-    public <U, E extends Exception> Task<U> thenApplyAsync(String name, Executor executor, ExceptionalFunction<T, U, E> fn) {
-        return new UniApply<>(fn).setExecutor(executor).setName(name);
+    /// Returns a named task that applies `fn` to the successful result on `executor`.
+    public <U extends @Nullable Object, E extends Exception> Task<U> thenApplyAsync(String name, Executor executor, ExceptionalFunction<T, U, E> fn) {
+        return Task.<U>continuation(executor, (context, callbackExecutor) -> {
+            T value = context.run(this);
+            return context.call(callbackExecutor, () -> fn.apply(value));
+        }).setName(name);
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed using the default Executor, with this
-     * task's result as the argument to the supplied action.
-     *
-     * @param action the action to perform before completing the
-     *               returned Task
-     * @return the new Task
-     */
-    public <E extends Exception> Task<Void> thenAcceptAsync(ExceptionalConsumer<T, E> action) {
+    /// Returns a task that passes the successful result to `action` on the default scheduler.
+    public <E extends Exception> Task<@Nullable Void> thenAcceptAsync(ExceptionalConsumer<T, E> action) {
         return thenAcceptAsync(Schedulers.defaultScheduler(), action);
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed using the supplied Executor, with this
-     * task's result as the argument to the supplied action.
-     *
-     * @param action   the action to perform before completing the returned Task
-     * @param executor the executor to use for asynchronous execution
-     * @return the new Task
-     */
-    public <E extends Exception> Task<Void> thenAcceptAsync(Executor executor, ExceptionalConsumer<T, E> action) {
+    /// Returns a task that passes the successful result to `action` on `executor`.
+    public <E extends Exception> Task<@Nullable Void> thenAcceptAsync(Executor executor, ExceptionalConsumer<T, E> action) {
         return thenAcceptAsync(getCaller(), executor, action).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed using the supplied Executor, with this
-     * task's result as the argument to the supplied action.
-     *
-     * @param name     the name of this new Task for displaying
-     * @param action   the action to perform before completing the returned Task
-     * @param executor the executor to use for asynchronous execution
-     * @return the new Task
-     */
-    public <E extends Exception> Task<Void> thenAcceptAsync(String name, Executor executor, ExceptionalConsumer<T, E> action) {
+    /// Returns a named task that passes the successful result to `action` on `executor`.
+    public <E extends Exception> Task<@Nullable Void> thenAcceptAsync(String name, Executor executor, ExceptionalConsumer<T, E> action) {
         return thenApplyAsync(name, executor, result -> {
             action.accept(result);
             return null;
         });
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, executes the given action using the default Executor.
-     *
-     * @param action the action to perform before completing the
-     *               returned Task
-     * @return the new Task
-     */
-    public <E extends Exception> Task<Void> thenRunAsync(ExceptionalRunnable<E> action) {
+    /// Returns a task that runs `action` on the default scheduler after this task succeeds.
+    public <E extends Exception> Task<@Nullable Void> thenRunAsync(ExceptionalRunnable<E> action) {
         return thenRunAsync(Schedulers.defaultScheduler(), action);
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, executes the given action using the supplied Executor.
-     *
-     * @param action   the action to perform before completing the
-     *                 returned Task
-     * @param executor the executor to use for asynchronous execution
-     * @return the new Task
-     */
-    public <E extends Exception> Task<Void> thenRunAsync(Executor executor, ExceptionalRunnable<E> action) {
+    /// Returns a task that runs `action` on `executor` after this task succeeds.
+    public <E extends Exception> Task<@Nullable Void> thenRunAsync(Executor executor, ExceptionalRunnable<E> action) {
         return thenRunAsync(getCaller(), executor, action).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, executes the given action using the supplied Executor.
-     *
-     * @param name     the name of this new Task for displaying
-     * @param action   the action to perform before completing the
-     *                 returned Task
-     * @param executor the executor to use for asynchronous execution
-     * @return the new Task
-     */
-    public <E extends Exception> Task<Void> thenRunAsync(String name, Executor executor, ExceptionalRunnable<E> action) {
+    /// Returns a named task that runs `action` on `executor` after this task succeeds.
+    public <E extends Exception> Task<@Nullable Void> thenRunAsync(String name, Executor executor, ExceptionalRunnable<E> action) {
         return thenApplyAsync(name, executor, ignore -> {
             action.run();
             return null;
         });
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed using the default Executor.
-     *
-     * @param fn  the function to use to compute the value of the returned Task
-     * @param <U> the function's return type
-     * @return the new Task
-     */
-    public final <U> Task<U> thenSupplyAsync(Callable<U> fn) {
+    /// Returns a task that calls `fn` on the default scheduler after this task succeeds and returns its value.
+    public final <U extends @Nullable Object> Task<U> thenSupplyAsync(Callable<U> fn) {
         return thenComposeAsync(() -> Task.supplyAsync(fn));
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed using the default Executor.
-     *
-     * @param name the name of this new Task for displaying
-     * @param fn   the function to use to compute the value of the returned Task
-     * @param <U>  the function's return type
-     * @return the new Task
-     */
-    public final <U> Task<U> thenSupplyAsync(String name, Callable<U> fn) {
+    /// Returns a task that runs the named supplier on the default scheduler after this task succeeds.
+    public final <U extends @Nullable Object> Task<U> thenSupplyAsync(String name, Callable<U> fn) {
         return thenComposeAsync(() -> Task.supplyAsync(name, fn));
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed.
-     *
-     * @param other the another Task
-     * @param <U>   the type of the returned Task's result
-     * @return the Task
-     */
-    public final <U> Task<U> thenComposeAsync(Task<U> other) {
+    /// Returns a task that runs `other` after this task succeeds and returns its result, or `null` if `other` is absent.
+    public final <U extends @Nullable Object> Task<@Nullable U> thenComposeAsync(@Nullable Task<U> other) {
         return thenComposeAsync(() -> other);
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed.
-     *
-     * @param fn  the function returning a new Task
-     * @param <U> the type of the returned Task's result
-     * @return the Task
-     */
-    public final <U> Task<U> thenComposeAsync(ExceptionalSupplier<Task<U>, ?> fn) {
+    /// Returns a task that calls `fn` on the default scheduler after success, then runs the supplied task.
+    /// A null task yields a null result.
+    public final <U extends @Nullable Object> Task<@Nullable U> thenComposeAsync(ExceptionalSupplier<@Nullable Task<U>, ?> fn) {
         return thenComposeAsync(Schedulers.defaultScheduler(), fn);
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed.
-     *
-     * @param fn       the function returning a new Task
-     * @param executor the executor to use for asynchronous execution
-     * @param <U>      the type of the returned Task's result
-     * @return the Task
-     */
-    public final <U> Task<U> thenComposeAsync(Executor executor, ExceptionalSupplier<Task<U>, ?> fn) {
-        return new UniCompose<>(fn, true).setExecutor(executor);
+    /// Returns a task that calls `fn` on `executor` after success, then runs the supplied task.
+    /// A null task yields a null result.
+    public final <U extends @Nullable Object> Task<@Nullable U> thenComposeAsync(Executor executor, ExceptionalSupplier<@Nullable Task<U>, ?> fn) {
+        return thenComposeAsync(executor, ignored -> fn.get());
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed with result of this task as the argument
-     * to the supplied function.
-     *
-     * @param fn  the function returning a new Task
-     * @param <U> the type of the returned Task's result
-     * @return the Task
-     */
-    public <U, E extends Exception> Task<U> thenComposeAsync(ExceptionalFunction<T, Task<U>, E> fn) {
+    /// Returns a task that maps the successful result to a child on the default scheduler and runs that child.
+    /// A null child yields a null result.
+    public <U extends @Nullable Object, E extends Exception> Task<@Nullable U> thenComposeAsync(ExceptionalFunction<T, @Nullable Task<U>, E> fn) {
         return thenComposeAsync(Schedulers.defaultScheduler(), fn);
     }
 
-    /**
-     * Returns a new Task that, when this task completes
-     * normally, is executed with result of this task as the argument
-     * to the supplied function.
-     *
-     * @param fn       the function returning a new Task
-     * @param executor the executor to use for asynchronous execution
-     * @param <U>      the type of the returned Task's result
-     * @return the Task
-     */
-    public <U, E extends Exception> Task<U> thenComposeAsync(Executor executor, ExceptionalFunction<T, Task<U>, E> fn) {
-        return new UniCompose<>(fn, true).setExecutor(executor);
+    /// Returns a task that maps the successful result to a child on `executor` and runs that child.
+    /// A null child yields a null result.
+    public <U extends @Nullable Object, E extends Exception> Task<@Nullable U> thenComposeAsync(Executor executor, ExceptionalFunction<T, @Nullable Task<U>, E> fn) {
+        return Task.<@Nullable U>continuation(executor, (context, callbackExecutor) -> {
+            T value = context.run(this);
+            @Nullable Task<U> next = context.call(callbackExecutor, () -> fn.apply(value));
+            return next == null ? null : context.run(next);
+        }).setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
     }
 
-    public final <U> Task<U> withComposeAsync(Task<U> other) {
+    /// Returns a task that runs `other` after success or ordinary failure, yielding its result.
+    /// Cancellation and errors propagate. A null child yields a null result.
+    public final <U extends @Nullable Object> Task<@Nullable U> withComposeAsync(@Nullable Task<U> other) {
         return withComposeAsync(() -> other);
     }
 
-    public final <U, E extends Exception> Task<U> withComposeAsync(ExceptionalSupplier<Task<U>, E> fn) {
-        return new UniCompose<>(fn, false);
+    /// Returns a task that calls `fn` after success or ordinary failure and runs the supplied task.
+    /// Cancellation and errors propagate. A null task yields a null result.
+    public final <U extends @Nullable Object, E extends Exception> Task<@Nullable U> withComposeAsync(ExceptionalSupplier<@Nullable Task<U>, E> fn) {
+        return Task.<@Nullable U>continuation(Schedulers.defaultScheduler(), (context, callbackExecutor) -> {
+            try {
+                context.run(this);
+            } catch (CancellationException e) {
+                throw e;
+            } catch (Exception ignored) {
+                // This continuation also runs after an ordinary failure.
+            }
+            @Nullable Task<U> next = context.call(callbackExecutor, fn::get);
+            return next == null ? null : context.run(next);
+        }).setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /**
-     * Returns a new Task that executes the given action when this task completes,
-     * regardless of whether this task succeeds or fails, using the default Executor.
-     *
-     * @param action the action to perform before completing the
-     *               returned Task
-     * @return the new Task
-     */
-    public <E extends Exception> Task<Void> withRunAsync(ExceptionalRunnable<E> action) {
+    /// Returns a task that runs `action` on the default scheduler after success or ordinary failure.
+    /// Cancellation and errors propagate.
+    public <E extends Exception> Task<@Nullable Void> withRunAsync(ExceptionalRunnable<E> action) {
         return withRunAsync(Schedulers.defaultScheduler(), action);
     }
 
-    /**
-     * Returns a new Task that executes the given action when this task completes,
-     * regardless of whether this task succeeds or fails, using the supplied Executor.
-     *
-     * @param action   the action to perform before completing the
-     *                 returned Task
-     * @param executor the executor to use for asynchronous execution
-     * @return the new Task
-     */
-    public <E extends Exception> Task<Void> withRunAsync(Executor executor, ExceptionalRunnable<E> action) {
+    /// Returns a task that runs `action` on `executor` after success or ordinary failure.
+    /// Cancellation and errors propagate.
+    public <E extends Exception> Task<@Nullable Void> withRunAsync(Executor executor, ExceptionalRunnable<E> action) {
         return withRunAsync(getCaller(), executor, action).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /**
-     * Returns a new Task that executes the given action when this task completes,
-     * regardless of whether this task succeeds or fails, using the supplied Executor.
-     *
-     * @param name     the name of this new Task for displaying
-     * @param action   the action to perform before completing the
-     *                 returned Task
-     * @param executor the executor to use for asynchronous execution
-     * @return the new Task
-     */
-    public <E extends Exception> Task<Void> withRunAsync(String name, Executor executor, ExceptionalRunnable<E> action) {
-        return new UniCompose<>(() -> Task.runAsync(name, executor, action), false);
+    /// Returns a task that runs the named action on `executor` after success or ordinary failure.
+    /// Cancellation and errors propagate.
+    public <E extends Exception> Task<@Nullable Void> withRunAsync(String name, Executor executor, ExceptionalRunnable<E> action) {
+        return withComposeAsync(() -> Task.runAsync(name, executor, action));
     }
 
-    /**
-     * Returns a new Task with the same exception as this task, that executes
-     * the given action when this task completes.
-     *
-     * <p>When this task is complete, the given action is invoked, a boolean
-     * value represents the execution status of this task, and the exception
-     * (or {@code null} if none) of this task as arguments.  The returned task
-     * is completed when the action returns.  If the supplied action itself
-     * encounters an exception, then the returned task exceptionally completes
-     * with this exception unless this task also completed exceptionally.
-     *
-     * @param action the action to perform
-     * @return the new Task
-     */
-    public final Task<Void> whenComplete(FinalizedCallback action) {
+    /// Returns a task that reports success or an exception to `action` on the default scheduler.
+    /// See [#whenComplete(Executor, FinalizedCallbackWithResult)] for failure propagation.
+    public final Task<@Nullable Void> whenComplete(FinalizedCallback action) {
         return whenComplete(Schedulers.defaultScheduler(), action);
     }
 
-    /**
-     * Returns a new Task with the same exception as this task, that executes
-     * the given action when this task completes.
-     *
-     * <p>When this task is complete, the given action is invoked, a boolean
-     * value represents the execution status of this task, and the exception
-     * (or {@code null} if none, which means when isDependentSucceeded is false,
-     * exception may be null) of this task as arguments.  The returned task
-     * is completed when the action returns.  If the supplied action itself
-     * encounters an exception, then the returned task exceptionally completes
-     * with this exception unless this task also completed exceptionally.
-     *
-     * @param action   the action to perform
-     * @param executor the executor to use for asynchronous execution
-     * @return the new Task
-     */
-    public final Task<Void> whenComplete(Executor executor, FinalizedCallback action) {
-        return new Task<Void>() {
-            {
-                setSignificance(TaskSignificance.MODERATE);
-            }
-
-            @Override
-            public void execute() throws Exception {
-                if (havePredecessorsSucceeded() != (Task.this.getException() == null))
-                    throw new AssertionError("When whenComplete succeeded, Task.exception must be null.", Task.this.getException());
-
-                action.execute(Task.this.getException());
-
-                if (!havePredecessorsSucceeded()) {
-                    setSignificance(TaskSignificance.MINOR);
-                    if (Task.this.getException() == null)
-                        throw new AssertionError("When failed, exception cannot be null");
-                    else
-                        throw Task.this.getException();
-                }
-            }
-
-            @Override
-            public Collection<Task<?>> getPredecessors() {
-                return Collections.singleton(Task.this);
-            }
-
-            @Override
-            public boolean requiresPredecessorSuccess() {
-                return false;
-            }
-        }.setExecutor(executor).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
+    /// Returns a task that reports success or an exception to `action` on `executor`.
+    /// See [#whenComplete(Executor, FinalizedCallbackWithResult)] for failure propagation.
+    public final Task<@Nullable Void> whenComplete(Executor executor, FinalizedCallback action) {
+        return whenComplete(executor, (value, failure) -> action.execute(failure));
     }
 
-    /**
-     * Returns a new Task with the same exception as this task, that executes
-     * the given action when this task completes.
-     *
-     * <p>When this task is complete, the given action is invoked with the
-     * result (or {@code null} if none), a boolean value represents the
-     * execution status of this task, and the exception (or {@code null}
-     * if none) of this task as arguments.  The returned task is completed
-     * when the action returns.  If the supplied action itself encounters an
-     * exception, then the returned task exceptionally completes with this
-     * exception unless this task also completed exceptionally.
-     *
-     * @param action the action to perform
-     * @return the new Task
-     */
-    public Task<Void> whenComplete(Executor executor, FinalizedCallbackWithResult<T> action) {
-        return whenComplete(executor, (exception -> action.execute(getResult(), exception)));
+    /// Returns a task that runs this task and then invokes `action` on `executor`. On success
+    /// the callback receives the result and a null exception. If running this task throws an
+    /// [Exception], including a [CancellationException], the callback receives a null result
+    /// and the exception. An [Error] propagates directly.
+    ///
+    /// If the callback returns normally, the returned task propagates the original failure
+    /// or completes with a null result on success. If the callback throws, that failure
+    /// propagates instead. Cancellation before the returned task's body starts skips the callback.
+    public Task<@Nullable Void> whenComplete(Executor executor, FinalizedCallbackWithResult<T> action) {
+        return Task.<@Nullable Void>continuation(executor, (context, callbackExecutor) -> {
+            T value;
+            try {
+                value = context.run(this);
+            } catch (Exception failure) {
+                context.call(callbackExecutor, () -> {
+                    action.execute(null, failure);
+                    return null;
+                });
+                throw failure;
+            }
+            return context.call(callbackExecutor, () -> {
+                action.execute(value, null);
+                return null;
+            });
+        }).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
+    /// Returns a task that represents success or an ordinary exception as a [Result].
+    /// Cancellation and errors propagate to the caller.
     public Task<Result<T>> wrapResult() {
-        return new Task<Result<T>>() {
-            {
-                setSignificance(TaskSignificance.MODERATE);
+        return Task.<Result<T>>of(context -> {
+            try {
+                return Result.success(context.run(this));
+            } catch (CancellationException e) {
+                throw e;
+            } catch (Exception failure) {
+                return Result.failure(failure);
             }
-
-            @Override
-            public void execute() throws Exception {
-                if (havePredecessorsSucceeded() != (Task.this.getException() == null))
-                    throw new AssertionError("When whenComplete succeeded, Task.exception must be null.", Task.this.getException());
-
-                if (havePredecessorsSucceeded()) {
-                    setResult(Result.success(Task.this.getResult()));
-                } else {
-                    setSignificance(TaskSignificance.MINOR);
-                    setResult(Result.failure(Task.this.getException()));
-                }
-            }
-
-            @Override
-            public Collection<Task<?>> getPredecessors() {
-                return Collections.singleton(Task.this);
-            }
-
-            @Override
-            public boolean requiresPredecessorSuccess() {
-                return false;
-            }
-        }.setExecutor(executor).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
+        }).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /**
-     * Returns a new Task with the same exception as this task, that executes
-     * the given actions when this task completes.
-     *
-     * <p>When this task is complete, the given success action is invoked, the
-     * given failure action is invoked with the exception of this task.  The
-     * returned task is completed when the action returns.  If the supplied
-     * action itself encounters an exception, then the returned task exceptionally
-     * completes with this exception unless this task also
-     * completed exceptionally.
-     *
-     * @param success the action to perform when this task successfully completed
-     * @param failure the action to perform when this task exceptionally returned
-     * @return the new Task
-     */
-    public final <E1 extends Exception, E2 extends Exception> Task<Void> whenComplete(Executor executor, ExceptionalRunnable<E1> success, ExceptionalConsumer<Exception, E2> failure) {
+    /// Returns a task that invokes the corresponding optional callback on `executor` after success or an exception.
+    /// An exception thrown by `success` is logged and passed to `failure` if present. If `failure`
+    /// returns normally, the source task's outcome is preserved. An exception thrown by `failure`
+    /// propagates. Either callback may be null.
+    public final <E1 extends Exception, E2 extends Exception> Task<@Nullable Void> whenComplete(Executor executor, @Nullable ExceptionalRunnable<E1> success, @Nullable ExceptionalConsumer<Exception, E2> failure) {
         return whenComplete(executor, exception -> {
             if (exception == null) {
                 if (success != null)
@@ -831,424 +563,355 @@ public abstract class Task<T> {
         });
     }
 
-    /**
-     * Returns a new Task with the same exception as this task, that executes
-     * the given actions when this task completes.
-     *
-     * <p>When this task is complete, the given success action is invoked with
-     * the result, the given failure action is invoked with the exception of
-     * this task.  The returned task is completed when the action returns.  If
-     * the supplied action itself encounters an exception, then the returned
-     * task exceptionally completes with this exception unless this task also
-     * completed exceptionally.
-     *
-     * @param success the action to perform when this task successfully completed
-     * @param failure the action to perform when this task exceptionally returned
-     * @return the new Task
-     */
-    public <E1 extends Exception, E2 extends Exception> Task<Void> whenComplete(Executor executor, ExceptionalConsumer<T, E1> success, ExceptionalConsumer<Exception, E2> failure) {
+    /// Returns a task that passes the successful result to `success` or an exception to `failure` on `executor`.
+    /// An exception thrown by `success` is logged and offered to the optional failure callback,
+    /// as in [#whenComplete(Executor, ExceptionalRunnable, ExceptionalConsumer)].
+    public <E1 extends Exception, E2 extends Exception> Task<@Nullable Void> whenComplete(Executor executor, ExceptionalConsumer<T, E1> success, @Nullable ExceptionalConsumer<Exception, E2> failure) {
         return whenComplete(executor, () -> success.accept(getResult()), failure);
     }
 
+    /// Returns a wrapper that supplies `stage` to this task through stage inheritance.
     public Task<T> withStage(String stage) {
         return new StageTask(stage);
     }
 
+    /// Returns a named task that runs this task and then reports estimated progress while waiting for `done`.
+    /// The wrapper returns the original result once `done` is true.
+    ///
+    /// @param k positive finite scale controlling the rate at which the estimate approaches its upper bound
     public Task<T> withFakeProgress(String name, BooleanSupplier done, double k) {
-        return new FakeProgressTask(done, k).setExecutor(Schedulers.defaultScheduler()).setName(name).setSignificance(TaskSignificance.MAJOR);
+        return new FakeProgressTask(done, k).setName(name).setSignificance(TaskSignificance.MAJOR);
     }
 
+    /// Describes a stage and the alternate identifiers grouped with it.
+    ///
+    /// @param stage the primary stage identifier
+    /// @param aliases the alternate identifiers, retained by reference
     public record StagesHint(String stage, List<String> aliases) {
+        /// Creates a stage hint with no aliases.
         public StagesHint(String stage) {
             this(stage, List.of());
         }
     }
 
+    /// Returns a wrapper with one stage hint per identifier, in argument order.
     public Task<T> withStagesHints(String... hints) {
         return withStagesHints(Arrays.stream(hints).map(StagesHint::new).toList());
     }
 
+    /// Returns a wrapper with an immutable snapshot of the supplied hints.
     public Task<T> withStagesHints(StagesHint... hints) {
         return new StagesHintTask(List.of(hints));
     }
 
+    /// Returns a wrapper retaining the supplied list of stage hints.
     public Task<T> withStagesHints(List<StagesHint> hints) {
         return new StagesHintTask(hints);
     }
 
+    /// Runs the enclosing task and exposes stage hints to listeners.
     public class StagesHintTask extends Task<T> {
+        /// Stage hints supplied to the constructor.
         private final List<StagesHint> hints;
 
+        /// Creates a wrapper that retains `hints` by reference.
         public StagesHintTask(List<StagesHint> hints) {
             this.hints = hints;
             setSignificance(TaskSignificance.MODERATE);
         }
 
+        /// {@inheritDoc}
         @Override
-        public Collection<Task<?>> getPredecessors() {
-            return Collections.singleton(Task.this);
+        public T execute(TaskExecutionContext context) throws Exception {
+            return context.run(Task.this);
         }
 
-        @Override
-        public void execute() {
-            setResult(Task.this.getResult());
-        }
-
+        /// Returns the supplied list of stage hints.
         public List<StagesHint> getHints() {
             return hints;
         }
     }
 
+    /// Returns a wrapper that signals a completed item for `countStage` after this task succeeds.
     public Task<T> withCounter(String countStage) {
         return new CountTask(countStage);
     }
 
-    public static Task<Void> runAsync(ExceptionalRunnable<?> closure) {
+    /// Creates a task that runs `closure` on the default scheduler and returns null.
+    public static Task<@Nullable Void> runAsync(ExceptionalRunnable<?> closure) {
         return runAsync(Schedulers.defaultScheduler(), closure);
     }
 
-    public static Task<Void> runAsync(String name, ExceptionalRunnable<?> closure) {
+    /// Creates a named task that runs `closure` on the default scheduler and returns null.
+    public static Task<@Nullable Void> runAsync(String name, ExceptionalRunnable<?> closure) {
         return runAsync(name, Schedulers.defaultScheduler(), closure);
     }
 
-    public static Task<Void> runAsync(Executor executor, ExceptionalRunnable<?> closure) {
+    /// Creates a task that runs `closure` on `executor` and returns null.
+    public static Task<@Nullable Void> runAsync(Executor executor, ExceptionalRunnable<?> closure) {
         return runAsync(getCaller(), executor, closure).setSignificance(TaskSignificance.MODERATE);
     }
 
-    public static Task<Void> runAsync(String name, Executor executor, ExceptionalRunnable<?> closure) {
-        return new SimpleTask<>(closure.toCallable()).setExecutor(executor).setName(name);
+    /// Creates a named task that runs `closure` on `executor` and returns null.
+    public static Task<@Nullable Void> runAsync(String name, Executor executor, ExceptionalRunnable<?> closure) {
+        return Task.<@Nullable Void>of(context -> {
+            closure.run();
+            return null;
+        }).setExecutor(executor).setName(name);
     }
 
-    public static <T> Task<T> composeAsync(ExceptionalSupplier<Task<T>, ?> fn) {
+    /// Creates a task that calls `fn` when run and returns the supplied child's result.
+    /// A null child yields a null result.
+    public static <T extends @Nullable Object> Task<@Nullable T> composeAsync(ExceptionalSupplier<@Nullable Task<T>, ?> fn) {
         return composeAsync(getCaller(), fn).setSignificance(TaskSignificance.MODERATE);
     }
 
-    public static <T> Task<T> composeAsync(String name, ExceptionalSupplier<Task<T>, ?> fn) {
-        return new Task<T>() {
-            Task<T> then;
-
-            @Override
-            public void execute() throws Exception {
-                then = fn.get();
-                if (then != null)
-                    then.storeTo(this::setResult);
-            }
-
-            @Override
-            public Collection<Task<?>> getSuccessors() {
-                return then == null ? Collections.emptySet() : Collections.singleton(then);
-            }
-        }.setName(name);
+    /// Creates a named task that calls `fn` when run and returns the supplied child's result.
+    /// A null child yields a null result.
+    public static <T extends @Nullable Object> Task<@Nullable T> composeAsync(String name, ExceptionalSupplier<@Nullable Task<T>, ?> fn) {
+        return composeAsync(Schedulers.defaultScheduler(), fn).setName(name).setSignificance(TaskSignificance.MAJOR);
     }
 
-    public static <T> Task<T> composeAsync(Executor executor, ExceptionalSupplier<Task<T>, ?> fn) {
-        return composeAsync(fn).setExecutor(executor);
+    /// Creates a task that calls `fn` on `executor` and returns the supplied child's result.
+    /// A null child yields a null result.
+    public static <T extends @Nullable Object> Task<@Nullable T> composeAsync(Executor executor, ExceptionalSupplier<@Nullable Task<T>, ?> fn) {
+        return Task.<@Nullable T>continuation(executor, (context, callbackExecutor) -> {
+            @Nullable Task<T> next = context.call(callbackExecutor, fn::get);
+            return next == null ? null : context.run(next);
+        }).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
-    public static <V> Task<V> supplyAsync(Callable<V> callable) {
+    /// Creates a task that returns the value of `callable` on the default scheduler.
+    public static <V extends @Nullable Object> Task<V> supplyAsync(Callable<V> callable) {
         return supplyAsync(getCaller(), callable).setSignificance(TaskSignificance.MODERATE);
     }
 
-    public static <V> Task<V> supplyAsync(Executor executor, Callable<V> callable) {
+    /// Creates a task that returns the value of `callable` on `executor`.
+    public static <V extends @Nullable Object> Task<V> supplyAsync(Executor executor, Callable<V> callable) {
         return supplyAsync(getCaller(), executor, callable).setSignificance(TaskSignificance.MODERATE);
     }
 
-    public static <V> Task<V> supplyAsync(String name, Callable<V> callable) {
+    /// Creates a named task that returns the value of `callable` on the default scheduler.
+    public static <V extends @Nullable Object> Task<V> supplyAsync(String name, Callable<V> callable) {
         return supplyAsync(name, Schedulers.defaultScheduler(), callable);
     }
 
-    public static <V> Task<V> supplyAsync(String name, Executor executor, Callable<V> callable) {
-        return new SimpleTask<>(callable).setExecutor(executor).setName(name);
+    /// Creates a named task that returns the value of `callable` on `executor`.
+    public static <V extends @Nullable Object> Task<V> supplyAsync(String name, Executor executor, Callable<V> callable) {
+        return Task.<V>of(context -> callable.call()).setExecutor(executor).setName(name);
     }
 
-    public static <V> Task<V> completed(V value) {
-        return fromCompletableFuture(CompletableFuture.completedFuture(value));
+    /// Creates a task that returns `value` when run.
+    public static <V extends @Nullable Object> Task<V> completed(V value) {
+        return of(context -> value);
     }
 
-    /// Creates a task backed by a future that has already completed exceptionally.
+    /// Creates a task that throws `failure` when its body runs.
     ///
-    /// The failure is processed by the task executor when the task is submitted;
-    /// this method does not start execution or notify task listeners.
-    ///
-    /// @param <V> the task's result type
-    /// @param failure the exception completing the backing future
-    /// @return a new task backed by the failed future
-    /// @throws NullPointerException if failure is null
-    public static <V> @NotNull Task<V> failed(@NotNull Exception failure) {
-        return fromCompletableFuture(CompletableFuture.failedFuture(failure));
+    /// @throws NullPointerException if `failure` is null
+    public static <V extends @Nullable Object> Task<V> failed(Exception failure) {
+        Objects.requireNonNull(failure);
+        return of(context -> {
+            throw failure;
+        });
     }
 
-    /**
-     * Returns a new Task that is completed when all of the given Tasks
-     * complete.  If any of the given Tasks complete exceptionally,
-     * then the returned Task also does so.  Otherwise, the results, if
-     * any, of the given Tasks are not reflected in the returned Task,
-     * but may be obtained by inspecting them individually. If no Tasks
-     * are provided, returns a Task completed with the value {@code null}.
-     *
-     * @param tasks the Tasks
-     * @return a new Task that is completed when all of the given Tasks complete
-     */
+    /// Returns a task that runs all supplied children and collects successful results in array order.
+    /// See [#allOf(Collection)]. The array is retained until execution.
     @SafeVarargs
-    public static <T> Task<List<T>> allOf(Task<? extends T>... tasks) {
+    public static <T extends @Nullable Object> Task<List<T>> allOf(Task<? extends T>... tasks) {
         return allOf(Arrays.asList(tasks));
     }
 
-    /**
-     * Returns a new Task that is completed when all of the given Tasks
-     * complete.  If any of the given Tasks complete exceptionally,
-     * then the returned Task also does so.  Otherwise, the results, if
-     * any, of the given Tasks are not reflected in the returned Task,
-     * but may be obtained by inspecting them individually. If no Tasks
-     * are provided, returns a Task completed with the value {@code null}.
-     *
-     * @param tasks the Tasks
-     * @return a new Task that is completed when all of the given Tasks complete
-     */
-    public static <T> Task<List<T>> allOf(Collection<? extends Task<? extends T>> tasks) {
-        return new Task<>() {
-            {
-                setSignificance(TaskSignificance.MINOR);
-            }
-
-            @Override
-            public void execute() {
-                setResult(tasks.stream().map(Task::getResult).collect(Collectors.toList()));
-            }
-
-            @Override
-            public Collection<? extends Task<?>> getPredecessors() {
-                return tasks;
-            }
-        };
+    /// Returns a task that runs the supplied children, waits for them all, and collects their results
+    /// in iteration order. The returned list is mutable and is empty when there are no children.
+    /// A child failure prevents publication of the result list and leaves successful siblings' results
+    /// available through [#getResult()]. Children may execute concurrently.
+    ///
+    /// The returned task retains the collection and snapshots its elements when execution starts.
+    public static <T extends @Nullable Object> Task<List<T>> allOf(Collection<? extends Task<? extends T>> tasks) {
+        return Task.<List<T>>of(context -> context.runAll(tasks)).setSignificance(TaskSignificance.MINOR);
     }
 
-    public static <T, U> Task<Pair<T, U>> combine(Task<? extends T> task1, Task<? extends U> task2) {
-        return new Task<>() {
-            {
-                setSignificance(TaskSignificance.MINOR);
-            }
-
-            @Override
-            public void execute() {
-                setResult(Pair.pair(task1.getResult(), task2.getResult()));
-            }
-
-            @Override
-            public Collection<? extends Task<?>> getPredecessors() {
-                return List.of(task1, task2);
-            }
-        };
+    /// Returns a task that waits for both children and pairs their results in argument order.
+    /// The children may run concurrently. Failure of either child fails the combined task.
+    public static <T extends @Nullable Object, U extends @Nullable Object> Task<Pair<T, U>> combine(Task<? extends T> task1, Task<? extends U> task2) {
+        return Task.<Pair<T, U>>of(context -> {
+            context.runAll(List.of(task1, task2));
+            return Pair.pair(task1.getResult(), task2.getResult());
+        }).setSignificance(TaskSignificance.MINOR);
     }
 
-    /**
-     * Returns a new task that runs the given tasks sequentially
-     * and returns the result of the last task.
-     *
-     * @param tasks tasks to run sequentially
-     * @return the combination of these tasks
-     */
+    /// Returns a task that runs the children in array order, stopping at the first failure.
+    /// The result is the last child's result, or `null` for an empty array. The array is retained.
     public static Task<?> runSequentially(Task<?>... tasks) {
-        if (tasks.length == 0) {
-            return new SimpleTask<>(() -> null);
-        }
-
-        Task<?> task = tasks[0];
-        for (int i = 1; i < tasks.length; i++) {
-            task = task.thenComposeAsync(tasks[i]);
-        }
-        return task;
-    }
-
-    public static <T> Task<T> fromCompletableFuture(CompletableFuture<T> future) {
-        return new CompletableFutureTask<T>() {
-            @Override
-            public CompletableFuture<T> getFuture(TaskCompletableFuture executor) {
-                return future;
+        return of(context -> {
+            @Nullable Object last = null;
+            for (Task<?> task : tasks) {
+                last = context.run(task);
             }
-        };
+            return last;
+        });
     }
 
+    /// Creates a task that waits for `future` and returns its result. Cancelling the task executor
+    /// does not cancel the future or interrupt a running wait. Future cancellation propagates
+    /// as a [CancellationException].
+    public static <T extends @Nullable Object> Task<T> fromCompletableFuture(CompletableFuture<T> future) {
+        return of(context -> {
+            try {
+                return future.get();
+            } catch (ExecutionException e) {
+                Throwable cause = Lang.resolveException(e);
+                if (cause instanceof Exception failure) throw failure;
+                if (cause instanceof Error error) throw error;
+                throw e;
+            }
+        });
+    }
+
+    /// Controls execution logging and visibility in the task list.
     public enum TaskSignificance {
+        /// Logged and displayed as a task.
         MAJOR,
+        /// Logged and hidden from the task list by default.
         MODERATE,
+        /// Hidden from normal task logging and display.
         MINOR;
 
+        /// Returns whether the executor should log task execution.
         public boolean shouldLog() {
             return this != MINOR;
         }
 
+        /// Returns whether the task should be displayed as a separate item.
         public boolean shouldShow() {
             return this == MAJOR;
         }
     }
 
+    /// Execution state published by the task executor.
     public enum TaskState {
+        /// Initial state, also published when the executor prepares the task.
         READY,
+        /// The executor is about to invoke the body or is executing it.
         RUNNING,
+        /// The body has exited, and the executor is determining the final outcome.
         EXECUTED,
+        /// The executor has published the successful result.
         SUCCEEDED,
+        /// The executor has recorded a failure, including cancellation.
         FAILED
     }
 
+    /// Receives the exception outcome of a task.
     @FunctionalInterface
     public interface FinalizedCallback {
-        void execute(Exception exception) throws Exception;
+        /// Receives null on success or the exception on failure. A thrown exception fails the continuation.
+        void execute(@Nullable Exception exception) throws Exception;
     }
 
+    /// Receives the result and exception outcome of a task.
+    ///
+    /// @param <T> the task result type
     @FunctionalInterface
-    public interface FinalizedCallbackWithResult<T> {
-        void execute(T result, Exception exception) throws Exception;
+    public interface FinalizedCallbackWithResult<T extends @Nullable Object> {
+        /// Receives the result and a null exception on success, or a null result and the exception on failure.
+        void execute(@Nullable T result, @Nullable Exception exception) throws Exception;
     }
 
+    /// Prefix identifying framework frames excluded from generated task names.
     private static final String PACKAGE_PREFIX = Task.class.getPackageName() + ".";
+    /// Selects caller frames outside the task package.
     private static final Predicate<StackWalker.StackFrame> PREDICATE = stackFrame -> !stackFrame.getClassName().startsWith(PACKAGE_PREFIX);
+    /// Finds the first external frame for the generated task name.
     private static final Function<Stream<StackWalker.StackFrame>, Optional<StackWalker.StackFrame>> FUNCTION = stream -> stream.filter(PREDICATE).findFirst();
+    /// Formats a caller frame, including the source location when available.
     private static final Function<StackWalker.StackFrame, String> FRAME_MAPPING = frame -> {
-        String fileName = frame.getFileName();
+        @Nullable String fileName = frame.getFileName();
         if (fileName != null)
             return frame.getClassName() + '.' + frame.getMethodName() + '(' + fileName + ':' + frame.getLineNumber() + ')';
         else
             return frame.getClassName() + '.' + frame.getMethodName();
     };
 
+    /// Returns a display name derived from the first caller outside the task package.
     private static String getCaller() {
         return StackWalker.getInstance().walk(FUNCTION).map(FRAME_MAPPING).orElse("Unknown");
     }
 
-    private static final class SimpleTask<T> extends Task<T> {
-
-        private final Callable<T> callable;
-
-        SimpleTask(Callable<T> callable) {
-            this.callable = callable;
-        }
-
-        @Override
-        public void execute() throws Exception {
-            setResult(callable.call());
-        }
+    /// Creates a task that invokes `body` with its execution context.
+    private static <T extends @Nullable Object> Task<T> of(ExceptionalFunction<TaskExecutionContext, T, ?> body) {
+        return new Task<>() {
+            /// {@inheritDoc}
+            @Override
+            public T execute(TaskExecutionContext context) throws Exception {
+                return body.apply(context);
+            }
+        };
     }
 
-    private class UniApply<R> extends Task<R> {
-        private final ExceptionalFunction<T, R, ?> callable;
+    /// Runs child orchestration on task workers and dispatches the callback to the configured executor.
+    private static <T extends @Nullable Object> Task<T> continuation(Executor executor,
+            ExceptionalBiFunction<TaskExecutionContext, Executor, T, ?> body) {
+        return new Task<T>() {
+            /// Selects the task worker so that a callback executor is free while children are running.
+            @Override
+            Executor bodyExecutor() {
+                return Schedulers.tasks();
+            }
 
-        UniApply(ExceptionalFunction<T, R, ?> callable) {
-            this.callable = callable;
-        }
-
-        @Override
-        public Collection<Task<?>> getPredecessors() {
-            return Collections.singleton(Task.this);
-        }
-
-        @Override
-        public void execute() throws Exception {
-            setResult(callable.apply(Task.this.getResult()));
-        }
+            /// {@inheritDoc}
+            @Override
+            public T execute(TaskExecutionContext context) throws Exception {
+                return body.apply(context, getExecutor());
+            }
+        }.setExecutor(executor);
     }
 
-    /**
-     * A task that combines two tasks and make sure [pred] runs before succ.
-     *
-     * @author huangyuhui
-     */
-    private final class UniCompose<U> extends Task<U> {
-
-        private final boolean relyingOnDependents;
-        private Task<U> succ;
-        private final ExceptionalFunction<T, Task<U>, ?> fn;
-
-        /**
-         * A task that combines two tasks and make sure pred runs before succ.
-         *
-         * @param fn                  a callback that returns the task runs after pred, succ will be executed asynchronously. You can do something that relies on the result of pred.
-         * @param relyingOnDependents true if this task chain will be broken when task pred fails.
-         */
-        UniCompose(ExceptionalSupplier<Task<U>, ?> fn, boolean relyingOnDependents) {
-            this(result -> fn.get(), relyingOnDependents);
-        }
-
-        /**
-         * A task that combines two tasks and make sure pred runs before succ.
-         *
-         * @param fn                  a callback that returns the task runs after pred, succ will be executed asynchronously. You can do something that relies on the result of pred.
-         * @param relyingOnDependents true if this task chain will be broken when task pred fails.
-         */
-        UniCompose(ExceptionalFunction<T, Task<U>, ?> fn, boolean relyingOnDependents) {
-            this.fn = fn;
-            this.relyingOnDependents = relyingOnDependents;
-
-            setSignificance(TaskSignificance.MODERATE);
-            setName(fn.toString());
-        }
-
-        @Override
-        public void execute() throws Exception {
-            setName(fn.toString());
-            succ = fn.apply(Task.this.getResult());
-            if (succ != null)
-                succ.storeTo(this::setResult);
-        }
-
-        @Override
-        public Collection<Task<?>> getPredecessors() {
-            return Collections.singleton(Task.this);
-        }
-
-        @Override
-        public Collection<Task<?>> getSuccessors() {
-            return succ == null ? Collections.emptySet() : Collections.singleton(succ);
-        }
-
-        @Override
-        public boolean requiresPredecessorSuccess() {
-            return relyingOnDependents;
-        }
-    }
-
+    /// Provides an enclosing stage for the wrapped task.
     private final class StageTask extends Task<T> {
+        /// Creates a stage wrapper for the enclosing task.
         private StageTask(String stage) {
             this.setStage(stage);
             setSignificance(TaskSignificance.MODERATE);
         }
 
+        /// {@inheritDoc}
         @Override
-        public Collection<Task<?>> getPredecessors() {
-            return Collections.singleton(Task.this);
-        }
-
-        @Override
-        public void execute() {
-            setResult(Task.this.getResult());
+        public T execute(TaskExecutionContext context) throws Exception {
+            return context.run(Task.this);
         }
     }
 
+    /// Waits for an external condition after the wrapped task has completed.
     private final class FakeProgressTask extends Task<T> {
+        /// Upper bound approached by the progress estimate before the condition is satisfied.
         private static final double MAX_VALUE = 0.98D;
 
+        /// Condition indicating that the wrapper may complete.
         private final BooleanSupplier done;
 
+        /// Time scale used to compute the progress estimate.
         private final double k;
 
+        /// Creates a wrapper that reports estimated progress until the supplied condition is true.
         private FakeProgressTask(BooleanSupplier done, double k) {
             this.done = done;
             this.k = k;
         }
 
+        /// {@inheritDoc}
         @Override
-        public Collection<Task<?>> getPredecessors() {
-            return Collections.singleton(Task.this);
-        }
-
-        @Override
-        public void execute() throws InterruptedException {
+        public T execute(TaskExecutionContext context) throws Exception {
+            T value = context.run(Task.this);
             if (!done.getAsBoolean()) {
                 updateProgress(0.0D);
 
                 final long start = System.currentTimeMillis();
                 final double k2 = k / MAX_VALUE;
                 while (!done.getAsBoolean()) {
+                    if (isCancelled()) throw new CancellationException();
                     updateProgressImmediately(-k / ((System.currentTimeMillis() - start) / 1000D + k2) + MAX_VALUE);
 
                     Thread.sleep(1000);
@@ -1256,40 +919,32 @@ public abstract class Task<T> {
             }
 
             updateProgress(1.0D);
-            setResult(Task.this.getResult());
+            return value;
         }
     }
 
+    /// Identifies a completed item for a stage counter.
     public final class CountTask extends Task<T> {
+        /// Stage whose completed-item counter is advanced.
         private final String countStage;
 
+        /// Creates a wrapper associated with the supplied counter stage.
         private CountTask(String countStage) {
             this.countStage = countStage;
             setSignificance(TaskSignificance.MINOR);
         }
 
+        /// Returns the stage whose completed items include this task.
         public String getCountStage() {
             return countStage;
         }
 
+        /// {@inheritDoc}
         @Override
-        public Collection<Task<?>> getPredecessors() {
-            return Collections.singleton(Task.this);
-        }
-
-        @Override
-        public void execute() throws Exception {
-            setResult(Task.this.getResult());
-        }
-
-        @Override
-        public boolean doPostExecute() {
-            return true;
-        }
-
-        @Override
-        public void postExecute() throws Exception {
+        public T execute(TaskExecutionContext context) throws Exception {
+            T value = context.run(Task.this);
             notifyPropertiesChanged();
+            return value;
         }
     }
 }

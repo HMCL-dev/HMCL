@@ -12,9 +12,11 @@ import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -31,12 +33,6 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
 
     private final NeoForgeRemoteVersion remoteVersion;
 
-    private Path installer = null;
-
-    private FileDownloadTask dependent;
-
-    private Task<GameInstancePatch> dependency;
-
     public NeoForgeInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, NeoForgeRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
@@ -44,49 +40,23 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
         setSignificance(TaskSignificance.MODERATE);
     }
 
+    /// Downloads the NeoForge installer and returns the patch produced by its processors.
     @Override
-    public boolean doPreExecute() {
-        return true;
-    }
+    public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
+        Path installer = Files.createTempFile("neoforge-installer", ".jar");
+        try (Closeable cleanup = () -> Files.deleteIfExists(installer)) {
+            DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+            var download = new FileDownloadTask(
+                    downloadProvider.getDownloadCandidates(remoteVersion),
+                    installer, null
+            );
+            download.setCacheRepository(dependencyManager.getCacheRepository());
+            download.setCaching(true);
+            download.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
+            context.run(download);
 
-    @Override
-    public void preExecute() throws Exception {
-        installer = Files.createTempFile("neoforge-installer", ".jar");
-
-        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
-        dependent = new FileDownloadTask(
-                downloadProvider.getDownloadCandidates(remoteVersion),
-                installer, null
-        );
-        dependent.setCacheRepository(dependencyManager.getCacheRepository());
-        dependent.setCaching(true);
-        dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
-    }
-
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    @Override
-    public void postExecute() throws Exception {
-        Files.deleteIfExists(installer);
-        this.setResult(dependency.getResult());
-    }
-
-    @Override
-    public Collection<? extends Task<?>> getPredecessors() {
-        return Collections.singleton(dependent);
-    }
-
-    @Override
-    public Collection<? extends Task<?>> getSuccessors() {
-        return Collections.singleton(dependency);
-    }
-
-    @Override
-    public void execute() throws Exception {
-        dependency = install(dependencyManager, manifest, remoteVersion.getGameVersion().toString(), installer);
+            return context.run(install(dependencyManager, manifest, remoteVersion.getGameVersion().toString(), installer));
+        }
     }
 
     /// Creates a task that installs NeoForge from a local installer JAR.

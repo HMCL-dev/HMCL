@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -30,13 +31,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Downloads game libraries after the game and its loader installation tasks have finished.
 ///
 /// @author huangyuhui
-public final class GameLibrariesTask extends Task<Void> {
+public final class GameLibrariesTask extends Task<@Nullable Void> {
 
     private final AbstractDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final boolean integrityCheck;
     private final List<Library> libraries;
-    private final List<Task<?>> dependencies = new ArrayList<>();
 
     /**
      * Constructor.
@@ -62,11 +62,6 @@ public final class GameLibrariesTask extends Task<Void> {
 
         setStage("hmcl.install.libraries");
         setSignificance(TaskSignificance.MODERATE);
-    }
-
-    @Override
-    public List<Task<?>> getSuccessors() {
-        return dependencies;
     }
 
     /// Checks whether a library is absent or fails the requested checksum and archive integrity checks.
@@ -111,9 +106,10 @@ public final class GameLibrariesTask extends Task<Void> {
         }
     }
 
-    /// {@inheritDoc}
+    /// Checks applicable libraries and downloads missing or invalid files in parallel.
     @Override
-    public void execute() throws IOException {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        List<Task<?>> dependencies = new ArrayList<>();
         int progress = 0;
         GameRepository gameRepository = dependencyManager.getGameRepository();
         for (Library library : libraries) {
@@ -188,6 +184,8 @@ public final class GameLibrariesTask extends Task<Void> {
             getProperties().put("total", dependencies.size());
             notifyPropertiesChanged();
         }
+        context.runAll(dependencies);
+        return null;
     }
 
     private static @Nullable List<FMLLib> getFMLLibs(String forgeVersion) {

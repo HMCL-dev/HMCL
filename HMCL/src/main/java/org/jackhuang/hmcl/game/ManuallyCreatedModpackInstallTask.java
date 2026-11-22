@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.io.Unzipper;
 
 import java.nio.file.Path;
@@ -22,17 +23,17 @@ public class ManuallyCreatedModpackInstallTask extends Task<Path> {
         setName(i18n("modpack.installing"));
     }
 
+    /// Extracts the game directory and returns its installation path.
     @Override
-    public void execute() throws Exception {
+    public Path execute(TaskExecutionContext context) throws Exception {
         String subdirectory = ModpackHelper.findMinecraftDirectoryInManuallyCreatedModpack(zipFile.toString(), zipFile);
 
         Path dest = Paths.get("externalgames").resolve(name);
-
-        setResult(dest);
 
         new Unzipper(zipFile, dest)
                 .setSubDirectory(subdirectory)
                 .setTerminateIfSubDirectoryNotExists()
                 .unzip();
+        return dest;
     }
 }

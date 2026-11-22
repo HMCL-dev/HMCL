@@ -7,20 +7,17 @@ import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
-public final class LegacyFabricAPIInstallTask extends Task<GameInstancePatch> {
+public final class LegacyFabricAPIInstallTask extends Task<@Nullable GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final LegacyFabricAPIRemoteVersion remote;
     private final Path modsDirectory;
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     /// @param dependencyManager the dependency manager
     /// @param manifest           the manifest being installed into
@@ -37,22 +34,13 @@ public final class LegacyFabricAPIInstallTask extends Task<GameInstancePatch> {
         this.modsDirectory = modsDirectory;
     }
 
+    /// Downloads the API mod without adding a component patch to the manifest.
     @Override
-    public Collection<Task<?>> getSuccessors() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean requiresSuccessorSuccess() {
-        return false;
-    }
-
-    @Override
-    public void execute() throws IOException {
-        dependencies.add(new FileDownloadTask(
+    public @Nullable GameInstancePatch execute(TaskExecutionContext context) throws Exception {
+        context.run(new FileDownloadTask(
                 remote.getVersion().file().url(),
                 modsDirectory.resolve("legacy-fabric-api-" + remote.getVersion().version() + ".jar"),
-                remote.getVersion().file().getIntegrityCheck())
-        );
+                remote.getVersion().file().getIntegrityCheck()).wrapResult());
+        return null;
     }
 }

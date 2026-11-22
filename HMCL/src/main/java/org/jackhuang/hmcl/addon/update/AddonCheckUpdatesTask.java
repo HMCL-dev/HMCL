@@ -7,6 +7,7 @@ import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,14 +16,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
-    private final List<Task<Pair<AddonUpdate, @Nullable AddonUpdate>>> dependents;
+    /// One update check per installed add-on.
+    private final List<Task<@Nullable Pair<AddonUpdate, @Nullable AddonUpdate>>> checks;
 
     public AddonCheckUpdatesTask(DownloadProvider downloadProvider, String gameVersion, Collection<? extends LocalAddonFile<?>> addons) {
-        dependents = addons.stream().map(addon ->
+        checks = addons.stream().map(addon ->
                 Task.supplyAsync(Schedulers.io(), () -> {
                     AddonUpdate candidate = null;
                     AddonUpdate candidateRelease = null;
@@ -53,37 +56,27 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
         ).toList();
 
         setStage("update.checking");
-        getProperties().put("total", dependents.size());
+        getProperties().put("total", checks.size());
     }
 
+    /// Collects available updates from all checks that completed successfully.
     @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() {
+    public AddonUpdates execute(TaskExecutionContext context) throws Exception {
         notifyPropertiesChanged();
-    }
+        try {
+            context.runAll(checks);
+        } catch (Exception failure) {
+            if (isCancelled() || failure instanceof InterruptedException || failure instanceof CancellationException)
+                throw failure;
+            // Other add-ons can still contribute updates after a failed check.
+        }
 
-    @Override
-    public Collection<? extends Task<?>> getPredecessors() {
-        return dependents;
-    }
-
-    @Override
-    public boolean requiresPredecessorSuccess() {
-        return false;
-    }
-
-    @Override
-    public void execute() throws Exception {
         List<AddonUpdate> commonUpdates = new ArrayList<>(), releaseUpdates = new ArrayList<>();
-        dependents.stream().map(Task::getResult).filter(Objects::nonNull)
+        checks.stream().map(Task::getResult).filter(Objects::nonNull)
                 .forEachOrdered(pair -> {
                     commonUpdates.add(pair.key());
                     if (pair.value() != null) releaseUpdates.add(pair.value());
                 });
-        setResult(new AddonUpdates(commonUpdates, releaseUpdates));
+        return new AddonUpdates(commonUpdates, releaseUpdates);
     }
 }

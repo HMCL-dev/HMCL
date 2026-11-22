@@ -9,28 +9,26 @@ import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Completes missing files for an installed Modrinth modpack.
 @NotNullByDefault
-public class ModrinthCompletionTask extends Task<Void> {
+public class ModrinthCompletionTask extends Task<@Nullable Void> {
 
     /// The dependency manager used to download remote files.
     private final DefaultDependencyManager dependency;
@@ -46,18 +44,6 @@ public class ModrinthCompletionTask extends Task<Void> {
 
     /// Keys of optional files the user chose not to install; `null` means install all.
     private @Nullable Set<String> excludedFiles;
-
-    /// Download tasks produced during [#execute()].
-    private final List<Task<?>> dependencies = new ArrayList<>();
-
-    /// Whether every required download has at least one usable URL.
-    private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
-
-    /// The number of manifest entries processed.
-    private final AtomicInteger finished = new AtomicInteger(0);
-
-    /// Whether a required file has no usable download URL.
-    private final AtomicBoolean notFound = new AtomicBoolean(false);
 
     /// Creates a task that completes the installed Modrinth modpack.
     ///
@@ -107,21 +93,13 @@ public class ModrinthCompletionTask extends Task<Void> {
         setSignificance(TaskSignificance.MODERATE);
     }
 
+    /// Resolves missing files and waits for all requested downloads to finish.
     @Override
-    public Collection<Task<?>> getSuccessors() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean requiresSuccessorSuccess() {
-        return false;
-    }
-
-    @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         if (manifest == null)
-            return;
+            return null;
 
+        List<Task<?>> dependencies = new ArrayList<>();
         Path runDirectory = FileUtils.toAbsolute(instance.getRunDirectory());
         Path modsDirectory = runDirectory.resolve("mods");
 
@@ -161,20 +139,16 @@ public class ModrinthCompletionTask extends Task<Void> {
             getProperties().put("total", dependencies.size());
             notifyPropertiesChanged();
         }
-    }
 
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    @Override
-    public void postExecute() throws Exception {
-        // Let this task fail if the curse manifest has not been completed.
-        // But continue other downloads.
-        if (notFound.get())
-            throw new ModpackCompletionException(new FileNotFoundException());
-        if (!allNameKnown.get() || !haveSuccessorsSucceeded())
-            throw new ModpackCompletionException();
+        try {
+            context.runAll(dependencies);
+        } catch (InterruptedException | CancellationException cancelled) {
+            throw cancelled;
+        } catch (Exception failure) {
+            ModpackCompletionException incomplete = new ModpackCompletionException();
+            incomplete.addSuppressed(failure);
+            throw incomplete;
+        }
+        return null;
     }
 }

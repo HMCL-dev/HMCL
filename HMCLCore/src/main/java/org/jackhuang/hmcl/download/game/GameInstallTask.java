@@ -7,12 +7,10 @@ import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /// Downloads the base game component and returns its manifest patch without publishing it.
@@ -35,9 +33,6 @@ public class GameInstallTask extends Task<GameInstancePatch> {
     /// Task that downloads the selected version's manifest JSON.
     private final GameInstanceJsonDownloadTask downloadTask;
 
-    /// Downloads scheduled after the remote manifest has been decoded.
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
-
     /// Creates a base-game installation task.
     ///
     /// @param dependencyManager the dependency manager for the target repository
@@ -50,44 +45,21 @@ public class GameInstallTask extends Task<GameInstancePatch> {
         this.downloadTask = new GameInstanceJsonDownloadTask(remoteVersion.getGameVersion().toString(), dependencyManager);
     }
 
-    /// {@inheritDoc}
+    /// Downloads the base manifest and attempts to install the client, assets and libraries in parallel.
+    /// Returns the patch even if one of those file downloads fails.
     @Override
-    public Collection<Task<?>> getPredecessors() {
-        return Collections.singleton(downloadTask);
-    }
-
-    /// {@inheritDoc}
-    @Override
-    public Collection<Task<?>> getSuccessors() {
-        return dependencies;
-    }
-
-    /// {@inheritDoc}
-    @Override
-    public boolean requiresSuccessorSuccess() {
-        return false;
-    }
-
-    /// Decodes the downloaded game manifest and schedules its files without saving repository state.
-    @Override
-    public void execute() throws Exception {
+    public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
         GameInstancePatch patch = GameInstancePatch.fromManifest(
-                JsonUtils.fromNonNullJson(downloadTask.getResult(), GameInstanceManifest.class),
+                JsonUtils.fromNonNullJson(context.run(downloadTask), GameInstanceManifest.class),
                 GameComponentType.GAME.getPatchId(),
                 remote.getGameVersion().toString(),
                 GameInstancePatch.PRIORITY_MC).withJar(null);
-        setResult(patch);
 
         GameInstanceManifest newManifest = new GameInstanceManifest(this.manifest.id()).addPatch(patch).reconstructByPatches();
-        dependencies.add(Task.allOf(
-                new GameDownloadTask(dependencyManager, newManifest),
-                Task.allOf(
-                        new GameAssetDownloadTask(dependencyManager, newManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
-                        new GameLibrariesTask(dependencyManager, newManifest, true)
-                ).withRunAsync(() -> {
-                    // ignore failure
-                })
-        ));
+        context.runAll(List.of(
+                new GameDownloadTask(dependencyManager, newManifest).wrapResult(),
+                new GameAssetDownloadTask(dependencyManager, newManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true).wrapResult(),
+                new GameLibrariesTask(dependencyManager, newManifest, true).wrapResult()));
+        return patch;
     }
-
 }

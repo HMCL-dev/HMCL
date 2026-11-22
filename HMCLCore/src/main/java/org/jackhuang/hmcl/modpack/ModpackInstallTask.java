@@ -3,15 +3,17 @@
 package org.jackhuang.hmcl.modpack;
 
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class ModpackInstallTask<T> extends Task<Void> {
+public class ModpackInstallTask<T> extends Task<@Nullable Void> {
 
     private final Path modpackFile;
     private final Path dest;
@@ -38,8 +40,9 @@ public class ModpackInstallTask<T> extends Task<Void> {
             overrides = oldConfiguration.getOverrides();
     }
 
+    /// Extracts selected overrides and removes files dropped by an update.
     @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         Set<String> entries = new HashSet<>();
         Files.createDirectories(dest);
 
@@ -80,5 +83,6 @@ public class ModpackInstallTask<T> extends Task<Void> {
             if (Files.exists(original) && !entries.contains(file.getPath()))
                 Files.deleteIfExists(original);
         }
+        return null;
     }
 }

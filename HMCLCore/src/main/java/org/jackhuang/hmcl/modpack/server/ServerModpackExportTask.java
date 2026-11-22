@@ -10,12 +10,14 @@ import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +30,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Exports one registered game instance as an HMCL server modpack archive.
 @NotNullByDefault
-public class ServerModpackExportTask extends Task<Void> {
+public class ServerModpackExportTask extends Task<@Nullable Void> {
     /// The fixed instance snapshot exported by this task.
     private final DefaultGameInstance instance;
 
@@ -61,7 +63,7 @@ public class ServerModpackExportTask extends Task<Void> {
 
     /// {@inheritDoc}
     @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         var instanceId = instance.getId();
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(instanceId + ".jar");
@@ -101,6 +103,7 @@ public class ServerModpackExportTask extends Task<Void> {
             ServerModpackManifest manifest = new ServerModpackManifest(exportInfo.getName(), exportInfo.getAuthor(), exportInfo.getVersion(), exportInfo.getDescription(), StringUtils.removeSuffix(exportInfo.getFileApi(), "/"), files, addons);
             zip.putTextFile(JsonUtils.GSON.toJson(manifest), "server-manifest.json");
         }
+        return null;
     }
 
     /// Export options supported by the server modpack format.

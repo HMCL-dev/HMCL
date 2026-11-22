@@ -10,10 +10,12 @@ import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
+import org.jetbrains.annotations.Nullable;
 import org.tukaani.xz.LZMAInputStream;
 
 import java.io.IOException;
@@ -35,42 +37,44 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
     private final DownloadProvider downloadProvider;
     private final Path target;
     private final Path tempDir;
-    private final Task<MojangJavaRemoteFiles> javaDownloadsTask;
-    private final List<Task<?>> dependencies = new ArrayList<>();
+    /// Runtime component and minimum Java major version requested by the manifest.
+    private final GameJavaVersion javaVersion;
+    /// Platform key used by the Mojang runtime catalog.
+    private final String platform;
 
-    private volatile MojangJavaDownloads.JavaDownload download;
-
+    /// Creates a runtime download that stages files in the supplied temporary directory.
     public MojangJavaDownloadTask(DownloadProvider downloadProvider, Path target, Path tempDir, GameJavaVersion javaVersion, String platform) {
         this.target = target;
         this.tempDir = tempDir;
         this.downloadProvider = downloadProvider;
-        this.javaDownloadsTask = new GetTask(downloadProvider.getDownloadCandidates(JAVA_LIST_URL))
-                .thenComposeAsync(javaDownloadsJson -> {
-                    MojangJavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, MojangJavaDownloads.class);
-
-                    Map<String, List<MojangJavaDownloads.JavaDownload>> osDownloads = allDownloads.downloads().get(platform);
-                    if (osDownloads == null || !osDownloads.containsKey(javaVersion.component()))
-                        throw new UnsupportedPlatformException("Unsupported platform: " + platform);
-                    List<MojangJavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.component());
-                    for (MojangJavaDownloads.JavaDownload download : candidates) {
-                        if (JavaInfo.parseVersion(download.version().name()) >= javaVersion.majorVersion()) {
-                            this.download = download;
-                            return new GetTask(downloadProvider.getDownloadCandidates(download.manifest().getUrl()));
-                        }
-                    }
-                    throw new UnsupportedPlatformException("Candidates: " + JsonUtils.GSON.toJson(candidates));
-                })
-                .thenApplyAsync(javaDownloadJson -> JsonUtils.fromNonNullJson(javaDownloadJson, MojangJavaRemoteFiles.class));
+        this.javaVersion = javaVersion;
+        this.platform = platform;
     }
 
-    @Override
-    public Collection<Task<?>> getPredecessors() {
-        return Collections.singleton(javaDownloadsTask);
+    /// Returns the first compatible runtime advertised for the requested platform and component.
+    private MojangJavaDownloads.JavaDownload selectDownload(MojangJavaDownloads catalog) throws UnsupportedPlatformException {
+        @Nullable Map<String, List<MojangJavaDownloads.JavaDownload>> components = catalog.downloads().get(platform);
+        @Nullable List<MojangJavaDownloads.JavaDownload> candidates = components == null ? null : components.get(javaVersion.component());
+        if (candidates == null) {
+            throw new UnsupportedPlatformException("Unsupported platform: " + platform);
+        }
+        for (MojangJavaDownloads.JavaDownload candidate : candidates) {
+            if (JavaInfo.parseVersion(candidate.version().name()) >= javaVersion.majorVersion()) {
+                return candidate;
+            }
+        }
+        throw new UnsupportedPlatformException("Candidates: " + JsonUtils.GSON.toJson(candidates));
     }
 
+    /// Downloads the selected runtime into the staging directory and installs it after its files are complete.
     @Override
-    public void execute() throws Exception {
-        for (Map.Entry<String, MojangJavaRemoteFiles.Remote> entry : javaDownloadsTask.getResult().files().entrySet()) {
+    public Result execute(TaskExecutionContext context) throws Exception {
+        String catalog = context.run(new GetTask(downloadProvider.getDownloadCandidates(JAVA_LIST_URL)));
+        MojangJavaDownloads.JavaDownload runtime = selectDownload(JsonUtils.fromNonNullJson(catalog, MojangJavaDownloads.class));
+        String manifest = context.run(new GetTask(downloadProvider.getDownloadCandidates(runtime.manifest().getUrl())));
+        MojangJavaRemoteFiles files = JsonUtils.fromNonNullJson(manifest, MojangJavaRemoteFiles.class);
+        List<Task<?>> dependencies = new ArrayList<>();
+        for (Map.Entry<String, MojangJavaRemoteFiles.Remote> entry : files.files().entrySet()) {
             Path dest = tempDir.resolve(entry.getKey());
             if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteFile file) {
                 // Use local file if it already exists
@@ -89,9 +93,9 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
                 if (file.getDownloads().containsKey("lzma")) {
                     DownloadInfo download = file.getDownloads().get("lzma");
-                    DownloadInfo raw = file.getDownloads().get("raw");
+                    @Nullable DownloadInfo raw = file.getDownloads().get("raw");
 
-                    String rawSha1;
+                    @Nullable String rawSha1;
                     if (raw != null && raw.getSha1() != null) {
                         rawSha1 = raw.getSha1();
                     } else {
@@ -147,31 +151,17 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                 Files.createSymbolicLink(dest, Paths.get(link.getTarget()));
             }
         }
-    }
+        context.runAll(dependencies);
 
-    @Override
-    public List<Task<?>> getSuccessors() {
-        return dependencies;
-    }
+        FileUtils.cleanDirectory(target);
 
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    @Override
-    public void postExecute() throws Exception {
-        if (haveSuccessorsSucceeded()) {
-            FileUtils.cleanDirectory(target);
-
-            if (Files.getFileStore(target).equals(Files.getFileStore(tempDir))) {
-                Files.move(tempDir, target, StandardCopyOption.REPLACE_EXISTING);
-            } else {
-                FileUtils.copyDirectory(tempDir, target);
-                FileUtils.deleteDirectory(tempDir);
-            }
-            setResult(new Result(download, javaDownloadsTask.getResult()));
+        if (Files.getFileStore(target).equals(Files.getFileStore(tempDir))) {
+            Files.move(tempDir, target, StandardCopyOption.REPLACE_EXISTING);
+        } else {
+            FileUtils.copyDirectory(tempDir, target);
+            FileUtils.deleteDirectory(tempDir);
         }
+        return new Result(runtime, files);
     }
 
     public record Result(MojangJavaDownloads.JavaDownload download, MojangJavaRemoteFiles remoteFiles) {

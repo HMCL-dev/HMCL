@@ -162,6 +162,31 @@ final class TaskExecutorDialogPaneTest {
         });
     }
 
+    /// Displays the failure even when both task notifications arrive before the next JavaFX pulse.
+    @Test
+    void displaysFailureForImmediatelyFailedTask() throws Exception {
+        String message = "Could not finish the visible task";
+        TaskListPane pane = onFxThread(() -> {
+            TaskListPane list = new TaskListPane();
+            new Scene(list, 480, 240);
+            TaskExecutor executor = Task.runAsync("Visible task", () -> {
+                throw new java.io.IOException(message);
+            }).executor();
+            list.setExecutor(executor);
+            assertFalse(executor.test());
+            return list;
+        });
+        onFxThread(() -> {
+            pane.applyCss();
+            pane.layout();
+            assertTrue(pane.lookupAll(".label").stream()
+                    .filter(Label.class::isInstance)
+                    .map(Label.class::cast)
+                    .anyMatch(label -> message.equals(label.getText())));
+            return true;
+        });
+    }
+
     /// Verifies disabled cancellation remains disabled and an enabled action runs only once.
     @Test
     void cancellationHonorsActionAndWaitsForCompletion() throws Exception {

@@ -176,24 +176,14 @@ public record Skin(Type type, String cslApi, TextureModel textureModel, String l
         }
 
         @Override
-        protected void useCachedResult(Path cachedFile) throws IOException {
-            setResult(Files.newInputStream(cachedFile));
+        protected InputStream useCachedResult(Path cachedFile) throws IOException {
+            return Files.newInputStream(cachedFile);
         }
 
         @Override
-        protected EnumCheckETag shouldCheckETag() {
-            return EnumCheckETag.CHECK_E_TAG;
-        }
-
-        @Override
-        protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
-            return new Context() {
+        protected Context<InputStream> getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
+            return new Context<>() {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-                @Override
-                public void reset() throws IOException {
-                    baos.reset();
-                }
 
                 @Override
                 public void write(byte[] buffer, int offset, int len) {
@@ -201,14 +191,12 @@ public record Skin(Type type, String cslApi, TextureModel textureModel, String l
                 }
 
                 @Override
-                public void close() throws IOException {
-                    if (!isSuccess()) return;
-
-                    setResult(new ByteArrayInputStream(baos.toByteArray()));
-
+                public InputStream finish() throws IOException {
+                    byte[] bytes = baos.toByteArray();
                     if (checkETag) {
-                        repository.cacheBytes(response, baos.toByteArray());
+                        repository.cacheBytes(response, bytes);
                     }
+                    return new ByteArrayInputStream(bytes);
                 }
             };
         }

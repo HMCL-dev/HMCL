@@ -56,20 +56,9 @@ public final class TerracottaBundle {
                 .thenComposeAsync(Schedulers.javafx(), pkg -> {
                     FileDownloadTask download = new FileDownloadTask(links, pkg, hash) {
                         @Override
-                        protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
-                            FetchTask.Context delegate = super.getContext(response, checkETag, bmclapiHash);
-                            return new Context() {
-                                @Override
-                                public void withResult(boolean success) {
-                                    super.withResult(success);
-                                    delegate.withResult(success);
-                                }
-
-                                @Override
-                                public void reset() throws IOException {
-                                    delegate.reset();
-                                }
-
+                        protected Context<@Nullable Void> getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
+                            FetchTask.Context<@Nullable Void> delegate = super.getContext(response, checkETag, bmclapiHash);
+                            return new Context<>() {
                                 @Override
                                 public void write(byte[] buffer, int offset, int len) throws IOException {
                                     context.checkCancellation();
@@ -77,11 +66,13 @@ public final class TerracottaBundle {
                                 }
 
                                 @Override
-                                public void close() throws IOException {
-                                    if (isSuccess()) {
-                                        context.checkCancellation();
-                                    }
+                                public @Nullable Void finish() throws IOException {
+                                    context.checkCancellation();
+                                    return delegate.finish();
+                                }
 
+                                @Override
+                                public void close() throws IOException {
                                     delegate.close();
                                 }
                             };

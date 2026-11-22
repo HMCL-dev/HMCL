@@ -6,6 +6,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.java.JavaPackageType;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.NativePlatform;
@@ -41,14 +42,10 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
         this.fetchPackagesTask = new GetTask(downloadProvider.getDownloadCandidates(NetworkUtils.withQuery(API_ROOT + "/packages", params)));
     }
 
+    /// Returns the latest matching distribution version per JDK major version and package type.
     @Override
-    public Collection<Task<?>> getPredecessors() {
-        return Collections.singleton(fetchPackagesTask);
-    }
-
-    @Override
-    public void execute() throws Exception {
-        String json = fetchPackagesTask.getResult();
+    public EnumMap<JavaPackageType, TreeMap<Integer, DiscoJavaRemoteVersion>> execute(TaskExecutionContext context) throws Exception {
+        String json = context.run(fetchPackagesTask);
         List<DiscoJavaRemoteVersion> list = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoJavaRemoteVersion.class)).getResult();
         EnumMap<JavaPackageType, TreeMap<Integer, DiscoJavaRemoteVersion>> result = new EnumMap<>(JavaPackageType.class);
 
@@ -70,7 +67,6 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
                 map.put(jdkVersion, version);
         }
 
-        setResult(result);
+        return result;
     }
-
 }

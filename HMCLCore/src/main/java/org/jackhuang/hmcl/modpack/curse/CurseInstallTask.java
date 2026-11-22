@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -28,7 +29,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Install a downloaded CurseForge modpack.
 ///
 /// @author huangyuhui
-public final class CurseInstallTask extends Task<Void> {
+public final class CurseInstallTask extends Task<@Nullable Void> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
@@ -55,8 +56,8 @@ public final class CurseInstallTask extends Task<Void> {
 
     /// Scheduled icon download corresponding to [#iconExt], or `null` when absent.
     private @Nullable Task<Path> downloadIconTask;
-    private final List<Task<?>> dependents = new ArrayList<>(4);
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
+    /// The tasks that install the instance and prepare its modpack files.
+    private final List<Task<?>> preparation = new ArrayList<>(4);
 
     /// Creates a task that installs a new CurseForge modpack instance.
     ///
@@ -166,8 +167,8 @@ public final class CurseInstallTask extends Task<Void> {
             }
         });
 
-        dependents.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(manifest.overrides()), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+        preparation.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(manifest.overrides()), any -> true, config).withStage("hmcl.modpack"));
+        preparation.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
         @Nullable WebURL iconUri = NetworkUtils.toWebURLOrNull(iconUrl);
         if (iconUri != null) {
@@ -175,7 +176,7 @@ public final class CurseInstallTask extends Task<Void> {
             if (Modpack.SUPPORTED_ICON_EXTS.contains(ext)) {
                 iconExt = ext;
                 DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
-                dependents.add(downloadIconTask = new CacheFileTask(downloadProvider.getDownloadCandidates(iconUrl)));
+                preparation.add(downloadIconTask = new CacheFileTask(downloadProvider.getDownloadCandidates(iconUrl)));
             }
         }
 
@@ -193,18 +194,8 @@ public final class CurseInstallTask extends Task<Void> {
                     builder.component(GameComponentType.NEO_FORGE, modLoader.id().substring("neoforge-".length()));
                 }
             }
-            dependents.add(0, builder.buildAsync());
+            preparation.add(0, builder.buildAsync());
         }
-    }
-
-    @Override
-    public Collection<Task<?>> getPredecessors() {
-        return dependents;
-    }
-
-    @Override
-    public Collection<Task<?>> getSuccessors() {
-        return dependencies;
     }
 
     private Set<String> getNewOverridesMods() throws IOException {
@@ -230,8 +221,10 @@ public final class CurseInstallTask extends Task<Void> {
         return result;
     }
 
+    /// Installs the instance and downloads the missing CurseForge files.
     @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        context.runAll(preparation);
         if (config != null) {
             Set<String> newOverridesMods = getNewOverridesMods();
             Set<CurseManifestFile> newManifestFiles = manifest.files() != null ? new HashSet<>(manifest.files()) : Collections.emptySet();
@@ -281,7 +274,8 @@ public final class CurseInstallTask extends Task<Void> {
             }
         }
 
-        // The game builder runs as a dependent and registers the instance before this phase.
-        dependencies.add(new CurseCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest, excludedFiles));
+        // The game builder publishes the instance before file completion starts.
+        context.run(new CurseCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest, excludedFiles));
+        return null;
     }
 }

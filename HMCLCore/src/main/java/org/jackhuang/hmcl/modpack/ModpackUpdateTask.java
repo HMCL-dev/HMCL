@@ -4,18 +4,18 @@ package org.jackhuang.hmcl.modpack;
 
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
 
 /// Runs a modpack update with an instance-directory backup and rollback on failure.
 @NotNullByDefault
-public class ModpackUpdateTask extends Task<Void> {
+public class ModpackUpdateTask extends Task<@Nullable Void> {
 
     /// The fixed pre-update instance snapshot.
     private final DefaultGameInstance instance;
@@ -45,42 +45,20 @@ public class ModpackUpdateTask extends Task<Void> {
         }
     }
 
-    /// Returns the update task that runs after this task creates the backup.
-    ///
-    /// @return a singleton containing the update task
+    /// Backs up the instance and restores it if applying the update fails.
     @Override
-    public Collection<Task<?>> getSuccessors() {
-        return Collections.singleton(updateTask);
-    }
-
-    /// Copies the instance directory into the backup directory.
-    @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         FileUtils.copyDirectory(instance.getInstanceRoot(), backupFolder);
-    }
-
-    /// Requests post-execution cleanup or rollback after the update task terminates.
-    ///
-    /// @return `true`
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    /// Retains the backup after success, or restores it and refreshes the repository after failure.
-    @Override
-    public void postExecute() throws Exception {
-        if (haveSuccessorsSucceeded()) {
-            // Keep backup game version for further repair.
-            return;
+        try {
+            context.run(updateTask);
+        } catch (Exception failure) {
+            if (!instance.getRepository().removeInstanceFromDisk(instance.getId())) {
+                throw new IOException("Failed to remove instance before restoring backup: " + instance.getId(), failure);
+            }
+            FileUtils.copyDirectory(backupFolder, instance.getInstanceRoot());
+            instance.getRepository().refresh();
+            throw failure;
         }
-
-        // Restore backup
-        if (!instance.getRepository().removeInstanceFromDisk(instance.getId())) {
-            throw new IOException("Failed to remove instance before restoring backup: " + instance.getId());
-        }
-
-        FileUtils.copyDirectory(backupFolder, instance.getInstanceRoot());
-        instance.getRepository().refresh();
+        return null;
     }
 }
