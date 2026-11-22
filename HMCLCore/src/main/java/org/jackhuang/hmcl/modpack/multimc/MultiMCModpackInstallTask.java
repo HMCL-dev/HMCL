@@ -387,7 +387,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         MultiMCInstancePatch.ResolvedInstance artifact = Objects.requireNonNull(getResult(), "ResolvedInstance");
 
         List<String> files = artifact.getJarModFileNames();
-        if (!isDependenciesSucceeded()) {
+        if (!haveSuccessorsSucceeded()) {
             return;
         }
 

@@ -219,7 +219,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     } else {
                         task.setException(dependentsException);
 
-                        if (task.isRelyingOnDependents()) {
+                        if (task.requiresPredecessorSuccess()) {
                             rethrow(dependentsException);
                         }
                     }
@@ -253,7 +253,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     if (!isDependenciesSucceeded) {
                         LOG.error("Subtasks failed for " + task.getName());
                         task.setException(dependenciesException);
-                        if (task.isRelyingOnDependencies()) {
+                        if (task.requiresSuccessorSuccess()) {
                             rethrow(dependenciesException);
                         }
                     }

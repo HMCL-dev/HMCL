@@ -64,7 +64,7 @@ public class GameInstallTask extends Task<GameInstancePatch> {
 
     /// {@inheritDoc}
     @Override
-    public boolean isRelyingOnDependencies() {
+    public boolean requiresSuccessorSuccess() {
         return false;
     }
 

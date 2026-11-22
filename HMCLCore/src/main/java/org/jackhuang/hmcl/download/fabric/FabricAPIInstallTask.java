@@ -48,7 +48,7 @@ public final class FabricAPIInstallTask extends Task<GameInstancePatch> {
     }
 
     @Override
-    public boolean isRelyingOnDependencies() {
+    public boolean requiresSuccessorSuccess() {
         return false;
     }
 

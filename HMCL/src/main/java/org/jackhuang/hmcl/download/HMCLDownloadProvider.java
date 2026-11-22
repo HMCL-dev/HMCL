@@ -272,13 +272,13 @@ public final class HMCLDownloadProvider extends DownloadProvider {
         }
 
         @Override
-        public boolean isRelyingOnDependents() {
+        public boolean requiresPredecessorSuccess() {
             return false;
         }
 
         @Override
         public void execute() throws Exception {
-            if (isDependentsSucceeded()) {
+            if (havePredecessorsSucceeded()) {
                 setResult(task.getResult());
             } else {
                 dependencies = List.of(fallback);

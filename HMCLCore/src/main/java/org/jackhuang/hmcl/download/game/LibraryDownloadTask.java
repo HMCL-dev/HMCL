@@ -54,7 +54,7 @@ public class LibraryDownloadTask extends Task<Void> {
     }
 
     @Override
-    public boolean isRelyingOnDependents() {
+    public boolean requiresPredecessorSuccess() {
         return false;
     }
 
@@ -62,7 +62,7 @@ public class LibraryDownloadTask extends Task<Void> {
     public void execute() throws Exception {
         if (cached) return;
 
-        if (!isDependentsSucceeded()) {
+        if (!havePredecessorsSucceeded()) {
             // Since FileDownloadTask wraps the actual exception with DownloadException.
             // We should extract it letting the error message clearer.
             Exception t = task.getException();

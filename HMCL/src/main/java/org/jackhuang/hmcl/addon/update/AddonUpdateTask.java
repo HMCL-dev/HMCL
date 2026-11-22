@@ -96,13 +96,13 @@ public class AddonUpdateTask extends Task<Void> {
     }
 
     @Override
-    public boolean isRelyingOnDependents() {
+    public boolean requiresPredecessorSuccess() {
         return false;
     }
 
     @Override
     public void execute() throws Exception {
-        if (!isDependentsSucceeded())
+        if (!havePredecessorsSucceeded())
             throw getException();
     }
 }

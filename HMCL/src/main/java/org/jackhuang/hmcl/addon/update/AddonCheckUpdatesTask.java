@@ -72,7 +72,7 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
     }
 
     @Override
-    public boolean isRelyingOnDependents() {
+    public boolean requiresPredecessorSuccess() {
         return false;
     }
 

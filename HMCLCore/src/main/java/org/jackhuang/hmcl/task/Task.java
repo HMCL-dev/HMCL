@@ -158,25 +158,25 @@ public abstract class Task<T> {
     }
 
     // dependents succeeded
-    private boolean dependentsSucceeded = false;
+    private boolean predecessorsSucceeded = false;
 
-    public boolean isDependentsSucceeded() {
-        return dependentsSucceeded;
+    public boolean havePredecessorsSucceeded() {
+        return predecessorsSucceeded;
     }
 
     void setDependentsSucceeded() {
-        dependentsSucceeded = true;
+        predecessorsSucceeded = true;
     }
 
     // dependencies succeeded
-    private boolean dependenciesSucceeded = false;
+    private boolean successorsSucceeded = false;
 
-    public boolean isDependenciesSucceeded() {
-        return dependenciesSucceeded;
+    public boolean haveSuccessorsSucceeded() {
+        return successorsSucceeded;
     }
 
     void setDependenciesSucceeded() {
-        dependenciesSucceeded = true;
+        successorsSucceeded = true;
     }
 
     /**
@@ -184,7 +184,7 @@ public abstract class Task<T> {
      * <p>
      * **Note** if this field is set false, you are not supposed to invoke [run]
      */
-    public boolean isRelyingOnDependents() {
+    public boolean requiresPredecessorSuccess() {
         return true;
     }
 
@@ -193,7 +193,7 @@ public abstract class Task<T> {
      * <p>
      * **Note** if this field is set false, you are not supposed to invoke [run]
      */
-    public boolean isRelyingOnDependencies() {
+    public boolean requiresSuccessorSuccess() {
         return true;
     }
 
@@ -274,12 +274,12 @@ public abstract class Task<T> {
      * This method will be called after dependency tasks terminated all together.
      * <p>
      * You can check whether dependencies succeed in this method by calling
-     * {@link Task#isDependenciesSucceeded()} no matter when
-     * {@link Task#isRelyingOnDependencies()} returns true or false.
+     * {@link Task#haveSuccessorsSucceeded()} no matter when
+     * {@link Task#requiresSuccessorSuccess()} returns true or false.
      *
      * @throws InterruptedException if current thread is interrupted
      * @see Thread#isInterrupted()
-     * @see Task#isDependenciesSucceeded()
+     * @see Task#haveSuccessorsSucceeded()
      */
     public void postExecute() throws Exception {
     }
@@ -722,12 +722,12 @@ public abstract class Task<T> {
 
             @Override
             public void execute() throws Exception {
-                if (isDependentsSucceeded() != (Task.this.getException() == null))
+                if (havePredecessorsSucceeded() != (Task.this.getException() == null))
                     throw new AssertionError("When whenComplete succeeded, Task.exception must be null.", Task.this.getException());
 
                 action.execute(Task.this.getException());
 
-                if (!isDependentsSucceeded()) {
+                if (!havePredecessorsSucceeded()) {
                     setSignificance(TaskSignificance.MINOR);
                     if (Task.this.getException() == null)
                         throw new AssertionError("When failed, exception cannot be null");
@@ -742,7 +742,7 @@ public abstract class Task<T> {
             }
 
             @Override
-            public boolean isRelyingOnDependents() {
+            public boolean requiresPredecessorSuccess() {
                 return false;
             }
         }.setExecutor(executor).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
@@ -775,10 +775,10 @@ public abstract class Task<T> {
 
             @Override
             public void execute() throws Exception {
-                if (isDependentsSucceeded() != (Task.this.getException() == null))
+                if (havePredecessorsSucceeded() != (Task.this.getException() == null))
                     throw new AssertionError("When whenComplete succeeded, Task.exception must be null.", Task.this.getException());
 
-                if (isDependentsSucceeded()) {
+                if (havePredecessorsSucceeded()) {
                     setResult(Result.success(Task.this.getResult()));
                 } else {
                     setSignificance(TaskSignificance.MINOR);
@@ -792,7 +792,7 @@ public abstract class Task<T> {
             }
 
             @Override
-            public boolean isRelyingOnDependents() {
+            public boolean requiresPredecessorSuccess() {
                 return false;
             }
         }.setExecutor(executor).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
@@ -1202,7 +1202,7 @@ public abstract class Task<T> {
         }
 
         @Override
-        public boolean isRelyingOnDependents() {
+        public boolean requiresPredecessorSuccess() {
             return relyingOnDependents;
         }
     }

@@ -161,7 +161,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
     @Override
     public void postExecute() throws Exception {
-        if (isDependenciesSucceeded()) {
+        if (haveSuccessorsSucceeded()) {
             FileUtils.cleanDirectory(target);
 
             if (Files.getFileStore(target).equals(Files.getFileStore(tempDir))) {

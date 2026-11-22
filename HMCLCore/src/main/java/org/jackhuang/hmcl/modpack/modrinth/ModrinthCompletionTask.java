@@ -113,7 +113,7 @@ public class ModrinthCompletionTask extends Task<Void> {
     }
 
     @Override
-    public boolean isRelyingOnDependencies() {
+    public boolean requiresSuccessorSuccess() {
         return false;
     }
 
@@ -174,7 +174,7 @@ public class ModrinthCompletionTask extends Task<Void> {
         // But continue other downloads.
         if (notFound.get())
             throw new ModpackCompletionException(new FileNotFoundException());
-        if (!allNameKnown.get() || !isDependenciesSucceeded())
+        if (!allNameKnown.get() || !haveSuccessorsSucceeded())
             throw new ModpackCompletionException();
     }
 }

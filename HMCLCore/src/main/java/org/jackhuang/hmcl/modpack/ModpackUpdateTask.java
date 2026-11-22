@@ -70,7 +70,7 @@ public class ModpackUpdateTask extends Task<Void> {
     /// Retains the backup after success, or restores it and refreshes the repository after failure.
     @Override
     public void postExecute() throws Exception {
-        if (isDependenciesSucceeded()) {
+        if (haveSuccessorsSucceeded()) {
             // Keep backup game version for further repair.
             return;
         }

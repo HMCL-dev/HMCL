@@ -63,7 +63,7 @@ public final class QuiltInstallTask extends Task<GameInstancePatch> {
     }
 
     @Override
-    public boolean isRelyingOnDependencies() {
+    public boolean requiresSuccessorSuccess() {
         return false;
     }
 
