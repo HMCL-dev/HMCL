@@ -183,7 +183,7 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
             handle.addTaskListener(new TaskListener() {
                 /// Registers this dialog when its current handle starts.
                 @Override
-                public void onStart() {
+                public void onExecutionStarted(TaskHandle handle) {
                     runInFX(() -> {
                         if (TaskHandleDialogPane.this.handle != handle)
                             return;
@@ -197,9 +197,9 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
 
                 /// Retains a successful task's pending action, otherwise removes the completed task.
                 @Override
-                public void onStop(boolean success, TaskHandle stoppedHandle) {
+                public void onExecutionFinished(TaskHandle handle, boolean success) {
                     Platform.runLater(() -> {
-                        if (TaskHandleDialogPane.this.handle == stoppedHandle)
+                        if (TaskHandleDialogPane.this.handle == handle)
                             finish(success);
                     });
                 }
@@ -229,7 +229,7 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
 
     /// Submits this dialog's handle to the serial task queue, once per attached handle.
     ///
-    /// @return completion after execution and stop-listener cleanup
+    /// @return a future completed after execution and listener cleanup
     public CompletableFuture<Boolean> startHandle() {
         return startHandle(null);
     }
@@ -239,7 +239,7 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
     /// Must be called on the JavaFX thread after all handle listeners are installed.
     ///
     /// @param parent the executing parent dialog, or `null` to queue an independent task
-    /// @return completion after execution and stop-listener cleanup
+    /// @return a future completed after execution and listener cleanup
     /// @throws IllegalStateException if this dialog has no handle
     public CompletableFuture<Boolean> startHandle(@Nullable TaskHandleDialogPane parent) {
         FXUtils.checkFxUserThread();

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -155,8 +156,9 @@ final class TaskExecutionContextTest {
             cleanups.incrementAndGet();
         });
         TaskHandle handle = root.newHandle(new TaskListener() {
+            /// Signals the test thread after cancellation has finished propagating.
             @Override
-            public void onStop(boolean success, TaskHandle handle) {
+            public void onExecutionFinished(TaskHandle handle, boolean success) {
                 stopped.complete(success);
             }
         });
@@ -269,7 +271,7 @@ final class TaskExecutionContextTest {
         assertTrue(batch.newHandle(new TaskListener() {
             /// Releases the first child after the second child's result has been published.
             @Override
-            public void onFinished(Task<?> task) {
+            public void onTaskFinished(Task<?> task, @Nullable TaskStage stage, @Nullable Throwable failure) {
                 if (task == second)
                     released.countDown();
             }
@@ -342,8 +344,9 @@ final class TaskExecutionContextTest {
         assertTrue(root.newHandle(new TaskListener() {
             /// Observes the published state and result, then exercises listener failure isolation.
             @Override
-            public void onFinished(Task<?> task) {
+            public void onTaskFinished(Task<?> task, @Nullable TaskStage stage, @Nullable Throwable failure) {
                 assertSame(root, task);
+                assertNull(failure);
                 assertEquals(Task.TaskState.SUCCEEDED, task.getState());
                 assertEquals(42, task.resultNow());
                 assertEquals(42, task.resultNowOrNull());
@@ -379,13 +382,14 @@ final class TaskExecutionContextTest {
         CountDownLatch entered = new CountDownLatch(1);
         CompletableFuture<@Nullable Void> release = new CompletableFuture<>();
         CompletableFuture<Boolean> stopped = new CompletableFuture<>();
-        AtomicInteger starts = new AtomicInteger();
-        AtomicInteger stops = new AtomicInteger();
+        List<TaskHandle> starts = new CopyOnWriteArrayList<>();
+        List<TaskHandle> stops = new CopyOnWriteArrayList<>();
         StageEvents events = new StageEvents() {
             /// Pauses the winning start call before it can submit the root body.
             @Override
-            public void onStart() {
-                if (starts.incrementAndGet() == 1) {
+            public void onExecutionStarted(TaskHandle handle) {
+                starts.add(handle);
+                if (starts.size() == 1) {
                     entered.countDown();
                     release.orTimeout(10, TimeUnit.SECONDS).join();
                 }
@@ -393,8 +397,8 @@ final class TaskExecutionContextTest {
 
             /// Records each handle stop and releases the test thread.
             @Override
-            public void onStop(boolean success, TaskHandle handle) {
-                stops.incrementAndGet();
+            public void onExecutionFinished(TaskHandle handle, boolean success) {
+                stops.add(handle);
                 stopped.complete(success);
             }
         };
@@ -422,8 +426,8 @@ final class TaskExecutionContextTest {
             caller.shutdownNow();
         }
         assertThrows(IllegalStateException.class, second::test);
-        assertEquals(1, starts.get());
-        assertEquals(1, stops.get());
+        assertEquals(List.of(first), starts);
+        assertEquals(List.of(first), stops);
         assertEquals(1, events.started.size());
         assertEquals(events.started, events.finished);
         assertEquals(1, bodies.get());
@@ -475,15 +479,8 @@ final class TaskExecutionContextTest {
             context.completeStageItem();
             return context.run(outer);
         });
-        Map<Task<?>, @Nullable TaskStage> running = new HashMap<>();
         List<StageProgress> progress = new ArrayList<>();
         StageEvents events = new StageEvents() {
-            /// Captures the stage delivered with the running task itself.
-            @Override
-            public void onRunning(Task<?> task, @Nullable TaskStage stage) {
-                running.put(task, stage);
-            }
-
             /// Records the effective stage and both increments in dispatch order.
             @Override
             public void onStageProgress(TaskStage stage, int completedDelta, int totalDelta) {
@@ -502,12 +499,12 @@ final class TaskExecutionContextTest {
         assertEquals("download", second.id());
         assertNull(first.parent());
         assertSame(first, second.parent());
-        assertSame(first, running.get(outer));
-        assertSame(second, running.get(nested));
-        assertSame(second, running.get(leaf));
-        assertSame(first, running.get(sibling));
-        assertTrue(running.containsKey(root));
-        assertNull(running.get(root));
+        assertSame(first, events.running.get(outer));
+        assertSame(second, events.running.get(nested));
+        assertSame(second, events.running.get(leaf));
+        assertSame(first, events.running.get(sibling));
+        assertTrue(events.running.containsKey(root));
+        assertNull(events.running.get(root));
         assertNull(leaf.getStage());
         assertNull(sibling.getStage());
         assertEquals(List.of(new StageProgress(second, 0, 2), new StageProgress(second, 1, 0)), progress);
@@ -522,7 +519,8 @@ final class TaskExecutionContextTest {
         IOException exception = new IOException("Download failed");
         AssertionError error = new AssertionError("Unexpected failure");
         RejectedExecutionException rejection = new RejectedExecutionException("Worker unavailable");
-        Task<?> failed = Task.failed(exception).withStage("checked");
+        Task<?> source = Task.failed(exception);
+        Task<?> failed = source.withStage("checked");
         Task<?> broken = task(null, "error", context -> {
             throw error;
         });
@@ -541,6 +539,14 @@ final class TaskExecutionContextTest {
         assertEquals(42, root.resultNow());
         assertEquals(List.of(root, failed, broken, rejected), events.started.stream().map(TaskStage::task).toList());
         TaskStage outer = events.started.get(0);
+        TaskStage checked = events.started.get(1);
+        assertFalse(events.running.containsKey(rejected));
+        assertEquals(List.of(
+                new TaskCompletion(source, checked, exception),
+                new TaskCompletion(failed, checked, exception),
+                new TaskCompletion(broken, events.started.get(2), error),
+                new TaskCompletion(rejected, events.started.get(3), rejection),
+                new TaskCompletion(root, outer, null)), events.completions);
         assertEquals(List.of(events.started.get(1), events.started.get(2), events.started.get(3), outer), events.finished);
         assertEquals(Arrays.asList(exception, error, rejection, null), events.failures);
     }
@@ -562,6 +568,8 @@ final class TaskExecutionContextTest {
         assertEquals(Task.TaskState.FAILED, root.getState());
         assertEquals(1, events.started.size());
         assertSame(root, events.started.get(0).task());
+        assertTrue(events.running.isEmpty());
+        assertEquals(List.of(new TaskCompletion(root, events.started.get(0), failure)), events.completions);
         assertEquals(events.started, events.finished);
         assertEquals(List.of(failure), events.failures);
     }
@@ -597,8 +605,17 @@ final class TaskExecutionContextTest {
     /// One incremental progress notification for an executing stage.
     private record StageProgress(TaskStage stage, int completedDelta, int totalDelta) {}
 
+    /// The task, effective stage and outcome delivered together at completion.
+    private record TaskCompletion(Task<?> task, @Nullable TaskStage stage, @Nullable Throwable failure) {}
+
     /// Records stage events from tests that dispatch one child at a time.
     private static class StageEvents extends TaskListener {
+        /// The effective stage reported when each task body starts.
+        private final Map<Task<?>, @Nullable TaskStage> running = new HashMap<>();
+
+        /// Task outcomes in completion order, including failures before body entry.
+        private final List<TaskCompletion> completions = new ArrayList<>();
+
         /// Stages in dispatch order.
         private final List<TaskStage> started = new ArrayList<>();
 
@@ -607,6 +624,18 @@ final class TaskExecutionContextTest {
 
         /// Outcomes in completion order, with null denoting success.
         private final List<@Nullable Throwable> failures = new ArrayList<>();
+
+        /// Records the stage associated with the task's running body.
+        @Override
+        public void onTaskStarted(Task<?> task, @Nullable TaskStage stage) {
+            running.put(task, stage);
+        }
+
+        /// Records the terminal notification and the original failure.
+        @Override
+        public void onTaskFinished(Task<?> task, @Nullable TaskStage stage, @Nullable Throwable failure) {
+            completions.add(new TaskCompletion(task, stage, failure));
+        }
 
         /// Records the identity of the new stage.
         @Override

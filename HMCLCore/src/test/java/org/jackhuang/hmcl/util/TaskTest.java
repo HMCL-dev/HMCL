@@ -6,6 +6,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -56,14 +57,19 @@ public class TaskTest {
         AtomicReference<@Nullable Throwable> uncaught = new AtomicReference<>();
 
         TaskHandle handle = task.newHandle(new TaskListener() {
+            /// Records the original error after the task has published its checked failure.
             @Override
-            public void onFailed(Task<?> failedTask, Throwable throwable) {
+            public void onTaskFinished(Task<?> failedTask, @Nullable TaskStage stage, @Nullable Throwable failure) {
+                assertSame(task, failedTask);
+                assertEquals(Task.TaskState.FAILED, failedTask.getState());
+                assertSame(error, failedTask.exceptionNow().getCause());
                 failedCount.incrementAndGet();
-                failedThrowable.set(throwable);
+                failedThrowable.set(failure);
             }
 
+            /// Records the final outcome reported by the handle.
             @Override
-            public void onStop(boolean success, TaskHandle handle) {
+            public void onExecutionFinished(TaskHandle handle, boolean success) {
                 stopCount.incrementAndGet();
                 stopSuccess.set(success);
             }
@@ -147,7 +153,7 @@ public class TaskTest {
         TaskHandle handle = task.newHandle(new TaskListener() {
             /// Publishes the execution result to the waiting test thread.
             @Override
-            public void onStop(boolean success, TaskHandle handle) {
+            public void onExecutionFinished(TaskHandle handle, boolean success) {
                 stopped.complete(success);
             }
         });

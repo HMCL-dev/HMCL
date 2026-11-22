@@ -50,7 +50,7 @@ public final class DefaultTaskHandle extends TaskHandle {
     /// Reserves the root task before a listener or another caller can start it again.
     private void beginExecution() {
         firstTask.claimExecution();
-        notifyListeners(TaskListener::onStart);
+        notifyListeners(listener -> listener.onExecutionStarted(this));
     }
 
     /// Runs one root task synchronously, propagating its failure to the caller.
@@ -78,13 +78,13 @@ public final class DefaultTaskHandle extends TaskHandle {
             Lang.handleUncaughtException(e);
         } finally {
             boolean completed = success;
-            notifyListeners(listener -> listener.onStop(completed, this));
+            notifyListeners(listener -> listener.onExecutionFinished(this, completed));
         }
         return success;
     }
 
     /// Requests cancellation. Already running bodies may finish before they observe the request.
-    /// Starting a previously cancelled handle still delivers its stop notification.
+    /// Starting a previously cancelled handle still delivers its completion notification.
     @Override
     public void cancel() {
         cancelled = true;
@@ -148,12 +148,12 @@ public final class DefaultTaskHandle extends TaskHandle {
         T result;
         try {
             checkCancellation();
-            if (task.getSignificance().shouldLog())
+            if (task.getSignificance().shouldLog()) {
                 LOG.trace("Executing task: " + task.getName());
-            notifyListeners(listener -> listener.onReady(task));
-            checkCancellation();
+                checkCancellation();
+            }
             task.setState(Task.TaskState.RUNNING);
-            notifyListeners(listener -> listener.onRunning(task, context.stage));
+            notifyListeners(listener -> listener.onTaskStarted(task, context.stage));
             try {
                 result = task.execute(context);
             } finally {
@@ -169,8 +169,7 @@ public final class DefaultTaskHandle extends TaskHandle {
         }
 
         task.publishResult(result);
-        notifyListeners(listener -> listener.onFinished(task));
-        finishStage(task, context.stage, null);
+        notifyTaskFinished(task, context.stage, null);
         if (task.getSignificance().shouldLog())
             LOG.trace("Task finished: " + task.getName());
         return result;
@@ -181,12 +180,12 @@ public final class DefaultTaskHandle extends TaskHandle {
         Exception recorded = cause instanceof Exception e ? e : new Exception(cause);
         exception = recorded;
         task.publishException(recorded);
-        notifyListeners(listener -> listener.onFailed(task, cause));
-        finishStage(task, stage, cause);
+        notifyTaskFinished(task, stage, cause);
     }
 
-    /// Closes a declared stage when its owning task reaches its terminal state.
-    private void finishStage(Task<?> task, @Nullable TaskStage stage, @Nullable Throwable failure) {
+    /// Reports the task's published outcome, then closes its stage if it declared one.
+    private void notifyTaskFinished(Task<?> task, @Nullable TaskStage stage, @Nullable Throwable failure) {
+        notifyListeners(listener -> listener.onTaskFinished(task, stage, failure));
         if (stage != null && stage.task() == task)
             notifyListeners(listener -> listener.onStageFinished(stage, failure));
     }

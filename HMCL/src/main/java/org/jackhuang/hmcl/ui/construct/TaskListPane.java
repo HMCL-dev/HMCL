@@ -86,6 +86,27 @@ public final class TaskListPane extends StackPane {
         }
     }
 
+    /// Localizes the task name if it should appear as a separate progress row.
+    private static boolean prepareTaskRow(Task<?> task, @Nullable TaskStage stage) {
+        if (!task.getSignificance().shouldShow() || task.getName() == null)
+            return false;
+        if (task instanceof GameInstallTask && stage != null && stage.id().startsWith("hmcl.install.game"))
+            return false;
+        @Nullable String localizedName = I18n.translateTaskName(task);
+        if (localizedName != null)
+            task.setName(localizedName);
+        return true;
+    }
+
+    /// Displays a task below its stage or at the top of the list when it has no stage.
+    @FXThread
+    private ProgressListNode addTaskRow(Task<?> task, @Nullable TaskStage stage) {
+        ProgressListNode node = new ProgressListNode(task);
+        int index = stage == null ? 0 : listView.getItems().indexOf(stageNode(stage.id())) + 1;
+        listView.getItems().add(index, node);
+        return node;
+    }
+
     /// Displays subsequent stage and task events from the supplied handle.
     public void setHandle(TaskHandle handle) {
         this.handle = handle;
@@ -98,8 +119,9 @@ public final class TaskListPane extends StackPane {
                 });
             }
 
+            /// Clears progress from the previous execution.
             @Override
-            public void onStart() {
+            public void onExecutionStarted(TaskHandle handle) {
                 update(() -> {
                     nodes.values().forEach(ProgressListNode::unbind);
                     nodes.clear();
@@ -138,43 +160,29 @@ public final class TaskListPane extends StackPane {
                 });
             }
 
+            /// Adds visible running tasks to their stage.
             @Override
-            public void onRunning(Task<?> task, @Nullable TaskStage stage) {
-                if (!task.getSignificance().shouldShow() || task.getName() == null)
-                    return;
-
-                if (task instanceof GameInstallTask && stage != null && stage.id().startsWith("hmcl.install.game"))
-                    return;
-
-                @Nullable String localizedName = I18n.translateTaskName(task);
-                if (localizedName != null)
-                    task.setName(localizedName);
-
-                update(() -> {
-                    ProgressListNode node = new ProgressListNode(task);
-                    nodes.put(task, node);
-                    int index = stage == null ? 0 : listView.getItems().indexOf(stageNode(stage.id())) + 1;
-                    listView.getItems().add(index, node);
-                });
+            public void onTaskStarted(Task<?> task, @Nullable TaskStage stage) {
+                if (prepareTaskRow(task, stage))
+                    update(() -> nodes.put(task, addTaskRow(task, stage)));
             }
 
+            /// Removes successful tasks and retains visible failures, including failures before the body starts.
             @Override
-            public void onFinished(Task<?> task) {
+            public void onTaskFinished(Task<?> task, @Nullable TaskStage stage, @Nullable Throwable failure) {
                 update(() -> {
                     @Nullable ProgressListNode node = nodes.remove(task);
-                    if (node != null) {
+                    if (node == null) {
+                        if (failure == null || !prepareTaskRow(task, stage))
+                            return;
+                        node = addTaskRow(task, stage);
+                    }
+                    if (failure == null) {
                         node.unbind();
                         listView.getItems().remove(node);
+                    } else {
+                        node.setThrowable(failure);
                     }
-                });
-            }
-
-            @Override
-            public void onFailed(Task<?> task, Throwable throwable) {
-                update(() -> {
-                    @Nullable ProgressListNode node = nodes.remove(task);
-                    if (node != null)
-                        node.setThrowable(throwable);
                 });
             }
 

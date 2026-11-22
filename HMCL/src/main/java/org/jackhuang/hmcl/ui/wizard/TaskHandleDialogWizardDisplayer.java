@@ -32,7 +32,7 @@ public abstract class TaskHandleDialogWizardDisplayer extends AbstractWizardDisp
         @Nullable WizardProvider.TaskCleanup cleanup = settings.remove(WizardProvider.TaskCleanup.KEY);
         TaskHandleDialogPane pane = new TaskHandleDialogPane(it -> {
             if (cleanup != null) {
-                // Keep the installation modal until onStop has released its repository draft.
+                // Keep the installation modal until the completion listener releases its repository draft.
                 it.setCancel(null);
                 return;
             }
@@ -52,8 +52,9 @@ public abstract class TaskHandleDialogWizardDisplayer extends AbstractWizardDisp
 
         runInFX(() -> {
             TaskHandle handle = task.newHandle(new TaskListener() {
+                /// Releases wizard resources and reports the outcome on the JavaFX thread.
                 @Override
-                public void onStop(boolean success, TaskHandle handle) {
+                public void onExecutionFinished(TaskHandle handle, boolean success) {
                     @Nullable Exception failure = success ? null : handle.getException();
                     if (cleanup != null) {
                         try {

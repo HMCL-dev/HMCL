@@ -45,6 +45,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -189,6 +190,30 @@ final class TaskHandleDialogPaneTest {
                     .filter(Label.class::isInstance)
                     .map(Label.class::cast)
                     .anyMatch(label -> message.equals(label.getText())));
+            return true;
+        });
+    }
+
+    /// Displays a task rejected before its body starts under its inherited stage.
+    @Test
+    void displaysRejectedTaskUnderItsStage() throws Exception {
+        var rejection = new RejectedExecutionException("The update worker is unavailable");
+        Task<?> child = Task.runAsync("Check updates", command -> {
+            throw rejection;
+        }, () -> fail("The rejected task ran"));
+        TaskHandle handle = child.withStage("update.checking")
+                .withStagesHints("update.checking", "launch.state.logging_in")
+                .newHandle();
+        TaskListPane pane = showTaskList(handle);
+
+        assertFalse(handle.test());
+        assertSame(rejection, child.exceptionNow());
+        onFxThread(() -> {
+            ListCell<?> item = findRow(pane, "Check updates");
+            assertTrue(findRow(pane, i18n("update.checking")).getIndex() < item.getIndex());
+            assertTrue(item.getIndex() < findRow(pane, i18n("launch.state.logging_in")).getIndex());
+            BorderPane row = (BorderPane) item.getGraphic();
+            assertEquals(rejection.getMessage(), ((Label) row.getRight()).getText());
             return true;
         });
     }
@@ -383,7 +408,7 @@ final class TaskHandleDialogPaneTest {
             handle.addTaskListener(new TaskListener() {
                 /// Signals after the pane's completion callback has been queued.
                 @Override
-                public void onStop(boolean success, TaskHandle completed) {
+                public void onExecutionFinished(TaskHandle completed, boolean success) {
                     stopped.countDown();
                 }
             });
@@ -771,7 +796,7 @@ final class TaskHandleDialogPaneTest {
         @Override
         public TaskHandle start() {
             starts++;
-            taskListeners.forEach(TaskListener::onStart);
+            taskListeners.forEach(listener -> listener.onExecutionStarted(this));
             return this;
         }
 
@@ -788,7 +813,7 @@ final class TaskHandleDialogPaneTest {
 
         /// Reports completion with the supplied result.
         private void stop(boolean success) {
-            taskListeners.forEach(listener -> listener.onStop(success, this));
+            taskListeners.forEach(listener -> listener.onExecutionFinished(this, success));
         }
     }
 }

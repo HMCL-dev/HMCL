@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 final class TaskManagerTest {
 
-    /// Keeps a following task queued until work and blocking stop-listener cleanup both finish.
+    /// Keeps a following task queued until work and completion-listener cleanup both finish.
     @Test
     void waitsForWorkAndCleanupBeforeStartingNext() throws Exception {
         CountDownLatch entered = new CountDownLatch(1);
@@ -42,7 +42,7 @@ final class TaskManagerTest {
         }), new TaskListener() {
             /// Keeps the execution slot occupied until cleanup is explicitly released.
             @Override
-            public void onStop(boolean success, TaskHandle handle) {
+            public void onExecutionFinished(TaskHandle handle, boolean success) {
                 cleanupEntered.countDown();
                 try {
                     await(releaseCleanup);
@@ -87,7 +87,7 @@ final class TaskManagerTest {
         Submission second = submit(Task.runAsync(bodies::incrementAndGet), new TaskListener() {
             /// Records cleanup even when the task was cancelled before starting.
             @Override
-            public void onStop(boolean success, TaskHandle handle) {
+            public void onExecutionFinished(TaskHandle handle, boolean success) {
                 assertFalse(success);
                 cleanups.incrementAndGet();
             }

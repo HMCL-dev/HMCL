@@ -337,11 +337,11 @@ public final class LauncherHelper {
         launchingStepsPane.setHandle(handle, false);
         handle.addTaskListener(new TaskListener() {
 
+            /// Reports the launch outcome on the JavaFX thread.
             @Override
-            public void onStop(boolean success, TaskHandle handle) {
+            public void onExecutionFinished(TaskHandle handle, boolean success) {
                 runLater(() -> {
-                    // Check if the application has stopped
-                    // because onStop will be invoked if tasks fail when the executor service shut down.
+                    // The executor service may have shut down before the launch finished.
                     if (!Controllers.isStopped()) {
                         launchingStepsPane.fireEvent(new DialogCloseEvent());
                         if (!success) {

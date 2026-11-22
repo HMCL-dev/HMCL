@@ -106,7 +106,7 @@ public final class TaskManager {
     /// @param handle the handle to submit, which must not have completed
     /// @param parent an executing parent whose slot this handle shares, or `null` to queue
     ///               an independent execution; a parent must still belong to the active group
-    /// @return a future completed after the handle's stop listeners and their preceding JavaFX
+    /// @return a future completed after the handle's completion listeners and their preceding JavaFX
     ///         callbacks have run. Its value indicates execution success. If the handle
     ///         rejects the start request, the future completes exceptionally with that failure.
     /// @throws IllegalArgumentException if `parent` is not executing in the active group
@@ -175,7 +175,7 @@ public final class TaskManager {
 
     /// Counts executions that must finish before an independent task may start.
     private static final class Group {
-        /// The number of started group members whose stop notifications have not been processed.
+        /// The number of started group members whose completion notifications have not been processed.
         private int members;
     }
 
@@ -207,9 +207,9 @@ public final class TaskManager {
             return clientCompletion;
         }
 
-        /// Releases the slot after earlier stop listeners and their JavaFX callbacks.
+        /// Releases the slot after earlier completion listeners and their JavaFX callbacks.
         @Override
-        public void onStop(boolean success, TaskHandle stoppedHandle) {
+        public void onExecutionFinished(TaskHandle handle, boolean success) {
             Platform.runLater(() -> {
                 if (release(this)) {
                     completion.complete(success);

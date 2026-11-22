@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.task;
 
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -9,65 +10,42 @@ import java.util.EventListener;
 import java.util.List;
 
 /// Observes execution of a root task and the children it dispatches.
-/// Notifications for concurrently executing tasks may arrive on different threads.
+/// A task publishes its terminal state and outcome before its finish notification.
+/// Different tasks can invoke the same listener concurrently, including progress updates for the same stage.
 ///
 /// @see TaskHandle#addTaskListener(TaskListener)
 /// @author huangyuhui
+@NotNullByDefault
 public abstract class TaskListener implements EventListener {
 
     /// Called on the thread that starts the handle, before the root task runs.
-    public void onStart() {
+    public void onExecutionStarted(TaskHandle handle) {
+    }
+
+    /// Called after the handle finishes executing its task tree.
+    ///
+    /// @param success whether execution succeeded, including when the root recovered from a child failure
+    public void onExecutionFinished(TaskHandle handle, boolean success) {
+    }
+
+    /// Called after the task enters [Task.TaskState#RUNNING], before its body is invoked.
+    ///
+    /// @param stage the task's declared or inherited stage, or `null` if neither applies
+    public void onTaskStarted(Task<?> task, @Nullable TaskStage stage) {
+    }
+
+    /// Called once when the task succeeds or fails. A failure before the body starts can
+    /// produce this notification without a preceding [#onTaskStarted(Task, TaskStage)].
+    ///
+    /// @param stage the task's declared or inherited stage, or `null` if neither applies
+    /// @param failure the failure cause, including cancellation or an [Error], or `null`
+    ///                on success, when [Task#resultNow()] is available
+    public void onTaskFinished(Task<?> task, @Nullable TaskStage stage, @Nullable Throwable failure) {
     }
 
     /// Announces ordered stage presentation hints when their declaring task is dispatched,
     /// before its stage starts.
     public void onStagesDeclared(@Unmodifiable List<Task.StagesHint> hints) {
-    }
-
-    /// Called when the task is [ready][Task.TaskState#READY].
-    ///
-    /// @param task the task about to run
-    public void onReady(Task<?> task) {
-    }
-
-    /// Called after the task enters [Task.TaskState#RUNNING], before its body is invoked.
-    ///
-    /// @param task the task about to execute its body
-    public void onRunning(Task<?> task) {
-    }
-
-    /// Called after the task enters [Task.TaskState#RUNNING], before its body is invoked.
-    ///
-    /// @implSpec The default implementation calls [#onRunning(Task)].
-    /// @param task the task about to execute its body
-    /// @param stage the task's declared or inherited stage, or `null` if neither applies
-    public void onRunning(Task<?> task, @Nullable TaskStage stage) {
-        onRunning(task);
-    }
-
-    /// Called after the executor publishes a successful result and marks the task
-    /// [Task.TaskState#SUCCEEDED]. The default [#onFailed(Task, Throwable)] implementation
-    /// also invokes this method for failed tasks.
-    ///
-    /// @param task the completed task
-    public void onFinished(Task<?> task) {
-    }
-
-    /// Called after the executor marks the task [Task.TaskState#FAILED]. Cancellation or
-    /// rejection can cause this notification before the task's body starts.
-    ///
-    /// @implSpec The default implementation calls [#onFinished(Task)] with the same task.
-    /// @param task the failed task
-    /// @param throwable the cause of failure, including cancellation
-    public void onFailed(Task<?> task, Throwable throwable) {
-        onFinished(task);
-    }
-
-    /// Called when execution of the root task has ended.
-    ///
-    /// @param success whether the root task succeeded, including when it recovered from a child failure
-    /// @param handle the handle for this execution
-    public void onStop(boolean success, TaskHandle handle) {
     }
 
     /// Called when the task declaring a stage is dispatched, before its body starts.
