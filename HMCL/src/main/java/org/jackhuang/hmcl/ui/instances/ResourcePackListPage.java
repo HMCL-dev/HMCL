@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
-import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -111,7 +110,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
 
     @Override
     protected ItemCell<ResourcePackInfoObject> createItemCell(ListView<ResourcePackInfoObject> listView) {
-        return new ResourcePackCell(listView, this);
+        return new ResourcePackCell(listView);
     }
 
     private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {

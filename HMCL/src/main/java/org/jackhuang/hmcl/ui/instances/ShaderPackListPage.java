@@ -4,12 +4,17 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -44,6 +49,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -53,14 +59,33 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
-import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPackInfoObject> {
+public class ShaderPackListPage extends ListPaneBase<ShaderPackListPage.ShaderPackInfoObject> {
+
+    /// Switches between toolbar modes.
+    private final TransitionPane toolbarPane = new TransitionPane();
+    /// Actions available while browsing.
+    private final HBox toolbarNormal = new HBox();
+    /// Actions on the selected items.
+    private final HBox toolbarSelecting = new HBox();
+    /// Toolbar containing the search input.
+    private final HBox searchBar = new HBox();
+    /// Text used to filter the list.
+    private final JFXTextField searchField = new JFXTextField();
+    /// Whether the search mechanism is currently active.
+    private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+    /// Timer for debouncing search input to avoid executing search on every keystroke.
+    private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
+
+    /// All loaded items before search filtering.
+    private final ObservableList<ShaderPackInfoObject> sourceItems = FXCollections.observableArrayList();
+
+    /// Source items matching the current search.
+    private final FilteredList<ShaderPackInfoObject> filteredItems = new FilteredList<>(sourceItems);
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -79,11 +104,138 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
                 loadInstance(current);
             }
         }));
+
+        initializeView();
     }
 
     @Override
-    protected Skin<?> createDefaultSkin() {
-        return new ShaderPackListPageSkin(this);
+    protected ItemCell<ShaderPackInfoObject> createItemCell(@NotNull ListView<ShaderPackInfoObject> listView) {
+        return new ShaderPackListCell(listView);
+    }
+
+    /// Configures the list and its page actions.
+    private void initializeView() {
+        getStyleClass().add("notice-pane");
+        var listView = getListView();
+        listView.setItems(filteredItems);
+
+        {
+
+            // Toolbar Selecting
+            // selectAll() clears the selection first, causing the toolbar to flicker.
+            var selectAllButton = createToolbarButton(i18n("button.select_all"), SVG.SELECT_ALL, () ->
+                    listView.getSelectionModel().selectRange(0, listView.getItems().size()));
+
+            ListChangeListener<Object> selectionListener = change -> selectAllButton.setDisable(!listView.getItems().isEmpty()
+                    && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+            listView.getSelectionModel().getSelectedItems().addListener(selectionListener);
+            listView.getItems().addListener(selectionListener);
+
+            toolbarSelecting.getChildren().setAll(
+                    createToolbarButton(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
+                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
+                                        removeSelected(listView.getSelectionModel().getSelectedItems()),
+                                null);
+                    }),
+                    createToolbarButton(i18n("addon.check_update.button"), SVG.UPDATE, () ->
+                            checkUpdates(listView.getSelectionModel().getSelectedItems().stream().map(ShaderPackInfoObject::getFile).toList())
+                    ),
+                    createToolbarButton(i18n("button.select_all"), SVG.SELECT_ALL, () ->
+                            listView.getSelectionModel().selectAll()),
+                    createToolbarButton(i18n("button.cancel"), SVG.CANCEL, () ->
+                            listView.getSelectionModel().clearSelection())
+            );
+
+            // Search Bar
+            searchBar.setAlignment(Pos.CENTER);
+            searchBar.setPadding(new Insets(0, 5, 0, 5));
+            searchField.setPromptText(i18n("search"));
+            HBox.setHgrow(searchField, Priority.ALWAYS);
+            searchPause.setOnFinished(e -> search());
+            FXUtils.onChange(searchField.textProperty(), newValue -> {
+                if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                    searchPause.setRate(1);
+                    searchPause.playFromStart();
+                }
+            });
+
+            JFXButton closeSearchBar = createToolbarButton(null, SVG.CLOSE,
+                    () -> {
+                        changeToolbar(toolbarNormal);
+
+                        searchField.clear();
+                        searchPause.stop();
+
+                        isSearching.set(false);
+                        filteredItems.setPredicate(null);
+                    });
+
+            onEscPressed(searchField, closeSearchBar::fire);
+
+            searchBar.getChildren().setAll(searchField, closeSearchBar);
+
+            // Toolbar Normal
+            toolbarNormal.setAlignment(Pos.CENTER_LEFT);
+            toolbarNormal.setPickOnBounds(false);
+            toolbarNormal.getChildren().setAll(
+                    createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refresh),
+                    createToolbarButton(i18n("shaderpack.add"), SVG.ADD, this::onAddFiles),
+                    createToolbarButton(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, this::onOpenFolder),
+                    createToolbarButton(i18n("addon.check_update.button"), SVG.UPDATE, () ->
+                            checkUpdates(listView.getItems().stream().map(ShaderPackInfoObject::getFile).toList())
+                    ),
+                    createToolbarButton(i18n("download"), SVG.DOWNLOAD, this::onDownload),
+                    createToolbarButton(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
+            );
+
+            FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
+                    selectedItem -> {
+                        if (selectedItem == null)
+                            changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
+                        else
+                            changeToolbar(toolbarSelecting);
+                    });
+            FXUtils.setOverflowHidden(toolbarPane, 8);
+            setToolbar(toolbarPane);
+
+            // Clear selection when pressing ESC
+            addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+                if (e.getCode() == KeyCode.ESCAPE) {
+                    if (listView.getSelectionModel().getSelectedItem() != null) {
+                        listView.getSelectionModel().clearSelection();
+                        e.consume();
+                    }
+                }
+            });
+        }
+
+        {
+            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("shaderpack.empty"));
+            placeholderLabel.textProperty().bind(
+                    Bindings.createStringBinding(() -> {
+                                if (isSearching.get()) {
+                                    return i18n("search.no_results_found");
+                                } else {
+                                    return i18n("shaderpack.empty");
+                                }
+                            },
+                            isSearching)
+            );
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+
+            listView.setOnContextMenuRequested(event -> {
+                ShaderPackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
+                if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
+                    listView.getSelectionModel().clearSelection();
+                    Controllers.dialog(new ShaderPackInfoDialog(selectedItem));
+                }
+            });
+        }
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
@@ -114,10 +266,10 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
             }
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                getItems().setAll(result);
+                sourceItems.setAll(result);
             } else {
                 LOG.warning("Failed to load shader packs", exception);
-                getItems().clear();
+                sourceItems.clear();
             }
             setLoading(false);
         }).start();
@@ -185,6 +337,43 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
         }
     }
 
+    private void changeToolbar(HBox newToolbar) {
+        Node oldToolbar = toolbarPane.getCurrentNode();
+        if (newToolbar != oldToolbar) {
+            toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
+            if (newToolbar == searchBar) {
+                Platform.runLater(searchField::requestFocus);
+            }
+        }
+    }
+
+    private void search() {
+        isSearching.set(true);
+
+        String queryString = searchField.getText();
+        if (StringUtils.isBlank(queryString)) {
+            filteredItems.setPredicate(null);
+        } else {
+            Predicate<@Nullable String> predicate;
+            try {
+                predicate = StringUtils.compileQuery(queryString);
+            } catch (Throwable e) {
+                LOG.warning("Illegal regular expression", e);
+                filteredItems.setPredicate(item -> false);
+                return;
+            }
+
+            filteredItems.setPredicate(item -> {
+                var file = item.getFile();
+                var meta = file.getMeta();
+                return predicate.test(file.getFile().getFileName().toString())
+                        || predicate.test(file.getName())
+                        || predicate.test(meta.version())
+                        || predicate.test(meta.description());
+            });
+        }
+    }
+
     public static final class ShaderPackInfoObject {
         private final ShaderPackFile file;
 
@@ -209,192 +398,18 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
 
         private Image loadIcon() {
             Image icon = file.loadIcon(ImageLoaders.DEFAULT);
-            if (icon != null) return icon;
-            return getDefaultIcon();
+            return FXUtils.isValidIcon(icon) ? icon : getDefaultIcon();
         }
     }
 
-    private static final class ShaderPackListPageSkin extends SkinBase<ShaderPackListPage> {
-        private final JFXListView<ShaderPackInfoObject> listView;
-        private final JFXTextField searchField = new JFXTextField();
-
-        private final TransitionPane toolbarPane = new TransitionPane();
-        private final HBox searchBar = new HBox();
-        private final HBox toolbarNormal = new HBox();
-        private final HBox toolbarSelecting = new HBox();
-
-        private boolean isSearching;
-
-        public ShaderPackListPageSkin(ShaderPackListPage control) {
-            super(control);
-
-            StackPane pane = new StackPane();
-            pane.setPadding(new Insets(10));
-            pane.getStyleClass().addAll("notice-pane");
-
-            ComponentList root = new ComponentList();
-            root.getStyleClass().add("no-padding");
-
-            listView = new JFXListView<>();
-
-            {
-
-                // Toolbar Selecting
-                toolbarSelecting.getChildren().setAll(
-                        createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
-                                            control.removeSelected(listView.getSelectionModel().getSelectedItems()),
-                                    null);
-                        }),
-                        createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
-                                control.checkUpdates(listView.getSelectionModel().getSelectedItems().stream().map(ShaderPackInfoObject::getFile).toList())
-                        ),
-                        createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
-                                listView.getSelectionModel().selectAll()),
-                        createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
-                                listView.getSelectionModel().clearSelection())
-                );
-
-                // Search Bar
-                searchBar.setAlignment(Pos.CENTER);
-                searchBar.setPadding(new Insets(0, 5, 0, 5));
-                searchField.setPromptText(i18n("search"));
-                HBox.setHgrow(searchField, Priority.ALWAYS);
-                PauseTransition pause = new PauseTransition(Duration.millis(100));
-                pause.setOnFinished(e -> search());
-                FXUtils.onChange(searchField.textProperty(), newValue -> {
-                    pause.setRate(1);
-                    pause.playFromStart();
-                });
-
-                JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
-                        () -> {
-                            changeToolbar(toolbarNormal);
-
-                            isSearching = false;
-                            searchField.clear();
-                            Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
-                        });
-
-                onEscPressed(searchField, closeSearchBar::fire);
-
-                searchBar.getChildren().setAll(searchField, closeSearchBar);
-
-                // Toolbar Normal
-                toolbarNormal.setAlignment(Pos.CENTER_LEFT);
-                toolbarNormal.setPickOnBounds(false);
-                toolbarNormal.getChildren().setAll(
-                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh),
-                        createToolbarButton2(i18n("shaderpack.add"), SVG.ADD, control::onAddFiles),
-                        createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, control::onOpenFolder),
-                        createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
-                                control.checkUpdates(listView.getItems().stream().map(ShaderPackInfoObject::getFile).toList())
-                        ),
-                        createToolbarButton2(i18n("download"), SVG.DOWNLOAD, control::onDownload),
-                        createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
-                );
-
-                FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
-                        selectedItem -> {
-                            if (selectedItem == null)
-                                changeToolbar(isSearching ? searchBar : toolbarNormal);
-                            else
-                                changeToolbar(toolbarSelecting);
-                        });
-                FXUtils.setOverflowHidden(toolbarPane, 8);
-                root.getContent().add(toolbarPane);
-
-                // Clear selection when pressing ESC
-                root.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
-                    if (e.getCode() == KeyCode.ESCAPE) {
-                        if (listView.getSelectionModel().getSelectedItem() != null) {
-                            listView.getSelectionModel().clearSelection();
-                            e.consume();
-                        }
-                    }
-                });
-            }
-
-            {
-                SpinnerPane center = new SpinnerPane();
-                ComponentList.setVgrow(center, Priority.ALWAYS);
-                center.loadingProperty().bind(control.loadingProperty());
-
-                listView.setCellFactory(x -> new ShaderPackListCell(listView));
-                listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-                Bindings.bindContent(listView.getItems(), control.getItems());
-
-                listView.setOnContextMenuRequested(event -> {
-                    ShaderPackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
-                    if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
-                        listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ShaderPackInfoDialog(selectedItem));
-                    }
-                });
-
-                ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-                listView.getStyleClass().add("no-horizontal-scrollbar");
-
-                center.setContent(listView);
-                root.getContent().add(center);
-            }
-
-            pane.getChildren().setAll(root);
-            getChildren().setAll(pane);
-        }
-
-        private void changeToolbar(HBox newToolbar) {
-            Node oldToolbar = toolbarPane.getCurrentNode();
-            if (newToolbar != oldToolbar) {
-                toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
-                if (newToolbar == searchBar) {
-                    Platform.runLater(searchField::requestFocus);
-                }
-            }
-        }
-
-        private void search() {
-            isSearching = true;
-
-            Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
-
-            String queryString = searchField.getText();
-            if (StringUtils.isBlank(queryString)) {
-                listView.getItems().setAll(getSkinnable().getItems());
-            } else {
-                listView.getItems().clear();
-
-                Predicate<@Nullable String> predicate;
-                try {
-                    predicate = StringUtils.compileQuery(queryString);
-                } catch (Throwable e) {
-                    LOG.warning("Illegal regular expression", e);
-                    return;
-                }
-
-                // Do we need to search in the background thread?
-                for (ShaderPackInfoObject item : getSkinnable().getItems()) {
-                    var file = item.getFile();
-                    var meta = file.getMeta();
-                    if (predicate.test(file.getFile().getFileName().toString())
-                            || predicate.test(file.getName())
-                            || (meta != null && (predicate.test(meta.version()) || predicate.test(meta.description())))) {
-                        listView.getItems().add(item);
-                    }
-                }
-            }
-        }
-
-    }
-
-    private static final class ShaderPackListCell extends MDListCell<ShaderPackInfoObject> {
+    private static final class ShaderPackListCell extends ListPaneBase.ItemCell<ShaderPackInfoObject> {
 
         private final ImageContainer imageContainer = new ImageContainer(24);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
 
-        public ShaderPackListCell(JFXListView<ShaderPackInfoObject> listView) {
+        public ShaderPackListCell(ListView<ShaderPackInfoObject> listView) {
             super(listView);
 
             HBox root = new HBox(8);
@@ -409,12 +424,12 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
             setSelectable();
 
             StackPane.setMargin(root, new Insets(8));
-            getContainer().getChildren().add(root);
+            setContent(root);
         }
 
         @Override
-        protected void updateControl(ShaderPackInfoObject item, boolean empty) {
-            if (empty || item == null) return;
+        protected void updateListItem(ShaderPackInfoObject item) {
+            if (item == null) return;
 
             ShaderPackFile file = item.file;
 

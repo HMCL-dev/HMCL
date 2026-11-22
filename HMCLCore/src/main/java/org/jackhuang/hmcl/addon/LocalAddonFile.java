@@ -55,10 +55,7 @@ public abstract class LocalAddonFile<T extends LocalAddonFile<T>> implements Com
     public abstract @Nullable <I> I loadIcon(ImageLoader<I> imageLoader, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth);
 
     public @Nullable Image loadIcon(ImageLoader<Image> imageLoader) {
-        Image icon = loadIcon(imageLoader, 64, 64, true, true);
-        if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1)
-            return icon;
-        return null;
+        return loadIcon(imageLoader, 64, 64, true, true);
     }
 
     /// @return the update target version restrictions for this addon file, or null if not upgradable.
