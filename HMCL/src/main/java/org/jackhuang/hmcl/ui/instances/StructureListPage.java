@@ -53,7 +53,7 @@ public class StructureListPage extends ListPaneBase<StructureListPage.NBTStructu
 
     public StructureListPage(WorldManagePage worldManagePage) {
         this.world = worldManagePage.getWorld();
-        this.dataVersion = world.getDataVersion();
+        this.dataVersion = Objects.requireNonNullElse(world.getDataVersion(), -1);
         this.readOnly = worldManagePage.readOnlyProperty();
         if (dataVersion <= 500) { // lower than 1.10 16w20a, unsupported
             directory = null;

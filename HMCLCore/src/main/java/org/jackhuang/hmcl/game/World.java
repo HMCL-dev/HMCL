@@ -164,12 +164,13 @@ public final class World {
         return null;
     }
 
-    public int getDataVersion() {
+    public @Nullable Integer getDataVersion() {
+        // Available since 1.9(15w32a)
         if (levelData.get("Data") instanceof CompoundTag data &&
                 data.get("DataVersion") instanceof IntTag dataVersionTag) {
             return dataVersionTag.get();
         }
-        return -1;
+        return null;
     }
 
     public @Nullable Long getSeed() {

@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -108,7 +109,16 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var gameVersionPane = new LineTextPane();
             {
                 gameVersionPane.setTitle(i18n("world.info.game_version"));
-                gameVersionPane.setText(world.getGameVersion() == null ? "" : world.getGameVersion().toNormalizedString());
+
+                @Nullable GameVersionNumber gameVersion = world.getGameVersion();
+                @Nullable Integer dataVersion = world.getDataVersion();
+                String text;
+                if (gameVersion == null) {
+                    text = dataVersion == null ? "" : dataVersion.toString();
+                } else {
+                    text = gameVersion.toNormalizedString() + (dataVersion == null ? "" : " (%d)".formatted(dataVersion));
+                }
+                gameVersionPane.setText(text);
             }
 
             var iconPane = new LinePane();
