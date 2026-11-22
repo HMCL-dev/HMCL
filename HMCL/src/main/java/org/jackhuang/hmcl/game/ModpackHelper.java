@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.modpack.curse.CurseModpackProvider;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
@@ -54,8 +55,8 @@ public final class ModpackHelper {
 
     /// Displays asset and library downloads alongside other modpack downloads.
     private static final @Unmodifiable List<Task.StageHint> MODPACK_STAGE_HINTS = List.of(
-            new Task.StageHint("hmcl.modpack"),
-            new Task.StageHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries"))
+            new Task.StageHint(InstallStages.MODPACK),
+            new Task.StageHint(InstallStages.MODPACK_DOWNLOAD, List.of(InstallStages.ASSETS, InstallStages.LIBRARIES))
     );
 
     private static final Map<String, ModpackProvider> providers = mapOf(
@@ -164,7 +165,7 @@ public final class ModpackHelper {
 
         return new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId)
                 .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                .withStage("hmcl.modpack")
+                .withStage(InstallStages.MODPACK)
                 .withStageHints(MODPACK_STAGE_HINTS);
     }
 
@@ -187,8 +188,8 @@ public final class ModpackHelper {
                     GameDirectoryManager.addLocalGameDirectory(newGameDirectory);
                     GameDirectoryManager.setSelectedGameDirectory(newGameDirectory);
                 })
-                .withStage("hmcl.modpack")
-                .withStageHints("hmcl.modpack");
+                .withStage(InstallStages.MODPACK)
+                .withStageHints(InstallStages.MODPACK);
     }
 
     public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, Modpack modpack, @Nullable String iconUrl) {
@@ -228,18 +229,18 @@ public final class ModpackHelper {
             return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMultiMCPostInstallTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
-                    .withStage("hmcl.modpack")
+                    .withStage(InstallStages.MODPACK)
                     .withStageHints(MODPACK_STAGE_HINTS);
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
             return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMcbbsPostInstallTask(repository, (McbbsModpackManifest) modpack.getManifest(), instanceId))
-                    .withStage("hmcl.modpack")
+                    .withStage(InstallStages.MODPACK)
                     .withStageHints(MODPACK_STAGE_HINTS);
         else
             return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .withStage("hmcl.modpack")
+                    .withStage(InstallStages.MODPACK)
                     .withStageHints(MODPACK_STAGE_HINTS);
     }
 
@@ -252,7 +253,7 @@ public final class ModpackHelper {
                         instance,
                         new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instance))
                         .thenComposeAsync(repository.refreshAsync())
-                        .withStage("hmcl.modpack")
+                        .withStage(InstallStages.MODPACK)
                         .withStageHints(MODPACK_STAGE_HINTS);
             }
             default:
@@ -289,12 +290,12 @@ public final class ModpackHelper {
             return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack, excludedFiles)
                     .thenComposeAsync(() -> createMultiMCPostUpdateTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
                     .thenComposeAsync(repository.refreshAsync())
-                    .withStage("hmcl.modpack")
+                    .withStage(InstallStages.MODPACK)
                     .withStageHints(MODPACK_STAGE_HINTS);
         else
             return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack, excludedFiles)
                     .thenComposeAsync(repository.refreshAsync())
-                    .withStage("hmcl.modpack")
+                    .withStage(InstallStages.MODPACK)
                     .withStageHints(MODPACK_STAGE_HINTS);
     }
 

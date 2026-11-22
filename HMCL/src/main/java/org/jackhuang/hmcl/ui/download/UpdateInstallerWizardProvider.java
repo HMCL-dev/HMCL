@@ -61,11 +61,11 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         var hints = new ArrayList<Task.StageHint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof ComponentRemoteVersion remoteVersion) {
-                hints.add(new Task.StageHint("hmcl.install.libraries"));
+                hints.add(new Task.StageHint(InstallStages.LIBRARIES));
 
-                hints.add(new Task.StageHint(String.format("hmcl.install.%s:%s", remoteVersion.getComponentType().getPatchId(), remoteVersion.getSelfVersion())));
+                hints.add(new Task.StageHint(InstallStages.component(remoteVersion.getComponentType(), remoteVersion.getSelfVersion())));
                 if (remoteVersion.getComponentType() == GameComponentType.GAME) {
-                    hints.add(new Task.StageHint("hmcl.install.assets"));
+                    hints.add(new Task.StageHint(InstallStages.ASSETS));
                 }
             }
         }

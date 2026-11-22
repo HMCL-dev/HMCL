@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.modpack.server;
 import com.google.gson.JsonParseException;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.game.GameComponentType;
@@ -12,6 +13,7 @@ import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.StageId;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -88,8 +90,8 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
 
     /// Returns the stage for modpack downloads.
     @Override
-    public String getStage() {
-        return "hmcl.modpack.download";
+    public StageId getStage() {
+        return InstallStages.MODPACK_DOWNLOAD;
     }
 
     /// Synchronizes game components and files against the remote manifest.

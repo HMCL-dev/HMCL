@@ -13,13 +13,13 @@ public final class TaskStage {
     private final Task<?> task;
 
     /// The identifier supplied by the declaring task.
-    private final String id;
+    private final StageId id;
 
     /// The enclosing stage, or `null` when there is none.
     private final @Nullable TaskStage parent;
 
     /// Identifies a stage declared by `task` within its parent's execution.
-    TaskStage(Task<?> task, String id, @Nullable TaskStage parent) {
+    TaskStage(Task<?> task, StageId id, @Nullable TaskStage parent) {
         this.task = task;
         this.id = id;
         this.parent = parent;
@@ -31,7 +31,7 @@ public final class TaskStage {
     }
 
     /// Returns the identifier supplied by the declaring task.
-    public String id() {
+    public StageId id() {
         return id;
     }
 

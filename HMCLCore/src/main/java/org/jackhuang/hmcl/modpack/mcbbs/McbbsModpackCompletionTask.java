@@ -6,6 +6,7 @@ import com.google.gson.JsonParseException;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -80,8 +81,8 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
 
     /// Returns the stage for modpack downloads.
     @Override
-    public String getStage() {
-        return "hmcl.modpack.download";
+    public StageId getStage() {
+        return InstallStages.MODPACK_DOWNLOAD;
     }
 
     /// Updates the manifest and completes downloads for its CurseForge entries.

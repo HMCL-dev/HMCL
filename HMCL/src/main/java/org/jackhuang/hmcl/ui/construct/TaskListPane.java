@@ -19,6 +19,8 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.task.StageId;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -47,7 +49,7 @@ public final class TaskListPane extends StackPane {
     private final JFXListView<Node> listView = new JFXListView<>();
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     /// Maps each observed stage identifier to its row for the current execution.
-    private final Map<String, StageNode> stageNodes = new HashMap<>();
+    private final Map<StageId, StageNode> stageNodes = new HashMap<>();
     /// Tracks the outermost active stages contributing to each display row.
     private final Map<TaskStage, StageNode> activeStages = new HashMap<>();
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
@@ -67,7 +69,7 @@ public final class TaskListPane extends StackPane {
 
     /// Returns the display row for an identifier or appends a row for a newly observed stage.
     @FXThread
-    private StageNode stageNode(String id) {
+    private StageNode stageNode(StageId id) {
         return stageNodes.computeIfAbsent(id, key -> {
             StageNode node = new StageNode(key);
             listView.getItems().add(node);
@@ -81,16 +83,22 @@ public final class TaskListPane extends StackPane {
     private void declareStages(@Unmodifiable List<Task.StageHint> hints) {
         for (Task.StageHint hint : hints) {
             StageNode node = stageNode(hint.stageId());
-            for (String stageId : hint.groupedStageIds())
+            for (StageId stageId : hint.groupedStageIds())
                 stageNodes.putIfAbsent(stageId, node);
         }
+    }
+
+    /// Returns the game component whose installation this stage represents.
+    private static @Nullable GameComponentType installComponent(StageId id) {
+        String prefix = "hmcl.install.";
+        return id.key().startsWith(prefix) ? GameComponentType.fromPatchId(id.key().substring(prefix.length())) : null;
     }
 
     /// Localizes the task name if it should appear as a separate progress row.
     private static boolean prepareTaskRow(Task<?> task, @Nullable TaskStage stage) {
         if (!task.getSignificance().shouldShow() || task.getName() == null)
             return false;
-        if (task instanceof GameInstallTask && stage != null && stage.id().startsWith("hmcl.install.game"))
+        if (task instanceof GameInstallTask && stage != null && installComponent(stage.id()) == GameComponentType.GAME)
             return false;
         @Nullable String localizedName = I18n.translateTaskName(task);
         if (localizedName != null)
@@ -343,42 +351,22 @@ public final class TaskListPane extends StackPane {
         private int count = 0;
         private int total = 0;
 
-        private StageNode(String stage) {
-            String stageKey;
-            String stageValue;
-
-            int idx = stage.indexOf(':');
-            if (idx >= 0) {
-                stageKey = stage.substring(0, idx);
-                stageValue = stage.substring(idx + 1);
+        /// Creates a row labeled with its localized stage name and component version when supplied.
+        private StageNode(StageId id) {
+            @Nullable GameComponentType component = installComponent(id);
+            if (component != null) {
+                String name = i18n("install.installer." + component.getPatchId());
+                @Nullable String version = id.qualifier();
+                message = i18n("install.installer.install", version == null ? name : name + " " + version);
             } else {
-                stageKey = stage;
-                stageValue = null;
+                message = switch (id.key()) {
+                    case "hmcl.modpack" -> i18n("install.modpack");
+                    case "hmcl.modpack.download" -> i18n("launch.state.modpack");
+                    case "hmcl.install.assets" -> i18n("assets.download");
+                    case "hmcl.install.libraries" -> i18n("libraries.download");
+                    default -> i18n(id.key());
+                };
             }
-
-            // CHECKSTYLE:OFF
-            // @formatter:off
-            message = switch (stageKey) {
-                case "hmcl.modpack" ->                  i18n("install.modpack");
-                case "hmcl.modpack.download" ->         i18n("launch.state.modpack");
-                case "hmcl.install.assets" ->           i18n("assets.download");
-                case "hmcl.install.libraries" ->        i18n("libraries.download");
-                case "hmcl.install.game" ->             i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue);
-                case "hmcl.install.forge" ->            i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue);
-                case "hmcl.install.cleanroom" ->        i18n("install.installer.install", i18n("install.installer.cleanroom") + " " + stageValue);
-                case "hmcl.install.neoforge" ->         i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue);
-                case "hmcl.install.liteloader" ->       i18n("install.installer.install", i18n("install.installer.liteloader") + " " + stageValue);
-                case "hmcl.install.optifine" ->         i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue);
-                case "hmcl.install.fabric" ->           i18n("install.installer.install", i18n("install.installer.fabric") + " " + stageValue);
-                case "hmcl.install.fabric-api" ->       i18n("install.installer.install", i18n("install.installer.fabric-api") + " " + stageValue);
-                case "hmcl.install.legacyfabric" ->     i18n("install.installer.install", i18n("install.installer.legacyfabric") + " " + stageValue);
-                case "hmcl.install.legacyfabric-api" -> i18n("install.installer.install", i18n("install.installer.legacyfabric-api") + " " + stageValue);
-                case "hmcl.install.quilt" ->            i18n("install.installer.install", i18n("install.installer.quilt") + " " + stageValue);
-                case "hmcl.install.quilt-api" ->        i18n("install.installer.install", i18n("install.installer.quilt-api") + " " + stageValue);
-                default -> i18n(stageKey);
-            };
-            // @formatter:on
-            // CHECKSTYLE:ON
 
             title.set(message);
         }

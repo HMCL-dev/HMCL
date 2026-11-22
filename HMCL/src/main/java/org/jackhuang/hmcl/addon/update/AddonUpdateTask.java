@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.StageId;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -82,8 +83,8 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
 
     /// Returns the stage for addon updates.
     @Override
-    public String getStage() {
-        return "addon.check_update.confirm";
+    public StageId getStage() {
+        return new StageId("addon.check_update.confirm");
     }
 
     /// Downloads the selected updates and waits for each addon's cleanup to finish.

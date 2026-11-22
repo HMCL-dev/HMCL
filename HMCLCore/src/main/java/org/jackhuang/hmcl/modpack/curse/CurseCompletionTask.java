@@ -8,9 +8,11 @@ import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.StageId;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -100,8 +102,8 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
 
     /// Returns the stage for modpack downloads.
     @Override
-    public String getStage() {
-        return "hmcl.modpack.download";
+    public StageId getStage() {
+        return InstallStages.MODPACK_DOWNLOAD;
     }
 
     /// Resolves missing files and waits for all requested downloads to finish.

@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.modpack.server;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -131,7 +132,7 @@ public class ServerModpackLocalInstallTask extends Task<@Nullable Void> {
             Path run = repository.getLayout().getInstanceRoot(instanceId);
             Task<?> overrides = new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config);
             Task<?> instance = new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId));
-            context.runAll(List.of(overrides.withStage("hmcl.modpack"), instance.withStage("hmcl.modpack")));
+            context.runAll(List.of(overrides.withStage(InstallStages.MODPACK), instance.withStage(InstallStages.MODPACK)));
             context.run(game);
         });
         return null;

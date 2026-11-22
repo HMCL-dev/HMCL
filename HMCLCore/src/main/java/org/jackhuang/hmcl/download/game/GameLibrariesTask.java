@@ -5,8 +5,10 @@ package org.jackhuang.hmcl.download.game;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.StageId;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -107,8 +109,8 @@ public final class GameLibrariesTask extends Task<@Nullable Void> {
 
     /// Returns the stage for game library downloads.
     @Override
-    public String getStage() {
-        return "hmcl.install.libraries";
+    public StageId getStage() {
+        return InstallStages.LIBRARIES;
     }
 
     /// Checks applicable libraries and downloads missing or invalid files in parallel.

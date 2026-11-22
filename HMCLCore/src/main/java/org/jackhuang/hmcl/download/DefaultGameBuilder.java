@@ -112,16 +112,14 @@ public class DefaultGameBuilder extends GameBuilder {
             var hints = new ArrayList<Task.StageHint>();
 
             components.forEach((componentType, version) -> {
-                hints.add(new Task.StageHint(
-                        "hmcl.install.%s:%s".formatted(
-                                componentType.getPatchId(),
-                                version instanceof ComponentRemoteVersion remoteVersion
-                                        ? remoteVersion.getSelfVersion()
-                                        : (String) version)));
+                hints.add(new Task.StageHint(InstallStages.component(componentType,
+                        version instanceof ComponentRemoteVersion remoteVersion
+                                ? remoteVersion.getSelfVersion()
+                                : (String) version)));
 
                 if (componentType == GameComponentType.GAME) {
-                    hints.add(new Task.StageHint("hmcl.install.libraries"));
-                    hints.add(new Task.StageHint("hmcl.install.assets"));
+                    hints.add(new Task.StageHint(InstallStages.LIBRARIES));
+                    hints.add(new Task.StageHint(InstallStages.ASSETS));
                 }
             });
 
@@ -157,7 +155,7 @@ public class DefaultGameBuilder extends GameBuilder {
             Task<?> buildTask = libraryTask.thenComposeAsync(manifest -> {
                         GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
                         return new GameDownloadTask(dependencyManager, resolved)
-                                .withStage("hmcl.install.game:" + gameVersion)
+                                .withStage(InstallStages.component(GameComponentType.GAME, gameVersion))
                                 .thenApplyAsync(minecraftJar -> {
                                     draft.put(resolved.withPatches(manifest.patches()));
                                     draft.putPrimaryJar(instanceId, minecraftJar);

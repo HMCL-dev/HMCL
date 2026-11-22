@@ -7,6 +7,7 @@ import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
@@ -182,8 +183,8 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
         Task<?> game = builder.buildAsync();
         List<Task<?>> preparation = new ArrayList<>(4);
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
-        preparation.add(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config).withStage("hmcl.modpack"));
-        preparation.add(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+        preparation.add(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config).withStage(InstallStages.MODPACK));
+        preparation.add(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage(InstallStages.MODPACK));
 
         @Nullable String iconExtension = null;
         @Nullable Task<Path> iconTask = null;

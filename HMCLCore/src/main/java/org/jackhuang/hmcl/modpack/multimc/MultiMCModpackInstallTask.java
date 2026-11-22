@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.modpack.multimc;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
@@ -149,8 +150,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             }
 
             // TODO: Optimize unbearably slow ModpackInstallTask
-            preparation.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
-            preparation.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+            preparation.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(mcDirectory), any -> true, config).withStage(InstallStages.MODPACK));
+            preparation.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getLayout().getModpackConfigurationFile(instanceId)).withStage(InstallStages.MODPACK));
         }
 
         // Stage #1: Load all related Json-Patch from meta maven or local mod pack.
@@ -320,7 +321,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             Path instanceJar = getPrimaryJarFile();
             dependencies.add(new GameDownloadTask(dependencyManager, instanceManifest)
                     .thenAcceptAsync(cachedJar -> FileUtils.copyFile(cachedJar, instanceJar))
-                    .withStage("hmcl.modpack.download"));
+                    .withStage(InstallStages.MODPACK_DOWNLOAD));
         }
 
         context.runAll(dependencies);

@@ -415,7 +415,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
                                 Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), resourcePackDirectory, result));
                             }
                         })
-                        .withStageHints("update.checking"),
+                        .withStageHints(AddonCheckUpdatesTask.STAGE),
                 i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
         if (gameInstance.isModpack()) {

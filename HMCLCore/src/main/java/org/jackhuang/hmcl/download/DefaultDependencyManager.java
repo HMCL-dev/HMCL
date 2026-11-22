@@ -334,9 +334,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                                         : updated;
                             });
                 })
-                .withStage("hmcl.install.%s:%s".formatted(
-                        componentVersion.getComponentType().getPatchId(),
-                        componentVersion.getSelfVersion()));
+                .withStage(InstallStages.component(componentVersion.getComponentType(), componentVersion.getSelfVersion()));
     }
 
     /// Resolves and installs a component into an unpublished working manifest.
@@ -360,7 +358,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         Optional.ofNullable(versions.getRemoteVersion(componentVersion))
                                 .orElseThrow(() -> new IOException(
                                         "Remote component " + componentType + " has no version " + componentVersion))))
-                .withStage("hmcl.install.%s:%s".formatted(componentType, componentVersion));
+                .withStage(InstallStages.component(componentType, componentVersion));
     }
 
     /// Installs a component using a working manifest that may be ahead of the instance's stored state.
@@ -415,7 +413,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         Optional.ofNullable(versions.getRemoteVersion(componentVersion))
                                 .orElseThrow(() -> new IOException(
                                         "Remote component " + componentType + " has no version " + componentVersion))))
-                .withStage("hmcl.install.%s:%s".formatted(componentType, componentVersion));
+                .withStage(InstallStages.component(componentType, componentVersion));
     }
 
     /// Installs a component from a local installer jar into a registered instance.

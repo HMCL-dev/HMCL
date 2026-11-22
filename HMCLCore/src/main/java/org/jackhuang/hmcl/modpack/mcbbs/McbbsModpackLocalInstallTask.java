@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.modpack.mcbbs;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -133,10 +134,10 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
         }
         Task<?> game = builder.buildAsync();
         Path run = repository.getLayout().getInstanceRoot(instanceId);
-        Task<?> overrides = new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack");
+        Task<?> overrides = new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage(InstallStages.MODPACK);
         var instanceTask = new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, McbbsModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId));
 
-        context.runAll(List.of(overrides, instanceTask.withStage("hmcl.modpack")));
+        context.runAll(List.of(overrides, instanceTask.withStage(InstallStages.MODPACK)));
         context.run(game);
         DefaultGameInstance instance = repository.getInstance(instanceId);
         GameInstanceManifest instanceManifest = instance.getManifest();

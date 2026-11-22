@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.download.ComponentRemoteVersionList;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
@@ -16,9 +17,12 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
 import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.StageId;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskHandle;
+import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
@@ -37,6 +41,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +56,7 @@ import java.util.zip.ZipOutputStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -130,6 +136,43 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals("missing.txt", saved.getFiles().get(0).getPath());
     }
 
+    /// The build plan, version lookup and resolved installer share the same qualified stage.
+    @Test
+    void componentVersionStageMatchesTheBuildPlan(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        String version = "1.21.2:local";
+        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, version);
+        StageId expected = InstallStages.component(GameComponentType.GAME, version);
+        assertEquals("hmcl.install.game", expected.key());
+        assertEquals(version, expected.qualifier());
+        assertNotEquals(expected, InstallStages.component(GameComponentType.FORGE, version));
+        assertNotEquals(expected, InstallStages.component(GameComponentType.GAME, "1.21.2"));
+
+        List<StageId> dispatched = new ArrayList<>();
+        TaskListener listener = new TaskListener() {
+            /// Records each installation stage before its task body starts.
+            @Override
+            public void onStageStarted(TaskStage stage) {
+                dispatched.add(stage.id());
+            }
+        };
+        try (var builder = manager.newGameBuilder(id)) {
+            Task<?> build = builder.component(GameComponentType.GAME, version).buildAsync();
+            assertEquals(expected, build.getStageHints().get(0).stageId());
+            assertTrue(build.newHandle(listener).test(), () -> String.valueOf(build.exceptionNowOrNull()));
+        }
+        // The version lookup, resolved component and client download each declare the game stage.
+        assertEquals(List.of(expected, expected, expected), dispatched);
+
+        DefaultGameInstance instance = repository.getInstance(id);
+        Task<?> install = manager.installComponentRemoteAsync(instance, instance.getManifest(),
+                version, GameComponentType.GAME, version);
+        dispatched.clear();
+        assertTrue(install.newHandle(listener).test(), () -> String.valueOf(install.exceptionNowOrNull()));
+        assertEquals(List.of(expected, expected), dispatched);
+    }
+
     /// Only formats allowing manual completion retain a committed instance after a completion failure.
     @ParameterizedTest
     @CsvSource({"false,true", "true,false", "true,true"})
@@ -137,7 +180,7 @@ public final class DefaultGameRepositoryDraftTest {
             throws IOException {
         TestRepository repository = new TestRepository(directory);
         GameInstanceID id = new GameInstanceID("instance");
-        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id);
+        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, "1.21.2");
         Exception failure = completionFailure ? new ModpackCompletionException() : new IOException();
         assertSame(failure, assertThrows(Exception.class, () ->
                 Modpack.installWithGameBuilder(manager, id, null, keepIncomplete, builder -> {
@@ -154,7 +197,7 @@ public final class DefaultGameRepositoryDraftTest {
     void modpackRollbackPreservesReplacement(@TempDir Path directory) throws IOException {
         TestRepository repository = new TestRepository(directory);
         GameInstanceID id = new GameInstanceID("instance");
-        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id);
+        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, "1.21.2");
         IOException failure = new IOException();
         Path marker = repository.getLayout().getInstanceRoot(id).resolve("replacement.txt");
         assertSame(failure, assertThrows(IOException.class, () ->
@@ -849,19 +892,19 @@ public final class DefaultGameRepositoryDraftTest {
     }
 
     /// Provides a fixed game patch and cached JAR for offline game builder installations.
-    private static DefaultDependencyManager createOfflineGameInstaller(TestRepository repository, GameInstanceID id)
-            throws IOException {
+    private static DefaultDependencyManager createOfflineGameInstaller(
+            TestRepository repository, GameInstanceID id, String version) throws IOException {
         DefaultCacheRepository cache = new DefaultCacheRepository(repository.getBaseDirectory().resolve("cache"));
         Path jar = repository.getBaseDirectory().resolve("client.jar");
-        writeVersionJar(jar, "1.21.2");
+        writeVersionJar(jar, version);
         String sha1 = DigestUtils.digestToString("SHA-1", jar);
         cache.cacheFile(jar, "SHA-1", sha1);
         GameInstanceManifest manifest = new GameInstanceManifest(id)
                 .withMainClass(GameComponentAnalyzer.VANILLA_MAIN)
                 .withDownloads(Map.of(DownloadType.CLIENT, new DownloadInfo("https://example.invalid/client.jar", sha1)));
         GameInstancePatch patch = GameInstancePatch.fromManifest(manifest, GameComponentType.GAME.getPatchId(),
-                "1.21.2", GameInstancePatch.PRIORITY_MC);
-        ComponentRemoteVersion remote = fixedComponent(GameComponentType.GAME, "1.21.2", patch);
+                version, GameInstancePatch.PRIORITY_MC);
+        ComponentRemoteVersion remote = fixedComponent(GameComponentType.GAME, version, patch);
         DownloadProvider provider = new DownloadProvider() {
             /// Supplies the local game version for the build task.
             @Override

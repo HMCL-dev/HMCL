@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.download.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -62,6 +63,15 @@ import static org.jackhuang.hmcl.util.logging.Logger.TIME_FORMATTER;
 import static org.jackhuang.hmcl.util.platform.SystemInfo.SYSTEM_PLATFORM;
 
 public final class LauncherHelper {
+
+    /// Locates a suitable Java runtime for the game.
+    private static final StageId JAVA_STAGE = new StageId("launch.state.java");
+    /// Groups the game files prepared for launch.
+    private static final StageId DEPENDENCIES_STAGE = new StageId("launch.state.dependencies");
+    /// Signs in the selected account.
+    private static final StageId LOGIN_STAGE = new StageId("launch.state.logging_in");
+    /// Waits for the game to start.
+    private static final StageId LAUNCH_STAGE = new StageId("launch.state.waiting_launching");
 
     private static final String LWJGL_3_4_1_TIP = "lwjgl3.4.1-ffm";
 
@@ -215,7 +225,7 @@ public final class LauncherHelper {
                                 }
                             })
                     );
-                }).withStage("launch.state.dependencies")
+                }).withStage(DEPENDENCIES_STAGE)
                 .thenComposeAsync(() -> new GameVerificationFixTask(gameInstance, gameInstance.getVersion(), context.launchManifest))
                 .thenComposeAsync(() -> {
                     if (setting.getInheritable(GameSettings::allowAutoAgentProperty)
@@ -239,7 +249,7 @@ public final class LauncherHelper {
                         return Task.fromCompletableFuture(future);
                     }
                 })
-                .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
+                .thenComposeAsync(() -> logIn(account).withStage(LOGIN_STAGE))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions.Builder launchOptionsBuilder = gameInstance.getLaunchOptions(
                             context.javaRuntime,
@@ -327,12 +337,12 @@ public final class LauncherHelper {
                 }).withFakeProgress(
                         i18n("message.doing"),
                         () -> launchingLatch.getCount() == 0, 6.95
-                ).withStage("launch.state.waiting_launching"))
+                ).withStage(LAUNCH_STAGE))
                 .withStageHints(
-                        new Task.StageHint("launch.state.java"),
-                        new Task.StageHint("launch.state.dependencies", List.of("hmcl.install.assets", "hmcl.install.libraries", "hmcl.modpack.download")),
-                        new Task.StageHint("launch.state.logging_in"),
-                        new Task.StageHint("launch.state.waiting_launching"))
+                        new Task.StageHint(JAVA_STAGE),
+                        new Task.StageHint(DEPENDENCIES_STAGE, List.of(InstallStages.ASSETS, InstallStages.LIBRARIES, InstallStages.MODPACK_DOWNLOAD)),
+                        new Task.StageHint(LOGIN_STAGE),
+                        new Task.StageHint(LAUNCH_STAGE))
                 .newHandle();
         launchingStepsPane.setHandle(handle, false);
         handle.addTaskListener(new TaskListener() {
@@ -733,7 +743,7 @@ public final class LauncherHelper {
             });
         }
 
-        return task.withStage("launch.state.java");
+        return task.withStage(JAVA_STAGE);
     }
 
     /// Prompts for and downloads Java as a required child of this launch operation.

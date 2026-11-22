@@ -105,7 +105,7 @@ public final class DefaultTaskHandle extends TaskHandle {
             @Unmodifiable List<Task.StageHint> hints = task.getStageHints();
             if (!hints.isEmpty())
                 notifyListeners(listener -> listener.onStagesDeclared(hints));
-            @Nullable String id = task.getStage();
+            @Nullable StageId id = task.getStage();
             if (id != null) {
                 TaskStage declared = new TaskStage(task, id, stage);
                 stage = declared;

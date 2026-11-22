@@ -68,7 +68,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// The stage succeeds if this task succeeds, even if it recovers from a child failure.
     ///
     /// @implSpec The default implementation returns `null`.
-    public @Nullable String getStage() {
+    public @Nullable StageId getStage() {
         return null;
     }
 
@@ -522,7 +522,7 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Returns a task that declares `stage` and runs this task as its child.
     /// If this task declares its own stage, that stage is nested inside `stage`.
-    public Task<T> withStage(String stage) {
+    public Task<T> withStage(StageId stage) {
         return new StageTask(stage);
     }
 
@@ -540,7 +540,7 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// @param stageId the identifier used to find or create the row
     /// @param groupedStageIds additional stage identifiers to display in the same row
-    public record StageHint(String stageId, @Unmodifiable List<String> groupedStageIds) {
+    public record StageHint(StageId stageId, @Unmodifiable List<StageId> groupedStageIds) {
         /// Creates a hint with an immutable snapshot of the grouped stage identifiers.
         public StageHint {
             Objects.requireNonNull(stageId);
@@ -548,7 +548,7 @@ public abstract class Task<T extends @Nullable Object> {
         }
 
         /// Creates a hint for a single stage identifier.
-        public StageHint(String stageId) {
+        public StageHint(StageId stageId) {
             this(stageId, List.of());
         }
     }
@@ -562,7 +562,7 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Returns a wrapper with one stage hint per identifier, in argument order.
-    public Task<T> withStageHints(String... stageIds) {
+    public Task<T> withStageHints(StageId... stageIds) {
         return withStageHints(Arrays.stream(stageIds).map(StageHint::new).toList());
     }
 
@@ -827,17 +827,17 @@ public abstract class Task<T extends @Nullable Object> {
     /// Provides an enclosing stage for the wrapped task.
     private final class StageTask extends Task<T> {
         /// The stage declared by the wrapper.
-        private final String stage;
+        private final StageId stage;
 
         /// Creates a stage wrapper for the enclosing task.
-        private StageTask(String stage) {
+        private StageTask(StageId stage) {
             this.stage = Objects.requireNonNull(stage);
             setSignificance(TaskSignificance.MODERATE);
         }
 
         /// Returns the stage enclosing the wrapped task.
         @Override
-        public String getStage() {
+        public StageId getStage() {
             return stage;
         }
 
