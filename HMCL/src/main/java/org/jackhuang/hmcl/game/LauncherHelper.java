@@ -65,13 +65,13 @@ import static org.jackhuang.hmcl.util.platform.SystemInfo.SYSTEM_PLATFORM;
 public final class LauncherHelper {
 
     /// Locates a suitable Java runtime for the game.
-    private static final StageId JAVA_STAGE = new StageId("launch.state.java");
+    private static final TaskStage JAVA_STAGE = new TaskStage("launch.state.java");
     /// Groups the game files prepared for launch.
-    private static final StageId DEPENDENCIES_STAGE = new StageId("launch.state.dependencies");
+    private static final TaskStage DEPENDENCIES_STAGE = new TaskStage("launch.state.dependencies");
     /// Signs in the selected account.
-    private static final StageId LOGIN_STAGE = new StageId("launch.state.logging_in");
+    private static final TaskStage LOGIN_STAGE = new TaskStage("launch.state.logging_in");
     /// Waits for the game to start.
-    private static final StageId LAUNCH_STAGE = new StageId("launch.state.waiting_launching");
+    private static final TaskStage LAUNCH_STAGE = new TaskStage("launch.state.waiting_launching");
 
     private static final String LWJGL_3_4_1_TIP = "lwjgl3.4.1-ffm";
 

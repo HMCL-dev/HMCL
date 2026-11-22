@@ -6,9 +6,9 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.StageId;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +23,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
     /// The stage shared by add-on update checks and their progress dialogs.
-    public static final StageId STAGE = new StageId("update.checking");
+    public static final TaskStage STAGE = new TaskStage("update.checking");
 
     /// One update check per installed add-on.
     private final List<Task<@Nullable Pair<AddonUpdate, @Nullable AddonUpdate>>> checks;
@@ -62,7 +62,7 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
 
     /// Returns the stage for addon update checks.
     @Override
-    public StageId getStage() {
+    public TaskStage getStage() {
         return STAGE;
     }
 

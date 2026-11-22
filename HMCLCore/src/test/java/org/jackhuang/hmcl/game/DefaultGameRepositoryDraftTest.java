@@ -17,12 +17,12 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
 import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.task.StageId;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskStage;
+import org.jackhuang.hmcl.task.TaskStageInstance;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
@@ -143,23 +143,23 @@ public final class DefaultGameRepositoryDraftTest {
         GameInstanceID id = new GameInstanceID("instance");
         String version = "1.21.2:local";
         DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, version);
-        StageId expected = InstallStages.component(GameComponentType.GAME, version);
+        TaskStage expected = InstallStages.component(GameComponentType.GAME, version);
         assertEquals("hmcl.install.game", expected.key());
         assertEquals(version, expected.qualifier());
         assertNotEquals(expected, InstallStages.component(GameComponentType.FORGE, version));
         assertNotEquals(expected, InstallStages.component(GameComponentType.GAME, "1.21.2"));
 
-        List<StageId> dispatched = new ArrayList<>();
+        List<TaskStage> dispatched = new ArrayList<>();
         TaskListener listener = new TaskListener() {
             /// Records each installation stage before its task body starts.
             @Override
-            public void onStageStarted(TaskStage stage) {
-                dispatched.add(stage.id());
+            public void onStageStarted(TaskStageInstance stageInstance) {
+                dispatched.add(stageInstance.stage());
             }
         };
         try (var builder = manager.newGameBuilder(id)) {
             Task<?> build = builder.component(GameComponentType.GAME, version).buildAsync();
-            assertEquals(expected, build.getStageHints().get(0).stageId());
+            assertEquals(expected, build.getStageHints().get(0).stage());
             assertTrue(build.newHandle(listener).test(), () -> String.valueOf(build.exceptionNowOrNull()));
         }
         // The version lookup, resolved component and client download each declare the game stage.

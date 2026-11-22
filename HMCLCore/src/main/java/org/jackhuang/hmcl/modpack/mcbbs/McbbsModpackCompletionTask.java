@@ -81,7 +81,7 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
 
     /// Returns the stage for modpack downloads.
     @Override
-    public StageId getStage() {
+    public TaskStage getStage() {
         return InstallStages.MODPACK_DOWNLOAD;
     }
 

@@ -5,38 +5,22 @@ package org.jackhuang.hmcl.task;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-/// A stage declared by one task in an execution. Tasks declaring the same identifier
-/// create distinct stages. A child without a stage declaration inherits its parent's stage.
+import java.util.Objects;
+
+/// A stage value identified by its key and optional qualifier.
+/// Each task declaring the stage opens a distinct [TaskStageInstance].
+///
+/// @param key the kind of work, such as `hmcl.install.forge`
+/// @param qualifier a value such as a component version, or `null` for an unqualified stage
 @NotNullByDefault
-public final class TaskStage {
-    /// The task whose outcome determines the outcome of this stage.
-    private final Task<?> task;
-
-    /// The identifier supplied by the declaring task.
-    private final StageId id;
-
-    /// The enclosing stage, or `null` when there is none.
-    private final @Nullable TaskStage parent;
-
-    /// Identifies a stage declared by `task` within its parent's execution.
-    TaskStage(Task<?> task, StageId id, @Nullable TaskStage parent) {
-        this.task = task;
-        this.id = id;
-        this.parent = parent;
+public record TaskStage(String key, @Nullable String qualifier) {
+    /// Creates a stage with the supplied key and qualifier.
+    public TaskStage {
+        Objects.requireNonNull(key);
     }
 
-    /// Returns the task that declared this stage.
-    public Task<?> task() {
-        return task;
-    }
-
-    /// Returns the identifier supplied by the declaring task.
-    public StageId id() {
-        return id;
-    }
-
-    /// Returns the enclosing stage, or `null` if the task was dispatched outside any stage.
-    public @Nullable TaskStage parent() {
-        return parent;
+    /// Creates an unqualified stage.
+    public TaskStage(String key) {
+        this(key, null);
     }
 }

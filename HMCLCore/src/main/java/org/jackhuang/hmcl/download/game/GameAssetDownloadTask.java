@@ -8,9 +8,9 @@ import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.StageId;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +55,7 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
 
     /// Returns the stage for game asset downloads.
     @Override
-    public StageId getStage() {
+    public TaskStage getStage() {
         return InstallStages.ASSETS;
     }
 

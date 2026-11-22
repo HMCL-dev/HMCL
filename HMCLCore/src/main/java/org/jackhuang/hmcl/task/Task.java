@@ -62,13 +62,13 @@ public abstract class Task<T extends @Nullable Object> {
         return this;
     }
 
-    /// Returns the identifier of the stage this task opens when dispatched, or `null` to
+    /// Returns the stage this task declares when dispatched, or `null` to
     /// inherit its parent's stage. A root task returning `null` runs outside any stage.
     /// The stage covers this task and is inherited by children until they declare their own.
     /// The stage succeeds if this task succeeds, even if it recovers from a child failure.
     ///
     /// @implSpec The default implementation returns `null`.
-    public @Nullable StageId getStage() {
+    public @Nullable TaskStage getStage() {
         return null;
     }
 
@@ -522,7 +522,7 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Returns a task that declares `stage` and runs this task as its child.
     /// If this task declares its own stage, that stage is nested inside `stage`.
-    public Task<T> withStage(StageId stage) {
+    public Task<T> withStage(TaskStage stage) {
         return new StageTask(stage);
     }
 
@@ -534,22 +534,22 @@ public abstract class Task<T extends @Nullable Object> {
         return new FakeProgressTask(done, k).setName(name).setSignificance(TaskSignificance.MAJOR);
     }
 
-    /// Declares one row in the stage progress display. Each stage identifier keeps its first
+    /// Declares one row in the stage progress display. Each stage keeps its first
     /// assigned row for the entire execution. To group stages across children, declare the
     /// hint on their common parent before it dispatches them.
     ///
-    /// @param stageId the identifier used to find or create the row
-    /// @param groupedStageIds additional stage identifiers to display in the same row
-    public record StageHint(StageId stageId, @Unmodifiable List<StageId> groupedStageIds) {
-        /// Creates a hint with an immutable snapshot of the grouped stage identifiers.
+    /// @param stage the stage used to find or create the row
+    /// @param groupedStages additional stages to display in the same row
+    public record StageHint(TaskStage stage, @Unmodifiable List<TaskStage> groupedStages) {
+        /// Creates a hint with an immutable snapshot of the grouped stages.
         public StageHint {
-            Objects.requireNonNull(stageId);
-            groupedStageIds = List.copyOf(groupedStageIds);
+            Objects.requireNonNull(stage);
+            groupedStages = List.copyOf(groupedStages);
         }
 
-        /// Creates a hint for a single stage identifier.
-        public StageHint(StageId stageId) {
-            this(stageId, List.of());
+        /// Creates a hint for a single stage.
+        public StageHint(TaskStage stage) {
+            this(stage, List.of());
         }
     }
 
@@ -561,9 +561,9 @@ public abstract class Task<T extends @Nullable Object> {
         return List.of();
     }
 
-    /// Returns a wrapper with one stage hint per identifier, in argument order.
-    public Task<T> withStageHints(StageId... stageIds) {
-        return withStageHints(Arrays.stream(stageIds).map(StageHint::new).toList());
+    /// Returns a wrapper with one hint per stage, in argument order.
+    public Task<T> withStageHints(TaskStage... stages) {
+        return withStageHints(Arrays.stream(stages).map(StageHint::new).toList());
     }
 
     /// Returns a wrapper with an immutable snapshot of the supplied hints.
@@ -827,17 +827,17 @@ public abstract class Task<T extends @Nullable Object> {
     /// Provides an enclosing stage for the wrapped task.
     private final class StageTask extends Task<T> {
         /// The stage declared by the wrapper.
-        private final StageId stage;
+        private final TaskStage stage;
 
         /// Creates a stage wrapper for the enclosing task.
-        private StageTask(StageId stage) {
+        private StageTask(TaskStage stage) {
             this.stage = Objects.requireNonNull(stage);
             setSignificance(TaskSignificance.MODERATE);
         }
 
         /// Returns the stage enclosing the wrapped task.
         @Override
-        public StageId getStage() {
+        public TaskStage getStage() {
             return stage;
         }
 

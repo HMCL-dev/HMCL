@@ -16,12 +16,12 @@ import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.task.StageId;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskStage;
+import org.jackhuang.hmcl.task.TaskStageInstance;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -61,9 +61,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 final class TaskHandleDialogPaneTest {
 
     /// A stage with a translated heading for task list tests.
-    private static final StageId CHECKING = new StageId("update.checking");
+    private static final TaskStage CHECKING = new TaskStage("update.checking");
     /// A second displayed stage for grouping and ordering assertions.
-    private static final StageId LOGGING_IN = new StageId("launch.state.logging_in");
+    private static final TaskStage LOGGING_IN = new TaskStage("launch.state.logging_in");
 
     /// Settings replaced temporarily to initialize dialog animation preferences.
     private static @Nullable Object previousSettings;
@@ -233,7 +233,7 @@ final class TaskHandleDialogPaneTest {
         CountDownLatch release = new CountDownLatch(1);
         Task<?> owner = new Task<@Nullable Void>() {
             @Override
-            public StageId getStage() {
+            public TaskStage getStage() {
                 return CHECKING;
             }
 
@@ -269,33 +269,33 @@ final class TaskHandleDialogPaneTest {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void retainsFailedStageAcrossSiblingCompletions(boolean failureFirst) throws Exception {
-        StageId firstId = new StageId("first");
-        StageId secondId = new StageId("second");
+        TaskStage firstStage = new TaskStage("first");
+        TaskStage secondStage = new TaskStage("second");
         CountDownLatch bothStarted = new CountDownLatch(2);
         CountDownLatch firstFinished = new CountDownLatch(1);
         Task<?> first = Task.runAsync(() -> {
             assertTrue(bothStarted.await(10, TimeUnit.SECONDS));
             if (failureFirst)
                 throw new IOException("First stage failed");
-        }).withStage(firstId);
+        }).withStage(firstStage);
         Task<?> second = Task.runAsync(() -> {
             assertTrue(firstFinished.await(10, TimeUnit.SECONDS));
             if (!failureFirst)
                 throw new IOException("Second stage failed");
-        }).withStage(secondId);
+        }).withStage(secondStage);
         TaskHandle handle = Task.allOf(first, second)
-                .withStageHints(new Task.StageHint(CHECKING, List.of(firstId, secondId)))
+                .withStageHints(new Task.StageHint(CHECKING, List.of(firstStage, secondStage)))
                 .newHandle();
         TaskListPane pane = showTaskList(handle);
         handle.addTaskListener(new TaskListener() {
             @Override
-            public void onStageStarted(TaskStage stage) {
+            public void onStageStarted(TaskStageInstance instance) {
                 bothStarted.countDown();
             }
 
             @Override
-            public void onStageFinished(TaskStage stage, @Nullable Throwable failure) {
-                if (stage.id().equals(firstId))
+            public void onStageFinished(TaskStageInstance instance, @Nullable Throwable failure) {
+                if (instance.stage().equals(firstStage))
                     firstFinished.countDown();
             }
         });
@@ -312,7 +312,7 @@ final class TaskHandleDialogPaneTest {
     void displaysRecoveredStageAndCompletedItemCount(boolean mergeStages) throws Exception {
         Task<?> owner = new Task<@Nullable Void>() {
             @Override
-            public StageId getStage() {
+            public TaskStage getStage() {
                 return CHECKING;
             }
 
@@ -342,9 +342,9 @@ final class TaskHandleDialogPaneTest {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void groupsStageOnlyWhenHintArrivesFirst(boolean hintFirst) throws Exception {
-        StageId groupId = CHECKING;
-        StageId partId = LOGGING_IN;
-        Task.StageHint group = new Task.StageHint(groupId, List.of(partId));
+        TaskStage groupStage = CHECKING;
+        TaskStage partStage = LOGGING_IN;
+        Task.StageHint group = new Task.StageHint(groupStage, List.of(partStage));
         Task<?> work = new Task<@Nullable Void>() {
             /// Reports one complete item in the enclosing stage.
             @Override
@@ -355,19 +355,19 @@ final class TaskHandleDialogPaneTest {
             }
         };
         TaskHandle handle = (hintFirst
-                ? work.withStage(partId).withStageHints(group)
-                : work.withStageHints(group).withStage(partId)).newHandle();
+                ? work.withStage(partStage).withStageHints(group)
+                : work.withStageHints(group).withStage(partStage)).newHandle();
         TaskListPane pane = showTaskList(handle);
         assertTrue(handle.test());
 
-        String completedRow = i18n((hintFirst ? groupId : partId).key()) + " - 1/1";
+        String completedRow = i18n((hintFirst ? groupStage : partStage).key()) + " - 1/1";
         assertEquals(SVG.CHECK.getPath(), stageIcon(pane, completedRow));
         onFxThread(() -> {
             ListCell<?> first = findRow(pane, completedRow);
             assertEquals(0, first.getIndex());
             assertEquals(hintFirst ? 1 : 2, first.getListView().getItems().size());
             if (!hintFirst)
-                assertEquals(1, findRow(pane, i18n(groupId.key())).getIndex());
+                assertEquals(1, findRow(pane, i18n(groupStage.key())).getIndex());
             return true;
         });
     }
@@ -382,7 +382,7 @@ final class TaskHandleDialogPaneTest {
                         Task.completed(1).withStage(InstallStages.component(component, secondVersion)),
                         Task.completed(2).withStage(InstallStages.component(component, firstVersion)))
                 .withStageHints(InstallStages.component(component, firstVersion), InstallStages.component(component, secondVersion),
-                        new StageId("hmcl.install.neoforge"))
+                        new TaskStage("hmcl.install.neoforge"))
                 .newHandle();
         TaskListPane pane = showTaskList(handle);
         assertTrue(handle.test());
