@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskStage;
-import org.jackhuang.hmcl.task.TaskStageInstance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.FXThread;
@@ -50,8 +49,8 @@ public final class TaskListPane extends StackPane {
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     /// Maps each stage to its row for the current execution.
     private final Map<TaskStage, StageNode> stageNodes = new HashMap<>();
-    /// Tracks the outermost active stage instances contributing to each display row.
-    private final Map<TaskStageInstance, StageNode> activeStages = new HashMap<>();
+    /// Tracks the outermost active stage scopes contributing to each display row.
+    private final Map<TaskStage.Scope, StageNode> activeScopes = new HashMap<>();
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
     private final DoubleProperty cellWidth = new SimpleDoubleProperty();
 
@@ -95,10 +94,10 @@ public final class TaskListPane extends StackPane {
     }
 
     /// Localizes the task name if it should appear as a separate progress row.
-    private static boolean prepareTaskRow(Task<?> task, @Nullable TaskStageInstance instance) {
+    private static boolean prepareTaskRow(Task<?> task, TaskStage.@Nullable Scope scope) {
         if (!task.getSignificance().shouldShow() || task.getName() == null)
             return false;
-        if (task instanceof GameInstallTask && instance != null && installComponent(instance.stage()) == GameComponentType.GAME)
+        if (task instanceof GameInstallTask && scope != null && installComponent(scope.stage()) == GameComponentType.GAME)
             return false;
         @Nullable String localizedName = I18n.translateTaskName(task);
         if (localizedName != null)
@@ -108,9 +107,9 @@ public final class TaskListPane extends StackPane {
 
     /// Displays a task below its stage or at the top of the list when it has no stage.
     @FXThread
-    private ProgressListNode addTaskRow(Task<?> task, @Nullable TaskStageInstance instance) {
+    private ProgressListNode addTaskRow(Task<?> task, TaskStage.@Nullable Scope scope) {
         ProgressListNode node = new ProgressListNode(task);
-        int index = instance == null ? 0 : listView.getItems().indexOf(stageNode(instance.stage())) + 1;
+        int index = scope == null ? 0 : listView.getItems().indexOf(stageNode(scope.stage())) + 1;
         listView.getItems().add(index, node);
         return node;
     }
@@ -134,7 +133,7 @@ public final class TaskListPane extends StackPane {
                     nodes.values().forEach(ProgressListNode::unbind);
                     nodes.clear();
                     stageNodes.clear();
-                    activeStages.clear();
+                    activeScopes.clear();
                     listView.getItems().clear();
                     progressNodePadding.set(DEFAULT_PROGRESS_NODE_PADDING);
                 });
@@ -146,23 +145,23 @@ public final class TaskListPane extends StackPane {
             }
 
             @Override
-            public void onStageStarted(TaskStageInstance instance) {
+            public void onStageStarted(TaskStage.Scope scope) {
                 update(() -> {
-                    StageNode node = stageNode(instance.stage());
+                    StageNode node = stageNode(scope.stage());
                     // An enclosing stage on this row owns the outcome, including any failures it handles.
-                    for (@Nullable TaskStageInstance parent = instance.parent(); parent != null; parent = parent.parent()) {
-                        if (activeStages.get(parent) == node)
+                    for (TaskStage.@Nullable Scope parent = scope.parent(); parent != null; parent = parent.parent()) {
+                        if (activeScopes.get(parent) == node)
                             return;
                     }
-                    activeStages.put(instance, node);
+                    activeScopes.put(scope, node);
                     node.begin();
                 });
             }
 
             @Override
-            public void onStageFinished(TaskStageInstance instance, @Nullable Throwable failure) {
+            public void onStageFinished(TaskStage.Scope scope, @Nullable Throwable failure) {
                 update(() -> {
-                    @Nullable StageNode node = activeStages.remove(instance);
+                    @Nullable StageNode node = activeScopes.remove(scope);
                     if (node != null)
                         node.finish(failure == null);
                 });
@@ -170,20 +169,20 @@ public final class TaskListPane extends StackPane {
 
             /// Adds visible running tasks to their stage.
             @Override
-            public void onTaskStarted(Task<?> task, @Nullable TaskStageInstance instance) {
-                if (prepareTaskRow(task, instance))
-                    update(() -> nodes.put(task, addTaskRow(task, instance)));
+            public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
+                if (prepareTaskRow(task, scope))
+                    update(() -> nodes.put(task, addTaskRow(task, scope)));
             }
 
             /// Removes successful tasks and retains visible failures, including failures before the body starts.
             @Override
-            public void onTaskFinished(Task<?> task, @Nullable TaskStageInstance instance, @Nullable Throwable failure) {
+            public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
                 update(() -> {
                     @Nullable ProgressListNode node = nodes.remove(task);
                     if (node == null) {
-                        if (failure == null || !prepareTaskRow(task, instance))
+                        if (failure == null || !prepareTaskRow(task, scope))
                             return;
-                        node = addTaskRow(task, instance);
+                        node = addTaskRow(task, scope);
                     }
                     if (failure == null) {
                         node.unbind();
@@ -196,8 +195,8 @@ public final class TaskListPane extends StackPane {
 
             /// Applies both increments to the display row for this stage.
             @Override
-            public void onStageProgress(TaskStageInstance instance, int completedDelta, int totalDelta) {
-                update(() -> stageNode(instance.stage()).addProgress(completedDelta, totalDelta));
+            public void onStageProgress(TaskStage.Scope scope, int completedDelta, int totalDelta) {
+                update(() -> stageNode(scope.stage()).addProgress(completedDelta, totalDelta));
             }
         });
     }

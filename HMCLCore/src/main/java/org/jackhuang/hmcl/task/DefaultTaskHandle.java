@@ -100,23 +100,23 @@ public final class DefaultTaskHandle extends TaskHandle {
 
     /// Announces the task's presentation hints and stage, then resolves its executor.
     private <T extends @Nullable Object> Context<T> prepare(@Nullable Context<?> parent, Task<T> task) {
-        @Nullable TaskStageInstance instance = parent == null ? null : parent.stageInstance;
+        TaskStage.@Nullable Scope scope = parent == null ? null : parent.stageScope;
         try {
             @Unmodifiable List<Task.StageHint> hints = task.getStageHints();
             if (!hints.isEmpty())
                 notifyListeners(listener -> listener.onStagesDeclared(hints));
             @Nullable TaskStage stage = task.getStage();
             if (stage != null) {
-                TaskStageInstance declared = new TaskStageInstance(task, stage, instance);
-                instance = declared;
+                TaskStage.Scope declared = new TaskStage.Scope(stage, task, scope);
+                scope = declared;
                 notifyListeners(listener -> listener.onStageStarted(declared));
             }
             @Nullable Executor executor = task.getExecutor();
             if (executor == null)
                 executor = parent == null ? Schedulers.tasks() : parent.executor;
-            return new Context<>(task, executor, instance);
+            return new Context<>(task, executor, scope);
         } catch (RuntimeException | Error failure) {
-            fail(task, instance, failure);
+            fail(task, scope, failure);
             throw failure;
         }
     }
@@ -136,7 +136,7 @@ public final class DefaultTaskHandle extends TaskHandle {
             checkCancellation();
             work.submit();
         } catch (RuntimeException | Error failure) {
-            fail(context.task, context.stageInstance, failure);
+            fail(context.task, context.stageScope, failure);
             work.reject(failure);
         }
         return work;
@@ -153,7 +153,7 @@ public final class DefaultTaskHandle extends TaskHandle {
                 checkCancellation();
             }
             task.setState(Task.TaskState.RUNNING);
-            notifyListeners(listener -> listener.onTaskStarted(task, context.stageInstance));
+            notifyListeners(listener -> listener.onTaskStarted(task, context.stageScope));
             try {
                 result = task.execute(context);
             } finally {
@@ -164,30 +164,30 @@ public final class DefaultTaskHandle extends TaskHandle {
             Throwable cause = Objects.requireNonNullElse(Lang.resolveException(failure), failure);
             if (cause instanceof InterruptedException)
                 cause = new CancellationException(cause.getMessage());
-            fail(task, context.stageInstance, cause);
+            fail(task, context.stageScope, cause);
             throw asException(cause);
         }
 
         task.publishResult(result);
-        notifyTaskFinished(task, context.stageInstance, null);
+        notifyTaskFinished(task, context.stageScope, null);
         if (task.getSignificance().shouldLog())
             LOG.trace("Task finished: " + task.getName());
         return result;
     }
 
     /// Records the checked failure exposed by a task and delivers its terminal notifications.
-    private void fail(Task<?> task, @Nullable TaskStageInstance instance, Throwable cause) {
+    private void fail(Task<?> task, TaskStage.@Nullable Scope scope, Throwable cause) {
         Exception recorded = cause instanceof Exception e ? e : new Exception(cause);
         exception = recorded;
         task.publishException(recorded);
-        notifyTaskFinished(task, instance, cause);
+        notifyTaskFinished(task, scope, cause);
     }
 
     /// Reports the task's published outcome, then closes its stage if it declared one.
-    private void notifyTaskFinished(Task<?> task, @Nullable TaskStageInstance instance, @Nullable Throwable failure) {
-        notifyListeners(listener -> listener.onTaskFinished(task, instance, failure));
-        if (instance != null && instance.task() == task)
-            notifyListeners(listener -> listener.onStageFinished(instance, failure));
+    private void notifyTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+        notifyListeners(listener -> listener.onTaskFinished(task, scope, failure));
+        if (scope != null && scope.task() == task)
+            notifyListeners(listener -> listener.onStageFinished(scope, failure));
     }
 
     /// Delivers a notification to each listener even if another listener fails.
@@ -239,14 +239,14 @@ public final class DefaultTaskHandle extends TaskHandle {
         /// Executor inherited by children that have no executor preference.
         private final Executor executor;
 
-        /// Stage instance declared by the running task or inherited from its parent.
-        private final @Nullable TaskStageInstance stageInstance;
+        /// Stage scope opened by the running task or inherited from its parent.
+        private final TaskStage.@Nullable Scope stageScope;
 
         /// Binds the task to its effective executor and stage for this execution.
-        Context(Task<R> task, Executor executor, @Nullable TaskStageInstance stageInstance) {
+        Context(Task<R> task, Executor executor, TaskStage.@Nullable Scope stageScope) {
             this.task = task;
             this.executor = executor;
-            this.stageInstance = stageInstance;
+            this.stageScope = stageScope;
         }
 
         @Override
@@ -257,15 +257,15 @@ public final class DefaultTaskHandle extends TaskHandle {
         /// {@inheritDoc}
         @Override
         public void addStageItems(int count) {
-            if (stageInstance != null)
-                notifyListeners(listener -> listener.onStageProgress(stageInstance, 0, count));
+            if (stageScope != null)
+                notifyListeners(listener -> listener.onStageProgress(stageScope, 0, count));
         }
 
         /// {@inheritDoc}
         @Override
         public void completeStageItem() {
-            if (stageInstance != null)
-                notifyListeners(listener -> listener.onStageProgress(stageInstance, 1, 0));
+            if (stageScope != null)
+                notifyListeners(listener -> listener.onStageProgress(stageScope, 1, 0));
         }
 
         @Override

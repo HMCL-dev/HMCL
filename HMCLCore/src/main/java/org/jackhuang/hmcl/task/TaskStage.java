@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 /// A stage value identified by its key and optional qualifier.
-/// Each task declaring the stage opens a distinct [TaskStageInstance].
+/// Each task declaring the stage opens a distinct [Scope].
 ///
 /// @param key the kind of work, such as `hmcl.install.forge`
 /// @param qualifier a value such as a component version, or `null` for an unqualified stage
@@ -22,5 +22,39 @@ public record TaskStage(String key, @Nullable String qualifier) {
     /// Creates an unqualified stage.
     public TaskStage(String key) {
         this(key, null);
+    }
+
+    /// A stage scope opened by one task. Children inherit it until they declare a stage of their own.
+    public static final class Scope {
+        /// The stage declared by the task.
+        private final TaskStage stage;
+
+        /// The task whose outcome determines the outcome of this scope.
+        private final Task<?> task;
+
+        /// The enclosing scope, or `null` at the top level.
+        private final @Nullable Scope parent;
+
+        /// Opens a scope for the stage declared by the task.
+        Scope(TaskStage stage, Task<?> task, @Nullable Scope parent) {
+            this.stage = stage;
+            this.task = task;
+            this.parent = parent;
+        }
+
+        /// Returns the stage declared by [#task()].
+        public TaskStage stage() {
+            return stage;
+        }
+
+        /// Returns the task that opened this scope.
+        public Task<?> task() {
+            return task;
+        }
+
+        /// Returns the enclosing scope, or `null` at the top level.
+        public @Nullable Scope parent() {
+            return parent;
+        }
     }
 }

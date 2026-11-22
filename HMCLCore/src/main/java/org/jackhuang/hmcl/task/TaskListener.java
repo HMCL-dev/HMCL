@@ -30,17 +30,17 @@ public abstract class TaskListener implements EventListener {
 
     /// Called after the task enters [Task.TaskState#RUNNING], before its body is invoked.
     ///
-    /// @param instance the task's declared or inherited stage instance, or `null` if neither applies
-    public void onTaskStarted(Task<?> task, @Nullable TaskStageInstance instance) {
+    /// @param scope the task's declared or inherited stage scope, or `null` if neither applies
+    public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
     }
 
     /// Called once when the task succeeds or fails. A failure before the body starts can
-    /// produce this notification without a preceding [#onTaskStarted(Task, TaskStageInstance)].
+    /// produce this notification without a preceding [#onTaskStarted(Task, TaskStage.Scope)].
     ///
-    /// @param instance the task's declared or inherited stage instance, or `null` if neither applies
+    /// @param scope the task's declared or inherited stage scope, or `null` if neither applies
     /// @param failure the failure cause, including cancellation or an [Error], or `null`
     ///                on success, when [Task#resultNow()] is available
-    public void onTaskFinished(Task<?> task, @Nullable TaskStageInstance instance, @Nullable Throwable failure) {
+    public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
     }
 
     /// Announces ordered stage presentation hints when their declaring task is dispatched,
@@ -49,18 +49,18 @@ public abstract class TaskListener implements EventListener {
     }
 
     /// Called when the task declaring a stage is dispatched, before its body starts.
-    public void onStageStarted(TaskStageInstance instance) {
+    public void onStageStarted(TaskStage.Scope scope) {
     }
 
     /// Called after the declaring task's terminal state and result or failure are published.
     ///
-    /// @param instance the same instance supplied to [#onStageStarted(TaskStageInstance)]
+    /// @param scope the same scope supplied to [#onStageStarted(TaskStage.Scope)]
     /// @param failure the cause of the task's failure, including cancellation, or `null` on success
-    public void onStageFinished(TaskStageInstance instance, @Nullable Throwable failure) {
+    public void onStageFinished(TaskStage.Scope scope, @Nullable Throwable failure) {
     }
 
     /// Called when a task adds to the completed or total item count of its effective stage.
     /// Both deltas are relative to the counts already reported.
-    public void onStageProgress(TaskStageInstance instance, int completedDelta, int totalDelta) {
+    public void onStageProgress(TaskStage.Scope scope, int completedDelta, int totalDelta) {
     }
 }

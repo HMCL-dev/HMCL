@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskStage;
-import org.jackhuang.hmcl.task.TaskStageInstance;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
@@ -153,8 +152,8 @@ public final class DefaultGameRepositoryDraftTest {
         TaskListener listener = new TaskListener() {
             /// Records each installation stage before its task body starts.
             @Override
-            public void onStageStarted(TaskStageInstance stageInstance) {
-                dispatched.add(stageInstance.stage());
+            public void onStageStarted(TaskStage.Scope scope) {
+                dispatched.add(scope.stage());
             }
         };
         try (var builder = manager.newGameBuilder(id)) {

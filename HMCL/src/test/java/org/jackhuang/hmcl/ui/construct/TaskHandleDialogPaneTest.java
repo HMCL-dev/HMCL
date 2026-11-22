@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskStage;
-import org.jackhuang.hmcl.task.TaskStageInstance;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -289,13 +288,13 @@ final class TaskHandleDialogPaneTest {
         TaskListPane pane = showTaskList(handle);
         handle.addTaskListener(new TaskListener() {
             @Override
-            public void onStageStarted(TaskStageInstance instance) {
+            public void onStageStarted(TaskStage.Scope scope) {
                 bothStarted.countDown();
             }
 
             @Override
-            public void onStageFinished(TaskStageInstance instance, @Nullable Throwable failure) {
-                if (instance.stage().equals(firstStage))
+            public void onStageFinished(TaskStage.Scope scope, @Nullable Throwable failure) {
+                if (scope.stage().equals(firstStage))
                     firstFinished.countDown();
             }
         });

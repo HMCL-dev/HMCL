@@ -271,7 +271,7 @@ final class TaskExecutionContextTest {
         assertTrue(batch.newHandle(new TaskListener() {
             /// Releases the first child after the second child's result has been published.
             @Override
-            public void onTaskFinished(Task<?> task, @Nullable TaskStageInstance stage, @Nullable Throwable failure) {
+            public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
                 if (task == second)
                     released.countDown();
             }
@@ -344,7 +344,7 @@ final class TaskExecutionContextTest {
         assertTrue(root.newHandle(new TaskListener() {
             /// Observes the published state and result, then exercises listener failure isolation.
             @Override
-            public void onTaskFinished(Task<?> task, @Nullable TaskStageInstance stage, @Nullable Throwable failure) {
+            public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
                 assertSame(root, task);
                 assertNull(failure);
                 assertEquals(Task.TaskState.SUCCEEDED, task.getState());
@@ -483,20 +483,21 @@ final class TaskExecutionContextTest {
         StageEvents events = new StageEvents() {
             /// Records the effective stage and both increments in dispatch order.
             @Override
-            public void onStageProgress(TaskStageInstance stage, int completedDelta, int totalDelta) {
-                progress.add(new StageProgress(stage, completedDelta, totalDelta));
+            public void onStageProgress(TaskStage.Scope scope, int completedDelta, int totalDelta) {
+                progress.add(new StageProgress(scope, completedDelta, totalDelta));
             }
         };
 
         assertTrue(root.newHandle(events).test());
         assertEquals(7, root.resultNow());
         assertEquals(2, events.started.size());
-        TaskStageInstance first = events.started.get(0);
-        TaskStageInstance second = events.started.get(1);
+        TaskStage.Scope first = events.started.get(0);
+        TaskStage.Scope second = events.started.get(1);
         assertNotSame(first, second);
         assertSame(outer, first.task());
         assertSame(nested, second.task());
-        assertEquals(new TaskStage("download"), first.stage());
+        assertSame(outer.getStage(), first.stage());
+        assertSame(nested.getStage(), second.stage());
         assertEquals(first.stage(), second.stage());
         assertNull(first.parent());
         assertSame(first, second.parent());
@@ -538,9 +539,9 @@ final class TaskExecutionContextTest {
         StageEvents events = new StageEvents();
         assertTrue(root.newHandle(events).test());
         assertEquals(42, root.resultNow());
-        assertEquals(List.of(root, failed, broken, rejected), events.started.stream().map(TaskStageInstance::task).toList());
-        TaskStageInstance outer = events.started.get(0);
-        TaskStageInstance checked = events.started.get(1);
+        assertEquals(List.of(root, failed, broken, rejected), events.started.stream().map(TaskStage.Scope::task).toList());
+        TaskStage.Scope outer = events.started.get(0);
+        TaskStage.Scope checked = events.started.get(1);
         assertFalse(events.running.containsKey(rejected));
         assertEquals(List.of(
                 new TaskCompletion(source, checked, exception),
@@ -595,7 +596,7 @@ final class TaskExecutionContextTest {
 
             /// Records which declarations are already visible at stage entry.
             @Override
-            public void onStageStarted(TaskStageInstance stage) {
+            public void onStageStarted(TaskStage.Scope scope) {
                 atStageStart.addAll(declarations);
             }
         }).test());
@@ -604,50 +605,50 @@ final class TaskExecutionContextTest {
     }
 
     /// One incremental progress notification for an executing stage.
-    private record StageProgress(TaskStageInstance stage, int completedDelta, int totalDelta) {}
+    private record StageProgress(TaskStage.Scope scope, int completedDelta, int totalDelta) {}
 
     /// The task, effective stage and outcome delivered together at completion.
-    private record TaskCompletion(Task<?> task, @Nullable TaskStageInstance stage, @Nullable Throwable failure) {}
+    private record TaskCompletion(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {}
 
     /// Records stage events from tests that dispatch one child at a time.
     private static class StageEvents extends TaskListener {
         /// The effective stage reported when each task body starts.
-        private final Map<Task<?>, @Nullable TaskStageInstance> running = new HashMap<>();
+        private final Map<Task<?>, TaskStage.@Nullable Scope> running = new HashMap<>();
 
         /// Task outcomes in completion order, including failures before body entry.
         private final List<TaskCompletion> completions = new ArrayList<>();
 
         /// Stages in dispatch order.
-        private final List<TaskStageInstance> started = new ArrayList<>();
+        private final List<TaskStage.Scope> started = new ArrayList<>();
 
         /// Stages in completion order.
-        private final List<TaskStageInstance> finished = new ArrayList<>();
+        private final List<TaskStage.Scope> finished = new ArrayList<>();
 
         /// Outcomes in completion order, with null denoting success.
         private final List<@Nullable Throwable> failures = new ArrayList<>();
 
         /// Records the stage associated with the task's running body.
         @Override
-        public void onTaskStarted(Task<?> task, @Nullable TaskStageInstance stage) {
-            running.put(task, stage);
+        public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
+            running.put(task, scope);
         }
 
         /// Records the terminal notification and the original failure.
         @Override
-        public void onTaskFinished(Task<?> task, @Nullable TaskStageInstance stage, @Nullable Throwable failure) {
-            completions.add(new TaskCompletion(task, stage, failure));
+        public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+            completions.add(new TaskCompletion(task, scope, failure));
         }
 
         /// Records the identity of the new stage.
         @Override
-        public void onStageStarted(TaskStageInstance stage) {
-            started.add(stage);
+        public void onStageStarted(TaskStage.Scope scope) {
+            started.add(scope);
         }
 
         /// Records the stage identity and cause from the terminal notification.
         @Override
-        public void onStageFinished(TaskStageInstance stage, @Nullable Throwable failure) {
-            finished.add(stage);
+        public void onStageFinished(TaskStage.Scope scope, @Nullable Throwable failure) {
+            finished.add(scope);
             failures.add(failure);
         }
     }
