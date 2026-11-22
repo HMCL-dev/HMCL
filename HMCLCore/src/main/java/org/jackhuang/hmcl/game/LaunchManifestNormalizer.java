@@ -63,8 +63,6 @@ public final class LaunchManifestNormalizer {
         }
 
         if (analyzer.has(GameComponentType.CLEANROOM)) {
-            // LegacyFabric adds higher-version ASM dependencies such as org.ow2.asm:asm,
-            // which conflict with the original org.ow2.asm:asm-all and cause launch failure.
             repaired = repairCleanroomLibraries(repaired, analyzer);
         }
 
