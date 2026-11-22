@@ -66,7 +66,7 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
 
         int progress = 0;
         for (AssetObject assetObject : index.getObjects().values()) {
-            if (isCancelled())
+            if (context.isCancelled())
                 throw new InterruptedException();
 
             GameRepository gameRepository = dependencyManager.getGameRepository();

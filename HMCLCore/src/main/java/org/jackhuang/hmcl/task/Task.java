@@ -34,7 +34,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// outermost task using [#start()], [#run()], or a [TaskExecutor]. Each task instance in an
 /// execution must be used only once. Create a new instance to repeat an operation.
 ///
-/// Cancellation is cooperative. A running body may check [#isCancelled()] and release its
+/// Cancellation is cooperative. A running body may check [TaskExecutionContext#isCancelled()] and release its
 /// resources before returning. The executor also checks for cancellation before invoking
 /// a body and before publishing its result.
 ///
@@ -58,20 +58,6 @@ public abstract class Task<T extends @Nullable Object> {
     public final Task<T> setSignificance(TaskSignificance significance) {
         this.significance = significance;
         return this;
-    }
-
-    /// Supplies the executor's cancellation flag during execution.
-    private @Nullable BooleanSupplier cancelled;
-
-    /// Associates the task with its executor's cancellation flag.
-    final void setCancelled(BooleanSupplier cancelled) {
-        this.cancelled = cancelled;
-    }
-
-    /// Returns whether cancellation was requested or the calling thread is interrupted.
-    /// Preserves the thread's interrupted status.
-    protected final boolean isCancelled() {
-        return Thread.currentThread().isInterrupted() || cancelled != null && cancelled.getAsBoolean();
     }
 
     /// Stage explicitly assigned to this task, or `null` to inherit its parent's stage.
@@ -865,7 +851,7 @@ public abstract class Task<T extends @Nullable Object> {
                 final long start = System.currentTimeMillis();
                 final double k2 = k / MAX_VALUE;
                 while (!done.getAsBoolean()) {
-                    if (isCancelled()) throw new CancellationException();
+                    if (context.isCancelled()) throw new CancellationException();
                     updateProgressImmediately(-k / ((System.currentTimeMillis() - start) / 1000D + k2) + MAX_VALUE);
 
                     Thread.sleep(1000);

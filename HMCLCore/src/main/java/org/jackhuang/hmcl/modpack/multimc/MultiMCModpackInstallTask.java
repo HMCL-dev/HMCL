@@ -249,7 +249,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
             draft.put(new GameInstanceManifest(instanceId));
             MultiMCInstancePatch.ResolvedInstance artifact = install(context);
-            if (isCancelled())
+            if (context.isCancelled())
                 throw new CancellationException();
             draft.put(artifact.getManifest());
             draft.commit();

@@ -272,7 +272,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
             try {
                 return context.run(task);
             } catch (Exception failure) {
-                if (isCancelled() || failure instanceof InterruptedException || failure instanceof CancellationException)
+                if (context.isCancelled() || failure instanceof InterruptedException || failure instanceof CancellationException)
                     throw failure;
                 return context.run(fallback);
             }

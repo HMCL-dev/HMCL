@@ -66,7 +66,7 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
         try {
             context.runAll(checks);
         } catch (Exception failure) {
-            if (isCancelled() || failure instanceof InterruptedException || failure instanceof CancellationException)
+            if (context.isCancelled() || failure instanceof InterruptedException || failure instanceof CancellationException)
                 throw failure;
             // Other add-ons can still contribute updates after a failed check.
         }

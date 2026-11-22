@@ -67,7 +67,7 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
                 writeArchive(zip, path -> !output.equals(runDirectory.resolve(path))
                         && Modpack.acceptFile(path, exclusions, info.getWhitelist()));
             }
-            if (isCancelled())
+            if (context.isCancelled())
                 throw new CancellationException();
             try {
                 Files.move(temporary, output, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);

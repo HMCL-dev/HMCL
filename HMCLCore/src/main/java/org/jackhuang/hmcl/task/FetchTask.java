@@ -116,8 +116,8 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
 
                 try {
                     if (NetworkUtils.isHttpUri(url))
-                        return downloadHttp(url, retry, connectTimeout, readTimeout, checkETag);
-                    return downloadNotHttp(url, retry, connectTimeout, readTimeout);
+                        return downloadHttp(execution, url, retry, connectTimeout, readTimeout, checkETag);
+                    return downloadNotHttp(execution, url, retry, connectTimeout, readTimeout);
                 } catch (DownloadException e) {
                     if (exceptions == null)
                         exceptions = new ArrayList<>();
@@ -238,7 +238,8 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
         }
     }
 
-    private void download(Context<T> context,
+    /// Copies the decoded response to the sink, closing the input and reporting cancellation as an interruption.
+    private void download(TaskExecutionContext execution, Context<T> context,
                           @Nullable FetchTask.HttpResumeContext resume, InputStream inputStream,
                           long contentLength,
                           ContentEncoding contentEncoding) throws IOException, InterruptedException {
@@ -247,7 +248,7 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
             long lastDownloaded = 0L;
             byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
             while (true) {
-                if (isCancelled()) break;
+                if (execution.isCancelled()) break;
 
                 int len = input.read(buffer);
                 if (len == -1) break;
@@ -271,7 +272,7 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
                 lastDownloaded = counter.downloaded;
             }
 
-            if (isCancelled())
+            if (execution.isCancelled())
                 throw new InterruptedException();
 
             updateDownloadSpeed(counter.downloaded - lastDownloaded);
@@ -282,7 +283,8 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
     }
 
     /// Downloads an HTTP candidate, following HTTP(S) redirects and retrying recoverable failures.
-    private T downloadHttp(WebURL url, int retry, Duration connectTimeout, Duration readTimeout, boolean checkETag) throws DownloadException, InterruptedException {
+    private T downloadHttp(TaskExecutionContext execution, WebURL url, int retry, Duration connectTimeout,
+                           Duration readTimeout, boolean checkETag) throws DownloadException, InterruptedException {
         if (checkETag) {
             // Handle cache
             try {
@@ -303,7 +305,7 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
         boolean useCachedResult = true;
         try {
             for (int attempts = 0, attemptsLimit = retry + 1; attempts < attemptsLimit; attempts++) {
-                if (isCancelled()) {
+                if (execution.isCancelled()) {
                     throw new InterruptedException();
                 }
 
@@ -441,7 +443,7 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
 
                         try {
                             inputStream = connection.getInputStream();
-                            download(context,
+                            download(execution, context,
                                     resumeContext, inputStream,
                                     contentLength,
                                     contentEncoding);
@@ -504,10 +506,11 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
     }
 
     /// Downloads a non-HTTP candidate through its installed URL handler, retrying I/O failures.
-    private T downloadNotHttp(WebURL url, int retry, Duration connectTimeout, Duration readTimeout) throws DownloadException, InterruptedException {
+    private T downloadNotHttp(TaskExecutionContext execution, WebURL url, int retry, Duration connectTimeout,
+                              Duration readTimeout) throws DownloadException, InterruptedException {
         @Nullable ArrayList<Exception> exceptions = null;
         for (int attempts = 0, attemptsLimit = retry + 1; attempts < attemptsLimit; attempts++) {
-            if (isCancelled()) {
+            if (execution.isCancelled()) {
                 throw new InterruptedException();
             }
 
@@ -519,7 +522,7 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
                 conn.setConnectTimeout((int) connectTimeout.toMillis());
                 conn.setReadTimeout((int) readTimeout.toMillis());
                 try (Context<T> context = getContext(null, false, null)) {
-                    download(context,
+                    download(execution, context,
                             null, conn.getInputStream(),
                             conn.getContentLengthLong(),
                             ContentEncoding.fromConnection(conn));

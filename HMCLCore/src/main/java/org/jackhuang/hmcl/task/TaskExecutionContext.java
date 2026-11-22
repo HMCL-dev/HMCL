@@ -20,6 +20,10 @@ import java.util.concurrent.Executor;
 /// branches and must not hold resources that their children need to complete.
 @NotNullByDefault
 public interface TaskExecutionContext {
+    /// Returns true if cancellation has been requested for this task tree or the calling thread
+    /// is interrupted. This method preserves the thread's interrupted status.
+    boolean isCancelled();
+
     /// Runs a child to completion and returns its published result.
     ///
     /// @throws Exception if the child fails or execution is cancelled or interrupted

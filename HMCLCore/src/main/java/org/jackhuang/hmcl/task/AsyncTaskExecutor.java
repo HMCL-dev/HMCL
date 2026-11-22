@@ -129,7 +129,6 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         T result;
         try {
             checkCancellation();
-            task.setCancelled(this::isCancelled);
             task.setState(Task.TaskState.READY);
             if (task.getStage() != null)
                 task.setInheritedStage(task.getStage());
@@ -202,9 +201,14 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         return previous == null || next instanceof Error && !(previous instanceof Error) ? next : previous;
     }
 
+    /// Returns whether this task tree was cancelled or the calling thread is interrupted.
+    private boolean isCancelledOrInterrupted() {
+        return isCancelled() || Thread.currentThread().isInterrupted();
+    }
+
     /// Throws when cancellation has been requested or the current worker is interrupted.
     private void checkCancellation() {
-        if (isCancelled() || Thread.currentThread().isInterrupted())
+        if (isCancelledOrInterrupted())
             throw new CancellationException("Cancelled by user");
     }
 
@@ -221,6 +225,11 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         Context(Task<?> task, Executor executor) {
             this.task = task;
             this.executor = executor;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return isCancelledOrInterrupted();
         }
 
         @Override

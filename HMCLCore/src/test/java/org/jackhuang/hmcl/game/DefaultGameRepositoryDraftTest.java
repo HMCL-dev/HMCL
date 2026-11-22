@@ -77,6 +77,12 @@ public final class DefaultGameRepositoryDraftTest {
                 new ModpackConfiguration<>(old, "Server", "pack", "1", List.of()));
         IOException failure = new IOException("File download failed");
         TaskExecutionContext context = new TaskExecutionContext() {
+            /// Reports interruption of the test thread.
+            @Override
+            public boolean isCancelled() {
+                return Thread.currentThread().isInterrupted();
+            }
+
             /// Supplies the remote manifest without opening a connection.
             @Override
             @SuppressWarnings("unchecked")

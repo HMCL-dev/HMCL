@@ -125,19 +125,28 @@ final class TaskExecutionContextTest {
         assertSame(Thread.currentThread(), task(Runnable::run, context -> context.run(composed)).run());
     }
 
-    /// Cancellation permits a running wrapper to clean up on the requested callback executor.
+    /// A cancellation request reaches parent and child contexts and permits cleanup on the callback executor.
     @Test
     void cleanupAfterCancellation() throws Exception {
         CountDownLatch entered = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
         AtomicInteger cleanups = new AtomicInteger();
         CompletableFuture<Boolean> stopped = new CompletableFuture<>();
-        Task<@Nullable Void> child = task(context -> {
+        Task<@Nullable Void> child = task(Schedulers.io(), context -> {
+            assertFalse(context.isCancelled());
             entered.countDown();
             assertTrue(release.await(10, TimeUnit.SECONDS));
+            assertTrue(context.isCancelled());
             return null;
         });
-        Task<?> root = child.whenComplete(cause -> {
+        Task<?> root = task(parent -> {
+            assertFalse(parent.isCancelled());
+            try {
+                return parent.run(child);
+            } finally {
+                assertTrue(parent.isCancelled());
+            }
+        }).whenComplete(cause -> {
             assertInstanceOf(CancellationException.class, cause);
             cleanups.incrementAndGet();
         });
@@ -157,6 +166,21 @@ final class TaskExecutionContextTest {
         assertFalse(stopped.get(10, TimeUnit.SECONDS));
         assertEquals(1, cleanups.get());
         assertInstanceOf(CancellationException.class, root.getException());
+    }
+
+    /// Querying cancellation observes the worker's interrupt status and leaves it set.
+    @Test
+    void observesInterruptionWithoutClearingIt() throws Exception {
+        task(context -> {
+            Thread.currentThread().interrupt();
+            try {
+                assertTrue(context.isCancelled());
+                assertTrue(Thread.currentThread().isInterrupted());
+            } finally {
+                Thread.interrupted();
+            }
+            return null;
+        }).run();
     }
 
     /// A failed sibling does not prevent concurrent work from completing before the batch returns.

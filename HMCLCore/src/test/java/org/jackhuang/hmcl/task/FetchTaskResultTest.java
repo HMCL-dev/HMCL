@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -119,5 +120,32 @@ class FetchTaskResultTest {
         assertEquals("previous", Files.readString(destination));
         assertEquals(1, temporaryFiles.size());
         assertFalse(Files.exists(temporaryFiles.get(0)));
+    }
+
+    /// Cancelling during a transfer preserves the destination and skips the remaining attempts.
+    @Test
+    void cancellationDuringTransferStopsRetries(@TempDir Path directory) throws IOException {
+        Path source = Files.writeString(directory.resolve("source"), "new contents");
+        Path destination = Files.writeString(directory.resolve("destination"), "previous");
+        var candidate = new DownloadCandidate(WebURL.parse(source.toUri().toString()), null, 2, null, null);
+        AtomicInteger attempts = new AtomicInteger();
+        var download = new FileDownloadTask(DownloadCandidates.of(candidate), destination) {
+            /// The execution cancelled after the transfer starts writing.
+            final TaskExecutor execution = executor();
+
+            /// Counts each attempt and requests cancellation when bytes have reached the sink.
+            @Override
+            protected void updateProgress(double progress) {
+                if (progress == 0)
+                    attempts.incrementAndGet();
+                else
+                    execution.cancel();
+            }
+        };
+
+        assertFalse(download.execution.test());
+        assertInstanceOf(CancellationException.class, download.getException());
+        assertEquals(1, attempts.get());
+        assertEquals("previous", Files.readString(destination));
     }
 }
