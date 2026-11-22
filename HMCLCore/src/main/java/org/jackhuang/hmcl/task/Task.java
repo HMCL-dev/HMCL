@@ -556,7 +556,11 @@ public abstract class Task<T extends @Nullable Object> {
     /// The wrapper takes an immutable snapshot of the hints.
     public Task<T> withStageHints(List<TaskStage.Hint> hints) {
         @Unmodifiable List<TaskStage.Hint> rows = List.copyOf(hints);
-        return new Task<T>() {
+        return new Task<>() {
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
             /// Returns the stage rows supplied to the wrapper.
             @Override
             public @Unmodifiable List<TaskStage.Hint> getStageHints() {
@@ -568,7 +572,7 @@ public abstract class Task<T extends @Nullable Object> {
             public T execute(TaskExecutionContext context) throws Exception {
                 return context.run(Task.this);
             }
-        }.setSignificance(TaskSignificance.MODERATE);
+        };
     }
 
     /// Returns a wrapper that reports one completed item in its inherited stage after this task succeeds.
