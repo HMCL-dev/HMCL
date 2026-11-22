@@ -228,8 +228,16 @@ final class TaskExecutionContextTest {
             return "first";
         });
         Task<@Nullable String> second = Task.completed(null);
-        second.onDone().register(event -> released.countDown());
-        assertEquals(Arrays.asList("first", null), Task.allOf(first, second).run());
+        Task<List<@Nullable String>> batch = Task.allOf(first, second);
+        assertTrue(batch.executor(new TaskListener() {
+            /// Releases the first child after the second child's result has been published.
+            @Override
+            public void onFinished(Task<?> task) {
+                if (task == second)
+                    released.countDown();
+            }
+        }).test());
+        assertEquals(Arrays.asList("first", null), batch.getResult());
         assertTrue(Task.allOf().run().isEmpty());
     }
 
@@ -282,14 +290,17 @@ final class TaskExecutionContextTest {
     void observersSeeTerminalStateOnce() {
         Task<Integer> root = task(context -> 42);
         AtomicInteger completions = new AtomicInteger();
-        root.onDone().register(event -> {
-            assertFalse(event.isFailed());
-            assertEquals(Task.TaskState.SUCCEEDED, root.getState());
-            assertEquals(42, root.getResult());
-            completions.incrementAndGet();
-            throw new IllegalStateException("Observer failed");
-        });
-        assertTrue(root.test());
+        assertTrue(root.executor(new TaskListener() {
+            /// Observes the published state and result, then exercises listener failure isolation.
+            @Override
+            public void onFinished(Task<?> task) {
+                assertSame(root, task);
+                assertEquals(Task.TaskState.SUCCEEDED, task.getState());
+                assertEquals(42, task.getResult());
+                completions.incrementAndGet();
+                throw new IllegalStateException("Observer failed");
+            }
+        }).test());
         assertEquals(1, completions.get());
         assertNull(root.getException());
     }

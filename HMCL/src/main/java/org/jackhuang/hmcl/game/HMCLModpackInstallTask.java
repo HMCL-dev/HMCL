@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -32,7 +31,6 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
     /// Existing instance selecting update mode, or `null` for a new installation.
     private final @Nullable DefaultGameInstance updateTarget;
 
-    private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependency;
     private final Modpack modpack;
     /// The tasks that install the instance and prepare its modpack files.
@@ -83,7 +81,6 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
             Modpack modpack,
             GameInstanceID instanceId,
             @Nullable DefaultGameInstance updateTarget) {
-        this.repository = repository;
         this.dependency = repository.getDependency();
         this.zipFile = zipFile;
         this.instanceId = instanceId;
@@ -109,33 +106,23 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
         } catch (JsonParseException | IOException ignore) {
         }
 
-        onDone().register(event -> {
-            if (this.updateTarget == null && event.isFailed()) {
-                repository.removeInstanceFromDisk(this.instanceId);
-            }
-        });
-
         preparation.add(new ModpackInstallTask<>(zipFile, run, List.of("/minecraft"), it -> !"pack.json".equals(it), config));
         preparation.add(new MinecraftInstanceTask<>(zipFile, List.of("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(this.instanceId)).withStage("hmcl.modpack"));
     }
 
-    /// Reads the legacy pack manifest and schedules one builder for all recognized components.
+    /// Reserves the target before extracting the pack and installs its recognized components.
     ///
     /// The pack manifest is used only for component detection. The builder creates a new
     /// patch-structured manifest instead of attempting to mutate the legacy flattened manifest.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        context.runAll(preparation);
-        String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
-        GameInstanceManifest originalManifest = JsonUtils.fromNonNullJson(json, GameInstanceManifest.class)
-                .withId(instanceId)
-                .withJar(null);
-        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(originalManifest, null);
-
-        Task<?> install;
-        try (GameBuilder builder = updateTarget == null
-                ? dependency.newGameBuilder(instanceId)
-                : dependency.newGameBuilder(updateTarget)) {
+        Modpack.installWithGameBuilder(dependency, instanceId, updateTarget, false, builder -> {
+            context.runAll(preparation);
+            String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
+            GameInstanceManifest originalManifest = JsonUtils.fromNonNullJson(json, GameInstanceManifest.class)
+                    .withId(instanceId)
+                    .withJar(null);
+            GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(originalManifest, null);
             builder.enableIsolation();
 
             String gameVersion = modpack.getGameVersion();
@@ -156,9 +143,8 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
                     builder.component(mark.componentType(), componentVersion);
                 }
             }
-            install = builder.buildAsync();
-        }
-        context.run(install);
+            context.run(builder.buildAsync());
+        });
         return null;
     }
 

@@ -25,8 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.util.*;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import java.util.concurrent.CancellationException;
 
 /// A task transforming MultiMC Modpack Scheme to Official Launcher Scheme.
 /// The transforming process contains 7 stage:
@@ -60,12 +59,6 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
     /// Previous modpack configuration when updating, or `null` for a new installation.
     private final @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config;
-
-    /// The repository transaction that owns a newly created instance root until publication.
-    private @Nullable DefaultGameRepositoryDraft draft;
-
-    /// Whether this task successfully reserved a previously absent instance in its draft.
-    private boolean newInstallationReserved;
 
     /// Creates a MultiMC modpack installation task.
     ///
@@ -142,40 +135,10 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         } catch (JsonParseException | IOException ignore) {
         }
         this.config = config;
-
-        onDone().register(event -> {
-            abortOpenDraft();
-            if (event.isFailed() && newInstallationReserved)
-                repository.removeInstanceFromDisk(instanceId);
-        });
     }
 
-    /// Reserves the instance in a repository draft and prepares extraction and patch tasks.
+    /// Prepares the extraction tasks and returns the task that assembles the pack's patches.
     private MMCInstancePatchesAssembleTask prepareInstallation(List<Task<?>> preparation) throws Exception {
-        DefaultGameRepositoryDraft openedDraft = repository.openDraft();
-        draft = openedDraft;
-        try {
-            // Construction fixes the mode; the captured snapshot only verifies that it is still valid.
-            boolean targetExists = openedDraft.getBaseSnapshot().hasInstance(instanceId);
-            if (this.updateTarget == null && targetExists) {
-                throw new IllegalStateException("Game instance already exists: " + instanceId);
-            }
-            if (this.updateTarget != null && !targetExists) {
-                throw new IllegalStateException("Game instance no longer exists: " + instanceId);
-            }
-
-            openedDraft.put(new GameInstanceManifest(instanceId));
-            newInstallationReserved = this.updateTarget == null;
-        } catch (IOException | RuntimeException e) {
-            try {
-                openedDraft.abort();
-            } catch (IOException cleanupFailure) {
-                e.addSuppressed(cleanupFailure);
-            }
-            draft = null;
-            throw e;
-        }
-
         // Stage #0: General Setup
         {
             Path run = repository.getLayout().getInstanceRoot(instanceId);
@@ -273,9 +236,29 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         }
     }
 
-    /// Resolves the pack's patches, installs the game files and commits the instance.
+    /// Reserves the target before writing files and commits the installed manifest.
+    /// Closing an uncommitted draft removes files under a newly reserved instance root.
     @Override
     public MultiMCInstancePatch.ResolvedInstance execute(TaskExecutionContext context) throws Exception {
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            boolean targetExists = draft.getBaseSnapshot().hasInstance(instanceId);
+            if (updateTarget == null && targetExists)
+                throw new IllegalStateException("Game instance already exists: " + instanceId);
+            if (updateTarget != null && !targetExists)
+                throw new IllegalStateException("Game instance no longer exists: " + instanceId);
+
+            draft.put(new GameInstanceManifest(instanceId));
+            MultiMCInstancePatch.ResolvedInstance artifact = install(context);
+            if (isCancelled())
+                throw new CancellationException();
+            draft.put(artifact.getManifest());
+            draft.commit();
+            return artifact;
+        }
+    }
+
+    /// Resolves the pack's patches and installs its files under the reserved instance root.
+    private MultiMCInstancePatch.ResolvedInstance install(TaskExecutionContext context) throws Exception {
         List<Task<?>> preparation = new ArrayList<>();
         MMCInstancePatchesAssembleTask patches = prepareInstallation(preparation);
         preparation.add(patches);
@@ -326,8 +309,6 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         // Stage #5: Assemble game files.
         {
             GameInstanceManifest instanceManifest = artifact.getManifest();
-            requireDraft().put(instanceManifest);
-
             dependencies.add(new GameAssetDownloadTask(dependencyManager, instanceManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true));
             dependencies.add(new GameLibrariesTask(
                     dependencyManager,
@@ -360,7 +341,6 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             }
         }
 
-        requireDraft().commit();
         return artifact;
     }
 
@@ -377,31 +357,6 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
         Path manifestFile = updateTarget.getManifestFile();
         return manifestFile.resolveSibling(FileUtils.getNameWithoutExtension(manifestFile) + ".jar");
-    }
-
-    /// Returns the open draft associated with this task.
-    ///
-    /// @return the open draft
-    /// @throws IllegalStateException if the task has not reserved a draft or already released it
-    private DefaultGameRepositoryDraft requireDraft() {
-        @Nullable DefaultGameRepositoryDraft currentDraft = draft;
-        if (currentDraft == null || !currentDraft.isOpen()) {
-            throw new IllegalStateException("MultiMC installation draft is not open");
-        }
-        return currentDraft;
-    }
-
-    /// Aborts the task's draft when execution ends before commit.
-    private void abortOpenDraft() {
-        @Nullable DefaultGameRepositoryDraft currentDraft = draft;
-        if (currentDraft == null || !currentDraft.isOpen()) {
-            return;
-        }
-        try {
-            currentDraft.abort();
-        } catch (IOException e) {
-            LOG.warning("Failed to abort MultiMC installation draft for " + instanceId, e);
-        }
     }
 
     private FileSystem openModpack() throws IOException {

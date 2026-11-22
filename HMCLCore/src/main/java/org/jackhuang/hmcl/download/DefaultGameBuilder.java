@@ -48,6 +48,9 @@ public class DefaultGameBuilder extends GameBuilder {
     /// Whether ownership of [#draft] has been transferred to the task returned by [#buildAsync()].
     private boolean draftTransferred;
 
+    /// Published manifest identifying a new installation that this builder can still roll back.
+    private @Nullable GameInstanceManifest committedManifest;
+
     /// Whether instance isolation was requested for this build.
     protected boolean isolationEnabled;
 
@@ -159,6 +162,8 @@ public class DefaultGameBuilder extends GameBuilder {
                                     draft.put(resolved.withPatches(manifest.patches()));
                                     draft.putPrimaryJar(instanceId, minecraftJar);
                                     DefaultGameInstance instance = draft.commit().getInstance(instanceId);
+                                    if (updateTarget == null)
+                                        committedManifest = instance.getManifest();
                                     onInstanceCommitted(instance);
                                     return instance;
                                 });
@@ -206,6 +211,27 @@ public class DefaultGameBuilder extends GameBuilder {
     public void abort() throws IOException {
         if (draft.isOpen()) {
             draft.abort();
+        }
+    }
+
+    /// Aborts an open draft and removes a new instance this builder has already published if its
+    /// stored manifest is still current. Updates and subsequently replaced instances are retained.
+    /// All work using this builder or writing the target instance must have stopped before this call.
+    ///
+    /// @throws IOException if the draft cannot be aborted or the new instance cannot be removed
+    /// @throws IllegalStateException if another draft prevents removal of the committed instance
+    public void rollback() throws IOException {
+        abort();
+        if (committedManifest == null)
+            return;
+
+        try (DefaultGameRepositoryDraft removal = dependencyManager.getGameRepository().openDraft()) {
+            @Nullable DefaultGameInstance current = removal.getBaseSnapshot().findInstance(instanceId);
+            if (current != null && current.getManifest() == committedManifest) {
+                removal.remove(instanceId);
+                removal.commit();
+            }
+            committedManifest = null;
         }
     }
 

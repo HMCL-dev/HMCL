@@ -124,7 +124,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         return work;
     }
 
-    /// Executes the body and publishes its result before delivering successful completion events.
+    /// Executes the body and publishes its result before notifying listeners of success.
     private <T extends @Nullable Object> T execute(@Nullable Context parent, Task<T> task, Executor executor) throws Exception {
         T result;
         try {
@@ -158,7 +158,6 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
         task.publishResult(result);
         task.setState(Task.TaskState.SUCCEEDED);
-        notifySafely(() -> task.fireDoneEvent(this, false));
         notifyListeners(listener -> listener.onFinished(task));
         if (task.getSignificance().shouldLog())
             LOG.trace("Task finished: " + task.getName());
@@ -171,7 +170,6 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         task.setException(recorded);
         exception = recorded;
         task.setState(Task.TaskState.FAILED);
-        notifySafely(() -> task.fireDoneEvent(this, true));
         notifyListeners(listener -> listener.onFailed(task, cause));
     }
 

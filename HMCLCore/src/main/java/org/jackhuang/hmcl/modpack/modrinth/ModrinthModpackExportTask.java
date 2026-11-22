@@ -10,11 +10,8 @@ import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentType;
-import org.jackhuang.hmcl.modpack.ModAdviser;
-import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.modpack.ModpackExportTask;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -28,24 +25,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Exports one registered game instance as a Modrinth modpack archive.
 @NotNullByDefault
-public class ModrinthModpackExportTask extends Task<@Nullable Void> {
-    /// The fixed instance snapshot exported by this task.
-    private final DefaultGameInstance instance;
-
+public class ModrinthModpackExportTask extends ModpackExportTask {
     /// The mod manager associated with the exported instance.
     private final ModManager modManager;
-
-    /// The validated export configuration.
-    private final ModpackExportInfo info;
-
-    /// The archive written by this task.
-    private final Path modpackFile;
 
     /// Creates a Modrinth modpack export task.
     ///
@@ -53,20 +42,8 @@ public class ModrinthModpackExportTask extends Task<@Nullable Void> {
     /// @param info        the export configuration
     /// @param modpackFile the archive to write
     public ModrinthModpackExportTask(DefaultGameInstance instance, ModpackExportInfo info, Path modpackFile) {
-        this.instance = instance;
+        super(instance, info, modpackFile);
         this.modManager = instance.getModManager();
-        this.info = info.validate();
-        this.modpackFile = modpackFile;
-
-        onDone().register(event -> {
-            if (event.isFailed()) {
-                try {
-                    Files.deleteIfExists(modpackFile);
-                } catch (IOException e) {
-                    LOG.warning("Failed to delete modpack file: " + modpackFile, e);
-                }
-            }
-        });
     }
 
     /// Returns a remote-file manifest entry for a local file when one can be identified.
@@ -134,86 +111,78 @@ public class ModrinthModpackExportTask extends Task<@Nullable Void> {
 
     /// {@inheritDoc}
     @Override
-    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        var instanceId = instance.getId();
-        ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
-        blackList.add(instanceId + ".jar");
-        blackList.add(instanceId + ".json");
-        LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
-        try (var zip = new Zipper(modpackFile)) {
-            Path runDirectory = instance.getRunDirectory();
-            List<ModrinthManifest.File> files = new ArrayList<>();
-            Set<String> filesInManifest = new HashSet<>();
+    protected void writeArchive(Zipper zip, Predicate<String> include) throws IOException {
+        Path runDirectory = instance.getRunDirectory();
+        List<ModrinthManifest.File> files = new ArrayList<>();
+        Set<String> filesInManifest = new HashSet<>();
 
-            List<Path> resourceDirs = Stream.of("resourcepacks", "shaderpacks", "mods").map(runDirectory::resolve).filter(Files::exists).toList();
+        List<Path> resourceDirs = Stream.of("resourcepacks", "shaderpacks", "mods").map(runDirectory::resolve).filter(Files::exists).toList();
 
-            List<Path> paths = new ArrayList<>();
-            for (Path dir : resourceDirs) {
-                try (var stream = Files.walk(dir)) {
-                    paths.addAll(stream.filter(Files::isRegularFile).toList());
-                }
+        List<Path> paths = new ArrayList<>();
+        for (Path dir : resourceDirs) {
+            try (var stream = Files.walk(dir)) {
+                paths.addAll(stream.filter(Files::isRegularFile).toList());
             }
-
-            long current = 0;
-            for (var file : paths) {
-                updateProgress(0.5 * ++current / paths.size());
-                String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-
-                if (!info.getWhitelist().contains(relativePath)) {
-                    continue;
-                }
-
-                try {
-                    ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
-                    if (fileEntry != null) {
-                        files.add(fileEntry);
-                        filesInManifest.add(relativePath);
-                    }
-                } catch (IOException e) {
-                    LOG.warning("Failed to process file: " + file, e);
-                }
-            }
-
-            zip.putDirectoryProgressed(runDirectory, "client-overrides", path -> {
-                String relativePath = path.replace(File.separatorChar, '/');
-                if (filesInManifest.contains(relativePath)) {
-                    return false;
-                }
-                return Modpack.acceptFile(path, blackList, info.getWhitelist());
-            }, progress -> updateProgress(0.5 + 0.5 * progress));
-
-            GameVersionNumber version = instance.getVersion();
-            if (version == GameVersionNumber.unknown()) {
-                throw new IOException("Cannot parse the version of " + instanceId);
-            }
-            String gameVersion = version.toString();
-            GameComponentAnalyzer analyzer = instance.getAnalyzer();
-
-            Map<String, String> dependencies = new HashMap<>();
-            dependencies.put("minecraft", gameVersion);
-
-            Optional.ofNullable(analyzer.getVersion(GameComponentType.FORGE)).ifPresent(forgeVersion ->
-                    dependencies.put("forge", forgeVersion));
-            Optional.ofNullable(analyzer.getVersion(GameComponentType.NEO_FORGE)).ifPresent(neoForgeVersion ->
-                    dependencies.put("neoforge", neoForgeVersion));
-            Optional.ofNullable(analyzer.getVersion(GameComponentType.FABRIC)).ifPresent(fabricVersion ->
-                    dependencies.put("fabric-loader", fabricVersion));
-            Optional.ofNullable(analyzer.getVersion(GameComponentType.QUILT)).ifPresent(quiltVersion ->
-                    dependencies.put("quilt-loader", quiltVersion));
-
-            ModrinthManifest manifest = new ModrinthManifest(
-                    "minecraft",
-                    1,
-                    info.getVersion(),
-                    info.getName(),
-                    info.getDescription(),
-                    files,
-                    dependencies
-            );
-
-            zip.putTextFile(JsonUtils.GSON.toJson(manifest), "modrinth.index.json");
         }
-        return null;
+
+        long current = 0;
+        for (var file : paths) {
+            updateProgress(0.5 * ++current / paths.size());
+            String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+
+            if (!info.getWhitelist().contains(relativePath) || !include.test(relativePath)) {
+                continue;
+            }
+
+            try {
+                @Nullable ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
+                if (fileEntry != null) {
+                    files.add(fileEntry);
+                    filesInManifest.add(relativePath);
+                }
+            } catch (IOException e) {
+                LOG.warning("Failed to process file: " + file, e);
+            }
+        }
+
+        zip.putDirectoryProgressed(runDirectory, "client-overrides", path -> {
+            String relativePath = path.replace(File.separatorChar, '/');
+            if (filesInManifest.contains(relativePath)) {
+                return false;
+            }
+            return include.test(path);
+        }, progress -> updateProgress(0.5 + 0.5 * progress));
+
+        GameVersionNumber version = instance.getVersion();
+        if (version == GameVersionNumber.unknown()) {
+            throw new IOException("Cannot parse the version of " + instance.getId());
+        }
+        String gameVersion = version.toString();
+        GameComponentAnalyzer analyzer = instance.getAnalyzer();
+
+        Map<String, String> dependencies = new HashMap<>();
+        dependencies.put("minecraft", gameVersion);
+
+        Optional.ofNullable(analyzer.getVersion(GameComponentType.FORGE)).ifPresent(forgeVersion ->
+                dependencies.put("forge", forgeVersion));
+        Optional.ofNullable(analyzer.getVersion(GameComponentType.NEO_FORGE)).ifPresent(neoForgeVersion ->
+                dependencies.put("neoforge", neoForgeVersion));
+        Optional.ofNullable(analyzer.getVersion(GameComponentType.FABRIC)).ifPresent(fabricVersion ->
+                dependencies.put("fabric-loader", fabricVersion));
+        Optional.ofNullable(analyzer.getVersion(GameComponentType.QUILT)).ifPresent(quiltVersion ->
+                dependencies.put("quilt-loader", quiltVersion));
+
+        ModrinthManifest manifest = new ModrinthManifest(
+                "minecraft",
+                1,
+                info.getVersion(),
+                info.getName(),
+                info.getDescription(),
+                files,
+                dependencies
+        );
+
+        zip.putTextFile(JsonUtils.GSON.toJson(manifest), "modrinth.index.json");
     }
 
     /// Export options supported by the Modrinth format.

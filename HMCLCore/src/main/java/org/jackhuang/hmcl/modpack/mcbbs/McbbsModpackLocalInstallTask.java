@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -34,9 +33,8 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
     /// Existing instance selecting update mode, or `null` for a new installation.
     private final @Nullable DefaultGameInstance updateTarget;
     private final DefaultGameRepository repository;
-    private final MinecraftInstanceTask<McbbsModpackManifest> instanceTask;
-    /// The tasks that install the instance and prepare its modpack files.
-    private final List<Task<?>> preparation = new ArrayList<>(4);
+    /// Previously installed configuration, or `null` if unavailable.
+    private final @Nullable ModpackConfiguration<McbbsModpackManifest> config;
 
     /// Creates a task that installs a new MCBBS modpack instance.
     ///
@@ -45,8 +43,6 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
     /// @param modpack           the parsed modpack metadata
     /// @param manifest          the MCBBS manifest
     /// @param instanceId        the id of the new instance
-    /// @throws IllegalStateException if the target cannot be reserved or another repository draft
-    ///                               is open
     public McbbsModpackLocalInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -65,8 +61,6 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
     /// @param instance          the existing instance to update
     /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
-    /// @throws IllegalStateException    if `instance` is not the exact currently published object
-    ///                                  or another repository draft is open
     public McbbsModpackLocalInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -85,8 +79,6 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
     /// @param instanceId        the target instance id
     /// @param updateTarget      the existing instance selecting update mode, or `null` for install
     /// @throws IllegalArgumentException if an update target has no compatible configuration
-    /// @throws IllegalStateException    if the target cannot be reserved, an update target is not
-    ///                                  the exact published object, or another draft is open
     private McbbsModpackLocalInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -100,8 +92,9 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
         this.manifest = manifest;
         this.instanceId = instanceId;
         this.updateTarget = updateTarget;
+        if (updateTarget != null)
+            dependencyManager.validateGameInstance(updateTarget);
         this.repository = dependencyManager.getGameRepository();
-        Path run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
         if (this.updateTarget != null && Files.notExists(json))
@@ -117,54 +110,58 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
             }
         } catch (JsonParseException | IOException ignore) {
         }
-
-        onDone().register(event -> {
-            if (this.updateTarget == null && event.isFailed())
-                repository.removeInstanceFromDisk(instanceId);
-        });
-
-        preparation.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
-        instanceTask = new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, McbbsModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId));
-        preparation.add(instanceTask.withStage("hmcl.modpack"));
-
-        try (GameBuilder builder = this.updateTarget == null
-                ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(this.updateTarget)) {
-            builder.enableIsolation();
-            for (McbbsModpackManifest.Addon addon : manifest.getAddons()) {
-                @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
-                if (componentType != null)
-                    builder.component(componentType, addon.getVersion());
-            }
-            preparation.add(0, builder.buildAsync());
-        }
+        this.config = config;
     }
 
     /// Installs the instance, updates its patch and completes the modpack files.
+    ///
+    /// @throws IllegalStateException if the target cannot be reserved or an update target
+    ///                               is no longer the exact published instance
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        context.runAll(preparation);
-        List<Task<?>> dependencies = new ArrayList<>(2);
-        GameInstanceManifest instanceManifest = repository.getInstanceManifest(instanceId);
-        Optional<GameInstancePatch> mcbbsPatch = instanceManifest.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.id())).findFirst();
+        Modpack.installWithGameBuilder(dependencyManager, instanceId, updateTarget, false, builder -> install(context, builder));
+        return null;
+    }
+
+    /// Installs the MCBBS pack into the target reserved by the builder.
+    private void install(TaskExecutionContext context, GameBuilder builder) throws Exception {
+        builder.enableIsolation();
+        for (McbbsModpackManifest.Addon addon : manifest.getAddons()) {
+            @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
+            if (componentType != null)
+                builder.component(componentType, addon.getVersion());
+        }
+        Task<?> game = builder.buildAsync();
+        Path run = repository.getLayout().getInstanceRoot(instanceId);
+        Task<?> overrides = new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack");
+        var instanceTask = new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, McbbsModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId));
+
+        context.runAll(List.of(overrides, instanceTask.withStage("hmcl.modpack")));
+        context.run(game);
+        DefaultGameInstance instance = repository.getInstance(instanceId);
+        GameInstanceManifest instanceManifest = instance.getManifest();
+        Task<?> completion = new McbbsModpackCompletionTask(dependencyManager, instance, instanceTask.getResult());
         if (this.updateTarget == null) {
+            // Keep the builder's published manifest current until file completion can no longer fail.
+            context.run(completion);
             GameInstancePatch patch = new GameInstancePatch(PATCH_NAME).withLibraries(manifest.getLibraries());
-            dependencies.add(repository.saveAsync(instanceManifest.addPatch(patch)));
-        } else if (mcbbsPatch.isPresent()) {
-            // This mcbbs modpack was installed by HMCL.
-            GameInstancePatch patch = mcbbsPatch.get().withLibraries(manifest.getLibraries());
-            dependencies.add(repository.saveAsync(instanceManifest.addPatch(patch)));
-        } else {
-            // This mcbbs modpack was installed by other launchers.
-            // TODO: maintain libraries.
+            try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+                if (draft.getBaseSnapshot().getInstance(instanceId).getManifest() != instanceManifest)
+                    throw new IllegalStateException("Game instance has changed: " + instanceId);
+                draft.put(instanceManifest.addPatch(patch));
+                draft.commit();
+            }
+            return;
         }
 
-        dependencies.add(new McbbsModpackCompletionTask(
-                dependencyManager,
-                repository.getInstance(instanceId),
-                instanceTask.getResult()));
-        context.runAll(dependencies);
-        return null;
+        Optional<GameInstancePatch> mcbbsPatch = instanceManifest.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.id())).findFirst();
+        if (mcbbsPatch.isPresent()) {
+            GameInstancePatch patch = mcbbsPatch.get().withLibraries(manifest.getLibraries());
+            context.runAll(List.of(repository.saveAsync(instanceManifest.addPatch(patch)), completion));
+        } else {
+            // Other launchers may manage the libraries outside the MCBBS patch.
+            context.run(completion);
+        }
     }
 
     private static final String PATCH_NAME = "mcbbs";

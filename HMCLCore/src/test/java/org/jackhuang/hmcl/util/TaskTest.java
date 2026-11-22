@@ -51,18 +51,12 @@ public class TaskTest {
 
     /// Checks the lifecycle events and recorded exceptions for one OOM task.
     private void assertOutOfMemoryErrorLifecycle(Task<?> task, OutOfMemoryError error) {
-        AtomicInteger doneCount = new AtomicInteger();
-        AtomicReference<@Nullable Boolean> doneFailed = new AtomicReference<>();
         AtomicInteger failedCount = new AtomicInteger();
         AtomicReference<@Nullable Throwable> failedThrowable = new AtomicReference<>();
         AtomicInteger stopCount = new AtomicInteger();
         AtomicReference<@Nullable Boolean> stopSuccess = new AtomicReference<>();
         AtomicReference<@Nullable Throwable> uncaught = new AtomicReference<>();
 
-        task.onDone().register(event -> {
-            doneCount.incrementAndGet();
-            doneFailed.set(event.isFailed());
-        });
         TaskExecutor executor = task.executor(new TaskListener() {
             @Override
             public void onFailed(Task<?> failedTask, Throwable throwable) {
@@ -85,8 +79,6 @@ public class TaskTest {
             Thread.setDefaultUncaughtExceptionHandler(previousHandler);
         }
 
-        assertEquals(1, doneCount.get());
-        assertEquals(Boolean.TRUE, doneFailed.get());
         assertEquals(1, failedCount.get());
         assertSame(error, failedThrowable.get());
         assertEquals(1, stopCount.get());

@@ -350,15 +350,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                         builder.enableIsolation();
                     }
 
-                    Task<?> buildTask = builder.buildAsync();
-                    buildTask.onDone().register(event -> {
-                        if (!event.isFailed()) {
-                            runInFX(() -> repository.setSelectedInstance(repository.getInstance(instanceId)));
-                        }
-                    });
-                    return buildTask;
+                    return builder.buildAsync();
                 }
-            });
+            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
         }
 
         @Override

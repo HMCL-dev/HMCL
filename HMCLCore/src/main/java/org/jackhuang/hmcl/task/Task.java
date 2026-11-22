@@ -6,7 +6,6 @@ import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.Result;
@@ -211,32 +210,6 @@ public abstract class Task<T extends @Nullable Object> {
     /// @throws Exception if execution cannot complete
     public abstract T execute(TaskExecutionContext context) throws Exception;
 
-    /// Lazily created event manager for terminal notifications.
-    private volatile @Nullable EventManager<TaskEvent> onDone;
-
-    /// Returns the event manager notified when this task succeeds or fails. A listener must
-    /// register before completion to observe the event.
-    public EventManager<TaskEvent> onDone() {
-        @Nullable EventManager<TaskEvent> onDone = this.onDone;
-        if (onDone == null) {
-            synchronized (this) {
-                onDone = this.onDone;
-                if (onDone == null) {
-                    this.onDone = onDone = new EventManager<>();
-                }
-            }
-        }
-
-        return onDone;
-    }
-
-    /// Fires a terminal event when the event manager has been requested.
-    void fireDoneEvent(Object source, boolean failed) {
-        @Nullable EventManager<TaskEvent> onDone = this.onDone;
-        if (onDone != null)
-            onDone.fireEvent(new TaskEvent(source, this, failed));
-    }
-
     /// JavaFX progress property, initially `-1` to indicate indeterminate progress.
     private final DoubleProperty progress = new SimpleDoubleProperty(this, "progress", -1);
 
@@ -273,7 +246,6 @@ public abstract class Task<T extends @Nullable Object> {
             lastUpdateProgressTime = now;
         }
     }
-
 
     /// Latest queued progress value, or `-1` when no JavaFX update is pending.
     @SuppressWarnings("FieldMayBeFinal")

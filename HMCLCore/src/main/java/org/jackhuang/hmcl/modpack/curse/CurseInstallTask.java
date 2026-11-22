@@ -51,14 +51,6 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
     /// Keys of optional files the user chose not to install; `null` or empty means install all.
     private final @Nullable Set<String> excludedFiles;
 
-    /// Validated extension of the scheduled icon download, or `null` when no icon is scheduled.
-    private @Nullable String iconExt;
-
-    /// Scheduled icon download corresponding to [#iconExt], or `null` when absent.
-    private @Nullable Task<Path> downloadIconTask;
-    /// The tasks that install the instance and prepare its modpack files.
-    private final List<Task<?>> preparation = new ArrayList<>(4);
-
     /// Creates a task that installs a new CurseForge modpack instance.
     ///
     /// @param dependencyManager the dependency manager for the target repository
@@ -69,8 +61,6 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
     /// @param iconUrl           the optional icon URL, or `null`
     /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
     ///                          install all files. When non-null, must not contain `null` elements.
-    /// @throws IllegalStateException if the target cannot be reserved or another repository draft
-    ///                               is open
     public CurseInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -94,8 +84,6 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
     ///                          install all files. When non-null, must not contain `null` elements.
     /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
-    /// @throws IllegalStateException    if `instance` is not the exact currently published object
-    ///                                  or another repository draft is open
     public CurseInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -119,8 +107,6 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
     /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
     ///                          install all files. When non-null, must not contain `null` elements.
     /// @throws IllegalArgumentException if an update target has no compatible configuration
-    /// @throws IllegalStateException    if the target cannot be reserved, an update target is not
-    ///                                  the exact published object, or another draft is open
     private CurseInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -136,6 +122,8 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
         this.manifest = manifest;
         this.instanceId = instanceId;
         this.updateTarget = updateTarget;
+        if (updateTarget != null)
+            dependencyManager.validateGameInstance(updateTarget);
         this.iconUrl = iconUrl;
         this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
         this.repository = dependencyManager.getGameRepository();
@@ -157,45 +145,6 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         this.config = config;
-
-        onDone().register(event -> {
-            @Nullable Exception ex = event.getTask().getException();
-            if (this.updateTarget == null && event.isFailed()) {
-                if (!(ex instanceof ModpackCompletionException)) {
-                    repository.removeInstanceFromDisk(instanceId);
-                }
-            }
-        });
-
-        preparation.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(manifest.overrides()), any -> true, config).withStage("hmcl.modpack"));
-        preparation.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
-
-        @Nullable WebURL iconUri = NetworkUtils.toWebURLOrNull(iconUrl);
-        if (iconUri != null) {
-            String ext = FileUtils.getExtension(StringUtils.substringAfter(iconUri.getPath(), '/')).toLowerCase(Locale.ROOT);
-            if (Modpack.SUPPORTED_ICON_EXTS.contains(ext)) {
-                iconExt = ext;
-                DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
-                preparation.add(downloadIconTask = new CacheFileTask(downloadProvider.getDownloadCandidates(iconUrl)));
-            }
-        }
-
-        try (GameBuilder builder = this.updateTarget == null
-                ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(this.updateTarget)) {
-            builder.enableIsolation()
-                    .component(GameComponentType.GAME, manifest.minecraft().gameVersion());
-            for (CurseManifestModLoader modLoader : manifest.minecraft().modLoaders()) {
-                if (modLoader.id().startsWith("forge-")) {
-                    builder.component(GameComponentType.FORGE, modLoader.id().substring("forge-".length()));
-                } else if (modLoader.id().startsWith("fabric-")) {
-                    builder.component(GameComponentType.FABRIC, modLoader.id().substring("fabric-".length()));
-                } else if (modLoader.id().startsWith("neoforge-")) {
-                    builder.component(GameComponentType.NEO_FORGE, modLoader.id().substring("neoforge-".length()));
-                }
-            }
-            preparation.add(0, builder.buildAsync());
-        }
     }
 
     private Set<String> getNewOverridesMods() throws IOException {
@@ -222,9 +171,48 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
     }
 
     /// Installs the instance and downloads the missing CurseForge files.
+    ///
+    /// @throws IllegalStateException if the target cannot be reserved or an update target
+    ///                               is no longer the exact published instance
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        Modpack.installWithGameBuilder(dependencyManager, instanceId, updateTarget, true, builder -> install(context, builder));
+        return null;
+    }
+
+    /// Installs the CurseForge pack into the target reserved by the builder.
+    private void install(TaskExecutionContext context, GameBuilder builder) throws Exception {
+        builder.enableIsolation()
+                .component(GameComponentType.GAME, manifest.minecraft().gameVersion());
+        for (CurseManifestModLoader modLoader : manifest.minecraft().modLoaders()) {
+            if (modLoader.id().startsWith("forge-")) {
+                builder.component(GameComponentType.FORGE, modLoader.id().substring("forge-".length()));
+            } else if (modLoader.id().startsWith("fabric-")) {
+                builder.component(GameComponentType.FABRIC, modLoader.id().substring("fabric-".length()));
+            } else if (modLoader.id().startsWith("neoforge-")) {
+                builder.component(GameComponentType.NEO_FORGE, modLoader.id().substring("neoforge-".length()));
+            }
+        }
+        Task<?> game = builder.buildAsync();
+        List<Task<?>> preparation = new ArrayList<>(4);
+        preparation.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(manifest.overrides()), any -> true, config).withStage("hmcl.modpack"));
+        preparation.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+
+        @Nullable String iconExtension = null;
+        @Nullable Task<Path> iconTask = null;
+        @Nullable WebURL iconUri = NetworkUtils.toWebURLOrNull(iconUrl);
+        if (iconUri != null) {
+            String ext = FileUtils.getExtension(StringUtils.substringAfter(iconUri.getPath(), '/')).toLowerCase(Locale.ROOT);
+            if (Modpack.SUPPORTED_ICON_EXTS.contains(ext)) {
+                iconExtension = ext;
+                DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+                iconTask = new CacheFileTask(downloadProvider.getDownloadCandidates(iconUrl));
+                preparation.add(iconTask);
+            }
+        }
+
         context.runAll(preparation);
+        context.run(game);
         if (config != null) {
             Set<String> newOverridesMods = getNewOverridesMods();
             Set<CurseManifestFile> newManifestFiles = manifest.files() != null ? new HashSet<>(manifest.files()) : Collections.emptySet();
@@ -262,8 +250,6 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
         Files.createDirectories(root);
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), manifest);
 
-        @Nullable String iconExtension = iconExt;
-        @Nullable Task<Path> iconTask = downloadIconTask;
         if (iconExtension != null
                 && iconTask != null
                 && Modpack.SUPPORTED_ICON_NAMES.stream().map(root::resolve).allMatch(Files::notExists)) {
@@ -276,6 +262,5 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
 
         // The game builder publishes the instance before file completion starts.
         context.run(new CurseCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest, excludedFiles));
-        return null;
     }
 }

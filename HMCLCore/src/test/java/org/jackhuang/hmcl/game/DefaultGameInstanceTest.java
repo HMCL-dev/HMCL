@@ -9,16 +9,23 @@ import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
 import org.jackhuang.hmcl.modpack.Modpack;
+import org.jackhuang.hmcl.modpack.ModpackExportInfo;
+import org.jackhuang.hmcl.modpack.ModpackExportTask;
 import org.jackhuang.hmcl.modpack.ModpackUpdateTask;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
+import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -34,12 +41,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -49,6 +59,68 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// Tests snapshot-bound behavior of [DefaultGameInstance].
 @NotNullByDefault
 public final class DefaultGameInstanceTest {
+
+    /// Failing exports preserve prior output. A successful retry replaces it and excludes the
+    /// archive and its staging file from the exported instance files.
+    @Test
+    public void testModpackExportReplacesOnlyCompletedArchive(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceManifest manifest = new GameInstanceManifest(id);
+        Path output = Files.writeString(tempDirectory.resolve("export.zip"), "previous archive");
+        Files.writeString(tempDirectory.resolve("example.txt"), "content");
+        Task<?> failing = serverExport(repository.publish(id, manifest), output);
+        assertThrows(IOException.class, failing::run);
+        assertEquals("previous archive", Files.readString(output));
+        try (var paths = Files.list(tempDirectory)) {
+            assertTrue(paths.noneMatch(path -> path.getFileName().toString().startsWith(".hmcl-export-")));
+        }
+
+        writeVersionJar(repository.getLayout().getInstanceJarFile(id), "1.20.1");
+        serverExport(repository.publish(id, manifest), output).run();
+        try (ZipFile zip = new ZipFile(output.toFile())) {
+            assertTrue(zip.stream().anyMatch(entry -> entry.getName().equals("overrides/example.txt")));
+            assertTrue(zip.stream().anyMatch(entry -> entry.getName().equals("server-manifest.json")));
+            assertNull(zip.getEntry("overrides/export.zip"));
+            assertTrue(zip.stream().noneMatch(entry -> entry.getName().contains(".hmcl-export-")));
+        }
+    }
+
+    /// Cancellation after the last archive entry is written preserves the original output
+    /// and removes the staging file before the task reports failure.
+    @Test
+    public void testModpackExportCancelledBeforeReplacement(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Path output = Files.writeString(directory.resolve("export.zip"), "previous archive");
+        var task = new ModpackExportTask(repository.publish(id, new GameInstanceManifest(id)), new ModpackExportInfo(), output) {
+            /// The execution cancelled immediately after writing the archive contents.
+            final TaskExecutor execution = executor();
+
+            /// Writes one entry and requests cancellation before the archive is published.
+            @Override
+            protected void writeArchive(Zipper zip, Predicate<String> include) throws IOException {
+                zip.putTextFile("content", "example.txt");
+                execution.cancel();
+            }
+        };
+        assertFalse(task.execution.test());
+        assertInstanceOf(CancellationException.class, task.getException());
+        assertEquals("previous archive", Files.readString(output));
+        try (var paths = Files.list(directory)) {
+            assertEquals(List.of(output), paths.toList());
+        }
+    }
+
+    /// Creates a server export whose file operations can run without a JavaFX toolkit.
+    private static Task<?> serverExport(DefaultGameInstance instance, Path output) {
+        return new ServerModpackExportTask(instance, new ModpackExportInfo().setFileApi("https://example.org/"), output) {
+            /// Ignores progress updates while testing the archive contents.
+            @Override
+            protected void updateProgress(double progress) {
+            }
+        };
+    }
 
     /// Launch repair for ModLauncher adds support metadata without materializing bundled files.
     @Test
@@ -584,6 +656,38 @@ public final class DefaultGameInstanceTest {
         assertEquals("existing", Files.readString(marker));
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
             assertTrue(draft.isOpen());
+        }
+    }
+
+    /// A patch failure after extraction removes the new instance files and releases the draft.
+    @Test
+    public void testFailedMultiMCInstallCleansReservedRoot(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultCacheRepository cache = new DefaultCacheRepository(tempDirectory.resolve("cache"));
+        DefaultDependencyManager manager = new DefaultDependencyManager(repository, new TestDownloadProvider(cache), cache);
+        Path archive = tempDirectory.resolve("modpack.zip");
+        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(archive))) {
+            writeZipEntry(zip, "instance.cfg", "name=Test");
+            writeZipEntry(zip, "mmc-pack.json", """
+                    {"formatVersion": 1, "components": [{"uid": "net.minecraft", "version": "1.21.1"}]}
+                    """);
+            writeZipEntry(zip, "patches/net.minecraft.json", """
+                    {"uid": "net.minecraft", "formatVersion": 2}
+                    """);
+            writeZipEntry(zip, ".minecraft/marker.txt", "extracted");
+        }
+
+        GameInstanceID id = new GameInstanceID("instance");
+        Modpack pack;
+        try (var zip = CompressingUtils.openZipFile(archive)) {
+            pack = MultiMCModpackProvider.INSTANCE.readManifest(zip, archive);
+        }
+        Task<?> install = pack.getInstallTask(manager, archive, id, "", null);
+        assertThrows(UnsupportedOperationException.class, install::run);
+        assertFalse(repository.hasInstance(id));
+        assertTrue(Files.notExists(repository.getLayout().getInstanceRoot(id)));
+        try (DefaultGameRepositoryDraft retry = repository.openDraft()) {
+            retry.put(new GameInstanceManifest(id));
         }
     }
 
