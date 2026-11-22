@@ -42,7 +42,7 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
     }
 
     @Override
-    public Collection<Task<?>> getDependents() {
+    public Collection<Task<?>> getPredecessors() {
         return Collections.singleton(fetchPackagesTask);
     }
 

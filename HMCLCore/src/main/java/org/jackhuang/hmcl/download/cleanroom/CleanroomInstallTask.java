@@ -113,12 +113,12 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
     }
 
     @Override
-    public Collection<Task<?>> getDependents() {
+    public Collection<Task<?>> getPredecessors() {
         return dependent == null ? Collections.emptySet() : Collections.singleton(dependent);
     }
 
     @Override
-    public Collection<Task<?>> getDependencies() {
+    public Collection<Task<?>> getSuccessors() {
         return Collections.singleton(Objects.requireNonNull(task));
     }
 

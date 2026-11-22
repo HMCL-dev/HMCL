@@ -272,12 +272,12 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
     }
 
     @Override
-    public Collection<Task<?>> getDependents() {
+    public Collection<Task<?>> getPredecessors() {
         return dependents;
     }
 
     @Override
-    public Collection<Task<?>> getDependencies() {
+    public Collection<Task<?>> getSuccessors() {
         return dependencies;
     }
 

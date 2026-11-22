@@ -103,12 +103,12 @@ public class ServerModpackCompletionTask extends Task<Void> {
     }
 
     @Override
-    public Collection<Task<?>> getDependencies() {
+    public Collection<Task<?>> getSuccessors() {
         return dependencies;
     }
 
     @Override
-    public Collection<Task<?>> getDependents() {
+    public Collection<Task<?>> getPredecessors() {
         return dependent == null ? Collections.emptySet() : Collections.singleton(dependent);
     }
 

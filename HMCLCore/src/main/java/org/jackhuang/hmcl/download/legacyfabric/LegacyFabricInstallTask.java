@@ -42,12 +42,12 @@ public final class LegacyFabricInstallTask extends Task<GameInstancePatch> {
     }
 
     @Override
-    public Collection<Task<?>> getDependents() {
+    public Collection<Task<?>> getPredecessors() {
         return Collections.singleton(launchMetaTask);
     }
 
     @Override
-    public Collection<Task<?>> getDependencies() {
+    public Collection<Task<?>> getSuccessors() {
         return dependencies;
     }
 

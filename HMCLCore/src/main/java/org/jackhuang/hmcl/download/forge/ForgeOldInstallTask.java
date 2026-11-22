@@ -41,7 +41,7 @@ public class ForgeOldInstallTask extends Task<GameInstancePatch> {
     }
 
     @Override
-    public List<Task<?>> getDependencies() {
+    public List<Task<?>> getSuccessors() {
         return dependencies;
     }
 

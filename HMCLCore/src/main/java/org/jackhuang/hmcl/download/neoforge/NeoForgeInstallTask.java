@@ -75,12 +75,12 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
     }
 
     @Override
-    public Collection<? extends Task<?>> getDependents() {
+    public Collection<? extends Task<?>> getPredecessors() {
         return Collections.singleton(dependent);
     }
 
     @Override
-    public Collection<? extends Task<?>> getDependencies() {
+    public Collection<? extends Task<?>> getSuccessors() {
         return Collections.singleton(dependency);
     }
 

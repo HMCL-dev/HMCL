@@ -67,7 +67,7 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
     }
 
     @Override
-    public Collection<? extends Task<?>> getDependents() {
+    public Collection<? extends Task<?>> getPredecessors() {
         return dependents;
     }
 

@@ -119,12 +119,12 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     }
 
     @Override
-    public List<Task<?>> getDependencies() {
+    public List<Task<?>> getSuccessors() {
         return dependencies;
     }
 
     @Override
-    public List<Task<?>> getDependents() {
+    public List<Task<?>> getPredecessors() {
         return dependents;
     }
 

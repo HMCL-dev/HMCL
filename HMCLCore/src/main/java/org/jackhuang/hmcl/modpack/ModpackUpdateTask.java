@@ -49,7 +49,7 @@ public class ModpackUpdateTask extends Task<Void> {
     ///
     /// @return a singleton containing the update task
     @Override
-    public Collection<Task<?>> getDependencies() {
+    public Collection<Task<?>> getSuccessors() {
         return Collections.singleton(updateTask);
     }
 

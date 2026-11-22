@@ -65,7 +65,7 @@ public final class GameLibrariesTask extends Task<Void> {
     }
 
     @Override
-    public List<Task<?>> getDependencies() {
+    public List<Task<?>> getSuccessors() {
         return dependencies;
     }
 

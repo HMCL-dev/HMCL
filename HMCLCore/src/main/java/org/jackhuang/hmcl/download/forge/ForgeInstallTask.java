@@ -81,12 +81,12 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
     }
 
     @Override
-    public Collection<Task<?>> getDependents() {
+    public Collection<Task<?>> getPredecessors() {
         return Collections.singleton(dependent);
     }
 
     @Override
-    public Collection<Task<?>> getDependencies() {
+    public Collection<Task<?>> getSuccessors() {
         return Collections.singleton(dependency);
     }
 

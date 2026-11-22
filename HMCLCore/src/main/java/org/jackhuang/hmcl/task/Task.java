@@ -180,7 +180,7 @@ public abstract class Task<T> {
     }
 
     /**
-     * True if requires all {@link #getDependents} finishing successfully.
+     * True if requires all {@link #getPredecessors} finishing successfully.
      * <p>
      * **Note** if this field is set false, you are not supposed to invoke [run]
      */
@@ -189,7 +189,7 @@ public abstract class Task<T> {
     }
 
     /**
-     * True if requires all {@link #getDependencies} finishing successfully.
+     * True if requires all {@link #getSuccessors} finishing successfully.
      * <p>
      * **Note** if this field is set false, you are not supposed to invoke [run]
      */
@@ -287,7 +287,7 @@ public abstract class Task<T> {
     /**
      * The collection of sub-tasks that should execute **before** this task running.
      */
-    public Collection<? extends Task<?>> getDependents() {
+    public Collection<? extends Task<?>> getPredecessors() {
         return Collections.emptySet();
     }
 
@@ -295,7 +295,7 @@ public abstract class Task<T> {
      * The collection of sub-tasks that should execute **after** this task running.
      * Will not be executed if execution fails.
      */
-    public Collection<? extends Task<?>> getDependencies() {
+    public Collection<? extends Task<?>> getSuccessors() {
         return Collections.emptySet();
     }
 
@@ -376,10 +376,10 @@ public abstract class Task<T> {
         if (getSignificance().shouldLog())
             LOG.trace("Executing task: " + getName());
 
-        for (Task<?> task : getDependents())
+        for (Task<?> task : getPredecessors())
             doSubTask(task);
         execute();
-        for (Task<?> task : getDependencies())
+        for (Task<?> task : getSuccessors())
             doSubTask(task);
         fireDoneEvent(this, false);
 
@@ -737,7 +737,7 @@ public abstract class Task<T> {
             }
 
             @Override
-            public Collection<Task<?>> getDependents() {
+            public Collection<Task<?>> getPredecessors() {
                 return Collections.singleton(Task.this);
             }
 
@@ -787,7 +787,7 @@ public abstract class Task<T> {
             }
 
             @Override
-            public Collection<Task<?>> getDependents() {
+            public Collection<Task<?>> getPredecessors() {
                 return Collections.singleton(Task.this);
             }
 
@@ -885,7 +885,7 @@ public abstract class Task<T> {
         }
 
         @Override
-        public Collection<Task<?>> getDependents() {
+        public Collection<Task<?>> getPredecessors() {
             return Collections.singleton(Task.this);
         }
 
@@ -935,7 +935,7 @@ public abstract class Task<T> {
             }
 
             @Override
-            public Collection<Task<?>> getDependencies() {
+            public Collection<Task<?>> getSuccessors() {
                 return then == null ? Collections.emptySet() : Collections.singleton(then);
             }
         }.setName(name);
@@ -1017,7 +1017,7 @@ public abstract class Task<T> {
             }
 
             @Override
-            public Collection<? extends Task<?>> getDependents() {
+            public Collection<? extends Task<?>> getPredecessors() {
                 return tasks;
             }
         };
@@ -1035,7 +1035,7 @@ public abstract class Task<T> {
             }
 
             @Override
-            public Collection<? extends Task<?>> getDependents() {
+            public Collection<? extends Task<?>> getPredecessors() {
                 return List.of(task1, task2);
             }
         };
@@ -1138,7 +1138,7 @@ public abstract class Task<T> {
         }
 
         @Override
-        public Collection<Task<?>> getDependents() {
+        public Collection<Task<?>> getPredecessors() {
             return Collections.singleton(Task.this);
         }
 
@@ -1192,12 +1192,12 @@ public abstract class Task<T> {
         }
 
         @Override
-        public Collection<Task<?>> getDependents() {
+        public Collection<Task<?>> getPredecessors() {
             return Collections.singleton(Task.this);
         }
 
         @Override
-        public Collection<Task<?>> getDependencies() {
+        public Collection<Task<?>> getSuccessors() {
             return succ == null ? Collections.emptySet() : Collections.singleton(succ);
         }
 
@@ -1214,7 +1214,7 @@ public abstract class Task<T> {
         }
 
         @Override
-        public Collection<Task<?>> getDependents() {
+        public Collection<Task<?>> getPredecessors() {
             return Collections.singleton(Task.this);
         }
 
@@ -1237,7 +1237,7 @@ public abstract class Task<T> {
         }
 
         @Override
-        public Collection<Task<?>> getDependents() {
+        public Collection<Task<?>> getPredecessors() {
             return Collections.singleton(Task.this);
         }
 
@@ -1273,7 +1273,7 @@ public abstract class Task<T> {
         }
 
         @Override
-        public Collection<Task<?>> getDependents() {
+        public Collection<Task<?>> getPredecessors() {
             return Collections.singleton(Task.this);
         }
 

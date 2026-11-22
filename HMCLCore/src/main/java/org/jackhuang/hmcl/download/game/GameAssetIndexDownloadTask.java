@@ -46,7 +46,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
     }
 
     @Override
-    public List<Task<?>> getDependencies() {
+    public List<Task<?>> getSuccessors() {
         return dependencies;
     }
 

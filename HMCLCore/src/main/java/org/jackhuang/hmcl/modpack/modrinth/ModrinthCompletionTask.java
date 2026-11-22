@@ -108,7 +108,7 @@ public class ModrinthCompletionTask extends Task<Void> {
     }
 
     @Override
-    public Collection<Task<?>> getDependencies() {
+    public Collection<Task<?>> getSuccessors() {
         return dependencies;
     }
 

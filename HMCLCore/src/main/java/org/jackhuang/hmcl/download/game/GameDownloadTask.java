@@ -48,7 +48,7 @@ public final class GameDownloadTask extends Task<Path> {
     ///
     /// @return the live dependency collection
     @Override
-    public Collection<Task<?>> getDependencies() {
+    public Collection<Task<?>> getSuccessors() {
         return dependencies;
     }
 

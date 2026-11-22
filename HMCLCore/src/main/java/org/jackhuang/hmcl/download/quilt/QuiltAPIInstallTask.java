@@ -43,7 +43,7 @@ public final class QuiltAPIInstallTask extends Task<GameInstancePatch> {
     }
 
     @Override
-    public Collection<Task<?>> getDependencies() {
+    public Collection<Task<?>> getSuccessors() {
         return dependencies;
     }
 

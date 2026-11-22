@@ -48,7 +48,7 @@ public class LibraryDownloadTask extends Task<Void> {
     }
 
     @Override
-    public Collection<Task<?>> getDependents() {
+    public Collection<Task<?>> getPredecessors() {
         if (cached) return Collections.emptyList();
         else return Collections.singleton(task);
     }

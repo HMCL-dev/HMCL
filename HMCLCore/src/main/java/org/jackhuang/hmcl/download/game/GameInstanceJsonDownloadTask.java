@@ -33,12 +33,12 @@ public final class GameInstanceJsonDownloadTask extends Task<String> {
     }
 
     @Override
-    public Collection<Task<?>> getDependencies() {
+    public Collection<Task<?>> getSuccessors() {
         return dependencies;
     }
 
     @Override
-    public Collection<Task<?>> getDependents() {
+    public Collection<Task<?>> getPredecessors() {
         return List.of(getGameVersionsTask);
     }
 

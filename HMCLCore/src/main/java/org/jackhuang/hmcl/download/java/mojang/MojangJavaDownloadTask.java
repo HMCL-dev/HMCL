@@ -64,7 +64,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
     }
 
     @Override
-    public Collection<Task<?>> getDependents() {
+    public Collection<Task<?>> getPredecessors() {
         return Collections.singleton(javaDownloadsTask);
     }
 
@@ -150,7 +150,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
     }
 
     @Override
-    public List<Task<?>> getDependencies() {
+    public List<Task<?>> getSuccessors() {
         return dependencies;
     }
 

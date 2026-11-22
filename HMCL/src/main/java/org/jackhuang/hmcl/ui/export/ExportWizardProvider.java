@@ -98,7 +98,7 @@ public final class ExportWizardProvider implements WizardProvider {
             }
 
             @Override
-            public Collection<Task<?>> getDependents() {
+            public Collection<Task<?>> getPredecessors() {
                 return Collections.singleton(exportTask);
             }
 
@@ -162,7 +162,7 @@ public final class ExportWizardProvider implements WizardProvider {
             }
 
             @Override
-            public Collection<Task<?>> getDependencies() {
+            public Collection<Task<?>> getSuccessors() {
                 return Collections.singleton(dependency);
             }
         };
@@ -182,7 +182,7 @@ public final class ExportWizardProvider implements WizardProvider {
             }
 
             @Override
-            public Collection<Task<?>> getDependencies() {
+            public Collection<Task<?>> getSuccessors() {
                 return Collections.singleton(dependency);
             }
         };
@@ -206,7 +206,7 @@ public final class ExportWizardProvider implements WizardProvider {
             }
 
             @Override
-            public Collection<Task<?>> getDependencies() {
+            public Collection<Task<?>> getSuccessors() {
                 return Collections.singleton(dependency);
             }
         };

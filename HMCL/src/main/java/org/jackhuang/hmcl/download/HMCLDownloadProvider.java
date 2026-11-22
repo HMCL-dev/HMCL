@@ -267,7 +267,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
         }
 
         @Override
-        public Collection<? extends Task<?>> getDependents() {
+        public Collection<? extends Task<?>> getPredecessors() {
             return List.of(task);
         }
 
@@ -287,7 +287,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
         }
 
         @Override
-        public List<Task<?>> getDependencies() {
+        public List<Task<?>> getSuccessors() {
             return dependencies;
         }
     }

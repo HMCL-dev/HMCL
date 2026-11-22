@@ -137,12 +137,12 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     }
 
     @Override
-    public List<Task<?>> getDependents() {
+    public List<Task<?>> getPredecessors() {
         return dependents;
     }
 
     @Override
-    public List<Task<?>> getDependencies() {
+    public List<Task<?>> getSuccessors() {
         return dependencies;
     }
 

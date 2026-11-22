@@ -250,7 +250,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         }
 
         @Override
-        public Collection<? extends Task<?>> getDependents() {
+        public Collection<? extends Task<?>> getPredecessors() {
             return patches;
         }
 
@@ -289,7 +289,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     }
 
     @Override
-    public List<Task<?>> getDependents() {
+    public List<Task<?>> getPredecessors() {
         // Stage #2: Resolve all Json-Patch
         return dependents;
     }
@@ -371,7 +371,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     }
 
     @Override
-    public List<Task<?>> getDependencies() {
+    public List<Task<?>> getSuccessors() {
         // Stage #6: Download game files.
         return dependencies;
     }

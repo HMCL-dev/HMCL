@@ -210,7 +210,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         return CompletableFuture.completedFuture(null);
                     }
                 })
-                .thenComposeAsync(unused -> executeTasks(task, task.getDependents()))
+                .thenComposeAsync(unused -> executeTasks(task, task.getPredecessors()))
                 .thenComposeAsync(dependentsException -> {
                     boolean isDependentsSucceeded = dependentsException == null;
 
@@ -233,7 +233,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         rethrow(throwable);
                     });
                 })
-                .thenComposeAsync(unused -> executeTasks(task, task.getDependencies()))
+                .thenComposeAsync(unused -> executeTasks(task, task.getSuccessors()))
                 .thenComposeAsync(dependenciesException -> {
                     boolean isDependenciesSucceeded = dependenciesException == null;
 

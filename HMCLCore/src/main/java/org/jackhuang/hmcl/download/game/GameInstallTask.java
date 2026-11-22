@@ -52,13 +52,13 @@ public class GameInstallTask extends Task<GameInstancePatch> {
 
     /// {@inheritDoc}
     @Override
-    public Collection<Task<?>> getDependents() {
+    public Collection<Task<?>> getPredecessors() {
         return Collections.singleton(downloadTask);
     }
 
     /// {@inheritDoc}
     @Override
-    public Collection<Task<?>> getDependencies() {
+    public Collection<Task<?>> getSuccessors() {
         return dependencies;
     }
 
