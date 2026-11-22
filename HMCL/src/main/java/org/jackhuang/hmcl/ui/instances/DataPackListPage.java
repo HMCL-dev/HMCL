@@ -43,13 +43,14 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.ImageContainer;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -57,7 +58,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.regex.PatternSyntaxException;
 
@@ -80,15 +80,14 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
     /// Timer for debouncing search input to avoid executing search on every keystroke.
     private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
-
-    private final ObservableList<DataPackInfoObject> items = FXCollections.observableArrayList();
+    /// All loaded items before search filtering.
+    private final ObservableList<DataPackInfoObject> sourceItems = FXCollections.observableArrayList();
 
     /// Source items matching the current search.
-    private final FilteredList<DataPackInfoObject> filteredItems = new FilteredList<>(items);
+    private final FilteredList<DataPackInfoObject> filteredItems = new FilteredList<>(sourceItems);
 
     private final DataPackManager dataPackManager;
     private final BooleanProperty readOnly;
-    private final ReentrantLock lock = new ReentrantLock();
 
     public DataPackListPage(WorldManagePage worldManagePage) {
         dataPackManager = worldManagePage.getWorld().getDataPackManager();
@@ -179,7 +178,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
             });
 
             FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
-                    (@Nullable DataPackInfoObject selectedItem) -> {
+                    selectedItem -> {
                         if (selectedItem == null)
                             changeToolbar(isSearching.get() ? searchBar : normalToolbar);
                         else
@@ -241,19 +240,14 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
     public void refresh() {
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
-            lock.lock();
-            try {
-                dataPackManager.refresh();
-                return dataPackManager.getLocalFiles().stream().map(DataPackInfoObject::new).toList();
-            } finally {
-                lock.unlock();
-            }
-        }).whenComplete(Schedulers.javafx(), (@Nullable @Unmodifiable List<DataPackInfoObject> result, @Nullable Exception exception) -> {
+            dataPackManager.refresh();
+            return dataPackManager.getLocalFiles().stream().map(DataPackInfoObject::new).toList();
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                items.setAll(Objects.requireNonNull(result));
+                sourceItems.setAll(result);
             } else {
                 LOG.warning("Error refreshing data pack list page", exception);
-                items.clear();
+                sourceItems.clear();
             }
             setLoading(false);
         }).start();
@@ -263,7 +257,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("datapack.add.title"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.datapack"), "*.zip"));
-        @Nullable List<Path> res = Controllers.showOpenMultipleDialog(chooser);
+        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
         if (res != null) {
             addFiles(res);
         }
@@ -309,7 +303,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
     private void search() {
         isSearching.set(true);
 
-        @Nullable String queryString = searchField.getText();
+        String queryString = searchField.getText();
         if (StringUtils.isBlank(queryString)) {
             filteredItems.setPredicate(null);
         } else {
@@ -342,15 +336,15 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         }
     }
 
-    static class DataPackInfoObject {
+    public static class DataPackInfoObject {
         private final DataPackFile file;
         private final ItemPropertyAsyncCache<Image, DataPackInfoObject> iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
 
-        DataPackInfoObject(DataPackFile file) {
+        public DataPackInfoObject(DataPackFile file) {
             this.file = file;
         }
 
-        DataPackFile getFile() {
+        public DataPackFile getFile() {
             return file;
         }
 
@@ -360,8 +354,8 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
 
         /// Loads the icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            @Nullable Image icon = file.loadIcon(ImageLoaders.DEFAULT);
-            return icon != null && FXUtils.isValidIcon(icon) ? icon : getDefaultIcon();
+            Image icon = file.loadIcon(ImageLoaders.DEFAULT);
+            return FXUtils.isValidIcon(icon) ? icon : getDefaultIcon();
         }
     }
 
@@ -370,8 +364,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
 
-        private final InvalidationListener activeListener = observable ->
-                activeSwitch.setSelected(((ReadOnlyBooleanProperty) observable).get());
+        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(((BooleanProperty) obs).get());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
@@ -402,14 +395,9 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
 
         @Override
         protected void updateListItem(@Nullable DataPackInfoObject dataItem) {
-            if (observedActiveProperty != null) {
+            if (observedActiveProperty != null)
                 observedActiveProperty.removeListener(weakActiveListener);
-                observedActiveProperty = null;
-            }
-            if (dataItem == null) {
-                activeSwitch.setOnAction(null);
-                return;
-            }
+            if (dataItem == null) return;
 
             DataPackFile packInfo = dataItem.getFile();
             content.setTitle(packInfo.getFileName());
