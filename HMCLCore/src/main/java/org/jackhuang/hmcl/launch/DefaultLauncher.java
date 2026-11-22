@@ -275,12 +275,6 @@ public class DefaultLauncher extends Launcher {
         // Library classpath used both for -cp and for rewriting old BootstrapLauncher ignore lists.
         Set<String> libraryClasspath = getClasspath();
 
-        if (instance.hasComponent(GameComponentType.CLEANROOM)) {
-            libraryClasspath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
-            libraryClasspath.removeIf(c -> c.contains("platform-3.4.0"));
-            libraryClasspath.removeIf(c -> c.contains("icu4j-core-mojang"));
-        }
-
         Path jar = instance.getInstanceJarFile();
         if (!Files.isRegularFile(jar))
             throw new IOException("Minecraft jar does not exist");

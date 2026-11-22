@@ -62,6 +62,12 @@ public final class LaunchManifestNormalizer {
             repaired = repairDuplicateAsm(repaired, analyzer);
         }
 
+        if (analyzer.has(GameComponentType.CLEANROOM)) {
+            // LegacyFabric adds higher-version ASM dependencies such as org.ow2.asm:asm,
+            // which conflict with the original org.ow2.asm:asm-all and cause launch failure.
+            repaired = repairCleanroomLibraries(repaired, analyzer);
+        }
+
         // Vanilla and Fabric/Quilt need no loader-specific argument repair here.
         return removeLegacyLog4jPatch(repaired);
     }
@@ -220,6 +226,24 @@ public final class LaunchManifestNormalizer {
         return hasAsm
                 ? manifest.withLibraries(libraries.stream().filter(it -> !it.is("org.ow2.asm", "asm-all")).toList())
                 : manifest;
+    }
+
+    private static GameInstanceManifest repairCleanroomLibraries(GameInstanceManifest manifest, GameComponentAnalyzer analyzer) {
+        if (!analyzer.has(GameComponentType.CLEANROOM)) {
+            return manifest;
+        }
+
+        List<Library> libraries = manifest.getLibraries();
+
+        libraries = libraries.stream().filter(it -> {
+            if (Objects.equals(it.artifact().getGroup(), "com.ibm.icu") && Objects.equals(it.artifact().getName(), "icu4j-core-mojang") && it.artifact().getVersion().equals("51.2"))
+                return false;
+            if (Objects.equals(it.artifact().getGroup(), "org.lwjgl.lwjgl") && it.artifact().getVersion().equals("2.9.4-nightly-20150209"))
+                return false;
+            return !Objects.equals(it.artifact().getGroup(), "net.java.dev.jna") || !Objects.equals(it.artifact().getName(), "platform") || !it.artifact().getVersion().equals("3.4.0");
+        }).toList();
+
+        return manifest.withLibraries(libraries);
     }
 
     /// Returns whether a comma-separated list contains the exact requested value.
