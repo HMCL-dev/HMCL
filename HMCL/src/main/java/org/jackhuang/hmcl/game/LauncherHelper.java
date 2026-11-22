@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskHandleDialogPane;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -91,7 +91,8 @@ public final class LauncherHelper {
         return gameInstance.getRepository();
     }
 
-    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+    /// Displays the tasks for this launch.
+    private final TaskHandleDialogPane launchingStepsPane = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
 
     public Account getAccount() {
         return account;
@@ -154,7 +155,7 @@ public final class LauncherHelper {
         // Resolve already deduplicated libraries; apply loader-specific argument repairs for this launch.
         context.launchManifest = LaunchManifestNormalizer.repairForLaunch(gameInstance.getResolvedManifest());
 
-        TaskExecutor executor = checkGameState(gameInstance, setting, context.launchManifest)
+        TaskHandle handle = checkGameState(gameInstance, setting, context.launchManifest)
                 .thenComposeAsync(java -> {
                     context.javaRuntime = Objects.requireNonNull(java);
                     context.javaExecutable = java.getBinary();
@@ -332,19 +333,19 @@ public final class LauncherHelper {
                         new Task.StagesHint("launch.state.dependencies", List.of("hmcl.install.assets", "hmcl.install.libraries", "hmcl.modpack.download")),
                         new Task.StagesHint("launch.state.logging_in"),
                         new Task.StagesHint("launch.state.waiting_launching"))
-                .executor();
-        launchingStepsPane.setExecutor(executor, false);
-        executor.addTaskListener(new TaskListener() {
+                .newHandle();
+        launchingStepsPane.setHandle(handle, false);
+        handle.addTaskListener(new TaskListener() {
 
             @Override
-            public void onStop(boolean success, TaskExecutor executor) {
+            public void onStop(boolean success, TaskHandle handle) {
                 runLater(() -> {
                     // Check if the application has stopped
                     // because onStop will be invoked if tasks fail when the executor service shut down.
                     if (!Controllers.isStopped()) {
                         launchingStepsPane.fireEvent(new DialogCloseEvent());
                         if (!success) {
-                            Exception ex = executor.getException();
+                            @Nullable Exception ex = handle.getException();
                             if (ex != null && !(ex instanceof CancellationException)) {
                                 String message;
                                 if (ex instanceof ModpackCompletionException) {
@@ -424,12 +425,12 @@ public final class LauncherHelper {
                             }
                         }
                     }
-                    launchingStepsPane.setExecutor(null);
+                    launchingStepsPane.setHandle(null);
                 });
             }
         });
 
-        launchingStepsPane.startExecutor();
+        launchingStepsPane.startHandle();
     }
 
     /// Checks launch requirements, allowing required Java downloads to share this launch's execution slot.

@@ -18,7 +18,7 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
-import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
@@ -176,9 +176,9 @@ public final class DefaultGameRepositoryDraftTest {
         GameInstanceID id = new GameInstanceID("cancelled");
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
             Task<?> task = new ServerModpackRemoteInstallTask(createDependencyManager(repository), new ServerModpackManifest(), id);
-            TaskExecutor executor = task.executor();
-            executor.cancel();
-            assertFalse(executor.test());
+            TaskHandle handle = task.newHandle();
+            handle.cancel();
+            assertFalse(handle.test());
             assertInstanceOf(CancellationException.class, task.getException());
             assertTrue(draft.isOpen());
         }
@@ -528,7 +528,7 @@ public final class DefaultGameRepositoryDraftTest {
 
         Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, workingInstance -> Task.supplyAsync(() ->
                 workingInstance.getManifest().withMainClass("updated.Main")));
-        assertTrue(update.executor().test());
+        assertTrue(update.newHandle().test());
 
         assertEquals("updated.Main", repository.getInstance(id).getManifest().mainClass());
         assertEquals("custom client", Files.readString(target));
@@ -559,7 +559,7 @@ public final class DefaultGameRepositoryDraftTest {
                     assertEquals(original, repository.getInstance(id).getManifest());
                     return replacement;
                 }));
-        assertTrue(update.executor().test());
+        assertTrue(update.newHandle().test());
 
         assertEquals(replacement, repository.getInstance(id).getManifest());
         assertTrue(replacement.getDownloadInfo().validateChecksum(target, false));
@@ -609,7 +609,7 @@ public final class DefaultGameRepositoryDraftTest {
                     assertEquals(sharedJar, repository.getInstance(id).getInstanceJarFile());
                     assertFalse(Files.exists(target));
                     return manifest;
-                })).executor().test());
+                })).newHandle().test());
 
         repository.refresh();
         DefaultGameInstance updated = repository.getInstance(id);
@@ -637,7 +637,7 @@ public final class DefaultGameRepositoryDraftTest {
                 new DownloadInfo("https://example.invalid/new.jar", "A".repeat(40))));
 
         assertTrue(createDependencyManager(repository).updateInstanceAsync(id,
-                instance -> Task.completed(replacement)).executor().test());
+                instance -> Task.completed(replacement)).newHandle().test());
 
         assertEquals(replacement, repository.getInstance(id).getManifest());
         assertEquals("custom client", Files.readString(target));
@@ -660,7 +660,7 @@ public final class DefaultGameRepositoryDraftTest {
                         "cache-control", List.of("max-age=3600")), (name, value) -> true)), "new client");
         GameInstanceManifest replacement = original.withDownloads(Map.of(DownloadType.CLIENT, new DownloadInfo(newUrl)));
 
-        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).executor().test());
+        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).newHandle().test());
 
         assertEquals(replacement, repository.getInstance(id).getManifest());
         assertEquals("new client", Files.readString(target));
@@ -685,7 +685,7 @@ public final class DefaultGameRepositoryDraftTest {
                         new DownloadInfo("https://example.invalid/client.jar", sha1))),
                 GameComponentType.GAME.getPatchId(), "new-version", GameInstancePatch.PRIORITY_MC)));
 
-        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).executor().test());
+        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).newHandle().test());
 
         assertEquals(replacement, repository.getInstance(id).getManifest());
         assertEquals("new client", Files.readString(target));
@@ -714,7 +714,7 @@ public final class DefaultGameRepositoryDraftTest {
         GameInstanceManifest replacement = original.withJar(useOwnJar ? id : sharedId)
                 .withDownloads(Map.of(DownloadType.CLIENT, download));
 
-        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).executor().test());
+        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).newHandle().test());
 
         assertEquals(useOwnJar ? "shared client" : "custom client", Files.readString(target));
         assertEquals("shared client", Files.readString(sharedJar));
@@ -737,7 +737,7 @@ public final class DefaultGameRepositoryDraftTest {
                 new DownloadInfo("file:///missing-client.jar", "0".repeat(40))));
         Task<?> update = createDependencyManager(repository).updateInstanceAsync(id,
                 instance -> Task.completed(replacement));
-        assertFalse(update.executor().test());
+        assertFalse(update.newHandle().test());
 
         assertEquals(original, repository.getInstance(id).getManifest());
         assertEquals(originalJson, Files.readString(manifestFile));
@@ -769,7 +769,7 @@ public final class DefaultGameRepositoryDraftTest {
                 .withDownloads(Map.of(DownloadType.CLIENT,
                         new DownloadInfo("https://example.invalid/client.jar", sha1)));
         Task<?> update = manager.updateInstanceAsync(id, instance -> Task.completed(replacement));
-        assertFalse(update.executor().test());
+        assertFalse(update.newHandle().test());
 
         assertEquals(original, repository.getInstance(id).getManifest());
         assertEquals(originalJson, Files.readString(manifestFile));
@@ -791,7 +791,7 @@ public final class DefaultGameRepositoryDraftTest {
 
         Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, workingInstance ->
                 Task.supplyAsync(() -> workingInstance.getManifest().withId(otherId)));
-        assertFalse(update.executor().test());
+        assertFalse(update.newHandle().test());
 
         assertEquals("original.Main", repository.getInstance(id).getManifest().mainClass());
         assertFalse(repository.hasInstance(otherId));
@@ -808,7 +808,7 @@ public final class DefaultGameRepositoryDraftTest {
 
         Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, workingInstance ->
                 Task.completed(workingInstance.getManifest()));
-        assertFalse(update.executor().test());
+        assertFalse(update.newHandle().test());
 
         try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
             assertTrue(ignored.isOpen());
@@ -825,7 +825,7 @@ public final class DefaultGameRepositoryDraftTest {
         Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, workingInstance -> {
             throw new IOException("Simulated updater failure");
         });
-        assertFalse(update.executor().test());
+        assertFalse(update.newHandle().test());
 
         try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
             assertTrue(ignored.isOpen());

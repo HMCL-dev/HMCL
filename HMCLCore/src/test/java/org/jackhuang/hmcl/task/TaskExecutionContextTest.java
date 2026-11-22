@@ -154,16 +154,16 @@ final class TaskExecutionContextTest {
             assertInstanceOf(CancellationException.class, cause);
             cleanups.incrementAndGet();
         });
-        TaskExecutor executor = root.executor(new TaskListener() {
+        TaskHandle handle = root.newHandle(new TaskListener() {
             @Override
-            public void onStop(boolean success, TaskExecutor executor) {
+            public void onStop(boolean success, TaskHandle handle) {
                 stopped.complete(success);
             }
         });
-        executor.start();
+        handle.start();
         try {
             assertTrue(entered.await(10, TimeUnit.SECONDS));
-            executor.cancel();
+            handle.cancel();
         } finally {
             release.countDown();
         }
@@ -257,7 +257,7 @@ final class TaskExecutionContextTest {
         });
         Task<@Nullable String> second = Task.completed(null);
         Task<List<@Nullable String>> batch = Task.allOf(first, second);
-        assertTrue(batch.executor(new TaskListener() {
+        assertTrue(batch.newHandle(new TaskListener() {
             /// Releases the first child after the second child's result has been published.
             @Override
             public void onFinished(Task<?> task) {
@@ -318,7 +318,7 @@ final class TaskExecutionContextTest {
     void observersSeeTerminalStateOnce() {
         Task<Integer> root = task(context -> 42);
         AtomicInteger completions = new AtomicInteger();
-        assertTrue(root.executor(new TaskListener() {
+        assertTrue(root.newHandle(new TaskListener() {
             /// Observes the published state and result, then exercises listener failure isolation.
             @Override
             public void onFinished(Task<?> task) {
@@ -371,7 +371,7 @@ final class TaskExecutionContextTest {
             }
         };
 
-        assertTrue(root.executor(events).test());
+        assertTrue(root.newHandle(events).test());
         assertEquals(7, root.getResult());
         assertEquals(2, events.started.size());
         TaskStage first = events.started.get(0);
@@ -417,7 +417,7 @@ final class TaskExecutionContextTest {
         });
 
         StageEvents events = new StageEvents();
-        assertTrue(root.executor(events).test());
+        assertTrue(root.newHandle(events).test());
         assertEquals(42, root.getResult());
         assertEquals(List.of(root, failed, broken, rejected), events.started.stream().map(TaskStage::task).toList());
         TaskStage outer = events.started.get(0);
@@ -430,9 +430,9 @@ final class TaskExecutionContextTest {
     void closesStageOfPreCancelledRoot() {
         StageEvents events = new StageEvents();
         Task<?> root = task(null, "cancelled", context -> fail("Unexpected execution"));
-        TaskExecutor executor = root.executor(events);
-        executor.cancel();
-        assertFalse(executor.test());
+        TaskHandle handle = root.newHandle(events);
+        handle.cancel();
+        assertFalse(handle.test());
         assertEquals(1, events.started.size());
         assertSame(root, events.started.get(0).task());
         assertEquals(events.started, events.finished);
@@ -450,7 +450,7 @@ final class TaskExecutionContextTest {
                 .withStagesHints(check, install);
         List<Task.StagesHint> declarations = new ArrayList<>();
         List<Task.StagesHint> atStageStart = new ArrayList<>();
-        assertTrue(root.executor(new TaskListener() {
+        assertTrue(root.newHandle(new TaskListener() {
             /// Preserves declaration order across callbacks.
             @Override
             public void onStagesDeclared(@Unmodifiable List<Task.StagesHint> hints) {

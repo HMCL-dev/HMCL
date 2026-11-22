@@ -31,7 +31,7 @@ import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -656,10 +656,10 @@ public final class Controllers {
         return pane.getCompletableFuture();
     }
 
-    /// Creates a task dialog and submits its executor to the serial business-task queue.
+    /// Creates a task dialog and submits its handle to the serial business-task queue.
     ///
-    /// Submits the executor even if the pane cannot be shown, and returns the pane.
-    public static TaskExecutorDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel) {
+    /// Submits the handle even if the pane cannot be shown, and returns the pane.
+    public static TaskHandleDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel) {
         return taskDialog(task, title, onCancel, null);
     }
 
@@ -670,14 +670,14 @@ public final class Controllers {
     /// @param onCancel the cancellation action
     /// @param parent the executing parent dialog, or `null` to queue an independent operation
     /// @return the submitted task dialog
-    public static TaskExecutorDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel,
-                                                  @Nullable TaskExecutorDialogPane parent) {
-        TaskExecutor executor = task.executor();
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
+    public static TaskHandleDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel,
+                                                  @Nullable TaskHandleDialogPane parent) {
+        TaskHandle handle = task.newHandle();
+        TaskHandleDialogPane pane = new TaskHandleDialogPane(onCancel);
         pane.setTitle(title);
-        pane.setExecutor(executor);
+        pane.setHandle(handle);
         dialog(pane);
-        pane.startExecutor(parent);
+        pane.startHandle(parent);
         return pane;
     }
 

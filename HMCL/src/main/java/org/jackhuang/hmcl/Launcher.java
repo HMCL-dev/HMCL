@@ -21,7 +21,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.setting.*;
-import org.jackhuang.hmcl.task.AsyncTaskExecutor;
+import org.jackhuang.hmcl.task.DefaultTaskHandle;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -277,7 +277,7 @@ public final class Launcher extends Application {
         }
 
         Thread.setDefaultUncaughtExceptionHandler(CRASH_REPORTER);
-        AsyncTaskExecutor.setUncaughtExceptionHandler(new CrashReporter(false));
+        DefaultTaskHandle.setUncaughtExceptionHandler(new CrashReporter(false));
 
         try {
             LOG.info("*** " + Metadata.TITLE + " ***");

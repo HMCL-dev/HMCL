@@ -11,11 +11,11 @@ import java.util.List;
 /// Observes execution of a root task and the children it dispatches.
 /// Notifications for concurrently executing tasks may arrive on different threads.
 ///
-/// @see TaskExecutor#addTaskListener(TaskListener)
+/// @see TaskHandle#addTaskListener(TaskListener)
 /// @author huangyuhui
 public abstract class TaskListener implements EventListener {
 
-    /// Called on the thread that starts the executor, before it starts the root task.
+    /// Called on the thread that starts the handle, before the root task runs.
     public void onStart() {
     }
 
@@ -66,8 +66,8 @@ public abstract class TaskListener implements EventListener {
     /// Called when execution of the root task has ended.
     ///
     /// @param success whether the root task succeeded, including when it recovered from a child failure
-    /// @param executor the executor that ran the task tree
-    public void onStop(boolean success, TaskExecutor executor) {
+    /// @param handle the handle for this execution
+    public void onStop(boolean success, TaskHandle handle) {
     }
 
     /// Called when the task declaring a stage is dispatched, before its body starts.

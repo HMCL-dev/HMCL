@@ -26,9 +26,9 @@ public interface WizardProvider {
         void onFail(SettingsMap settings, Exception exception, Runnable next);
     }
 
-    /// Releases resources owned by a task displayed by [TaskExecutorDialogWizardDisplayer].
+    /// Releases resources owned by a task displayed by [TaskHandleDialogWizardDisplayer].
     ///
-    /// Cleanup runs on the executor's completion thread after task execution stops, including
+    /// Cleanup runs on the handle's completion thread after task execution stops, including
     /// cancellation before the first task starts, and before the dialog reports its outcome.
     @NotNullByDefault
     @FunctionalInterface

@@ -5,9 +5,9 @@ package org.jackhuang.hmcl.util;
 import javafx.application.Platform;
 import javafx.scene.control.ButtonBase;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskHandleDialogPane;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/// Verifies serial business execution with real asynchronous executors and explicit child tasks.
+/// Verifies queued task execution and explicit child tasks with asynchronous task handles.
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 final class TaskManagerTest {
@@ -41,7 +41,7 @@ final class TaskManagerTest {
         }), new TaskListener() {
             /// Keeps the execution slot occupied until cleanup is explicitly released.
             @Override
-            public void onStop(boolean success, TaskExecutor executor) {
+            public void onStop(boolean success, TaskHandle handle) {
                 cleanupEntered.countDown();
                 try {
                     await(releaseCleanup);
@@ -59,7 +59,7 @@ final class TaskManagerTest {
                 assertTrue(second.pane().queuedProperty().get());
                 assertTrue(third.pane().queuedProperty().get());
                 assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
-                assertSame(second.completion(), second.pane().startExecutor());
+                assertSame(second.completion(), second.pane().startHandle());
                 return true;
             });
             release.countDown();
@@ -84,9 +84,9 @@ final class TaskManagerTest {
         AtomicInteger cleanups = new AtomicInteger();
         Submission first = submit(Task.runAsync(() -> await(release)), null);
         Submission second = submit(Task.runAsync(bodies::incrementAndGet), new TaskListener() {
-            /// Records cleanup even when cancellation precedes executor start.
+            /// Records cleanup even when the task was cancelled before starting.
             @Override
-            public void onStop(boolean success, TaskExecutor executor) {
+            public void onStop(boolean success, TaskHandle handle) {
                 assertFalse(success);
                 cleanups.incrementAndGet();
             }
@@ -158,13 +158,13 @@ final class TaskManagerTest {
         Submission next = submit(Task.runAsync(() -> assertEquals(2, order.getAndIncrement())), null);
         await(parentEntered);
         Submission child = onFxThread(() -> {
-            TaskExecutorDialogPane pane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
-            pane.setExecutor(Task.runAsync(() -> {
+            TaskHandleDialogPane pane = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
+            pane.setHandle(Task.runAsync(() -> {
                 await(releaseChild);
                 assertEquals(0, order.getAndIncrement());
                 childFinished.countDown();
-            }).executor());
-            return new Submission(pane, pane.startExecutor(parent.pane()));
+            }).newHandle());
+            return new Submission(pane, pane.startHandle(parent.pane()));
         });
         try {
             onFxThread(() -> {
@@ -189,14 +189,14 @@ final class TaskManagerTest {
         AtomicInteger nextBodies = new AtomicInteger();
         Submission parent = submit(Task.runAsync(() -> await(releaseParent)), null);
         Submission child = onFxThread(() -> {
-            TaskExecutorDialogPane pane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
-            pane.setExecutor(Task.runAsync(() -> await(releaseChild)).executor());
-            return new Submission(pane, pane.startExecutor(parent.pane()));
+            TaskHandleDialogPane pane = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
+            pane.setHandle(Task.runAsync(() -> await(releaseChild)).newHandle());
+            return new Submission(pane, pane.startHandle(parent.pane()));
         });
         Submission next = submit(Task.runAsync(nextBodies::incrementAndGet), null);
         try {
             onFxThread(() -> {
-                parent.pane().setExecutor(null);
+                parent.pane().setHandle(null);
                 return true;
             });
             releaseParent.countDown();
@@ -228,12 +228,12 @@ final class TaskManagerTest {
     /// Attaches listeners before submitting an independent task on the JavaFX thread.
     private static Submission submit(Task<?> task, @Nullable TaskListener listener) throws Exception {
         return onFxThread(() -> {
-            TaskExecutor executor = task.executor();
+            TaskHandle handle = task.newHandle();
             if (listener != null)
-                executor.addTaskListener(listener);
-            TaskExecutorDialogPane pane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
-            pane.setExecutor(executor);
-            return new Submission(pane, pane.startExecutor());
+                handle.addTaskListener(listener);
+            TaskHandleDialogPane pane = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
+            pane.setHandle(handle);
+            return new Submission(pane, pane.startHandle());
         });
     }
 
@@ -252,8 +252,8 @@ final class TaskManagerTest {
     /// Retains a dialog and its queue completion for assertions outside the JavaFX thread.
     ///
     /// @param pane the submitted dialog
-    /// @param completion completion after the executor's cleanup listeners
+    /// @param completion completion after the handle's cleanup listeners
     @NotNullByDefault
-    private record Submission(TaskExecutorDialogPane pane, CompletableFuture<Boolean> completion) {
+    private record Submission(TaskHandleDialogPane pane, CompletableFuture<Boolean> completion) {
     }
 }

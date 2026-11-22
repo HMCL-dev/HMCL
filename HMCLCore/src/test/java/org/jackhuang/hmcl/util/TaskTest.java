@@ -4,7 +4,7 @@ package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
@@ -19,9 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TaskTest {
-    /**
-     * TaskExecutor will not catch error and will be thrown to global handler.
-     */
+    /// A nested task's error reaches the default uncaught exception handler.
     @Test
     public void expectErrorUncaught() {
         AtomicReference<Throwable> throwable = new AtomicReference<>();
@@ -57,7 +55,7 @@ public class TaskTest {
         AtomicReference<@Nullable Boolean> stopSuccess = new AtomicReference<>();
         AtomicReference<@Nullable Throwable> uncaught = new AtomicReference<>();
 
-        TaskExecutor executor = task.executor(new TaskListener() {
+        TaskHandle handle = task.newHandle(new TaskListener() {
             @Override
             public void onFailed(Task<?> failedTask, Throwable throwable) {
                 failedCount.incrementAndGet();
@@ -65,7 +63,7 @@ public class TaskTest {
             }
 
             @Override
-            public void onStop(boolean success, TaskExecutor taskExecutor) {
+            public void onStop(boolean success, TaskHandle handle) {
                 stopCount.incrementAndGet();
                 stopSuccess.set(success);
             }
@@ -74,7 +72,7 @@ public class TaskTest {
         @Nullable Thread.UncaughtExceptionHandler previousHandler = Thread.getDefaultUncaughtExceptionHandler();
         try {
             Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> uncaught.set(throwable));
-            assertFalse(executor.test());
+            assertFalse(handle.test());
         } finally {
             Thread.setDefaultUncaughtExceptionHandler(previousHandler);
         }
@@ -86,8 +84,8 @@ public class TaskTest {
         assertEquals(Task.TaskState.FAILED, task.getState());
         assertNotNull(task.getException());
         assertSame(error, task.getException().getCause());
-        assertNotNull(executor.getException());
-        assertSame(error, executor.getException().getCause());
+        assertNotNull(handle.getException());
+        assertSame(error, handle.getException().getCause());
         assertSame(error, uncaught.get());
     }
 
@@ -147,24 +145,24 @@ public class TaskTest {
             releaseTask.await();
             taskCompleted.set(true);
         }).thenRunAsync(() -> continuationExecuted.set(true));
-        TaskExecutor executor = task.executor(new TaskListener() {
+        TaskHandle handle = task.newHandle(new TaskListener() {
             /// Publishes the execution result to the waiting test thread.
             @Override
-            public void onStop(boolean success, TaskExecutor taskExecutor) {
+            public void onStop(boolean success, TaskHandle handle) {
                 stopped.complete(success);
             }
         });
         try {
-            executor.start();
+            handle.start();
             assertTrue(taskStarted.await(30, TimeUnit.SECONDS), "Task should start before cancellation");
-            executor.cancel();
+            handle.cancel();
         } finally {
             // Keep the task running until cancellation is requested, and release it even if setup fails.
             releaseTask.countDown();
         }
 
         assertFalse(stopped.get(30, TimeUnit.SECONDS), "Task should fail because we have cancelled it");
-        assertInstanceOf(CancellationException.class, executor.getException(), "CancellationException should be recorded");
+        assertInstanceOf(CancellationException.class, handle.getException(), "CancellationException should be recorded");
         assertInstanceOf(CancellationException.class, task.getException(), "CancellationException should be recorded");
         assertTrue(taskCompleted.get(), "Cancellation should not interrupt the running task");
         assertFalse(continuationExecuted.get(), "Continuation should not run after cancellation");

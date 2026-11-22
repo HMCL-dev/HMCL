@@ -20,7 +20,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -37,13 +37,13 @@ import java.util.Map;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-/// Displays running tasks, retained failures, and the stages reported by an executor.
+/// Displays running tasks, retained failures, and the stages reported by a handle.
 public final class TaskListPane extends StackPane {
     private static final Insets DEFAULT_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 0);
     private static final Insets STAGED_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 26);
 
-    /// The executor whose queued notifications may update the list.
-    private @Nullable TaskExecutor executor;
+    /// The handle whose queued notifications may update the list.
+    private @Nullable TaskHandle handle;
     private final JFXListView<Node> listView = new JFXListView<>();
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     /// Maps identifiers and their display aliases to stage rows.
@@ -86,14 +86,14 @@ public final class TaskListPane extends StackPane {
         }
     }
 
-    /// Displays stage and task events from the supplied executor, beginning with its next run.
-    public void setExecutor(TaskExecutor executor) {
-        this.executor = executor;
-        executor.addTaskListener(new TaskListener() {
-            /// Queues a change on the JavaFX thread while this executor is attached.
+    /// Displays subsequent stage and task events from the supplied handle.
+    public void setHandle(TaskHandle handle) {
+        this.handle = handle;
+        handle.addTaskListener(new TaskListener() {
+            /// Queues a change on the JavaFX thread while this handle is attached.
             private void update(Runnable action) {
                 Platform.runLater(() -> {
-                    if (TaskListPane.this.executor == executor)
+                    if (TaskListPane.this.handle == handle)
                         action.run();
                 });
             }

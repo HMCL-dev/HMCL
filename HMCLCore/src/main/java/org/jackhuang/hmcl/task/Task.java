@@ -32,7 +32,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// A single-use unit of work with a result, lifecycle notifications, and optional progress.
 /// Creating a task or composing it with another task does not start either body. Submit the
-/// outermost task using [#start()], [#run()], or a [TaskExecutor]. Each task instance in an
+/// outermost task using [#start()], [#run()], or a [TaskHandle]. Each task instance in an
 /// execution must be used only once. Create a new instance to repeat an operation.
 ///
 /// Cancellation is cooperative. A running body may check [TaskExecutionContext#isCancelled()] and release its
@@ -226,37 +226,37 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// @throws Exception if execution fails, is cancelled, or the wait is interrupted
     public final T run() throws Exception {
-        return AsyncTaskExecutor.run(this);
+        return DefaultTaskHandle.run(this);
     }
 
-    /// Creates an executor for this task. Call [TaskExecutor#start()] to begin execution.
-    public final TaskExecutor executor() {
-        return new AsyncTaskExecutor(this);
+    /// Creates a handle for this task. Call [TaskHandle#start()] to begin execution.
+    public final TaskHandle newHandle() {
+        return new DefaultTaskHandle(this);
     }
 
-    /// Creates an executor for this task and starts it if `start` is true.
-    public final TaskExecutor executor(boolean start) {
-        TaskExecutor executor = new AsyncTaskExecutor(this);
+    /// Creates a handle for this task and starts it if `start` is true.
+    public final TaskHandle newHandle(boolean start) {
+        TaskHandle handle = newHandle();
         if (start)
-            executor.start();
-        return executor;
+            handle.start();
+        return handle;
     }
 
-    /// Creates an executor with the supplied listener registered before execution starts.
-    public final TaskExecutor executor(TaskListener taskListener) {
-        TaskExecutor executor = new AsyncTaskExecutor(this);
-        executor.addTaskListener(taskListener);
-        return executor;
+    /// Creates a handle with the supplied listener registered before execution starts.
+    public final TaskHandle newHandle(TaskListener taskListener) {
+        TaskHandle handle = newHandle();
+        handle.addTaskListener(taskListener);
+        return handle;
     }
 
     /// Starts an asynchronous execution of this task.
     public final void start() {
-        executor().start();
+        newHandle().start();
     }
 
     /// Runs this task, waits for termination, and returns whether it succeeded.
     public final boolean test() {
-        return executor().test();
+        return newHandle().test();
     }
 
     /// Returns a task that applies `fn` to the successful result on the default scheduler.
@@ -681,7 +681,7 @@ public abstract class Task<T extends @Nullable Object> {
         });
     }
 
-    /// Creates a task that waits for `future` and returns its result. Cancelling the task executor
+    /// Creates a task that waits for `future` and returns its result. Cancelling the task handle
     /// does not cancel the future or interrupt a running wait. Future cancellation propagates
     /// as a [CancellationException].
     public static <T extends @Nullable Object> Task<T> fromCompletableFuture(CompletableFuture<T> future) {

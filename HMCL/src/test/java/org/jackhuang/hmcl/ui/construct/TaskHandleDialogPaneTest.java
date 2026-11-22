@@ -16,7 +16,7 @@ import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
-import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -53,7 +53,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// Verifies background task lifetimes and reuse of progress dialogs.
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
-final class TaskExecutorDialogPaneTest {
+final class TaskHandleDialogPaneTest {
 
     /// Settings replaced temporarily to initialize dialog animation preferences.
     private static @Nullable Object previousSettings;
@@ -88,16 +88,16 @@ final class TaskExecutorDialogPaneTest {
             Decorator decorator = new Decorator(new StackPane(), stage -> { });
             new Scene(decorator.getRoot());
             field.set(null, decorator);
-            TaskExecutorDialogPane pane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
-            TaskExecutorDialogPane second = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+            TaskHandleDialogPane pane = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
+            TaskHandleDialogPane second = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
             try {
                 ButtonBase tasksButton = decorator.getRoot().lookupAll(".jfx-decorator-button").stream()
                         .filter(node -> i18n("task.list").equals(node.getAccessibleText()))
                         .map(ButtonBase.class::cast).findFirst().orElseThrow();
                 Node icon = Objects.requireNonNull(tasksButton.getGraphic());
-                ControlledExecutor executor = new ControlledExecutor();
-                pane.setExecutor(executor, false);
-                executor.start();
+                ControlledHandle handle = new ControlledHandle();
+                pane.setHandle(handle, false);
+                handle.start();
                 Controllers.dialog(pane);
                 assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
                 assertSame(icon, tasksButton.getGraphic());
@@ -117,11 +117,11 @@ final class TaskExecutorDialogPaneTest {
                 assertNotNull(stack);
                 assertEquals(1, stack.size());
                 assertSame(pane, stack.peek().orElseThrow());
-                assertEquals(1, executor.starts);
+                assertEquals(1, handle.starts);
 
-                ControlledExecutor secondExecutor = new ControlledExecutor();
-                second.setExecutor(secondExecutor, false);
-                secondExecutor.start();
+                ControlledHandle secondHandle = new ControlledHandle();
+                second.setHandle(secondHandle, false);
+                secondHandle.start();
                 Controllers.dialog(second);
                 second.runInBackground();
                 Node nextSpinner = Objects.requireNonNull(tasksButton.getGraphic());
@@ -153,14 +153,14 @@ final class TaskExecutorDialogPaneTest {
                 assertFalse(second.runOrDeferCompletionAction("Install", "Ready to install", actions::incrementAndGet));
                 assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
                 assertEquals(SVG.PENDING.getPath(), assertInstanceOf(SVGPath.class, tasksButton.getGraphic()).getContent());
-                second.setExecutor(null);
+                second.setHandle(null);
                 assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
                 assertSame(icon, tasksButton.getGraphic());
             } finally {
                 DialogUtils.close(pane);
-                pane.setExecutor(null);
+                pane.setHandle(null);
                 DialogUtils.close(second);
-                second.setExecutor(null);
+                second.setHandle(null);
                 field.set(null, previous);
             }
             return true;
@@ -174,11 +174,11 @@ final class TaskExecutorDialogPaneTest {
         TaskListPane pane = onFxThread(() -> {
             TaskListPane list = new TaskListPane();
             new Scene(list, 480, 240);
-            TaskExecutor executor = Task.runAsync("Visible task", () -> {
+            TaskHandle handle = Task.runAsync("Visible task", () -> {
                 throw new IOException(message);
-            }).executor();
-            list.setExecutor(executor);
-            assertFalse(executor.test());
+            }).newHandle();
+            list.setHandle(handle);
+            assertFalse(handle.test());
             return list;
         });
         onFxThread(() -> {
@@ -211,9 +211,9 @@ final class TaskExecutorDialogPaneTest {
                 }));
             }
         }.setName("Owner task");
-        TaskExecutor executor = owner.withStagesHints("update.checking", "launch.state.logging_in").executor();
-        TaskListPane pane = showTaskList(executor);
-        CompletableFuture<Boolean> result = CompletableFuture.supplyAsync(executor::test);
+        TaskHandle handle = owner.withStagesHints("update.checking", "launch.state.logging_in").newHandle();
+        TaskListPane pane = showTaskList(handle);
+        CompletableFuture<Boolean> result = CompletableFuture.supplyAsync(handle::test);
         try {
             assertTrue(entered.await(10, TimeUnit.SECONDS));
             onFxThread(() -> {
@@ -247,11 +247,11 @@ final class TaskExecutorDialogPaneTest {
             if (!failureFirst)
                 throw new IOException("Second stage failed");
         }).withStage("second");
-        TaskExecutor executor = Task.allOf(first, second)
+        TaskHandle handle = Task.allOf(first, second)
                 .withStagesHints(new Task.StagesHint("update.checking", List.of("first", "second")))
-                .executor();
-        TaskListPane pane = showTaskList(executor);
-        executor.addTaskListener(new TaskListener() {
+                .newHandle();
+        TaskListPane pane = showTaskList(handle);
+        handle.addTaskListener(new TaskListener() {
             @Override
             public void onStageStarted(TaskStage stage) {
                 bothStarted.countDown();
@@ -264,7 +264,7 @@ final class TaskExecutorDialogPaneTest {
             }
         });
 
-        assertFalse(executor.test());
+        assertFalse(handle.test());
         assertInstanceOf(IOException.class, (failureFirst ? first : second).getException());
         assertEquals(Task.TaskState.SUCCEEDED, (failureFirst ? second : first).getState());
         assertEquals(SVG.CLOSE.getPath(), stageIcon(pane, i18n("update.checking")));
@@ -293,21 +293,21 @@ final class TaskExecutorDialogPaneTest {
         };
         if (mergeStages)
             owner = owner.withStagesHints(new Task.StagesHint("update.checking", List.of("launch.state.logging_in")));
-        TaskExecutor executor = owner.executor();
-        TaskListPane pane = showTaskList(executor);
+        TaskHandle handle = owner.newHandle();
+        TaskListPane pane = showTaskList(handle);
 
-        assertTrue(executor.test());
+        assertTrue(handle.test());
         assertEquals(SVG.CHECK.getPath(), stageIcon(pane, i18n("update.checking") + " - 2/3"));
         if (!mergeStages)
             assertEquals(SVG.CLOSE.getPath(), stageIcon(pane, i18n("launch.state.logging_in")));
     }
 
     /// Attaches a list to a scene so its stage rows are available for inspection.
-    private static TaskListPane showTaskList(TaskExecutor executor) throws Exception {
+    private static TaskListPane showTaskList(TaskHandle handle) throws Exception {
         return onFxThread(() -> {
             TaskListPane pane = new TaskListPane();
             new Scene(pane, 480, 240);
-            pane.setExecutor(executor);
+            pane.setHandle(handle);
             return pane;
         });
     }
@@ -335,16 +335,16 @@ final class TaskExecutorDialogPaneTest {
     /// Verifies disabled cancellation remains disabled and an enabled action runs only once.
     @Test
     void cancellationHonorsActionAndWaitsForCompletion() throws Exception {
-        TaskExecutorDialogPane pane = onFxThread(() -> {
-            TaskExecutorDialogPane dialog = new TaskExecutorDialogPane(TaskCancellationAction.NO_CANCEL);
-            ControlledExecutor executor = new ControlledExecutor();
-            dialog.setExecutor(executor, false);
-            executor.start();
+        TaskHandleDialogPane pane = onFxThread(() -> {
+            TaskHandleDialogPane dialog = new TaskHandleDialogPane(TaskCancellationAction.NO_CANCEL);
+            ControlledHandle handle = new ControlledHandle();
+            dialog.setHandle(handle, false);
+            handle.start();
             @Nullable ButtonBase cancel = (ButtonBase) dialog.lookup(".dialog-cancel");
             assertNotNull(cancel);
             assertTrue(cancel.isDisabled());
             cancel.fire();
-            assertFalse(executor.isCancelled());
+            assertFalse(handle.isCancelled());
             dialog.setCancel(null);
             assertTrue(cancel.isDisabled());
             AtomicInteger cancellations = new AtomicInteger();
@@ -352,10 +352,10 @@ final class TaskExecutorDialogPaneTest {
             assertFalse(cancel.isDisabled());
             cancel.fire();
             cancel.fire();
-            assertTrue(executor.isCancelled());
+            assertTrue(handle.isCancelled());
             assertEquals(1, cancellations.get());
             assertTrue(TaskManager.getInstance().getTasks().contains(dialog));
-            executor.stop(false);
+            handle.stop(false);
             return dialog;
         });
         onFxThread(() -> {
@@ -371,25 +371,25 @@ final class TaskExecutorDialogPaneTest {
         CountDownLatch release = new CountDownLatch(1);
         CountDownLatch stopped = new CountDownLatch(1);
         AtomicInteger executions = new AtomicInteger();
-        TaskExecutor executor = Task.runAsync(() -> {
+        TaskHandle handle = Task.runAsync(() -> {
             executions.incrementAndGet();
             entered.countDown();
             assertTrue(release.await(10, TimeUnit.SECONDS));
-        }).executor();
-        TaskExecutorDialogPane pane = onFxThread(() -> {
-            TaskExecutorDialogPane dialog = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
-            dialog.setExecutor(executor);
-            executor.addTaskListener(new TaskListener() {
+        }).newHandle();
+        TaskHandleDialogPane pane = onFxThread(() -> {
+            TaskHandleDialogPane dialog = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
+            dialog.setHandle(handle);
+            handle.addTaskListener(new TaskListener() {
                 /// Signals after the pane's completion callback has been queued.
                 @Override
-                public void onStop(boolean success, TaskExecutor completed) {
+                public void onStop(boolean success, TaskHandle completed) {
                     stopped.countDown();
                 }
             });
             StackPane container = new StackPane();
             new Scene(container);
             DialogUtils.show(container, dialog);
-            executor.start();
+            handle.start();
             return dialog;
         });
         try {
@@ -405,7 +405,7 @@ final class TaskExecutorDialogPaneTest {
                     pane.runInBackground();
                     assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                     assertFalse(DialogUtils.isShowing(pane));
-                    assertFalse(executor.isCancelled());
+                    assertFalse(handle.isCancelled());
                     assertTrue(TaskManager.getInstance().getTasks().contains(pane));
                     // Reuse the same pane through the dialog stack used by Controllers.dialog.
                     DialogUtils.show(container, pane);
@@ -437,7 +437,7 @@ final class TaskExecutorDialogPaneTest {
             return true;
         });
         assertEquals(1, executions.get());
-        assertNull(executor.getException());
+        assertNull(handle.getException());
     }
 
     /// Verifies hiding or restoring a queued dialog cannot start it ahead of background work.
@@ -454,16 +454,16 @@ final class TaskExecutorDialogPaneTest {
                 Decorator decorator = new Decorator(new StackPane(), stage -> { });
                 new Scene(decorator.getRoot());
                 field.set(null, decorator);
-                TaskExecutorDialogPane first = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
-                TaskExecutorDialogPane second = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+                TaskHandleDialogPane first = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
+                TaskHandleDialogPane second = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
                 try {
-                    first.setExecutor(Task.runAsync(() -> assertTrue(release.await(10, TimeUnit.SECONDS))).executor());
+                    first.setHandle(Task.runAsync(() -> assertTrue(release.await(10, TimeUnit.SECONDS))).newHandle());
                     Controllers.dialog(first);
-                    completions.add(first.startExecutor());
+                    completions.add(first.startHandle());
                     first.runInBackground();
-                    second.setExecutor(Task.runAsync(executions::incrementAndGet).executor());
+                    second.setHandle(Task.runAsync(executions::incrementAndGet).newHandle());
                     Controllers.dialog(second);
-                    completions.add(second.startExecutor());
+                    completions.add(second.startHandle());
                     assertTrue(second.queuedProperty().get());
                     assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                     second.runInBackground();
@@ -475,13 +475,13 @@ final class TaskExecutorDialogPaneTest {
                     assertTrue(second.queuedProperty().get());
                     assertEquals(0, executions.get());
                     second.runInBackground();
-                    first.setExecutor(null);
+                    first.setHandle(null);
                     assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
                 } finally {
                     DialogUtils.close(first);
                     DialogUtils.close(second);
-                    first.setExecutor(null);
-                    second.setExecutor(null);
+                    first.setHandle(null);
+                    second.setHandle(null);
                     field.set(null, previous);
                 }
                 return true;
@@ -498,11 +498,11 @@ final class TaskExecutorDialogPaneTest {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void completionRemovesHiddenTask(boolean success) throws Exception {
-        TaskExecutorDialogPane pane = onFxThread(() -> {
-            TaskExecutorDialogPane dialog = new TaskExecutorDialogPane(TaskCancellationAction.NO_CANCEL);
-            ControlledExecutor executor = new ControlledExecutor();
-            dialog.setExecutor(executor, false);
-            executor.start();
+        TaskHandleDialogPane pane = onFxThread(() -> {
+            TaskHandleDialogPane dialog = new TaskHandleDialogPane(TaskCancellationAction.NO_CANCEL);
+            ControlledHandle handle = new ControlledHandle();
+            dialog.setHandle(handle, false);
+            handle.start();
             assertTrue(TaskManager.getInstance().getTasks().contains(dialog));
             StackPane container = new StackPane();
             new Scene(container);
@@ -511,7 +511,7 @@ final class TaskExecutorDialogPaneTest {
             assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
             assertThrows(UnsupportedOperationException.class,
                     () -> TaskManager.getInstance().getTasks().clear());
-            executor.stop(success);
+            handle.stop(success);
             return dialog;
         });
         onFxThread(() -> {
@@ -530,22 +530,22 @@ final class TaskExecutorDialogPaneTest {
             new Scene(result, 600, 400);
             return result;
         });
-        TaskExecutorDialogPane pane = onFxThread(() -> {
-            TaskExecutorDialogPane dialog = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+        TaskHandleDialogPane pane = onFxThread(() -> {
+            TaskHandleDialogPane dialog = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
             dialog.setTitle("Example modpack");
-            ControlledExecutor executor = new ControlledExecutor();
-            dialog.setExecutor(executor);
+            ControlledHandle handle = new ControlledHandle();
+            dialog.setHandle(handle);
             StackPane container = new StackPane();
             new Scene(container);
             DialogUtils.show(container, dialog);
-            executor.start();
+            handle.start();
             dialog.runInBackground();
             page.applyCss();
             page.layout();
             assertFalse(page.lookupAll(".jfx-spinner").isEmpty());
             assertFalse(dialog.runOrDeferCompletionAction(i18n("button.install"), i18n("modpack.install.ready"),
                     installations::incrementAndGet));
-            executor.stop(true);
+            handle.stop(true);
             return dialog;
         });
         onFxThread(() -> {
@@ -570,7 +570,7 @@ final class TaskExecutorDialogPaneTest {
                 assertNull(pane.pendingActionProperty().get());
                 assertFalse(TaskManager.getInstance().getTasks().contains(pane));
             } finally {
-                pane.setExecutor(null);
+                pane.setHandle(null);
             }
             return true;
         });
@@ -580,14 +580,14 @@ final class TaskExecutorDialogPaneTest {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void foregroundCompletionRunsImmediately(boolean restore) throws Exception {
-        TaskExecutorDialogPane pane = onFxThread(() -> {
-            TaskExecutorDialogPane dialog = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
-            ControlledExecutor executor = new ControlledExecutor();
-            dialog.setExecutor(executor);
+        TaskHandleDialogPane pane = onFxThread(() -> {
+            TaskHandleDialogPane dialog = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
+            ControlledHandle handle = new ControlledHandle();
+            dialog.setHandle(handle);
             StackPane container = new StackPane();
             new Scene(container);
             DialogUtils.show(container, dialog);
-            executor.start();
+            handle.start();
             if (restore) {
                 dialog.runInBackground();
                 DialogUtils.show(container, dialog);
@@ -596,7 +596,7 @@ final class TaskExecutorDialogPaneTest {
             assertTrue(dialog.runOrDeferCompletionAction("Install", "Ready to install", installations::incrementAndGet));
             assertEquals(1, installations.get());
             assertNull(dialog.pendingActionProperty().get());
-            executor.stop(true);
+            handle.stop(true);
             return dialog;
         });
         onFxThread(() -> {
@@ -611,19 +611,19 @@ final class TaskExecutorDialogPaneTest {
     @ValueSource(booleans = {true, false})
     void unsuccessfulCompletionDiscardsPendingAction(boolean detach) throws Exception {
         AtomicInteger installations = new AtomicInteger();
-        TaskExecutorDialogPane pane = onFxThread(() -> {
-            TaskExecutorDialogPane dialog = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
-            ControlledExecutor executor = new ControlledExecutor();
-            dialog.setExecutor(executor);
+        TaskHandleDialogPane pane = onFxThread(() -> {
+            TaskHandleDialogPane dialog = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
+            ControlledHandle handle = new ControlledHandle();
+            dialog.setHandle(handle);
             StackPane container = new StackPane();
             new Scene(container);
             DialogUtils.show(container, dialog);
-            executor.start();
+            handle.start();
             dialog.runInBackground();
             assertFalse(dialog.runOrDeferCompletionAction("Install", "Ready to install", installations::incrementAndGet));
             if (detach)
-                dialog.setExecutor(null);
-            executor.stop(false);
+                dialog.setHandle(null);
+            handle.stop(false);
             return dialog;
         });
         onFxThread(() -> {
@@ -636,25 +636,25 @@ final class TaskExecutorDialogPaneTest {
         });
     }
 
-    /// Verifies late completion from a detached executor cannot remove its replacement.
+    /// Verifies late completion from a detached handle cannot remove its replacement.
     @Test
     void staleCompletionDoesNotRemoveReplacement() throws Exception {
-        TaskExecutorDialogPane pane = onFxThread(() -> {
-            TaskExecutorDialogPane dialog = new TaskExecutorDialogPane(null);
-            ControlledExecutor previous = new ControlledExecutor();
-            dialog.setExecutor(previous, false);
+        TaskHandleDialogPane pane = onFxThread(() -> {
+            TaskHandleDialogPane dialog = new TaskHandleDialogPane(null);
+            ControlledHandle previous = new ControlledHandle();
+            dialog.setHandle(previous, false);
             previous.start();
             previous.stop(true);
-            ControlledExecutor replacement = new ControlledExecutor();
-            dialog.setExecutor(replacement, false);
+            ControlledHandle replacement = new ControlledHandle();
+            dialog.setHandle(replacement, false);
             replacement.start();
-            dialog.setExecutor(replacement, false);
+            dialog.setHandle(replacement, false);
             return dialog;
         });
         onFxThread(() -> {
             assertTrue(TaskManager.getInstance().getTasks().contains(pane));
             assertEquals(1, TaskManager.getInstance().getTasks().stream().filter(it -> it == pane).count());
-            pane.setExecutor(null);
+            pane.setHandle(null);
             assertFalse(TaskManager.getInstance().getTasks().contains(pane));
             return true;
         });
@@ -687,26 +687,26 @@ final class TaskExecutorDialogPaneTest {
         return future.get(30, TimeUnit.SECONDS);
     }
 
-    /// Emits executor lifecycle events under test control without scheduling work.
+    /// Emits handle lifecycle events under test control without scheduling work.
     @NotNullByDefault
-    private static final class ControlledExecutor extends TaskExecutor {
+    private static final class ControlledHandle extends TaskHandle {
 
         /// The number of times execution has been requested.
         private int starts;
 
-        /// Creates an executor with an unused root task.
-        private ControlledExecutor() {
+        /// Creates a handle with an unused root task.
+        private ControlledHandle() {
             super(Task.runAsync(() -> { }));
         }
 
         @Override
-        public TaskExecutor start() {
+        public TaskHandle start() {
             starts++;
             taskListeners.forEach(TaskListener::onStart);
             return this;
         }
 
-        /// Rejects synchronous execution, which this test executor does not support.
+        /// Rejects synchronous execution, which this test handle does not support.
         @Override
         public boolean test() {
             throw new UnsupportedOperationException();

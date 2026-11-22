@@ -19,7 +19,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Runs a task tree with shared cancellation, stage inheritance, and lifecycle notifications.
 @NotNullByDefault
-public final class AsyncTaskExecutor extends TaskExecutor {
+public final class DefaultTaskHandle extends TaskHandle {
     /// The framework submission currently using this thread.
     private static final ThreadLocal<@Nullable Work<?>> CURRENT_WORK = new ThreadLocal<>();
 
@@ -29,13 +29,13 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     /// Guards the waiting threads and the work they can execute without losing thread affinity.
     private final ReentrantLock lock = new ReentrantLock();
 
-    /// Creates an executor for a root task.
-    public AsyncTaskExecutor(Task<?> task) {
+    /// Creates a handle for a root task.
+    public DefaultTaskHandle(Task<?> task) {
         super(task);
     }
 
     @Override
-    public TaskExecutor start() {
+    public TaskHandle start() {
         notifyListeners(TaskListener::onStart);
         new Work<>(Schedulers.tasks(), this::runToCompletion).submit();
         return this;
@@ -49,7 +49,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
     /// Runs one root task synchronously, propagating its failure to the caller.
     static <T extends @Nullable Object> T run(Task<T> task) throws Exception {
-        return new AsyncTaskExecutor(task).runChild(null, task);
+        return new DefaultTaskHandle(task).runChild(null, task);
     }
 
     /// Runs the root through its final notification and reports uncaught failures.
@@ -77,7 +77,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     }
 
     /// Requests cancellation. Already running bodies may finish before they observe the request.
-    /// Starting an executor cancelled before start still delivers its stop notification.
+    /// Starting a previously cancelled handle still delivers its stop notification.
     @Override
     public void cancel() {
         cancelled = true;
@@ -227,7 +227,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
             throw new CancellationException("Cancelled by user");
     }
 
-    /// Executes children under a single parent and shares this executor's listeners and cancellation.
+    /// Executes children under a single parent and shares the handle's listeners and cancellation.
     @NotNullByDefault
     private final class Context<R extends @Nullable Object> implements TaskExecutionContext {
         /// The task executed in this context.
@@ -367,12 +367,12 @@ public final class AsyncTaskExecutor extends TaskExecutor {
             super(action);
             this.executor = executor;
             @Nullable Work<?> current = CURRENT_WORK.get();
-            this.parent = current != null && current.owner() == AsyncTaskExecutor.this ? current : null;
+            this.parent = current != null && current.owner() == DefaultTaskHandle.this ? current : null;
         }
 
         /// Returns the task tree owning this submission.
-        private AsyncTaskExecutor owner() {
-            return AsyncTaskExecutor.this;
+        private DefaultTaskHandle owner() {
+            return DefaultTaskHandle.this;
         }
 
         /// Finds waiting work in this branch that the given worker can run.

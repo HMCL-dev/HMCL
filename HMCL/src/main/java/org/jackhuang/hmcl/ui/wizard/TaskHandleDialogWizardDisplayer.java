@@ -4,12 +4,12 @@ package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskHandleDialogPane;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
@@ -20,9 +20,9 @@ import java.util.concurrent.CancellationException;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplayer {
+public abstract class TaskHandleDialogWizardDisplayer extends AbstractWizardDisplayer {
 
-    public TaskExecutorDialogWizardDisplayer(Queue<Object> cancelQueue) {
+    public TaskHandleDialogWizardDisplayer(Queue<Object> cancelQueue) {
         super(cancelQueue);
     }
 
@@ -30,7 +30,7 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
     @Override
     public void handleTask(SettingsMap settings, Task<?> task) {
         @Nullable WizardProvider.TaskCleanup cleanup = settings.remove(WizardProvider.TaskCleanup.KEY);
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(it -> {
+        TaskHandleDialogPane pane = new TaskHandleDialogPane(it -> {
             if (cleanup != null) {
                 // Keep the installation modal until onStop has released its repository draft.
                 it.setCancel(null);
@@ -51,10 +51,10 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
         }
 
         runInFX(() -> {
-            TaskExecutor executor = task.executor(new TaskListener() {
+            TaskHandle handle = task.newHandle(new TaskListener() {
                 @Override
-                public void onStop(boolean success, TaskExecutor executor) {
-                    @Nullable Exception failure = success ? null : executor.getException();
+                public void onStop(boolean success, TaskHandle handle) {
+                    @Nullable Exception failure = success ? null : handle.getException();
                     if (cleanup != null) {
                         try {
                             cleanup.cleanup();
@@ -105,9 +105,9 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                     });
                 }
             });
-            pane.setExecutor(executor);
+            pane.setHandle(handle);
             Controllers.dialog(pane);
-            pane.startExecutor();
+            pane.startHandle();
         });
     }
 }

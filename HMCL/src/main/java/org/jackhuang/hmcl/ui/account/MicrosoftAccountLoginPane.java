@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.QrCodeUtils;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
@@ -53,8 +54,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
     private final ObjectProperty<Step> step = new SimpleObjectProperty<>();
 
-    private TaskExecutor browserTaskExecutor;
-    private TaskExecutor deviceTaskExecutor;
+    /// The most recent browser login attempt, available for cancellation.
+    private @Nullable TaskHandle browserTaskHandle;
+    /// The most recent device login attempt, available for cancellation.
+    private @Nullable TaskHandle deviceTaskHandle;
 
     private final JFXButton btnLogin;
     private final SpinnerPane loginButtonSpinner;
@@ -152,18 +155,18 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
             rootContainer.getChildren().add(new JFXSpinner());
 
-            browserTaskExecutor = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE))
+            browserTaskHandle = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE))
                     .whenComplete(Schedulers.javafx(), this::onLoginCompleted)
-                    .executor(true);
+                    .newHandle(true);
         } else if (currentStep instanceof Step.StartDeviceCodeLogin) {
             loginButtonSpinner.setLoading(true);
             cancelAllTasks();
 
             rootContainer.getChildren().add(new JFXSpinner());
 
-            deviceTaskExecutor = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE))
+            deviceTaskHandle = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE))
                     .whenComplete(Schedulers.javafx(), this::onLoginCompleted)
-                    .executor(true);
+                    .newHandle(true);
         } else if (currentStep instanceof Step.WaitForOpenBrowser wait) {
             btnLogin.setOnAction(e -> {
                 FXUtils.openLink(wait.url());
@@ -272,8 +275,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     }
 
     private void cancelAllTasks() {
-        if (browserTaskExecutor != null) browserTaskExecutor.cancel();
-        if (deviceTaskExecutor != null) deviceTaskExecutor.cancel();
+        if (browserTaskHandle != null) browserTaskHandle.cancel();
+        if (deviceTaskHandle != null) deviceTaskHandle.cancel();
     }
 
     private void onCancel() {

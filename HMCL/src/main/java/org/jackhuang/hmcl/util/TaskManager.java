@@ -9,10 +9,10 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskHandleDialogPane;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
@@ -25,9 +25,9 @@ import java.util.concurrent.CompletableFuture;
 ///
 /// All operations and access to the observable list must occur on the JavaFX application thread.
 /// Entries remain registered while hidden. Completed entries remain until their pending action
-/// is activated; entries without a pending action are removed when their executors stop.
+/// is activated. Entries without a pending action are removed when their executions finish.
 /// Explicit child executions share their parent's execution slot. The next independent task
-/// starts only after every executor in that slot has reported completion and its cleanup listeners
+/// starts only after every handle in that slot has reported completion and its cleanup listeners
 /// have run. Hiding or detaching a dialog does not release its slot.
 @NotNullByDefault
 public final class TaskManager {
@@ -46,20 +46,20 @@ public final class TaskManager {
     private static final TaskManager INSTANCE = new TaskManager();
 
     /// Queued and active dialogs and completed dialogs awaiting user action.
-    private final ObservableList<TaskExecutorDialogPane> tasks =
+    private final ObservableList<TaskHandleDialogPane> tasks =
             FXCollections.observableArrayList(pane -> new Observable[]{pane.runningInBackgroundProperty(), pane.pendingActionProperty(), pane.queuedProperty()});
 
     /// Independent executions waiting in submission order.
     private final ArrayDeque<Execution> queue = new ArrayDeque<>();
 
     /// Submitted executions, retained independently of their dialogs' visibility or attachment.
-    private final IdentityHashMap<TaskExecutor, Execution> executions = new IdentityHashMap<>();
+    private final IdentityHashMap<TaskHandle, Execution> executions = new IdentityHashMap<>();
 
     /// The group currently owning the execution slot, or `null` when idle.
     private @Nullable Group activeGroup;
 
     /// A live view that prevents callers from modifying the task list.
-    private final @UnmodifiableView ObservableList<TaskExecutorDialogPane> tasksView =
+    private final @UnmodifiableView ObservableList<TaskHandleDialogPane> tasksView =
             FXCollections.unmodifiableObservableList(tasks);
 
     /// The aggregate status, with background execution taking priority over waiting tasks.
@@ -69,7 +69,7 @@ public final class TaskManager {
     private TaskManager() {
         status.bind(Bindings.createObjectBinding(() -> {
             boolean pending = false;
-            for (TaskExecutorDialogPane pane : tasks) {
+            for (TaskHandleDialogPane pane : tasks) {
                 if (pane.pendingActionProperty().get() != null || pane.queuedProperty().get())
                     pending = true;
                 else if (pane.runningInBackgroundProperty().get())
@@ -85,7 +85,7 @@ public final class TaskManager {
     }
 
     /// Returns an unmodifiable, observable view of queued tasks, active dialogs, and pending completion actions.
-    public @UnmodifiableView ObservableList<TaskExecutorDialogPane> getTasks() {
+    public @UnmodifiableView ObservableList<TaskHandleDialogPane> getTasks() {
         FXUtils.checkFxUserThread();
         return tasksView;
     }
@@ -99,19 +99,19 @@ public final class TaskManager {
         return status.getReadOnlyProperty();
     }
 
-    /// Submits an unstarted executor, returning the same future while it remains registered.
-    /// All executor listeners must be installed before submission. Callers must not subsequently
-    /// invoke [TaskExecutor#start()] or [TaskExecutor#test()] directly.
+    /// Submits an unstarted handle, returning the same future while it remains registered.
+    /// All handle listeners must be installed before submission. Callers must not subsequently
+    /// invoke [TaskHandle#start()] or [TaskHandle#test()] directly.
     ///
-    /// @param executor the executor to submit; an executor that has completed must not be resubmitted
-    /// @param parent an executing parent whose slot this executor shares, or `null` to queue
+    /// @param handle the handle to submit, which must not have completed
+    /// @param parent an executing parent whose slot this handle shares, or `null` to queue
     ///               an independent execution; a parent must still belong to the active group
-    /// @return a future completed after the executor's stop listeners and their preceding JavaFX
+    /// @return a future completed after the handle's stop listeners and their preceding JavaFX
     ///         callbacks have run; its value indicates execution success
     /// @throws IllegalArgumentException if `parent` is not executing in the active group
-    public CompletableFuture<Boolean> submit(TaskExecutor executor, @Nullable TaskExecutor parent) {
+    public CompletableFuture<Boolean> submit(TaskHandle handle, @Nullable TaskHandle parent) {
         FXUtils.checkFxUserThread();
-        @Nullable Execution existing = executions.get(executor);
+        @Nullable Execution existing = executions.get(handle);
         if (existing != null)
             return existing.completion;
 
@@ -121,15 +121,15 @@ public final class TaskManager {
         } else {
             @Nullable Execution owner = executions.get(parent);
             if (owner == null || owner.group != activeGroup)
-                throw new IllegalArgumentException("Parent executor is not running");
+                throw new IllegalArgumentException("Parent handle is not running");
             group = owner.group;
         }
-        Execution execution = new Execution(executor, group);
-        executions.put(executor, execution);
-        executor.addTaskListener(new TaskListener() {
+        Execution execution = new Execution(handle, group);
+        executions.put(handle, execution);
+        handle.addTaskListener(new TaskListener() {
             /// Releases the slot after earlier stop listeners and their JavaFX callbacks.
             @Override
-            public void onStop(boolean success, TaskExecutor stoppedExecutor) {
+            public void onStop(boolean success, TaskHandle stoppedHandle) {
                 Platform.runLater(() -> complete(execution, success));
             }
         });
@@ -154,12 +154,12 @@ public final class TaskManager {
     /// Starts a group member while retaining the group's exclusive slot.
     private void start(Execution execution) {
         execution.group.members++;
-        execution.executor.start();
+        execution.handle.start();
     }
 
     /// Completes a submitted execution once, releasing its group after its last member stops.
     private void complete(Execution execution, boolean success) {
-        if (executions.remove(execution.executor) == null)
+        if (executions.remove(execution.handle) == null)
             return;
         if (--execution.group.members == 0)
             activeGroup = null;
@@ -167,7 +167,7 @@ public final class TaskManager {
         startNext();
     }
 
-    /// Counts executors that must stop before an independent task may start.
+    /// Counts executions that must finish before an independent task may start.
     private static final class Group {
         /// The number of started group members whose stop notifications have not been processed.
         private int members;
@@ -175,29 +175,29 @@ public final class TaskManager {
 
     /// Retains scheduling state even if its progress dialog is hidden or detached.
     private static final class Execution {
-        /// The executor started when its group owns the slot.
-        private final TaskExecutor executor;
+        /// The handle started when its group owns the slot.
+        private final TaskHandle handle;
         /// The execution slot shared with explicitly declared children.
         private final Group group;
         /// Completion observed after cleanup listeners have run.
         private final CompletableFuture<Boolean> completion = new CompletableFuture<>();
 
         /// Creates an unstarted execution in the supplied group.
-        private Execution(TaskExecutor executor, Group group) {
-            this.executor = executor;
+        private Execution(TaskHandle handle, Group group) {
+            this.handle = handle;
             this.group = group;
         }
     }
 
     /// Registers a dialog; registering an existing entry has no effect.
-    public void register(TaskExecutorDialogPane pane) {
+    public void register(TaskHandleDialogPane pane) {
         FXUtils.checkFxUserThread();
         if (!tasks.contains(pane))
             tasks.add(pane);
     }
 
     /// Removes a dialog; removing an absent entry has no effect.
-    public void unregister(TaskExecutorDialogPane pane) {
+    public void unregister(TaskHandleDialogPane pane) {
         FXUtils.checkFxUserThread();
         tasks.remove(pane);
     }

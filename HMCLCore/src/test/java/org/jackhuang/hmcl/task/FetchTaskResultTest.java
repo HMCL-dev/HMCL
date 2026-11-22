@@ -131,7 +131,7 @@ class FetchTaskResultTest {
         AtomicInteger attempts = new AtomicInteger();
         var download = new FileDownloadTask(DownloadCandidates.of(candidate), destination) {
             /// The execution cancelled after the transfer starts writing.
-            final TaskExecutor execution = executor();
+            final TaskHandle handle = newHandle();
 
             /// Counts each attempt and requests cancellation when bytes have reached the sink.
             @Override
@@ -139,11 +139,11 @@ class FetchTaskResultTest {
                 if (progress == 0)
                     attempts.incrementAndGet();
                 else
-                    execution.cancel();
+                    handle.cancel();
             }
         };
 
-        assertFalse(download.execution.test());
+        assertFalse(download.handle.test());
         assertInstanceOf(CancellationException.class, download.getException());
         assertEquals(1, attempts.get());
         assertEquals("previous", Files.readString(destination));

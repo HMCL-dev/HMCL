@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class DecoratorWizardDisplayer extends DecoratorTransitionPage implements WizardDisplayer {
     private final WizardController wizardController = new WizardController(this);
-    private final WizardDisplayer displayer = new TaskExecutorDialogWizardDisplayer(new ConcurrentLinkedQueue<>()) {
+    private final WizardDisplayer displayer = new TaskHandleDialogWizardDisplayer(new ConcurrentLinkedQueue<>()) {
         @Override
         public void onEnd() {
             super.onEnd();
