@@ -245,7 +245,7 @@ public class TerracottaControllerPage extends StackPane {
                     feedback.setTitle(i18n("terracotta.feedback.title"));
                     feedback.setSubtitle(i18n("terracotta.feedback.desc"));
                     feedback.setTrailingIcon(SVG.OPEN_IN_NEW, ICON_SIZE);
-                    FXUtils.onClicked(feedback, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
+                    feedback.setOnAction(event -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
 
                     nodesProperty.setAll(flow, host, guest, feedback);
                 } else {

@@ -6,6 +6,7 @@ import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.util.Base64Utils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -238,6 +239,11 @@ public class DefaultLauncher extends Launcher {
 
                 if (is64bit && (javaVersion >= 25 && javaVersion <= 26)) {
                     res.addUnstableDefault("UseCompactObjectHeaders", true);
+                }
+
+                // CVE-2026-114938
+                if (Base64Utils.shouldDisableBase64Intrinsics(options.getJava().getInfo())) {
+                    res.addUnstableDefault("UseBASE64Intrinsics", false);
                 }
 
                 // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,

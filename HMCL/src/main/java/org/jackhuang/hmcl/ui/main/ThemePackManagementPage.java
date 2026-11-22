@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
@@ -21,13 +20,9 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
@@ -52,13 +47,23 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.*;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Shows installed theme packs and common theme-pack actions.
 @NotNullByDefault
-public final class ThemePackManagementPage extends ListPageBase<ThemePackManager.InstalledThemePack> implements DecoratorPage {
+public final class ThemePackManagementPage extends ListPaneBase<ThemePackManager.InstalledThemePack> implements DecoratorPage {
+    /// Toolbar container used to switch between normal and search actions.
+    private final TransitionPane toolbarPane = new TransitionPane();
+    /// Toolbar shown during normal browsing.
+    private final HBox toolbarNormal = new HBox();
+    /// Search toolbar.
+    private final HBox searchBar = new HBox();
+    /// Search input.
+    private final JFXTextField searchField = new JFXTextField();
+    /// Whether the search mechanism is currently active.
+    private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+
     /// The icon container size used by theme-pack icons.
     private static final double ICON_SIZE = 40;
 
@@ -88,17 +93,21 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         getStyleClass().add("gray-background");
 
         this.onThemePacksChanged = Objects.requireNonNull(onThemePacksChanged);
-        setItems(filteredList);
+        getListView().setItems(filteredList);
         setOnFailedAction(event -> refreshThemePacks());
         refreshThemePacks();
 
         FXUtils.applyDragListener(this, it -> "hmcl-theme".equals(FileUtils.getExtension(it)), paths -> paths.forEach(this::importThemePackImpl));
+
+        getStyleClass().add("notice-pane");
+
+        initializeToolbar();
+        initializeList();
     }
 
-    /// Creates the default list skin for the management page.
     @Override
-    protected Skin<?> createDefaultSkin() {
-        return new ThemePackManagementPageSkin(this);
+    protected ItemCell<ThemePackManager.InstalledThemePack> createItemCell(ListView<ThemePackManager.InstalledThemePack> listView) {
+        return new ThemePackCell(listView, this);
     }
 
     /// Returns the decorator title state for this page.
@@ -451,7 +460,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 rowRippler.setCursor(Cursor.HAND);
                 ComponentList.setNoPadding(rowRippler);
 
-                FXUtils.onClicked(rowRippler, () -> {
+                rowRippler.setOnAction(event -> {
                     fireEvent(new DialogCloseEvent());
                     page.confirmApplyTheme(themePack, theme);
                 });
@@ -480,141 +489,84 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
     }
 
-    /// Skin for the theme-pack management list page.
-    @NotNullByDefault
-    private static final class ThemePackManagementPageSkin extends SkinBase<ThemePackManagementPage> {
-        /// Toolbar container used to switch between normal and search actions.
-        private final TransitionPane toolbarPane = new TransitionPane();
+    /// Initializes toolbar actions and search.
+    private void initializeToolbar() {
+        searchBar.setAlignment(Pos.CENTER);
+        searchBar.setPadding(new Insets(0, 5, 0, 5));
+        searchField.setPromptText(i18n("search"));
+        HBox.setHgrow(searchField, Priority.ALWAYS);
 
-        /// Search toolbar.
-        private final HBox searchBar = new HBox();
+        PauseTransition pause = new PauseTransition(Duration.millis(100));
+        pause.setOnFinished(event ->
+                filteredList.setPredicate(createPredicate(searchField.getText())));
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                pause.setRate(1);
+                pause.playFromStart();
+            }
+        });
 
-        /// Toolbar shown during normal browsing.
-        private final HBox toolbarNormal = new HBox();
+        JFXButton closeSearchBar = createToolbarButton(null, SVG.CLOSE, () -> {
+            changeToolbar(toolbarNormal);
 
-        /// Whether the search mechanism is currently active.
-        private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+            searchField.clear();
+            pause.stop();
 
-        /// Search input.
-        private final JFXTextField searchField = new JFXTextField();
+            filteredList.setPredicate(null);
+            isSearching.set(false);
+        });
+        onEscPressed(searchField, closeSearchBar::fire);
 
-        /// List of installed theme packs.
-        private final JFXListView<ThemePackManager.InstalledThemePack> listView = new JFXListView<>();
+        searchBar.getChildren().setAll(searchField, closeSearchBar);
 
-        /// Creates the management page skin.
-        ///
-        /// @param skinnable the page controlled by this skin
-        private ThemePackManagementPageSkin(ThemePackManagementPage skinnable) {
-            super(skinnable);
+        toolbarNormal.setAlignment(Pos.CENTER_LEFT);
+        toolbarNormal.setPickOnBounds(false);
+        toolbarNormal.getChildren().setAll(
+                createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refreshThemePacks),
+                createToolbarButton(i18n("theme_pack.import"), SVG.FILE_OPEN, this::importThemePack),
+                createToolbarButton(i18n("theme_pack.directory"), SVG.FOLDER_OPEN,
+                        () -> FXUtils.openFolder(ThemePackManager.THEME_PACKS_DIRECTORY)),
+                createToolbarButton(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
 
-            StackPane pane = new StackPane();
-            pane.setPadding(new Insets(10));
-            pane.getStyleClass().addAll("notice-pane");
+        toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
+        FXUtils.setOverflowHidden(toolbarPane, 8);
 
-            ComponentList root = new ComponentList();
-            root.getStyleClass().add("no-padding");
+        setToolbar(toolbarPane);
+    }
 
-            initializeToolbar(skinnable, root);
-            initializeList(skinnable, root);
+    /// Initializes the installed theme-pack list.
+    private void initializeList() {
+        var listView = getListView();
+        listView.setPadding(Insets.EMPTY);
 
-            pane.getChildren().setAll(root);
-            getChildren().setAll(pane);
-        }
+        StackPane placeholderContainer = new StackPane();
+        placeholderContainer.getStyleClass().add("notice-pane");
+        Label placeholderLabel = new Label();
+        placeholderLabel.textProperty().bind(
+            Bindings.when(isSearching).then(i18n("search.no_results_found")).otherwise("")
+        );
+        placeholderContainer.getChildren().add(placeholderLabel);
+        listView.setPlaceholder(placeholderContainer);
+    }
 
-        /// Initializes toolbar actions and search.
-        private void initializeToolbar(ThemePackManagementPage skinnable, ComponentList root) {
-            searchBar.setAlignment(Pos.CENTER);
-            searchBar.setPadding(new Insets(0, 5, 0, 5));
-            searchField.setPromptText(i18n("search"));
-            HBox.setHgrow(searchField, Priority.ALWAYS);
+    /// Switches the visible toolbar.
+    private void changeToolbar(HBox newToolbar) {
+        Node oldToolbar = toolbarPane.getCurrentNode();
+        if (newToolbar != oldToolbar) {
+            toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
+            if (newToolbar == searchBar) {
+                runInFX(searchField::requestFocus);
 
-            PauseTransition pause = new PauseTransition(Duration.millis(100));
-            pause.setOnFinished(event ->
-                    skinnable.filteredList.setPredicate(skinnable.createPredicate(searchField.getText())));
-            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                if (isSearching.get() || !StringUtils.isBlank(newValue)) {
-                    pause.setRate(1);
-                    pause.playFromStart();
-                }
-            });
-
-            JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
-                changeToolbar(toolbarNormal);
-
-                searchField.clear();
-                pause.stop();
-
-                skinnable.filteredList.setPredicate(null);
-                isSearching.set(false);
-            });
-            onEscPressed(searchField, closeSearchBar::fire);
-
-            searchBar.getChildren().setAll(searchField, closeSearchBar);
-
-            toolbarNormal.setAlignment(Pos.CENTER_LEFT);
-            toolbarNormal.setPickOnBounds(false);
-            toolbarNormal.getChildren().setAll(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshThemePacks),
-                    createToolbarButton2(i18n("theme_pack.import"), SVG.FILE_OPEN, skinnable::importThemePack),
-                    createToolbarButton2(i18n("theme_pack.directory"), SVG.FOLDER_OPEN,
-                            () -> FXUtils.openFolder(ThemePackManager.THEME_PACKS_DIRECTORY)),
-                    createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
-
-            toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
-            FXUtils.setOverflowHidden(toolbarPane, 8);
-
-            root.getContent().add(toolbarPane);
-        }
-
-        /// Initializes the installed theme-pack list.
-        private void initializeList(ThemePackManagementPage skinnable, ComponentList root) {
-            SpinnerPane center = new SpinnerPane();
-            ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.loadingProperty().bind(skinnable.loadingProperty());
-            center.failedReasonProperty().bind(skinnable.failedReasonProperty());
-            center.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
-
-            listView.setPadding(Insets.EMPTY);
-            listView.setCellFactory(x -> new ThemePackItemCell(skinnable));
-            listView.setItems(skinnable.getItems());
-            listView.getStyleClass().add("no-horizontal-scrollbar");
-            ignoreEvent(listView, KeyEvent.KEY_PRESSED, event -> event.getCode() == KeyCode.ESCAPE);
-
-            StackPane placeholderContainer = new StackPane();
-            placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label();
-            placeholderLabel.textProperty().bind(
-                Bindings.when(isSearching).then(i18n("search.no_results_found")).otherwise("")
-            );
-            placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
-
-            center.setContent(listView);
-            root.getContent().add(center);
-        }
-
-        /// Switches the visible toolbar.
-        private void changeToolbar(HBox newToolbar) {
-            Node oldToolbar = toolbarPane.getCurrentNode();
-            if (newToolbar != oldToolbar) {
-                toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
-                if (newToolbar == searchBar) {
-                    runInFX(searchField::requestFocus);
-
-                    isSearching.set(true);
-                }
+                isSearching.set(true);
             }
         }
     }
 
     /// List cell that renders one installed theme pack.
     @NotNullByDefault
-    private static final class ThemePackItemCell extends ListCell<ThemePackManager.@Nullable InstalledThemePack> {
+    private static final class ThemePackCell extends ItemCell<ThemePackManager.InstalledThemePack> {
         /// The owning management page.
         private final ThemePackManagementPage page;
-
-        /// Root graphic reused by this cell.
-        private final RipplerContainer graphic;
 
         /// The text content shown for the current theme pack.
         private final TwoLineListItem content = new TwoLineListItem();
@@ -637,24 +589,25 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Deletes the package.
         private final JFXButton deleteButton;
 
-        /// Creates a reusable theme-pack list cell.
+        /// Creates reusable theme-pack controls for the supplied list.
         ///
         /// @param page the owning management page
-        private ThemePackItemCell(ThemePackManagementPage page) {
+        private ThemePackCell(ListView<ThemePackManager.InstalledThemePack> listView, ThemePackManagementPage page) {
+            super(listView);
             this.page = page;
 
-            content.getStyleClass().add("md-list-cell");
             content.setPadding(new Insets(8));
             content.setCursor(Cursor.HAND);
 
-            var ripplerContainer = new RipplerContainer(content);
-            this.graphic = ripplerContainer;
+            content.setPickOnBounds(false);
+
+            setContent(content);
 
             icon.setMouseTransparent(true);
             icon.getChildren().setAll(iconImage, iconFallback);
             TwoLineListItem.setMargin(icon, new Insets(0, 8, 0, 0));
             content.setLeading(icon);
-            FXUtils.onClicked(ripplerContainer, () -> {
+            getFeedbackContainer().setOnAction(event -> {
                 ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {
                     page.selectThemePack(themePack);
@@ -686,24 +639,14 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
         /// Updates this cell for one installed theme pack.
         @Override
-        protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
-            ThemePackManager.@Nullable InstalledThemePack currentItem = getItem();
-            boolean oldEmpty = isEmpty();
-
-            super.updateItem(themePack, empty);
-
-            if (Objects.equals(getItem(), currentItem) && oldEmpty == empty) return;
-
-            this.graphic.resetFeedback();
+        protected void updateListItem(ThemePackManager.@Nullable InstalledThemePack themePack) {
             iconImage.setImage(null);
             iconFallback.setVisible(false);
 
-            if (empty || themePack == null) {
+            if (themePack == null) {
                 content.getTags().clear();
-                setGraphic(null);
                 return;
             }
-            setGraphic(graphic);
 
             ThemePackManifest manifest = themePack.manifest();
             page.updateIcon(iconImage, iconFallback, themePack, manifest.icon());

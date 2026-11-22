@@ -8,6 +8,7 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import org.jackhuang.hmcl.util.Base64Utils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -226,13 +227,13 @@ final class ProtectedPayload {
                         throw new JsonParseException("Missing protected payload member: nonce");
                     }
 
-                    byte[] nonce = Base64.getDecoder().decode(encodedNonce);
+                    byte[] nonce = Base64Utils.decode(encodedNonce);
                     if (nonce.length != NONCE_SIZE) {
                         throw new JsonParseException("Protected payload nonce has invalid length");
                     }
 
                     String encodedPayload = joinObfuscatedPayload(envelope);
-                    byte[] encryptedPayload = Base64.getDecoder().decode(encodedPayload);
+                    byte[] encryptedPayload = Base64Utils.decode(encodedPayload);
                     byte[] payloadBytes = decryptPayload(encryptedPayload, nonce);
                     return JsonParser.parseString(new String(payloadBytes, StandardCharsets.UTF_8));
                 } catch (IllegalArgumentException e) {
