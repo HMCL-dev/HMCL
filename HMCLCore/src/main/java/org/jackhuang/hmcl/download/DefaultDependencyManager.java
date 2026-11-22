@@ -175,7 +175,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             try {
                 GameInstance instance = draft.getBaseSnapshot().getInstance(instanceId);
                 return Objects.requireNonNull(updater.apply(instance), "Instance updater returned null")
-                        .thenComposeAsync(manifest -> {
+                        .thenComposeOptionalAsync(manifest -> {
                             if (!instanceId.equals(manifest.id())) {
                                 throw new IllegalArgumentException(
                                         "Instance updater changed id from " + instanceId + " to " + manifest.id());
@@ -222,7 +222,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         validateGameInstance(instance);
 
         return Task.allOf(
-                Task.composeAsync(() -> {
+                Task.composeOptionalAsync(() -> {
                     Path instanceJar = instance.getInstanceJarFile();
 
                     return Files.notExists(instanceJar) || FileUtils.size(instanceJar) == 0L
@@ -248,7 +248,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             boolean integrityCheck) {
         validateGameInstance(instance);
 
-        return Task.composeAsync(() -> {
+        return Task.composeOptionalAsync(() -> {
             List<Task<?>> tasks = new ArrayList<>(0);
 
             GameVersionNumber detectedVersion = instance.getVersion();

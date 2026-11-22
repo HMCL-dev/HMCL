@@ -397,7 +397,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
 
         Path resourcePackDirectory = gameInstance.getResourcePackManager().getDirectory();
         Runnable action = () -> Controllers.taskDialog(Task
-                        .composeAsync(() -> {
+                        .composeOptionalAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
                             if (version != GameVersionNumber.unknown()) {
                                 return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), resourcePacks);

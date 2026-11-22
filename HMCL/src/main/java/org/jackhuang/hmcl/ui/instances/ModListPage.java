@@ -435,7 +435,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
 
         Path modDirectory = gameInstance.getModManager().getDirectory();
         Runnable action = () -> Controllers.taskDialog(Task
-                        .composeAsync(() -> {
+                        .composeOptionalAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
                             if (version != GameVersionNumber.unknown()) {
                                 return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), mods);

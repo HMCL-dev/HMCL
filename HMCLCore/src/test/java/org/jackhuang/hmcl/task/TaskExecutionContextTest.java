@@ -122,12 +122,54 @@ final class TaskExecutionContextTest {
             Platform.runLater(event);
             return event.get(10, TimeUnit.SECONDS);
         });
-        Task<@Nullable Thread> composed = source.thenComposeAsync(Schedulers.javafx(), processed -> {
+        Task<Thread> composed = source.thenComposeAsync(Schedulers.javafx(), processed -> {
             assertTrue(processed);
             assertTrue(Platform.isFxApplicationThread());
             return Task.supplyAsync(Thread::currentThread);
         });
         assertSame(Thread.currentThread(), task(Runnable::run, context -> context.run(composed)).run());
+    }
+
+    /// Composition preserves the result type and value of the selected child.
+    @Test
+    void preservesComposedChildResult() throws Exception {
+        Task<String> supplied = Task.composeAsync(() -> Task.completed("child"));
+        Task<String> recovered = Task.failed(new IOException("Source failed")).withComposeAsync(supplied);
+        assertEquals("child", recovered.run());
+
+        Task<@Nullable String> child = Task.completed(null);
+        Task<@Nullable String> composed = Task.completed(1).thenComposeAsync(child);
+        assertNull(composed.run());
+        assertEquals(Task.TaskState.SUCCEEDED, child.getState());
+    }
+
+    /// A missing child fails when passed directly or when its factory runs.
+    @Test
+    void rejectsMissingComposedChild() {
+        Task<Integer> source = Task.completed(1);
+        @Nullable Task<String> missing = null;
+        assertThrows(NullPointerException.class, () -> source.thenComposeAsync(missing));
+        assertThrows(NullPointerException.class, () -> source.withComposeAsync(missing));
+        assertThrows(NullPointerException.class, source.thenComposeAsync(value -> missing)::run);
+        assertThrows(NullPointerException.class, Task.completed(1).withComposeAsync(() -> missing)::run);
+        assertThrows(NullPointerException.class, Task.composeAsync(() -> missing)::run);
+    }
+
+    /// An optional factory can skip child execution and publish a successful null result.
+    @Test
+    void skipsAbsentComposedChildren() throws Exception {
+        Task<@Nullable String> source = Task.composeOptionalAsync(() -> null);
+        Task<@Nullable String> composed = source.thenComposeOptionalAsync(value -> {
+            assertNull(value);
+            return null;
+        });
+        StageEvents events = new StageEvents();
+        assertTrue(composed.newHandle(events).test());
+        assertNull(composed.resultNow());
+        assertEquals(List.of(source, composed), events.completions.stream().map(TaskCompletion::task).toList());
+
+        assertEquals("present", Task.composeOptionalAsync(() -> Task.completed("present"))
+                .thenComposeOptionalAsync(Task::completed).run());
     }
 
     /// A cancellation request reaches parent and child contexts and permits cleanup on the callback executor.

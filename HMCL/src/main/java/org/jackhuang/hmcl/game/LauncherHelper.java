@@ -166,7 +166,7 @@ public final class LauncherHelper {
         context.launchManifest = LaunchManifestNormalizer.repairForLaunch(gameInstance.getResolvedManifest());
 
         TaskHandle handle = checkGameState(gameInstance, setting, context.launchManifest)
-                .thenComposeAsync(java -> {
+                .thenComposeOptionalAsync(java -> {
                     context.javaRuntime = Objects.requireNonNull(java);
                     context.javaExecutable = java.getBinary();
                     if (java.getPlatform().os() == OperatingSystem.WINDOWS
@@ -184,7 +184,7 @@ public final class LauncherHelper {
                         return null;
                     return Task.allOf(
                             dependencyManager.checkGameCompletionAsync(gameInstance, context.launchManifest, integrityCheck),
-                            Task.composeAsync(() -> {
+                            Task.composeOptionalAsync(() -> {
                                 try {
                                     @Nullable ModpackConfiguration<?> configuration =
                                             gameInstance.readModpackConfiguration();
@@ -199,7 +199,7 @@ public final class LauncherHelper {
                                     return null;
                                 }
                             }),
-                            Task.composeAsync(() -> {
+                            Task.composeOptionalAsync(() -> {
                                 if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS
                                         || !(setting.getRenderer(gameInstance.getVersion()) instanceof Renderer.Driver renderer)
                                         || renderer.mesaDriverName() == null)

@@ -155,7 +155,7 @@ public final class TerracottaManager {
         TerracottaState.Preparing preparing = new TerracottaState.Preparing(new ReadOnlyDoubleWrapper(-1), true);
 
         Task.composeAsync(() -> getProvider().download(preparing))
-                .thenComposeAsync(pkg -> {
+                .thenComposeOptionalAsync(pkg -> {
                     if (!preparing.requestInstallFence()) {
                         return null;
                     }
