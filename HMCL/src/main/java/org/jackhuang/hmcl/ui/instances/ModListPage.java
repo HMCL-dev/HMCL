@@ -12,8 +12,10 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -60,19 +62,15 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
-import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
@@ -80,15 +78,34 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
-import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> implements PageAware {
+public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> implements PageAware {
+    /// Switches between toolbar modes.
+    private final TransitionPane toolbarPane = new TransitionPane();
+    /// Actions available while browsing.
+    private final HBox toolbarNormal = new HBox();
+    /// Actions on the selected items.
+    private final HBox toolbarSelecting = new HBox();
+    /// Toolbar containing the search input.
+    private final HBox searchBar = new HBox();
+    /// Text used to filter the list.
+    private final JFXTextField searchField = new JFXTextField();
+    /// Whether the search mechanism is currently active.
+    private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+    /// Timer for debouncing search input to avoid executing search on every keystroke.
+    private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
+
+    /// All loaded items before search filtering.
+    private final ObservableList<ModInfoObject> sourceItems = FXCollections.observableArrayList();
+
+    /// Source items matching the current search.
+    private final FilteredList<ModInfoObject> filteredItems = new FilteredList<>(sourceItems);
+
     private final ReentrantLock lock = new ReentrantLock();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
@@ -120,11 +137,155 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 loadInstance(current);
             }
         }));
+
+        initializeView();
     }
 
     @Override
-    protected Skin<?> createDefaultSkin() {
-        return new ModListPageSkin(this);
+    protected ItemCell<ModInfoObject> createItemCell(ListView<ModInfoObject> listView) {
+        return new ModListPage.ModCell(listView, this);
+    }
+
+    /// Configures the list and its page actions.
+    private void initializeView() {
+        getStyleClass().add("notice-pane");
+        var listView = getListView();
+        listView.setItems(filteredItems);
+
+        {
+
+            // Search Bar
+            searchBar.setAlignment(Pos.CENTER);
+            searchBar.setPadding(new Insets(0, 5, 0, 5));
+            searchField.setPromptText(i18n("search"));
+            HBox.setHgrow(searchField, Priority.ALWAYS);
+            searchPause.setOnFinished(e -> search());
+            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                    searchPause.setRate(1);
+                    searchPause.playFromStart();
+                }
+            });
+
+            JFXButton closeSearchBar = createToolbarButton(null, SVG.CLOSE,
+                    () -> {
+                        changeToolbar(toolbarNormal);
+
+                        searchField.clear();
+                        searchPause.stop();
+
+                        isSearching.set(false);
+                        filteredItems.setPredicate(null);
+                    });
+
+            onEscPressed(searchField, closeSearchBar::fire);
+
+            searchBar.getChildren().setAll(searchField, closeSearchBar);
+
+            JFXButton refreshButton = createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refresh);
+            refreshButton.disableProperty().bind(loadingProperty());
+
+            // Toolbar Normal
+            toolbarNormal.getChildren().setAll(
+                    refreshButton,
+                    createToolbarButton(i18n("mods.add"), SVG.ADD, this::add),
+                    createToolbarButton(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, this::openModFolder),
+                    createToolbarButton(i18n("addon.check_update.button"), SVG.UPDATE, () ->
+                            checkUpdates(
+                                    listView.getItems().stream()
+                                            .map(ModListPage.ModInfoObject::getModInfo)
+                                            .toList()
+                            )
+                    ),
+                    createToolbarButton(i18n("mods.download"), SVG.DOWNLOAD, this::download),
+                    createToolbarButton(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
+            );
+
+            // Toolbar Selecting
+
+            // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
+            var selectAll = createToolbarButton(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
+
+            ListChangeListener<Object> listener = change -> {
+                selectAll.setDisable(!listView.getItems().isEmpty()
+                        && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+            };
+
+            listView.getSelectionModel().getSelectedItems().addListener(listener);
+            listView.getItems().addListener(listener);
+
+            toolbarSelecting.getChildren().setAll(
+                    createToolbarButton(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
+                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                            removeSelected(listView.getSelectionModel().getSelectedItems());
+                        }, null);
+                    }),
+                    createToolbarButton(i18n("mods.enable"), SVG.CHECK, () ->
+                            setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
+                    createToolbarButton(i18n("mods.disable"), SVG.CLOSE, () ->
+                            setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
+                    createToolbarButton(i18n("addon.check_update.button"), SVG.UPDATE, () ->
+                            checkUpdates(
+                                    listView.getSelectionModel().getSelectedItems().stream()
+                                            .map(ModListPage.ModInfoObject::getModInfo)
+                                            .toList()
+                            )
+                    ),
+                    selectAll,
+                    createToolbarButton(i18n("button.cancel"), SVG.CANCEL, () ->
+                            listView.getSelectionModel().clearSelection())
+            );
+
+            FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
+                    selectedItem -> {
+                        if (selectedItem == null)
+                            changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
+                        else
+                            changeToolbar(toolbarSelecting);
+                    });
+
+            FXUtils.setOverflowHidden(toolbarPane, 8);
+
+            setToolbar(toolbarPane);
+
+            // Clear selection when pressing ESC
+            addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+                if (e.getCode() == KeyCode.ESCAPE) {
+                    if (listView.getSelectionModel().getSelectedItem() != null) {
+                        listView.getSelectionModel().clearSelection();
+                        e.consume();
+                    }
+                }
+            });
+        }
+
+        {
+            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("mods.empty"));
+            placeholderLabel.textProperty().bind(
+                Bindings.createStringBinding(() -> {
+                    if (isSearching.get()) {
+                        return i18n("search.no_results_found");
+                    } else {
+                        return i18n("mods.empty");
+                    }
+                },
+                isSearching)
+            );
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+
+            listView.setOnContextMenuRequested(event -> {
+                ModListPage.ModInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
+                if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
+                    listView.getSelectionModel().clearSelection();
+                    Controllers.dialog(new ModListPage.ModInfoDialog(selectedItem));
+                }
+            });
+        }
     }
 
     public void refresh() {
@@ -148,7 +309,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         setLoading(true);
 
         if (this.modManager != modManager) {
-            getItems().clear();
+            sourceItems.clear();
         }
         this.modManager = modManager;
 
@@ -172,10 +333,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 supportedLoaders.addAll(modManager.getSupportedLoaders());
 
                 if (exception == null) {
-                    getItems().setAll(list);
+                    sourceItems.setAll(list);
                 } else {
                     LOG.warning("Failed to load mods", exception);
-                    getItems().clear();
+                    sourceItems.clear();
                 }
             } finally {
                 setLoading(false);
@@ -336,245 +497,45 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         return gameInstance != null ? gameInstance.getId() : null;
     }
 
-    @NotNullByDefault
-    private static final class ModListPageSkin extends SkinBase<ModListPage> {
-
-        private final TransitionPane toolbarPane;
-        private final HBox searchBar;
-        private final HBox toolbarNormal;
-        private final HBox toolbarSelecting;
-
-        private final JFXListView<ModListPage.ModInfoObject> listView;
-
-        /// Whether the search mechanism is currently active.
-        private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
-
-        private final JFXTextField searchField;
-
-        /// Timer for debouncing search input to avoid executing search on every keystroke.
-        private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
-
-        public ModListPageSkin(ModListPage skinnable) {
-            super(skinnable);
-
-            StackPane pane = new StackPane();
-            pane.setPadding(new Insets(10));
-            pane.getStyleClass().addAll("notice-pane");
-
-            ComponentList root = new ComponentList();
-            pane.getChildren().setAll(root);
-            root.getStyleClass().add("no-padding");
-            listView = new JFXListView<>();
-            listView.getStyleClass().add("no-horizontal-scrollbar");
-
-            {
-                toolbarPane = new TransitionPane();
-
-                searchBar = new HBox();
-                toolbarNormal = new HBox();
-                toolbarSelecting = new HBox();
-
-                // Search Bar
-                searchBar.setAlignment(Pos.CENTER);
-                searchBar.setPadding(new Insets(0, 5, 0, 5));
-                searchField = new JFXTextField();
-                searchField.setPromptText(i18n("search"));
-                HBox.setHgrow(searchField, Priority.ALWAYS);
-                searchPause.setOnFinished(e -> search());
-                searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                    if (isSearching.get() || !StringUtils.isBlank(newValue)) {
-                        searchPause.setRate(1);
-                        searchPause.playFromStart();
-                    }
-                });
-
-                JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
-                        () -> {
-                            changeToolbar(toolbarNormal);
-
-                            searchField.clear();
-                            searchPause.stop();
-
-                            isSearching.set(false);
-                            Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
-                        });
-
-                onEscPressed(searchField, closeSearchBar::fire);
-
-                searchBar.getChildren().setAll(searchField, closeSearchBar);
-
-                JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh);
-                refreshButton.disableProperty().bind(skinnable.loadingProperty());
-
-                // Toolbar Normal
-                toolbarNormal.getChildren().setAll(
-                        refreshButton,
-                        createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
-                        createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
-                        createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
-                                skinnable.checkUpdates(
-                                        listView.getItems().stream()
-                                                .map(ModListPage.ModInfoObject::getModInfo)
-                                                .toList()
-                                )
-                        ),
-                        createToolbarButton2(i18n("mods.download"), SVG.DOWNLOAD, skinnable::download),
-                        createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
-                );
-
-                // Toolbar Selecting
-
-                // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
-                var selectAll = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
-
-                ListChangeListener<Object> listener = change -> {
-                    selectAll.setDisable(!listView.getItems().isEmpty()
-                            && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
-                };
-
-                listView.getSelectionModel().getSelectedItems().addListener(listener);
-                listView.getItems().addListener(listener);
-
-                toolbarSelecting.getChildren().setAll(
-                        createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                                skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
-                            }, null);
-                        }),
-                        createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
-                                skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
-                        createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
-                                skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
-                        createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
-                                skinnable.checkUpdates(
-                                        listView.getSelectionModel().getSelectedItems().stream()
-                                                .map(ModListPage.ModInfoObject::getModInfo)
-                                                .toList()
-                                )
-                        ),
-                        selectAll,
-                        createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
-                                listView.getSelectionModel().clearSelection())
-                );
-
-                FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
-                        selectedItem -> {
-                            if (selectedItem == null)
-                                changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
-                            else
-                                changeToolbar(toolbarSelecting);
-                        });
-
-                FXUtils.setOverflowHidden(toolbarPane, 8);
-
-                root.getContent().add(toolbarPane);
-
-                // Clear selection when pressing ESC
-                root.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
-                    if (e.getCode() == KeyCode.ESCAPE) {
-                        if (listView.getSelectionModel().getSelectedItem() != null) {
-                            listView.getSelectionModel().clearSelection();
-                            e.consume();
-                        }
-                    }
-                });
-            }
-
-            {
-                SpinnerPane center = new SpinnerPane();
-                ComponentList.setVgrow(center, Priority.ALWAYS);
-                center.loadingProperty().bind(skinnable.loadingProperty());
-
-                listView.setCellFactory(x -> new ModListPage.ModInfoListCell(listView, skinnable));
-                listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-                StackPane placeholderContainer = new StackPane();
-                placeholderContainer.getStyleClass().add("notice-pane");
-                Label placeholderLabel = new Label(i18n("mods.empty"));
-                placeholderLabel.textProperty().bind(
-                    Bindings.createStringBinding(() -> {
-                        if (isSearching.get()) {
-                            return i18n("search.no_results_found");
-                        } else {
-                            return i18n("mods.empty");
-                        }
-                    },
-                    isSearching)
-                );
-                placeholderContainer.getChildren().add(placeholderLabel);
-                listView.setPlaceholder(placeholderContainer);
-
-                Bindings.bindContent(listView.getItems(), skinnable.getItems());
-                skinnable.getItems().addListener((ListChangeListener<? super ModListPage.ModInfoObject>) c -> {
-                    if (isSearching.get()) {
-                        search();
-                    }
-                });
-
-                listView.setOnContextMenuRequested(event -> {
-                    ModListPage.ModInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
-                    if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
-                        listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ModListPage.ModInfoDialog(selectedItem));
-                    }
-                });
-
-                // ListViewBehavior would consume ESC pressed event, preventing us from handling it
-                // So we ignore it here
-                ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-
-                center.setContent(listView);
-                root.getContent().add(center);
-            }
-
-            getChildren().setAll(pane);
-        }
-
-        private void changeToolbar(HBox newToolbar) {
-            Node oldToolbar = toolbarPane.getCurrentNode();
-            if (newToolbar != oldToolbar) {
-                toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
-                if (newToolbar == searchBar) {
-                    Platform.runLater(searchField::requestFocus);
-                }
+    /// Shows the requested toolbar and focuses the search input when appropriate.
+    private void changeToolbar(HBox newToolbar) {
+        Node oldToolbar = toolbarPane.getCurrentNode();
+        if (newToolbar != oldToolbar) {
+            toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
+            if (newToolbar == searchBar) {
+                Platform.runLater(searchField::requestFocus);
             }
         }
+    }
 
-        private void search() {
-            isSearching.set(true);
+    /// Applies the search text to the displayed items.
+    private void search() {
+        isSearching.set(true);
 
-            Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
-
-            String queryString = searchField.getText();
-            if (StringUtils.isBlank(queryString)) {
-                listView.getItems().setAll(getSkinnable().getItems());
-            } else {
-                listView.getItems().clear();
-
-                Predicate<@Nullable String> predicate;
-                try {
-                    predicate = StringUtils.compileQuery(queryString);
-                } catch (Throwable e) {
-                    LOG.warning("Illegal regular expression", e);
-                    return;
-                }
-
-                // Do we need to search in the background thread?
-                for (ModListPage.ModInfoObject item : getSkinnable().getItems()) {
-                    LocalModFile modInfo = item.getModInfo();
-                    if (predicate.test(modInfo.getFileName())
-                            || predicate.test(modInfo.getName())
-                            || predicate.test(modInfo.getVersion())
-                            || predicate.test(modInfo.getGameVersion())
-                            || predicate.test(modInfo.getId())
-                            || predicate.test(Objects.toString(modInfo.getModLoaderType()))
-                            || predicate.test((item.getProjectInfo() != null ? item.getProjectInfo().displayName() : null))) {
-                        listView.getItems().add(item);
-                    }
-                }
+        String queryString = searchField.getText();
+        if (StringUtils.isBlank(queryString)) {
+            filteredItems.setPredicate(null);
+        } else {
+            Predicate<@Nullable String> predicate;
+            try {
+                predicate = StringUtils.compileQuery(queryString);
+            } catch (Throwable e) {
+                LOG.warning("Illegal regular expression", e);
+                filteredItems.setPredicate(item -> false);
+                return;
             }
-        }
 
+            filteredItems.setPredicate(item -> {
+                LocalModFile modInfo = item.getModInfo();
+                return predicate.test(modInfo.getFileName())
+                        || predicate.test(modInfo.getName())
+                        || predicate.test(modInfo.getVersion())
+                        || predicate.test(modInfo.getGameVersion())
+                        || predicate.test(modInfo.getId())
+                        || predicate.test(Objects.toString(modInfo.getModLoaderType()))
+                        || predicate.test((item.getProjectInfo() != null ? item.getProjectInfo().displayName() : null));
+            });
+        }
     }
 
     public static final class ModInfoObject {
@@ -604,29 +565,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
         }
 
+        /// Loads the icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            List<String> iconPaths = new ArrayList<>();
-
-            if (StringUtils.isNotBlank(this.localModFile.getLogoPath())) {
-                iconPaths.add(this.localModFile.getLogoPath());
-            }
-
-            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(this.localModFile.getFile())) {
-                for (String path : iconPaths) {
-                    Path iconPath = fs.getPath(path);
-                    if (Files.exists(iconPath)) {
-                        Image image = ImageLoaders.DEFAULT.load(iconPath, 80, 80, true, true);
-                        if (!image.isError() && image.getWidth() > 0 && image.getHeight() > 0 &&
-                                Math.abs(image.getWidth() - image.getHeight()) < 1) {
-                            return image;
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                LOG.warning("Failed to load mod icons", e);
-            }
-
-            return getDefaultIcon();
+            Image icon = localModFile.loadIcon(ImageLoaders.DEFAULT);
+            return FXUtils.isValidIcon(icon) ? icon : getDefaultIcon();
         }
     }
 
@@ -763,7 +705,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     private static final Lazy<PopupMenu> menu = new Lazy<>(PopupMenu::new);
     private static final Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
 
-    private static final class ModInfoListCell extends MDListCell<ModInfoObject> {
+    private static final class ModCell extends ItemCell<ModInfoObject> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
         private final ModListPage page;
@@ -782,11 +724,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private Tooltip warningTooltip;
 
         /// Creates a selectable mod row with file actions for the supplied page.
-        ModInfoListCell(JFXListView<ModInfoObject> listView, ModListPage page) {
+        ModCell(ListView<ModInfoObject> listView, ModListPage page) {
             super(listView);
             this.page = page;
 
-            this.getStyleClass().add("mod-info-list-cell");
+            getStyleClass().add("mod-info-list-cell");
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
@@ -815,12 +757,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             container.getChildren().setAll(imageContainer, content, actions);
 
             StackPane.setMargin(container, new Insets(8));
-            getContainer().getChildren().setAll(container);
+            setContent(container);
         }
 
         /// Updates mod details, warnings, and tags while retaining reusable tag labels.
         @Override
-        protected void updateControl(@Nullable ModInfoObject dataItem, boolean empty) {
+        protected void updateListItem(@Nullable ModInfoObject dataItem) {
             if (observedActiveProperty != null)
                 observedActiveProperty.removeListener(weakActiveListener);
 
@@ -830,7 +772,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 warningTooltip = null;
             }
 
-            if (empty || dataItem == null) return;
+            if (dataItem == null) return;
 
             List<String> warning = new ArrayList<>();
 
@@ -841,7 +783,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
-            dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
+            dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
 
             String displayName = modInfo.getName();
             if (projectInfo != null && I18n.isUseChinese()) {

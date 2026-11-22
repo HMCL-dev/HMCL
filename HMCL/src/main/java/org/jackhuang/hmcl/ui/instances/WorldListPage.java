@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -12,11 +11,9 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -50,7 +47,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class WorldListPage extends ListPageBase<World> {
+public final class WorldListPage extends ListPaneBase<World> {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
@@ -77,11 +74,30 @@ public final class WorldListPage extends ListPageBase<World> {
                 loadInstance(current);
             }
         }));
+
+        StackPane placeholderContainer = new StackPane();
+        placeholderContainer.getStyleClass().add("notice-pane");
+        var listView = getListView();
+        listView.setPadding(Insets.EMPTY);
+        Label placeholderLabel = new Label(i18n("world.empty"));
+        placeholderContainer.getChildren().add(placeholderLabel);
+        listView.setPlaceholder(placeholderContainer);
+
+        JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
+        chkShowAll.selectedProperty().bindBidirectional(showAllProperty());
+
+        setToolbarButtons(Arrays.asList(
+                chkShowAll,
+                createToolbarButton(i18n("button.refresh"), SVG.REFRESH, this::refresh),
+                createToolbarButton(i18n("world.add"), SVG.ADD, this::add),
+                createToolbarButton(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, this::openSavesFolder),
+                createToolbarButton(i18n("world.download"), SVG.DOWNLOAD, this::download)
+        ));
     }
 
     @Override
-    protected Skin<WorldListPage> createDefaultSkin() {
-        return new WorldListPageSkin();
+    protected ItemCell<World> createItemCell(ListView<World> listView) {
+        return new WorldCell(listView, this);
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
@@ -221,54 +237,21 @@ public final class WorldListPage extends ListPageBase<World> {
         return supportQuickPlay;
     }
 
-    private final class WorldListPageSkin extends ToolbarListPageSkin<World, WorldListPage> {
-
-        WorldListPageSkin() {
-            super(WorldListPage.this);
-
-            StackPane placeholderContainer = new StackPane();
-            placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label(i18n("world.empty"));
-            placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(WorldListPage skinnable) {
-            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
-            chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
-
-            return Arrays.asList(
-                    chkShowAll,
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
-                    createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openSavesFolder),
-                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download)
-            );
-        }
-
-        @Override
-        protected ListCell<World> createListCell(JFXListView<World> listView) {
-            return new WorldListCell(getSkinnable());
-        }
-    }
-
-    private static final class WorldListCell extends ListCell<World> {
+    private static final class WorldCell extends ItemCell<World> {
 
         private final WorldListPage page;
 
-        private final RipplerContainer graphic;
         private final ImageContainer imageView;
         private final Tooltip leftTooltip;
         private final TwoLineListItem content;
         private final JFXButton btnLaunch;
 
         /// Creates a world row with launch and management actions for the supplied page.
-        public WorldListCell(WorldListPage page) {
+        public WorldCell(ListView<World> listView, WorldListPage page) {
+            super(listView);
             this.page = page;
 
             var root = new BorderPane();
-            root.getStyleClass().add("md-list-cell");
             root.setPadding(new Insets(8));
 
             {
@@ -298,7 +281,7 @@ public final class WorldListPage extends ListPageBase<World> {
                 right.getChildren().add(btnLaunch);
                 FXUtils.installFastTooltip(btnLaunch, i18n("instance.launch"));
                 btnLaunch.setOnAction(event -> {
-                    World world = getItem();
+                    @Nullable World world = getItem();
                     if (world != null)
                         page.launch(world);
                 });
@@ -306,18 +289,20 @@ public final class WorldListPage extends ListPageBase<World> {
                 JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
                 right.getChildren().add(btnMore);
                 btnMore.setOnAction(event -> {
-                    World world = getItem();
+                    @Nullable World world = getItem();
                     if (world != null)
                         showPopupMenu(world, page.supportQuickPlayProperty().get(), JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
                 });
             }
 
-            this.graphic = new RipplerContainer(root);
-            graphic.setOnMouseClicked(event -> {
+            root.setPickOnBounds(false);
+
+            setContent(root);
+            getFeedbackContainer().setOnMouseClicked(event -> {
                 if (event.getClickCount() != 1)
                     return;
 
-                World world = getItem();
+                @Nullable World world = getItem();
                 if (world == null)
                     return;
 
@@ -330,19 +315,9 @@ public final class WorldListPage extends ListPageBase<World> {
 
         /// Updates world details and replaces version and lock tags together.
         @Override
-        protected void updateItem(@Nullable World world, boolean empty) {
-            @Nullable World oldWorld = getItem();
-            boolean oldEmpty = isEmpty();
-
-            super.updateItem(world, empty);
-
-            if (oldWorld == world && oldEmpty == empty) return;
-
-            this.graphic.resetFeedback();
-
-            if (empty || world == null) {
+        protected void updateListItem(@Nullable World world) {
+            if (world == null) {
                 content.getTags().clear();
-                setGraphic(null);
                 imageView.setImage(null);
                 leftTooltip.setText("");
                 content.setTitle("");
@@ -365,7 +340,6 @@ public final class WorldListPage extends ListPageBase<World> {
                 content.getTags().setAll(tags);
                 content.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
-                setGraphic(graphic);
             }
         }
 

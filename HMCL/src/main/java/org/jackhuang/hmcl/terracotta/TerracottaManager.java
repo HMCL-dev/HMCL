@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.io.IOException;
@@ -54,7 +55,7 @@ public final class TerracottaManager {
         Schedulers.io().execute(() -> {
             try {
                 if (TerracottaMetadata.PROVIDER == null)
-                    throw new IOException("Unsupported platform: " + org.jackhuang.hmcl.util.platform.Platform.CURRENT_PLATFORM);
+                    throw new IOException("Unsupported platform: " + SystemInfo.CURRENT_PLATFORM);
 
                 switch (TerracottaMetadata.PROVIDER.status()) {
                     case NOT_EXIST -> setState(new TerracottaState.Uninitialized(false));

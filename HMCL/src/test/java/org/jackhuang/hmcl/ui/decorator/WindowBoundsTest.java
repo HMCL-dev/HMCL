@@ -16,6 +16,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.JavaFXLauncher;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeAll;
@@ -207,7 +208,7 @@ final class WindowBoundsTest {
         Fixture fixture = onFxThread(Fixture::new);
         try {
             onFxThread(() -> {
-                fixture.replace(OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                fixture.replace(SystemInfo.CURRENT_OS == OperatingSystem.MACOS
                         ? nativeStyle() : StageStyle.TRANSPARENT, false);
                 return null;
             });

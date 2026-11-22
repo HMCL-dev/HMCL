@@ -9,8 +9,8 @@ import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
@@ -20,14 +20,17 @@ import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.JavaProcessLauncher;
+import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
@@ -59,7 +62,7 @@ public final class UpdateHandler {
         }
 
         if (args.length == 2 && args[0].equals("--apply-to")) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && !OperatingSystem.isWindows7OrLater()) {
+            if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS && !SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7)) {
                 SwingUtils.showErrorDialog(i18n("fatal.apply_update_need_win7", Metadata.PUBLISH_URL));
                 return true;
             }
@@ -86,7 +89,7 @@ public final class UpdateHandler {
     public static void updateFrom(RemoteVersion version) {
         checkFxUserThread();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && !OperatingSystem.isWindows7OrLater()) {
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS && !SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7)) {
             Controllers.dialog(i18n("fatal.apply_update_need_win7", Metadata.PUBLISH_URL), i18n("message.error"), MessageType.ERROR);
             return;
         }

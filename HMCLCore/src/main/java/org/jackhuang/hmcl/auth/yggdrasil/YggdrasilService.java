@@ -10,6 +10,7 @@ import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
+import org.jackhuang.hmcl.util.Base64Utils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -174,7 +175,7 @@ public class YggdrasilService {
         if (encodedTextures != null) {
             byte[] decodedBinary;
             try {
-                decodedBinary = Base64.getDecoder().decode(encodedTextures);
+                decodedBinary = Base64Utils.decode(encodedTextures);
             } catch (IllegalArgumentException e) {
                 throw new ServerResponseMalformedException(e);
             }

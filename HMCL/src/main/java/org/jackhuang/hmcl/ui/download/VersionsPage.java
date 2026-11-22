@@ -44,8 +44,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.NativePatcher;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -177,7 +176,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             twoLineListItem.setPadding(new Insets(10, 16, 10, 16));
             ripplerContainer = new RipplerContainer(twoLineListItem);
 
-            FXUtils.onClicked(this, this::onAction);
+            ripplerContainer.setOnAction(event -> this.onAction());
         }
 
         private void onAction() {
@@ -248,7 +247,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     }
                 }
 
-                switch (NativePatcher.checkSupportedStatus(gameVersion, Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION)) {
+                switch (NativePatcher.checkSupportedStatus(gameVersion, SystemInfo.SYSTEM_PLATFORM, SystemInfo.SYSTEM_VERSION)) {
                     case UNTESTED -> tags.add(Tag.warning(i18n("instance.game.support_status.untested")));
                     case UNSUPPORTED -> tags.add(Tag.warning(i18n("instance.game.support_status.unsupported")));
                 }

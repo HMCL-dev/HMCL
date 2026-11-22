@@ -4,6 +4,7 @@
  */
 
 .root {
+    -title-fill: -monet-on-primary-container;
 }
 
 .svg {
@@ -405,8 +406,6 @@
 
 .installer-item-wrapper .installer-item:list-item {
     -fx-padding: 8px;
-    -fx-border-color: -monet-outline-variant;
-    -fx-border-width: 0 0 1 0;
     -fx-alignment: center-left;
 }
 
@@ -686,10 +685,16 @@
 
 .jfx-tool-bar .jfx-decorator-title {
     -fx-font-weight: BOLD;
+    -fx-text-fill: -title-fill;
 }
 
 .jfx-tool-bar.background {
     -fx-background-color: -monet-primary-container;
+}
+
+.jfx-tool-bar.background:transparent {
+    -title-fill: -monet-on-surface;
+    -fx-background-color: -monet-surface-transparent-50;
 }
 
 /*.jfx-tool-bar HBox {*/
@@ -708,11 +713,11 @@
 }
 
 .jfx-tool-bar .jfx-decorator-button .svg {
-    -fx-fill: -monet-on-primary-container;
+    -fx-fill: -title-fill;
 }
 
 .jfx-decorator-button .jfx-spinner .arc {
-    -fx-stroke: -monet-on-primary-container;
+    -fx-stroke: -title-fill;
 }
 
 .jfx-tool-bar Label {

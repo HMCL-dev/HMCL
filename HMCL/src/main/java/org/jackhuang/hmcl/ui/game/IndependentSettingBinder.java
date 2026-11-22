@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.ui.construct.LineInheritableSwitch;
 import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -607,7 +606,7 @@ final class IndependentSettingBinder {
 
         long memoryAllocated;
         if (Boolean.TRUE.equals(autoMemory)) {
-            memoryAllocated = HMCLGameRepository.getAutoAllocatedMemory(memoryStatus, Platform.SYSTEM_PLATFORM);
+            memoryAllocated = HMCLGameRepository.getAutoAllocatedMemory(memoryStatus, SystemInfo.SYSTEM_PLATFORM);
         } else if (maxMemory != null && maxMemory > 0) {
             memoryAllocated = maxMemory * 1024L * 1024L;
         } else {
