@@ -333,6 +333,103 @@ final class TaskExecutionContextTest {
         assertNull(root.getException());
     }
 
+    /// Running a root directly consumes the same execution that its handles would start.
+    @Test
+    void rejectsAnotherRootExecutionAfterRun() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        Task<Integer> root = Task.supplyAsync(calls::incrementAndGet);
+        TaskHandle handle = root.newHandle();
+        assertEquals(1, root.run());
+        assertThrows(IllegalStateException.class, root::run);
+        assertThrows(IllegalStateException.class, handle::test);
+        assertThrows(IllegalStateException.class, root::start);
+        assertEquals(1, calls.get());
+        assertEquals(Task.TaskState.SUCCEEDED, root.getState());
+        assertEquals(1, root.getResult());
+        assertNull(root.getException());
+    }
+
+    /// Competing callers are rejected while the first handle is still announcing its start.
+    @Test
+    void claimsRootBeforeNotifyingStartListeners() throws Exception {
+        AtomicInteger bodies = new AtomicInteger();
+        Task<Integer> root = task(null, "claimed", context -> bodies.incrementAndGet());
+        CountDownLatch entered = new CountDownLatch(1);
+        CompletableFuture<@Nullable Void> release = new CompletableFuture<>();
+        CompletableFuture<Boolean> stopped = new CompletableFuture<>();
+        AtomicInteger starts = new AtomicInteger();
+        AtomicInteger stops = new AtomicInteger();
+        StageEvents events = new StageEvents() {
+            /// Pauses the winning start call before it can submit the root body.
+            @Override
+            public void onStart() {
+                if (starts.incrementAndGet() == 1) {
+                    entered.countDown();
+                    release.orTimeout(10, TimeUnit.SECONDS).join();
+                }
+            }
+
+            /// Records each handle stop and releases the test thread.
+            @Override
+            public void onStop(boolean success, TaskHandle handle) {
+                stops.incrementAndGet();
+                stopped.complete(success);
+            }
+        };
+        TaskHandle first = root.newHandle(events);
+        TaskHandle second = root.newHandle(events);
+        assertEquals(Task.TaskState.NEW, root.getState());
+        ExecutorService caller = Executors.newSingleThreadExecutor();
+        try {
+            var start = caller.submit(first::start);
+            try {
+                assertTrue(entered.await(10, TimeUnit.SECONDS));
+                assertEquals(Task.TaskState.READY, root.getState());
+                assertThrows(IllegalStateException.class, second::start);
+                assertThrows(IllegalStateException.class, first::test);
+                assertThrows(IllegalStateException.class, root::run);
+                assertFalse(release.isDone());
+                assertEquals(0, bodies.get());
+            } finally {
+                release.complete(null);
+            }
+            assertSame(first, start.get(10, TimeUnit.SECONDS));
+            assertTrue(stopped.get(10, TimeUnit.SECONDS));
+        } finally {
+            caller.shutdownNow();
+        }
+        assertThrows(IllegalStateException.class, second::test);
+        assertEquals(1, starts.get());
+        assertEquals(1, stops.get());
+        assertEquals(1, events.started.size());
+        assertEquals(events.started, events.finished);
+        assertEquals(1, bodies.get());
+        assertEquals(1, root.getResult());
+        assertEquals(Task.TaskState.SUCCEEDED, root.getState());
+        assertNull(root.getException());
+        assertNull(second.getException());
+    }
+
+    /// A repeated child fails the batch once its siblings finish and retains its own successful result.
+    @Test
+    void rejectsRepeatedChildWithoutFailingItsFirstExecution() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        Task<Integer> shared = Task.supplyAsync(calls::incrementAndGet);
+        Task<Integer> first = Task.completed(11);
+        Task<Integer> last = Task.completed(22);
+        task(context -> {
+            assertThrows(IllegalStateException.class, () -> context.runAll(List.of(first, shared, shared, last)));
+            assertEquals(11, first.getResult());
+            assertEquals(22, last.getResult());
+            assertThrows(IllegalStateException.class, () -> context.run(shared));
+            return null;
+        }).run();
+        assertEquals(1, calls.get());
+        assertEquals(1, shared.getResult());
+        assertEquals(Task.TaskState.SUCCEEDED, shared.getState());
+        assertNull(shared.getException());
+    }
+
     /// A task owns its declared stage from the running notification onward. Children on other
     /// workers inherit it, even when an enclosing task uses the same identifier.
     @Test
@@ -433,10 +530,17 @@ final class TaskExecutionContextTest {
         TaskHandle handle = root.newHandle(events);
         handle.cancel();
         assertFalse(handle.test());
+        CancellationException failure = assertInstanceOf(CancellationException.class, root.getException());
+        assertThrows(IllegalStateException.class, handle::test);
+        assertThrows(IllegalStateException.class, root.newHandle(events)::start);
+        assertThrows(IllegalStateException.class, root::run);
+        assertSame(failure, root.getException());
+        assertSame(failure, handle.getException());
+        assertEquals(Task.TaskState.FAILED, root.getState());
         assertEquals(1, events.started.size());
         assertSame(root, events.started.get(0).task());
         assertEquals(events.started, events.finished);
-        assertEquals(List.of(assertInstanceOf(CancellationException.class, root.getException())), events.failures);
+        assertEquals(List.of(failure), events.failures);
     }
 
     /// Hints declared during execution follow root hints and precede the staged task they describe.

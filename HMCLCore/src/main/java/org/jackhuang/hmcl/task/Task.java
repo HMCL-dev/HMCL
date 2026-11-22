@@ -32,8 +32,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// A single-use unit of work with a result, lifecycle notifications, and optional progress.
 /// Creating a task or composing it with another task does not start either body. Submit the
-/// outermost task using [#start()], [#run()], or a [TaskHandle]. Each task instance in an
-/// execution must be used only once. Create a new instance to repeat an operation.
+/// outermost task using [#start()], [#run()], or a [TaskHandle]. Submitting the same instance
+/// again throws [IllegalStateException], even through a different handle or parent task.
+/// Create a new instance to repeat an operation.
 ///
 /// Cancellation is cooperative. A running body may check [TaskExecutionContext#isCancelled()] and release its
 /// resources before returning. The executor also checks for cancellation before invoking
@@ -43,7 +44,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public abstract class Task<T extends @Nullable Object> {
 
-    /// Creates a task in the ready state with indeterminate progress.
+    /// Creates an unsubmitted task with indeterminate progress.
     public Task() {
     }
 
@@ -71,8 +72,26 @@ public abstract class Task<T extends @Nullable Object> {
         return null;
     }
 
-    /// Most recent execution state, initially [TaskState#READY].
-    private volatile TaskState state = TaskState.READY;
+    /// Most recent execution state, initially [TaskState#NEW].
+    private volatile TaskState state = TaskState.NEW;
+
+    /// Atomically claims [#state] on the first submission.
+    private static final VarHandle STATE_HANDLE;
+
+    static {
+        try {
+            STATE_HANDLE = MethodHandles.lookup()
+                    .findVarHandle(Task.class, "state", TaskState.class);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
+    /// Reserves this task for its first submission, before any execution notifications.
+    final void claimExecution() {
+        if (!STATE_HANDLE.compareAndSet(this, TaskState.NEW, TaskState.READY))
+            throw new IllegalStateException("Task has already been submitted: " + (name != null ? name : getClass().getName()));
+    }
 
     /// Returns the current execution state.
     public final TaskState getState() {
@@ -147,6 +166,7 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Runs the task body using the supplied context to execute children and obtain their results.
+    /// Call [#run()] or [TaskExecutionContext#run(Task)] to submit a task through its lifecycle.
     ///
     /// @implSpec Implementations that need child work must use the context within this invocation
     /// and on its calling thread. The executor publishes the returned value after its final
@@ -225,6 +245,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// requires that executor. Use [TaskExecutionContext#run(Task)] from another task.
     ///
     /// @throws Exception if execution fails, is cancelled, or the wait is interrupted
+    /// @throws IllegalStateException if this task was already submitted
     public final T run() throws Exception {
         return DefaultTaskHandle.run(this);
     }
@@ -719,7 +740,9 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Execution state published by the task executor.
     public enum TaskState {
-        /// Initial state, also published when the executor prepares the task.
+        /// The task has not been submitted.
+        NEW,
+        /// The task has been submitted and its body has not started.
         READY,
         /// The executor is about to invoke the body or is executing it.
         RUNNING,

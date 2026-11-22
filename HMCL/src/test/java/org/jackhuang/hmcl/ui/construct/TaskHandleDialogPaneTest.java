@@ -43,6 +43,7 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -492,6 +493,74 @@ final class TaskHandleDialogPaneTest {
         for (CompletableFuture<Boolean> completion : completions)
             assertTrue(completion.get(10, TimeUnit.SECONDS));
         assertEquals(1, executions.get());
+    }
+
+    /// A rejected start clears the dialog even if it was sent to the background while queued.
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void rejectsPreviouslyStartedHandle(boolean waitForSlot) throws Exception {
+        TaskHandle used = Task.completed(1).newHandle();
+        assertTrue(used.test());
+        TaskHandleDialogPane dialog = onFxThread(() -> {
+            TaskHandleDialogPane pane = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
+            pane.setHandle(used);
+            StackPane container = new StackPane();
+            new Scene(container);
+            DialogUtils.show(container, pane);
+            return pane;
+        });
+        CompletableFuture<Boolean> rejected = onFxThread(() -> {
+            ControlledHandle blocker = new ControlledHandle();
+            if (waitForSlot)
+                TaskManager.getInstance().submit(blocker, null);
+            try {
+                CompletableFuture<Boolean> submitted = dialog.startHandle();
+                if (waitForSlot) {
+                    assertTrue(dialog.queuedProperty().get());
+                    dialog.runInBackground();
+                    assertTrue(dialog.runningInBackgroundProperty().get());
+                }
+                return submitted;
+            } finally {
+                if (waitForSlot)
+                    blocker.stop(true);
+            }
+        });
+        assertInstanceOf(IllegalStateException.class,
+                assertThrows(ExecutionException.class, () -> rejected.get(10, TimeUnit.SECONDS)).getCause());
+        onFxThread(() -> {
+            assertSame(rejected, dialog.startHandle());
+            assertFalse(dialog.queuedProperty().get());
+            assertFalse(dialog.runningInBackgroundProperty().get());
+            assertFalse(dialog.canStartChild());
+            assertNull(dialog.pendingActionProperty().get());
+            assertFalse(TaskManager.getInstance().getTasks().contains(dialog));
+            assertFalse(DialogUtils.isShowing(dialog));
+            return true;
+        });
+    }
+
+    /// Cancelling the returned future leaves an accepted handle attached until it actually stops.
+    @Test
+    void cancellingSubmissionFutureKeepsRunningDialog() throws Exception {
+        TaskHandleDialogPane dialog = onFxThread(() -> {
+            ControlledHandle handle = new ControlledHandle();
+            TaskHandleDialogPane pane = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
+            pane.setHandle(handle);
+            try {
+                assertTrue(pane.startHandle().cancel(false));
+                assertTrue(pane.canStartChild());
+                assertTrue(TaskManager.getInstance().getTasks().contains(pane));
+            } finally {
+                handle.stop(true);
+            }
+            return pane;
+        });
+        onFxThread(() -> {
+            assertFalse(dialog.canStartChild());
+            assertFalse(TaskManager.getInstance().getTasks().contains(dialog));
+            return true;
+        });
     }
 
     /// Verifies both successful and failed completion remove hidden tasks from the list.

@@ -35,11 +35,13 @@ public interface TaskExecutionContext {
     /// Runs a child to completion and returns its published result.
     ///
     /// @throws Exception if the child fails or execution is cancelled or interrupted
+    /// @throws IllegalStateException if the child was already submitted
     <T extends @Nullable Object> T run(Task<T> task) throws Exception;
 
     /// Schedules the children on their respective executors and waits for all of them.
     /// Siblings on executors with available workers may run concurrently. A failure in
     /// one child does not cancel the others. An empty collection schedules no work.
+    /// Submitting an instance twice is a failure of the batch. Other children are still awaited.
     ///
     /// @return a mutable list of successful results in the input's iteration order
     /// @throws Exception if a child fails or execution is cancelled or interrupted

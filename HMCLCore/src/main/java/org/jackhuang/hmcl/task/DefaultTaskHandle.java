@@ -36,27 +36,34 @@ public final class DefaultTaskHandle extends TaskHandle {
 
     @Override
     public TaskHandle start() {
-        notifyListeners(TaskListener::onStart);
+        beginExecution();
         new Work<>(Schedulers.tasks(), this::runToCompletion).submit();
         return this;
     }
 
     @Override
     public boolean test() {
-        notifyListeners(TaskListener::onStart);
+        beginExecution();
         return runToCompletion();
+    }
+
+    /// Reserves the root task before a listener or another caller can start it again.
+    private void beginExecution() {
+        firstTask.claimExecution();
+        notifyListeners(TaskListener::onStart);
     }
 
     /// Runs one root task synchronously, propagating its failure to the caller.
     static <T extends @Nullable Object> T run(Task<T> task) throws Exception {
-        return new DefaultTaskHandle(task).runChild(null, task);
+        task.claimExecution();
+        return new DefaultTaskHandle(task).runClaimed(null, task);
     }
 
     /// Runs the root through its final notification and reports uncaught failures.
     private boolean runToCompletion() {
         boolean success = false;
         try {
-            runChild(null, firstTask);
+            runClaimed(null, firstTask);
             exception = null;
             success = true;
         } catch (Exception e) {
@@ -114,8 +121,8 @@ public final class DefaultTaskHandle extends TaskHandle {
         }
     }
 
-    /// Runs a task inline when the caller already owns a worker of its effective executor.
-    private <T extends @Nullable Object> T runChild(@Nullable Context<?> parent, Task<T> child) throws Exception {
+    /// Dispatches a claimed task, running it inline on a worker of its effective executor.
+    private <T extends @Nullable Object> T runClaimed(@Nullable Context<?> parent, Task<T> child) throws Exception {
         Context<T> context = prepare(parent, child);
         if (context.executor == currentExecutor())
             return execute(context);
@@ -141,7 +148,6 @@ public final class DefaultTaskHandle extends TaskHandle {
         T result;
         try {
             checkCancellation();
-            task.setState(Task.TaskState.READY);
             if (task.getSignificance().shouldLog())
                 LOG.trace("Executing task: " + task.getName());
             notifyListeners(listener -> listener.onReady(task));
@@ -267,7 +273,8 @@ public final class DefaultTaskHandle extends TaskHandle {
 
         @Override
         public <T extends @Nullable Object> T run(Task<T> task) throws Exception {
-            return runChild(this, task);
+            task.claimExecution();
+            return runClaimed(this, task);
         }
 
         @Override
@@ -277,6 +284,7 @@ public final class DefaultTaskHandle extends TaskHandle {
             @Nullable Throwable failure = null;
             for (Task<? extends T> child : List.copyOf(tasks)) {
                 try {
+                    child.claimExecution();
                     children.add(submitChild(prepare(this, child)));
                 } catch (RuntimeException | Error e) {
                     failure = batchFailure(failure, e);

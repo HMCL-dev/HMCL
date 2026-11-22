@@ -16,6 +16,7 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -223,6 +224,37 @@ final class TaskManagerTest {
         assertFalse(failed.completion().get(10, TimeUnit.SECONDS));
         assertTrue(next.completion().get(10, TimeUnit.SECONDS));
         assertEquals(1, bodies.get());
+    }
+
+    /// Rejects reused child and queued root tasks while preserving the parent's exclusive slot.
+    @Test
+    void rejectedStartsReleaseOnlyTheirOwnSlots() throws Exception {
+        CountDownLatch releaseParent = new CountDownLatch(1);
+        AtomicInteger bodies = new AtomicInteger();
+        Task<?> used = Task.runAsync(bodies::incrementAndGet);
+        TaskHandle completed = used.newHandle();
+        assertTrue(completed.test());
+
+        TaskManager manager = TaskManager.getInstance();
+        TaskHandle parent = Task.runAsync(() -> await(releaseParent)).newHandle();
+        CompletableFuture<Boolean> parentResult = onFxThread(() -> manager.submit(parent, null));
+        CompletableFuture<Boolean> queued = onFxThread(() -> manager.submit(used.newHandle(), null));
+        CompletableFuture<Boolean> next = onFxThread(() -> manager.submit(
+                Task.runAsync(bodies::incrementAndGet).newHandle(), null));
+        try {
+            CompletableFuture<Boolean> child = onFxThread(() -> manager.submit(completed, parent));
+            assertInstanceOf(IllegalStateException.class,
+                    assertThrows(ExecutionException.class, () -> child.get(10, TimeUnit.SECONDS)).getCause());
+            assertFalse(queued.isDone());
+            assertFalse(next.isDone());
+        } finally {
+            releaseParent.countDown();
+        }
+        assertTrue(parentResult.get(10, TimeUnit.SECONDS));
+        assertInstanceOf(IllegalStateException.class,
+                assertThrows(ExecutionException.class, () -> queued.get(10, TimeUnit.SECONDS)).getCause());
+        assertTrue(next.get(10, TimeUnit.SECONDS));
+        assertEquals(2, bodies.get());
     }
 
     /// Attaches listeners before submitting an independent task on the JavaFX thread.

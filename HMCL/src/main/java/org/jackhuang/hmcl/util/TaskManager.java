@@ -107,13 +107,20 @@ public final class TaskManager {
     /// @param parent an executing parent whose slot this handle shares, or `null` to queue
     ///               an independent execution; a parent must still belong to the active group
     /// @return a future completed after the handle's stop listeners and their preceding JavaFX
-    ///         callbacks have run; its value indicates execution success
+    ///         callbacks have run. Its value indicates execution success. If the handle
+    ///         rejects the start request, the future completes exceptionally with that failure.
     /// @throws IllegalArgumentException if `parent` is not executing in the active group
     public CompletableFuture<Boolean> submit(TaskHandle handle, @Nullable TaskHandle parent) {
+        return submit(handle, parent, null);
+    }
+
+    /// Submits the handle and invokes `onStartRejected` on the JavaFX thread if starting it throws.
+    /// Changes made by callers to the returned future do not trigger the callback.
+    public CompletableFuture<Boolean> submit(TaskHandle handle, @Nullable TaskHandle parent, @Nullable Runnable onStartRejected) {
         FXUtils.checkFxUserThread();
         @Nullable Execution existing = executions.get(handle);
         if (existing != null)
-            return existing.completion;
+            return existing.observe(onStartRejected);
 
         Group group;
         if (parent == null) {
@@ -126,45 +133,44 @@ public final class TaskManager {
         }
         Execution execution = new Execution(handle, group);
         executions.put(handle, execution);
-        handle.addTaskListener(new TaskListener() {
-            /// Releases the slot after earlier stop listeners and their JavaFX callbacks.
-            @Override
-            public void onStop(boolean success, TaskHandle stoppedHandle) {
-                Platform.runLater(() -> complete(execution, success));
-            }
-        });
         if (parent == null) {
             queue.addLast(execution);
             startNext();
         } else {
             start(execution);
         }
-        return execution.completion;
+        return execution.observe(onStartRejected);
     }
 
     /// Starts the oldest independent execution when no group owns the slot.
     private void startNext() {
-        if (activeGroup != null || queue.isEmpty())
-            return;
-        Execution next = queue.removeFirst();
-        activeGroup = next.group;
-        start(next);
+        while (activeGroup == null && !queue.isEmpty()) {
+            Execution next = queue.removeFirst();
+            activeGroup = next.group;
+            start(next);
+        }
     }
 
     /// Starts a group member while retaining the group's exclusive slot.
     private void start(Execution execution) {
         execution.group.members++;
-        execution.handle.start();
+        execution.handle.addTaskListener(execution);
+        try {
+            execution.handle.start();
+        } catch (RuntimeException | Error failure) {
+            release(execution);
+            execution.completion.completeExceptionally(failure);
+        }
     }
 
-    /// Completes a submitted execution once, releasing its group after its last member stops.
-    private void complete(Execution execution, boolean success) {
-        if (executions.remove(execution.handle) == null)
-            return;
+    /// Releases this submission once, ignoring late notifications from previous submissions.
+    private boolean release(Execution execution) {
+        if (!executions.remove(execution.handle, execution))
+            return false;
+        execution.handle.removeTaskListener(execution);
         if (--execution.group.members == 0)
             activeGroup = null;
-        execution.completion.complete(success);
-        startNext();
+        return true;
     }
 
     /// Counts executions that must finish before an independent task may start.
@@ -174,18 +180,42 @@ public final class TaskManager {
     }
 
     /// Retains scheduling state even if its progress dialog is hidden or detached.
-    private static final class Execution {
+    private final class Execution extends TaskListener {
         /// The handle started when its group owns the slot.
         private final TaskHandle handle;
         /// The execution slot shared with explicitly declared children.
         private final Group group;
         /// Completion observed after cleanup listeners have run.
         private final CompletableFuture<Boolean> completion = new CompletableFuture<>();
+        /// The shared caller-visible future, which callers may cancel independently.
+        private final CompletableFuture<Boolean> clientCompletion = completion.copy();
 
         /// Creates an unstarted execution in the supplied group.
         private Execution(TaskHandle handle, Group group) {
             this.handle = handle;
             this.group = group;
+        }
+
+        /// Observes actual startup failures independently of changes to the caller's future.
+        private CompletableFuture<Boolean> observe(@Nullable Runnable onStartRejected) {
+            if (onStartRejected != null) {
+                completion.whenComplete((success, failure) -> {
+                    if (failure != null)
+                        onStartRejected.run();
+                });
+            }
+            return clientCompletion;
+        }
+
+        /// Releases the slot after earlier stop listeners and their JavaFX callbacks.
+        @Override
+        public void onStop(boolean success, TaskHandle stoppedHandle) {
+            Platform.runLater(() -> {
+                if (release(this)) {
+                    completion.complete(success);
+                    startNext();
+                }
+            });
         }
     }
 

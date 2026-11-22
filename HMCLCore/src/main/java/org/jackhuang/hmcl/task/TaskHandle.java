@@ -32,17 +32,25 @@ public abstract class TaskHandle {
         taskListeners.add(taskListener);
     }
 
+    /// Removes a previously registered listener from subsequent notifications.
+    public void removeTaskListener(TaskListener taskListener) {
+        taskListeners.remove(taskListener);
+    }
+
     /// Returns the recorded failure, or null if none has been recorded.
     public @Nullable Exception getException() {
         return exception;
     }
 
     /// Starts execution asynchronously and returns this handle.
+    ///
+    /// @throws IllegalStateException if the root task was already submitted
     public abstract TaskHandle start();
 
     /// Starts execution and waits for the outcome.
     ///
     /// @return true if the root task succeeded
+    /// @throws IllegalStateException if the root task was already submitted
     public abstract boolean test();
 
     /// Requests cancellation of the task tree.

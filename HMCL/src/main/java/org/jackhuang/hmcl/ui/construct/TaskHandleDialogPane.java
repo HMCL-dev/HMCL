@@ -44,6 +44,8 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
 
     /// The handle whose progress is displayed, or `null` if detached.
     private @Nullable TaskHandle handle;
+    /// Whether completion of the attached handle closes the dialog.
+    private boolean autoClose;
     /// The cancellation action, or `null` when cancellation is disabled.
     private @Nullable TaskCancellationAction onCancel;
     /// An optional action invoked when the dialog is first sent to the background.
@@ -167,6 +169,7 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
             return;
         TaskManager.getInstance().unregister(this);
         this.handle = handle;
+        this.autoClose = autoClose;
         submission = null;
         queued.set(false);
         pendingAction.set(null);
@@ -196,26 +199,31 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
                 @Override
                 public void onStop(boolean success, TaskHandle stoppedHandle) {
                     Platform.runLater(() -> {
-                        if (TaskHandleDialogPane.this.handle != stoppedHandle)
-                            return;
-                        running = false;
-                        runningInBackground.set(false);
-                        if (!success)
-                            pendingAction.set(null);
-                        if (pendingAction.get() == null)
-                            TaskManager.getInstance().unregister(TaskHandleDialogPane.this);
-                        updateButtons();
-                        if (autoClose) {
-                            fireEvent(new DialogCloseEvent());
-                            if (Controllers.AUTO_TRIM_HEAP) {
-                                // Trim heap memory when tasks finish, allowing GC to return memory to the OS faster,
-                                // prevent excessive peak memory from consuming system resources.
-                                Platform.runLater(Controllers::trimHeap);
-                            }
-                        }
+                        if (TaskHandleDialogPane.this.handle == stoppedHandle)
+                            finish(success);
                     });
                 }
             });
+        }
+    }
+
+    /// Clears active and queued state, preserving any pending action after a successful run.
+    private void finish(boolean success) {
+        if (queued.get()) {
+            queued.set(false);
+            lblProgress.setText("");
+        }
+        running = false;
+        runningInBackground.set(false);
+        if (!success)
+            pendingAction.set(null);
+        if (pendingAction.get() == null)
+            TaskManager.getInstance().unregister(this);
+        updateButtons();
+        if (autoClose) {
+            fireEvent(new DialogCloseEvent());
+            if (Controllers.AUTO_TRIM_HEAP)
+                Platform.runLater(Controllers::trimHeap);
         }
     }
 
@@ -242,12 +250,24 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
         @Nullable TaskHandle parentHandle = parent == null
                 ? null
                 : Objects.requireNonNull(parent.handle, "parent handle");
+        TaskHandle submittedHandle = handle;
         queued.set(true);
         lblProgress.setText(i18n("task.queued"));
         TaskManager.getInstance().register(this);
         updateButtons();
-        submission = TaskManager.getInstance().submit(handle, parentHandle);
-        return submission;
+        CompletableFuture<Boolean> submitted;
+        try {
+            submitted = TaskManager.getInstance().submit(submittedHandle, parentHandle, () -> {
+                if (handle == submittedHandle)
+                    finish(false);
+            });
+        } catch (IllegalArgumentException failure) {
+            finish(false);
+            throw failure;
+        }
+        if (handle == submittedHandle)
+            submission = submitted;
+        return submitted;
     }
 
     /// Returns whether this dialog's submitted handle is waiting for its execution slot.
