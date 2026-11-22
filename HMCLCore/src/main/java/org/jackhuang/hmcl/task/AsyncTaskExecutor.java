@@ -230,7 +230,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     /// Executes children under a single parent and shares this executor's listeners and cancellation.
     @NotNullByDefault
     private final class Context<R extends @Nullable Object> implements TaskExecutionContext {
-        /// The task to execute and the source of its property notifications.
+        /// The task executed in this context.
         private final Task<R> task;
 
         /// Executor inherited by children that have no executor preference.
@@ -251,9 +251,18 @@ public final class AsyncTaskExecutor extends TaskExecutor {
             return isCancelledOrInterrupted();
         }
 
+        /// {@inheritDoc}
         @Override
-        public void notifyPropertiesChanged() {
-            notifyListeners(listener -> listener.onPropertiesUpdate(task, stage));
+        public void addStageItems(int count) {
+            if (stage != null)
+                notifyListeners(listener -> listener.onStageProgress(stage, 0, count));
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public void completeStageItem() {
+            if (stage != null)
+                notifyListeners(listener -> listener.onStageProgress(stage, 1, 0));
         }
 
         @Override

@@ -340,7 +340,9 @@ final class TaskExecutionContextTest {
         Task<Thread> leaf = Task.supplyAsync(Schedulers.io(), Thread::currentThread);
         Task<Thread> counted = leaf.withCounter();
         Task<Thread> nested = task(null, "download", context -> {
-            context.notifyPropertiesChanged();
+            context.addStageItems(2);
+            IOException failure = new IOException("Download failed");
+            assertSame(failure, assertThrows(IOException.class, () -> context.run(Task.failed(failure).withCounter())));
             return context.runAll(List.of(counted)).get(0);
         });
         Task<Integer> sibling = Task.completed(7);
@@ -348,9 +350,13 @@ final class TaskExecutionContextTest {
             assertNotSame(Thread.currentThread(), context.run(nested));
             return context.run(sibling);
         }).withStage("download");
-        Task<Integer> root = task(context -> context.run(outer));
+        Task<Integer> root = task(context -> {
+            context.addStageItems(1);
+            context.completeStageItem();
+            return context.run(outer);
+        });
         Map<Task<?>, @Nullable TaskStage> running = new HashMap<>();
-        Map<Task<?>, @Nullable TaskStage> properties = new HashMap<>();
+        List<StageProgress> progress = new ArrayList<>();
         StageEvents events = new StageEvents() {
             /// Captures the stage delivered with the running task itself.
             @Override
@@ -358,10 +364,10 @@ final class TaskExecutionContextTest {
                 running.put(task, stage);
             }
 
-            /// Captures the stage of explicit property changes and completed-item notifications.
+            /// Records the effective stage and both increments in dispatch order.
             @Override
-            public void onPropertiesUpdate(Task<?> task, @Nullable TaskStage stage) {
-                properties.put(task, stage);
+            public void onStageProgress(TaskStage stage, int completedDelta, int totalDelta) {
+                progress.add(new StageProgress(stage, completedDelta, totalDelta));
             }
         };
 
@@ -384,7 +390,7 @@ final class TaskExecutionContextTest {
         assertNull(running.get(root));
         assertNull(leaf.getStage());
         assertNull(sibling.getStage());
-        assertEquals(Map.of(nested, second, counted, second), properties);
+        assertEquals(List.of(new StageProgress(second, 0, 2), new StageProgress(second, 1, 0)), progress);
         assertEquals(List.of(second, first), events.finished);
         assertEquals(Arrays.asList(null, null), events.failures);
     }
@@ -460,6 +466,9 @@ final class TaskExecutionContextTest {
         assertEquals(List.of(check, install, runtime), declarations);
         assertEquals(declarations, atStageStart);
     }
+
+    /// One incremental progress notification for an executing stage.
+    private record StageProgress(TaskStage stage, int completedDelta, int totalDelta) {}
 
     /// Records stage events from tests that dispatch one child at a time.
     private static class StageEvents extends TaskListener {

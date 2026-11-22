@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Displays running tasks, retained failures, and the stages reported by an executor.
@@ -179,17 +178,10 @@ public final class TaskListPane extends StackPane {
                 });
             }
 
+            /// Applies both increments to the display row for this stage.
             @Override
-            public void onPropertiesUpdate(Task<?> task, @Nullable TaskStage stage) {
-                if (stage == null)
-                    return;
-
-                if (task instanceof Task.CountTask) {
-                    update(() -> stageNode(stage.id()).count());
-                } else {
-                    int total = tryCast(task.getProperties().get("total"), Integer.class).orElse(0);
-                    update(() -> stageNode(stage.id()).addTotal(total));
-                }
+            public void onStageProgress(TaskStage stage, int completedDelta, int totalDelta) {
+                update(() -> stageNode(stage.id()).addProgress(completedDelta, totalDelta));
             }
         });
     }
@@ -399,16 +391,10 @@ public final class TaskListPane extends StackPane {
                 status.set(Status.SUCCESS);
         }
 
-        public void count() {
-            updateCounter(++count, total);
-        }
-
-        public void addTotal(int n) {
-            this.total += n;
-            updateCounter(count, total);
-        }
-
-        public void updateCounter(int count, int total) {
+        /// Accumulates progress from all stages sharing this row.
+        private void addProgress(int completedDelta, int totalDelta) {
+            count += completedDelta;
+            total += totalDelta;
             title.setValue(total > 0
                     ? message + " - " + count + "/" + total
                     : message

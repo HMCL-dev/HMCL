@@ -178,8 +178,7 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
                 .toList();
 
         if (!dependencies.isEmpty()) {
-            getProperties().put("total", dependencies.size());
-            context.notifyPropertiesChanged();
+            context.addStageItems(dependencies.size());
         }
 
         try {

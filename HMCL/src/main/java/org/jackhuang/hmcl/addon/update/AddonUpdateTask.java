@@ -28,8 +28,6 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
     private final List<LocalAddonFile<?>> failedAddons = new ArrayList<>();
 
     public AddonUpdateTask(DownloadProvider downloadProvider, Path addonDirectory, List<AddonUpdate> addons) {
-        getProperties().put("total", addons.size());
-
         for (AddonUpdate addon : addons) {
             LocalAddonFile<?> local = addon.localAddonFile();
             RemoteAddon.Version remote = addon.targetVersion();
@@ -91,7 +89,7 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
     /// Downloads the selected updates and waits for each addon's cleanup to finish.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        context.notifyPropertiesChanged();
+        context.addStageItems(updates.size());
         context.runAll(updates);
         return null;
     }

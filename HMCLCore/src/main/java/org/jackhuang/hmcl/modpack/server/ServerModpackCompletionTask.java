@@ -167,8 +167,7 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
                 Files.deleteIfExists(actualPath);
         }
 
-        getProperties().put("total", dependencies.size());
-        context.notifyPropertiesChanged();
+        context.addStageItems(dependencies.size());
 
         try {
             context.runAll(dependencies);

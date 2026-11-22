@@ -54,8 +54,6 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
                     return Pair.pair(candidate, candidateRelease);
                 }).setName(addon.getFileName()).setSignificance(TaskSignificance.MAJOR).withCounter()
         ).toList();
-
-        getProperties().put("total", checks.size());
     }
 
     /// Returns the stage for addon update checks.
@@ -67,7 +65,7 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
     /// Collects available updates from all checks that completed successfully.
     @Override
     public AddonUpdates execute(TaskExecutionContext context) throws Exception {
-        context.notifyPropertiesChanged();
+        context.addStageItems(checks.size());
         try {
             context.runAll(checks);
         } catch (Exception failure) {

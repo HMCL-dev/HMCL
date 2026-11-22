@@ -282,8 +282,9 @@ final class TaskExecutorDialogPaneTest {
 
             @Override
             public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-                getProperties().put("total", 2);
-                context.notifyPropertiesChanged();
+                context.addStageItems(2);
+                context.addStageItems(1);
+                context.completeStageItem();
                 context.run(Task.completed(1).withCounter());
                 assertThrows(IOException.class, () -> context.run(Task.failed(new IOException("Check failed"))
                         .withCounter().withStage("launch.state.logging_in")));
@@ -296,7 +297,7 @@ final class TaskExecutorDialogPaneTest {
         TaskListPane pane = showTaskList(executor);
 
         assertTrue(executor.test());
-        assertEquals(SVG.CHECK.getPath(), stageIcon(pane, i18n("update.checking") + " - 1/2"));
+        assertEquals(SVG.CHECK.getPath(), stageIcon(pane, i18n("update.checking") + " - 2/3"));
         if (!mergeStages)
             assertEquals(SVG.CLOSE.getPath(), stageIcon(pane, i18n("launch.state.logging_in")));
     }

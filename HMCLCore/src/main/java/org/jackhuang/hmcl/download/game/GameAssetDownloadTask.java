@@ -100,8 +100,7 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
         }
 
         if (!dependencies.isEmpty()) {
-            getProperties().put("total", dependencies.size());
-            context.notifyPropertiesChanged();
+            context.addStageItems(dependencies.size());
         }
         context.runAll(dependencies);
         return null;

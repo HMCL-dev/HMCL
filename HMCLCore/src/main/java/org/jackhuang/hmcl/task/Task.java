@@ -71,16 +71,6 @@ public abstract class Task<T extends @Nullable Object> {
         return null;
     }
 
-    /// Lazily allocated mutable properties shared with task observers.
-    private @Nullable Map<String, Object> properties;
-
-    /// Returns the live, mutable property map for this task. Call [TaskExecutionContext#notifyPropertiesChanged()]
-    /// after updating values that should be reflected by execution listeners.
-    public Map<String, Object> getProperties() {
-        if (properties == null) properties = new HashMap<>();
-        return properties;
-    }
-
     /// Most recent execution state, initially [TaskState#READY].
     private volatile TaskState state = TaskState.READY;
 
@@ -558,7 +548,11 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Returns a wrapper that reports one completed item in its inherited stage after this task succeeds.
     public Task<T> withCounter() {
-        return new CountTask();
+        return Task.of(context -> {
+            T value = context.run(this);
+            context.completeStageItem();
+            return value;
+        }).setSignificance(TaskSignificance.MINOR);
     }
 
     /// Creates a task with no executor preference that runs `closure` and returns `null`.
@@ -843,22 +837,6 @@ public abstract class Task<T extends @Nullable Object> {
             }
 
             updateProgress(1.0D);
-            return value;
-        }
-    }
-
-    /// Identifies a completed item for a stage counter.
-    public final class CountTask extends Task<T> {
-        /// Creates a wrapper that reports the wrapped task's success.
-        private CountTask() {
-            setSignificance(TaskSignificance.MINOR);
-        }
-
-        /// {@inheritDoc}
-        @Override
-        public T execute(TaskExecutionContext context) throws Exception {
-            T value = context.run(Task.this);
-            context.notifyPropertiesChanged();
             return value;
         }
     }

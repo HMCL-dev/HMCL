@@ -77,6 +77,9 @@ public final class DefaultGameRepositoryDraftTest {
                 new ModpackConfiguration<>(old, "Server", "pack", "1", List.of()));
         IOException failure = new IOException("File download failed");
         TaskExecutionContext context = new TaskExecutionContext() {
+            /// Number of file downloads announced before the batch starts.
+            private int announcedFiles;
+
             /// Reports interruption of the test thread.
             @Override
             public boolean isCancelled() {
@@ -85,8 +88,14 @@ public final class DefaultGameRepositoryDraftTest {
 
             /// Verifies the batch size reported before the simulated download failure.
             @Override
-            public void notifyPropertiesChanged() {
-                assertEquals(1, task.getProperties().get("total"));
+            public void addStageItems(int count) {
+                announcedFiles += count;
+            }
+
+            /// A failed file batch must not report completed downloads.
+            @Override
+            public void completeStageItem() {
+                fail("Unexpected completed download");
             }
 
             /// Supplies the remote manifest without opening a connection.
@@ -101,6 +110,7 @@ public final class DefaultGameRepositoryDraftTest {
             @Override
             public <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> children) throws IOException {
                 assertEquals(1, children.size());
+                assertEquals(children.size(), announcedFiles);
                 try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
                     assertTrue(draft.isOpen());
                 }

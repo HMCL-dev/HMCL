@@ -81,18 +81,8 @@ public abstract class TaskListener implements EventListener {
     public void onStageFinished(TaskStage stage, @Nullable Throwable failure) {
     }
 
-    /// Called when a task explicitly reports a change to its [properties][Task#getProperties()].
-    ///
-    /// @param task the task reporting the change
-    public void onPropertiesUpdate(Task<?> task) {
-    }
-
-    /// Called when a task reports a property change through its execution context.
-    ///
-    /// @implSpec The default implementation calls [#onPropertiesUpdate(Task)].
-    /// @param task the task reporting the change
-    /// @param stage the task's declared or inherited stage, or `null` if neither applies
-    public void onPropertiesUpdate(Task<?> task, @Nullable TaskStage stage) {
-        onPropertiesUpdate(task);
+    /// Called when a task adds to the completed or total item count of its effective stage.
+    /// Both deltas are relative to the counts already reported.
+    public void onStageProgress(TaskStage stage, int completedDelta, int totalDelta) {
     }
 }

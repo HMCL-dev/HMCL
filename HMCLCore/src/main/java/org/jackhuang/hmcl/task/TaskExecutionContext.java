@@ -24,9 +24,13 @@ public interface TaskExecutionContext {
     /// is interrupted. This method preserves the thread's interrupted status.
     boolean isCancelled();
 
-    /// Notifies listeners that the running task's [properties][Task#getProperties()] may have
-    /// changed. Listeners receive the task and its effective stage.
-    void notifyPropertiesChanged();
+    /// Adds `count` items to the total for the task's declared or inherited stage.
+    /// Has no effect outside a stage.
+    void addStageItems(int count);
+
+    /// Reports one completed item in the task's declared or inherited stage.
+    /// Has no effect outside a stage.
+    void completeStageItem();
 
     /// Runs a child to completion and returns its published result.
     ///
