@@ -338,7 +338,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 }
             });
 
-            FXUtils.onClicked(this, () -> {
+            ripplerContainer.setOnAction(event -> {
                 AddonUpdateObject item = getItem();
                 if (item != null) {
                     item.enabled.set(!item.isEnabled());

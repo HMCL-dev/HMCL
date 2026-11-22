@@ -91,7 +91,7 @@ public class GameInstanceIconDialog extends JFXDialogLayout {
         RipplerContainer container = new RipplerContainer(shape);
         FXUtils.setLimitWidth(container, 36);
         FXUtils.setLimitHeight(container, 36);
-        FXUtils.onClicked(container, this::exploreIcon);
+        container.setOnAction(event -> exploreIcon());
         return container;
     }
 
@@ -101,7 +101,7 @@ public class GameInstanceIconDialog extends JFXDialogLayout {
         RipplerContainer container = new RipplerContainer(imageView);
         FXUtils.setLimitWidth(container, 36);
         FXUtils.setLimitHeight(container, 36);
-        FXUtils.onClicked(container, () -> {
+        container.setOnAction(event -> {
             if (setting != null) {
                 setting.iconProperty().setValue(type);
                 onAccept();
