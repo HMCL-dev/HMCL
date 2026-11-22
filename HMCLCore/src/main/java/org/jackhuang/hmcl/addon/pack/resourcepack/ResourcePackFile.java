@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.addon.pack.resourcepack;
 
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.pack.PackMcMeta;
-import org.jackhuang.hmcl.image.ImageLoader;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;

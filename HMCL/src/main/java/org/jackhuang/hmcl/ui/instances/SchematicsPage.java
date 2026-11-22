@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
-import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.util.StringUtils;
