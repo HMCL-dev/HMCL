@@ -234,11 +234,15 @@ public final class LaunchManifestNormalizer {
         List<Library> libraries = manifest.getLibraries();
 
         libraries = libraries.stream().filter(it -> {
-            if (Objects.equals(it.artifact().getGroup(), "com.ibm.icu") && Objects.equals(it.artifact().getName(), "icu4j-core-mojang") && it.artifact().getVersion().equals("51.2"))
-                return false;
-            if (Objects.equals(it.artifact().getGroup(), "org.lwjgl.lwjgl") && it.artifact().getVersion().equals("2.9.4-nightly-20150209"))
-                return false;
-            return !Objects.equals(it.artifact().getGroup(), "net.java.dev.jna") || !Objects.equals(it.artifact().getName(), "platform") || !it.artifact().getVersion().equals("3.4.0");
+            var group = it.artifact().getGroup();
+            var name = it.artifact().getName();
+            var version = it.artifact().getVersion();
+
+            return !(
+                ("com.ibm.icu".equals(group) && "icu4j-core-mojang".equals(name) && "51.2".equals(version))
+                || ("org.lwjgl.lwjgl".equals(group) && "2.9.4-nightly-20150209".equals(version))
+                || ("net.java.dev.jna".equals(group) && "platform".equals(name) && "3.4.0".equals(version))
+            );
         }).toList();
 
         return manifest.withLibraries(libraries);
