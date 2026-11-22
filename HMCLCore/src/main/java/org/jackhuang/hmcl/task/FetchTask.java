@@ -21,6 +21,7 @@ import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -48,7 +49,12 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
     /// @throws NullPointerException if the list or any element is null
     public FetchTask(DownloadCandidates candidates) {
         this.candidates = candidates;
-        setExecutor(DOWNLOAD_EXECUTOR);
+    }
+
+    /// Returns the shared executor for downloads.
+    @Override
+    public Executor getExecutor() {
+        return DOWNLOAD_EXECUTOR;
     }
 
     public void setCacheRepository(CacheRepository repository) {

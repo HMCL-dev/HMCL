@@ -153,19 +153,14 @@ public abstract class Task<T extends @Nullable Object> {
         exception = e;
     }
 
-    /// Executor on which the task body runs.
-    private Executor executor = Schedulers.tasks();
-
-    /// Returns the executor used to invoke [#execute(TaskExecutionContext)].
-    public final Executor getExecutor() {
-        return executor;
-    }
-
-    /// Sets the executor used to invoke [#execute(TaskExecutionContext)] and returns this task.
-    /// Continuation callbacks run on the executor selected when composing the task.
-    public final Task<T> setExecutor(Executor executor) {
-        this.executor = executor;
-        return this;
+    /// Returns the executor requested for [#execute(TaskExecutionContext)], or `null` to
+    /// inherit the executor running the parent task's body. A root task returning `null`
+    /// runs on the task scheduler. The scheduler queries this method once per dispatch.
+    /// Continuation callbacks use the executor selected at composition.
+    ///
+    /// @implSpec The default implementation returns `null`.
+    public @Nullable Executor getExecutor() {
+        return null;
     }
 
     /// Optional name used for logging and display.
@@ -402,12 +397,12 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Returns a task that calls `fn` on the default scheduler after this task succeeds and returns its value.
     public final <U extends @Nullable Object> Task<U> thenSupplyAsync(Callable<U> fn) {
-        return thenComposeAsync(() -> Task.supplyAsync(fn));
+        return thenComposeAsync(() -> Task.supplyAsync(Schedulers.defaultScheduler(), fn));
     }
 
     /// Returns a task that runs the named supplier on the default scheduler after this task succeeds.
     public final <U extends @Nullable Object> Task<U> thenSupplyAsync(String name, Callable<U> fn) {
-        return thenComposeAsync(() -> Task.supplyAsync(name, fn));
+        return thenComposeAsync(() -> Task.supplyAsync(name, Schedulers.defaultScheduler(), fn));
     }
 
     /// Returns a task that runs `other` after this task succeeds and returns its result, or `null` if `other` is absent.
@@ -633,14 +628,14 @@ public abstract class Task<T extends @Nullable Object> {
         return new CountTask(countStage);
     }
 
-    /// Creates a task that runs `closure` on the default scheduler and returns null.
+    /// Creates a task with no executor preference that runs `closure` and returns `null`.
     public static Task<@Nullable Void> runAsync(ExceptionalRunnable<?> closure) {
-        return runAsync(Schedulers.defaultScheduler(), closure);
+        return runAsync(getCaller(), closure).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /// Creates a named task that runs `closure` on the default scheduler and returns null.
+    /// Creates a named task with no executor preference that runs `closure` and returns `null`.
     public static Task<@Nullable Void> runAsync(String name, ExceptionalRunnable<?> closure) {
-        return runAsync(name, Schedulers.defaultScheduler(), closure);
+        return supplyAsync(name, closure.toCallable());
     }
 
     /// Creates a task that runs `closure` on `executor` and returns null.
@@ -650,10 +645,7 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Creates a named task that runs `closure` on `executor` and returns null.
     public static Task<@Nullable Void> runAsync(String name, Executor executor, ExceptionalRunnable<?> closure) {
-        return Task.<@Nullable Void>of(context -> {
-            closure.run();
-            return null;
-        }).setExecutor(executor).setName(name);
+        return supplyAsync(name, executor, closure.toCallable());
     }
 
     /// Creates a task that calls `fn` when run and returns the supplied child's result.
@@ -677,7 +669,7 @@ public abstract class Task<T extends @Nullable Object> {
         }).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /// Creates a task that returns the value of `callable` on the default scheduler.
+    /// Creates a task with no executor preference that returns the value of `callable`.
     public static <V extends @Nullable Object> Task<V> supplyAsync(Callable<V> callable) {
         return supplyAsync(getCaller(), callable).setSignificance(TaskSignificance.MODERATE);
     }
@@ -687,14 +679,26 @@ public abstract class Task<T extends @Nullable Object> {
         return supplyAsync(getCaller(), executor, callable).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /// Creates a named task that returns the value of `callable` on the default scheduler.
+    /// Creates a named task with no executor preference that returns the value of `callable`.
     public static <V extends @Nullable Object> Task<V> supplyAsync(String name, Callable<V> callable) {
-        return supplyAsync(name, Schedulers.defaultScheduler(), callable);
+        return Task.<V>of(context -> callable.call()).setName(name);
     }
 
     /// Creates a named task that returns the value of `callable` on `executor`.
     public static <V extends @Nullable Object> Task<V> supplyAsync(String name, Executor executor, Callable<V> callable) {
-        return Task.<V>of(context -> callable.call()).setExecutor(executor).setName(name);
+        return new Task<V>() {
+            /// Returns the executor supplied to the factory.
+            @Override
+            public Executor getExecutor() {
+                return executor;
+            }
+
+            /// Returns the result of the supplied callable.
+            @Override
+            public V execute(TaskExecutionContext context) throws Exception {
+                return callable.call();
+            }
+        }.setName(name);
     }
 
     /// Creates a task that returns `value` when run.

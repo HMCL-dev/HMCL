@@ -357,7 +357,6 @@ public final class JavaDownloadDialog extends StackPane {
                 return;
 
             Controllers.taskDialog(new GetTask(downloadProvider.getDownloadCandidates(version.getLinks().pkgInfoUri()))
-                    .setExecutor(Schedulers.io())
                     .thenComposeAsync(json -> {
                         DiscoResult<DiscoRemoteFileInfo> result = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoRemoteFileInfo.class));
                         if (result.getResult().size() != 1)
@@ -431,7 +430,7 @@ public final class JavaDownloadDialog extends StackPane {
                 return null;
             return javaVersionLists.computeIfAbsent(distribution, it -> {
                 DiscoJavaVersionList versionList = new DiscoJavaVersionList(it);
-                new DiscoFetchJavaListTask(downloadProvider, it, platform).setExecutor(Schedulers.io()).thenApplyAsync(versions -> {
+                new DiscoFetchJavaListTask(downloadProvider, it, platform).thenApplyAsync(versions -> {
                     EnumMap<JavaPackageType, ObservableList<DiscoJavaRemoteVersion>> result = new EnumMap<>(JavaPackageType.class);
                     if (versions.isEmpty())
                         return result;

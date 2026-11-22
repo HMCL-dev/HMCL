@@ -11,6 +11,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
 /// Executes children within the current task's cancellation and listener scope.
+/// Children whose [Task#getExecutor()] returns null inherit the executor running the current
+/// task's body. Each child can in turn supply this executor to its own children.
 /// A task must use its context only on the thread executing its body and before the body returns.
 /// While waiting, a worker may execute submissions from the awaited child's subtree on its
 /// own executor. Use the same executor instance for work requiring the same worker.

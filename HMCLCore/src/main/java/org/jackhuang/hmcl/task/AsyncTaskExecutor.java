@@ -90,16 +90,30 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         return Platform.isFxApplicationThread() ? Schedulers.javafx() : null;
     }
 
-    /// Runs a child inline when its parent already owns a worker of the requested executor.
-    private <T extends @Nullable Object> T runChild(@Nullable Task<?> parent, Task<T> child) throws Exception {
-        if (child.getExecutor() == currentExecutor())
-            return execute(parent, child);
-        return await(submitChild(parent, child));
+    /// Resolves a task's executor once, before scheduling or entering its body.
+    private Executor resolveExecutor(@Nullable Context parent, Task<?> task) {
+        try {
+            @Nullable Executor requested = task.getExecutor();
+            if (requested != null)
+                return requested;
+            return parent == null ? Schedulers.tasks() : parent.executor;
+        } catch (RuntimeException | Error failure) {
+            fail(task, failure);
+            throw failure;
+        }
+    }
+
+    /// Runs a task inline when the caller already owns a worker of its effective executor.
+    private <T extends @Nullable Object> T runChild(@Nullable Context parent, Task<T> child) throws Exception {
+        Executor executor = resolveExecutor(parent, child);
+        if (executor == currentExecutor())
+            return execute(parent, child, executor);
+        return await(submitChild(parent, child, executor));
     }
 
     /// Schedules a child and records task failure if the executor rejects the submission.
-    private <T extends @Nullable Object> Work<T> submitChild(@Nullable Task<?> parent, Task<T> child) {
-        Work<T> work = new Work<>(child.getExecutor(), () -> execute(parent, child));
+    private <T extends @Nullable Object> Work<T> submitChild(@Nullable Context parent, Task<T> child, Executor executor) {
+        Work<T> work = new Work<>(executor, () -> execute(parent, child, executor));
         try {
             checkCancellation();
             work.submit();
@@ -111,7 +125,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     }
 
     /// Executes the body and publishes its result before delivering successful completion events.
-    private <T extends @Nullable Object> T execute(@Nullable Task<?> parent, Task<T> task) throws Exception {
+    private <T extends @Nullable Object> T execute(@Nullable Context parent, Task<T> task, Executor executor) throws Exception {
         T result;
         try {
             checkCancellation();
@@ -120,7 +134,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
             if (task.getStage() != null)
                 task.setInheritedStage(task.getStage());
             else if (parent != null)
-                task.setInheritedStage(parent.getInheritedStage());
+                task.setInheritedStage(parent.task.getInheritedStage());
             task.setNotifyPropertiesChanged(() -> notifyListeners(listener -> listener.onPropertiesUpdate(task)));
             if (task.getSignificance().shouldLog())
                 LOG.trace("Executing task: " + task.getName());
@@ -129,7 +143,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
             task.setState(Task.TaskState.RUNNING);
             notifyListeners(listener -> listener.onRunning(task));
             try {
-                result = task.execute(new Context(task));
+                result = task.execute(new Context(task, executor));
             } finally {
                 task.setState(Task.TaskState.EXECUTED);
             }
@@ -185,6 +199,11 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         return failure instanceof Exception e ? e : new Exception(failure);
     }
 
+    /// Retains the first batch failure, giving errors precedence over ordinary exceptions.
+    private static Throwable batchFailure(@Nullable Throwable previous, Throwable next) {
+        return previous == null || next instanceof Error && !(previous instanceof Error) ? next : previous;
+    }
+
     /// Throws when cancellation has been requested or the current worker is interrupted.
     private void checkCancellation() {
         if (isCancelled() || Thread.currentThread().isInterrupted())
@@ -194,35 +213,43 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     /// Executes children under a single parent and shares this executor's listeners and cancellation.
     @NotNullByDefault
     private final class Context implements TaskExecutionContext {
-        /// The running parent, used for stage inheritance.
-        private final Task<?> parent;
+        /// The running task, used for stage inheritance.
+        private final Task<?> task;
 
-        /// Binds child execution to its parent.
-        Context(Task<?> parent) {
-            this.parent = parent;
+        /// Executor inherited by children that have no executor preference.
+        private final Executor executor;
+
+        /// Binds child execution to the running task and its effective executor.
+        Context(Task<?> task, Executor executor) {
+            this.task = task;
+            this.executor = executor;
         }
 
         @Override
         public <T extends @Nullable Object> T run(Task<T> task) throws Exception {
-            return runChild(parent, task);
+            return runChild(this, task);
         }
 
         @Override
         public <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> tasks) throws Exception {
             checkCancellation();
             List<Work<? extends T>> children = new ArrayList<>(tasks.size());
-            for (Task<? extends T> task : List.copyOf(tasks))
-                children.add(submitChild(parent, task));
+            @Nullable Throwable failure = null;
+            for (Task<? extends T> child : List.copyOf(tasks)) {
+                try {
+                    children.add(submitChild(this, child, resolveExecutor(this, child)));
+                } catch (RuntimeException | Error e) {
+                    failure = batchFailure(failure, e);
+                }
+            }
 
             List<T> results = new ArrayList<>(children.size());
-            @Nullable Throwable failure = null;
             for (Work<? extends T> child : children) {
                 try {
                     results.add(await(child));
                 } catch (Throwable e) {
                     // Drain every sibling, including after failure. Errors must reach the global handler.
-                    if (failure == null || e instanceof Error && !(failure instanceof Error))
-                        failure = e;
+                    failure = batchFailure(failure, e);
                 }
             }
             if (failure != null)
