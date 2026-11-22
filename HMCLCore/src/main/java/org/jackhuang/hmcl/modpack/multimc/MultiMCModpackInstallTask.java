@@ -263,7 +263,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         MMCInstancePatchesAssembleTask patches = prepareInstallation(preparation);
         preparation.add(patches);
         context.runAll(preparation);
-        MultiMCInstancePatch.ResolvedInstance artifact = MultiMCInstancePatch.resolveArtifact(patches.getResult(), instanceId);
+        MultiMCInstancePatch.ResolvedInstance artifact = MultiMCInstancePatch.resolveArtifact(patches.resultNow(), instanceId);
 
         // Stage #4: Copy embedded files.
         try (FileSystem fs = openModpack()) {

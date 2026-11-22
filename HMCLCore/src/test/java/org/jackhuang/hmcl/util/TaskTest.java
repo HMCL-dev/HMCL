@@ -82,8 +82,7 @@ public class TaskTest {
         assertEquals(1, stopCount.get());
         assertEquals(Boolean.FALSE, stopSuccess.get());
         assertEquals(Task.TaskState.FAILED, task.getState());
-        assertNotNull(task.getException());
-        assertSame(error, task.getException().getCause());
+        assertSame(error, task.exceptionNow().getCause());
         assertNotNull(handle.getException());
         assertSame(error, handle.getException().getCause());
         assertSame(error, uncaught.get());
@@ -163,7 +162,7 @@ public class TaskTest {
 
         assertFalse(stopped.get(30, TimeUnit.SECONDS), "Task should fail because we have cancelled it");
         assertInstanceOf(CancellationException.class, handle.getException(), "CancellationException should be recorded");
-        assertInstanceOf(CancellationException.class, task.getException(), "CancellationException should be recorded");
+        assertInstanceOf(CancellationException.class, task.exceptionNow(), "CancellationException should be recorded");
         assertTrue(taskCompleted.get(), "Cancellation should not interrupt the running task");
         assertFalse(continuationExecuted.get(), "Continuation should not run after cancellation");
     }
@@ -229,6 +228,6 @@ public class TaskTest {
         boolean result = task.test();
 
         assertFalse(result, "Task should fail since ExecutorService is shut down and RejectedExecutionException should be thrown");
-        assertInstanceOf(RejectedExecutionException.class, task.getException(), "RejectedExecutionException should be recorded");
+        assertInstanceOf(RejectedExecutionException.class, task.exceptionNow(), "RejectedExecutionException should be recorded");
     }
 }

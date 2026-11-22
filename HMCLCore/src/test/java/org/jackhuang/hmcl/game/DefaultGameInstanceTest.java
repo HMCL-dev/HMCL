@@ -38,7 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -105,7 +104,7 @@ public final class DefaultGameInstanceTest {
             }
         };
         assertFalse(task.handle.test());
-        assertInstanceOf(CancellationException.class, task.getException());
+        assertInstanceOf(CancellationException.class, task.exceptionNow());
         assertEquals("previous archive", Files.readString(output));
         try (var paths = Files.list(directory)) {
             assertEquals(List.of(output), paths.toList());
@@ -339,7 +338,7 @@ public final class DefaultGameInstanceTest {
         GameDownloadTask task = new GameDownloadTask(dependencyManager, manifest);
 
         assertTrue(task.newHandle().test());
-        assertEquals(cached, task.getResult());
+        assertEquals(cached, task.resultNow());
         assertFalse(Files.exists(cacheDirectory.resolve("jars")));
         assertFalse(cached.startsWith(repository.getLayout().getInstanceRoot(manifest.id())));
     }
@@ -651,7 +650,7 @@ public final class DefaultGameInstanceTest {
 
         assertEquals(
                 "Game instance already exists: instance",
-                Objects.requireNonNull(task.getException()).getMessage());
+                task.exceptionNow().getMessage());
         assertSame(instance, repository.getInstance(instanceId));
         assertEquals("existing", Files.readString(marker));
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {

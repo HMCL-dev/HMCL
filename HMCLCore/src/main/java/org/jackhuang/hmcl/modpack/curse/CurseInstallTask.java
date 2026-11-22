@@ -254,7 +254,7 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
                 && iconTask != null
                 && Modpack.SUPPORTED_ICON_NAMES.stream().map(root::resolve).allMatch(Files::notExists)) {
             try {
-                Files.copy(iconTask.getResult(), root.resolve("icon." + iconExtension));
+                Files.copy(iconTask.resultNow(), root.resolve("icon." + iconExtension));
             } catch (Exception e) {
                 LOG.warning("Failed to copy modpack icon", e);
             }

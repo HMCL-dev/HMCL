@@ -75,7 +75,9 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
         }
 
         List<AddonUpdate> commonUpdates = new ArrayList<>(), releaseUpdates = new ArrayList<>();
-        checks.stream().map(Task::getResult).filter(Objects::nonNull)
+        checks.stream()
+                .map(Task::resultNowOrNull)
+                .filter(Objects::nonNull)
                 .forEachOrdered(pair -> {
                     commonUpdates.add(pair.key());
                     if (pair.value() != null) releaseUpdates.add(pair.value());

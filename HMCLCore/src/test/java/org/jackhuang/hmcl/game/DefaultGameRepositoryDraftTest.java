@@ -179,7 +179,7 @@ public final class DefaultGameRepositoryDraftTest {
             TaskHandle handle = task.newHandle();
             handle.cancel();
             assertFalse(handle.test());
-            assertInstanceOf(CancellationException.class, task.getException());
+            assertInstanceOf(CancellationException.class, task.exceptionNow());
             assertTrue(draft.isOpen());
         }
         assertFalse(Files.exists(repository.getLayout().getInstanceRoot(id)));

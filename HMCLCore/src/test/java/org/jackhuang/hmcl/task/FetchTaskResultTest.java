@@ -116,7 +116,7 @@ class FetchTaskResultTest {
         repository.changeDirectory(directory);
         FetchTask<@Nullable Void> stream = streamWithoutUI(task, repository);
         assertThrows(DownloadException.class, stream::run);
-        assertNull(stream.getResult());
+        assertThrows(IllegalStateException.class, stream::resultNow);
         assertEquals("previous", Files.readString(destination));
         assertEquals(1, temporaryFiles.size());
         assertFalse(Files.exists(temporaryFiles.get(0)));
@@ -144,7 +144,7 @@ class FetchTaskResultTest {
         };
 
         assertFalse(download.handle.test());
-        assertInstanceOf(CancellationException.class, download.getException());
+        assertInstanceOf(CancellationException.class, download.exceptionNow());
         assertEquals(1, attempts.get());
         assertEquals("previous", Files.readString(destination));
     }

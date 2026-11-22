@@ -140,7 +140,7 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
         context.run(game);
         DefaultGameInstance instance = repository.getInstance(instanceId);
         GameInstanceManifest instanceManifest = instance.getManifest();
-        Task<?> completion = new McbbsModpackCompletionTask(dependencyManager, instance, instanceTask.getResult());
+        Task<?> completion = new McbbsModpackCompletionTask(dependencyManager, instance, instanceTask.resultNow());
         if (this.updateTarget == null) {
             // Keep the builder's published manifest current until file completion can no longer fail.
             context.run(completion);

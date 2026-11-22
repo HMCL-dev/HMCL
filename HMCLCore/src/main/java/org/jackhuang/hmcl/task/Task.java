@@ -98,23 +98,9 @@ public abstract class Task<T extends @Nullable Object> {
         return state;
     }
 
-    /// Publishes a lifecycle transition.
+    /// Publishes a nonterminal lifecycle transition.
     final void setState(TaskState state) {
         this.state = state;
-    }
-
-    /// Failure recorded by the executor, or `null` before a failure has been recorded.
-    private volatile @Nullable Exception exception;
-
-    /// Returns the recorded failure, or `null` if none has been recorded. Cancellation is
-    /// recorded as a [CancellationException]. For an [Error], the recorded exception wraps the error.
-    public final @Nullable Exception getException() {
-        return exception;
-    }
-
-    /// Records the exception exposed to task observers.
-    final void setException(@Nullable Exception e) {
-        exception = e;
     }
 
     /// Returns the executor requested for [#execute(TaskExecutionContext)], or `null` to
@@ -150,19 +136,53 @@ public abstract class Task<T extends @Nullable Object> {
             return getClass().getName() + "[" + getName() + "]";
     }
 
-    /// Successful return value, or `null` until publication or for a successful null result.
-    private volatile @Nullable T result;
+    /// Return value published by the transition to [TaskState#SUCCEEDED].
+    private @Nullable T result;
 
-    /// Returns the value published on success, or `null` before publication, after failure,
-    /// or for a successful null result. Consult [#getState()] to distinguish these cases.
-    /// The executor publishes the value before notifying successful completion listeners.
-    public final @Nullable T getResult() {
+    /// Returns the successful result without waiting. A task with a nullable result type may return `null`.
+    ///
+    /// @throws IllegalStateException if the task is not in [TaskState#SUCCEEDED]
+    public final T resultNow() {
+        TaskState currentState = state;
+        if (currentState != TaskState.SUCCEEDED)
+            throw new IllegalStateException("Task has not completed successfully: " + currentState);
         return result;
     }
 
-    /// Publishes the value returned by the body after the final cancellation check.
+    /// Returns the result without waiting, or `null` if the task has not succeeded or returned `null`.
+    public final @Nullable T resultNowOrNull() {
+        return state == TaskState.SUCCEEDED ? result : null;
+    }
+
+    /// Publishes the value returned by the body and marks the task successful.
     final void publishResult(T value) {
         result = value;
+        state = TaskState.SUCCEEDED;
+    }
+
+    /// Failure published by the transition to [TaskState#FAILED].
+    private @Nullable Exception exception;
+
+    /// Returns the recorded failure without waiting. Cancellation is recorded as a [CancellationException].
+    /// For an [Error], the recorded exception wraps the error.
+    ///
+    /// @throws IllegalStateException if the task is not in [TaskState#FAILED]
+    public final Exception exceptionNow() {
+        TaskState currentState = state;
+        if (currentState != TaskState.FAILED)
+            throw new IllegalStateException("Task has not failed: " + currentState);
+        return Objects.requireNonNull(exception);
+    }
+
+    /// Returns the same failure as [#exceptionNow()] without waiting, or `null` unless the task is in [TaskState#FAILED].
+    public final @Nullable Exception exceptionNowOrNull() {
+        return state == TaskState.FAILED ? exception : null;
+    }
+
+    /// Publishes the recorded exception and marks the task failed.
+    final void publishException(Exception failure) {
+        exception = failure;
+        state = TaskState.FAILED;
     }
 
     /// Runs the task body using the supplied context to execute children and obtain their results.
@@ -497,7 +517,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// An exception thrown by `success` is logged and offered to the optional failure callback,
     /// as in [#whenComplete(Executor, ExceptionalRunnable, ExceptionalConsumer)].
     public <E1 extends Exception, E2 extends Exception> Task<@Nullable Void> whenComplete(Executor executor, ExceptionalConsumer<T, E1> success, @Nullable ExceptionalConsumer<Exception, E2> failure) {
-        return whenComplete(executor, () -> success.accept(getResult()), failure);
+        return whenComplete(executor, () -> success.accept(resultNow()), failure);
     }
 
     /// Returns a task that declares `stage` and runs this task as its child.
@@ -674,7 +694,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// Returns a task that runs the supplied children, waits for them all, and collects their results
     /// in iteration order. The returned list is mutable and is empty when there are no children.
     /// A child failure prevents publication of the result list and leaves successful siblings' results
-    /// available through [#getResult()]. Children may execute concurrently.
+    /// available through [#resultNow()]. Children may execute concurrently.
     ///
     /// The returned task retains the collection and snapshots its elements when execution starts.
     public static <T extends @Nullable Object> Task<List<T>> allOf(Collection<? extends Task<? extends T>> tasks) {
@@ -686,7 +706,7 @@ public abstract class Task<T extends @Nullable Object> {
     public static <T extends @Nullable Object, U extends @Nullable Object> Task<Pair<T, U>> combine(Task<? extends T> task1, Task<? extends U> task2) {
         return Task.<Pair<T, U>>of(context -> {
             context.runAll(List.of(task1, task2));
-            return Pair.pair(task1.getResult(), task2.getResult());
+            return Pair.pair(task1.resultNow(), task2.resultNow());
         }).setSignificance(TaskSignificance.MINOR);
     }
 

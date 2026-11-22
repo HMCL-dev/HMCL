@@ -169,7 +169,6 @@ public final class DefaultTaskHandle extends TaskHandle {
         }
 
         task.publishResult(result);
-        task.setState(Task.TaskState.SUCCEEDED);
         notifyListeners(listener -> listener.onFinished(task));
         finishStage(task, context.stage, null);
         if (task.getSignificance().shouldLog())
@@ -180,9 +179,8 @@ public final class DefaultTaskHandle extends TaskHandle {
     /// Records the checked failure exposed by a task and delivers its terminal notifications.
     private void fail(Task<?> task, @Nullable TaskStage stage, Throwable cause) {
         Exception recorded = cause instanceof Exception e ? e : new Exception(cause);
-        task.setException(recorded);
         exception = recorded;
-        task.setState(Task.TaskState.FAILED);
+        task.publishException(recorded);
         notifyListeners(listener -> listener.onFailed(task, cause));
         finishStage(task, stage, cause);
     }

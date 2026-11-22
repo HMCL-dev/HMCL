@@ -266,7 +266,7 @@ final class TaskHandleDialogPaneTest {
         });
 
         assertFalse(handle.test());
-        assertInstanceOf(IOException.class, (failureFirst ? first : second).getException());
+        assertInstanceOf(IOException.class, (failureFirst ? first : second).exceptionNow());
         assertEquals(Task.TaskState.SUCCEEDED, (failureFirst ? second : first).getState());
         assertEquals(SVG.CLOSE.getPath(), stageIcon(pane, i18n("update.checking")));
     }

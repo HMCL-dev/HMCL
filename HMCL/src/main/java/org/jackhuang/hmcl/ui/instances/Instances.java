@@ -223,7 +223,7 @@ public final class Instances {
                                     throw new IllegalStateException("Game repository draft is unavailable");
                                 }
                                 draft.put(newManifest);
-                                draft.putPrimaryJar(instanceId, gameDownloadTask.getResult());
+                                draft.putPrimaryJar(instanceId, gameDownloadTask.resultNow());
                                 draft.commit();
                             })
                             .whenComplete(exception -> {
