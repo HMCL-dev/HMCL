@@ -549,7 +549,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
         private final LocalModFile localModFile;
         /// Localized metadata and available languages read from the mod archive.
         private final ModLocalization localization;
-        /// Project abbreviation, or an empty string when unavailable.
+        /// Abbreviation of the matched project, or an empty string when unavailable.
         private final String abbreviation;
         /// Matching project metadata, or null if the local mod cannot be identified.
         private final @Nullable ModProjectInfo projectInfo;
@@ -563,10 +563,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
             this.projectInfo = AddonProjectInfoRegistry.MOD.getInfo(localModFile.getId(), localModFile.getName());
             this.abbreviation = projectInfo != null && StringUtils.isNotBlank(projectInfo.abbrName())
                     ? projectInfo.abbrName()
-                    : AddonProjectInfoRegistry.MOD.search(localModFile.getName()).stream()
-                    .map(ModProjectInfo::abbrName)
-                    .filter(StringUtils::isNotBlank)
-                    .findFirst().orElse("");
+                    : "";
 
             this.localization = localModFile.getLocalization();
 
