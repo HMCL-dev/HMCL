@@ -579,18 +579,18 @@ final class TaskExecutionContextTest {
     /// Hints declared during execution follow root hints and precede the staged task they describe.
     @Test
     void announcesNestedHintsWhenDispatched() {
-        Task.StageHint check = new Task.StageHint(new TaskStage("check"));
-        Task.StageHint install = new Task.StageHint(new TaskStage("install"), List.of(new TaskStage("download")));
-        Task.StageHint runtime = new Task.StageHint(new TaskStage("runtime"));
+        TaskStage.Hint check = new TaskStage.Hint(new TaskStage("check"));
+        TaskStage.Hint install = new TaskStage.Hint(new TaskStage("install"), List.of(new TaskStage("download")));
+        TaskStage.Hint runtime = new TaskStage.Hint(new TaskStage("runtime"));
         Task<Integer> root = task(context ->
                 context.run(Task.completed(42).withStage(runtime.stage()).withStageHints(runtime)))
                 .withStageHints(check, install);
-        List<Task.StageHint> declarations = new ArrayList<>();
-        List<Task.StageHint> atStageStart = new ArrayList<>();
+        List<TaskStage.Hint> declarations = new ArrayList<>();
+        List<TaskStage.Hint> atStageStart = new ArrayList<>();
         assertTrue(root.newHandle(new TaskListener() {
             /// Preserves declaration order across callbacks.
             @Override
-            public void onStagesDeclared(@Unmodifiable List<Task.StageHint> hints) {
+            public void onStagesDeclared(@Unmodifiable List<TaskStage.Hint> hints) {
                 declarations.addAll(hints);
             }
 

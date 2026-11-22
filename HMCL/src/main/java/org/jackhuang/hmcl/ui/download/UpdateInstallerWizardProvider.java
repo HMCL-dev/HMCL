@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -58,14 +59,14 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (settings1, exception, next) -> alertFailureMessage(exception, next));
 
-        var hints = new ArrayList<Task.StageHint>();
+        var hints = new ArrayList<TaskStage.Hint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof ComponentRemoteVersion remoteVersion) {
-                hints.add(new Task.StageHint(InstallStages.LIBRARIES));
+                hints.add(new TaskStage.Hint(InstallStages.LIBRARIES));
 
-                hints.add(new Task.StageHint(InstallStages.component(remoteVersion.getComponentType(), remoteVersion.getSelfVersion())));
+                hints.add(new TaskStage.Hint(InstallStages.component(remoteVersion.getComponentType(), remoteVersion.getSelfVersion())));
                 if (remoteVersion.getComponentType() == GameComponentType.GAME) {
-                    hints.add(new Task.StageHint(InstallStages.ASSETS));
+                    hints.add(new TaskStage.Hint(InstallStages.ASSETS));
                 }
             }
         }

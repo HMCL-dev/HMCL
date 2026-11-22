@@ -339,10 +339,10 @@ public final class LauncherHelper {
                         () -> launchingLatch.getCount() == 0, 6.95
                 ).withStage(LAUNCH_STAGE))
                 .withStageHints(
-                        new Task.StageHint(JAVA_STAGE),
-                        new Task.StageHint(DEPENDENCIES_STAGE, List.of(InstallStages.ASSETS, InstallStages.LIBRARIES, InstallStages.MODPACK_DOWNLOAD)),
-                        new Task.StageHint(LOGIN_STAGE),
-                        new Task.StageHint(LAUNCH_STAGE))
+                        new TaskStage.Hint(JAVA_STAGE),
+                        new TaskStage.Hint(DEPENDENCIES_STAGE, List.of(InstallStages.ASSETS, InstallStages.LIBRARIES, InstallStages.MODPACK_DOWNLOAD)),
+                        new TaskStage.Hint(LOGIN_STAGE),
+                        new TaskStage.Hint(LAUNCH_STAGE))
                 .newHandle();
         launchingStepsPane.setHandle(handle, false);
         handle.addTaskListener(new TaskListener() {

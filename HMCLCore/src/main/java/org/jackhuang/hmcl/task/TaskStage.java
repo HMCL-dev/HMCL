@@ -4,7 +4,9 @@ package org.jackhuang.hmcl.task;
 
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.List;
 import java.util.Objects;
 
 /// A stage value identified by its key and optional qualifier.
@@ -22,6 +24,25 @@ public record TaskStage(String key, @Nullable String qualifier) {
     /// Creates an unqualified stage.
     public TaskStage(String key) {
         this(key, null);
+    }
+
+    /// Declares one row in the stage progress display. Each stage keeps its first
+    /// assigned row for the entire execution. To group stages across children, declare the
+    /// hint on their common parent before it dispatches them.
+    ///
+    /// @param stage the stage used to find or create the row
+    /// @param groupedStages additional stages to display in the same row
+    public record Hint(TaskStage stage, @Unmodifiable List<TaskStage> groupedStages) {
+        /// Creates a hint with an immutable snapshot of the grouped stages.
+        public Hint {
+            Objects.requireNonNull(stage);
+            groupedStages = List.copyOf(groupedStages);
+        }
+
+        /// Creates a hint for a single stage.
+        public Hint(TaskStage stage) {
+            this(stage, List.of());
+        }
     }
 
     /// A stage scope opened by one task. Children inherit it until they declare a stage of their own.

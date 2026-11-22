@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -109,17 +110,17 @@ public class DefaultGameBuilder extends GameBuilder {
             if (gameVersion == null)
                 throw new IllegalStateException("GameBuilder.gameVersion must be set");
 
-            var hints = new ArrayList<Task.StageHint>();
+            var hints = new ArrayList<TaskStage.Hint>();
 
             components.forEach((componentType, version) -> {
-                hints.add(new Task.StageHint(InstallStages.component(componentType,
+                hints.add(new TaskStage.Hint(InstallStages.component(componentType,
                         version instanceof ComponentRemoteVersion remoteVersion
                                 ? remoteVersion.getSelfVersion()
                                 : (String) version)));
 
                 if (componentType == GameComponentType.GAME) {
-                    hints.add(new Task.StageHint(InstallStages.LIBRARIES));
-                    hints.add(new Task.StageHint(InstallStages.ASSETS));
+                    hints.add(new TaskStage.Hint(InstallStages.LIBRARIES));
+                    hints.add(new TaskStage.Hint(InstallStages.ASSETS));
                 }
             });
 

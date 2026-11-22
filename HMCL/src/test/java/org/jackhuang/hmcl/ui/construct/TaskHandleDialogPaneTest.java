@@ -283,7 +283,7 @@ final class TaskHandleDialogPaneTest {
                 throw new IOException("Second stage failed");
         }).withStage(secondStage);
         TaskHandle handle = Task.allOf(first, second)
-                .withStageHints(new Task.StageHint(CHECKING, List.of(firstStage, secondStage)))
+                .withStageHints(new TaskStage.Hint(CHECKING, List.of(firstStage, secondStage)))
                 .newHandle();
         TaskListPane pane = showTaskList(handle);
         handle.addTaskListener(new TaskListener() {
@@ -327,7 +327,7 @@ final class TaskHandleDialogPaneTest {
             }
         };
         if (mergeStages)
-            owner = owner.withStageHints(new Task.StageHint(CHECKING, List.of(LOGGING_IN)));
+            owner = owner.withStageHints(new TaskStage.Hint(CHECKING, List.of(LOGGING_IN)));
         TaskHandle handle = owner.newHandle();
         TaskListPane pane = showTaskList(handle);
 
@@ -343,7 +343,7 @@ final class TaskHandleDialogPaneTest {
     void groupsStageOnlyWhenHintArrivesFirst(boolean hintFirst) throws Exception {
         TaskStage groupStage = CHECKING;
         TaskStage partStage = LOGGING_IN;
-        Task.StageHint group = new Task.StageHint(groupStage, List.of(partStage));
+        TaskStage.Hint group = new TaskStage.Hint(groupStage, List.of(partStage));
         Task<?> work = new Task<@Nullable Void>() {
             /// Reports one complete item in the enclosing stage.
             @Override

@@ -102,7 +102,7 @@ public final class DefaultTaskHandle extends TaskHandle {
     private <T extends @Nullable Object> Context<T> prepare(@Nullable Context<?> parent, Task<T> task) {
         TaskStage.@Nullable Scope scope = parent == null ? null : parent.stageScope;
         try {
-            @Unmodifiable List<Task.StageHint> hints = task.getStageHints();
+            @Unmodifiable List<TaskStage.Hint> hints = task.getStageHints();
             if (!hints.isEmpty())
                 notifyListeners(listener -> listener.onStagesDeclared(hints));
             @Nullable TaskStage stage = task.getStage();

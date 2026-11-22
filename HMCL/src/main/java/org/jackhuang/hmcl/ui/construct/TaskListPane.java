@@ -79,8 +79,8 @@ public final class TaskListPane extends StackPane {
 
     /// Appends new rows in declaration order. Each stage keeps its first row.
     @FXThread
-    private void declareStages(@Unmodifiable List<Task.StageHint> hints) {
-        for (Task.StageHint hint : hints) {
+    private void declareStages(@Unmodifiable List<TaskStage.Hint> hints) {
+        for (TaskStage.Hint hint : hints) {
             StageNode node = stageNode(hint.stage());
             for (TaskStage groupedStage : hint.groupedStages())
                 stageNodes.putIfAbsent(groupedStage, node);
@@ -140,7 +140,7 @@ public final class TaskListPane extends StackPane {
             }
 
             @Override
-            public void onStagesDeclared(@Unmodifiable List<Task.StageHint> hints) {
+            public void onStagesDeclared(@Unmodifiable List<TaskStage.Hint> hints) {
                 update(() -> declareStages(hints));
             }
 

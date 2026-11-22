@@ -20,6 +20,7 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
@@ -54,9 +55,9 @@ public final class ModpackHelper {
     }
 
     /// Displays asset and library downloads alongside other modpack downloads.
-    private static final @Unmodifiable List<Task.StageHint> MODPACK_STAGE_HINTS = List.of(
-            new Task.StageHint(InstallStages.MODPACK),
-            new Task.StageHint(InstallStages.MODPACK_DOWNLOAD, List.of(InstallStages.ASSETS, InstallStages.LIBRARIES))
+    private static final @Unmodifiable List<TaskStage.Hint> MODPACK_STAGE_HINTS = List.of(
+            new TaskStage.Hint(InstallStages.MODPACK),
+            new TaskStage.Hint(InstallStages.MODPACK_DOWNLOAD, List.of(InstallStages.ASSETS, InstallStages.LIBRARIES))
     );
 
     private static final Map<String, ModpackProvider> providers = mapOf(
