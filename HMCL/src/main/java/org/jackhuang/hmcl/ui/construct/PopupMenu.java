@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.binding.Bindings;
@@ -30,7 +15,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ScrollUtils;
 
 public class PopupMenu extends Control {
 
@@ -89,7 +74,7 @@ public class PopupMenu extends Control {
             Bindings.bindContent(content.getChildren(), PopupMenu.this.getContent());
             scrollPane.setContent(content);
 
-            FXUtils.smoothScrolling(scrollPane);
+            ScrollUtils.installSmoothScrolling(scrollPane);
 
             getChildren().setAll(scrollPane);
         }

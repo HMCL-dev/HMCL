@@ -1,23 +1,9 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXPopup;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -33,11 +19,20 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class AccountListPopupMenu extends StackPane {
+    private static final String KEY = AccountListPopupMenu.class.getName() + ".popup";
+
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY) {
+        if (owner.getProperties().get(KEY) instanceof JFXPopup showingPopup && showingPopup.isShowing()) {
+            showingPopup.hide();
+            return;
+        }
+
         var menu = new AccountListPopupMenu();
         JFXPopup popup = new JFXPopup(menu);
-        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
+        owner.getProperties().put(KEY, popup);
+        popup.setOnHidden(event -> owner.getProperties().remove(KEY, popup));
+        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY, true);
     }
 
     @SuppressWarnings("FieldCanBeLocal")
@@ -57,6 +52,7 @@ public final class AccountListPopupMenu extends StackPane {
 
             for (Account account : Accounts.getAccounts()) {
                 AccountAdvancedListItem item = new AccountAdvancedListItem(account);
+                if (Accounts.getSelectedAccount() == account) item.setActive(true);
                 item.setOnAction(e -> {
                     Accounts.setSelectedAccount(account);
                     if (getScene().getWindow() instanceof JFXPopup popup)
@@ -64,6 +60,9 @@ public final class AccountListPopupMenu extends StackPane {
                 });
                 box.add(item);
             }
+
+            // https://github.com/HMCL-dev/HMCL/issues/5343
+            Platform.runLater(() -> box.setVvalue(0.0));
         };
         listener.invalidated(null);
         Accounts.getAccounts().addListener(new WeakInvalidationListener(listener));

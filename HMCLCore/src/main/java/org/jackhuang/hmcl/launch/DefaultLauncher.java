@@ -1,35 +1,27 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.launch;
 
+import org.glavo.uuid.UUIDs;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.util.Base64Utils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
+import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jackhuang.hmcl.util.platform.macos.HomebrewUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -40,47 +32,45 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.game.GameComponentType.*;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author huangyuhui
- */
+/// @author huangyuhui
 public class DefaultLauncher extends Launcher {
 
-    private final LibraryAnalyzer analyzer;
+    /// the native library directory selected by the launch options
+    private final @NotNull Path nativeFolder;
 
-    public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
-        this(repository, version, authInfo, options, null);
+    public DefaultLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+        super(instance, manifest, authInfo, options, listener, daemon);
+
+        if (StringUtils.isBlank(options.getNativesDir())) {
+            nativeFolder = instance.getNativeDirectory(options.getJava().getPlatform());
+        } else {
+            nativeFolder = Path.of(options.getNativesDir());
+        }
     }
 
-    public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, version, authInfo, options, listener, true);
-    }
-
-    public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
-        super(repository, version, authInfo, options, listener, daemon);
-
-        this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
-    }
-
-    private Command generateCommandLine(Path nativeFolder) throws IOException {
+    @Contract(value = " -> new", pure = true)
+    private @NotNull Command generateCommandLine() throws IOException {
         CommandBuilder res = new CommandBuilder();
 
         switch (options.getProcessPriority()) {
             case HIGH:
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/high");
-                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                } else if (SystemInfo.CURRENT_OS.isUnixLike()) {
                     res.addAll("nice", "-n", "-5");
                 }
                 break;
             case ABOVE_NORMAL:
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
-                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                } else if (SystemInfo.CURRENT_OS.isUnixLike()) {
                     res.addAll("nice", "-n", "-1");
                 }
                 break;
@@ -88,16 +78,16 @@ public class DefaultLauncher extends Launcher {
                 // do nothing
                 break;
             case BELOW_NORMAL:
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
-                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                } else if (SystemInfo.CURRENT_OS.isUnixLike()) {
                     res.addAll("nice", "-n", "1");
                 }
                 break;
             case LOW:
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/low");
-                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                } else if (SystemInfo.CURRENT_OS.isUnixLike()) {
                     res.addAll("nice", "-n", "5");
                 }
                 break;
@@ -105,9 +95,9 @@ public class DefaultLauncher extends Launcher {
 
         // Executable
         if (StringUtils.isNotBlank(options.getWrapper()))
-            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars(nativeFolder)));
+            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), generateEnvVars()));
 
-        res.add(options.getJava().getBinary().toString());
+        res.add(options.getJavaExecutable().toString());
 
         res.addAllWithoutParsingAndReadExternal(options.getOverrideJavaArguments());
 
@@ -126,7 +116,7 @@ public class DefaultLauncher extends Launcher {
 
         res.addAllDefaultWithoutParsing(options.getJavaArguments());
 
-        Charset encoding = OperatingSystem.NATIVE_CHARSET;
+        Charset encoding = SystemInfo.NATIVE_CHARSET;
         String fileEncoding = res.addDefault("-Dfile.encoding=", encoding.name());
         if (fileEncoding != null && !"-Dfile.encoding=COMPAT".equals(fileEncoding)) {
             try {
@@ -158,17 +148,19 @@ public class DefaultLauncher extends Launcher {
         if (!options.isNoGeneratedJVMArgs()) {
             appendJvmArgs(res);
 
-            res.addDefault("-Dminecraft.client.jar=", FileUtils.getAbsolutePath(repository.getVersionJar(version)));
+            Path clientJar = instance.getInstanceJarFile();
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
-                repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns")
+            res.addDefault("-Dminecraft.client.jar=", FileUtils.getAbsolutePath(clientJar));
+
+            if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
+                res.addDefault("-Xdock:name=", "Minecraft " + manifest.id());
+                instance.getAssetObject(manifest.getAssetIndex().getId(), "icons/minecraft.icns")
                         .ifPresent(minecraftIcns -> {
                             res.addDefault("-Xdock:icon=", FileUtils.getAbsolutePath(minecraftIcns));
                         });
             }
 
-            if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+            if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS)
                 res.addDefault("-Duser.home=", options.getGameDir().toAbsolutePath().getParent().toString());
 
             boolean addProxyOptions = res.noneMatch(arg ->
@@ -249,6 +241,11 @@ public class DefaultLauncher extends Launcher {
                     res.addUnstableDefault("UseCompactObjectHeaders", true);
                 }
 
+                // CVE-2026-114938
+                if (Base64Utils.shouldDisableBase64Intrinsics(options.getJava().getInfo())) {
+                    res.addUnstableDefault("UseBASE64Intrinsics", false);
+                }
+
                 // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
                 // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
                 if (!is64bit) {
@@ -266,14 +263,14 @@ public class DefaultLauncher extends Launcher {
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
         }
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS
                 && options.getRenderer() instanceof Renderer.Driver renderer
                 && renderer.mesaDriverName() != null) {
             res.addDefault("-Dorg.glavo.mesa.loader.nativeDir=", FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader")));
         }
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
-                && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
+        if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS
+                && options.getJava().getArchitecture() == SystemInfo.SYSTEM_ARCH
                 && options.getRenderer() instanceof Renderer.Vulkan vulkanDriver
                 && vulkanDriver.icdFile() != null) {
             if (Files.isRegularFile(HomebrewUtils.LIB_VULKAN)) {
@@ -281,31 +278,35 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        Set<String> classpath = repository.getClasspath(version);
+        // Library classpath used both for -cp and for rewriting old BootstrapLauncher ignore lists.
+        Set<String> libraryClasspath = getClasspath();
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
-            classpath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
+        if (instance.hasComponent(GameComponentType.CLEANROOM)) {
+            libraryClasspath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
+            libraryClasspath.removeIf(c -> c.contains("platform-3.4.0"));
+            libraryClasspath.removeIf(c -> c.contains("icu4j-core-mojang"));
         }
 
-        Path jar = repository.getVersionJar(version);
+        Path jar = instance.getInstanceJarFile();
         if (!Files.isRegularFile(jar))
             throw new IOException("Minecraft jar does not exist");
-        classpath.add(FileUtils.getAbsolutePath(jar.toAbsolutePath()));
+        Set<String> classpath = new LinkedHashSet<>(libraryClasspath);
+        classpath.add(FileUtils.getAbsolutePath(jar));
 
         // Provided Minecraft arguments
-        Path gameAssets = repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId());
+        Path gameAssets = instance.getActualAssetDirectory(manifest.getAssetIndex().getId());
         Map<String, String> configuration = getConfigurations();
         configuration.put("${classpath}", String.join(File.pathSeparator, classpath));
         configuration.put("${game_assets}", FileUtils.getAbsolutePath(gameAssets));
         configuration.put("${assets_root}", FileUtils.getAbsolutePath(gameAssets));
 
-        Optional<String> gameVersion = repository.getGameVersion(version);
+        Optional<String> gameVersion = findGameVersion();
 
         // lwjgl assumes path to native libraries encoded by ASCII.
         // Here is a workaround for this issue: https://github.com/HMCL-dev/HMCL/issues/1141.
         String nativeFolderPath = FileUtils.getAbsolutePath(nativeFolder);
         Path tempNativeFolder = null;
-        if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+        if ((SystemInfo.CURRENT_OS == OperatingSystem.LINUX || SystemInfo.CURRENT_OS == OperatingSystem.MACOS)
                 && !StringUtils.isASCII(nativeFolderPath)
                 && gameVersion.isPresent() && GameVersionNumber.compare(gameVersion.get(), "1.19") < 0) {
             tempNativeFolder = Paths.get("/", "tmp", "hmcl-natives-" + UUID.randomUUID());
@@ -314,20 +315,23 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${natives_directory}", nativeFolderPath);
 
         Path javaNativeFolder = FileUtils.toAbsolute(nativeFolder);
-        @Nullable List<Argument> jvmArguments = version.getArguments().map(Arguments::getJvm).orElse(null);
+        @Nullable List<Argument> jvmArguments = Optional.ofNullable(manifest.arguments()).map(Arguments::jvm).orElse(null);
+        if (jvmArguments != null) {
+            jvmArguments = rewriteUnsafeBootstrapLauncherIgnoreList(jvmArguments, libraryClasspath);
+        }
 
         if (jvmArguments != null) {
             for (Argument jvmArgument : jvmArguments) {
                 if (jvmArgument instanceof StringArgument stringArgument
-                        && stringArgument.getArgument().startsWith("-Djava.library.path=")) {
+                        && stringArgument.argument().startsWith("-Djava.library.path=")) {
 
                     // We conservatively handle parameters like "-Djava.library.path=${natives_directory}/java"
                     // to avoid extracting native libraries to unexpected locations.
 
                     String prefix = "-Djava.library.path=${natives_directory}/";
-                    if (stringArgument.getArgument().startsWith(prefix)) {
+                    if (stringArgument.argument().startsWith(prefix)) {
                         try {
-                            String subDir = stringArgument.getArgument().substring(prefix.length());
+                            String subDir = stringArgument.argument().substring(prefix.length());
                             Path actualNativeFolder = FileUtils.toAbsolute(javaNativeFolder.resolve(subDir));
 
                             if (actualNativeFolder.startsWith(javaNativeFolder)) {
@@ -344,28 +348,28 @@ public class DefaultLauncher extends Launcher {
 
         res.addAll(Arguments.parseArguments(Objects.requireNonNullElseGet(jvmArguments, this::getDefaultJVMArguments), configuration));
         Arguments argumentsFromAuthInfo = authInfo.getLaunchArguments(options);
-        if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getJvm() != null && !argumentsFromAuthInfo.getJvm().isEmpty())
-            res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getJvm(), configuration));
+        if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.jvm() != null && !argumentsFromAuthInfo.jvm().isEmpty())
+            res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.jvm(), configuration));
 
         for (String javaAgent : options.getJavaAgents()) {
             res.add("-javaagent:" + javaAgent);
         }
 
-        if (version.getMainClass() == null) {
-            throw new IllegalStateException("Main class is null for instance " + version.getId());
+        if (manifest.mainClass() == null) {
+            throw new IllegalStateException("Main class is null for instance " + manifest.id());
         }
 
-        res.add(version.getMainClass());
+        res.add(manifest.mainClass());
 
-        res.addAll(Arguments.parseStringArguments(version.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(ArrayList::new), configuration));
+        res.addAll(Arguments.parseStringArguments(Optional.ofNullable(manifest.minecraftArguments()).map(StringUtils::tokenize).orElseGet(ArrayList::new), configuration));
 
         Map<String, Boolean> features = getFeatures();
-        version.getArguments().map(Arguments::getGame).ifPresent(arguments -> res.addAll(Arguments.parseArguments(arguments, configuration, features)));
-        if (version.getMinecraftArguments().isPresent()) {
+        Optional.ofNullable(manifest.arguments()).map(Arguments::game).ifPresent(arguments -> res.addAll(Arguments.parseArguments(arguments, configuration, features)));
+        if (Optional.ofNullable(manifest.minecraftArguments()).isPresent()) {
             res.addAll(Arguments.parseArguments(this.getDefaultGameArguments(), configuration, features));
         }
-        if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getGame() != null && !argumentsFromAuthInfo.getGame().isEmpty())
-            res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getGame(), configuration, features));
+        if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.game() != null && !argumentsFromAuthInfo.game().isEmpty())
+            res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.game(), configuration, features));
 
         if (options.getQuickPlayOption() instanceof QuickPlayOption.MultiPlayer multiPlayer) {
             String address = multiPlayer.serverIP();
@@ -373,13 +377,32 @@ public class DefaultLauncher extends Launcher {
             try {
                 ServerAddress parsed = ServerAddress.parse(address);
                 if (World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
-                    res.add("--quickPlayMultiplayer");
-                    res.add(parsed.getPort() >= 0 ? address : parsed.getHost() + ":25565");
+
+                    String quickPlayMultiplayerArg;
+                    if (World.supportQueryArgServerAddress(GameVersionNumber.asGameVersion(gameVersion))) {
+                        // keep original address.
+                        quickPlayMultiplayerArg = parsed.getRawAddress();
+                    } else {
+                        if (parsed.isIncludeParameterContent()) {
+                            LOG.warning("Ignore the query parameters in the server address.");
+                            // Before support for parameter addresses was introduced, the host did not permit the use of the '@' and '?'.
+                            quickPlayMultiplayerArg = parsed.getHostAndPort().toString();
+                        } else {
+                            quickPlayMultiplayerArg = parsed.getRawAddress();
+                        }
+                    }
+
+                    res.add("--quickPlayMultiplayer").add(quickPlayMultiplayerArg.trim());
                 } else {
-                    res.add("--server");
-                    res.add(parsed.getHost());
-                    res.add("--port");
-                    res.add(parsed.getPort() >= 0 ? String.valueOf(parsed.getPort()) : "25565");
+                    String serverArg = parsed.getHostAndPort().host();
+                    String portArg = String.valueOf(parsed.getHostAndPort().port());
+
+                    res.add("--server").add(serverArg.trim());
+                    res.add("--port").add(portArg.trim());
+
+                    if (parsed.isIncludeParameterContent()) {
+                        LOG.warning("Ignore the query parameters in the server address.");
+                    }
                 }
             } catch (IllegalArgumentException e) {
                 LOG.warning("Invalid server address: " + address, e);
@@ -423,11 +446,17 @@ public class DefaultLauncher extends Launcher {
         return new Command(res, tempNativeFolder, javaNativeFolder, encoding);
     }
 
-    public Map<String, Boolean> getFeatures() {
-        return Collections.singletonMap(
-                "has_custom_resolution",
-                options.getHeight() != null && options.getHeight() != 0 && options.getWidth() != null && options.getWidth() != 0
-        );
+    /// Returns the feature flags used to evaluate conditional game arguments.
+    /// The `has_custom_resolution` flag is enabled when both dimensions are non-null and nonzero
+    /// and the game version is at least `1.6` (snapshot `13w25a`).
+    ///
+    /// @return an unmodifiable snapshot containing the custom resolution flag
+    public @Unmodifiable Map<String, Boolean> getFeatures() {
+        boolean hasCustomResolution = options.getHeight() != null && options.getHeight() != 0
+                && options.getWidth() != null && options.getWidth() != 0
+                && instance.getVersion().isAtLeast("1.6", "13w25a");
+
+        return Collections.singletonMap("has_custom_resolution", hasCustomResolution);
     }
 
     private final Map<String, Supplier<Boolean>> forbiddens = mapOf(
@@ -446,13 +475,11 @@ public class DefaultLauncher extends Launcher {
         return Arguments.DEFAULT_GAME_ARGUMENTS;
     }
 
-    /**
-     * Do something here.
-     * i.e.
-     * -Dminecraft.launcher.version=&lt;Your launcher name&gt;
-     * -Dminecraft.launcher.brand=&lt;Your launcher version&gt;
-     * -Dlog4j.configurationFile=&lt;Your custom log4j configuration&gt;
-     */
+    /// Do something here.
+    /// i.e.
+    /// -Dminecraft.launcher.version=<Your launcher name>
+    /// -Dminecraft.launcher.brand=<Your launcher version>
+    /// -Dlog4j.configurationFile=<Your custom log4j configuration>
     protected void appendJvmArgs(CommandBuilder result) {
     }
 
@@ -461,9 +488,9 @@ public class DefaultLauncher extends Launcher {
 
         try {
             FileUtils.cleanDirectoryQuietly(destination);
-            for (Library library : version.getLibraries())
+            for (Library library : manifest.getLibraries())
                 if (library.isNative())
-                    new Unzipper(repository.getLibraryFile(version, library), destination)
+                    new Unzipper(instance.getLayout().getLibraryFile(instance.getId(), library), destination)
                             .setFilter((zipEntry, destFile, relativePath) -> {
                                 if (!zipEntry.isDirectory() && !zipEntry.isUnixSymlink()
                                         && Files.isRegularFile(destFile)
@@ -474,9 +501,14 @@ public class DefaultLauncher extends Launcher {
                                 if (ext.equals("sha1") || ext.equals("git"))
                                     return false;
 
-                                if (options.isUseNativeGLFW() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("glfw")) {
+                                if (options.isUseNativeGLFWorSDL() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("glfw")) {
                                     return false;
                                 }
+
+                                if (options.isUseNativeGLFWorSDL() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("sdl")) {
+                                    return false;
+                                }
+
                                 if (options.isUseNativeOpenAL() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("openal")) {
                                     return false;
                                 }
@@ -489,12 +521,23 @@ public class DefaultLauncher extends Launcher {
         }
     }
 
+    /// Returns the detected Minecraft version string for this instance, if known.
+    ///
+    /// @return the version string, or empty when detection failed
+    private Optional<String> findGameVersion() {
+        GameVersionNumber version = instance.getVersion();
+        if (version == GameVersionNumber.unknown()) {
+            return Optional.empty();
+        }
+        return Optional.of(version.toString());
+    }
+
     private boolean isUsingLog4j() {
-        return GameVersionNumber.compare(repository.getGameVersion(version).orElse("1.7"), "1.7") >= 0;
+        return GameVersionNumber.compare(findGameVersion().orElse("1.7"), "1.7") >= 0;
     }
 
     public Path getLog4jConfigurationFile() {
-        return repository.getVersionRoot(version.getId()).resolve("log4j2.xml");
+        return instance.getInstanceRoot().resolve("log4j2.xml");
     }
 
     public void extractLog4jConfigurationFile() throws IOException {
@@ -502,7 +545,7 @@ public class DefaultLauncher extends Launcher {
 
         String sourcePath;
 
-        if (GameVersionNumber.asGameVersion(repository.getGameVersion(version)).compareTo("1.12") < 0) {
+        if (GameVersionNumber.asGameVersion(findGameVersion()).compareTo("1.12") < 0) {
             if (options.isEnableDebugLogOutput()) {
                 sourcePath = "/assets/game/log4j2-1.7-debug.xml";
             } else {
@@ -521,48 +564,127 @@ public class DefaultLauncher extends Launcher {
         }
     }
 
+    /// Rewrites `-DignoreList=` for old BootstrapLauncher when launching Forge / NeoForge.
+    ///
+    /// BootstrapLauncher older than 0.1.17 matches each ignore-list token as a substring against
+    /// every classpath component. A game directory such as `/Users/asm` therefore causes every
+    /// library whose path contains `asm` to be ignored. Using the library classpath already built
+    /// for this launch, loose tokens are replaced with exact installed paths (or portable
+    /// `${library_directory}` placeholders). `${primary_jar}` is always retained for Jigsaw.
+    ///
+    /// BootstrapLauncher 0.1.17+ only matches file names; those manifests are repaired for launch by
+    /// [LaunchManifestNormalizer#repairForLaunch(GameInstanceManifest)].
+    ///
+    /// @param jvmArguments     JVM arguments from the launch manifest
+    /// @param libraryClasspath absolute library classpath entries for this launch (without primary jar)
+    /// @return a possibly rewritten argument list; the input list is not modified
+    private List<Argument> rewriteUnsafeBootstrapLauncherIgnoreList(
+            List<Argument> jvmArguments,
+            Set<String> libraryClasspath) {
+        if (!GameComponentAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(manifest.mainClass())) {
+            return jvmArguments;
+        }
+        if (!instance.hasComponent(GameComponentType.FORGE) && !instance.hasComponent(GameComponentType.NEO_FORGE)) {
+            return jvmArguments;
+        }
+        @Nullable String bootstrapVersion = instance.getAnalyzer().getBootstrapVersion();
+        if (bootstrapVersion == null || VersionNumber.compare(bootstrapVersion, "0.1.17") >= 0) {
+            return jvmArguments;
+        }
+
+        Path libraryDirectory = instance.getLayout().getLibrariesDirectory().toAbsolutePath().normalize();
+        List<Argument> rewritten = new ArrayList<>(jvmArguments.size());
+        boolean changed = false;
+        for (Argument argument : jvmArguments) {
+            if (argument instanceof StringArgument stringArgument) {
+                String value = stringArgument.argument();
+                if (value.startsWith("-DignoreList=")) {
+                    rewritten.add(new StringArgument(
+                            "-DignoreList=" + rewriteIgnoreList(
+                                    value.substring("-DignoreList=".length()),
+                                    libraryClasspath,
+                                    libraryDirectory)));
+                    changed = true;
+                    continue;
+                }
+            }
+            rewritten.add(argument);
+        }
+        return changed ? rewritten : jvmArguments;
+    }
+
+    /// Converts a substring-based BootstrapLauncher ignore list to exact classpath entries.
+    ///
+    /// For example, if `client-extra` is listed and a path component contains `client-extra`,
+    /// every matching library would be ignored under substring matching. Matching is performed
+    /// against library file names only; matched jars are rewritten to concrete paths.
+    ///
+    /// @param ignoreList       the original comma-separated substring list
+    /// @param libraryClasspath absolute library classpath entries for this launch
+    /// @param libraryDirectory absolute `.minecraft/libraries` directory
+    /// @return the exact comma-separated ignore list
+    private static String rewriteIgnoreList(
+            String ignoreList,
+            Set<String> libraryClasspath,
+            Path libraryDirectory) {
+        String[] ignoredSubstrings = ignoreList.split(",");
+        List<String> exactEntries = new ArrayList<>();
+        exactEntries.add("${primary_jar}");
+
+        for (String classpathName : libraryClasspath) {
+            Path classpathFile = Paths.get(classpathName).toAbsolutePath();
+            String fileName = classpathFile.getFileName().toString();
+            if (Stream.of(ignoredSubstrings).anyMatch(fileName::contains)) {
+                String absolutePath;
+                if (classpathFile.startsWith(libraryDirectory)) {
+                    absolutePath = "${library_directory}${file_separator}"
+                            + libraryDirectory.relativize(classpathFile).toString()
+                            .replace(File.separator, "${file_separator}");
+                } else {
+                    absolutePath = classpathFile.toString();
+                }
+                exactEntries.add(StringUtils.substringBefore(absolutePath, ","));
+            }
+        }
+        return String.join(",", exactEntries);
+    }
+
     protected Map<String, String> getConfigurations() {
         return mapOf(
                 // defined by Minecraft official launcher
                 pair("${auth_player_name}", authInfo.getUsername()),
                 pair("${auth_session}", authInfo.getAccessToken()),
                 pair("${auth_access_token}", authInfo.getAccessToken()),
-                pair("${auth_uuid}", UUIDTypeAdapter.fromUUID(authInfo.getUUID())),
-                pair("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(version.getId())),
+                pair("${auth_uuid}", UUIDs.toCompactString(authInfo.getUUID())),
+                pair("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(manifest.id().toString())),
                 pair("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
-                pair("${version_type}", Optional.ofNullable(options.getVersionType()).orElse(version.getType().getId())),
-                pair("${game_directory}", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))),
+                pair("${version_type}", Optional.ofNullable(options.getVersionType()).orElse(manifest.type() != null ? manifest.type().getId() : ReleaseType.UNKNOWN.getId())),
+                pair("${game_directory}", FileUtils.getAbsolutePath(instance.getRunDirectory())),
                 pair("${user_type}", authInfo.getUserType()),
-                pair("${assets_index_name}", version.getAssetIndex().getId()),
+                pair("${assets_index_name}", manifest.getAssetIndex().getId()),
                 pair("${user_properties}", authInfo.getUserProperties()),
                 pair("${resolution_width}", options.getWidth().toString()),
                 pair("${resolution_height}", options.getHeight().toString()),
-                pair("${library_directory}", FileUtils.getAbsolutePath(repository.getLibrariesDirectory(version))),
+                pair("${library_directory}", FileUtils.getAbsolutePath(instance.getLayout().getLibrariesDirectory())),
                 pair("${classpath_separator}", File.pathSeparator),
-                pair("${primary_jar}", FileUtils.getAbsolutePath(repository.getVersionJar(version))),
+                pair("${primary_jar}", FileUtils.getAbsolutePath(instance.getInstanceJarFile())),
                 pair("${language}", Locale.getDefault().toLanguageTag()),
 
                 // defined by HMCL
                 // libraries_directory stands for historical reasons here. We don't know the official launcher
                 // had already defined "library_directory" as the placeholder for path to ".minecraft/libraries"
                 // when we propose this placeholder.
-                pair("${libraries_directory}", FileUtils.getAbsolutePath(repository.getLibrariesDirectory(version))),
+                pair("${libraries_directory}", FileUtils.getAbsolutePath(instance.getLayout().getLibrariesDirectory())),
                 // file_separator is used in -DignoreList
                 pair("${file_separator}", File.separator),
-                pair("${primary_jar_name}", FileUtils.getName(repository.getVersionJar(version)))
+                pair("${primary_jar_name}", FileUtils.getName(instance.getInstanceJarFile()))
         );
     }
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        Path nativeFolder;
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
-        } else {
-            nativeFolder = Path.of(options.getNativesDir());
-        }
-
-        final Command command = generateCommandLine(nativeFolder);
+        final Command command = generateCommandLine();
+        final Map<String, String> envVars = generateEnvVars();
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
@@ -576,18 +698,18 @@ public class DefaultLauncher extends Launcher {
             throw new IllegalStateException("Illegal command line " + rawCommandLine);
         }
 
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+        if (!options.isUseCustomNatives()) {
             decompressNatives(command.javaNativeFolder);
         }
 
         if (isUsingLog4j())
             extractLog4jConfigurationFile();
 
-        Path runDirectory = repository.getRunDirectory(version.getId());
+        Path runDirectory = instance.getRunDirectory();
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars(nativeFolder))).directory(runDirectory.toFile());
-            builder.environment().putAll(getEnvVars(nativeFolder));
+            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), envVars)).directory(runDirectory.toFile());
+            builder.environment().putAll(envVars);
             SystemUtils.callExternalProcess(builder);
         }
 
@@ -600,7 +722,7 @@ public class DefaultLauncher extends Launcher {
             Path appdata = options.getGameDir().toAbsolutePath().getParent();
             if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
 
-            builder.environment().putAll(getEnvVars(nativeFolder));
+            builder.environment().putAll(envVars);
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
@@ -608,22 +730,23 @@ public class DefaultLauncher extends Launcher {
 
         ManagedProcess p = new ManagedProcess(process, rawCommandLine);
         if (listener != null)
-            startMonitors(p, nativeFolder, listener, command.encoding, daemon);
+            startMonitors(p, envVars, listener, command.encoding, daemon);
         return p;
     }
 
-    private Map<String, String> getEnvVars(Path nativeFolder) {
-        String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
+    @Contract(value = " -> new", pure = true)
+    private @NotNull Map<String, String> generateEnvVars() {
+        String versionName = Optional.ofNullable(options.getVersionName()).orElse(manifest.id().toString());
 
         Map<String, String> env = new LinkedHashMap<>();
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
-        env.put("INST_DIR", FileUtils.getAbsolutePath(repository.getVersionRoot(version.getId())));
-        env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId())));
+        env.put("INST_DIR", FileUtils.getAbsolutePath(instance.getInstanceRoot()));
+        env.put("INST_MC_DIR", FileUtils.getAbsolutePath(instance.getRunDirectory()));
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
         if (options.getRenderer() instanceof Renderer.Driver driver) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                 if (driver.mesaDriverName() != null) {
                     if (driver instanceof Renderer.OpenGL && driver != Renderer.OpenGL.LLVMPIPE)
                         env.put("GALLIUM_DRIVER", driver.mesaDriverName());
@@ -635,13 +758,22 @@ public class DefaultLauncher extends Launcher {
                     }
                 } else if (driver instanceof Renderer.Vulkan vulkanDriver
                         && vulkanDriver.icdFile() != null
-                        && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH) {
+                        && options.getJava().getArchitecture() == SystemInfo.SYSTEM_ARCH) {
                     String icdFile = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
 
                     env.put("VK_ICD_FILENAMES", icdFile);
                     env.put("VK_DRIVER_FILES", icdFile);
                 }
-            } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
+                if (options.getJava().getArchitecture() == SystemInfo.SYSTEM_ARCH
+                        && driver instanceof Renderer.Vulkan vulkanDriver
+                        && vulkanDriver != Renderer.Vulkan.MOLTENVK
+                        && vulkanDriver.icdFile() != null) {
+                    String absolutePath = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
+                    env.put("VK_ICD_FILENAMES", absolutePath);
+                    env.put("VK_DRIVER_FILES", absolutePath);
+                }
+            } else if (SystemInfo.CURRENT_OS.isUnixLike()) {
                 if (driver instanceof Renderer.OpenGL oglDriver) {
                     if (oglDriver == Renderer.OpenGL.LLVMPIPE) {
                         env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
@@ -658,48 +790,51 @@ public class DefaultLauncher extends Launcher {
                         env.put("LIBGL_KOPPER_DRI2", "1");
                     }
                 } else if (driver instanceof Renderer.Vulkan vulkanDriver
-                        && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH) {
+                        && options.getJava().getArchitecture() == SystemInfo.SYSTEM_ARCH) {
                     if (vulkanDriver.icdFile() != null) {
                         String absolutePath = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
                         env.put("VK_ICD_FILENAMES", absolutePath);
                         env.put("VK_DRIVER_FILES", absolutePath);
                     }
                 }
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
-                    && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH) {
-                if (driver instanceof Renderer.Vulkan vulkanDriver
-                        && vulkanDriver != Renderer.Vulkan.MOLTENVK
-                        && vulkanDriver.icdFile() != null) {
-                    String absolutePath = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
-                    env.put("VK_ICD_FILENAMES", absolutePath);
-                    env.put("VK_DRIVER_FILES", absolutePath);
+            }
+        }
+
+        if (options.getRenderer() == Renderer.DEFAULT) {
+            @Unmodifiable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards().stream()
+                    .filter(it -> it.getType() != GraphicsCard.Type.DISPLAY_ONLY)
+                    .toList();
+            if (graphicsCards.size() == 2) {
+                GraphicsCard card0 = graphicsCards.get(0);
+                GraphicsCard card1 = graphicsCards.get(1);
+
+                boolean hasIntegrated = card0.getType() == GraphicsCard.Type.INTEGRATED || card1.getType() == GraphicsCard.Type.INTEGRATED;
+                boolean hasDiscrete = card0.getType() == GraphicsCard.Type.DISCRETE || card1.getType() == GraphicsCard.Type.DISCRETE;
+
+                if (hasIntegrated && hasDiscrete) {
+                    GraphicsCard discreteGraphicsCard = card0.getType() == GraphicsCard.Type.DISCRETE ? card0 : card1;
+
+                    if (SystemInfo.CURRENT_OS == OperatingSystem.LINUX) {
+                        if (HardwareVendor.NVIDIA.equals(discreteGraphicsCard.getVendor())
+                                && "nvidia".equals(discreteGraphicsCard.getDriver())) {
+                            // https://askubuntu.com/a/1350825
+                            env.put("__NV_PRIME_RENDER_OFFLOAD", "1");
+                            env.put("__GLX_VENDOR_LIBRARY_NAME", "nvidia");
+                            env.put("__VK_LAYER_NV_optimus", "NVIDIA_only");
+                        }
+                    }
                 }
             }
         }
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
-            env.put("INST_FORGE", "1");
+        for (ModLoaderType modLoader : instance.getModLoaders()) {
+            if (modLoader.getEnvVarName() != null) {
+                env.put(modLoader.getEnvVarName(), "1");
+            }
         }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
-            env.put("INST_CLEANROOM", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
-            env.put("INST_NEOFORGE", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER)) {
-            env.put("INST_LITELOADER", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC)) {
-            env.put("INST_FABRIC", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE)) {
+
+        if (instance.hasComponent(GameComponentType.OPTIFINE)) {
             env.put("INST_OPTIFINE", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
-            env.put("INST_QUILT", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
-            env.put("INST_LEGACYFABRIC", "1");
         }
 
         env.putAll(options.getEnvironmentVariables());
@@ -707,16 +842,50 @@ public class DefaultLauncher extends Launcher {
         return env;
     }
 
+    private Set<String> getClasspath() {
+        GameInstanceID instanceId = instance.getId();
+        GameRepositoryLayout layout = instance.getLayout();
+
+        boolean processOptiFine = instance.hasComponent(OPTIFINE) && (instance.hasComponent(LITELOADER) || instance.hasComponent(FORGE));
+        @Nullable Path selectedOptiFineInstallerFile = null;
+
+        Set<String> classpath = new LinkedHashSet<>();
+        for (Library library : manifest.getLibraries()) {
+            if (library.appliesToCurrentEnvironment() && !library.isNative()) {
+                if (processOptiFine) {
+                    if (library.is("optifine", "OptiFine")) {
+                        // Prefer the installer jar over the patch jar when both are present.
+                        Library installer = new Library(
+                                new Artifact("optifine", "OptiFine", library.version(), "installer"));
+                        Path installerFile = layout.getLibraryFile(instanceId, installer);
+                        if (Files.isRegularFile(installerFile)) {
+                            selectedOptiFineInstallerFile = installerFile;
+                            continue;
+                        }
+                    } else if (library.is("optifine", "launchwrapper-of")) {
+                        // Drop OptiFine's private launchwrapper; Forge/LiteLoader supply their own.
+                        continue;
+                    }
+                }
+
+                Path libraryFile = layout.getLibraryFile(instanceId, library);
+                if (Files.isRegularFile(libraryFile))
+                    classpath.add(FileUtils.getAbsolutePath(libraryFile));
+            }
+        }
+
+        // Re-append the installer last so OptiFine follows Forge when Forge has no patch entry.
+        if (selectedOptiFineInstallerFile != null &&
+                // With ModLauncher, OptiFine is discovered via HMCLTransformerDiscoveryService, not classpath.
+                !GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass())) {
+            classpath.add(FileUtils.getAbsolutePath(selectedOptiFineInstallerFile));
+        }
+        return classpath;
+    }
+
     @Override
     public void makeLaunchScript(Path scriptFile) throws IOException {
-        boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
-
-        Path nativeFolder;
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
-        } else {
-            nativeFolder = Path.of(options.getNativesDir());
-        }
+        boolean isWindows = OperatingSystem.WINDOWS == SystemInfo.CURRENT_OS;
 
         String scriptExtension = FileUtils.getExtension(scriptFile);
         boolean usePowerShell = "ps1".equals(scriptExtension);
@@ -728,9 +897,9 @@ public class DefaultLauncher extends Launcher {
                 throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh', 'bash', 'ps1' or 'command' in macOS/Linux");
         }
 
-        final Command commandLine = generateCommandLine(nativeFolder);
+        final Command commandLine = generateCommandLine();
         final String command = usePowerShell ? null : commandLine.commandLine.toString();
-        Map<String, String> envVars = getEnvVars(nativeFolder);
+        final Map<String, String> envVars = generateEnvVars();
 
         if (isWindows && !usePowerShell) {
             // https://stackoverflow.com/a/28452546
@@ -743,7 +912,7 @@ public class DefaultLauncher extends Launcher {
         if (isUsingLog4j())
             extractLog4jConfigurationFile();
 
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER)
+        if (!options.isUseCustomNatives())
             decompressNatives(commandLine.javaNativeFolder);
 
         Files.createDirectories(scriptFile.getParent());
@@ -763,7 +932,7 @@ public class DefaultLauncher extends Launcher {
                         throw e;
                     }
                 } else {
-                    charset = OperatingSystem.NATIVE_CHARSET;
+                    charset = SystemInfo.NATIVE_CHARSET;
                 }
             }
 
@@ -783,7 +952,7 @@ public class DefaultLauncher extends Launcher {
                         writer.newLine();
                     }
                     writer.write("Set-Location -LiteralPath ");
-                    writer.write(CommandBuilder.pwshString(FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))));
+                    writer.write(CommandBuilder.pwshString(FileUtils.getAbsolutePath(instance.getRunDirectory())));
                     writer.newLine();
 
 
@@ -827,7 +996,7 @@ public class DefaultLauncher extends Launcher {
                             writer.newLine();
                         }
                         writer.newLine();
-                        writer.write(new CommandBuilder().addAll("cd", "/D", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
+                        writer.write(new CommandBuilder().addAll("cd", "/D", FileUtils.getAbsolutePath(instance.getRunDirectory())).toString());
                     } else {
                         writer.write("#!/usr/bin/env bash");
                         writer.newLine();
@@ -839,7 +1008,7 @@ public class DefaultLauncher extends Launcher {
                             writer.write(new CommandBuilder().addAll("ln", "-s", FileUtils.getAbsolutePath(nativeFolder), commandLine.tempNativeFolder.toString()).toString());
                             writer.newLine();
                         }
-                        writer.write(new CommandBuilder().addAll("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
+                        writer.write(new CommandBuilder().addAll("cd", FileUtils.getAbsolutePath(instance.getRunDirectory())).toString());
                     }
                     writer.newLine();
                     if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
@@ -873,7 +1042,7 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, Path nativeFolder, ProcessListener processListener, Charset encoding, boolean isDaemon) {
+    private void startMonitors(ManagedProcess managedProcess, Map<String, String> envVars, ProcessListener processListener, Charset encoding, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, false);
@@ -890,8 +1059,8 @@ public class DefaultLauncher extends Launcher {
 
             if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars(nativeFolder))).directory(options.getGameDir().toFile());
-                    builder.environment().putAll(getEnvVars(nativeFolder));
+                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), envVars)).directory(options.getGameDir().toFile());
+                    builder.environment().putAll(envVars);
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
                     LOG.warning("An Exception happened while running exit command.", e);

@@ -1,22 +1,8 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.auth.authlibinjector;
 
+import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
@@ -46,8 +32,13 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         this.downloader = downloader;
     }
 
-    public AuthlibInjectorAccount(AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, YggdrasilSession session) {
-        super(server.getYggdrasilService(), username, session);
+    public AuthlibInjectorAccount(
+            AccountID accountID,
+            AuthlibInjectorServer server,
+            AuthlibInjectorArtifactProvider downloader,
+            String username,
+            YggdrasilSession session) {
+        super(accountID, server.getYggdrasilService(), username, session);
         this.server = server;
         this.downloader = downloader;
     }
@@ -130,17 +121,16 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         @Override
         public Arguments getLaunchArguments(LaunchOptions options) {
             return new Arguments().addJVMArguments(
-                    "-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl(),
+                    "-javaagent:" + artifact.location().toString() + "=" + server.getUrl(),
                     "-Dauthlibinjector.side=client",
                     "-Dauthlibinjector.yggdrasil.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
         }
     }
 
     @Override
-    public Map<Object, Object> toStorage() {
-        Map<Object, Object> map = super.toStorage();
-        map.put("serverBaseURL", server.getUrl());
-        return map;
+    public void writeMetadata(JsonObject metadata) {
+        metadata.addProperty("serverBaseURL", server.getUrl());
+        super.writeMetadata(metadata);
     }
 
     @Override
@@ -154,29 +144,11 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     }
 
     @Override
-    public String getIdentifier() {
-        return server.getUrl() + ":" + super.getIdentifier();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), server.hashCode());
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null || obj.getClass() != AuthlibInjectorAccount.class)
-            return false;
-        AuthlibInjectorAccount another = (AuthlibInjectorAccount) obj;
-        return isPortable() == another.isPortable()
-                && characterUUID.equals(another.characterUUID) && server.equals(another.server);
-    }
-
-    @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("uuid", characterUUID)
-                .append("username", getUsername())
+                .append("accountID", getAccountID())
+                .append("profileID", profileID)
+                .append("loginName", getLoginName())
                 .append("server", getServer().getUrl())
                 .toString();
     }

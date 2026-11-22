@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 /*
  * The MIT License (MIT)
  *
@@ -48,7 +33,7 @@ import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -102,14 +87,14 @@ public final class SelfDependencyPatcher {
 
     private static final class DependencyDescriptor {
         private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
-        private static final Path DEPENDENCIES_DIR_PATH = Metadata.DEPENDENCIES_DIRECTORY.resolve(Platform.CURRENT_PLATFORM.toString()).resolve("openjfx");
+        private static final Path DEPENDENCIES_DIR_PATH = Metadata.DEPENDENCIES_DIRECTORY.resolve(SystemInfo.CURRENT_PLATFORM.toString()).resolve("openjfx");
 
         static List<DependencyDescriptor> readDependencies() {
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
                 Map<String, Map<String, List<DependencyDescriptor>>> allDependencies =
                         JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, mapTypeOf(String.class, listTypeOf(DependencyDescriptor.class))));
-                Map<String, List<DependencyDescriptor>> platform = allDependencies.get(Platform.CURRENT_PLATFORM.toString());
+                Map<String, List<DependencyDescriptor>> platform = allDependencies.get(SystemInfo.CURRENT_PLATFORM.toString());
                 if (platform == null)
                     return null;
 
@@ -269,7 +254,14 @@ public final class SelfDependencyPatcher {
             AtomicBoolean isCancelled = new AtomicBoolean();
             AtomicBoolean showDetails = new AtomicBoolean();
 
-            ProgressFrame dialog = new ProgressFrame(i18n("download.javafx"));
+            ProgressFrame dialog;
+            try {
+                dialog = new SwingProgressFrame(i18n("download.javafx"));
+            } catch (HeadlessException e) {
+                LOG.warning("Failed to open dialog", e);
+                dialog = new FakeProgressFrame();
+            }
+
             dialog.setProgressMaximum(dependencies.size() + 1);
             dialog.setProgress(count);
             dialog.setOnCancel(() -> isCancelled.set(true));
@@ -296,9 +288,10 @@ public final class SelfDependencyPatcher {
                     DependencyDescriptor dependency = dependencies.get(i);
 
                     final String url = repository.resolveDependencyURL(dependency);
+                    ProgressFrame finalDialog = dialog;
                     SwingUtilities.invokeLater(() -> {
-                        dialog.setCurrent(dependency.module);
-                        dialog.incrementProgress();
+                        finalDialog.setCurrent(dependency.module);
+                        finalDialog.incrementProgress();
                     });
 
                     LOG.info("Downloading " + url);
@@ -382,14 +375,32 @@ public final class SelfDependencyPatcher {
         }
     }
 
-    public static class ProgressFrame extends JDialog {
+    public sealed interface ProgressFrame {
+        void setCurrent(String component);
+
+        void setProgressMaximum(int total);
+
+        void setProgress(int n);
+
+        void incrementProgress();
+
+        void setOnCancel(Runnable action);
+
+        void setOnChangeSource(Runnable action);
+
+        void setVisible(boolean visible);
+
+        void dispose();
+    }
+
+    public static final class SwingProgressFrame extends JDialog implements ProgressFrame {
 
         private final JProgressBar progressBar;
         private final JLabel progressText;
         private final JButton btnChangeSource;
         private final JButton btnCancel;
 
-        public ProgressFrame(String title) {
+        public SwingProgressFrame(String title) {
             JPanel panel = new JPanel();
 
             setResizable(false);
@@ -451,6 +462,41 @@ public final class SelfDependencyPatcher {
 
         public void setOnChangeSource(Runnable action) {
             btnChangeSource.addActionListener(e -> action.run());
+        }
+    }
+
+    public static final class FakeProgressFrame implements ProgressFrame {
+
+        @Override
+        public void setCurrent(String component) {
+        }
+
+        @Override
+        public void setProgressMaximum(int total) {
+        }
+
+        @Override
+        public void setProgress(int n) {
+        }
+
+        @Override
+        public void incrementProgress() {
+        }
+
+        @Override
+        public void setOnCancel(Runnable action) {
+        }
+
+        @Override
+        public void setOnChangeSource(Runnable action) {
+        }
+
+        @Override
+        public void setVisible(boolean visible) {
+        }
+
+        @Override
+        public void dispose() {
         }
     }
 }

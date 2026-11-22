@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXButton;
@@ -27,8 +12,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
+import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
+import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -42,9 +29,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -112,9 +97,8 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("modpack.choose"));
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip", "*.mrpack"));
-        Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        Path selectedFile = Controllers.showOpenDialog(chooser);
         if (selectedFile == null) {
-            Platform.runLater(controller::onEnd);
             return;
         }
 
@@ -127,7 +111,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
             try {
                 if (url.endsWith("server-manifest.json")) {
                     // if urlString ends with .json, we assume that the url is server-manifest.json
-                    Controllers.taskDialog(new GetTask(url).whenComplete(Schedulers.javafx(), (result, e) -> {
+                    Controllers.taskDialog(new GetTask(WebURL.parse(url)).whenComplete(Schedulers.javafx(), (result, e) -> {
                         ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
                         if (manifest == null) {
                             handler.reject(i18n("modpack.type.server.malformed"));
@@ -158,15 +142,15 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                             TaskCancellationAction.NORMAL
                     );
                 }
-            } catch (IOException e) {
-                handler.reject(e.getMessage());
+            } catch (Exception e) {
+                handler.reject(i18n("message.failed"));
             }
         }, "", new URLValidator());
     }
 
     public void onChooseRepository() {
         String modPackName = controller.getSettings().get(MODPACK_NAME);
-        DownloadPage downloadPage = new DownloadPage(modPackName);
+        DownloadPage downloadPage = new DownloadPage(modPackName != null ? new GameInstanceID(modPackName) : null);
         downloadPage.showModpackDownloads();
         Controllers.navigate(downloadPage);
     }

@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import fi.iki.elonen.NanoHTTPD;
@@ -30,7 +15,10 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -50,7 +38,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     private String idToken;
 
     private OAuthServer(int port) {
-        super(port);
+        super("localhost", port);
 
         this.port = port;
 
@@ -172,6 +160,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
     public static class Factory implements OAuth.Callback {
         public final EventManager<GrantDeviceCodeEvent> onGrantDeviceCode = new EventManager<>();
+        public final EventManager<LoginCompletedDeviceCodeEvent> onLoginCompletedDeviceCode = new EventManager<>();
         public final EventManager<OpenBrowserEvent> onOpenBrowserAuthorizationCode = new EventManager<>();
         public final EventManager<OpenBrowserEvent> onOpenBrowserDevice = new EventManager<>();
 
@@ -197,6 +186,11 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         @Override
         public void grantDeviceCode(String userCode, String verificationURI) {
             onGrantDeviceCode.fireEvent(new GrantDeviceCodeEvent(this, userCode, verificationURI));
+        }
+
+        @Override
+        public void loginCompletedDeviceCode() {
+            onLoginCompletedDeviceCode.fireEvent(new LoginCompletedDeviceCodeEvent(this));
         }
 
         @Override
@@ -232,6 +226,12 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         public String getVerificationUri() {
             return verificationUri;
+        }
+    }
+
+    public static class LoginCompletedDeviceCodeEvent extends Event {
+        public LoginCompletedDeviceCodeEvent(Object source) {
+            super(source);
         }
     }
 

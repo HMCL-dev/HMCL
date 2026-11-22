@@ -1,23 +1,11 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2024 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
@@ -54,9 +42,11 @@ import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -76,7 +66,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class JavaDownloadDialog extends StackPane {
 
     public static Runnable showDialogAction(DownloadProvider downloadProvider) {
-        Platform platform = Platform.SYSTEM_PLATFORM;
+        NativePlatform platform = SystemInfo.SYSTEM_PLATFORM;
 
         List<GameJavaVersion> supportedVersions = GameJavaVersion.getSupportedVersions(platform);
 
@@ -93,11 +83,11 @@ public final class JavaDownloadDialog extends StackPane {
     }
 
     private final DownloadProvider downloadProvider;
-    private final Platform platform;
+    private final NativePlatform platform;
     private final List<GameJavaVersion> supportedGameJavaVersions;
     private final EnumSet<DiscoJavaDistribution> distributions;
 
-    private JavaDownloadDialog(DownloadProvider downloadProvider, Platform platform, List<GameJavaVersion> supportedGameJavaVersions, EnumSet<DiscoJavaDistribution> distributions) {
+    private JavaDownloadDialog(DownloadProvider downloadProvider, NativePlatform platform, List<GameJavaVersion> supportedGameJavaVersions, EnumSet<DiscoJavaDistribution> distributions) {
         this.downloadProvider = downloadProvider;
         this.platform = platform;
         this.supportedGameJavaVersions = supportedGameJavaVersions;
@@ -197,7 +187,7 @@ public final class JavaDownloadDialog extends StackPane {
 
                         if (exceptionToDisplay != null) {
                             LOG.warning("Failed to download java", exceptionToDisplay);
-                            Controllers.dialog(DownloadProviders.localizeErrorMessage(exceptionToDisplay), i18n("install.failed"));
+                            Controllers.dialog(I18n.localizeErrorMessage(exceptionToDisplay), i18n("install.failed"));
                         }
                     });
 
@@ -227,8 +217,11 @@ public final class JavaDownloadDialog extends StackPane {
 
             this.remoteVersionBox = new JFXComboBox<>();
             this.remoteVersionBox.setConverter(FXUtils.stringConverter(JavaRemoteVersion::getDistributionVersion));
+            this.remoteVersionBox.disableProperty().bind(Bindings.isNull(distributionBox.getSelectionModel().selectedItemProperty()));
 
             this.packageTypeBox = new JFXComboBox<>(FXCollections.observableArrayList());
+            this.packageTypeBox.setConverter(FXUtils.stringConverter(JavaPackageType::getDisplayName));
+            this.packageTypeBox.disableProperty().bind(Bindings.isNull(distributionBox.getSelectionModel().selectedItemProperty()));
 
             this.downloadButton = new JFXButton(i18n("download"));
             downloadButton.setOnAction(e -> onDownload());
@@ -308,8 +301,6 @@ public final class JavaDownloadDialog extends StackPane {
             Consumer<DiscoJavaVersionList> updateListStatus = list -> {
                 remoteVersionBox.setItems(null);
                 packageTypeBox.getItems().clear();
-                remoteVersionBox.setDisable(true);
-                packageTypeBox.setDisable(true);
                 warningLabel.setText(null);
 
                 if (list == null || (list.versions != null && list.versions.isEmpty()))
@@ -322,9 +313,6 @@ public final class JavaDownloadDialog extends StackPane {
                     if (list.status == DiscoJavaVersionList.Status.SUCCESS) {
                         packageTypeBox.getItems().setAll(list.versions.keySet());
                         packageTypeBox.getSelectionModel().selectFirst();
-
-                        remoteVersionBox.setDisable(false);
-                        packageTypeBox.setDisable(false);
                     } else
                         warningLabel.setText(i18n("java.download.load_list.failed"));
                 }
@@ -351,7 +339,7 @@ public final class JavaDownloadDialog extends StackPane {
             setHeading(new Label(i18n("java.download.title")));
             setBody(body);
             setActions(warningLabel, downloadButtonPane, cancelButton);
-            if (platform.getOperatingSystem() == OperatingSystem.LINUX && platform.getArchitecture() == Architecture.RISCV64) {
+            if (platform.os() == OperatingSystem.LINUX && platform.arch() == Architecture.RISCV64) {
                 JFXHyperlink hyperlink = new JFXHyperlink(i18n("java.download.banshanjdk-8"));
                 hyperlink.setExternalLink("https://www.zthread.cn/#product");
                 getActions().add(0, hyperlink);
@@ -368,7 +356,7 @@ public final class JavaDownloadDialog extends StackPane {
             if (version == null)
                 return;
 
-            Controllers.taskDialog(new GetTask(downloadProvider.injectURLWithCandidates(version.getLinks().getPkgInfoUri()))
+            Controllers.taskDialog(new GetTask(downloadProvider.getDownloadCandidates(version.getLinks().pkgInfoUri()))
                     .setExecutor(Schedulers.io())
                     .thenComposeAsync(json -> {
                         DiscoResult<DiscoRemoteFileInfo> result = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoRemoteFileInfo.class));
@@ -376,19 +364,20 @@ public final class JavaDownloadDialog extends StackPane {
                             throw new IOException("Illegal result: " + json);
 
                         DiscoRemoteFileInfo fileInfo = result.getResult().get(0);
-                        if (!fileInfo.getChecksumType().equals("sha1") && !fileInfo.getChecksumType().equals("sha256"))
-                            throw new IOException("Unsupported checksum type: " + fileInfo.getChecksumType());
-                        if (StringUtils.isBlank(fileInfo.getDirectDownloadUri()))
+                        if (StringUtils.isNotBlank(fileInfo.checksumType())
+                                && !fileInfo.checksumType().equals("sha1") && !fileInfo.checksumType().equals("sha256") && !fileInfo.checksumType().equals("md5"))
+                            throw new IOException("Unsupported checksum type: " + fileInfo.checksumType());
+                        if (StringUtils.isBlank(fileInfo.directDownloadUri()))
                             throw new IOException("Missing download URI: " + json);
 
                         Path targetFile = Files.createTempFile("hmcl-java-", "." + version.getArchiveType());
                         targetFile.toFile().deleteOnExit();
 
                         Task<FileDownloadTask.IntegrityCheck> getIntegrityCheck;
-                        if (StringUtils.isNotBlank(fileInfo.getChecksum()))
-                            getIntegrityCheck = Task.completed(new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), fileInfo.getChecksum()));
-                        else if (StringUtils.isNotBlank(fileInfo.getChecksumUri()))
-                            getIntegrityCheck = new GetTask(downloadProvider.injectURLWithCandidates(fileInfo.getChecksumUri()))
+                        if (StringUtils.isNotBlank(fileInfo.checksum()))
+                            getIntegrityCheck = Task.completed(new FileDownloadTask.IntegrityCheck(fileInfo.checksumType(), fileInfo.checksum()));
+                        else if (StringUtils.isNotBlank(fileInfo.checksumUri())) {
+                            getIntegrityCheck = new GetTask(downloadProvider.getDownloadCandidates(fileInfo.checksumUri()))
                                     .thenApplyAsync(checksum -> {
                                         checksum = checksum.trim();
 
@@ -396,15 +385,18 @@ public final class JavaDownloadDialog extends StackPane {
                                         if (idx > 0)
                                             checksum = checksum.substring(0, idx);
 
-                                        return new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), checksum);
+                                        return new FileDownloadTask.IntegrityCheck(fileInfo.checksumType(), checksum);
                                     });
+                        }
                         else
-                            throw new IOException("Unable to get checksum for file");
+                            getIntegrityCheck = Task.completed(null);
 
                         return getIntegrityCheck
                                 .thenComposeAsync(integrityCheck ->
-                                        new FileDownloadTask(downloadProvider.injectURLWithCandidates(fileInfo.getDirectDownloadUri()),
-                                                targetFile, integrityCheck).setName(fileInfo.getFileName()))
+                                {
+                                    return new FileDownloadTask(downloadProvider.getDownloadCandidates(fileInfo.directDownloadUri()),
+                                            targetFile, integrityCheck).setName(fileInfo.fileName());
+                                })
                                 .thenSupplyAsync(() -> targetFile);
                     })
                     .whenComplete(Schedulers.javafx(), ((result, exception) -> {
@@ -427,7 +419,7 @@ public final class JavaDownloadDialog extends StackPane {
                             LOG.warning("Failed to download java", exception);
                             Throwable resolvedException = resolveException(exception);
                             if (!(resolvedException instanceof CancellationException)) {
-                                Controllers.dialog(DownloadProviders.localizeErrorMessage(resolvedException), i18n("install.failed"));
+                                Controllers.dialog(I18n.localizeErrorMessage(resolvedException), i18n("install.failed"));
                             }
                         }
                     })), i18n("java.download"), TaskCancellationAction.NORMAL);

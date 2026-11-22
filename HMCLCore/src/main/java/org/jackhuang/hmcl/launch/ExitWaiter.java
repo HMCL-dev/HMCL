@@ -1,30 +1,11 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.launch;
 
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.JVMLaunchFailedEvent;
-import org.jackhuang.hmcl.event.ProcessExitedAbnormallyEvent;
-import org.jackhuang.hmcl.event.ProcessStoppedEvent;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.util.Collection;
 import java.util.List;
@@ -67,14 +48,11 @@ final class ExitWaiter implements Runnable {
                     "Could not create the Java Virtual Machine.",
                     "Error occurred during initialization of VM",
                     "A fatal exception has occurred. Program will exit.")) {
-                EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(this, process));
                 exitType = ProcessListener.ExitType.JVM_ERROR;
             } else if (exitCode != 0 || StringUtils.containsOne(errorLines,
                     "Crash report saved to", "Could not save crash report to", "This crash report has been saved to:",
                     "Unable to launch", "An exception was thrown, the game will display an error screen and halt.")) {
-                EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(this, process));
-
-                if (exitCode == 137 && OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+                if (exitCode == 137 && SystemInfo.CURRENT_OS.isUnixLike()) {
                     exitType = ProcessListener.ExitType.SIGKILL;
                 } else {
                     exitType = ProcessListener.ExitType.APPLICATION_ERROR;
@@ -82,8 +60,6 @@ final class ExitWaiter implements Runnable {
             } else {
                 exitType = ProcessListener.ExitType.NORMAL;
             }
-
-            EventBus.EVENT_BUS.fireEvent(new ProcessStoppedEvent(this, process));
 
             watcher.accept(exitCode, exitType);
         } catch (InterruptedException e) {

@@ -1,32 +1,19 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.io;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import org.glavo.chardet.DetectedCharset;
-import org.glavo.chardet.UniversalDetector;
+import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
@@ -38,6 +25,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -45,6 +33,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huang
  */
 public final class FileUtils {
+
+    public static final long KB = 1024;
+    public static final long MB = KB * KB;
+    public static final long GB = KB * MB;
+    public static final long TB = KB * GB;
 
     private FileUtils() {
     }
@@ -99,7 +92,11 @@ public final class FileUtils {
     }
 
     public static String getNameWithoutExtension(Path file) {
-        return StringUtils.substringBeforeLast(getName(file), '.');
+        String name = getName(file);
+        if (Files.isDirectory(file)) {
+            return name;
+        }
+        return StringUtils.substringBeforeLast(name, '.');
     }
 
     public static String getExtension(String fileName) {
@@ -141,7 +138,7 @@ public final class FileUtils {
 
     /// @see #isNameValid(OperatingSystem, String)
     public static boolean isNameValid(String name) {
-        return isNameValid(OperatingSystem.CURRENT_OS, name);
+        return isNameValid(SystemInfo.CURRENT_OS, name);
     }
 
     /// Returns true if the given name is a valid file name on the given operating system,
@@ -211,7 +208,7 @@ public final class FileUtils {
 
     /// @see #isNameValidForJar(OperatingSystem, String)
     public static boolean isNameValidForJar(String name) {
-        return isNameValidForJar(OperatingSystem.CURRENT_OS, name);
+        return isNameValidForJar(SystemInfo.CURRENT_OS, name);
     }
 
     /// Returns true if the given name is a valid jar file name on the given operating system,
@@ -232,22 +229,32 @@ public final class FileUtils {
         }
     }
 
+    public static String parseFileSize(long sizeInBytes) {
+        if (sizeInBytes >= TB)
+            return String.format(Locale.ROOT, "%.2f TiB", (float) sizeInBytes / TB);
+        if (sizeInBytes >= GB)
+            return String.format(Locale.ROOT, "%.2f GiB", (float) sizeInBytes / GB);
+        if (sizeInBytes >= MB)
+            return String.format(Locale.ROOT, "%.2f MiB", (float) sizeInBytes / MB);
+        if (sizeInBytes >= KB)
+            return String.format(Locale.ROOT, "%.2f KiB", (float) sizeInBytes / KB);
+        return String.format(Locale.ROOT, "%d B", sizeInBytes);
+    }
+
     public static String readTextMaybeNativeEncoding(Path file) throws IOException {
         byte[] bytes = Files.readAllBytes(file);
 
-        if (OperatingSystem.NATIVE_CHARSET == UTF_8)
+        if (SystemInfo.NATIVE_CHARSET == UTF_8)
             return new String(bytes, UTF_8);
 
-        UniversalDetector detector = new UniversalDetector();
-        detector.handleData(bytes);
-        detector.dataEnd();
+        EncodingDetector detector = EncodingDetector.MODERN_WEB;
+        EncodingDetector.@Nullable Encoding bestEncoding = detector.detect(bytes).bestEncoding();
+        @Nullable Charset detectedCharset = bestEncoding != null ? bestEncoding.approximateCharset() : null;
 
-        DetectedCharset detectedCharset = detector.getDetectedCharset();
-        if (detectedCharset != null && detectedCharset.isSupported()
-                && (detectedCharset == DetectedCharset.UTF_8 || detectedCharset == DetectedCharset.US_ASCII))
+        if (detectedCharset != null && (detectedCharset == UTF_8 || detectedCharset == US_ASCII))
             return new String(bytes, UTF_8);
         else
-            return new String(bytes, OperatingSystem.NATIVE_CHARSET);
+            return new String(bytes, SystemInfo.NATIVE_CHARSET);
     }
 
     public static void deleteDirectory(Path directory) throws IOException {
@@ -326,7 +333,7 @@ public final class FileUtils {
     }
 
     public static boolean hasKnownDesktop() {
-        if (!OperatingSystem.CURRENT_OS.isLinuxOrBSD())
+        if (!SystemInfo.isXdgPreferred())
             return true;
 
         String desktops = System.getenv("XDG_CURRENT_DESKTOP");
@@ -359,7 +366,7 @@ public final class FileUtils {
      * @return false if moveToTrash does not exist, or platform does not support Desktop.Action.MOVE_TO_TRASH
      */
     public static boolean moveToTrash(Path file) {
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && hasKnownDesktop()) {
+        if (SystemInfo.isXdgPreferred() && hasKnownDesktop()) {
             if (!Files.exists(file)) {
                 return false;
             }
@@ -503,8 +510,17 @@ public final class FileUtils {
     }
 
     public static void saveSafely(Path file, String content) throws IOException {
+        saveSafely(file, content, StandardCharsets.UTF_8);
+    }
+
+    public static void saveSafely(Path file, String content, @Nullable Charset charset) throws IOException {
+        Path parent = file.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
         Path tmpFile = tmpSaveFile(file);
-        try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, charset != null ? charset : StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
             writer.write(content);
         }
 
@@ -519,6 +535,11 @@ public final class FileUtils {
     }
 
     public static void saveSafely(Path file, ExceptionalConsumer<? super OutputStream, IOException> action) throws IOException {
+        Path parent = file.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
         Path tmpFile = tmpSaveFile(file);
 
         try (OutputStream os = Files.newOutputStream(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {

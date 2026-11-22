@@ -1,95 +1,186 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.DataSizeUnit;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
+import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
-import org.jackhuang.hmcl.util.platform.windows.*;
+import org.jackhuang.hmcl.util.platform.windows.Kernel32;
+import org.jackhuang.hmcl.util.platform.windows.WinReg;
+import org.jackhuang.hmcl.util.platform.windows.WindowsHardwareDetector;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.ByteOrder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
+/// Provides cached operating system and hardware information and current physical memory usage.
+@NotNullByDefault
 public final class SystemInfo {
 
+    /// The operating system reported by the current JVM.
+    public static final OperatingSystem CURRENT_OS = OperatingSystem.parseOSName(System.getProperty("os.name"));
+
+    /// The charset used for native text, honoring the `hmcl.native.encoding` override.
+    public static final Charset NATIVE_CHARSET = detectNativeCharset();
+
+    /// The current system version; always an [OSVersion.Windows] instance on Windows.
+    public static final OSVersion SYSTEM_VERSION = detectSystemVersion();
+
+    /// The Windows ANSI code page, falling back to the console code page; -1 if unavailable or not on Windows.
+    public static final int CODE_PAGE = detectCodePage();
+
+    /// The current JVM architecture, including native byte-order and ABI refinements.
+    public static final Architecture CURRENT_ARCH = detectArchitecture(System.getProperty("os.arch"));
+
+    /// The host architecture, falling back to the JVM architecture when detection fails.
+    public static final Architecture SYSTEM_ARCH = detectSystemArchitecture();
+
+    /// The operating system and architecture of the current JVM.
+    public static final NativePlatform CURRENT_PLATFORM = NativePlatform.of(CURRENT_OS, CURRENT_ARCH);
+
+    /// The operating system and native architecture of the host system.
+    public static final NativePlatform SYSTEM_PLATFORM = NativePlatform.of(CURRENT_OS, SYSTEM_ARCH);
+
+    /// Whether the ARM64 host supports executing x86-64 applications through translation.
+    private static final boolean SUPPORTED_TRANSLATION_X86_64 = detectTranslationX86_64Support();
+
+    /// Lazily initializes the platform detector and cached system information.
     private static final class Holder {
+
+        /// The hardware detector for the current operating system.
         public static final HardwareDetector DETECTOR;
 
         static {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+            if (CURRENT_OS == OperatingSystem.WINDOWS)
                 DETECTOR = new WindowsHardwareDetector();
-            else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+            else if (CURRENT_OS == OperatingSystem.LINUX)
                 DETECTOR = new LinuxHardwareDetector();
-            else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+            else if (CURRENT_OS == OperatingSystem.MACOS)
                 DETECTOR = new MacOSHardwareDetector();
             else
                 DETECTOR = new HardwareDetector();
         }
 
+        /// The cached operating system name and detailed description.
+        public static final OperatingSystemInfo OPERATING_SYSTEM = DETECTOR.detectOperatingSystemInfo();
+
+        /// The detected total physical memory size, in bytes.
         public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
-        public static final @Nullable CentralProcessor CENTRAL_PROCESSOR = DETECTOR.detectCentralProcessor();
-        public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
+
+        /// A nonempty immutable processor snapshot supplied by the detector.
+        public static final @Unmodifiable List<CentralProcessor> CENTRAL_PROCESSORS = DETECTOR.detectCentralProcessors();
+
+        /// The immutable graphics card snapshot, empty if detection is unavailable or fails.
+        public static final @Unmodifiable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
+
+        /// The cached device identity, or `null` if unavailable.
+        public static final @Nullable DeviceInfo DEVICE_INFO = DETECTOR.detectDeviceInfo();
+
+        /// The cached desktop environment description, or `null` if unavailable.
+        public static final @Nullable String DESKTOP = DETECTOR.detectDesktopEnvironment();
     }
 
-    public static void initialize() {
-        StringBuilder builder = new StringBuilder("System Info:");
+    /// Returns the cached distribution or system name, falling back to `os.name`.
+    /// Includes the Windows display release or macOS release name when available.
+    public static String getOperatingSystemName() {
+        return Holder.OPERATING_SYSTEM.name();
+    }
 
-        // CPU
-        CentralProcessor cpu = getCentralProcessor();
-        if (cpu != null)
-            builder.append("\n - CPU: ").append(cpu);
+    /// Returns the cached system name and version, prefixed with the distribution's pretty name when available.
+    public static String getOperatingSystemDescription() {
+        return Holder.OPERATING_SYSTEM.description();
+    }
 
-        // Graphics Card
-        List<GraphicsCard> graphicsCards = getGraphicsCards();
-        if (graphicsCards != null) {
-            if (graphicsCards.isEmpty())
-                builder.append("\n - GPU: Not Found");
-            else if (graphicsCards.size() == 1)
-                builder.append("\n - GPU: ").append(graphicsCards.get(0));
-            else {
-                int index = 1;
-                for (GraphicsCard graphicsCard : graphicsCards) {
-                    builder.append("\n - GPU ").append(index++).append(": ").append(graphicsCard);
-                }
-            }
+    /// Returns whether XDG conventions are preferred for system and desktop integration.
+    /// Uses the operating system category without checking individual tools or services.
+    public static boolean isXdgPreferred() {
+        return CURRENT_OS.isUnixLike() && CURRENT_OS != OperatingSystem.MACOS;
+    }
+
+    /// Returns the cached desktop environment description, or `null` if detection is unsupported or no name is available.
+    ///
+    /// The description includes the session type when supplied by the platform detector.
+    /// The result is detected once during initialization of the cached system information and is not refreshed.
+    public static @Nullable String getDesktopEnvironment() {
+        return Holder.DESKTOP;
+    }
+
+    /// Resolves a locally reported architecture name using the current JVM byte order and system version.
+    /// Applies the kernel-version heuristic for the LoongArch ABI; not intended for foreign binaries.
+    /// Returns [Architecture#UNKNOWN] for null or unrecognized names.
+    public static Architecture detectArchitecture(@Nullable String name) {
+        return detectArchitecture(name, SYSTEM_VERSION, ByteOrder.nativeOrder());
+    }
+
+    /// Returns whether the ARM64 host supports x86-64 translation based on Windows build or Rosetta availability.
+    public static boolean isSupportedTranslationX86_64() {
+        return SUPPORTED_TRANSLATION_X86_64;
+    }
+
+    /// Returns whether a Wine environment variable is present on Windows.
+    public static boolean isRunningUnderWine() {
+        if (CURRENT_OS != OperatingSystem.WINDOWS) {
+            return false;
         }
 
-        // Memory
-        long totalMemorySize = getTotalMemorySize();
-        long usedMemorySize = getUsedMemorySize();
+        String @Unmodifiable [] wineEnvVars = {
+                "WINEPREFIX",
+                "WINELOADER",
+                "WINEDLLPATH"
+        };
 
-        builder.append("\n - Memory: ")
-                .append(DataSizeUnit.format(usedMemorySize))
-                .append(" / ")
-                .append(DataSizeUnit.format(totalMemorySize));
-
-        if (totalMemorySize > 0 && usedMemorySize > 0)
-            builder.append(" (").append((int) (((double) usedMemorySize / totalMemorySize) * 100)).append("%)");
-
-        LOG.info(builder.toString());
+        for (String var : wineEnvVars) {
+            if (System.getenv(var) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
+    /// Returns the cached device identity, or `null` if unavailable or unsupported.
+    ///
+    /// This describes the hardware product, not the user-configured hostname.
+    /// Detection runs once during initialization of the cached system information.
+    public static @Nullable DeviceInfo getDeviceInfo() {
+        return Holder.DEVICE_INFO;
+    }
+
+    /// Returns a nonempty immutable list of processor snapshots in stable order.
+    ///
+    /// Sources without package topology may provide only the first processor identity.
+    /// If detection returns no processors, a synthetic `Unknown` processor with no vendor is supplied.
+    /// For a single entry with no core counts, logical and performance counts use [Runtime#availableProcessors()].
+    /// These display estimates do not establish the hardware's physical core count or package topology.
+    public static @Unmodifiable List<CentralProcessor> getCentralProcessors() {
+        return Holder.CENTRAL_PROCESSORS;
+    }
+
+    /// Returns the cached immutable graphics card list, empty if no cards were reported or detection failed.
+    public static @Unmodifiable List<GraphicsCard> getGraphicsCards() {
+        return Holder.GRAPHICS_CARDS;
+    }
+
+    /// Returns a snapshot using the cached total and currently available physical memory.
+    ///
+    /// Returns [PhysicalMemoryStatus#INVALID] if the total is non-positive or available memory is negative.
     public static PhysicalMemoryStatus getPhysicalMemoryStatus() {
         long totalMemorySize = getTotalMemorySize();
         long freeMemorySize = getFreeMemorySize();
@@ -99,14 +190,21 @@ public final class SystemInfo {
                 : PhysicalMemoryStatus.INVALID;
     }
 
+    /// Returns the cached total physical memory size in bytes, or zero if detection is unsupported.
     public static long getTotalMemorySize() {
         return Holder.TOTAL_MEMORY;
     }
 
+    /// Queries the available physical memory in bytes, including reclaimable memory where supported.
+    ///
+    /// Returns zero if detection is unsupported.
     public static long getFreeMemorySize() {
         return Holder.DETECTOR.getFreeMemorySize();
     }
 
+    /// Returns the cached total minus the currently available physical memory, in bytes, clamped to zero.
+    ///
+    /// Returns zero without querying available memory if the cached total is non-positive.
     public static long getUsedMemorySize() {
         long totalMemorySize = getTotalMemorySize();
         if (totalMemorySize <= 0)
@@ -115,14 +213,187 @@ public final class SystemInfo {
         return Long.max(0, totalMemorySize - getFreeMemorySize());
     }
 
-    public static @Nullable CentralProcessor getCentralProcessor() {
-        return Holder.CENTRAL_PROCESSOR;
+    /// Queries current page file capacity in bytes without caching it.
+    ///
+    /// Returns zero when no page files exist, or -1 if unsupported or detection fails.
+    public static long getTotalPageFileSize() {
+        return Holder.DETECTOR.getTotalPageFileSize();
     }
 
-    public static @Nullable List<GraphicsCard> getGraphicsCards() {
-        return Holder.GRAPHICS_CARDS;
+    /// Queries configured page file sizing policy without caching; changes may require a restart.
+    public static PageFileConfiguration getPageFileConfiguration() {
+        return Holder.DETECTOR.getPageFileConfiguration();
     }
 
+    /// Selects the native charset, honoring the explicit override and otherwise normalizing ASCII and GBK-family encodings.
+    private static Charset detectNativeCharset() {
+        @Nullable String nativeEncoding = System.getProperty("native.encoding");
+        @Nullable String hmclNativeEncoding = System.getProperty("hmcl.native.encoding");
+        Charset nativeCharset = Charset.defaultCharset();
+
+        try {
+            if (hmclNativeEncoding != null) {
+                nativeCharset = Charset.forName(hmclNativeEncoding);
+            } else {
+                if (nativeEncoding != null && !nativeEncoding.equalsIgnoreCase(nativeCharset.name())) {
+                    nativeCharset = Charset.forName(nativeEncoding);
+                }
+
+                if (nativeCharset == StandardCharsets.UTF_8 || nativeCharset == StandardCharsets.US_ASCII) {
+                    nativeCharset = StandardCharsets.UTF_8;
+                } else if ("GBK".equalsIgnoreCase(nativeCharset.name()) || "GB2312".equalsIgnoreCase(nativeCharset.name())) {
+                    nativeCharset = Charset.forName("GB18030");
+                }
+            }
+        } catch (UnsupportedCharsetException e) {
+            e.printStackTrace(System.err);
+        }
+        return nativeCharset;
+    }
+
+    /// Returns the system version, refining Windows builds from the registry or command output when available.
+    private static OSVersion detectSystemVersion() {
+        if (CURRENT_OS != OperatingSystem.WINDOWS)
+            return OSVersion.of(CURRENT_OS, System.getProperty("os.version", "Unknown"));
+
+        @Nullable OSVersion.Windows windowsVersion = null;
+
+        @Nullable WinReg reg = WinReg.INSTANCE;
+
+        if (reg != null) {
+            var baseVersion = OSVersion.Windows.parse(System.getProperty("os.version", "Unknown"));
+            int majorVersion = baseVersion.major();
+            int minorVersion = baseVersion.minor();
+            int buildNumber = baseVersion.build();
+            int revision = baseVersion.revision();
+
+            @Nullable Object currentBuild = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                    "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentBuild");
+            if (currentBuild instanceof String currentBuildStr) {
+                try {
+                    buildNumber = Integer.parseInt(currentBuildStr);
+                } catch (NumberFormatException e) {
+                    System.err.println("Invalid Windows build number: " + currentBuildStr);
+                }
+            }
+
+            if (majorVersion >= 10) {
+                @Nullable Object ubr = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "UBR");
+
+                if (ubr instanceof Integer ubrValue)
+                    revision = ubrValue;
+            }
+
+            windowsVersion = new OSVersion.Windows(majorVersion, minorVersion, buildNumber, revision);
+        }
+
+        if (windowsVersion == null) {
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
+                    @Nullable String line = reader.readLine();
+                    Matcher matcher = Pattern.compile("(?<version>\\d+\\.\\d+\\.\\d+\\.\\d+?)]$")
+                            .matcher(line == null ? "" : line.trim());
+                    if (matcher.find())
+                        windowsVersion = OSVersion.Windows.parse(matcher.group("version"));
+                }
+                process.destroy();
+            } catch (Throwable ignored) {
+            }
+        }
+
+        if (windowsVersion == null)
+            windowsVersion = OSVersion.Windows.parse(System.getProperty("os.version", "Unknown"));
+
+        return windowsVersion;
+    }
+
+    /// Returns the Windows ANSI or fallback console code page, or -1 if unavailable or not on Windows.
+    private static int detectCodePage() {
+        if (CURRENT_OS != OperatingSystem.WINDOWS)
+            return -1;
+
+        @Nullable Kernel32 kernel32 = Kernel32.INSTANCE;
+        if (kernel32 != null)
+            return kernel32.GetACP();
+        return -1;
+    }
+
+    /// Resolves ambiguous architecture names using the supplied system version and byte order.
+    static Architecture detectArchitecture(
+            @Nullable String name,
+            OSVersion systemVersion,
+            ByteOrder byteOrder
+    ) {
+        Architecture architecture = Architecture.parseArchName(name);
+        if (architecture == Architecture.PPC64 && byteOrder == ByteOrder.LITTLE_ENDIAN)
+            return Architecture.PPC64LE;
+        if (architecture == Architecture.LOONGARCH64
+                && systemVersion.getOperatingSystem() == OperatingSystem.LINUX
+                && !systemVersion.isAtLeast(OSVersion.of(OperatingSystem.LINUX, "5.19")))
+            return Architecture.LOONGARCH64_OW;
+        return architecture;
+    }
+
+    /// Detects the host architecture, falling back to the current JVM architecture when unavailable.
+    private static Architecture detectSystemArchitecture() {
+        @Nullable Architecture sysArch = null;
+        if (CURRENT_OS == OperatingSystem.WINDOWS) {
+            @Nullable String processorIdentifier = System.getenv("PROCESSOR_IDENTIFIER");
+            if (processorIdentifier != null) {
+                int idx = processorIdentifier.indexOf(' ');
+                if (idx > 0) {
+                    sysArch = detectArchitecture(processorIdentifier.substring(0, idx));
+                }
+            }
+        } else if (CURRENT_OS == OperatingSystem.MACOS) {
+            if (CURRENT_ARCH == Architecture.X86_64) {
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{"/usr/sbin/sysctl", "-n", "sysctl.proc_translated"});
+                    if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0
+                            && "1".equals(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim())) {
+                        sysArch = Architecture.ARM64;
+                    }
+                } catch (Throwable e) {
+                    e.printStackTrace(System.err);
+                }
+            }
+        } else {
+            for (String uname : new String[]{
+                    "/bin/uname",
+                    "/usr/bin/uname"
+            }) {
+                if (Files.exists(Path.of(uname))) {
+                    try {
+                        Process process = Runtime.getRuntime().exec(new String[]{uname, "-m"});
+                        if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0) {
+                            sysArch = detectArchitecture(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim());
+                        }
+                    } catch (Throwable e) {
+                        e.printStackTrace(System.err);
+                    }
+                    break;
+                }
+            }
+        }
+
+        return sysArch == null || sysArch == Architecture.UNKNOWN ? CURRENT_ARCH : sysArch;
+    }
+
+    /// Detects x86-64 translation support from the host platform, Windows build, and Rosetta installation.
+    private static boolean detectTranslationX86_64Support() {
+        if (SYSTEM_PLATFORM.equals(NativePlatform.WINDOWS_ARM64)) {
+            return SYSTEM_VERSION instanceof OSVersion.Windows windowsVersion
+                    && windowsVersion.build() >= 21277;
+        } else if (SYSTEM_PLATFORM.equals(NativePlatform.MACOS_ARM64)) {
+            return Files.isRegularFile(Path.of("/usr/libexec/rosetta/runtime"));
+        } else {
+            return false;
+        }
+    }
+
+    /// Prevents instantiation of this utility class.
     private SystemInfo() {
     }
 }

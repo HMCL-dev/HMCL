@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.function.*;
@@ -36,14 +21,6 @@ public final class Lang {
 
     public static <T> T requireNonNullElse(T value, T defaultValue) {
         return value != null ? value : defaultValue;
-    }
-
-    public static <T> T requireNonNullElseGet(T value, Supplier<? extends T> defaultValue) {
-        return value != null ? value : defaultValue.get();
-    }
-
-    public static <T, U> U requireNonNullElseGet(T value, Function<? super T, ? extends U> mapper, Supplier<? extends U> defaultValue) {
-        return value != null ? mapper.apply(value) : defaultValue.get();
     }
 
     /**
@@ -72,11 +49,6 @@ public final class Lang {
         for (Pair<K, V> pair : pairs)
             map.put(pair.getKey(), pair.getValue());
         return map;
-    }
-
-    @SafeVarargs
-    public static <T> List<T> immutableListOf(T... elements) {
-        return Collections.unmodifiableList(Arrays.asList(elements));
     }
 
     public static boolean test(ExceptionalRunnable<?> r) {
@@ -134,12 +106,6 @@ public final class Lang {
         return operator.apply(a, b);
     }
 
-    public static <T> List<T> removingDuplicates(List<T> list) {
-        LinkedHashSet<T> set = new LinkedHashSet<>(list.size());
-        set.addAll(list);
-        return new ArrayList<>(set);
-    }
-
     /**
      * Join two collections into one list.
      *
@@ -155,10 +121,6 @@ public final class Lang {
         if (b != null)
             result.addAll(b);
         return result;
-    }
-
-    public static <T> List<T> copyList(List<T> list) {
-        return list == null ? null : list.isEmpty() ? null : new ArrayList<>(list);
     }
 
     public static <T> int indexWhere(List<T> list, Predicate<T> predicate) {
@@ -357,25 +319,11 @@ public final class Lang {
         };
     }
 
-    @SafeVarargs
-    public static <T> Consumer<T> compose(Consumer<T>... consumers) {
-        return t -> {
-            for (Consumer<T> consumer : consumers) {
-                consumer.accept(t);
-            }
-        };
-    }
-
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public static <T> Stream<T> toStream(Optional<T> optional) {
-        return optional.map(Stream::of).orElseGet(Stream::empty);
-    }
-
     public static <T> Iterable<T> toIterable(Enumeration<T> enumeration) {
         if (enumeration == null) {
             throw new NullPointerException();
         }
-        return () -> new Iterator<T>() {
+        return () -> new Iterator<>() {
             public boolean hasNext() {
                 return enumeration.hasMoreElements();
             }
@@ -398,11 +346,14 @@ public final class Lang {
         return () -> iterator;
     }
 
-    public static <T, U> void forEachZipped(Iterable<T> i1, Iterable<U> i2, BiConsumer<T, U> action) {
-        Iterator<T> it1 = i1.iterator();
-        Iterator<U> it2 = i2.iterator();
-        while (it1.hasNext() && it2.hasNext())
-            action.accept(it1.next(), it2.next());
+    public static <T> List<T> copyWithSize(List<T> list, int newSize, T defaultValue) {
+        if (list.size() == newSize) return new ArrayList<>(list);
+        if (list.size() > newSize) return new ArrayList<>(list.subList(0, newSize));
+        List<T> result = new ArrayList<>(newSize);
+        result.addAll(list);
+        for (int i = list.size(); i < newSize; i++)
+            result.add(defaultValue);
+        return result;
     }
 
     public static Throwable resolveException(Throwable e) {
@@ -411,16 +362,6 @@ public final class Lang {
         else
             return e;
     }
-
-    /**
-     * This is a useful function to prevent exceptions being eaten when using CompletableFuture.
-     * You can write:
-     * ... .exceptionally(handleUncaught);
-     */
-    public static final Function<Throwable, Void> handleUncaught = e -> {
-        handleUncaughtException(e);
-        return null;
-    };
 
     public static <R> R handleUncaughtException(Throwable e) {
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);

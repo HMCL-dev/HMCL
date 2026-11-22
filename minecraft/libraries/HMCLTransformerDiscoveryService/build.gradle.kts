@@ -1,7 +1,7 @@
 version = "1.0"
 
 dependencies {
-    compileOnly(project.files("lib/modlauncher-4.1.0.jar"))
+    compileOnly(files("lib/modlauncher-4.1.0.jar"))
 }
 
 tasks.compileJava {
@@ -12,7 +12,7 @@ tasks.compileJava {
 tasks.jar {
     manifest {
         attributes(
-            "Created-By" to "Copyright(c) 2013-2020 huangyuhui.",
+            "Created-By" to "Copyright(c) 2013-2020 The HMCL Authors",
             "Implementation-Version" to project.version
         )
     }

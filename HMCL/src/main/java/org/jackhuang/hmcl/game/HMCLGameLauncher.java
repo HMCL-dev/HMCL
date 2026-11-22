@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.Metadata;
@@ -35,7 +20,6 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -43,16 +27,27 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class HMCLGameLauncher extends DefaultLauncher {
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
-        this(repository, version, authInfo, options, null);
+    /// Creates a launcher with daemon process monitors.
+    ///
+    /// @param instance the instance being launched
+    /// @param manifest the effective launch-time manifest
+    /// @param authInfo authentication information for the game process
+    /// @param options  launch options
+    /// @param listener process listener, or `null` to inherit IO
+    public HMCLGameLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
+        this(instance, manifest, authInfo, options, listener, true);
     }
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, version, authInfo, options, listener, true);
-    }
-
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
-        super(repository, version, authInfo, options, listener, daemon);
+    /// Creates a launcher for the given instance and launch plan.
+    ///
+    /// @param instance the instance being launched
+    /// @param manifest the effective launch-time manifest
+    /// @param authInfo authentication information for the game process
+    /// @param options  launch options
+    /// @param listener process listener, or `null` to inherit IO
+    /// @param daemon   whether monitors should be daemon threads
+    public HMCLGameLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+        super(instance, manifest, authInfo, options, listener, daemon);
     }
 
     @Override
@@ -64,10 +59,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     private void generateOptionsTxt() {
-        if (config().isDisableAutoGameOptions())
+        if (options.isDisableAutoGameOptions())
             return;
 
-        Path runDir = repository.getRunDirectory(version.getId());
+        Path runDir = instance.getRunDirectory();
         Path optionsFile = runDir.resolve("options.txt");
         Path configFolder = runDir.resolve("config");
 
@@ -92,8 +87,14 @@ public final class HMCLGameLauncher extends DefaultLauncher {
          *  1.11 ~ 1.12 : zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
          *  1.13+       : zh_cn works fine, zh_CN will automatically switch to English
          */
-        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
-        if (gameVersion.compareTo("1.1") < 0)
+        GameVersionNumber gameVersion = instance.getVersion();
+        if (gameVersion == GameVersionNumber.unknown() || gameVersion.compareTo("1.1") < 0)
+            return;
+
+        // These snapshots lack the external language resources needed for non-English locales.
+        // Selecting an unavailable language causes a NullPointerException during startup.
+        if (gameVersion instanceof GameVersionNumber.LegacySnapshot
+                && gameVersion.compareTo("13w16a") >= 0 && gameVersion.compareTo("13w23b") <= 0)
             return;
 
         String lang = normalizedLanguageTag(locale, gameVersion);
@@ -159,10 +160,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     protected void appendJvmArgs(CommandBuilder result) {
         super.appendJvmArgs(result);
 
-        if (config().getAllowAutoAgent()
+        if (options.isAllowAutoAgent()
                 && !options.isNoGeneratedJVMArgs()
                 && !options.isNoGeneratedOptimizingJVMArgs()
-                && NativePatcher.needPatchMemoryUtil(version, options.getJava().getParsedVersion())) {
+                && NativePatcher.needPatchMemoryUtil(manifest, options.getJava().getParsedVersion())) {
             LOG.info("Attempting to patch game with lwjgl-unsafe-agent");
             try {
                 result.add("-javaagent:" + extractLwjglUnsafeAgent());
@@ -179,9 +180,9 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         }
 
         Library library = new Library(new Artifact("org.glavo", "lwjgl-unsafe-agent", agentVersion));
-        String fileName = library.getArtifact().getFileName();
+        String fileName = library.artifact().getFileName();
 
-        Path agentPath = repository.getLibraryFile(version, library).toAbsolutePath().normalize();
+        Path agentPath = instance.getLayout().getLibraryFile(instance.getId(), library).toAbsolutePath().normalize();
         if (agentPath.toString().contains("=")) {
             throw new IOException("Invalid library path: " + agentPath);
         }

@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.gradle.ci;
 
 import com.google.gson.Gson;
@@ -79,8 +64,8 @@ public abstract class CheckUpdate extends DefaultTask {
 
     @TaskAction
     public void run() throws Exception {
-        String uri = getUri().get();
-        URI apiUri = URI.create(concatUri(uri, "api", "json"));
+        String url = getUri().get();
+        URI apiUri = URI.create(concatUri(url, "api", "json"));
         LOGGER.quiet("Fetching metadata from {}", apiUri);
 
         BuildMetadata buildMetadata;
@@ -113,7 +98,7 @@ public abstract class CheckUpdate extends DefaultTask {
 
                 buildMetadata = metadatas.get(metadatas.size() - 1);
             } else if (WORKFLOW_JOB.equals(jobType) || FREE_STYLE_PROJECT.equals(jobType)) {
-                buildMetadata = fetchBuildInfo(helper, uri);
+                buildMetadata = fetchBuildInfo(helper, url);
             } else {
                 throw new GradleException("Unsupported job type: " + jobType);
             }

@@ -1,35 +1,19 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.auth.yggdrasil;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.Pair.pair;
 
 @Immutable
 public class YggdrasilSession {
@@ -38,6 +22,7 @@ public class YggdrasilSession {
     private final String accessToken;
     private final GameProfile selectedProfile;
     private final List<GameProfile> availableProfiles;
+
     @Nullable
     private final Map<String, String> userProperties;
 
@@ -77,28 +62,44 @@ public class YggdrasilSession {
         return userProperties;
     }
 
-    public static YggdrasilSession fromStorage(Map<?, ?> storage) {
-        Objects.requireNonNull(storage);
-
-        UUID uuid = tryCast(storage.get("uuid"), String.class).map(UUIDTypeAdapter::fromString).orElseThrow(() -> new IllegalArgumentException("uuid is missing"));
-        String name = tryCast(storage.get("displayName"), String.class).orElseThrow(() -> new IllegalArgumentException("displayName is missing"));
-        String clientToken = tryCast(storage.get("clientToken"), String.class).orElseThrow(() -> new IllegalArgumentException("clientToken is missing"));
-        String accessToken = tryCast(storage.get("accessToken"), String.class).orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
-        @SuppressWarnings("unchecked")
-        Map<String, String> userProperties = tryCast(storage.get("userProperties"), Map.class).orElse(null);
-        return new YggdrasilSession(clientToken, accessToken, new GameProfile(uuid, name), null, userProperties);
+    public boolean hasProfileName() {
+        return selectedProfile != null && StringUtils.isNotBlank(selectedProfile.getName());
     }
 
-    public Map<Object, Object> toStorage() {
+    public static YggdrasilSession fromStorage(JsonObject metadata, JsonObject privateData) {
+        Objects.requireNonNull(metadata);
+        Objects.requireNonNull(privateData);
+
+        String profileIDText = JsonUtils.getString(metadata, "profileID");
+        if (profileIDText == null) {
+            throw new IllegalArgumentException("profileID is missing");
+        }
+        UUID profileID = UUIDs.parse(profileIDText);
+        String profileName = JsonUtils.getString(privateData, "profileName", "");
+        String clientToken = requireStorageString(privateData, "clientToken");
+        String accessToken = requireStorageString(privateData, "accessToken");
+        @Nullable Map<String, String> userProperties = privateData.get("userProperties") instanceof JsonObject userPropertiesObject
+                ? GSON_PROPERTIES.fromJson(userPropertiesObject, JsonUtils.mapTypeOf(String.class, String.class))
+                : null;
+        return new YggdrasilSession(clientToken, accessToken, new GameProfile(profileID, profileName), null, userProperties);
+    }
+
+    public void writePrivateData(JsonObject privateData) {
         if (selectedProfile == null)
             throw new IllegalStateException("No character is selected");
 
-        return mapOf(
-                pair("clientToken", clientToken),
-                pair("accessToken", accessToken),
-                pair("uuid", UUIDTypeAdapter.fromUUID(selectedProfile.getId())),
-                pair("displayName", selectedProfile.getName()),
-                pair("userProperties", userProperties));
+        privateData.addProperty("clientToken", clientToken);
+        privateData.addProperty("accessToken", accessToken);
+        privateData.addProperty("profileName", selectedProfile.getName());
+        privateData.add("userProperties", GSON_PROPERTIES.toJsonTree(userProperties));
+    }
+
+    private static String requireStorageString(JsonObject storage, String name) {
+        String value = JsonUtils.getString(storage, name);
+        if (value == null) {
+            throw new IllegalArgumentException(name + " is missing");
+        }
+        return value;
     }
 
     public AuthInfo toAuthInfo() {

@@ -1,0 +1,82 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
+package org.jackhuang.hmcl.modpack;
+
+import kala.compress.archivers.zip.ZipArchiveEntry;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>> {
+
+    private final Path zipFile;
+    private final List<String> subDirectories;
+    private final Path jsonFile;
+    private final T manifest;
+    private final String type;
+    private final String name;
+    private final String version;
+
+    public MinecraftInstanceTask(Path zipFile, List<String> subDirectories, T manifest, ModpackProvider modpackProvider, String name, String version, Path jsonFile) {
+        this.zipFile = zipFile;
+        this.subDirectories = subDirectories.stream().map(FileUtils::normalizePath).toList();
+        this.manifest = manifest;
+        this.jsonFile = jsonFile;
+        this.type = modpackProvider.getName();
+        this.name = name;
+        this.version = version;
+    }
+
+    private static void getOverrides(List<ModpackConfiguration.FileInformation> overrides,
+                                     ZipFileTree tree,
+                                     ArchiveFileTree.Dir<ZipArchiveEntry> dir,
+                                     List<String> names) throws IOException {
+        String prefix = String.join("/", names);
+        if (!prefix.isEmpty())
+            prefix = prefix + "/";
+
+        for (Map.Entry<String, ZipArchiveEntry> entry : dir.getFiles().entrySet()) {
+            String hash;
+            try (InputStream input = tree.getInputStream(entry.getValue())) {
+                hash = DigestUtils.digestToString("SHA-1", input);
+            }
+            overrides.add(new ModpackConfiguration.FileInformation(prefix + entry.getKey(), hash));
+        }
+
+        for (ArchiveFileTree.Dir<ZipArchiveEntry> subDir : dir.getSubDirs().values()) {
+            names.add(subDir.getName());
+            getOverrides(overrides, tree, subDir, names);
+            names.remove(names.size() - 1);
+        }
+    }
+
+    @Override
+    public void execute() throws Exception {
+        List<ModpackConfiguration.FileInformation> overrides = new ArrayList<>();
+
+        try (var tree = new ZipFileTree(CompressingUtils.openZipFile(zipFile))) {
+            for (String subDirectory : subDirectories) {
+                ArchiveFileTree.Dir<ZipArchiveEntry> root = tree.getDirectory(subDirectory);
+                if (root == null)
+                    continue;
+                var names = new ArrayList<String>();
+                getOverrides(overrides, tree, root, names);
+            }
+        }
+        ModpackConfiguration<T> configuration = new ModpackConfiguration<>(manifest, type, name, version, overrides);
+        Files.createDirectories(jsonFile.getParent());
+        JsonUtils.writeToJsonFile(jsonFile, configuration);
+        setResult(configuration);
+    }
+}

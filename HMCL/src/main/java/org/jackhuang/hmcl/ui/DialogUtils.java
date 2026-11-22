@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXDialog;
@@ -31,7 +16,9 @@ import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedList;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.function.Consumer;
 
 public final class DialogUtils {
@@ -45,17 +32,33 @@ public final class DialogUtils {
     public static final String PROPERTY_PARENT_PANE_REF = DialogUtils.class.getName() + ".dialog.parentPaneRef";
     public static final String PROPERTY_PARENT_DIALOG_REF = DialogUtils.class.getName() + ".dialog.parentDialogRef";
 
+    public static final String PROPERTY_DIALOG_SHOW_LATER = DialogUtils.class.getName() + ".dialog.showLater";
+
+    /// Shows content in the main-window dialog stack owned by `decorator`.
+    ///
+    /// @param decorator the main-window decorator
+    /// @param content   the dialog content
     public static void show(Decorator decorator, Node content) {
-        if (decorator.getDrawerWrapper() == null) {
-            Platform.runLater(() -> show(decorator, content));
+        StackPane dialogContainer = decorator.getDialogContainer();
+        if (decorator.getRoot().getScene() == null) {
+            Platform.runLater(() -> showInDecorator(decorator, dialogContainer, content));
             return;
         }
 
-        show(decorator.getDrawerWrapper(), content, (dialog) -> {
+        showInDecorator(decorator, dialogContainer, content);
+    }
+
+    /// Shows content in a decorator's resolved dialog container.
+    ///
+    /// @param decorator     the main-window decorator
+    /// @param dialogContainer the container resolved before any deferred execution
+    /// @param content       the dialog content
+    private static void showInDecorator(Decorator decorator, StackPane dialogContainer, Node content) {
+        show(dialogContainer, content, dialog -> {
             JFXDialogPane pane = (JFXDialogPane) dialog.getContent();
-            decorator.capableDraggingWindow(dialog);
+            decorator.capableDraggingOverlay(dialog);
             decorator.forbidDraggingWindow(pane);
-            dialog.setDialogContainer(decorator.getDrawerWrapper());
+            dialog.setDialogContainer(dialogContainer);
         });
     }
 
@@ -63,17 +66,33 @@ public final class DialogUtils {
         show(container, content, null);
     }
 
+    /// Adds content to the container's dialog stack on the JavaFX application thread.
+    ///
+    /// Content already in a dialog stack is left unchanged. Content still attached
+    /// to a closing dialog is detached before being shown again.
+    ///
+    /// @param container the container that hosts the dialog
+    /// @param content the content to display
+    /// @param onDialogCreated an optional callback that configures a newly created dialog
     public static void show(StackPane container, Node content, @Nullable Consumer<JFXDialog> onDialogCreated) {
         FXUtils.checkFxUserThread();
+        if (isShowing(content))
+            return;
 
-        JFXDialog dialog = (JFXDialog) container.getProperties().get(PROPERTY_DIALOG_INSTANCE);
-        JFXDialogPane dialogPane = (JFXDialogPane) container.getProperties().get(PROPERTY_DIALOG_PANE_INSTANCE);
+        // A closing dialog may retain its content until its exit animation finishes.
+        if (content.getParent() instanceof JFXDialogPane previousPane)
+            previousPane.pop(content);
+
+        @Nullable JFXDialog dialog = (JFXDialog) container.getProperties().get(PROPERTY_DIALOG_INSTANCE);
+        @Nullable JFXDialogPane dialogPane = (JFXDialogPane) container.getProperties().get(PROPERTY_DIALOG_PANE_INSTANCE);
 
         if (dialog == null) {
             dialog = new JFXDialog(AnimationUtils.isAnimationEnabled()
                     ? JFXDialog.DialogTransition.CENTER
                     : JFXDialog.DialogTransition.NONE);
             dialogPane = new JFXDialogPane();
+            dialogPane.maxWidthProperty().bind(container.widthProperty().multiply(0.7));
+            dialogPane.maxHeightProperty().bind(container.heightProperty().multiply(0.7));
 
             dialog.setContent(dialogPane);
             dialog.setDialogContainer(container);
@@ -121,27 +140,84 @@ public final class DialogUtils {
         }
     }
 
+    /// Queues content in the main-window dialog stack owned by `decorator`.
+    ///
+    /// @param decorator the main-window decorator
+    /// @param content   the dialog content
+    public static void showLater(Decorator decorator, Node content) {
+        StackPane dialogContainer = decorator.getDialogContainer();
+        Runnable showDialogAction = () -> showInDecorator(decorator, dialogContainer, content);
+        if (decorator.getRoot().getScene() == null) {
+            Platform.runLater(() -> showLater(dialogContainer, showDialogAction));
+            return;
+        }
+        showLater(dialogContainer, showDialogAction);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void showLater(StackPane container, Runnable showDialogAction) {
+        if (showDialogAction == null) return;
+        FXUtils.checkFxUserThread();
+
+        if (container.getProperties().get(PROPERTY_DIALOG_INSTANCE) == null) {
+            showDialogAction.run();
+            return;
+        }
+        Queue<Runnable> queue = (Queue<Runnable>) container.getProperties().get(PROPERTY_DIALOG_SHOW_LATER);
+        if (queue == null) {
+            queue = new LinkedList<>();
+            container.getProperties().put(PROPERTY_DIALOG_SHOW_LATER, queue);
+        }
+        queue.add(showDialogAction);
+    }
+
+    /// Returns whether content belongs to a dialog that has not been closed.
+    ///
+    /// Content covered by another dialog is still considered shown.
+    public static boolean isShowing(Node content) {
+        FXUtils.checkFxUserThread();
+        return content.getProperties().containsKey(PROPERTY_PARENT_DIALOG_REF);
+    }
+
+    /// Removes content from its dialog stack, closing the dialog if the stack becomes empty.
+    ///
+    /// Must be called on the JavaFX application thread. Closing already detached content
+    /// has no effect. Content may remain attached until the closing animation finishes. Its dialog
+    /// references are removed immediately so that it can be safely shown again.
     @SuppressWarnings("unchecked")
     public static void close(Node content) {
         FXUtils.checkFxUserThread();
 
-        Optional.ofNullable(content.getProperties().get(PROPERTY_DIALOG_CLOSE_HANDLER))
+        Optional.ofNullable(content.getProperties().remove(PROPERTY_DIALOG_CLOSE_HANDLER))
                 .ifPresent(handler -> content.removeEventHandler(DialogCloseEvent.CLOSE, (EventHandler<DialogCloseEvent>) handler));
 
-        JFXDialogPane pane = (JFXDialogPane) content.getProperties().get(PROPERTY_PARENT_PANE_REF);
-        JFXDialog dialog = (JFXDialog) content.getProperties().get(PROPERTY_PARENT_DIALOG_REF);
+        @Nullable JFXDialogPane pane = (JFXDialogPane) content.getProperties().remove(PROPERTY_PARENT_PANE_REF);
+        @Nullable JFXDialog dialog = (JFXDialog) content.getProperties().remove(PROPERTY_PARENT_DIALOG_REF);
+
+        @Nullable Runnable showNextDialogAction = null;
 
         if (dialog != null && pane != null) {
             if (pane.size() == 1 && pane.peek().orElse(null) == content) {
                 dialog.setOnDialogClosed(e -> pane.pop(content));
                 dialog.close();
 
-                StackPane container = dialog.getDialogContainer();
+                @Nullable StackPane container = dialog.getDialogContainer();
                 if (container != null) {
                     container.getProperties().remove(PROPERTY_DIALOG_INSTANCE);
                     container.getProperties().remove(PROPERTY_DIALOG_PANE_INSTANCE);
                     container.getProperties().remove(PROPERTY_PARENT_DIALOG_REF);
                     container.getProperties().remove(PROPERTY_PARENT_PANE_REF);
+
+                    @Nullable Queue<Runnable> queue = (Queue<Runnable>) container.getProperties().get(PROPERTY_DIALOG_SHOW_LATER);
+                    if (queue != null) {
+                        if (!queue.isEmpty()) {
+                            @Nullable Runnable next = queue.remove();
+                            if (next != null) showNextDialogAction = next;
+                        }
+                        if (queue.isEmpty()) {
+                            container.getProperties().remove(PROPERTY_DIALOG_SHOW_LATER);
+                        }
+                    }
                 }
             } else {
                 pane.pop(content);
@@ -151,5 +227,7 @@ public final class DialogUtils {
                 dialogAware.onDialogClosed();
             }
         }
+
+        if (showNextDialogAction != null) showNextDialogAction.run();
     }
 }

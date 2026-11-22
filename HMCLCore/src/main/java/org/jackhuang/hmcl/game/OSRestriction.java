@@ -1,25 +1,11 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.util.regex.Pattern;
 
@@ -65,11 +51,13 @@ public final class OSRestriction {
                 Architecture arch = Architecture.parseArchName(parts[1]);
 
                 if (os != OperatingSystem.UNKNOWN && arch != Architecture.UNKNOWN) {
-                    if (os != OperatingSystem.CURRENT_OS && !(os == OperatingSystem.LINUX && OperatingSystem.CURRENT_OS.isLinuxOrBSD())) {
+                    if (os != SystemInfo.CURRENT_OS
+                            && !(os == OperatingSystem.LINUX && SystemInfo.CURRENT_OS.isUnixLike()
+                            && SystemInfo.CURRENT_OS != OperatingSystem.MACOS)) {
                         return false;
                     }
 
-                    if (arch != Architecture.SYSTEM_ARCH) {
+                    if (arch != SystemInfo.SYSTEM_ARCH) {
                         return false;
                     }
 
@@ -80,16 +68,17 @@ public final class OSRestriction {
 
         OperatingSystem os = OperatingSystem.parseOSName(name);
         if (os != OperatingSystem.UNKNOWN
-                && os != OperatingSystem.CURRENT_OS
-                && !(os == OperatingSystem.LINUX && OperatingSystem.CURRENT_OS.isLinuxOrBSD()))
+                && os != SystemInfo.CURRENT_OS
+                && !(os == OperatingSystem.LINUX && SystemInfo.CURRENT_OS.isUnixLike()
+                && SystemInfo.CURRENT_OS != OperatingSystem.MACOS))
             return false;
 
         if (version != null)
-            if (Lang.test(() -> !Pattern.compile(version).matcher(OperatingSystem.SYSTEM_VERSION.getVersion()).matches()))
+            if (Lang.test(() -> !Pattern.compile(version).matcher(SystemInfo.SYSTEM_VERSION.getVersion()).matches()))
                 return false;
 
         if (arch != null)
-            return !Lang.test(() -> !Pattern.compile(arch).matcher(Architecture.SYSTEM_ARCH.getCheckedName()).matches());
+            return !Lang.test(() -> !Pattern.compile(arch).matcher(SystemInfo.SYSTEM_ARCH.getCheckedName()).matches());
 
         return true;
     }

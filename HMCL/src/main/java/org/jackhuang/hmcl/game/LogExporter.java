@@ -1,31 +1,20 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,22 +31,24 @@ public final class LogExporter {
     }
 
     public static CompletableFuture<Void> exportLogs(
-            Path zipFile, DefaultGameRepository gameRepository, String versionId, String logs, String launchScript,
+            Path zipFile, DefaultGameInstance instance, LaunchOptions options, String logs, String launchScript,
             PathMatcher logMatcher) {
-        Path runDirectory = gameRepository.getRunDirectory(versionId);
-        Path baseDirectory = gameRepository.getBaseDirectory();
-        List<String> versions = new ArrayList<>();
+        DefaultGameRepositorySnapshot repositorySnapshot = instance.getSnapshot();
+        Path runDirectory = instance.getRunDirectory();
+        List<GameInstanceID> instances = new ArrayList<>();
 
-        String currentVersionId = versionId;
-        HashSet<String> resolvedSoFar = new HashSet<>();
+        GameInstanceID currentInstanceId = instance.id;
+        HashSet<GameInstanceID> resolvedSoFar = new HashSet<>();
         while (true) {
-            if (resolvedSoFar.contains(currentVersionId)) break;
-            resolvedSoFar.add(currentVersionId);
-            Version currentVersion = gameRepository.getVersion(currentVersionId);
-            versions.add(currentVersionId);
+            if (resolvedSoFar.contains(currentInstanceId)) break;
+            resolvedSoFar.add(currentInstanceId);
+            @Nullable DefaultGameInstance currentInstance = repositorySnapshot.get(currentInstanceId);
+            if (currentInstance == null)
+                break;
+            instances.add(currentInstanceId);
 
-            if (StringUtils.isNotBlank(currentVersion.getInheritsFrom())) {
-                currentVersionId = currentVersion.getInheritsFrom();
+            if (currentInstance.getManifest().inheritsFrom() != null) {
+                currentInstanceId = currentInstance.getManifest().inheritsFrom();
             } else {
                 break;
             }
@@ -72,12 +63,14 @@ public final class LogExporter {
 
                 zipper.putTextFile(LOG.getLogs(), "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
-                zipper.putTextFile(Logger.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
+                zipper.putTextFile(Logger.filterForbiddenToken(launchScript), SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
 
-                for (String id : versions) {
-                    Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");
-                    if (Files.exists(versionJson)) {
-                        zipper.putFile(versionJson, id + ".json");
+                for (GameInstanceID id : instances) {
+                    @Nullable DefaultGameInstance currentInstance = repositorySnapshot.get(id);
+                    if (currentInstance != null) {
+                        try (var writer = new OutputStreamWriter(zipper.putStream(id + ".json"), StandardCharsets.UTF_8)) {
+                            JsonUtils.GSON.toJson(currentInstance.getManifest(), writer);
+                        }
                     }
                 }
             } catch (IOException e) {

@@ -1,31 +1,22 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.auth.microsoft;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import org.glavo.url.WebURL;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.*;
@@ -34,7 +25,6 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -72,7 +62,7 @@ public class MicrosoftService {
     public MicrosoftSession authenticate(OAuth.GrantFlow flow) throws AuthenticationException {
         try {
             OAuth.Result result = OAuth.MICROSOFT.authenticate(flow, new OAuth.Options(SCOPE, callback));
-            return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
+            return authenticateViaLiveAccessToken(result.accessToken(), result.refreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
@@ -82,8 +72,8 @@ public class MicrosoftService {
 
     public MicrosoftSession refresh(MicrosoftSession oldSession) throws AuthenticationException {
         try {
-            OAuth.Result result = OAuth.MICROSOFT.refresh(oldSession.getRefreshToken(), new OAuth.Options(SCOPE, callback));
-            return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
+            OAuth.Result result = OAuth.MICROSOFT.refresh(oldSession.refreshToken(), new OAuth.Options(SCOPE, callback));
+            return authenticateViaLiveAccessToken(result.accessToken(), result.refreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
@@ -245,7 +235,16 @@ public class MicrosoftService {
                 .createConnection();
         int responseCode = conn.getResponseCode();
         if (responseCode == HTTP_NOT_FOUND) {
-            throw new NoMinecraftJavaEditionProfileException();
+            MinecraftLicense license = HttpRequest.GET("https://api.minecraftservices.com/entitlements/license")
+                    .authorization(tokenType, accessToken)
+                    .getJson(MinecraftLicense.class);
+            boolean hasMinecraftLicense = license != null && license.items() != null && license.items().stream()
+                    .anyMatch(item -> "game_minecraft".equals(item.name()));
+            if (!hasMinecraftLicense) {
+                throw new MinecraftJavaEditionLicenseNotFoundException();
+            } else {
+                throw new MinecraftJavaEditionProfileNotFoundException();
+            }
         } else if (responseCode != 200) {
             throw new ResponseCodeException("https://api.minecraftservices.com/minecraft/profile", responseCode);
         }
@@ -257,7 +256,7 @@ public class MicrosoftService {
     public Optional<CompleteGameProfile> getCompleteGameProfile(UUID uuid) throws AuthenticationException {
         Objects.requireNonNull(uuid);
 
-        return Optional.ofNullable(GSON.fromJson(request("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid), null), CompleteGameProfile.class));
+        return Optional.ofNullable(GSON.fromJson(request("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDs.toCompactString(uuid), null), CompleteGameProfile.class));
     }
 
     public void uploadSkin(String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
@@ -276,13 +275,13 @@ public class MicrosoftService {
             String response = NetworkUtils.readFullyAsString(con);
             if (StringUtils.isBlank(response)) {
                 if (con.getResponseCode() / 100 != 2)
-                    throw new ResponseCodeException(con.getURL().toURI(), con.getResponseCode());
+                    throw new ResponseCodeException(WebURL.of(con.getURL()), con.getResponseCode());
             } else {
                 MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
                 if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
                     throw new AuthenticationException("Failed to upload skin, response code: " + con.getResponseCode() + ", response: " + response);
             }
-        } catch (IOException | JsonParseException | URISyntaxException e) {
+        } catch (IOException | JsonParseException e) {
             throw new AuthenticationException(e);
         }
     }
@@ -292,7 +291,7 @@ public class MicrosoftService {
             if (payload == null)
                 return NetworkUtils.doGet(url);
             else
-                return NetworkUtils.doPost(NetworkUtils.toURI(url), payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+                return NetworkUtils.doPost(WebURL.parse(url), payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         }
@@ -324,7 +323,10 @@ public class MicrosoftService {
     public final static class XBox400Exception extends AuthenticationException {
     }
 
-    public final static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
+    public final static class MinecraftJavaEditionProfileNotFoundException extends AuthenticationException {
+    }
+
+    public final static class MinecraftJavaEditionLicenseNotFoundException extends AuthenticationException {
     }
 
     public final static class NoXuiException extends AuthenticationException {
@@ -425,8 +427,24 @@ public class MicrosoftService {
 
     }
 
+    @JsonSerializable
+    public record MinecraftLicense(
+            @SerializedName("items") List<MinecraftLicenseItem> items,
+            @SerializedName("signature") String signature,
+            @SerializedName("keyId") String keyId
+    ) {
+    }
+
+    @JsonSerializable
+    public record MinecraftLicenseItem(
+            @SerializedName("name") String name,
+            @SerializedName("signature") String signature
+    ) {
+    }
+
     public static class MinecraftProfileResponse extends MinecraftErrorResponse implements Validation {
         @SerializedName("id")
+        @JsonAdapter(UnhyphenatedUUIDTypeAdapter.class)
         UUID id;
         @SerializedName("name")
         String name;
@@ -453,7 +471,6 @@ public class MicrosoftService {
     }
 
     private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
             .create();
 

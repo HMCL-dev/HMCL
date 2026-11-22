@@ -1,0 +1,135 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
+package org.jackhuang.hmcl.setting;
+
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.ObservableSetting;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+
+/// Stores launcher state shared by all workspaces for the current user.
+@NotNullByDefault
+@JsonAdapter(UserState.Adapter.class)
+@JsonSerializable
+public final class UserState extends ObservableSetting implements JsonSchemaSetting {
+    /// The JSON schema supported by this user state store.
+    public static final JsonSchema CURRENT_SCHEMA =
+            new JsonSchema("user-state", new JsonSchema.Version(1, 0, 0));
+
+    /// Deserializes user state from JSON.
+    ///
+    /// @param json the JSON content to parse
+    /// @return the parsed state, or {@code null} when the JSON value is {@code null}
+    public static @Nullable UserState fromJson(String json) throws JsonParseException {
+        return JsonUtils.fromJson(JsonUtils.GSON, json, UserState.class);
+    }
+
+    /// Creates empty user state with default values.
+    public UserState() {
+        tracker.markDirty(schema);
+        register();
+    }
+
+    /// Serializes this state to JSON.
+    public String toJson() {
+        return JsonUtils.GSON.toJson(this);
+    }
+
+    /// The schema used by this user state file.
+    @SerializedName(JsonSchema.PROPERTY_SCHEMA)
+    private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
+
+    /// Returns the schema property.
+    public ObjectProperty<JsonSchema> schemaProperty() {
+        return schema;
+    }
+
+    /// Returns the schema used by this user state file.
+    @Override
+    public JsonSchema getSchema() {
+        return schema.get();
+    }
+
+    /// Sets the schema used by this user state file.
+    @Override
+    public void setSchema(JsonSchema schema) {
+        this.schema.set(Objects.requireNonNull(schema));
+    }
+
+    /// Whether this user state store may be saved back to `state/user-state.json`.
+    private transient boolean savable = true;
+
+    /// Whether the next successful save should back up the current `state/user-state.json` first.
+    private transient boolean backupOnNextSave;
+
+    /// Returns whether this user state store may be saved back to `state/user-state.json`.
+    @Override
+    public boolean isSavable() {
+        return savable;
+    }
+
+    /// Sets whether this user state store may be saved back to `state/user-state.json`.
+    @Override
+    public void setSavable(boolean savable) {
+        this.savable = savable;
+    }
+
+    /// Returns whether the next successful save should back up the current `state/user-state.json` first.
+    @Override
+    public boolean isBackupOnNextSave() {
+        return backupOnNextSave;
+    }
+
+    /// Sets whether the next successful save should back up the current `state/user-state.json` first.
+    @Override
+    public void setBackupOnNextSave(boolean backupOnNextSave) {
+        this.backupOnNextSave = backupOnNextSave;
+    }
+
+    /// The accepted launcher agreement version.
+    @SerializedName("agreementVersion")
+    private final IntegerProperty agreementVersion = new SimpleIntegerProperty();
+
+    /// Returns the accepted launcher agreement version property.
+    public IntegerProperty agreementVersionProperty() {
+        return agreementVersion;
+    }
+
+    /// The accepted Terracotta agreement version.
+    @SerializedName("terracottaAgreementVersion")
+    private final IntegerProperty terracottaAgreementVersion = new SimpleIntegerProperty();
+
+    /// Returns the accepted Terracotta agreement version property.
+    public IntegerProperty terracottaAgreementVersionProperty() {
+        return terracottaAgreementVersion;
+    }
+
+    /// The platform prompt version shown to the user.
+    @SerializedName("platformPromptVersion")
+    private final IntegerProperty platformPromptVersion = new SimpleIntegerProperty();
+
+    /// Returns the platform prompt version property.
+    public IntegerProperty platformPromptVersionProperty() {
+        return platformPromptVersion;
+    }
+
+    /// Gson adapter for observable user state.
+    static final class Adapter extends ObservableSetting.Adapter<UserState> {
+        /// Creates an empty user state instance during deserialization.
+        @Override
+        protected UserState createInstance() {
+            return new UserState();
+        }
+    }
+}

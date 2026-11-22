@@ -1,30 +1,20 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.io;
 
+import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -44,13 +34,27 @@ public final class NetworkUtils {
 
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
-    public static final int TIME_OUT = 8000;
+
+    public static final Duration TIMEOUT = Duration.ofSeconds(10);
+    public static final int TIMEOUT_MILLIS = (int) TIMEOUT.toMillis();
 
     private NetworkUtils() {
     }
 
+    /// Resolves the URL host and returns whether it is a loopback address.
+    /// Returns `false` when the host is absent or cannot be resolved.
+    public static boolean isLoopbackAddress(WebURL url) {
+        return isLoopbackHost(url.getHost());
+    }
+
+    /// Resolves the host of a JDK URI, including addresses supplied by a proxy selector.
+    /// Returns `false` when the host is absent or cannot be resolved.
     public static boolean isLoopbackAddress(URI uri) {
-        String host = uri.getHost();
+        return isLoopbackHost(uri.getHost());
+    }
+
+    /// Returns whether the host resolves to a loopback address.
+    private static boolean isLoopbackHost(@Nullable String host) {
         if (StringUtils.isBlank(host))
             return false;
 
@@ -62,8 +66,9 @@ public final class NetworkUtils {
         }
     }
 
-    public static boolean isHttpUri(URI uri) {
-        return "http".equals(uri.getScheme()) || "https".equals(uri.getScheme());
+    /// Returns whether the URL uses HTTP or HTTPS.
+    public static boolean isHttpUri(WebURL url) {
+        return "http".equals(url.getScheme()) || "https".equals(url.getScheme());
     }
 
     public static String addHttpsIfMissing(String url) {
@@ -97,7 +102,7 @@ public final class NetworkUtils {
         return sb.toString();
     }
 
-    public static String withQuery(String baseUrl, List<Pair<String, String>> params) {
+    public static WebURL withQuery(String baseUrl, List<Pair<String, String>> params) {
         StringBuilder sb = new StringBuilder(baseUrl);
         boolean first = true;
         for (Pair<String, String> param : params) {
@@ -115,18 +120,29 @@ public final class NetworkUtils {
             sb.append(NAME_VALUE_SEPARATOR);
             sb.append(encodeURL(param.getValue()));
         }
-        return sb.toString();
+        return WebURL.parse(sb.toString());
     }
 
-    public static List<URI> withQuery(List<URI> list, Map<String, String> params) {
-        return list.stream().map(uri -> URI.create(withQuery(uri.toString(), params))).collect(Collectors.toList());
+    /// Returns URLs with their queries replaced by the form-encoded non-null parameters.
+    /// Fragments and existing path escapes are preserved. If no non-null parameters are supplied,
+    /// returns a copy of the list with the URLs unchanged.
+    public static List<WebURL> withQuery(List<WebURL> list, Map<String, @Nullable String> params) {
+        String query = withQuery("", params);
+        if (query.isEmpty())
+            return new ArrayList<>(list);
+        return list.stream().map(uri -> WebURL.newBuilder(uri).setRawQuery(query).build()).collect(Collectors.toList());
     }
 
-    public static List<Pair<String, String>> parseQuery(URI uri) {
-        return parseQuery(uri.getRawQuery());
+    /// Parses the URL query as form-encoded name/value pairs.
+    public static List<Pair<String, String>> parseQuery(WebURL url) {
+        return parseQuery(url.getRawQuery());
     }
 
     public static List<Pair<String, String>> parseQuery(String queryParameterString) {
+        return parseQuery(queryParameterString, false);
+    }
+
+    public static List<Pair<String, String>> parseQuery(String queryParameterString, boolean lenient) {
         if (queryParameterString == null) return Collections.emptyList();
 
         List<Pair<String, String>> result = new ArrayList<>();
@@ -134,54 +150,107 @@ public final class NetworkUtils {
         try (Scanner scanner = new Scanner(queryParameterString)) {
             scanner.useDelimiter("&");
             while (scanner.hasNext()) {
-                String[] nameValue = scanner.next().split(NAME_VALUE_SEPARATOR);
-                if (nameValue.length == 0 || nameValue.length > 2) {
-                    throw new IllegalArgumentException("bad query string");
+                String token = scanner.next();
+
+                String name;
+                String value;
+                if (lenient) {
+                    if (token.isEmpty()) continue;
+                    int idx = token.indexOf('=');
+                    if (idx < 0) {
+                        name = decodeURL(token);
+                        value = null;
+                    } else {
+                        name = decodeURL(token.substring(0, idx));
+                        value = decodeURL(token.substring(idx + 1));
+                    }
+                } else {
+                    String[] nv = token.split(NAME_VALUE_SEPARATOR);
+                    if (nv.length == 0 || nv.length > 2) {
+                        throw new IllegalArgumentException("bad query string");
+                    }
+                    name = decodeURL(nv[0]);
+                    value = nv.length == 2 ? decodeURL(nv[1]) : null;
                 }
 
-                String name = decodeURL(nameValue[0]);
-                String value = nameValue.length == 2 ? decodeURL(nameValue[1]) : null;
                 result.add(pair(name, value));
             }
         }
         return result;
     }
 
-    public static URI dropQuery(URI u) {
+    /// Returns the URL without its query or fragment, preserving encoded path delimiters.
+    public static WebURL dropQuery(WebURL u) {
         if (u.getRawQuery() == null && u.getRawFragment() == null) {
             return u;
         }
 
-        try {
-            return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), u.getPath(), null, null);
-        } catch (URISyntaxException e) {
-            throw new AssertionError("Unreachable", e);
+        return WebURL.newBuilder(u).setRawQuery(null).setRawFragment(null).build();
+    }
+
+    private static final List<Pair<String, String>> API_KEYS;
+
+    static {
+        if (CurseForgeRemoteAddonRepository.API_KEY.isEmpty()) {
+            API_KEYS = List.of();
+        } else {
+            API_KEYS = List.of(
+                    pair("api.curseforge.com", CurseForgeRemoteAddonRepository.API_KEY),
+                    pair("forgecdn.net", CurseForgeRemoteAddonRepository.API_KEY)
+            );
         }
     }
 
-    public static URLConnection createConnection(URI uri) throws IOException {
+    private static boolean matchDomainSuffix(String domain, String suffix) {
+        return domain.endsWith(suffix)
+                && (domain.length() == suffix.length() || domain.charAt(domain.length() - suffix.length() - 1) == '.');
+    }
+
+    public static void injectApiKey(WebURL url, URLConnection connection) {
+        if (!(connection instanceof HttpURLConnection))
+            return;
+
+        if (connection.getRequestProperty("x-api-key") != null) {
+            return;
+        }
+
+        String host = url.getHost();
+        if (host == null || host.isEmpty())
+            return;
+
+        for (Pair<String, String> pair : API_KEYS) {
+            String hostSuffix = pair.getKey();
+            if (matchDomainSuffix(host, hostSuffix)) {
+                connection.addRequestProperty("x-api-key", pair.getValue());
+                return;
+            }
+        }
+    }
+
+    public static URLConnection createConnection(WebURL url) throws IOException {
         URLConnection connection;
         try {
-            connection = uri.toURL().openConnection();
+            connection = url.toURL().openConnection();
         } catch (IllegalArgumentException | MalformedURLException e) {
             throw new IOException(e);
         }
-        connection.setConnectTimeout(TIME_OUT);
-        connection.setReadTimeout(TIME_OUT);
+        connection.setConnectTimeout(TIMEOUT_MILLIS);
+        connection.setReadTimeout(TIMEOUT_MILLIS);
         if (connection instanceof HttpURLConnection httpConnection) {
             httpConnection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
             httpConnection.setRequestProperty("User-Agent", USER_AGENT);
             httpConnection.setInstanceFollowRedirects(false);
+            injectApiKey(url, connection);
         }
         return connection;
     }
 
-    public static HttpURLConnection createHttpConnection(String url) throws IOException {
-        return (HttpURLConnection) createConnection(toURI(url));
+    public static HttpURLConnection createHttpConnection(WebURL url) throws IOException {
+        return (HttpURLConnection) createConnection(url);
     }
 
-    public static HttpURLConnection createHttpConnection(URI url) throws IOException {
-        return (HttpURLConnection) createConnection(url);
+    public static HttpURLConnection createHttpConnection(String url) throws IOException {
+        return (HttpURLConnection) createConnection(WebURL.parse(url));
     }
 
     private static void encodeCodePoint(StringBuilder builder, int codePoint) {
@@ -267,8 +336,8 @@ public final class NetworkUtils {
         int redirect = 0;
         while (true) {
             conn.setUseCaches(useCache);
-            conn.setConnectTimeout(TIME_OUT);
-            conn.setReadTimeout(TIME_OUT);
+            conn.setConnectTimeout(TIMEOUT_MILLIS);
+            conn.setReadTimeout(TIMEOUT_MILLIS);
             conn.setInstanceFollowRedirects(false);
             Map<String, List<String>> properties = conn.getRequestProperties();
             String method = conn.getRequestMethod();
@@ -281,10 +350,10 @@ public final class NetworkUtils {
                     throw new IOException("Too much redirects");
                 }
 
-                HttpURLConnection redirected = (HttpURLConnection) new URL(conn.getURL(), encodeLocation(newURL))
-                        .openConnection();
-                properties
-                        .forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
+                WebURL redirectedUrl = WebURL.of(conn.getURL()).resolve(newURL);
+                HttpURLConnection redirected = (HttpURLConnection) redirectedUrl.toURL().openConnection();
+                properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
+                injectApiKey(redirectedUrl, redirected);
                 redirected.setRequestMethod(method);
                 conn = redirected;
                 ++redirect;
@@ -295,23 +364,25 @@ public final class NetworkUtils {
         return conn;
     }
 
-    public static String doGet(String uri) throws IOException {
-        return doGet(toURI(uri));
+    public static String doGet(String url) throws IOException {
+        return doGet(WebURL.parse(url));
     }
 
-    public static String doGet(URI uri) throws IOException {
-        URLConnection connection = createConnection(uri);
+    /// Reads a URL as text, following HTTP redirects and decoding the response content.
+    public static String doGet(WebURL url) throws IOException {
+        URLConnection connection = createConnection(url);
         if (connection instanceof HttpURLConnection httpURLConnection) {
             connection = resolveConnection(httpURLConnection);
         }
         return readFullyAsString(connection);
     }
 
-    public static String doGet(List<URI> uris) throws IOException {
-        List<IOException> exceptions = null;
-        for (URI uri : uris) {
+    /// Tries candidate URLs in order until one succeeds, or throws their I/O failures.
+    public static String doGet(List<WebURL> urls) throws IOException {
+        @Nullable List<IOException> exceptions = null;
+        for (WebURL url : urls) {
             try {
-                return doGet(uri);
+                return doGet(url);
             } catch (IOException e) {
                 if (exceptions == null) {
                     exceptions = new ArrayList<>(1);
@@ -333,24 +404,27 @@ public final class NetworkUtils {
         }
     }
 
-    public static String doPost(URI uri, String post) throws IOException {
-        return doPost(uri, post, "application/x-www-form-urlencoded");
+    /// Posts UTF-8 form content and reads the response as text.
+    public static String doPost(WebURL url, String post) throws IOException {
+        return doPost(url, post, "application/x-www-form-urlencoded");
     }
 
-    public static String doPost(URI u, Map<String, String> params) throws IOException {
+    /// Form-encodes the parameters and posts them to the URL.
+    public static String doPost(WebURL url, @Nullable Map<String, String> params) throws IOException {
         StringBuilder sb = new StringBuilder();
         if (params != null) {
             for (Map.Entry<String, String> e : params.entrySet())
-                sb.append(e.getKey()).append("=").append(e.getValue()).append("&");
+                sb.append(encodeURL(e.getKey())).append("=").append(encodeURL(e.getValue())).append("&");
             sb.deleteCharAt(sb.length() - 1);
         }
-        return doPost(u, sb.toString());
+        return doPost(url, sb.toString());
     }
 
-    public static String doPost(URI uri, String post, String contentType) throws IOException {
+    /// Posts UTF-8 content with the given media type and reads the response as text.
+    public static String doPost(WebURL url, String post, String contentType) throws IOException {
         byte[] bytes = post.getBytes(UTF_8);
 
-        HttpURLConnection con = createHttpConnection(uri);
+        HttpURLConnection con = createHttpConnection(url);
         con.setRequestMethod("POST");
         con.setDoOutput(true);
         con.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
@@ -405,13 +479,14 @@ public final class NetworkUtils {
         }
     }
 
-    public static String detectFileName(URI uri) throws IOException {
-        HttpURLConnection conn = resolveConnection(createHttpConnection(uri));
+    /// Reads a successful HTTP response's filename from its disposition header or final URL.
+    public static String detectFileName(WebURL url) throws IOException {
+        HttpURLConnection conn = resolveConnection(createHttpConnection(url));
         int code = conn.getResponseCode();
         if (code / 100 == 4)
             throw new FileNotFoundException();
         if (code / 100 != 2)
-            throw new ResponseCodeException(uri, conn.getResponseCode());
+            throw new ResponseCodeException(url, conn.getResponseCode());
 
         String disposition = conn.getHeaderField("Content-Disposition");
         if (disposition == null || !disposition.contains("filename=")) {
@@ -431,28 +506,8 @@ public final class NetworkUtils {
         return URLDecoder.decode(toDecode, UTF_8);
     }
 
-    /// @throws IllegalArgumentException if the string is not a valid URI
-    public static @NotNull URI toURI(@NotNull String uri) {
-        try {
-            return new URI(encodeLocation(uri));
-        } catch (URISyntaxException e) {
-            // Possibly an Internationalized Domain Name (IDN)
-            return URI.create(uri);
-        }
-    }
-
-    public static @NotNull URI toURI(@NotNull URL url) {
-        return toURI(url.toExternalForm());
-    }
-
-    public static @Nullable URI toURIOrNull(String uri) {
-        if (StringUtils.isNotBlank(uri)) {
-            try {
-                return toURI(uri);
-            } catch (Exception ignored) {
-            }
-        }
-
-        return null;
+    /// Parses an absolute URL, or returns `null` for null, blank, or invalid input.
+    public static @Nullable WebURL toWebURLOrNull(@Nullable String url) {
+        return StringUtils.isBlank(url) ? null : WebURL.tryParse(url);
     }
 }

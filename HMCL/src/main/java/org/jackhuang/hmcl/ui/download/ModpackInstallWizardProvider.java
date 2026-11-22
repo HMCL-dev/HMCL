@@ -1,31 +1,14 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
-import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.ModpackCompletionException;
-import org.jackhuang.hmcl.mod.UnsupportedModpackException;
-import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.modpack.MismatchedModpackTypeException;
+import org.jackhuang.hmcl.modpack.Modpack;
+import org.jackhuang.hmcl.modpack.ModpackCompletionException;
+import org.jackhuang.hmcl.modpack.UnsupportedModpackException;
+import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -37,34 +20,33 @@ import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackInstallWizardProvider implements WizardProvider {
-    private final Profile profile;
+    private final HMCLGameRepository repository;
     private final Path file;
     private final String updateVersion;
     private String iconUrl;
     private boolean hasSource;
 
-    public ModpackInstallWizardProvider(Profile profile) {
-        this(profile, null, null);
+    public ModpackInstallWizardProvider(HMCLGameRepository repository) {
+        this(repository, null, null);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, Path modpackFile) {
-        this(profile, modpackFile, null);
+    public ModpackInstallWizardProvider(HMCLGameRepository repository, Path modpackFile) {
+        this(repository, modpackFile, null);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, String updateVersion) {
-        this(profile, null, updateVersion);
+    public ModpackInstallWizardProvider(HMCLGameRepository repository, GameInstanceID updateInstanceId) {
+        this(repository, null, updateInstanceId);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, Path modpackFile, String updateVersion) {
-        this.profile = profile;
+    public ModpackInstallWizardProvider(HMCLGameRepository repository, Path modpackFile, GameInstanceID updateInstanceId) {
+        this.repository = repository;
         this.file = modpackFile;
-        this.updateVersion = updateVersion;
+        this.updateVersion = updateInstanceId != null ? updateInstanceId.toString() : null;
     }
 
     public void setIconUrl(String iconUrl) {
@@ -79,7 +61,8 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
         if (StringUtils.isNotBlank(iconUrl))
             settings.put(LocalModpackPage.MODPACK_ICON_URL, iconUrl);
-        settings.put(ModpackPage.PROFILE, profile);
+        settings.put(ModpackPage.GAME_DIRECTORY, repository.getGameDirectory());
+        settings.put(ModpackPage.REPOSITORY, repository);
         hasSource = settings.containsKey(LocalModpackPage.MODPACK_FILE) || settings.containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
     }
 
@@ -89,14 +72,16 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         Modpack modpack = settings.get(LocalModpackPage.MODPACK_MANIFEST);
         String name = settings.get(LocalModpackPage.MODPACK_NAME);
         String iconUrl = settings.get(LocalModpackPage.MODPACK_ICON_URL);
-        Charset charset = settings.get(LocalModpackPage.MODPACK_CHARSET);
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
+        var excludedFiles = settings.get(LocalModpackPage.MODPACK_EXCLUDED_FILES);
 
         if (isManuallyCreated) {
-            return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset);
+            return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name);
         }
 
         if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
+
+        GameInstanceID instanceId = new GameInstanceID(name);
 
         if (updateVersion != null) {
             if (selected == null) {
@@ -105,9 +90,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
             try {
                 if (serverModpackManifest != null) {
-                    return ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
+                    return ModpackHelper.getUpdateTask(repository, serverModpackManifest, instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)));
                 } else {
-                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
+                    return ModpackHelper.getUpdateTask(repository, selected, instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)), excludedFiles);
                 }
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
@@ -119,18 +104,18 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             return null;
         } else {
             if (serverModpackManifest != null) {
-                return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
-                        .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+                return ModpackHelper.getInstallTask(repository, serverModpackManifest, instanceId, modpack)
+                        .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
             } else {
-                return ModpackHelper.getInstallTask(profile, selected, name, modpack, iconUrl)
-                        .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+                return ModpackHelper.getInstallTask(repository, selected, instanceId, modpack, iconUrl, excludedFiles)
+                        .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
             }
         }
     }
 
     @Override
     public Object finish(SettingsMap settings) {
-        settings.put("title", i18n("install.modpack.installation"));
+        settings.put("title", i18n("install.modpack.installation", settings.get(LocalModpackPage.MODPACK_NAME)));
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (ignored, exception, next) -> {
             if (exception instanceof ModpackCompletionException) {

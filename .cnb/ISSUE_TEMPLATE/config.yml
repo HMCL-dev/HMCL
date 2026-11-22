@@ -6,3 +6,6 @@ contact_links:
   - name: Discord 服务器
     url: https://discord.gg/jVvC7HfM6U
     about: Hello Minecraft! Launcher 的官方 Discord 服务器。
+  - name: GitHub Issue
+    url: https://github.com/HMCL-dev/HMCL/issues/new/choose
+    about: 本仓库为镜像仓库，Bug 报告与功能请求请在 GitHub 上提交。

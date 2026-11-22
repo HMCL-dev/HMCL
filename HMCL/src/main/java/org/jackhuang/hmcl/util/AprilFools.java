@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -23,7 +8,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 /// April Fools' Day utilities.
 ///
@@ -34,7 +19,6 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 public final class AprilFools {
 
     private static final boolean ENABLED;
-    private static final boolean SHOW_APRIL_FOOLS_SETTINGS;
 
     static {
         var date = LocalDate.now();
@@ -57,15 +41,7 @@ public final class AprilFools {
         else
             aprilFoolsMode = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
 
-        ENABLED = aprilFoolsMode && !config().isDisableAprilFools();
-        SHOW_APRIL_FOOLS_SETTINGS = aprilFoolsMode || supportedRegion && date.getMonth() == Month.MARCH && date.getDayOfMonth() > 30;
-    }
-
-    /// Whether April Fools settings should be shown.
-    ///
-    /// This method returns true if April Fools settings should be shown.
-    public static boolean isShowAprilFoolsSettings() {
-        return SHOW_APRIL_FOOLS_SETTINGS;
+        ENABLED = aprilFoolsMode && !settings().disableAprilFoolsProperty().get();
     }
 
     /// Whether April Fools is enabled.

@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2024 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
@@ -23,11 +8,9 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -35,7 +18,7 @@ import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
 import java.io.IOException;
@@ -43,8 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -52,7 +33,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class JavaRestorePage extends ListPageBase<JavaRestorePage.DisabledJavaItem> implements DecoratorPage {
+public final class JavaRestorePage extends ListPaneBase<JavaRestorePage.DisabledJavaItem> implements DecoratorPage {
 
     private final ObjectProperty<State> state = new SimpleObjectProperty<>(State.fromTitle(i18n("java.disabled.management")));
 
@@ -60,6 +41,7 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
     private final InvalidationListener listener;
 
     public JavaRestorePage(ObservableSet<String> disabledJava) {
+        getListView().setPadding(Insets.EMPTY);
         this.listener = o -> {
             ArrayList<DisabledJavaItem> result = new ArrayList<>(disabledJava.size());
             for (String path : disabledJava) {
@@ -79,15 +61,19 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
                     return 1;
                 return a.path.compareTo(b.path);
             });
-            this.setItems(FXCollections.observableList(result));
+            getItems().setAll(result);
+
+            if (result.isEmpty()) {
+                fireEvent(new PageCloseEvent());
+            }
         };
         disabledJava.addListener(new WeakInvalidationListener(listener));
         listener.invalidated(disabledJava);
     }
 
     @Override
-    protected Skin<?> createDefaultSkin() {
-        return new JavaRestorePageSkin(this);
+    protected ItemCell<DisabledJavaItem> createItemCell(ListView<DisabledJavaItem> listView) {
+        return ItemCell.forNode(listView);
     }
 
     @Override
@@ -148,9 +134,11 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
         DisabledJavaItemSkin(DisabledJavaItem skinnable) {
             super(skinnable);
 
+            skinnable.setPickOnBounds(false);
             BorderPane root = new BorderPane();
 
             Label label = new Label(skinnable.path);
+            label.setMouseTransparent(true);
             BorderPane.setAlignment(label, Pos.CENTER_LEFT);
             root.setCenter(label);
 
@@ -179,21 +167,11 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
             }
             root.setRight(right);
 
-            root.getStyleClass().add("md-list-cell");
+            root.setPickOnBounds(false);
             root.setPadding(new Insets(8));
 
-            this.getChildren().setAll(new RipplerContainer(root));
+            this.getChildren().setAll(root);
         }
     }
 
-    private static final class JavaRestorePageSkin extends ToolbarListPageSkin<DisabledJavaItem, JavaRestorePage> {
-        JavaRestorePageSkin(JavaRestorePage skinnable) {
-            super(skinnable);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(JavaRestorePage skinnable) {
-            return Collections.emptyList();
-        }
-    }
 }

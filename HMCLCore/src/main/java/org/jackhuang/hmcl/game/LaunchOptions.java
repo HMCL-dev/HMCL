@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -30,8 +15,10 @@ import java.util.*;
  */
 public class LaunchOptions implements Serializable {
 
+    private GameInstanceID instanceId;
     private Path gameDir;
     private JavaRuntime java;
+    private Path javaExecutable;
     private String versionName;
     private String versionType;
     private String profileName;
@@ -53,15 +40,22 @@ public class LaunchOptions implements Serializable {
     private boolean noGeneratedOptimizingJVMArgs;
     private String preLaunchCommand;
     private String postExitCommand;
-    private NativesDirectoryType nativesDirType;
+    private boolean useCustomNatives;
     private String nativesDir;
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
     private GraphicsAPI graphicsBackend = GraphicsAPI.DEFAULT;
     private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
+    private boolean useHighPerformanceGPU;
     private boolean enableDebugLogOutput;
+    private boolean allowAutoAgent;
+    private boolean disableAutoGameOptions;
     private boolean daemon;
+
+    public GameInstanceID getInstanceId() {
+        return instanceId;
+    }
 
     /**
      * The game directory
@@ -75,6 +69,16 @@ public class LaunchOptions implements Serializable {
      */
     public JavaRuntime getJava() {
         return java;
+    }
+
+    /// Returns the executable selected for launch, falling back to [JavaRuntime#getBinary()] if none is specified.
+    /// The path is used without automatic executable substitution or file validation.
+    public Path getJavaExecutable() {
+        if (javaExecutable != null)
+            return javaExecutable;
+        if (java != null)
+            return java.getBinary();
+        return null;
     }
 
     /**
@@ -223,17 +227,12 @@ public class LaunchOptions implements Serializable {
         return postExitCommand;
     }
 
-    /**
-     * 0 - ./minecraft/versions/&lt;version&gt;/natives
-     * 1 - custom natives directory
-     */
-    public NativesDirectoryType getNativesDirType() {
-        return nativesDirType;
+    /// Whether native libraries are supplied and managed outside HMCL.
+    public boolean isUseCustomNatives() {
+        return useCustomNatives;
     }
 
-    /**
-     * Path to the natives directory, optional
-     */
+    /// Path to the natives directory, or blank for the default directory.
     public String getNativesDir() {
         return nativesDir;
     }
@@ -253,7 +252,7 @@ public class LaunchOptions implements Serializable {
         return renderer;
     }
 
-    public boolean isUseNativeGLFW() {
+    public boolean isUseNativeGLFWorSDL() {
         return useNativeGLFW;
     }
 
@@ -261,8 +260,21 @@ public class LaunchOptions implements Serializable {
         return useNativeOpenAL;
     }
 
+    public boolean isUseHighPerformanceGPU() {
+        return useHighPerformanceGPU;
+    }
+
     public boolean isEnableDebugLogOutput() {
         return enableDebugLogOutput;
+    }
+
+    public boolean isAllowAutoAgent() {
+        return allowAutoAgent;
+    }
+
+    /// Returns whether automatic game options generation is disabled.
+    public boolean isDisableAutoGameOptions() {
+        return disableAutoGameOptions;
     }
 
     /**
@@ -305,6 +317,11 @@ public class LaunchOptions implements Serializable {
             return options.javaAgents;
         }
 
+        public Builder setInstanceId(GameInstanceID instanceId) {
+            options.instanceId = instanceId;
+            return this;
+        }
+
         public Builder setGameDir(Path gameDir) {
             options.gameDir = gameDir;
             return this;
@@ -312,6 +329,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setJava(JavaRuntime java) {
             options.java = java;
+            return this;
+        }
+
+        public Builder setJavaExecutable(Path javaExecutable) {
+            options.javaExecutable = javaExecutable;
             return this;
         }
 
@@ -425,8 +447,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setNativesDirType(NativesDirectoryType nativesDirType) {
-            options.nativesDirType = nativesDirType;
+        public Builder setUseCustomNatives(boolean useCustomNatives) {
+            options.useCustomNatives = useCustomNatives;
             return this;
         }
 
@@ -450,13 +472,18 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setUseNativeGLFW(boolean useNativeGLFW) {
+        public Builder setUseNativeGLFWorSDL(boolean useNativeGLFW) {
             options.useNativeGLFW = useNativeGLFW;
             return this;
         }
 
         public Builder setUseNativeOpenAL(boolean useNativeOpenAL) {
             options.useNativeOpenAL = useNativeOpenAL;
+            return this;
+        }
+
+        public Builder setUseHighPerformanceGPU(boolean useHighPerformanceGPU) {
+            options.useHighPerformanceGPU = useHighPerformanceGPU;
             return this;
         }
 
@@ -467,6 +494,16 @@ public class LaunchOptions implements Serializable {
 
         public Builder setEnableDebugLogOutput(boolean u) {
             options.enableDebugLogOutput = u;
+            return this;
+        }
+
+        public Builder setAllowAutoAgent(boolean allowAutoAgent) {
+            options.allowAutoAgent = allowAutoAgent;
+            return this;
+        }
+
+        public Builder setDisableAutoGameOptions(boolean disableAutoGameOptions) {
+            options.disableAutoGameOptions = disableAutoGameOptions;
             return this;
         }
     }

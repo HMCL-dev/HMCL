@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.download.java.mojang;
 
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
@@ -59,7 +44,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
         this.target = target;
         this.tempDir = tempDir;
         this.downloadProvider = downloadProvider;
-        this.javaDownloadsTask = new GetTask(downloadProvider.injectURLWithCandidates(JAVA_LIST_URL))
+        this.javaDownloadsTask = new GetTask(downloadProvider.getDownloadCandidates(JAVA_LIST_URL))
                 .thenComposeAsync(javaDownloadsJson -> {
                     MojangJavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, MojangJavaDownloads.class);
 
@@ -70,7 +55,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                     for (MojangJavaDownloads.JavaDownload download : candidates) {
                         if (JavaInfo.parseVersion(download.version().name()) >= javaVersion.majorVersion()) {
                             this.download = download;
-                            return new GetTask(downloadProvider.injectURLWithCandidates(download.manifest().getUrl()));
+                            return new GetTask(downloadProvider.getDownloadCandidates(download.manifest().getUrl()));
                         }
                     }
                     throw new UnsupportedPlatformException("Candidates: " + JsonUtils.GSON.toJson(candidates));
@@ -85,7 +70,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
     @Override
     public void execute() throws Exception {
-        for (Map.Entry<String, MojangJavaRemoteFiles.Remote> entry : javaDownloadsTask.getResult().getFiles().entrySet()) {
+        for (Map.Entry<String, MojangJavaRemoteFiles.Remote> entry : javaDownloadsTask.getResult().files().entrySet()) {
             Path dest = tempDir.resolve(entry.getKey());
             if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteFile file) {
                 // Use local file if it already exists
@@ -114,7 +99,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                     }
 
                     Path tempFile = tempDir.resolve(entry.getKey() + ".lzma");
-                    var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile,
+                    var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(download.getUrl()), tempFile,
                             new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
@@ -145,7 +130,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                     }));
                 } else if (file.getDownloads().containsKey("raw")) {
                     DownloadInfo download = file.getDownloads().get("raw");
-                    var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), dest, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(download.getUrl()), dest, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     if (file.isExecutable()) {
                         dependencies.add(task.thenRunAsync(() -> FileUtils.setExecutable(dest)));

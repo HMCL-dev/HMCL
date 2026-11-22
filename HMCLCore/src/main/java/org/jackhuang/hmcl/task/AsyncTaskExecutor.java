@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.task;
 
 import com.google.gson.JsonParseException;
@@ -65,7 +50,10 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     return success;
                 })
                 .exceptionally(e -> {
-                    Lang.handleUncaughtException(resolveException(e));
+                    Throwable resolved = resolveException(e);
+                    if (resolved instanceof OutOfMemoryError)
+                        taskListeners.forEach(it -> it.onStop(false, this));
+                    Lang.handleUncaughtException(resolved);
                     return false;
                 });
         return this;
@@ -86,12 +74,11 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         return false;
     }
 
+    /// Requests cancellation, including before execution starts. Cancellation before start prevents
+    /// task bodies from executing, but the executor must still be started to deliver stop notifications.
+    /// Already running task bodies may finish before execution observes the request.
     @Override
     public synchronized void cancel() {
-        if (future == null) {
-            throw new IllegalStateException("Cannot cancel a not started TaskExecutor");
-        }
-
         cancelled = true;
     }
 
@@ -190,6 +177,8 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         }
 
                         task.setState(Task.TaskState.FAILED);
+                    } else if (resolved instanceof OutOfMemoryError e) {
+                        handleOutOfMemoryError(task, e);
                     }
 
                     throw new CompletionException(resolved); // rethrow error
@@ -301,6 +290,8 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         taskListeners.forEach(it -> it.onFailed(task, e));
 
                         task.setState(Task.TaskState.FAILED);
+                    } else if (resolved instanceof OutOfMemoryError e) {
+                        handleOutOfMemoryError(task, e);
                     }
 
                     throw new CompletionException(resolved); // rethrow error
@@ -313,6 +304,16 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         } else {
             return executeNormalTask(parentTask, task);
         }
+    }
+
+    /// Completes the failed task lifecycle while preserving the original error for the global handler.
+    private void handleOutOfMemoryError(Task<?> task, OutOfMemoryError error) {
+        Exception taskException = new Exception(error);
+        task.setException(taskException);
+        exception = taskException;
+        task.fireDoneEvent(this, true);
+        taskListeners.forEach(it -> it.onFailed(task, error));
+        task.setState(Task.TaskState.FAILED);
     }
 
     private void checkCancellation() {

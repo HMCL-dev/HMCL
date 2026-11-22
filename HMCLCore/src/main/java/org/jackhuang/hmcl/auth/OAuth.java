@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.auth;
 
 import com.google.gson.JsonParseException;
@@ -160,6 +145,8 @@ public class OAuth {
                 continue;
             }
 
+            options.callback.loginCompletedDeviceCode();
+
             return new Result(tokenResponse.accessToken, tokenResponse.refreshToken);
         }
     }
@@ -268,6 +255,8 @@ public class OAuth {
 
         void grantDeviceCode(String userCode, String verificationURI);
 
+        void loginCompletedDeviceCode();
+
         /**
          * Open browser
          *
@@ -284,22 +273,7 @@ public class OAuth {
         DEVICE,
     }
 
-    public static final class Result {
-        private final String accessToken;
-        private final String refreshToken;
-
-        public Result(String accessToken, String refreshToken) {
-            this.accessToken = accessToken;
-            this.refreshToken = refreshToken;
-        }
-
-        public String getAccessToken() {
-            return accessToken;
-        }
-
-        public String getRefreshToken() {
-            return refreshToken;
-        }
+    public record Result(String accessToken, String refreshToken) {
     }
 
     private final static class DeviceTokenResponse extends ErrorResponse {

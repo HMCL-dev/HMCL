@@ -1,22 +1,10 @@
-/**
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+ * SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+ * SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
  */
 
 .root {
+    -title-fill: -monet-on-primary-container;
 }
 
 .svg {
@@ -68,15 +56,6 @@
 
 .hint.info Text, .hint.info .svg {
     -fx-fill: -monet-on-primary-fixed;
-}
-
-.hint.success {
-    -fx-background-color: #d1e7dd;
-    -fx-border-color: -monet-outline;
-}
-
-.hint.success Text, .hint.success .svg {
-    -fx-fill: #0a3622;
 }
 
 .hint.error {
@@ -166,11 +145,26 @@
 }
 
 .rippler-container {
-    -jfx-rippler-fill: -monet-on-surface-variant;
+    -jfx-feedback-fill: -monet-on-surface;
 }
 
-.advanced-list-item .rippler-container {
-    -jfx-rippler-fill: -monet-on-secondary-container;
+.rippler-container:press-feedback-enabled {
+    -fx-cursor: hand;
+}
+
+.advanced-list-item:action-disabled > .rippler-container > .container > .title,
+.advanced-list-item:action-disabled > .rippler-container > .container > .subtitle,
+.advanced-list-item:action-disabled > .rippler-container > .container > :action-disabled {
+    -fx-opacity: 0.4;
+}
+
+.advanced-list-item:selected .rippler-container {
+    -jfx-feedback-fill: -monet-on-secondary-container;
+}
+
+.advanced-list-item:action-disabled > .rippler-container {
+    -jfx-feedback-fill: transparent;
+    -fx-cursor: default;
 }
 
 .advanced-list-item > .rippler-container > .container {
@@ -178,26 +172,23 @@
     -fx-background-color: null;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item {
-    -fx-alignment: center-left;
+.advanced-list-item > .rippler-container > .container > .title {
     -fx-padding: 0 0 0 10;
-}
-
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > .first-line > .title {
     -fx-font-size: 13;
     -fx-text-alignment: justify;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > HBox > .subtitle {
+.advanced-list-item > .rippler-container > .container > .subtitle {
+    -fx-padding: 0 0 0 10;
     -fx-font-size: 10;
     -fx-text-alignment: justify;
 }
 
-.advanced-list-item:selected > .rippler-container > .container {
-    -fx-background-color: -monet-secondary-container-transparent-50;
+.advanced-list-item {
+    -jfx-selected-background-fill: -monet-secondary-container;
 }
 
-.advanced-list-item:selected > .rippler-container > .container > .two-line-list-item > .first-line > .title {
+.advanced-list-item:selected > .rippler-container > .container > .title {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-font-weight: bold;
 }
@@ -206,32 +197,28 @@
     -fx-fill: -monet-on-secondary-container;
 }
 
-.navigation-drawer-item > .rippler-container > .container > VBox {
-    -fx-padding: 0 0 0 0;
-}
-
-.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
+.game-directory-list-item > .rippler-container > .two-line-list-item > .title {
     -fx-font-size: 13;
 }
 
-.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > HBox > .subtitle {
+.game-directory-list-item > .rippler-container > .two-line-list-item > .subtitle {
     -fx-font-size: 10;
 }
 
-.profile-list-item > .rippler-container > BorderPane {
+.game-directory-list-item > .rippler-container > .two-line-list-item {
     -fx-padding: 8 0 8 16;
 }
 
-.profile-list-item:selected > .rippler-container > BorderPane {
+.game-directory-list-item:selected > .rippler-container > .two-line-list-item {
     -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
-.profile-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
+.game-directory-list-item:selected > .rippler-container > .two-line-list-item > .title {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-font-weight: bold;
 }
 
-.profile-list-item:selected .svg {
+.game-directory-list-item:selected .svg {
     -fx-fill: -monet-on-secondary-container;
 }
 
@@ -268,7 +255,7 @@
 }
 
 .iconed-item {
-    -jfx-rippler-fill: -monet-secondary-container;
+    -jfx-feedback-fill: -monet-on-surface;
 }
 
 .iconed-item .iconed-item-container {
@@ -279,7 +266,12 @@
 }
 
 .iconed-menu-item {
-    -jfx-rippler-fill: -monet-secondary-container;
+    -jfx-feedback-fill: -monet-on-surface;
+    -fx-cursor: hand;
+}
+
+.iconed-menu-item:disabled {
+    -fx-cursor: default;
 }
 
 .iconed-menu-item .iconed-item-container {
@@ -306,54 +298,56 @@
     -fx-padding: 4 0 4 0;
 }
 
-.two-line-list-item > .first-line > .title {
+.two-line-list-item > .title {
     -fx-text-fill: -monet-on-surface;
     -fx-font-size: 15px;
     -fx-padding: 0 8 0 0;
 }
 
-.two-line-list-item > HBox > .subtitle {
+.two-line-list-item > .title > Text {
+    -fx-fill: -monet-on-surface;
+}
+
+.two-line-list-item > .subtitle {
     -fx-text-fill: -monet-on-surface-variant;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > .second-line > .subtitle Text {
+.two-line-list-item > .subtitle Text {
     -fx-fill: -monet-on-surface-variant;
 }
 
-.two-line-list-item > .first-line .scroll-bar {
-    -fx-opacity: 0;
-    -fx-max-height: 0;
-    -fx-min-height: 0;
-    -fx-pref-height: 0;
-}
-
-.two-line-list-item > .first-line .tag {
+.tag {
+    -fx-alignment: center;
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
-    -fx-background-radius: 2;
-    -fx-padding: 2;
+    -fx-background-radius: 999px;
+    -fx-padding: 0 5px;
     -fx-font-weight: normal;
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
 }
 
-.two-line-list-item > .first-line .tag:warning {
+.tag:warning {
     -fx-text-fill: -monet-on-error-container;
     -fx-background-color: -fixed-warning-tag-background;
+}
+
+.tag > .text {
+    -fx-bounds-type: logical_vertical_center;
 }
 
 .two-line-item-second-large {
 
 }
 
-.two-line-item-second-large > .first-line > .title, .two-line-item-second-large-title {
+.two-line-item-second-large > .title, .two-line-item-second-large-title {
     -fx-text-fill: -monet-on-surface-variant;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-item-second-large > HBox > .subtitle {
+.two-line-item-second-large > .subtitle {
     -fx-text-fill: -monet-on-surface;
     -fx-font-size: 15px;
 }
@@ -374,7 +368,7 @@
     -fx-fill: -monet-primary;
 }
 
-.wrap-text > HBox > .subtitle {
+.wrap-text > .subtitle {
     -fx-wrap-text: true;
 }
 
@@ -383,8 +377,8 @@
     -fx-background-radius: 2px;
 }
 
-.bubble > HBox > .two-line-list-item > .first-line > .title,
-.bubble > HBox > .two-line-list-item > HBox > .subtitle {
+.bubble > RipplerContainer > HBox > .two-line-list-item > .title,
+.bubble > RipplerContainer > HBox > .two-line-list-item > .subtitle {
     -fx-text-fill: -monet-inverse-on-surface;
 }
 
@@ -394,6 +388,10 @@
 
 .sponsor-pane {
     -fx-cursor: hand;
+}
+
+.installer-item-status:incompatible {
+    -fx-opacity: 0.6;
 }
 
 .installer-item-wrapper {
@@ -408,8 +406,6 @@
 
 .installer-item-wrapper .installer-item:list-item {
     -fx-padding: 8px;
-    -fx-border-color: -monet-outline-variant;
-    -fx-border-width: 0 0 1 0;
     -fx-alignment: center-left;
 }
 
@@ -448,16 +444,24 @@
 }
 
 .launch-pane > .jfx-button.launch-button {
-    -fx-max-width: 207px;
-    -fx-min-width: 207px;
+    -fx-max-width: 200px;
+    -fx-min-width: 200px;
     -fx-border-width: 0 3px 0 0;
-    -fx-border-color: -monet-on-surface-variant;
+    -fx-border-color: linear-gradient(
+        to bottom, 
+        transparent 0%, 
+        transparent 20%, 
+        -monet-on-surface-variant 20%,
+        -monet-on-surface-variant 80%,
+        transparent 80%, 
+        transparent 100%
+    );
     -fx-background-radius: 4px 0 0 4px;
 }
 
 .launch-pane > .jfx-button.menu-button {
-    -fx-max-width: 20px;
-    -fx-min-width: 20px;
+    -fx-max-width: 27px;
+    -fx-min-width: 27px;
     -fx-font-size: 15px;
     -fx-background-radius: 0 4px 4px 0;
 }
@@ -468,7 +472,7 @@
     -fx-padding: 0;
 }
 
-.launch-pane > .jfx-button, .jfx-button * {
+.launch-pane > .launch-button .label {
     -fx-text-fill: -monet-on-primary-container;
     -fx-font-size: 14px;
 }
@@ -489,6 +493,10 @@
 
 .tab-selected-line {
     -fx-background-color: derive(-monet-primary-container, -30%);
+}
+
+.tab-header > .rippler-container {
+    -jfx-feedback-fill: -monet-primary;
 }
 
 /* TODO: It seems not actually used */
@@ -621,7 +629,7 @@
 }
 
 .jfx-popup-container {
-    -fx-background-color: -monet-surface;
+    -fx-background-color: -monet-surface-container;
     -fx-background-radius: 4;
 }
 
@@ -677,10 +685,16 @@
 
 .jfx-tool-bar .jfx-decorator-title {
     -fx-font-weight: BOLD;
+    -fx-text-fill: -title-fill;
 }
 
 .jfx-tool-bar.background {
     -fx-background-color: -monet-primary-container;
+}
+
+.jfx-tool-bar.background:transparent {
+    -title-fill: -monet-on-surface;
+    -fx-background-color: -monet-surface-transparent-50;
 }
 
 /*.jfx-tool-bar HBox {*/
@@ -699,7 +713,11 @@
 }
 
 .jfx-tool-bar .jfx-decorator-button .svg {
-    -fx-fill: -monet-on-primary-container;
+    -fx-fill: -title-fill;
+}
+
+.jfx-decorator-button .jfx-spinner .arc {
+    -fx-stroke: -title-fill;
 }
 
 .jfx-tool-bar Label {
@@ -708,6 +726,10 @@
 
 .jfx-tool-bar.gray-background Label {
     -fx-text-fill: BLACK;
+}
+
+.jfx-tool-bar Text {
+
 }
 
 .jfx-tool-bar .jfx-options-burger {
@@ -742,6 +764,7 @@
 
 .jfx-tool-bar-button {
     -fx-text-fill: -monet-on-surface;
+    -fx-font-size: 14px;
     -fx-toggle-icon4-size: 37px;
     -fx-pref-height: -fx-toggle-icon4-size;
     -fx-max-height: -fx-toggle-icon4-size;
@@ -755,6 +778,11 @@
 .jfx-tool-bar-button .icon {
     -fx-fill: rgb(204.0, 204.0, 51.0);
     -fx-padding: 10.0;
+}
+
+.jfx-tool-bar-tip Text {
+    -fx-font-size: 13;
+    -fx-fill: -monet-on-surface;
 }
 
 .jfx-decorator-button {
@@ -886,7 +914,7 @@
     -fx-background-radius: 50px;
 }
 
-.menu-up-down-button .label {
+.expandable-pane-header-label {
     -fx-text-fill: -monet-on-surface;
 }
 
@@ -966,6 +994,10 @@
 
 .no-padding .list-cell {
     -fx-padding: 0;
+}
+
+.no-padding .combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-padding: 4 0 4 5;
 }
 
 .jfx-list-cell, .list-cell {
@@ -1085,11 +1117,19 @@
     -fx-border-width: 0 0 1 0;
 }
 
+.md-list-cell:last {
+    -fx-border-width: 0;
+}
+
 .md-list-cell:selected {
     -fx-background-color: -monet-secondary-container;
 }
 
 .mod-info-list-cell:warning {
+    -fx-background-color: -monet-error-container;
+}
+
+.resource-pack-list-cell:warning {
     -fx-background-color: -monet-error-container;
 }
 
@@ -1165,121 +1205,144 @@
 }
 
 /*******************************************************************************
-*                                                                              *
-* JFX Toggle Button                                                            *
-*                                                                              *
-*******************************************************************************/
+ *                                                                             *
+ * JFX Switch                                                                  *
+ *                                                                             *
+ ******************************************************************************/
 
-.jfx-toggle-button,
-.jfx-toggle-button:armed,
-.jfx-toggle-button:hover,
-.jfx-toggle-button:focused,
-.jfx-toggle-button:selected,
-.jfx-toggle-button:focused:selected {
-    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
-    -fx-background-radius: 3px;
-    -fx-background-insets: 0px;
-
-    -jfx-toggle-color: -monet-primary;
-    -jfx-toggle-line-color: -monet-secondary-container;
-    -jfx-untoggle-color: -monet-outline;
-    -jfx-untoggle-line-color: -monet-surface-container-highest;
-    -jfx-size: 10;
+.jfx-switch {
+    -jfx-switch-primary: -monet-primary;
+    -jfx-switch-on-primary: -monet-on-primary;
+    -jfx-switch-primary-container: -monet-primary-container;
+    -jfx-switch-on-primary-container: -monet-on-primary-container;
+    -jfx-switch-surface: -monet-surface;
+    -jfx-switch-surface-container-highest: -monet-surface-container-highest;
+    -jfx-switch-on-surface: -monet-on-surface;
+    -jfx-switch-on-surface-variant: -monet-on-surface-variant;
+    -jfx-switch-outline: -monet-outline;
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-cursor: hand;
 }
 
-
-.jfx-toggle-button Line {
-    -fx-stroke: -jfx-untoggle-line-color;
+.jfx-switch > .switch-artwork > .switch-track {
+    -fx-fill: -jfx-switch-surface-container-highest;
+    -fx-stroke: -jfx-switch-outline;
+    -fx-stroke-width: 2;
+    -fx-stroke-type: inside;
 }
 
-.jfx-toggle-button:selected Line {
-    -fx-stroke: -jfx-toggle-line-color;
+.jfx-switch:selected > .switch-artwork > .switch-track {
+    -fx-fill: -jfx-switch-primary;
+    -fx-stroke: transparent;
 }
 
-.jfx-toggle-button Circle {
-    -fx-fill: -jfx-untoggle-color;
+.jfx-switch > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-outline;
 }
 
-.jfx-toggle-button:selected Circle {
-    -fx-fill: -jfx-toggle-color;
+.jfx-switch:selected > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-on-primary;
 }
 
-.jfx-toggle-button .jfx-rippler {
-    -jfx-rippler-fill: -jfx-untoggle-line-color;
+.jfx-switch:hover > .switch-artwork > .switch-handle,
+.jfx-switch:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:armed > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-on-surface-variant;
 }
 
-.jfx-toggle-button:selected .jfx-rippler {
-    -jfx-rippler-fill: -jfx-toggle-line-color;
+.jfx-switch:selected:hover > .switch-artwork > .switch-handle,
+.jfx-switch:selected:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:selected:armed > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-primary-container;
 }
 
+.jfx-switch > .switch-artwork > .switch-state-layer {
+    -fx-fill: -jfx-switch-on-surface;
+    -fx-opacity: 0;
+}
+
+.jfx-switch:selected > .switch-artwork > .switch-state-layer {
+    -fx-fill: -jfx-switch-primary;
+}
+
+.jfx-switch:hover > .switch-artwork > .switch-state-layer {
+    -fx-opacity: 0.08;
+}
+
+.jfx-switch:visual-focused > .switch-artwork > .switch-state-layer,
+.jfx-switch:armed > .switch-artwork > .switch-state-layer {
+    -fx-opacity: 0.12;
+}
+
+.jfx-switch > .switch-artwork > .switch-icon {
+    -fx-fill: -jfx-switch-surface-container-highest;
+}
+
+.jfx-switch:selected > .switch-artwork > .switch-icon {
+    -fx-fill: -jfx-switch-on-primary-container;
+}
+
+/* Disabled opacity belongs to individual parts, never to the entire control. */
+.jfx-switch:disabled {
+    -fx-opacity: 1;
+    -fx-cursor: default;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-track {
+    -fx-fill: -jfx-switch-surface-container-highest;
+    -fx-stroke: -jfx-switch-on-surface;
+    -fx-opacity: 0.12;
+}
+
+.jfx-switch:selected:disabled > .switch-artwork > .switch-track {
+    -fx-fill: -jfx-switch-on-surface;
+    -fx-stroke: transparent;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:hover > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:armed > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-on-surface;
+    -fx-opacity: 0.38;
+}
+
+.jfx-switch:selected:disabled > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:hover > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:armed > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-surface;
+    -fx-opacity: 1;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-icon {
+    -fx-opacity: 0.38;
+}
+
+.jfx-switch:selected:disabled > .switch-artwork > .switch-icon {
+    -fx-fill: -jfx-switch-on-surface;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:hover > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:visual-focused > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:armed > .switch-artwork > .switch-state-layer {
+    -fx-opacity: 0;
+}
 
 .toggle-label {
     -fx-font-size: 14.0px;
 }
 
-/* unused */
-.toggle-icon1 .icon {
-    -fx-fill: #4285F4;
-    -fx-padding: 20.0;
-}
-
-.toggle-icon1 {
-    -fx-pref-width: 80px;
-    -fx-background-radius: 80px;
-    -fx-pref-height: 80px;
-    -fx-background-color: transparent;
-    -jfx-toggle-color: rgba(66.0, 133.0, 244.0, 0.29885056614875793);
-    -jfx-untoggle-color: transparent;
-}
-
-.toggle-icon1 .jfx-rippler {
-    -jfx-rippler-fill: rgba(66.0, 133.0, 244.0, 0.29885056614875793);
-    -jfx-mask-type: CIRCLE;
-}
-
-.toggle-icon2, .toggle-icon3, .jfx-decorator-button {
+.jfx-decorator-button {
     -fx-pref-width: 50px;
     -fx-background-radius: 50px;
     -fx-pref-height: 50px;
     -fx-background-color: transparent;
 }
 
-/* unused */
-.toggle-icon2 .icon {
-    -fx-fill: RED;
-}
 
-.toggle-icon2 .jfx-rippler {
-    -jfx-rippler-fill: RED;
-    -jfx-mask-type: CIRCLE;
-}
-
-/* unused */
-.toggle-icon3 {
-    -fx-toggle-icon4-size: 35px;
-    -fx-pref-width: -fx-toggle-icon4-size;
-    -fx-max-width: -fx-toggle-icon4-size;
-    -fx-min-width: -fx-toggle-icon4-size;
-    -fx-pref-height: -fx-toggle-icon4-size;
-    -fx-max-height: -fx-toggle-icon4-size;
-    -fx-min-height: -fx-toggle-icon4-size;
-    -fx-background-radius: 50px;
-    -fx-background-color: transparent;
-    -jfx-toggle-color: white;
-    -jfx-untoggle-color: transparent;
-}
-
-.toggle-icon3 .icon {
-    -fx-fill: rgb(204.0, 204.0, 51.0);
-    -fx-padding: 10.0;
-}
-
-.toggle-icon3 .jfx-rippler {
-    -jfx-rippler-fill: white;
-    -jfx-mask-type: CIRCLE;
-}
-
-/* used */
 .toggle-icon4 {
     -fx-toggle-icon4-size: 30px;
     -fx-pref-width: -fx-toggle-icon4-size;
@@ -1312,6 +1375,7 @@
     -fx-pref-height: -fx-toggle-icon-tiny-size;
     -fx-max-height: -fx-toggle-icon-tiny-size;
     -fx-min-height: -fx-toggle-icon-tiny-size;
+    -fx-padding: 0;
     -fx-background-radius: 25px;
     -fx-background-color: transparent;
     -jfx-toggle-color: -monet-primary;
@@ -1320,7 +1384,11 @@
 
 .toggle-icon-tiny .icon {
     -fx-fill: rgb(204.0, 204.0, 51.0);
-    -fx-padding: 5.0;
+    -fx-padding: 0;
+}
+
+.toggle-icon-tiny:overridden .svg {
+    -fx-fill: -monet-primary;
 }
 
 .toggle-icon-tiny .jfx-rippler {
@@ -1369,27 +1437,27 @@
 }
 
 .log-toggle.fatal {
-    -fx-background-color: -fixed-log-fatal;
+    -fx-background-color: -fixed-log-fatal-background;
 }
 
 .log-toggle.error {
-    -fx-background-color: -fixed-log-error;
+    -fx-background-color: -fixed-log-error-background;
 }
 
 .log-toggle.warn {
-    -fx-background-color: -fixed-log-warn;
+    -fx-background-color: -fixed-log-warn-background;
 }
 
 .log-toggle.info {
-    -fx-background-color: -fixed-log-info;
+    -fx-background-color: -fixed-log-info-background;
 }
 
 .log-toggle.debug {
-    -fx-background-color: -fixed-log-debug;
+    -fx-background-color: -fixed-log-debug-background;
 }
 
 .log-toggle.trace {
-    -fx-background-color: -fixed-log-trace;
+    -fx-background-color: -fixed-log-trace-background;
 }
 
 .log-window-list-cell:selected {
@@ -1397,7 +1465,7 @@
 }
 
 .log-window {
-    -fx-background-color: -monet-surface-container;
+    -fx-background-color: -fixed-log-background;
 }
 
 .log-window .scroll-bar .thumb {
@@ -1420,42 +1488,52 @@
 
 .log-window-list-cell:fatal {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-fatal;
+    -fx-background-color: -fixed-log-fatal-background;
 }
 
 .log-window-list-cell:error {
-    -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-error;
+    -fx-text-fill: -fixed-log-error-text-fill;
+    -fx-background-color: -fixed-log-error-background;
 }
 
 .log-window-list-cell:warn {
-    -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-warn;
+    -fx-text-fill: -fixed-log-warn-text-fill;
+    -fx-background-color: -fixed-log-warn-background;
 }
 
 .log-window-list-cell:info {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-info;
+    -fx-background-color: -fixed-log-info-background;
 }
 
 .log-window-list-cell {
-    -fx-background-color: -fixed-log-info;
+    -fx-background-color: -fixed-log-info-background;
 }
 
 .log-window-list-cell:debug {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-debug;
+    -fx-background-color: -fixed-log-debug-background;
 }
 
 .log-window-list-cell:trace {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-trace;
+    -fx-background-color: -fixed-log-trace-background;
 }
 
 .log-window-list-cell:selected {
     -fx-text-fill: -fixed-log-text-fill;
     -fx-background-color: -fixed-log-selected;
 }
+
+.log-window .always-on-top-button {
+    -fx-rotate: 0.0;
+}
+
+.log-window .always-on-top-button:selected {
+    -fx-background-color: -monet-secondary-container-transparent-80;
+    -fx-rotate: 45.0;
+}
+
 
 /*******************************************************************************
 *                                                                              *
@@ -1558,7 +1636,7 @@
     -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
     -fx-background-radius: 3px;
     -fx-background-insets: 0px;
-    -fx-min-height: 25px;
+    -fx-min-height: 36px;
 }
 
 .color-palette-region {
@@ -1678,6 +1756,7 @@
     -fx-padding: 5;
     -fx-background-radius: 6;
     -fx-background-color: -monet-surface-container-low;
+    -fx-background-insets: 0.0;
     -fx-border-radius: 6;
 }
 
@@ -1725,11 +1804,6 @@
 
 .jfx-decorator-title {
     -fx-font-size: 14;
-}
-
-.window {
-    -fx-background-color: transparent;
-    -fx-padding: 8;
 }
 
 .debug-border {
@@ -1893,6 +1967,15 @@
     -fx-font-style: italic;
 }
 
+.html-code {
+    -fx-font-size: 15;
+}
+
+.html .separator > .line {
+    -fx-border-color: -monet-outline-variant;
+    -fx-border-width: 0.5;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Tooltip                                                                     *
@@ -1964,13 +2047,141 @@
 }
 
 .line-select-button .menu-container:selected .subtitle-label {
-    -fx-text-fill: -monet-primary-container;
+    -fx-text-fill: -monet-primary-transparent-80;
 }
 
-.line-toggle-button .jfx-toggle-button {
-    -fx-padding: 0;
+.line-switch .jfx-switch {
+    -jfx-size: 24;
+    -fx-min-height: 30;
+    -fx-pref-height: 30;
+    -fx-max-height: 30;
 }
 
 .update-pane:active .subtitle-label {
     -fx-text-fill: -monet-tertiary;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Mod Changelog                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
+.addon-changelog {
+    -fx-background-color: -monet-surface;
+    -fx-background-radius: 4;
+    -fx-padding: 10;
+    -fx-font-size: 12;
+    -fx-text-fill: -monet-on-surface;
+    -fx-line-spacing: 2;
+}
+
+.addon-changelog .html {
+    -fx-font-size: 12;
+}
+
+.addon-changelog .html-h1 {
+    -fx-font-size: 16.5;
+}
+
+.addon-changelog .html-h2 {
+    -fx-font-size: 15;
+}
+
+.addon-changelog .html-h3 {
+    -fx-font-size: 13.5;
+}
+
+.addon-changelog .html-code {
+    -fx-font-size: 11.25;
+}
+
+.addon-changelog .html-code-block {
+    -fx-padding: 0 3 0 3;
+    -fx-background-radius: 5;
+    /* Should be -monet-surface-bright in dark mode and -dim in light mode, however that's not supported */
+    -fx-background-color: -monet-surface-container;
+}
+
+.addon-changelog-table-cell {
+    -fx-text-fill: -monet-primary;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * JFX Date Picker                                                             *
+ *                                                                             *
+ ******************************************************************************/
+
+.jfx-date-picker {
+    -jfx-default-color: -monet-primary;
+}
+
+.date-picker-popup {
+    -fx-padding: 5;
+    -fx-background-color: -monet-surface-container-high;
+    -fx-background-radius: 4;
+}
+
+.date-picker-popup .spinner .spinner-label {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.date-picker-popup .month-year-pane,
+.date-picker-popup .content {
+    -fx-background-color: transparent;
+}
+
+.date-picker-popup .separator .line {
+    -fx-border-width: 1;
+    -fx-border-color: -monet-outline-variant;
+}
+
+.date-picker-popup .content .spinner-label,
+.date-picker-popup .data-picker-list-cell .spinner-label {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.date-picker-popup .data-picker-list-cell:selected {
+    -fx-background-color: -monet-secondary-container;
+}
+
+.date-picker-popup .date-cell {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.date-picker-popup .day-cell {
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-background-color: transparent;
+}
+
+.date-picker-popup .day-cell.today {
+    -fx-border-color: -monet-primary;
+    -fx-text-fill: -monet-primary;
+}
+
+.date-picker-popup .day-cell.previous-month,
+.date-picker-popup .day-cell.next-month {
+    -fx-background-color: transparent;
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.date-picker-popup .day-cell.hovered {
+    -fx-background-color: -monet-surface-container-highest;
+}
+
+.date-picker-popup .day-cell.selected,
+.date-picker-popup .day-cell.selected.hovered{
+    -fx-background-color: -monet-primary;
+    -fx-text-fill: -monet-on-primary;
+}
+
+.date-picker-popup .left-button .jfx-svg-glyph,
+.date-picker-popup .right-button .jfx-svg-glyph {
+    -fx-fill: -monet-on-surface-variant;
+}
+
+.date-picker-popup .title {
+    -fx-text-fill: -monet-on-surface-variant;
 }

@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.task;
 
 import javafx.application.Platform;
@@ -22,11 +7,13 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandles;
@@ -655,8 +642,8 @@ public abstract class Task<T> {
     }
 
     /**
-     * Returns a new Task that, when this task completes
-     * normally, executes the given action using the default Executor.
+     * Returns a new Task that executes the given action when this task completes,
+     * regardless of whether this task succeeds or fails, using the default Executor.
      *
      * @param action the action to perform before completing the
      *               returned Task
@@ -667,8 +654,8 @@ public abstract class Task<T> {
     }
 
     /**
-     * Returns a new Task that, when this task completes
-     * normally, executes the given action using the supplied Executor.
+     * Returns a new Task that executes the given action when this task completes,
+     * regardless of whether this task succeeds or fails, using the supplied Executor.
      *
      * @param action   the action to perform before completing the
      *                 returned Task
@@ -680,8 +667,8 @@ public abstract class Task<T> {
     }
 
     /**
-     * Returns a new Task that, when this task completes
-     * normally, executes the given action using the supplied Executor.
+     * Returns a new Task that executes the given action when this task completes,
+     * regardless of whether this task succeeds or fails, using the supplied Executor.
      *
      * @param name     the name of this new Task for displaying
      * @param action   the action to perform before completing the
@@ -894,6 +881,7 @@ public abstract class Task<T> {
 
         public StagesHintTask(List<StagesHint> hints) {
             this.hints = hints;
+            setSignificance(TaskSignificance.MODERATE);
         }
 
         @Override
@@ -977,6 +965,19 @@ public abstract class Task<T> {
         return fromCompletableFuture(CompletableFuture.completedFuture(value));
     }
 
+    /// Creates a task backed by a future that has already completed exceptionally.
+    ///
+    /// The failure is processed by the task executor when the task is submitted;
+    /// this method does not start execution or notify task listeners.
+    ///
+    /// @param <V> the task's result type
+    /// @param failure the exception completing the backing future
+    /// @return a new task backed by the failed future
+    /// @throws NullPointerException if failure is null
+    public static <V> @NotNull Task<V> failed(@NotNull Exception failure) {
+        return fromCompletableFuture(CompletableFuture.failedFuture(failure));
+    }
+
     /**
      * Returns a new Task that is completed when all of the given Tasks
      * complete.  If any of the given Tasks complete exceptionally,
@@ -1018,6 +1019,24 @@ public abstract class Task<T> {
             @Override
             public Collection<? extends Task<?>> getDependents() {
                 return tasks;
+            }
+        };
+    }
+
+    public static <T, U> Task<Pair<T, U>> combine(Task<? extends T> task1, Task<? extends U> task2) {
+        return new Task<>() {
+            {
+                setSignificance(TaskSignificance.MINOR);
+            }
+
+            @Override
+            public void execute() {
+                setResult(Pair.pair(task1.getResult(), task2.getResult()));
+            }
+
+            @Override
+            public Collection<? extends Task<?>> getDependents() {
+                return List.of(task1, task2);
             }
         };
     }
@@ -1191,6 +1210,7 @@ public abstract class Task<T> {
     private final class StageTask extends Task<T> {
         private StageTask(String stage) {
             this.setStage(stage);
+            setSignificance(TaskSignificance.MODERATE);
         }
 
         @Override

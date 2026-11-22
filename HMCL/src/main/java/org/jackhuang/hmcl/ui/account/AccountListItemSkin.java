@@ -1,26 +1,12 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
@@ -34,6 +20,7 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -86,6 +73,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
 
         center.getChildren().setAll(canvas, item);
         root.setCenter(center);
+        BorderPane.setMargin(center, new Insets(0, 0, 0, 8));
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
@@ -95,24 +83,15 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerMove.getStyleClass().add("small-spinner-pane");
         btnMove.setOnAction(e -> {
             Account account = skinnable.getAccount();
-            Accounts.getAccounts().remove(account);
-            if (account.isPortable()) {
-                account.setPortable(false);
-                if (!Accounts.getAccounts().contains(account))
-                    Accounts.getAccounts().add(account);
-            } else {
-                account.setPortable(true);
-                if (!Accounts.getAccounts().contains(account)) {
-                    int idx = 0;
-                    for (int i = Accounts.getAccounts().size() - 1; i >= 0; i--) {
-                        if (Accounts.getAccounts().get(i).isPortable()) {
-                            idx = i + 1;
-                            break;
-                        }
-                    }
-                    Accounts.getAccounts().add(idx, account);
-                }
+            if (!Accounts.canMoveAccount(account)) {
+                Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
+                    Accounts.forceOverwriteAccountFiles();
+                    moveAccount(skinnable);
+                });
+                return;
             }
+
+            moveAccount(skinnable);
         });
         btnMove.getStyleClass().add("toggle-icon4");
         if (skinnable.getAccount().isPortable()) {
@@ -128,6 +107,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnRefresh = FXUtils.newToggleButton4(SVG.REFRESH);
         SpinnerPane spinnerRefresh = new SpinnerPane();
         spinnerRefresh.getStyleClass().setAll("small-spinner-pane");
+        spinnerRefresh.setPrefSize(30.0, 30.0);
         if (skinnable.getAccount() instanceof MicrosoftAccount && Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
             btnRefresh.setDisable(true);
             FXUtils.installFastTooltip(spinnerRefresh, i18n("account.methods.microsoft.snapshot.tooltip"));
@@ -159,19 +139,16 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
                         .start();
             }
         });
-        FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload"));
+        FXUtils.installFastTooltip(btnUpload, i18n("account.skin." + (skinnable.getAccount() instanceof OfflineAccount ? "edit" : "upload")));
         btnUpload.disableProperty().bind(Bindings.not(skinnable.canUploadSkin()));
         spinnerUpload.setContent(btnUpload);
         spinnerUpload.getStyleClass().add("small-spinner-pane");
         right.getChildren().add(spinnerUpload);
 
         JFXButton btnCopyUUID = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
-        SpinnerPane spinnerCopyUUID = new SpinnerPane();
-        spinnerCopyUUID.getStyleClass().add("small-spinner-pane");
-        btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getUUID().toString()));
+        btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getProfileID().toString()));
         FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid"));
-        spinnerCopyUUID.setContent(btnCopyUUID);
-        right.getChildren().add(spinnerCopyUUID);
+        right.getChildren().add(btnCopyUUID);
 
         JFXButton btnRemove = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
         btnRemove.setOnAction(e -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::remove, null));
@@ -185,5 +162,28 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXDepthManager.setDepth(root, 1);
 
         getChildren().setAll(root);
+    }
+
+    /// Moves the account between local and user account files.
+    private static void moveAccount(AccountListItem skinnable) {
+        Account account = skinnable.getAccount();
+        Accounts.getAccounts().remove(account);
+        if (account.isPortable()) {
+            account.setPortable(false);
+            if (!Accounts.getAccounts().contains(account))
+                Accounts.getAccounts().add(account);
+        } else {
+            account.setPortable(true);
+            if (!Accounts.getAccounts().contains(account)) {
+                int idx = 0;
+                for (int i = Accounts.getAccounts().size() - 1; i >= 0; i--) {
+                    if (Accounts.getAccounts().get(i).isPortable()) {
+                        idx = i + 1;
+                        break;
+                    }
+                }
+                Accounts.getAccounts().add(idx, account);
+            }
+        }
     }
 }

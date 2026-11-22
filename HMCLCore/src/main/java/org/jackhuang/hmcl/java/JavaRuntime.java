@@ -1,26 +1,12 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2024 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.java;
 
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.Bits;
+import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +21,7 @@ import java.nio.file.Paths;
 public final class JavaRuntime implements Comparable<JavaRuntime> {
 
     public static JavaRuntime of(Path binary, JavaInfo info, boolean isManaged) {
-        String javacName = info.getPlatform().getOperatingSystem() == OperatingSystem.WINDOWS ? "javac.exe" : "javac";
+        String javacName = info.getPlatform().os() == OperatingSystem.WINDOWS ? "javac.exe" : "javac";
         return new JavaRuntime(binary, info, isManaged, Files.isRegularFile(binary.resolveSibling(javacName)));
     }
 
@@ -59,20 +45,24 @@ public final class JavaRuntime implements Comparable<JavaRuntime> {
         return binary;
     }
 
+    public JavaInfo getInfo() {
+        return info;
+    }
+
     public String getVersion() {
         return info.getVersion();
     }
 
-    public Platform getPlatform() {
+    public NativePlatform getPlatform() {
         return info.getPlatform();
     }
 
     public Architecture getArchitecture() {
-        return getPlatform().getArchitecture();
+        return getPlatform().arch();
     }
 
     public Bits getBits() {
-        return getPlatform().getBits();
+        return getPlatform().arch().getBits();
     }
 
     public VersionNumber getVersionNumber() {
@@ -140,7 +130,7 @@ public final class JavaRuntime implements Comparable<JavaRuntime> {
         String javaHome = System.getProperty("java.home");
         Path executable = null;
         if (javaHome != null) {
-            executable = Paths.get(javaHome, "bin", OperatingSystem.CURRENT_OS.getJavaExecutable());
+            executable = Paths.get(javaHome, "bin", SystemInfo.CURRENT_OS.getJavaExecutable());
             try {
                 executable = executable.toRealPath();
             } catch (IOException ignored) {

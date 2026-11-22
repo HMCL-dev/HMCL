@@ -1,23 +1,9 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.terracotta;
 
 import kala.compress.archivers.tar.TarArchiveEntry;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -27,15 +13,14 @@ import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.logging.Logger;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.tree.TarFileTree;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
-import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestInputStream;
@@ -45,16 +30,21 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 public final class TerracottaBundle {
     private final Path root;
 
-    private final List<URI> links;
+    /// Candidate bundle URLs in attempt order.
+    private final List<WebURL> links;
 
     private final FileDownloadTask.IntegrityCheck hash;
 
     private final Map<String, FileDownloadTask.IntegrityCheck> files;
 
-    public TerracottaBundle(Path root, List<URI> links, FileDownloadTask.IntegrityCheck hash, Map<String, FileDownloadTask.IntegrityCheck> files) {
+    /// Creates a bundle using the supplied download candidates and archive/file integrity metadata.
+    /// The candidate list and file map are retained without copying.
+    public TerracottaBundle(Path root, List<WebURL> links, FileDownloadTask.IntegrityCheck hash, Map<String, FileDownloadTask.IntegrityCheck> files) {
         this.root = root;
         this.links = links;
         this.hash = hash;
@@ -66,12 +56,18 @@ public final class TerracottaBundle {
                 .thenComposeAsync(Schedulers.javafx(), pkg -> {
                     FileDownloadTask download = new FileDownloadTask(links, pkg, hash) {
                         @Override
-                        protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
+                        protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
                             FetchTask.Context delegate = super.getContext(response, checkETag, bmclapiHash);
                             return new Context() {
                                 @Override
                                 public void withResult(boolean success) {
+                                    super.withResult(success);
                                     delegate.withResult(success);
+                                }
+
+                                @Override
+                                public void reset() throws IOException {
+                                    delegate.reset();
                                 }
 
                                 @Override
@@ -113,7 +109,7 @@ public final class TerracottaBundle {
                         throw new ArtifactMalformedException(String.format("Expecting %s file in terracotta bundle.", file));
                     }
 
-                    MessageDigest digest = DigestUtils.getDigest(check.getAlgorithm());
+                    MessageDigest digest = DigestUtils.getDigest(check.algorithm());
                     try (
                             InputStream is = tree.getInputStream(archive);
                             OutputStream os = new DigestOutputStream(Files.newOutputStream(path), digest)
@@ -122,11 +118,11 @@ public final class TerracottaBundle {
                     }
 
                     String hash = HexFormat.of().formatHex(digest.digest());
-                    if (!check.getChecksum().equalsIgnoreCase(hash)) {
-                        throw new ChecksumMismatchException(check.getAlgorithm(), check.getChecksum(), hash);
+                    if (!check.checksum().equalsIgnoreCase(hash)) {
+                        throw new ChecksumMismatchException(check.algorithm(), check.checksum(), hash);
                     }
 
-                    switch (OperatingSystem.CURRENT_OS) {
+                    switch (SystemInfo.CURRENT_OS) {
                         case LINUX, MACOS, FREEBSD -> Files.setPosixFilePermissions(path, FileUtils.parsePosixFilePermission(archive.getMode()));
                     }
                 }
@@ -156,7 +152,7 @@ public final class TerracottaBundle {
                 return AbstractTerracottaProvider.Status.LEGACY_VERSION;
             }
         } catch (IOException e) {
-            Logger.LOG.warning("Cannot determine whether legacy versions exist.", e);
+            LOG.warning("Cannot determine whether legacy versions exist.", e);
         }
         return AbstractTerracottaProvider.Status.NOT_EXIST;
     }
@@ -172,7 +168,7 @@ public final class TerracottaBundle {
                 return false;
             }
 
-            MessageDigest digest = DigestUtils.getDigest(check.getAlgorithm());
+            MessageDigest digest = DigestUtils.getDigest(check.algorithm());
             try (InputStream is = new DigestInputStream(Files.newInputStream(path), digest)) {
                 int n;
                 while ((n = is.read(buffer)) >= 0) {
@@ -182,7 +178,7 @@ public final class TerracottaBundle {
                     }
                 }
             }
-            if (!HexFormat.of().formatHex(digest.digest()).equalsIgnoreCase(check.getChecksum())) {
+            if (!HexFormat.of().formatHex(digest.digest()).equalsIgnoreCase(check.checksum())) {
                 return false;
             }
         }

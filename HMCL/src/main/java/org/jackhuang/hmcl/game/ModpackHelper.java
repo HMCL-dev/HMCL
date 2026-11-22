@@ -1,53 +1,38 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.mod.*;
-import org.jackhuang.hmcl.mod.curse.CurseModpackProvider;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackProvider;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackProvider;
-import org.jackhuang.hmcl.mod.multimc.MultiMCComponents;
-import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
-import org.jackhuang.hmcl.mod.multimc.MultiMCModpackProvider;
-import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
-import org.jackhuang.hmcl.mod.server.ServerModpackProvider;
-import org.jackhuang.hmcl.mod.server.ServerModpackRemoteInstallTask;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.modpack.*;
+import org.jackhuang.hmcl.modpack.curse.CurseModpackProvider;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackProvider;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackProvider;
+import org.jackhuang.hmcl.modpack.multimc.MultiMCComponents;
+import org.jackhuang.hmcl.modpack.multimc.MultiMCInstanceConfiguration;
+import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackProvider;
+import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
+import org.jackhuang.hmcl.modpack.server.ServerModpackProvider;
+import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,12 +40,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.Set;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Lang.toIterable;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
+/// Utilities for reading, installing, and applying modpack-specific game settings.
+@NotNullByDefault
 public final class ModpackHelper {
     private ModpackHelper() {
     }
@@ -75,7 +61,7 @@ public final class ModpackHelper {
     );
 
     static {
-        MultiMCComponents.setImplementation(Metadata.FULL_TITLE);
+        MultiMCComponents.setImplementation(Metadata.FULL_NAME + " v" + Metadata.VERSION);
     }
 
     @Nullable
@@ -88,8 +74,8 @@ public final class ModpackHelper {
         return "zip".equals(ext) || "mrpack".equals(ext);
     }
 
-    public static Modpack readModpackManifest(Path file, Charset charset) throws UnsupportedModpackException, ManuallyCreatedModpackException {
-        try (ZipArchiveReader zipFile = CompressingUtils.openZipFile(file, charset)) {
+    public static Modpack readModpackManifest(Path file) throws UnsupportedModpackException, ManuallyCreatedModpackException {
+        try (ZipArchiveReader zipFile = CompressingUtils.openZipFile(file)) {
             // Order for trying detecting manifest is necessary here.
             // Do not change to iterating providers.
             for (ModpackProvider provider : new ModpackProvider[]{
@@ -100,15 +86,15 @@ public final class ModpackHelper {
                     MultiMCModpackProvider.INSTANCE,
                     ServerModpackProvider.INSTANCE}) {
                 try {
-                    return provider.readManifest(zipFile, file, charset);
+                    return provider.readManifest(zipFile, file);
                 } catch (Exception ignored) {
                 }
             }
         } catch (IOException ignored) {
         }
 
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file, charset)) {
-            findMinecraftDirectoryInManuallyCreatedModpack(file.toString(), fs);
+        try {
+            findMinecraftDirectoryInManuallyCreatedModpack(file.toString(), file);
             throw new ManuallyCreatedModpackException(file);
         } catch (IOException e) {
             // ignore it
@@ -117,28 +103,35 @@ public final class ModpackHelper {
         throw new UnsupportedModpackException(file.toString());
     }
 
-    public static Path findMinecraftDirectoryInManuallyCreatedModpack(String modpackName, FileSystem fs) throws IOException, UnsupportedModpackException {
-        Path root = fs.getPath("/");
-        if (isMinecraftDirectory(root)) return root;
-        try (Stream<Path> firstLayer = Files.list(root)) {
-            for (Path dir : toIterable(firstLayer)) {
-                if (isMinecraftDirectory(dir)) return dir;
+    public static String findMinecraftDirectoryInManuallyCreatedModpack(String modpackName, Path zipPath)
+            throws IOException, UnsupportedModpackException {
 
-                try (Stream<Path> secondLayer = Files.list(dir)) {
-                    for (Path subdir : toIterable(secondLayer)) {
-                        if (isMinecraftDirectory(subdir)) return subdir;
+        try (ArchiveFileTree<?, ?> tree = ArchiveFileTree.open(zipPath)) {
+            ArchiveFileTree.Dir<?> rootDir = tree.getRoot();
+
+            if (isMinecraftDirectory(rootDir)) {
+                return "";
+            }
+
+
+            for (ArchiveFileTree.Dir<?> firstLayer : rootDir.getSubDirs().values()) {
+                if (isMinecraftDirectory(firstLayer)) {
+                    return firstLayer.getName();
+                }
+
+                for (ArchiveFileTree.Dir<?> secondLayer : firstLayer.getSubDirs().values()) {
+                    if (isMinecraftDirectory(secondLayer)) {
+                        return firstLayer.getName() + "/" + secondLayer.getName();
                     }
-                } catch (IOException ignored) {
                 }
             }
-        } catch (IOException ignored) {
         }
+
         throw new UnsupportedModpackException(modpackName);
     }
 
-    private static boolean isMinecraftDirectory(Path path) {
-        return Files.isDirectory(path.resolve("versions")) &&
-                (path.getFileName() == null || ".minecraft".equals(FileUtils.getName(path)));
+    private static boolean isMinecraftDirectory(ArchiveFileTree.Dir<?> dir) {
+        return dir.getSubDirs().containsKey("versions") && (dir.isRoot() || ".minecraft".equals(dir.getName()));
     }
 
     public static ModpackConfiguration<?> readModpackConfiguration(Path file) throws IOException {
@@ -149,16 +142,10 @@ public final class ModpackHelper {
         }
     }
 
-    public static Task<?> getInstallTask(Profile profile, ServerModpackManifest manifest, String name, Modpack modpack) {
-        profile.getRepository().markVersionAsModpack(name);
-
+    public static Task<?> getInstallTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId, Modpack modpack) {
         ExceptionalRunnable<?> success = () -> {
-            HMCLGameRepository repository = profile.getRepository();
-            repository.refreshVersions();
-            VersionSetting vs = repository.specializeVersionSetting(name);
-            repository.undoMark(name);
-            if (vs != null)
-                vs.setGameDirType(GameDirectoryType.VERSION_FOLDER);
+            repository.refresh();
+            repository.getInstance(instanceId).enableIsolation();
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
@@ -168,8 +155,9 @@ public final class ModpackHelper {
             }
         };
 
-        return new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name)
+        return new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId)
                 .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                .withStage("hmcl.modpack")
                 .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
@@ -177,30 +165,49 @@ public final class ModpackHelper {
         return Files.exists(Paths.get("externalgames").resolve(name));
     }
 
-    public static Task<?> getInstallManuallyCreatedModpackTask(Profile profile, Path zipFile, String name, Charset charset) {
+    /// Extracts a manually created modpack and selects its new external game directory.
+    public static Task<?> getInstallManuallyCreatedModpackTask(Path zipFile, String name) {
         if (isExternalGameNameConflicts(name)) {
             throw new IllegalArgumentException("name existing");
         }
 
-        return new ManuallyCreatedModpackInstallTask(profile, zipFile, charset, name)
+        return new ManuallyCreatedModpackInstallTask(zipFile, name)
                 .thenAcceptAsync(Schedulers.javafx(), location -> {
-                    Profile newProfile = new Profile(name, location);
-                    newProfile.setUseRelativePath(true);
-                    Profiles.getProfiles().add(newProfile);
-                    Profiles.setSelectedProfile(newProfile);
-                });
+                    GameDirectory newGameDirectory = new GameDirectory(
+                            GameDirectoryManager.newGameDirectoryId(),
+                            LocalizedText.plain(name),
+                            PortablePath.fromPath(location));
+                    GameDirectoryManager.addLocalGameDirectory(newGameDirectory);
+                    GameDirectoryManager.setSelectedGameDirectory(newGameDirectory);
+                })
+                .withStage("hmcl.modpack")
+                .withStagesHints("hmcl.modpack");
     }
 
-    public static Task<?> getInstallTask(Profile profile, Path zipFile, String name, Modpack modpack, String iconUrl) {
-        profile.getRepository().markVersionAsModpack(name);
+    public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, Modpack modpack, @Nullable String iconUrl) {
+        return getInstallTask(repository, zipFile, instanceId, modpack, iconUrl, null);
+    }
 
+    /// Creates an install task that respects optional-file selection.
+    ///
+    /// @param repository      the target repository
+    /// @param zipFile         the modpack archive
+    /// @param instanceId      the new instance id
+    /// @param modpack         the parsed modpack
+    /// @param iconUrl         the optional icon URL, or `null`
+    /// @param excludedFiles keys of optional files the user chose not to install; `null` means install all.
+    ///                        When non-null, must not contain `null` elements.
+    /// @return the install task
+    public static Task<?> getInstallTask(
+            HMCLGameRepository repository,
+            Path zipFile,
+            GameInstanceID instanceId,
+            Modpack modpack,
+            @Nullable String iconUrl,
+            @Nullable Set<String> excludedFiles) {
         ExceptionalRunnable<?> success = () -> {
-            HMCLGameRepository repository = profile.getRepository();
-            repository.refreshVersions();
-            VersionSetting vs = repository.specializeVersionSetting(name);
-            repository.undoMark(name);
-            if (vs != null)
-                vs.setGameDirType(GameDirectoryType.VERSION_FOLDER);
+            repository.refresh();
+            repository.getInstance(instanceId).enableIsolation();
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
@@ -211,114 +218,181 @@ public final class ModpackHelper {
         };
 
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconUrl)
+            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
+                    .thenComposeAsync(createMultiMCPostInstallTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
+                    .withStage("hmcl.modpack")
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconUrl)
+            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name))
+                    .thenComposeAsync(createMcbbsPostInstallTask(repository, (McbbsModpackManifest) modpack.getManifest(), instanceId))
+                    .withStage("hmcl.modpack")
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconUrl)
-                    .whenComplete(Schedulers.javafx(), success, failure)
+            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
+                    .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                    .withStage("hmcl.modpack")
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
-    public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
+    /// Updates a server modpack with backup, repository refresh, and modpack stage hints.
+    public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
         switch (configuration.getType()) {
-            case ServerModpackRemoteInstallTask.MODPACK_TYPE:
-                return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name))
-                        .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
+            case ServerModpackRemoteInstallTask.MODPACK_TYPE: {
+                HMCLGameInstance instance = repository.getInstance(instanceId);
+                return new ModpackUpdateTask(
+                        instance,
+                        new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instance))
+                        .thenComposeAsync(repository.refreshAsync())
+                        .withStage("hmcl.modpack")
                         .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
+            }
             default:
                 throw new UnsupportedModpackException();
         }
     }
 
-    public static Task<?> getUpdateTask(Profile profile, Path zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
-        Modpack modpack = ModpackHelper.readModpackManifest(zipFile, charset);
-        ModpackProvider provider = getProviderByType(configuration.getType());
+    public static Task<?> getUpdateTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
+        return getUpdateTask(repository, zipFile, instanceId, configuration, null);
+    }
+
+    /// Creates an update task that respects optional-file selection.
+    ///
+    /// @param repository      the target repository
+    /// @param zipFile         the modpack archive
+    /// @param instanceId      the instance to update
+    /// @param configuration   the existing modpack configuration
+    /// @param excludedFiles keys of optional files the user chose not to install; `null` means install all.
+    ///                        When non-null, must not contain `null` elements.
+    /// @return the update task
+    public static Task<?> getUpdateTask(
+            HMCLGameRepository repository,
+            Path zipFile,
+            GameInstanceID instanceId,
+            ModpackConfiguration<?> configuration,
+            @Nullable Set<String> excludedFiles)
+            throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
+        Modpack modpack = ModpackHelper.readModpackManifest(zipFile);
+        @Nullable ModpackProvider provider = getProviderByType(configuration.getType());
         if (provider == null) {
             throw new UnsupportedModpackException();
         }
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack)
-                    .thenComposeAsync(() -> createMultiMCPostUpdateTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
-                    .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
+            return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack, excludedFiles)
+                    .thenComposeAsync(() -> createMultiMCPostUpdateTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
+                    .thenComposeAsync(repository.refreshAsync())
+                    .withStage("hmcl.modpack")
+                    .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else
-            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack)
-                    .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
+            return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack, excludedFiles)
+                    .thenComposeAsync(repository.refreshAsync())
+                    .withStage("hmcl.modpack")
+                    .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
-    public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {
-        vs.setUsesGlobal(false);
-        vs.setGameDirType(GameDirectoryType.VERSION_FOLDER);
+    public static void toGameSettings(MultiMCInstanceConfiguration c, GameSettings.Instance setting) {
+        setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
 
         if (c.isOverrideJavaLocation()) {
-            vs.setJavaDir(Lang.nonNull(c.getJavaPath(), ""));
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_JAVA_TYPE);
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_CUSTOM_JAVA_PATH);
+            setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
+            setting.customJavaPathProperty().setValue(Objects.requireNonNullElse(c.getJavaPath(), ""));
         }
 
         if (c.isOverrideMemory()) {
-            vs.setPermSize(Optional.ofNullable(c.getPermGen()).map(Object::toString).orElse(""));
+            setting.getOverrideProperties().addAll(List.of(
+                    GameSettings.PROPERTY_AUTO_MEMORY,
+                    GameSettings.PROPERTY_PERM_SIZE,
+                    GameSettings.PROPERTY_MAX_MEMORY,
+                    GameSettings.PROPERTY_MIN_MEMORY
+            ));
+            setting.permSizeProperty().setValue(Optional.ofNullable(c.getPermGen()).map(Object::toString).orElse(""));
             if (c.getMaxMemory() != null)
-                vs.setMaxMemory(c.getMaxMemory());
-            vs.setMinMemory(c.getMinMemory());
+                setting.maxMemoryProperty().setValue(c.getMaxMemory());
+            setting.minMemoryProperty().setValue(c.getMinMemory());
         }
 
         if (c.isOverrideCommands()) {
-            vs.setWrapper(Lang.nonNull(c.getWrapperCommand(), ""));
-            vs.setPreLaunchCommand(Lang.nonNull(c.getPreLaunchCommand(), ""));
+            setting.getOverrideProperties().addAll(List.of(
+                    GameSettings.PROPERTY_COMMAND_WRAPPER,
+                    GameSettings.PROPERTY_PRE_LAUNCH_COMMAND
+            ));
+            setting.commandWrapperProperty().setValue(Objects.requireNonNullElse(c.getWrapperCommand(), ""));
+            setting.preLaunchCommandProperty().setValue(Objects.requireNonNullElse(c.getPreLaunchCommand(), ""));
         }
 
         if (c.isOverrideJavaArgs()) {
-            vs.setJavaArgs(Lang.nonNull(c.getJvmArgs(), ""));
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_JVM_OPTIONS);
+            setting.jvmOptionsProperty().setValue(Objects.requireNonNullElse(c.getJvmArgs(), ""));
         }
 
         if (c.isOverrideConsole()) {
-            vs.setShowLogs(c.isShowConsole());
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_SHOW_LOGS);
+            setting.showLogsProperty().setValue(c.isShowConsole());
         }
 
         if (c.isOverrideWindow()) {
-            vs.setFullscreen(c.isFullscreen());
+            setting.getOverrideProperties().addAll(List.of(
+                    GameSettings.PROPERTY_WINDOW_TYPE,
+                    GameSettings.PROPERTY_WIDTH,
+                    GameSettings.PROPERTY_HEIGHT
+            ));
+            setting.windowTypeProperty().setValue(c.isFullscreen() ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);
             if (c.getWidth() != null)
-                vs.setWidth(c.getWidth());
+                setting.widthProperty().setValue(c.getWidth().doubleValue());
             if (c.getHeight() != null)
-                vs.setHeight(c.getHeight());
+                setting.heightProperty().setValue(c.getHeight().doubleValue());
         }
     }
 
-    private static void applyCommandAndJvmSettings(MultiMCInstanceConfiguration c, VersionSetting vs) {
+    private static void applyCommandAndJvmSettings(MultiMCInstanceConfiguration c, GameSettings.Instance setting) {
         if (c.isOverrideCommands()) {
-            vs.setWrapper(Lang.nonNull(c.getWrapperCommand(), ""));
-            vs.setPreLaunchCommand(Lang.nonNull(c.getPreLaunchCommand(), ""));
+            setting.getOverrideProperties().addAll(List.of(
+                    GameSettings.PROPERTY_COMMAND_WRAPPER,
+                    GameSettings.PROPERTY_PRE_LAUNCH_COMMAND
+            ));
+            setting.commandWrapperProperty().setValue(Lang.nonNull(c.getWrapperCommand(), ""));
+            setting.preLaunchCommandProperty().setValue(Lang.nonNull(c.getPreLaunchCommand(), ""));
         }
 
         if (c.isOverrideJavaArgs()) {
-            vs.setJavaArgs(Lang.nonNull(c.getJvmArgs(), ""));
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_JVM_OPTIONS);
+            setting.jvmOptionsProperty().setValue(Lang.nonNull(c.getJvmArgs(), ""));
         }
     }
 
-    private static Task<Void> createMultiMCPostUpdateTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
+    private static Task<Void> createMultiMCPostUpdateTask(HMCLGameRepository repository, MultiMCInstanceConfiguration manifest, GameInstanceID instanceId) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
-            ModpackHelper.applyCommandAndJvmSettings(manifest, vs);
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettingsOrCreate(instanceId));
+            ModpackHelper.applyCommandAndJvmSettings(manifest, setting);
         });
     }
 
-    private static Task<Void> createMultiMCPostInstallTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
+    private static Task<Void> createMultiMCPostInstallTask(HMCLGameRepository repository, MultiMCInstanceConfiguration manifest, GameInstanceID instanceId) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
-            ModpackHelper.toVersionSetting(manifest, vs);
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettingsOrCreate(instanceId));
+            ModpackHelper.toGameSettings(manifest, setting);
         });
     }
 
-    private static Task<Void> createMcbbsPostInstallTask(Profile profile, McbbsModpackManifest manifest, String version) {
+    private static Task<Void> createMcbbsPostInstallTask(HMCLGameRepository repository, McbbsModpackManifest manifest, GameInstanceID instanceId) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
-            if (manifest.getLaunchInfo().getMinMemory() > vs.getMaxMemory())
-                vs.setMaxMemory(manifest.getLaunchInfo().getMinMemory());
+            GameSettings.Effective effective = repository.getEffectiveGameSettings(instanceId);
+            if (manifest.getLaunchInfo().getMinMemory() > effective.getMaxMemory()) {
+                GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettingsOrCreate(instanceId));
+                setting.getOverrideProperties().addAll(List.of(
+                        GameSettings.PROPERTY_AUTO_MEMORY,
+                        GameSettings.PROPERTY_MIN_MEMORY,
+                        GameSettings.PROPERTY_MAX_MEMORY,
+                        GameSettings.PROPERTY_PERM_SIZE
+                ));
+                setting.autoMemoryProperty().setValue(effective.getInheritable(GameSettings::autoMemoryProperty));
+                setting.minMemoryProperty().setValue(effective.getInheritable(GameSettings::minMemoryProperty));
+                setting.maxMemoryProperty().setValue(manifest.getLaunchInfo().getMinMemory());
+                setting.permSizeProperty().setValue(effective.getInheritable(GameSettings::permSizeProperty));
+            }
         });
     }
 }

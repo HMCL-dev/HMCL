@@ -1,27 +1,11 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.application.Platform;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.modpack.Modpack;
+import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.WebPage;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -46,7 +30,7 @@ public final class RemoteModpackPage extends ModpackPage {
             throw new IllegalStateException("MODPACK_SERVER_MANIFEST should exist");
 
         try {
-            controller.getSettings().put(MODPACK_MANIFEST, manifest.toModpack(null));
+            controller.getSettings().put(MODPACK_MANIFEST, manifest.toModpack());
         } catch (IOException e) {
             Controllers.dialog(i18n("modpack.type.server.malformed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             Platform.runLater(controller::onEnd);
@@ -57,18 +41,17 @@ public final class RemoteModpackPage extends ModpackPage {
         versionProperty.set(manifest.getVersion());
         authorProperty.set(manifest.getAuthor());
 
-        Profile profile = controller.getSettings().get(ModpackPage.PROFILE);
+        HMCLGameRepository repository = controller.getSettings().get(ModpackPage.REPOSITORY);
         String name = controller.getSettings().get(MODPACK_NAME);
         if (name != null) {
             txtModpackName.setText(name);
             txtModpackName.setDisable(true);
         } else {
-            // trim: https://github.com/HMCL-dev/HMCL/issues/962
-            txtModpackName.setText(manifest.getName().trim());
+            txtModpackName.setText(LocalModpackPage.processModpackName(manifest.getName()));
             txtModpackName.getValidators().addAll(
                     new RequiredValidator(),
-                    new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().versionIdConflicts(str)),
-                    new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
+                    new Validator(i18n("install.new_game.already_exists"), str -> !repository.instanceIdConflicts(str)),
+                    new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
         }
 
         btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));

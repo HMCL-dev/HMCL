@@ -1,26 +1,12 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import org.jackhuang.hmcl.countly.CrashReport;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.CrashWindow;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -66,6 +52,11 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
                         alert.setHeaderText(i18n("message.info"));
                         alert.showAndWait();
                     } catch (Throwable t) {
+                        try {
+                            SwingUtils.showErrorDialog(info);
+                        } catch (Throwable t2) {
+                            t.addSuppressed(t2);
+                        }
                         LOG.error("Unable to show message", t);
                     }
                 }
@@ -101,7 +92,7 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
             LOG.error("Unable to handle uncaught exception", handlingException);
         }
 
-        FileSaver.shutdown();
+        SettingsManager.shutdown();
         LOG.shutdown();
     }
 }
