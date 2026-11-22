@@ -65,27 +65,24 @@ public class JFXButtonSkin extends ButtonSkin {
 
     public JFXButtonSkin(JFXButton button) {
         super(button);
-        if (!AnimationUtils.isAnimationEnabled()) {
+        boolean staticPressFeedback = !AnimationUtils.isAnimationEnabled()
+                && button.getStyleClass().contains("jfx-decorator-button");
+        if (staticPressFeedback) {
             this.buttonRippler.setRipplerDisabled(true);
         }
-        this.getSkinnable().armedProperty().addListener((o, oldVal, newVal) -> {
-            if (newVal) {
+        button.armedProperty().addListener((observable, wasArmed, armed) -> {
+            if (staticPressFeedback) {
+                this.buttonRippler.setOverlayVisibleImmediately(armed);
+            } else if (armed) {
                 this.releaseManualRippler = this.buttonRippler.createManualRipple();
-                if (this.clickedAnimation != null) {
-                    this.clickedAnimation.setRate(1.0);
-                    this.clickedAnimation.play();
-                }
-            } else {
-                if (this.releaseManualRippler != null) {
-                    this.releaseManualRippler.run();
-                }
-
-                if (this.clickedAnimation != null) {
-                    this.clickedAnimation.setRate(-1.0);
-                    this.clickedAnimation.play();
-                }
+            } else if (this.releaseManualRippler != null) {
+                this.releaseManualRippler.run();
             }
 
+            if (this.clickedAnimation != null) {
+                this.clickedAnimation.setRate(armed ? 1.0 : -1.0);
+                this.clickedAnimation.play();
+            }
         });
         this.buttonContainer.getChildren().add(this.buttonRippler);
         button.buttonTypeProperty().addListener((o, oldVal, newVal) -> this.updateButtonType(newVal));
@@ -115,7 +112,9 @@ public class JFXButtonSkin extends ButtonSkin {
                 this.buttonRippler.hideOverlay();
             }
         });
-        button.pressedProperty().addListener((o, oldVal, newVal) -> this.buttonRippler.hideOverlay());
+        if (!staticPressFeedback) {
+            button.pressedProperty().addListener((o, oldVal, newVal) -> this.buttonRippler.hideOverlay());
+        }
         button.setPickOnBounds(false);
         this.buttonContainer.setPickOnBounds(false);
         this.buttonContainer.shapeProperty().bind(this.getSkinnable().shapeProperty());

@@ -320,6 +320,17 @@ public class JFXRippler extends StackPane {
         }
     }
 
+    public void setOverlayVisibleImmediately(boolean visible) {
+        if (visible) {
+            rippler.createOverlay();
+        }
+        if (rippler.overlayRect != null) {
+            rippler.overlayRect.inAnimation.stop();
+            rippler.overlayRect.outAnimation.stop();
+            rippler.overlayRect.setOpacity(visible ? 1 : 0);
+        }
+    }
+
     /**
      * this method will be set to private in future versions of JFoenix,
      * user the method {@link #setOverlayVisible(boolean)}
