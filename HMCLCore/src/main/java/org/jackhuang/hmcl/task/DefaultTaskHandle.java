@@ -265,8 +265,7 @@ public final class DefaultTaskHandle extends TaskHandle {
         public void update(double fraction) {
             if (!(fraction >= 0 && fraction <= 1))
                 throw new IllegalArgumentException("Invalid progress: " + fraction);
-            if (!taskListeners.isEmpty())
-                notifyListeners(listener -> listener.onTaskProgress(task, fraction));
+            notifyListeners(listener -> listener.onTaskProgress(task, fraction));
         }
 
         /// {@inheritDoc}
