@@ -645,11 +645,11 @@ final class TaskExecutionContextTest {
             assertSame(caller, Thread.currentThread());
             return Task.completed(1);
         }).thenSupply(Thread::currentThread);
-        Task<@Nullable Void> finished = supplied.whenComplete(failure -> {
+        Task<Thread> finished = supplied.whenComplete(failure -> {
             assertNull(failure);
             assertSame(caller, Thread.currentThread());
         });
-        task(Runnable::run, context -> context.run(finished)).run();
+        assertSame(caller, task(Runnable::run, context -> context.run(finished)).run());
         assertSame(caller, supplied.resultNow());
     }
 

@@ -162,7 +162,7 @@ public final class JavaDownloadDialog extends StackPane {
             if (selectedVersions.isEmpty())
                 return;
 
-            Task<@Nullable Void> task = Task.allOf(selectedVersions.stream()
+            Task<?> task = Task.allOf(selectedVersions.stream()
                             .map(javaVersion -> JavaManager.getDownloadJavaTask(downloadProvider, platform, javaVersion)
                                     .handle((runtime, failure) -> failure))
                             .toList())

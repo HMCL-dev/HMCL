@@ -140,6 +140,34 @@ public class TaskTest {
         assertSame(error, uncaught.get());
     }
 
+    /// Completion observers preserve the source value for downstream continuations, including null.
+    @Test
+    public void testWhenCompletePreservesResult() throws Exception {
+        StringBuilder value = new StringBuilder("result");
+        Task<StringBuilder> observed = Task.completed(value)
+                .whenComplete(failure -> assertNull(failure))
+                .whenComplete(null, failure -> assertNull(failure))
+                .whenComplete((result, failure) -> {
+                    assertSame(value, result);
+                    assertNull(failure);
+                    value.append('s');
+                })
+                .whenComplete(null, (result, failure) -> {
+                    assertSame(value, result);
+                    assertNull(failure);
+                })
+                .whenComplete(null, () -> value.append('!'), null)
+                .whenComplete(null, result -> assertSame(value, result), null);
+        assertEquals("results!", observed.thenApply(StringBuilder::toString).run());
+        assertSame(value, observed.resultNow());
+
+        Task<@Nullable String> nullable = Task.<@Nullable String>completed(null).whenComplete(null, (result, failure) -> {
+            assertNull(result);
+            assertNull(failure);
+        });
+        assertNull(nullable.run());
+    }
+
     /// A callback failure is suppressed when the source failed and propagates when the source succeeded.
     @Test
     public void testWhenComplete() {

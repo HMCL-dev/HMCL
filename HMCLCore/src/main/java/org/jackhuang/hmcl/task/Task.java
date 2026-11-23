@@ -483,30 +483,39 @@ public abstract class Task<T extends @Nullable Object> {
         }.setName(name));
     }
 
-    /// Returns a task that reports success or failure to `action` on the continuation's thread.
+    /// Reports completion to `action` on the continuation's thread and preserves this task's result.
     /// See [#whenComplete(Executor, FinalizedCallbackWithResult)] for failure propagation.
-    public final Task<@Nullable Void> whenComplete(FinalizedCallback action) {
+    public final Task<T> whenComplete(FinalizedCallback action) {
         return whenComplete(null, action);
     }
 
-    /// Returns a task that reports success or failure to `action` on `executor`.
+    /// Reports completion to `action` on `executor` and preserves this task's result.
     /// See [#whenComplete(Executor, FinalizedCallbackWithResult)] for failure propagation.
-    public final Task<@Nullable Void> whenComplete(@Nullable Executor executor, FinalizedCallback action) {
+    public final Task<T> whenComplete(@Nullable Executor executor, FinalizedCallback action) {
         return whenComplete(executor, (value, failure) -> action.execute(failure));
     }
 
-    /// Runs this task and invokes `action` on `executor` with its result or failure.
+    /// Reports this task's result or failure to `action` on the continuation's thread.
+    /// See [#whenComplete(Executor, FinalizedCallbackWithResult)] for the returned task's outcome.
+    public final Task<T> whenComplete(FinalizedCallbackWithResult<? super T> action) {
+        return whenComplete(null, action);
+    }
+
+    /// Returns a continuation that invokes `action` with this task's result or failure.
     /// The callback receives a null failure on success and a null result on failure.
     /// Failures include errors and cancellation.
     ///
-    /// The returned task succeeds with null if both the source and the callback succeed.
+    /// If both the source and the callback succeed, the continuation returns the source result,
+    /// which may be null. If only one fails, its failure propagates.
     /// If both fail, the source failure propagates with the distinct callback failure suppressed.
     /// Cancellation before the returned task starts skips the callback.
-    public Task<@Nullable Void> whenComplete(@Nullable Executor executor, FinalizedCallbackWithResult<T> action) {
-        return new Task<@Nullable Void>() {
+    ///
+    /// @param executor the executor for the callback, or `null` to run it on the continuation's thread
+    public Task<T> whenComplete(@Nullable Executor executor, FinalizedCallbackWithResult<? super T> action) {
+        return new Task<T>() {
             /// {@inheritDoc}
             @Override
-            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+            public T execute(TaskExecutionContext context) throws Exception {
                 T value;
                 try {
                     value = context.run(Task.this);
@@ -518,15 +527,16 @@ public abstract class Task<T extends @Nullable Object> {
                 }
                 return context.call(executor, () -> {
                     action.execute(value, null);
-                    return null;
+                    return value;
                 });
             }
         }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /// Invokes the corresponding optional callback on `executor`. If `success` throws, its failure
-    /// is also reported to `failure`. The first failure propagates, with any distinct later failure suppressed.
-    public final <E1 extends Exception, E2 extends Exception> Task<@Nullable Void> whenComplete(@Nullable Executor executor, @Nullable ExceptionalRunnable<E1> success, @Nullable ExceptionalConsumer<? super Throwable, E2> failure) {
+    /// Invokes the corresponding optional callback on `executor` and preserves the source result.
+    /// If `success` throws, its exception is also reported to `failure`.
+    /// The first failure propagates, with any distinct later failure suppressed.
+    public final <E1 extends Exception, E2 extends Exception> Task<T> whenComplete(@Nullable Executor executor, @Nullable ExceptionalRunnable<E1> success, @Nullable ExceptionalConsumer<? super Throwable, E2> failure) {
         return whenComplete(executor, exception -> {
             if (exception != null) {
                 if (failure != null)
@@ -544,9 +554,10 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Passes the successful result to `success` or the failure to `failure` on `executor`.
+    /// The returned task preserves the successful result.
     /// A failure thrown by `success` is reported to the optional failure callback,
     /// as in [#whenComplete(Executor, ExceptionalRunnable, ExceptionalConsumer)].
-    public <E1 extends Exception, E2 extends Exception> Task<@Nullable Void> whenComplete(@Nullable Executor executor, ExceptionalConsumer<T, E1> success, @Nullable ExceptionalConsumer<? super Throwable, E2> failure) {
+    public <E1 extends Exception, E2 extends Exception> Task<T> whenComplete(@Nullable Executor executor, ExceptionalConsumer<T, E1> success, @Nullable ExceptionalConsumer<? super Throwable, E2> failure) {
         return whenComplete(executor, () -> success.accept(resultNow()), failure);
     }
 
