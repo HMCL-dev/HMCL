@@ -11,7 +11,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -113,8 +113,8 @@ public final class Schedulers {
             if (virtualThreads != null)
                 return virtualThreads;
 
-            int parallelism = MathUtils.clamp(Runtime.getRuntime().availableProcessors() * 4, 4, 64);
-            AtomicInteger workerIds = new AtomicInteger();
+            int parallelism = MathUtils.clamp(Runtime.getRuntime().availableProcessors(), 4, 32);
+            var workerIds = new AtomicLong();
             // Task submissions are not joined as ForkJoinTasks, so use local FIFO scheduling.
             return new ForkJoinPool(parallelism, pool -> {
                 ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
