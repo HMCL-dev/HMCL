@@ -15,7 +15,7 @@ import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Supplies executors used for task bodies, blocking I/O, computation, and JavaFX callbacks.
+/// Supplies executors used for task bodies, blocking I/O, and JavaFX callbacks.
 public final class Schedulers {
 
     /// Prevents instantiation.
@@ -88,13 +88,6 @@ public final class Schedulers {
 
     /// The shared executor identity used when a JavaFX callback waits for a task.
     private static final Executor JAVAFX_EXECUTOR = Platform::runLater;
-
-    /// Default thread pool, equivalent to [ForkJoinPool#commonPool()].
-    ///
-    /// It is recommended to perform computation tasks on this thread pool. For I/O operations, please use [#io()].
-    public static Executor defaultScheduler() {
-        return ForkJoinPool.commonPool();
-    }
 
     /// Logs the application shutdown request.
     public static void shutdown() {

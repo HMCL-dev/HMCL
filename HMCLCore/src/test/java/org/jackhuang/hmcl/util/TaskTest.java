@@ -222,18 +222,4 @@ public class TaskTest {
         //Assert.assertNull("CancellationException should not be recorded.", executor.getException());
         //Assert.assertTrue("Thread.sleep cannot be interrupted", flag.get());
     }
-
-    public void testRejectedExecutionException() {
-        Schedulers.defaultScheduler();
-        Schedulers.shutdown();
-
-        Task<?> task = Task.runAsync(() -> {
-            Thread.sleep(1000);
-        });
-
-        boolean result = task.test();
-
-        assertFalse(result, "Task should fail since ExecutorService is shut down and RejectedExecutionException should be thrown");
-        assertInstanceOf(RejectedExecutionException.class, task.exceptionNow(), "RejectedExecutionException should be recorded");
-    }
 }

@@ -10,7 +10,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -74,20 +73,21 @@ public record Skin(Type type, String cslApi, TextureModel textureModel, String l
         return textureModel == null ? TextureModel.WIDE : textureModel;
     }
 
-    /// Creates a task that loads textures using the default scheduler for decoding.
+    /// Creates a task that decodes textures on the task's own executor.
     ///
     /// @see #load(String, Executor)
     public Task<@Nullable LoadedSkin> load(String username) {
-        return load(username, Schedulers.defaultScheduler());
+        return load(username, null);
     }
 
-    /// Creates a task that loads the configured skin and cape, decoding images on the supplied executor.
+    /// Creates a task that loads the configured skin and cape.
     ///
     /// @param username the profile name used for remote skin lookups
-    /// @param textureExecutor the executor for loading local images and decoding downloaded textures
+    /// @param textureExecutor the executor for loading local images and decoding downloaded textures,
+    ///                        or `null` to inherit the task's executor
     /// @return a task whose result is null for the default skin or a remote profile with a missing or blank username
     /// @throws UnsupportedOperationException if the skin type is unsupported
-    public Task<@Nullable LoadedSkin> load(String username, Executor textureExecutor) {
+    public Task<@Nullable LoadedSkin> load(String username, @Nullable Executor textureExecutor) {
         switch (type) {
             case DEFAULT:
                 return Task.supplyAsync(textureExecutor, () -> null);

@@ -151,6 +151,7 @@ public final class ModpackHelper {
         }
     }
 
+    /// Creates a server modpack installation task that refreshes the repository and enables instance isolation.
     public static Task<?> getInstallTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId, Modpack modpack) {
         ExceptionalRunnable<?> success = () -> {
             repository.refresh();
@@ -165,7 +166,7 @@ public final class ModpackHelper {
         };
 
         return new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId)
-                .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                .whenComplete(Schedulers.io(), success, failure)
                 .withStage(InstallStages.MODPACK)
                 .withStageHints(MODPACK_STAGE_HINTS);
     }
@@ -228,19 +229,19 @@ public final class ModpackHelper {
 
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
-                    .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                    .whenComplete(Schedulers.io(), success, failure)
                     .thenComposeAsync(createMultiMCPostInstallTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
                     .withStage(InstallStages.MODPACK)
                     .withStageHints(MODPACK_STAGE_HINTS);
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
             return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
-                    .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                    .whenComplete(Schedulers.io(), success, failure)
                     .thenComposeAsync(createMcbbsPostInstallTask(repository, (McbbsModpackManifest) modpack.getManifest(), instanceId))
                     .withStage(InstallStages.MODPACK)
                     .withStageHints(MODPACK_STAGE_HINTS);
         else
             return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
-                    .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                    .whenComplete(Schedulers.io(), success, failure)
                     .withStage(InstallStages.MODPACK)
                     .withStageHints(MODPACK_STAGE_HINTS);
     }

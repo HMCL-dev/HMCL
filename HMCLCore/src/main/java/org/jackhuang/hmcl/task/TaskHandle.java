@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.Arrays;
-import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
