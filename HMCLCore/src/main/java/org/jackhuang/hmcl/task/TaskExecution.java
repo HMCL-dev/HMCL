@@ -256,13 +256,9 @@ final class TaskExecution {
                 LOG.trace("Executing task: " + task.getName());
                 checkCancellation();
             }
-            task.setState(Task.State.RUNNING);
+            task.markRunning();
             notifyListeners(listener -> listener.onTaskStarted(task, context.stageScope));
-            try {
-                result = task.execute(context);
-            } finally {
-                task.setState(Task.State.EXECUTED);
-            }
+            result = task.execute(context);
             checkCancellation();
         } catch (Throwable failure) {
             Throwable cause = Objects.requireNonNullElse(Lang.resolveException(failure), failure);

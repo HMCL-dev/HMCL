@@ -681,9 +681,9 @@ public abstract class Task<T extends @Nullable Object> {
         state = State.READY;
     }
 
-    /// Publishes a nonterminal lifecycle transition.
-    final void setState(State state) {
-        this.state = state;
+    /// Marks the task as running before start listeners are notified.
+    final void markRunning() {
+        state = State.RUNNING;
     }
 
     /// Publishes the value returned by the body and marks the task successful.
@@ -755,10 +755,8 @@ public abstract class Task<T extends @Nullable Object> {
         NEW,
         /// The task has been submitted and its body has not started.
         READY,
-        /// The executor is about to invoke the body or is executing it.
+        /// Execution has started and the final outcome has yet to be published.
         RUNNING,
-        /// The body has exited, and the executor is determining the final outcome.
-        EXECUTED,
         /// The executor has published the successful result.
         SUCCEEDED,
         /// The executor has recorded a failure, including cancellation.
