@@ -21,18 +21,21 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TaskTest {
-    /// Explicit names retain their type and supply the text used in task diagnostics.
+    /// A task retains a diagnostic description when its display name is absent or cleared.
     @Test
     public void testCustomTaskName() {
         Task<?> task = Task.completed(42);
         String className = task.getClass().getName();
+        assertNull(task.getName());
+        assertEquals(className, task.toString());
+
         TaskName name = () -> "custom";
         task.setName(name);
         assertSame(name, task.getName());
         assertEquals(className + "[custom]", task.toString());
 
         task.setName(null);
-        assertEquals(className, task.getName().text());
+        assertNull(task.getName());
         assertEquals(className, task.toString());
     }
 

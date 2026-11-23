@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackLocalInstallTask;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
@@ -177,10 +178,12 @@ public final class I18n {
                 : StringUtils.capitalizeWords(loader.name());
     }
 
-    /// Returns the explicit task name, or a localized default title when one is available.
+    /// Returns the task name if present, otherwise a localized title for known task types
+    /// or the task's string representation.
     public static String translateTaskName(Task<?> task) {
-        if (task.hasExplicitName())
-            return task.getName().text();
+        @Nullable TaskName name = task.getName();
+        if (name != null)
+            return name.text();
         if (task instanceof GameAssetDownloadTask) {
             return i18n("assets.download_all");
         } else if (task instanceof GameInstallTask) {
@@ -231,7 +234,7 @@ public final class I18n {
             return i18n("java.installing");
         }
 
-        return task.getName().text();
+        return task.toString();
     }
 
     public static String localizeErrorMessage(Throwable exception) {

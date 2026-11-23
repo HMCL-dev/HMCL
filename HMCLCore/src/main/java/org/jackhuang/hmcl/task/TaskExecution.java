@@ -256,7 +256,8 @@ final class TaskExecution {
         try {
             checkCancellation();
             if (task.getSignificance().shouldLog()) {
-                LOG.trace("Executing task: " + task.getName().text());
+                @Nullable TaskName name = task.getName();
+                LOG.trace("Executing task: " + (name != null ? name.text() : task.toString()));
                 checkCancellation();
             }
             task.markRunning();
@@ -273,8 +274,10 @@ final class TaskExecution {
 
         task.publishResult(result);
         notifyTaskFinished(task, context.stageScope, null);
-        if (task.getSignificance().shouldLog())
-            LOG.trace("Task finished: " + task.getName().text());
+        if (task.getSignificance().shouldLog()) {
+            @Nullable TaskName name = task.getName();
+            LOG.trace("Task finished: " + (name != null ? name.text() : task.toString()));
+        }
         return result;
     }
 

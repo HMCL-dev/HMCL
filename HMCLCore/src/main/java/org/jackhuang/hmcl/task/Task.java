@@ -92,9 +92,9 @@ public abstract class Task<T extends @Nullable Object> {
     public Task() {
     }
 
-    /// Returns the configured display name, or the class name if none was supplied.
-    public TaskName getName() {
-        return name != null ? name : DefaultNames.INSTANCE.get(getClass());
+    /// Returns the display name, or `null` if this task has no name.
+    public @Nullable TaskName getName() {
+        return name;
     }
 
     /// Returns whether a name has been configured with [#setName(TaskName)].
@@ -102,19 +102,22 @@ public abstract class Task<T extends @Nullable Object> {
         return name != null;
     }
 
-    /// Sets the display name and returns this task. Passing `null` restores the class name.
+    /// Sets the display name and returns this task. Passing `null` clears the name.
     @Contract("_ -> this")
     public Task<T> setName(@Nullable TaskName name) {
         this.name = name;
         return this;
     }
 
-    /// Returns the class name and, when different, the display name.
+    /// Returns the class name, followed by the display name in brackets if present and different.
     @Override
     public String toString() {
+        @Nullable TaskName name = getName();
+        if (name == null) {
+            return super.toString();
+        }
         String className = getClass().getName();
-        String text = getName().text();
-        return className.equals(text) ? className : className + "[" + text + "]";
+        return className + "[" + name.text() + "]";
     }
 
     /// Returns the logging and display policy for this task.
@@ -668,15 +671,19 @@ public abstract class Task<T extends @Nullable Object> {
     /// Marks a new root as ready and returns its execution.
     private TaskExecution markReadyAsRoot() {
         TaskExecution execution = rootExecution();
-        if (!STATE_HANDLE.compareAndSet(this, State.NEW, State.READY))
-            throw new IllegalStateException("Task has already been submitted: " + getName().text());
+        if (!STATE_HANDLE.compareAndSet(this, State.NEW, State.READY)) {
+            @Nullable TaskName name = getName();
+            throw new IllegalStateException("Task has already been submitted: " + (name != null ? name.text() : toString()));
+        }
         return execution;
     }
 
     /// Marks an unreserved task as ready for execution as a child.
     final void markReadyAsChild() {
-        if (!EXECUTION_BINDING.compareAndSet(this, null, ExecutionBinding.CHILD))
-            throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + getName().text());
+        if (!EXECUTION_BINDING.compareAndSet(this, null, ExecutionBinding.CHILD)) {
+            @Nullable TaskName name = getName();
+            throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name.text() : toString()));
+        }
         state = State.READY;
     }
 
@@ -802,18 +809,6 @@ public abstract class Task<T extends @Nullable Object> {
             if (rootExecution == null)
                 throw new IllegalStateException("Task has been submitted as a child");
             return rootExecution;
-        }
-    }
-
-    /// Shares the default name among tasks of the same class.
-    private static final class DefaultNames extends ClassValue<TaskName.Simple> {
-        /// Default names indexed by task class.
-        private static final DefaultNames INSTANCE = new DefaultNames();
-
-        /// Returns the fully qualified name of the supplied class.
-        @Override
-        protected TaskName.Simple computeValue(Class<?> type) {
-            return new TaskName.Simple(type.getName());
         }
     }
 
