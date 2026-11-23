@@ -7,9 +7,9 @@ import org.jetbrains.annotations.NotNullByDefault;
 /// Reports progress for one executing task. Workers may share this reporter
 /// until the task body returns. A retry may report a smaller fraction.
 @NotNullByDefault
+@FunctionalInterface
 public interface TaskProgress {
-    /// Reports a fraction between zero and one. Intermediate updates may be rate-limited.
-    /// Zero (start or restart) and one (complete) bypass the rate limit.
+    /// Reports a fraction between zero and one to the task's listeners on the calling thread.
     ///
     /// @throws IllegalArgumentException if the fraction is outside the range or is NaN
     void update(double fraction);
@@ -22,9 +22,4 @@ public interface TaskProgress {
             throw new IllegalArgumentException("Invalid progress: " + completed + "/" + total);
         update(completed < total ? (double) completed / total : 1.0);
     }
-
-    /// Reports a fraction between zero and one without rate limiting.
-    ///
-    /// @throws IllegalArgumentException if the fraction is outside the range or is NaN
-    void updateImmediately(double fraction);
 }

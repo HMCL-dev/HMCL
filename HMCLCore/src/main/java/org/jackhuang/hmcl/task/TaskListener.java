@@ -34,7 +34,7 @@ public abstract class TaskListener implements EventListener {
     public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
     }
 
-    /// Called on the reporting worker with this task's progress in the range zero to one.
+    /// Called on the reporting worker for every progress report, with a fraction between zero and one.
     /// Workers contributing to the same task may report concurrently.
     public void onTaskProgress(Task<?> task, double fraction) {
     }

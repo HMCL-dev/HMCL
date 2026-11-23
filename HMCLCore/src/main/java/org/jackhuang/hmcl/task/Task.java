@@ -814,7 +814,7 @@ public abstract class Task<T extends @Nullable Object> {
                     if (context.isCancelled()) throw new CancellationException();
                     double elapsedSeconds = (System.nanoTime() - start) / 1_000_000_000.0;
                     double scaledTime = elapsedSeconds * MAX_VALUE;
-                    progress.updateImmediately(MAX_VALUE * scaledTime / (k + scaledTime));
+                    progress.update(MAX_VALUE * scaledTime / (k + scaledTime));
 
                     Thread.sleep(1000);
                 }
