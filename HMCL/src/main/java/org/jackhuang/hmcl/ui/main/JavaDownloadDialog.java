@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
@@ -398,7 +399,7 @@ public final class JavaDownloadDialog extends StackPane {
                                 .thenComposeAsync(integrityCheck ->
                                 {
                                     return new FileDownloadTask(downloadProvider.getDownloadCandidates(fileInfo.directDownloadUri()),
-                                            targetFile, integrityCheck).setName(fileInfo.fileName());
+                                            targetFile, integrityCheck).setName(new TaskName.Simple(fileInfo.fileName()));
                                 })
                                 .thenSupplyAsync(() -> targetFile);
                     })

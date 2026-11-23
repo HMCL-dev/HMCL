@@ -23,7 +23,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.*;
-import java.util.stream.Stream;
 
 /// A single-use unit of work with a result, lifecycle notifications, and optional progress.
 /// Submit the root using [#start()], [#run()], or [#test()]. Each task can be submitted only
@@ -66,23 +65,11 @@ public abstract class Task<T extends @Nullable Object> {
     /// Prefix identifying framework frames excluded from generated task names.
     private static final String PACKAGE_PREFIX = Task.class.getPackageName() + ".";
 
-    /// Selects caller frames outside the task package.
-    private static final Predicate<StackWalker.StackFrame> PREDICATE = stackFrame -> !stackFrame.getClassName().startsWith(PACKAGE_PREFIX);
-
-    /// Finds the first external frame for the generated task name.
-    private static final Function<Stream<StackWalker.StackFrame>, Optional<StackWalker.StackFrame>> FUNCTION = stream -> stream.filter(PREDICATE).findFirst();
-
-    /// Formats a caller frame, including the source location when available.
-    private static final Function<StackWalker.StackFrame, String> FRAME_MAPPING = frame -> {
-        @Nullable String fileName = frame.getFileName();
-        if (fileName != null)
-            return frame.getClassName() + '.' + frame.getMethodName() + '(' + fileName + ':' + frame.getLineNumber() + ')';
-        else
-            return frame.getClassName() + '.' + frame.getMethodName();
-    };
+    /// Captures the call site when a task factory assigns a name.
+    private static final StackWalker WALKER = StackWalker.getInstance();
 
     /// Optional name used for logging and display.
-    private @Nullable String name;
+    private @Nullable TaskName name;
 
     /// Controls execution logging and visibility in the task list.
     private TaskSignificance significance = TaskSignificance.MAJOR;
@@ -105,13 +92,18 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Returns the configured display name, or the class name if none was supplied.
-    public String getName() {
-        return name != null ? name : getClass().getName();
+    public TaskName getName() {
+        return name != null ? name : DefaultNames.INSTANCE.get(getClass());
+    }
+
+    /// Returns whether a name has been configured with [#setName(TaskName)].
+    public final boolean hasExplicitName() {
+        return name != null;
     }
 
     /// Sets the display name and returns this task. Passing `null` restores the class name.
     @Contract("_ -> this")
-    public Task<T> setName(@Nullable String name) {
+    public Task<T> setName(@Nullable TaskName name) {
         this.name = name;
         return this;
     }
@@ -119,10 +111,9 @@ public abstract class Task<T extends @Nullable Object> {
     /// Returns the class name and, when different, the display name.
     @Override
     public String toString() {
-        if (getClass().getName().equals(getName()))
-            return getName();
-        else
-            return getClass().getName() + "[" + getName() + "]";
+        String className = getClass().getName();
+        String text = getName().text();
+        return className.equals(text) ? className : className + "[" + text + "]";
     }
 
     /// Returns the logging and display policy for this task.
@@ -339,7 +330,7 @@ public abstract class Task<T extends @Nullable Object> {
             T value = context.run(this);
             Task<U> next = context.call(executor, () -> fn.apply(value));
             return context.run(next);
-        }).setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
+        }).setName(new TaskName.Simple(fn.toString())).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Maps the successful result to an optional child on the continuation's thread.
@@ -349,7 +340,7 @@ public abstract class Task<T extends @Nullable Object> {
             T value = context.run(this);
             @Nullable Task<U> next = fn.apply(value);
             return next == null ? null : context.run(next);
-        }).setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
+        }).setName(new TaskName.Simple(fn.toString())).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Returns a task that runs `other` after success or ordinary failure, yielding its result.
@@ -374,7 +365,7 @@ public abstract class Task<T extends @Nullable Object> {
                 // This continuation also runs after an ordinary failure.
             }
             return context.run(fn.get());
-        }).setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
+        }).setName(new TaskName.Simple(fn.toString())).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Returns a task that runs `action` on the continuation's executor after success or ordinary failure.
@@ -386,7 +377,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// Returns a task that runs `action` on `executor` after success or ordinary failure.
     /// Cancellation and errors propagate.
     public <E extends Exception> Task<@Nullable Void> withRunAsync(@Nullable Executor executor, ExceptionalRunnable<E> action) {
-        String name = getCaller();
+        TaskName name = getCaller();
         return withComposeAsync(() -> Task.of(executor, action.toCallable()).setName(name));
     }
 
@@ -537,7 +528,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// The wrapper returns the original result once `done` is true.
     ///
     /// @param k positive finite scale controlling the rate at which the estimate approaches its upper bound
-    public Task<T> withFakeProgress(String name, BooleanSupplier done, double k) {
+    public Task<T> withFakeProgress(TaskName name, BooleanSupplier done, double k) {
         return new FakeProgressTask(done, k).setName(name).setSignificance(TaskSignificance.MAJOR);
     }
 
@@ -669,14 +660,14 @@ public abstract class Task<T extends @Nullable Object> {
     private TaskExecution markReadyAsRoot() {
         TaskExecution execution = rootExecution();
         if (!STATE_HANDLE.compareAndSet(this, State.NEW, State.READY))
-            throw new IllegalStateException("Task has already been submitted: " + (name != null ? name : getClass().getName()));
+            throw new IllegalStateException("Task has already been submitted: " + getName().text());
         return execution;
     }
 
     /// Marks an unreserved task as ready for execution as a child.
     final void markReadyAsChild() {
         if (!EXECUTION_BINDING.compareAndSet(this, null, ExecutionBinding.CHILD))
-            throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name : getClass().getName()));
+            throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + getName().text());
         state = State.READY;
     }
 
@@ -750,9 +741,12 @@ public abstract class Task<T extends @Nullable Object> {
         };
     }
 
-    /// Returns a display name derived from the first caller outside the task package.
-    private static String getCaller() {
-        return StackWalker.getInstance().walk(FUNCTION).map(FRAME_MAPPING).orElse("Unknown");
+    /// Captures the first caller outside the task package for use as a task name.
+    private static TaskName getCaller() {
+        return WALKER.walk(frames -> frames.filter(frame -> !frame.getClassName().startsWith(PACKAGE_PREFIX))
+                .findFirst()
+                .<TaskName>map(frame -> new TaskName.CallSite(frame.toStackTraceElement()))
+                .orElseGet(() -> new TaskName.Simple("Unknown")));
     }
 
     /// Execution state published by the task executor.
@@ -799,6 +793,18 @@ public abstract class Task<T extends @Nullable Object> {
             if (rootExecution == null)
                 throw new IllegalStateException("Task has been submitted as a child");
             return rootExecution;
+        }
+    }
+
+    /// Shares the default name among tasks of the same class.
+    private static final class DefaultNames extends ClassValue<TaskName.Simple> {
+        /// Default names indexed by task class.
+        private static final DefaultNames INSTANCE = new DefaultNames();
+
+        /// Returns the fully qualified name of the supplied class.
+        @Override
+        protected TaskName.Simple computeValue(Class<?> type) {
+            return new TaskName.Simple(type.getName());
         }
     }
 

@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.CreateAccountPane;
@@ -91,7 +92,7 @@ public final class Instances {
         TaskDialogPane pane = new TaskDialogPane(TaskCancellationAction.NORMAL);
         pane.setTitle(i18n("modpack.download.title", file.file().filename()));
         Task<?> task = new FileDownloadTask(downloadURLs, modpack)
-                .setName(file.name())
+                .setName(new TaskName.Simple(file.name()))
                 .whenComplete(Schedulers.javafx(), (@Nullable Throwable e) -> {
                     if (e == null) {
                         ModpackInstallWizardProvider installWizardProvider;

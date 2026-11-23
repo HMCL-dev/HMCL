@@ -53,7 +53,7 @@ public final class CacheFileTask extends FetchTask<@Nullable Path> {
         super(candidates);
         this.expectedSha1 = null;
         validateUris(candidates);
-        setName(candidates.getPrimaryCandidate().displayUrl());
+        setName(new TaskName.Simple(candidates.getPrimaryCandidate().displayUrl()));
     }
 
     public CacheFileTask(DownloadCandidates candidates, String expectedSha1) {
@@ -63,7 +63,7 @@ public final class CacheFileTask extends FetchTask<@Nullable Path> {
         }
         this.expectedSha1 = expectedSha1.toLowerCase(Locale.ROOT);
         validateUris(candidates);
-        setName(candidates.getPrimaryCandidate().displayUrl());
+        setName(new TaskName.Simple(candidates.getPrimaryCandidate().displayUrl()));
     }
 
     /// Verifies that all candidate URLs use HTTP or HTTPS.

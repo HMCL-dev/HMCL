@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -105,7 +106,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                     Path tempFile = tempDir.resolve(entry.getKey() + ".lzma");
                     var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(download.getUrl()), tempFile,
                             new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
-                    task.setName(entry.getKey());
+                    task.setName(new TaskName.Simple(entry.getKey()));
                     dependencies.add(task.thenRunAsync(() -> {
                         Path decompressed = tempDir.resolve(entry.getKey() + ".tmp");
                         var digest = MessageDigest.getInstance("SHA-1");
@@ -135,7 +136,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                 } else if (file.getDownloads().containsKey("raw")) {
                     DownloadInfo download = file.getDownloads().get("raw");
                     var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(download.getUrl()), dest, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
-                    task.setName(entry.getKey());
+                    task.setName(new TaskName.Simple(entry.getKey()));
                     if (file.isExecutable()) {
                         dependencies.add(task.thenRunAsync(() -> FileUtils.setExecutable(dest)));
                     } else {

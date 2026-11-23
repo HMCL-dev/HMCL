@@ -95,16 +95,10 @@ public final class TaskListPane extends StackPane {
         return stage.key().startsWith(prefix) ? GameComponentType.fromPatchId(stage.key().substring(prefix.length())) : null;
     }
 
-    /// Localizes the task name if it should appear as a separate progress row.
-    private static boolean prepareTaskRow(Task<?> task, TaskStage.@Nullable Scope scope) {
-        if (!task.getSignificance().shouldShow() || task.getName() == null)
-            return false;
-        if (task instanceof GameInstallTask && scope != null && installComponent(scope.stage()) == GameComponentType.GAME)
-            return false;
-        @Nullable String localizedName = I18n.translateTaskName(task);
-        if (localizedName != null)
-            task.setName(localizedName);
-        return true;
+    /// Returns whether the task should appear as a separate progress row.
+    private static boolean shouldShowTaskRow(Task<?> task, TaskStage.@Nullable Scope scope) {
+        return task.getSignificance().shouldShow()
+                && !(task instanceof GameInstallTask && scope != null && installComponent(scope.stage()) == GameComponentType.GAME);
     }
 
     /// Displays a task below its stage or at the top of the list when it has no stage.
@@ -146,7 +140,7 @@ public final class TaskListPane extends StackPane {
 
                 /// Captures the display details before the task body runs or its rejection is reported.
                 TaskRowUpdate(Task<?> task, TaskStage.@Nullable Scope scope) {
-                    this.title = task.getName();
+                    this.title = I18n.translateTaskName(task);
                     this.scope = scope;
                 }
 
@@ -215,7 +209,7 @@ public final class TaskListPane extends StackPane {
             /// Adds visible running tasks to their stage.
             @Override
             public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
-                if (prepareTaskRow(task, scope)) {
+                if (shouldShowTaskRow(task, scope)) {
                     TaskRowUpdate pending = new TaskRowUpdate(task, scope);
                     running.put(task, pending);
                     pending.report(ProgressIndicator.INDETERMINATE_PROGRESS);
@@ -235,7 +229,7 @@ public final class TaskListPane extends StackPane {
             public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
                 @Nullable TaskRowUpdate pending = running.remove(task);
                 if (pending == null) {
-                    if (failure == null || !prepareTaskRow(task, scope))
+                    if (failure == null || !shouldShowTaskRow(task, scope))
                         return;
                     pending = new TaskRowUpdate(task, scope);
                 }

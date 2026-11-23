@@ -97,7 +97,7 @@ final class TaskExecutionContextTest {
                 return context.runAll(List.of(
                         Task.supplyAsync(Thread::currentThread),
                         task(other, child -> child.run(Task.supplyAsync(Thread::currentThread))),
-                        Task.supplyAsync(Thread::currentThread).setName("last")
+                        Task.supplyAsync(Thread::currentThread).setName(new TaskName.Simple("last"))
                                 .setSignificance(TaskSignificance.MAJOR)));
             });
             assertEquals(List.of(caller, worker, caller),

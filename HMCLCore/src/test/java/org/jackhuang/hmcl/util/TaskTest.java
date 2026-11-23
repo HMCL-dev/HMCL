@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.util;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,37 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TaskTest {
+    /// Explicit names retain their type and supply the text used in task diagnostics.
+    @Test
+    public void testCustomTaskName() {
+        Task<?> task = Task.completed(42);
+        String className = task.getClass().getName();
+        TaskName name = () -> "custom";
+        task.setName(name);
+        assertSame(name, task.getName());
+        assertEquals(className + "[custom]", task.toString());
+
+        task.setName(null);
+        assertEquals(className, task.getName().text());
+        assertEquals(className, task.toString());
+    }
+
+    /// A factory captures its caller before the task name is read.
+    @Test
+    public void testCallSiteTaskName() {
+        Task<?> task = createTaskWithCallSiteName();
+        TaskName.CallSite name = assertInstanceOf(TaskName.CallSite.class, task.getName());
+        StackTraceElement frame = name.frame();
+        assertEquals(TaskTest.class.getName(), frame.getClassName());
+        assertEquals("createTaskWithCallSiteName", frame.getMethodName());
+        assertEquals(TaskTest.class.getName() + ".createTaskWithCallSiteName(TaskTest.java:" + frame.getLineNumber() + ")", name.text());
+    }
+
+    /// Creates a task whose factory call can be distinguished from the code reading its name.
+    private static Task<Integer> createTaskWithCallSiteName() {
+        return Task.supplyAsync(() -> 42);
+    }
+
     /// A nested task's error reaches both its completion callback and the default uncaught exception handler.
     @Test
     public void expectErrorUncaught() {

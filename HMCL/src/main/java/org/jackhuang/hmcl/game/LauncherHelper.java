@@ -335,7 +335,7 @@ public final class LauncherHelper {
                         });
                     }
                 }).withFakeProgress(
-                        i18n("message.doing"),
+                        new TaskName.Simple(i18n("message.doing")),
                         () -> launchingLatch.getCount() == 0, 6.95
                 ).withStage(LAUNCH_STAGE))
                 .withStageHints(

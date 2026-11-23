@@ -7,6 +7,7 @@ import javafx.beans.property.StringProperty;
 import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.ui.wizard.WizardSinglePage;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -63,7 +64,7 @@ public class WorldExportPage extends WizardSinglePage {
     @Override
     protected Object finish() {
         return Task.runAsync(() -> world.export(Path.of(path.get()), worldName.get()))
-                .setName(i18n("world.export.wizard", worldName.get()))
+                .setName(new TaskName.Simple(i18n("world.export.wizard", worldName.get())))
                 .setSignificance(TaskSignificance.MAJOR);
     }
 }

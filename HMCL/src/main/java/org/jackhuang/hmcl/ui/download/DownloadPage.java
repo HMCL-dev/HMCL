@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -171,7 +172,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             Controllers.taskDialog(Task.composeAsync(() -> {
                 var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(file.file().url()), dest);
-                task.setName(file.name());
+                task.setName(new TaskName.Simple(file.name()));
                 return task;
             }).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {

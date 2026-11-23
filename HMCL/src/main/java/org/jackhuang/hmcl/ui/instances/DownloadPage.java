@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -165,7 +166,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         Controllers.taskDialog(
                 Task.composeAsync(() -> {
                     var task = new FileDownloadTask(file.file().url(), dest, file.file().getIntegrityCheck());
-                    task.setName(file.name());
+                    task.setName(new TaskName.Simple(file.name()));
                     return task;
                 }),
                 i18n("message.downloading.file", file.file().filename()),

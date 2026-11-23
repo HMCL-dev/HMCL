@@ -177,7 +177,10 @@ public final class I18n {
                 : StringUtils.capitalizeWords(loader.name());
     }
 
-    public static @Nullable String translateTaskName(Task<?> task) {
+    /// Returns the explicit task name, or a localized default title when one is available.
+    public static String translateTaskName(Task<?> task) {
+        if (task.hasExplicitName())
+            return task.getName().text();
         if (task instanceof GameAssetDownloadTask) {
             return i18n("assets.download_all");
         } else if (task instanceof GameInstallTask) {
@@ -228,7 +231,7 @@ public final class I18n {
             return i18n("java.installing");
         }
 
-        return null;
+        return task.getName().text();
     }
 
     public static String localizeErrorMessage(Throwable exception) {

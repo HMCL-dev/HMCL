@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.MacOSNativeUtils;
 import org.jackhuang.hmcl.ui.WindowsNativeUtils;
@@ -639,7 +640,7 @@ public final class Themes {
             applyLoadedBackground(loadFallbackBackground(), currentGeneration);
         }
         Task.supplyAsync(Schedulers.io(), Themes::loadBackground)
-                .setName("Update background")
+                .setName(new TaskName.Simple("Update background"))
                 .whenComplete(Schedulers.javafx(), (newLoadedBackground, exception) -> {
                     if (exception == null) {
                         applyLoadedBackground(newLoadedBackground, currentGeneration);
