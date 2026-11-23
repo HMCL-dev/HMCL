@@ -50,6 +50,7 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
@@ -919,17 +920,17 @@ public final class FXUtils {
 
     public static Task<Image> getRemoteImageTask(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(url)
-                .setSignificance(Task.TaskSignificance.MINOR)
+                .setSignificance(TaskSignificance.MINOR)
                 .thenApplyAsync(file -> ImageLoaders.DEFAULT.load(file, requestedWidth, requestedHeight, preserveRatio, smooth))
-                .setSignificance(Task.TaskSignificance.MINOR);
+                .setSignificance(TaskSignificance.MINOR);
     }
 
     /// Creates a task that caches an image from HTTP(S) candidates and loads it with the requested sizing options.
     public static Task<Image> getRemoteImageTask(DownloadCandidates candidates, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(candidates)
-                .setSignificance(Task.TaskSignificance.MINOR)
+                .setSignificance(TaskSignificance.MINOR)
                 .thenApplyAsync(file -> ImageLoaders.DEFAULT.load(file, requestedWidth, requestedHeight, preserveRatio, smooth))
-                .setSignificance(Task.TaskSignificance.MINOR);
+                .setSignificance(TaskSignificance.MINOR);
     }
 
     public static ObservableValue<Image> newRemoteImage(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
@@ -942,7 +943,7 @@ public final class FXUtils {
                         LOG.warning("An exception encountered while loading remote image: " + url, exception);
                     }
                 })
-                .setSignificance(Task.TaskSignificance.MINOR)
+                .setSignificance(TaskSignificance.MINOR)
                 .start();
         return image;
     }

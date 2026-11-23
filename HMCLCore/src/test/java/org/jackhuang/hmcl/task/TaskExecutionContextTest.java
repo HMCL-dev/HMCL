@@ -95,7 +95,7 @@ final class TaskExecutionContextTest {
                         Task.supplyAsync(Thread::currentThread),
                         task(other, child -> child.run(Task.supplyAsync(Thread::currentThread))),
                         Task.supplyAsync(Thread::currentThread).setName("last")
-                                .setSignificance(Task.TaskSignificance.MAJOR)));
+                                .setSignificance(TaskSignificance.MAJOR)));
             });
             assertEquals(List.of(caller, worker, caller),
                     task(Runnable::run, context -> context.run(branch)).run());
@@ -375,7 +375,7 @@ final class TaskExecutionContextTest {
         Task<?> continuation = source.withRunAsync(() -> {});
         StageEvents events = new StageEvents();
         assertTrue(continuation.newHandle(events).test());
-        assertEquals(List.of(Task.TaskSignificance.MODERATE, Task.TaskSignificance.MAJOR, Task.TaskSignificance.MODERATE),
+        assertEquals(List.of(TaskSignificance.MODERATE, TaskSignificance.MAJOR, TaskSignificance.MODERATE),
                 events.completions.stream().map(event -> event.task().getSignificance()).toList());
     }
 

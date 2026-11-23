@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -597,7 +598,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
-                            .setSignificance(Task.TaskSignificance.MINOR)
+                            .setSignificance(TaskSignificance.MINOR)
                             .thenAcceptAsync(Schedulers.javafx(), dep -> {
                                 if (dep == RemoteAddon.BROKEN) {
                                     hasBroken.set(true);
@@ -608,7 +609,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 dependencyAddonItem.getProperties().put("DependencyAddonItem.width", listener);
                                 dependencies.get(dependency.getType()).value().add(dependencyAddonItem);
                             })
-                            .setSignificance(Task.TaskSignificance.MINOR));
+                            .setSignificance(TaskSignificance.MINOR));
                 }
 
                 return Task.allOf(queue).thenSupplyAsync(() -> {

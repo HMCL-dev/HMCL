@@ -15,6 +15,7 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.FXThread;
@@ -206,7 +207,7 @@ public final class JavaManager {
     public static Task<JavaRuntime> getAddJavaTask(Path binary) {
         return Task.supplyAsync(() -> JavaManager.getJava(binary))
                 .setName("Get Java")
-                .setSignificance(Task.TaskSignificance.MAJOR)
+                .setSignificance(TaskSignificance.MAJOR)
                 .thenApplyAsync(Schedulers.javafx(), javaRuntime -> {
                     if (!JavaManager.isCompatible(javaRuntime.getPlatform())) {
                         throw new UnsupportedPlatformException("Incompatible platform: " + javaRuntime.getPlatform());

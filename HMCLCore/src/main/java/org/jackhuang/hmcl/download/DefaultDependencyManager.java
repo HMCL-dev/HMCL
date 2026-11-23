@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -231,7 +232,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                             : null;
                 }).thenComposeAsync(checkPatchCompletionAsync(instance, manifest, integrityCheck)),
                 new GameAssetDownloadTask(this, manifest, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)
-                        .setSignificance(Task.TaskSignificance.MODERATE),
+                        .setSignificance(TaskSignificance.MODERATE),
                 new GameLibrariesTask(this, manifest, integrityCheck)
         );
     }

@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FXThread;
@@ -274,7 +275,7 @@ public final class TerracottaManager {
     public static Task<String> exportLogs() {
         if (STATE_V.get() instanceof TerracottaState.PortSpecific portSpecific) {
             return new GetTask(WebURL.parse(String.format("http://127.0.0.1:%d/log?fetch=true", portSpecific.port)))
-                    .setSignificance(Task.TaskSignificance.MINOR);
+                    .setSignificance(TaskSignificance.MINOR);
         }
         return Task.completed(null);
     }
@@ -283,7 +284,7 @@ public final class TerracottaManager {
         TerracottaState state = STATE_V.get();
         if (state instanceof TerracottaState.PortSpecific portSpecific) {
             new GetTask(WebURL.parse(String.format("http://127.0.0.1:%d/state/ide", portSpecific.port)))
-                    .setSignificance(Task.TaskSignificance.MINOR)
+                    .setSignificance(TaskSignificance.MINOR)
                     .start();
             return new TerracottaState.Waiting(-1, -1, null);
         }
@@ -307,7 +308,7 @@ public final class TerracottaManager {
                         }
                         return new GetTask(NetworkUtils.withQuery(
                                 "http://127.0.0.1:%d/state/scanning".formatted(portSpecific.port), query
-                        )).setSignificance(Task.TaskSignificance.MINOR);
+                        )).setSignificance(TaskSignificance.MINOR);
                     }).start();
 
             return new TerracottaState.HostScanning(-1, -1, null);
@@ -327,9 +328,9 @@ public final class TerracottaManager {
                             query.add(pair("public_nodes", node.toString()));
                         }
                         return new GetTask(NetworkUtils.withQuery("http://127.0.0.1:%d/state/guesting".formatted(portSpecific.port), query))
-                                .setSignificance(Task.TaskSignificance.MINOR)
+                                .setSignificance(TaskSignificance.MINOR)
                                 .thenSupplyAsync(() -> new TerracottaState.GuestConnecting(-1, -1, null))
-                                .setSignificance(Task.TaskSignificance.MINOR);
+                                .setSignificance(TaskSignificance.MINOR);
                     });
         } else {
             return null;

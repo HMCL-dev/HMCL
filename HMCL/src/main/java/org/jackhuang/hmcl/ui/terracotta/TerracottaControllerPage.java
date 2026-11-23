@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.terracotta.TerracottaManager;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.terracotta.TerracottaState;
@@ -232,7 +233,7 @@ public class TerracottaControllerPage extends StackPane {
                                     handler.resolve();
                                     UI_STATE.set(s);
                                 }
-                            }).setSignificance(Task.TaskSignificance.MINOR).start();
+                            }).setSignificance(TaskSignificance.MINOR).start();
                         } else {
                             handler.resolve();
                         }
