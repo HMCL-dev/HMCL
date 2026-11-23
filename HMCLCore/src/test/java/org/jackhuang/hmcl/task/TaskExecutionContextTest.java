@@ -417,7 +417,7 @@ final class TaskExecutionContextTest {
             };
             CountDownLatch lastStarted = new CountDownLatch(1);
             Task<Integer> inline = Task.supplyAsync(Runnable::run, () -> 0);
-            Task<Integer> first = task(children, context -> context.run(Task.completed(1).thenApplyAsync(value -> {
+            Task<Integer> first = task(children, context -> context.run(Task.completed(1).thenApply(value -> {
                 inContinuation.complete(null);
                 assertTrue(lastStarted.await(10, TimeUnit.SECONDS));
                 return value;
@@ -602,25 +602,49 @@ final class TaskExecutionContextTest {
         }
     }
 
-    /// A root continuation runs its default callback on the same task worker as its inherited source.
+    /// A root's inline continuation runs on the same task worker as its inherited source.
     @Test
     void rootContinuationUsesTaskWorker() throws Exception {
         Task<Thread> source = Task.supplyAsync(Thread::currentThread);
-        Thread callback = source.thenApplyAsync(ignored -> Thread.currentThread()).run();
+        Thread callback = source.thenApply(ignored -> Thread.currentThread()).run();
         assertNotSame(Thread.currentThread(), callback);
         assertSame(source.resultNow(), callback);
     }
 
-    /// Default callbacks inherit the enclosing task's worker even when the source runs elsewhere.
+    /// Asynchronous callbacks without an explicit executor use the task scheduler from another executor.
+    @Test
+    void asyncContinuationsUseTaskScheduler() throws Exception {
+        Thread caller = Thread.currentThread();
+        AtomicInteger invocations = new AtomicInteger();
+        Callable<Integer> checkWorker = () -> {
+            Thread worker = Thread.currentThread();
+            assertNotSame(caller, worker);
+            // A nested task on the same executor runs inline on this worker.
+            assertSame(worker, Task.supplyAsync(Schedulers.tasks(), Thread::currentThread).run());
+            return invocations.incrementAndGet();
+        };
+
+        Task<@Nullable Integer> chain = Task.completed(0)
+                .thenApplyAsync(value -> checkWorker.call())
+                .thenAcceptAsync(value -> checkWorker.call())
+                .thenRunAsync(checkWorker::call)
+                .thenComposeAsync(() -> Task.completed(checkWorker.call()))
+                .thenComposeAsync(value -> Task.completed(checkWorker.call()))
+                .thenSupplyAsync(checkWorker)
+                .thenComposeOptionalAsync(value -> Task.completed(checkWorker.call()));
+        assertEquals(7, task(Runnable::run, context -> context.run(chain)).run());
+    }
+
+    /// Inline continuations inherit the enclosing task's worker even when the source runs elsewhere.
     @Test
     void nestedContinuationsUseEnclosingWorker() throws Exception {
         Thread caller = Thread.currentThread();
         Task<Thread> source = Task.supplyAsync(Schedulers.io(), Thread::currentThread);
-        Task<Thread> supplied = source.thenComposeOptionalAsync(sourceThread -> {
+        Task<Thread> supplied = source.thenComposeOptional(sourceThread -> {
             assertNotSame(caller, sourceThread);
             assertSame(caller, Thread.currentThread());
             return Task.completed(1);
-        }).thenSupplyAsync(Thread::currentThread);
+        }).thenSupply(Thread::currentThread);
         Task<@Nullable Void> finished = supplied.whenComplete(failure -> {
             assertNull(failure);
             assertSame(caller, Thread.currentThread());
@@ -645,6 +669,25 @@ final class TaskExecutionContextTest {
         });
         Task<?> root = task(Runnable::run, context -> context.run(continuation));
         assertSame(failure, assertThrows(IOException.class, root::run));
+    }
+
+    /// An explicit null executor runs each continuation callback on the enclosing worker.
+    @Test
+    void nullContinuationExecutorUsesEnclosingWorker() throws Exception {
+        Thread caller = Thread.currentThread();
+        Task<Thread> continuation = Task.completed(1)
+                .thenApplyAsync(null, value -> Thread.currentThread())
+                .thenAcceptAsync(null, applyThread -> {
+                    assertSame(caller, applyThread);
+                    assertSame(caller, Thread.currentThread());
+                })
+                .thenRunAsync(null, () -> assertSame(caller, Thread.currentThread()))
+                .thenComposeAsync(null, () -> Task.completed(Thread.currentThread()))
+                .thenComposeAsync(null, supplierThread -> {
+                    assertSame(caller, supplierThread);
+                    return Task.completed(Thread.currentThread());
+                });
+        assertSame(caller, task(Runnable::run, context -> context.run(continuation)).run());
     }
 
     /// The follow-up action remains visible while its continuation wrapper stays hidden.

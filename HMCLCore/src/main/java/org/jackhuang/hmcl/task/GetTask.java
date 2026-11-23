@@ -72,10 +72,12 @@ public final class GetTask extends FetchTask<String> {
         };
     }
 
+    /// Parses the downloaded text as a non-null instance of `type` on the default task scheduler.
     public <T> Task<T> thenGetJsonAsync(Class<T> type) {
         return thenGetJsonAsync(TypeToken.get(type));
     }
 
+    /// Parses the downloaded text as a non-null value of the given type on the default task scheduler.
     public <T> Task<T> thenGetJsonAsync(TypeToken<T> type) {
         return thenApplyAsync(jsonString -> JsonUtils.fromNonNullJson(jsonString, type));
     }
