@@ -160,7 +160,7 @@ final class TaskExecution {
         } finally {
             notifyExecutionFinished(root);
         }
-        return root.getState() == Task.TaskState.SUCCEEDED;
+        return root.getState() == Task.State.SUCCEEDED;
     }
 
     /// Publishes a root failure even if its executor could not be reached.
@@ -168,7 +168,7 @@ final class TaskExecution {
         try {
             return runReadyTask(null, root, propagateWaitInterruption);
         } catch (Throwable failure) {
-            if (root.getState() == Task.TaskState.READY)
+            if (root.getState() == Task.State.READY)
                 fail(root, null, failure);
             throw failure;
         }
@@ -176,7 +176,7 @@ final class TaskExecution {
 
     /// Reports the root's published outcome and releases references to its listeners.
     private void notifyExecutionFinished(Task<?> root) {
-        boolean success = root.getState() == Task.TaskState.SUCCEEDED;
+        boolean success = root.getState() == Task.State.SUCCEEDED;
         try {
             notifyListeners(listener -> listener.onExecutionFinished(root, success));
         } finally {
@@ -256,12 +256,12 @@ final class TaskExecution {
                 LOG.trace("Executing task: " + task.getName());
                 checkCancellation();
             }
-            task.setState(Task.TaskState.RUNNING);
+            task.setState(Task.State.RUNNING);
             notifyListeners(listener -> listener.onTaskStarted(task, context.stageScope));
             try {
                 result = task.execute(context);
             } finally {
-                task.setState(Task.TaskState.EXECUTED);
+                task.setState(Task.State.EXECUTED);
             }
             checkCancellation();
         } catch (Throwable failure) {

@@ -144,7 +144,7 @@ final class TaskExecutionContextTest {
         Task<@Nullable String> child = Task.completed(null);
         Task<@Nullable String> composed = Task.completed(1).thenComposeAsync(child);
         assertNull(composed.run());
-        assertEquals(Task.TaskState.SUCCEEDED, child.getState());
+        assertEquals(Task.State.SUCCEEDED, child.getState());
     }
 
     /// A missing child fails when passed directly or when its factory runs.
@@ -321,7 +321,7 @@ final class TaskExecutionContextTest {
                 assertSame(failure, assertThrows(IOException.class, () -> context.runAll(List.of(first, second))));
             assertEquals(1, finished.get());
             assertEquals(1, second.resultNow());
-            assertEquals(Task.TaskState.FAILED, first.getState());
+            assertEquals(Task.State.FAILED, first.getState());
             return null;
         }).run();
     }
@@ -355,7 +355,7 @@ final class TaskExecutionContextTest {
             assertSame(failure, broken.exceptionNow());
             assertSame(failure, broken.exceptionNowOrNull());
             assertNull(broken.resultNowOrNull());
-            assertEquals(Task.TaskState.FAILED, broken.getState());
+            assertEquals(Task.State.FAILED, broken.getState());
             assertEquals(1, first.resultNow());
             assertEquals(2, last.resultNow());
         } finally {
@@ -510,7 +510,7 @@ final class TaskExecutionContextTest {
             public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
                 assertSame(root, task);
                 assertNull(failure);
-                assertEquals(Task.TaskState.SUCCEEDED, task.getState());
+                assertEquals(Task.State.SUCCEEDED, task.getState());
                 assertEquals(42, task.resultNow());
                 assertEquals(42, task.resultNowOrNull());
                 completions.incrementAndGet();
@@ -532,7 +532,7 @@ final class TaskExecutionContextTest {
         assertThrows(IllegalStateException.class, root::test);
         assertThrows(IllegalStateException.class, root::start);
         assertEquals(1, calls.get());
-        assertEquals(Task.TaskState.SUCCEEDED, root.getState());
+        assertEquals(Task.State.SUCCEEDED, root.getState());
         assertEquals(1, root.resultNow());
         assertNull(root.exceptionNowOrNull());
     }
@@ -650,13 +650,13 @@ final class TaskExecutionContextTest {
             }
         };
         root.addTaskListener(events);
-        assertEquals(Task.TaskState.NEW, root.getState());
+        assertEquals(Task.State.NEW, root.getState());
         ExecutorService caller = Executors.newSingleThreadExecutor();
         try {
             var start = caller.submit(root::start);
             try {
                 assertTrue(entered.await(10, TimeUnit.SECONDS));
-                assertEquals(Task.TaskState.READY, root.getState());
+                assertEquals(Task.State.READY, root.getState());
                 assertThrows(IllegalStateException.class, root::resultNow);
                 assertThrows(IllegalStateException.class, root::start);
                 assertThrows(IllegalStateException.class, root::test);
@@ -678,7 +678,7 @@ final class TaskExecutionContextTest {
         assertEquals(events.started, events.finished);
         assertEquals(1, bodies.get());
         assertEquals(1, root.resultNow());
-        assertEquals(Task.TaskState.SUCCEEDED, root.getState());
+        assertEquals(Task.State.SUCCEEDED, root.getState());
         assertNull(root.exceptionNowOrNull());
     }
 
@@ -698,7 +698,7 @@ final class TaskExecutionContextTest {
         }).run();
         assertEquals(1, calls.get());
         assertEquals(1, shared.resultNow());
-        assertEquals(Task.TaskState.SUCCEEDED, shared.getState());
+        assertEquals(Task.State.SUCCEEDED, shared.getState());
         assertNull(shared.exceptionNowOrNull());
     }
 
@@ -910,7 +910,7 @@ final class TaskExecutionContextTest {
         assertThrows(IllegalStateException.class, root::start);
         assertThrows(IllegalStateException.class, root::run);
         assertSame(failure, root.exceptionNow());
-        assertEquals(Task.TaskState.FAILED, root.getState());
+        assertEquals(Task.State.FAILED, root.getState());
         assertEquals(1, events.started.size());
         assertSame(root, events.started.get(0).task());
         assertTrue(events.running.isEmpty());

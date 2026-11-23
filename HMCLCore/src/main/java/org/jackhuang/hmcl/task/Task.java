@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 @NotNullByDefault
 public abstract class Task<T extends @Nullable Object> {
 
-    /// Atomically transitions a root from [TaskState#NEW] to [TaskState#READY].
+    /// Atomically transitions a root from [State#NEW] to [State#READY].
     ///
     /// @see #state
     private static final VarHandle STATE_HANDLE;
@@ -56,7 +56,7 @@ public abstract class Task<T extends @Nullable Object> {
     static {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
-            STATE_HANDLE = lookup.findVarHandle(Task.class, "state", TaskState.class);
+            STATE_HANDLE = lookup.findVarHandle(Task.class, "state", State.class);
             EXECUTION_BINDING = lookup.findVarHandle(Task.class, "executionBinding", ExecutionBinding.class);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new ExceptionInInitializerError(e);
@@ -93,13 +93,13 @@ public abstract class Task<T extends @Nullable Object> {
     @SuppressWarnings("unused")
     private volatile @Nullable ExecutionBinding executionBinding;
 
-    /// Most recent execution state, initially [TaskState#NEW].
-    private volatile TaskState state = TaskState.NEW;
+    /// Most recent execution state, initially [State#NEW].
+    private volatile State state = State.NEW;
 
-    /// Return value published by the transition to [TaskState#SUCCEEDED].
+    /// Return value published by the transition to [State#SUCCEEDED].
     private @Nullable T result;
 
-    /// Failure published by the transition to [TaskState#FAILED].
+    /// Failure published by the transition to [State#FAILED].
     private @Nullable Throwable exception;
 
     /// Creates an unsubmitted task.
@@ -230,7 +230,7 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Returns the current execution state.
-    public final TaskState getState() {
+    public final State getState() {
         return state;
     }
 
@@ -241,32 +241,32 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Returns the successful result without waiting. A task with a nullable result type may return `null`.
     ///
-    /// @throws IllegalStateException if the task is not in [TaskState#SUCCEEDED]
+    /// @throws IllegalStateException if the task is not in [State#SUCCEEDED]
     public final T resultNow() {
-        TaskState currentState = state;
-        if (currentState != TaskState.SUCCEEDED)
+        State currentState = state;
+        if (currentState != State.SUCCEEDED)
             throw new IllegalStateException("Task has not completed successfully: " + currentState);
         return result;
     }
 
     /// Returns the result without waiting, or `null` if the task has not succeeded or returned `null`.
     public final @Nullable T resultNowOrNull() {
-        return state == TaskState.SUCCEEDED ? result : null;
+        return state == State.SUCCEEDED ? result : null;
     }
 
     /// Returns the recorded failure without waiting. Cancellation is recorded as a [CancellationException].
     ///
-    /// @throws IllegalStateException if the task is not in [TaskState#FAILED]
+    /// @throws IllegalStateException if the task is not in [State#FAILED]
     public final Throwable exceptionNow() {
-        TaskState currentState = state;
-        if (currentState != TaskState.FAILED)
+        State currentState = state;
+        if (currentState != State.FAILED)
             throw new IllegalStateException("Task has not failed: " + currentState);
         return Objects.requireNonNull(exception);
     }
 
-    /// Returns the same failure as [#exceptionNow()] without waiting, or `null` unless the task is in [TaskState#FAILED].
+    /// Returns the same failure as [#exceptionNow()] without waiting, or `null` unless the task is in [State#FAILED].
     public final @Nullable Throwable exceptionNowOrNull() {
-        return state == TaskState.FAILED ? exception : null;
+        return state == State.FAILED ? exception : null;
     }
 
     /// Returns a task that applies `fn` to the successful result on the continuation's thread.
@@ -669,7 +669,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// Marks a new root as ready and returns its execution.
     private TaskExecution markReadyAsRoot() {
         TaskExecution execution = rootExecution();
-        if (!STATE_HANDLE.compareAndSet(this, TaskState.NEW, TaskState.READY))
+        if (!STATE_HANDLE.compareAndSet(this, State.NEW, State.READY))
             throw new IllegalStateException("Task has already been submitted: " + (name != null ? name : getClass().getName()));
         return execution;
     }
@@ -678,24 +678,24 @@ public abstract class Task<T extends @Nullable Object> {
     final void markReadyAsChild() {
         if (!EXECUTION_BINDING.compareAndSet(this, null, ExecutionBinding.CHILD))
             throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name : getClass().getName()));
-        state = TaskState.READY;
+        state = State.READY;
     }
 
     /// Publishes a nonterminal lifecycle transition.
-    final void setState(TaskState state) {
+    final void setState(State state) {
         this.state = state;
     }
 
     /// Publishes the value returned by the body and marks the task successful.
     final void publishResult(T value) {
         result = value;
-        state = TaskState.SUCCEEDED;
+        state = State.SUCCEEDED;
     }
 
     /// Publishes the failure and marks the task failed.
     final void publishException(Throwable failure) {
         exception = failure;
-        state = TaskState.FAILED;
+        state = State.FAILED;
     }
 
     /// Notifies the observer and propagates the primary failure even if notification also fails.
@@ -750,7 +750,7 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Execution state published by the task executor.
-    public enum TaskState {
+    public enum State {
         /// The task has not been submitted.
         NEW,
         /// The task has been submitted and its body has not started.

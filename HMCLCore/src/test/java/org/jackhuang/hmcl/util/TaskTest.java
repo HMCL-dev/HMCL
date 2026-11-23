@@ -65,7 +65,7 @@ public class TaskTest {
             @Override
             public void onTaskFinished(Task<?> failedTask, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
                 assertSame(task, failedTask);
-                assertEquals(Task.TaskState.FAILED, failedTask.getState());
+                assertEquals(Task.State.FAILED, failedTask.getState());
                 assertSame(error, failedTask.exceptionNow());
                 failedCount.incrementAndGet();
                 failedThrowable.set(failure);
@@ -91,7 +91,7 @@ public class TaskTest {
         assertSame(error, failedThrowable.get());
         assertEquals(1, stopCount.get());
         assertEquals(Boolean.FALSE, stopSuccess.get());
-        assertEquals(Task.TaskState.FAILED, task.getState());
+        assertEquals(Task.State.FAILED, task.getState());
         assertSame(error, task.exceptionNowOrNull());
         assertSame(error, uncaught.get());
     }

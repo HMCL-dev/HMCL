@@ -28,7 +28,7 @@ public abstract class TaskListener implements EventListener {
     public void onExecutionFinished(Task<?> root, boolean success) {
     }
 
-    /// Called after the task enters [Task.TaskState#RUNNING], before its body is invoked.
+    /// Called after the task enters [Task.State#RUNNING], before its body is invoked.
     ///
     /// @param scope the task's declared or inherited stage scope, or `null` if neither applies
     public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
