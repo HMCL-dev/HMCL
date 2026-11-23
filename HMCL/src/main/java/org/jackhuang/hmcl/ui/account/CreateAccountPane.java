@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -74,7 +73,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private final BooleanProperty logging = new SimpleBooleanProperty();
 
     /// The most recent login attempt, available for cancellation.
-    private @Nullable TaskHandle loginHandle;
+    private @Nullable Task<?> loginTask;
 
     public CreateAccountPane() {
         this((AccountFactory<?>) null);
@@ -214,7 +213,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         Runnable doCreate = () -> {
             logging.set(true);
 
-            loginHandle = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
+            loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
                     .whenComplete(Schedulers.javafx(), account -> {
                         if (Accounts.isAccountFilesReadOnly(account)) {
                             body.setDisable(false);
@@ -235,7 +234,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         }
                         body.setDisable(false);
                         spinner.hideSpinner();
-                    }).newHandle(true);
+                    }).start();
         };
 
         if (factory instanceof OfflineAccountFactory && username != null && (!USERNAME_CHECKER_PATTERN.matcher(username).matches() || username.length() > 16)) {
@@ -268,8 +267,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     }
 
     private void onCancel() {
-        if (loginHandle != null) {
-            loginHandle.cancel();
+        if (loginTask != null) {
+            loginTask.cancel();
         }
         fireEvent(new DialogCloseEvent());
     }

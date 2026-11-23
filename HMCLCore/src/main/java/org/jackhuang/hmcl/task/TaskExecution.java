@@ -9,16 +9,19 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Runs a task tree with shared cancellation, stage inheritance, and lifecycle notifications.
 @NotNullByDefault
-public final class DefaultTaskHandle extends TaskHandle {
+final class TaskExecution {
     /// The framework submission currently using this thread.
     private static final ThreadLocal<@Nullable Work<?>> CURRENT_WORK = new ThreadLocal<>();
 
@@ -28,45 +31,124 @@ public final class DefaultTaskHandle extends TaskHandle {
     /// Guards the waiting threads and the work they can execute without losing thread affinity.
     private final ReentrantLock lock = new ReentrantLock();
 
-    /// Creates a handle for a root task.
-    public DefaultTaskHandle(Task<?> task) {
-        super(task);
-    }
+    /// Shared snapshot for executions with no registered listeners.
+    private static final TaskListener @Unmodifiable [] NO_LISTENERS = {};
 
-    @Override
-    public TaskHandle start() {
-        beginExecution();
-        new Work<>(Schedulers.tasks(), this::runToCompletion).submit();
-        return this;
-    }
+    /// Terminal snapshot that blocks further listener registration.
+    private static final TaskListener @Unmodifiable [] FINISHED = {};
 
-    @Override
-    public boolean test() {
-        beginExecution();
-        return runToCompletion();
-    }
+    /// Current listeners in registration order. Each notification reads one snapshot.
+    private volatile TaskListener @Unmodifiable [] taskListeners = NO_LISTENERS;
 
-    /// Reserves the root task before a listener or another caller can start it again.
-    private void beginExecution() {
-        firstTask.claimExecution();
-        notifyListeners(listener -> listener.onExecutionStarted(this));
-    }
+    /// Atomically replaces the listener snapshot when registrations change.
+    private static final VarHandle TASK_LISTENERS_HANDLE;
 
-    /// Runs one root task synchronously, propagating its failure to the caller.
-    static <T extends @Nullable Object> T run(Task<T> task) throws Exception {
-        task.claimExecution();
-        return new DefaultTaskHandle(task).runClaimed(null, task);
-    }
-
-    /// Runs the root through its final notification and reports uncaught failures.
-    private boolean runToCompletion() {
-        boolean success = false;
+    static {
         try {
-            runClaimed(null, firstTask);
-            exception = null;
-            success = true;
+            TASK_LISTENERS_HANDLE = MethodHandles.lookup()
+                    .findVarHandle(TaskExecution.class, "taskListeners", TaskListener[].class);
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
+    /// Whether cancellation has been requested.
+    private volatile boolean cancelled;
+
+    /// Creates an execution for one root and its descendants.
+    TaskExecution() {
+    }
+
+    /// Registers a listener for subsequent notifications. Register before starting to observe the entire execution.
+    void addTaskListener(TaskListener taskListener) {
+        while (true) {
+            TaskListener @Unmodifiable [] current = taskListeners;
+            if (current == FINISHED)
+                return;
+            TaskListener[] updated = Arrays.copyOf(current, current.length + 1);
+            updated[current.length] = taskListener;
+
+            if (TASK_LISTENERS_HANDLE.compareAndSet(this, current, updated)) {
+                return;
+            }
+        }
+    }
+
+    /// Removes the first matching registration from subsequent notifications.
+    void removeTaskListener(TaskListener taskListener) {
+        while (true) {
+            TaskListener @Unmodifiable [] current = taskListeners;
+
+            int index = 0;
+            while (index < current.length && current[index] != taskListener) {
+                index++;
+            }
+
+            if (index == current.length) {
+                return;
+            }
+
+            TaskListener[] updated;
+
+            if (current.length == 1) {
+                updated = NO_LISTENERS;
+            } else {
+                updated = new TaskListener[current.length - 1];
+                System.arraycopy(current, 0, updated, 0, index);
+                System.arraycopy(current, index + 1, updated, index, updated.length - index);
+            }
+
+            if (TASK_LISTENERS_HANDLE.compareAndSet(this, current, updated)) {
+                return;
+            }
+        }
+    }
+
+    /// Notifies a snapshot in registration order and reports each listener's failure independently.
+    private void notifyListeners(Consumer<TaskListener> notification) {
+        for (TaskListener listener : taskListeners) {
+            try {
+                notification.accept(listener);
+            } catch (Throwable e) {
+                LOG.warning("Task listener failed", e);
+            }
+        }
+    }
+
+    /// Starts a claimed root asynchronously and reports submission failures to the caller.
+    void start(Task<?> root) {
+        notifyListeners(listener -> listener.onExecutionStarted(root));
+        try {
+            Executor scheduler = Schedulers.tasks();
+            scheduler.execute(new Work<>(scheduler, () -> runToCompletion(root)));
+        } catch (Throwable failure) {
+            fail(root, null, failure);
+            notifyExecutionFinished(root);
+            throw failure;
+        }
+    }
+
+    /// Runs a claimed root and returns its outcome, preserving the waiting thread's interrupt status.
+    boolean test(Task<?> root) {
+        notifyListeners(listener -> listener.onExecutionStarted(root));
+        return runToCompletion(root);
+    }
+
+    /// Runs a claimed root synchronously and propagates its failure to the caller.
+    <T extends @Nullable Object> T run(Task<T> root) throws Exception {
+        notifyListeners(listener -> listener.onExecutionStarted(root));
+        try {
+            return runRoot(root, true);
+        } finally {
+            notifyExecutionFinished(root);
+        }
+    }
+
+    /// Reports uncaught failures and returns whether the root succeeded.
+    private boolean runToCompletion(Task<?> root) {
+        try {
+            runRoot(root, false);
         } catch (Exception e) {
-            exception = e;
             LOG.warning("An exception occurred in task execution", e);
             Thread.@Nullable UncaughtExceptionHandler handler = uncaughtExceptionHandler;
             if (handler != null && e instanceof RuntimeException && !(e instanceof CancellationException)
@@ -74,20 +156,42 @@ public final class DefaultTaskHandle extends TaskHandle {
                 handler.uncaughtException(Thread.currentThread(), e);
             }
         } catch (Throwable failure) {
-            exception = failure;
             Lang.handleUncaughtException(failure);
         } finally {
-            boolean completed = success;
-            notifyListeners(listener -> listener.onExecutionFinished(this, completed));
+            notifyExecutionFinished(root);
         }
-        return success;
+        return root.getState() == Task.TaskState.SUCCEEDED;
     }
 
-    /// Requests cancellation. Already running bodies may finish before they observe the request.
-    /// Starting a previously cancelled handle still delivers its completion notification.
-    @Override
-    public void cancel() {
+    /// Publishes a root failure even if its executor could not be reached.
+    private <T extends @Nullable Object> T runRoot(Task<T> root, boolean propagateWaitInterruption) throws Exception {
+        try {
+            return runClaimed(null, root, propagateWaitInterruption);
+        } catch (Throwable failure) {
+            if (root.getState() == Task.TaskState.READY)
+                fail(root, null, failure);
+            throw failure;
+        }
+    }
+
+    /// Reports the root's published outcome and releases references to its listeners.
+    private void notifyExecutionFinished(Task<?> root) {
+        boolean success = root.getState() == Task.TaskState.SUCCEEDED;
+        try {
+            notifyListeners(listener -> listener.onExecutionFinished(root, success));
+        } finally {
+            taskListeners = FINISHED;
+        }
+    }
+
+    /// Requests cancellation of this execution.
+    void cancel() {
         cancelled = true;
+    }
+
+    /// Returns whether cancellation was requested for this execution.
+    boolean isCancelled() {
+        return cancelled;
     }
 
     /// Returns the executor whose work the caller can execute inline.
@@ -122,11 +226,11 @@ public final class DefaultTaskHandle extends TaskHandle {
     }
 
     /// Dispatches a claimed task, running it inline on a worker of its effective executor.
-    private <T extends @Nullable Object> T runClaimed(@Nullable Context<?> parent, Task<T> child) throws Exception {
+    private <T extends @Nullable Object> T runClaimed(@Nullable Context<?> parent, Task<T> child, boolean propagateWaitInterruption) throws Exception {
         Context<T> context = prepare(parent, child);
         if (context.executor == currentExecutor())
             return execute(context);
-        return await(submitChild(context));
+        return await(submitChild(context), propagateWaitInterruption);
     }
 
     /// Schedules a child and records task failure if the executor rejects the submission.
@@ -177,7 +281,6 @@ public final class DefaultTaskHandle extends TaskHandle {
 
     /// Records the failure before delivering terminal notifications.
     private void fail(Task<?> task, TaskStage.@Nullable Scope scope, Throwable cause) {
-        exception = cause;
         task.publishException(cause);
         notifyTaskFinished(task, scope, cause);
     }
@@ -205,7 +308,7 @@ public final class DefaultTaskHandle extends TaskHandle {
             throw new CancellationException("Cancelled by user");
     }
 
-    /// Executes children under a single parent and shares the handle's listeners and cancellation.
+    /// Executes children under a single parent and shares the root's listeners and cancellation.
     @NotNullByDefault
     private final class Context<R extends @Nullable Object> implements TaskExecutionContext, TaskProgress {
         /// The task executed in this context.
@@ -224,6 +327,7 @@ public final class DefaultTaskHandle extends TaskHandle {
             this.stageScope = stageScope;
         }
 
+        /// {@inheritDoc}
         @Override
         public boolean isCancelled() {
             return isCancelledOrInterrupted();
@@ -257,12 +361,14 @@ public final class DefaultTaskHandle extends TaskHandle {
                 notifyListeners(listener -> listener.onStageProgress(stageScope, 1, 0));
         }
 
+        /// {@inheritDoc}
         @Override
         public <T extends @Nullable Object> T run(Task<T> task) throws Exception {
-            task.claimExecution();
-            return runClaimed(this, task);
+            task.claimAsChild();
+            return runClaimed(this, task, true);
         }
 
+        /// {@inheritDoc}
         @Override
         public <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> tasks) throws Exception {
             checkCancellation();
@@ -270,7 +376,7 @@ public final class DefaultTaskHandle extends TaskHandle {
             @Nullable Throwable failure = null;
             for (Task<? extends T> child : List.copyOf(tasks)) {
                 try {
-                    child.claimExecution();
+                    child.claimAsChild();
                     children.add(submitChild(prepare(this, child)));
                 } catch (Throwable e) {
                     failure = batchFailure(failure, e);
@@ -280,7 +386,7 @@ public final class DefaultTaskHandle extends TaskHandle {
             List<T> results = new ArrayList<>(children.size());
             for (Work<? extends T> child : children) {
                 try {
-                    results.add(await(child));
+                    results.add(await(child, true));
                 } catch (Throwable e) {
                     // Drain every sibling before propagating the batch failure.
                     failure = batchFailure(failure, e);
@@ -299,13 +405,14 @@ public final class DefaultTaskHandle extends TaskHandle {
                 return action.call();
             Work<T> work = new Work<>(executor, action);
             work.submit();
-            return await(work);
+            return await(work, true);
         }
     }
 
     /// Waits for completion while allowing a constrained worker to run other work for its executor.
-    /// An interruption is reported after the submitted work has stopped.
-    private <T extends @Nullable Object> T await(Work<T> work) throws Exception {
+    /// Restores any interruption after the work stops. A caller reporting the root's outcome
+    /// observes that outcome even if the waiting thread was interrupted.
+    private <T extends @Nullable Object> T await(Work<T> work, boolean propagateWaitInterruption) throws Exception {
         @Nullable Executor current = currentExecutor();
         boolean interrupted = false;
         while (!work.isDone()) {
@@ -328,14 +435,15 @@ public final class DefaultTaskHandle extends TaskHandle {
             if (next != null)
                 next.run();
         }
-        if (interrupted) {
-            Thread.currentThread().interrupt();
-            throw new InterruptedException();
-        }
         try {
+            if (interrupted && propagateWaitInterruption)
+                throw new InterruptedException();
             return work.get();
         } catch (ExecutionException e) {
             throw Task.rethrow(Objects.requireNonNull(e.getCause()));
+        } finally {
+            if (interrupted)
+                Thread.currentThread().interrupt();
         }
     }
 
@@ -345,7 +453,7 @@ public final class DefaultTaskHandle extends TaskHandle {
         /// Executor whose workers may run this submission.
         private final Executor executor;
 
-        /// Created under the handle lock on the first wait for completion or runnable descendants.
+        /// Created under the execution lock on the first wait for completion or runnable descendants.
         private @Nullable Condition changed;
 
         /// Submission in this task tree that created this work.
@@ -365,12 +473,12 @@ public final class DefaultTaskHandle extends TaskHandle {
             super(action);
             this.executor = executor;
             @Nullable Work<?> current = CURRENT_WORK.get();
-            this.parent = current != null && current.owner() == DefaultTaskHandle.this ? current : null;
+            this.parent = current != null && current.owner() == TaskExecution.this ? current : null;
         }
 
         /// Returns the task tree owning this submission.
-        private DefaultTaskHandle owner() {
-            return DefaultTaskHandle.this;
+        private TaskExecution owner() {
+            return TaskExecution.this;
         }
 
         /// Finds waiting work in this branch that the given worker can run.
@@ -412,6 +520,7 @@ public final class DefaultTaskHandle extends TaskHandle {
             setException(failure);
         }
 
+        /// Claims this work and executes it once in its assigned executor context.
         @Override
         public void run() {
             lock.lock();
@@ -445,6 +554,7 @@ public final class DefaultTaskHandle extends TaskHandle {
             }
         }
 
+        /// Wakes the parent waiting for this submission.
         @Override
         protected void done() {
             lock.lock();
@@ -457,8 +567,8 @@ public final class DefaultTaskHandle extends TaskHandle {
         }
     }
 
-    /// Sets the handler for unexpected runtime exceptions from asynchronous task execution.
-    public static void setUncaughtExceptionHandler(Thread.@Nullable UncaughtExceptionHandler handler) {
+    /// Sets the handler for unexpected runtime exceptions reported by start or test.
+    static void setUncaughtExceptionHandler(Thread.@Nullable UncaughtExceptionHandler handler) {
         uncaughtExceptionHandler = handler;
     }
 }

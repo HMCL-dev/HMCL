@@ -110,17 +110,16 @@ class FetchTaskResultTest {
                 attempts.incrementAndGet();
             }
         };
-        TaskHandle handle = download.newHandle();
-        handle.addTaskListener(new TaskListener() {
+        download.addTaskListener(new TaskListener() {
             /// Cancels the transfer after bytes have reached the sink.
             @Override
             public void onTaskProgress(Task<?> task, double fraction) {
                 if (task == download && fraction > 0)
-                    handle.cancel();
+                    download.cancel();
             }
         });
 
-        assertFalse(handle.test());
+        assertFalse(download.test());
         assertInstanceOf(CancellationException.class, download.exceptionNow());
         assertEquals(1, attempts.get());
         assertEquals("previous", Files.readString(destination));

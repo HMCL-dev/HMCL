@@ -14,7 +14,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.task.FetchTask;
-import org.jackhuang.hmcl.task.TaskHandle;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
@@ -37,22 +37,22 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// Displays task progress and allows active tasks to continue with the dialog hidden.
 ///
 /// Construction and lifecycle operations must occur on the JavaFX application thread.
-/// Restoring a hidden dialog preserves its task list and does not restart its handle.
+/// Restoring a hidden dialog preserves its task list and the running task.
 /// Background tasks may retain a completion action in the task list for explicit activation.
 @NotNullByDefault
-public class TaskHandleDialogPane extends BorderPane implements DialogAware {
+public class TaskDialogPane extends BorderPane implements DialogAware {
 
-    /// The handle whose progress is displayed, or `null` if detached.
-    private @Nullable TaskHandle handle;
-    /// Whether completion of the attached handle closes the dialog.
+    /// The task whose progress is displayed, or `null` if detached.
+    private @Nullable Task<?> task;
+    /// Whether completion of the attached task closes the dialog.
     private boolean autoClose;
     /// The cancellation action, or `null` when cancellation is disabled.
     private @Nullable TaskCancellationAction onCancel;
     /// An optional action invoked when the dialog is first sent to the background.
     private @Nullable Runnable onBackground;
-    /// Whether the current handle has started and has not yet reported completion.
+    /// Whether the current task has started and has not yet reported completion.
     private boolean running;
-    /// Whether this handle has been submitted and is waiting for an execution slot.
+    /// Whether this task has been submitted and is waiting for an execution slot.
     private final ReadOnlyBooleanWrapper queued = new ReadOnlyBooleanWrapper(this, "queued");
     /// The current submission's completion future, retained to prevent duplicate starts.
     private @Nullable CompletableFuture<Boolean> submission;
@@ -70,16 +70,16 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
     private final Label lblProgress;
     /// The action that requests cancellation.
     private final JFXButton btnCancel;
-    /// The action that hides the dialog without cancelling its handle.
+    /// The action that hides the dialog without cancelling its task.
     private final JFXButton btnBackground;
     /// The retained task progress view.
     private final TaskListPane taskListPane;
 
     /// Creates a progress dialog with the given cancellation action.
     ///
-    /// @param cancel the action invoked after requesting handle cancellation;
+    /// @param cancel the action invoked after requesting task cancellation;
     ///               `null` disables cancellation
-    public TaskHandleDialogPane(@Nullable TaskCancellationAction cancel) {
+    public TaskDialogPane(@Nullable TaskCancellationAction cancel) {
         this.getStyleClass().add("task-executor-dialog-layout");
 
         FXUtils.setLimitWidth(this, 500);
@@ -130,8 +130,8 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
             @Nullable TaskCancellationAction action = onCancel;
             if ((!running && !queued.get()) || action == null || !action.isEnabled())
                 return;
-            if (handle != null && !handle.isCancelled())
-                handle.cancel();
+            if (task != null && !task.isCancelled())
+                task.cancel();
             action.accept(this);
             btnCancel.setDisable(true);
         });
@@ -147,28 +147,28 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
         onEscPressed(this, btnCancel::fire);
     }
 
-    /// Attaches a handle before submitting it with [#startHandle()] and closes the dialog when it stops.
+    /// Attaches a task before submitting it with [#startTask()] and closes the dialog when it stops.
     ///
-    /// @param handle the handle to display, or `null` to detach the current handle
-    public void setHandle(@Nullable TaskHandle handle) {
-        setHandle(handle, true);
+    /// @param task the task to display, or `null` to detach the current task
+    public void setTask(@Nullable Task<?> task) {
+        setTask(task, true);
     }
 
-    /// Attaches a handle before submitting it with [#startHandle()] and tracks it until it stops.
+    /// Attaches a task before submitting it with [#startTask()] and tracks it until it stops.
     ///
-    /// Reattaching the same handle has no effect. Replacing a handle removes the
-    /// previous dialog entry without cancelling that handle. Detaching does not close
-    /// the dialog. Replacing or detaching a handle discards any pending completion action.
-    /// Listener callbacks from a replaced handle do not close this dialog.
+    /// Reattaching the same task has no effect. Replacing a task removes the
+    /// previous dialog entry without cancelling that task. Detaching does not close
+    /// the dialog. Replacing or detaching a task discards any pending completion action.
+    /// Listener callbacks from a replaced task do not close this dialog.
     ///
-    /// @param handle the handle to display, or `null` to detach
-    /// @param autoClose whether to close the dialog when this handle stops
-    public void setHandle(@Nullable TaskHandle handle, boolean autoClose) {
+    /// @param task the task to display, or `null` to detach
+    /// @param autoClose whether to close the dialog when this task stops
+    public void setTask(@Nullable Task<?> task, boolean autoClose) {
         FXUtils.checkFxUserThread();
-        if (this.handle == handle)
+        if (this.task == task)
             return;
         TaskManager.getInstance().unregister(this);
-        this.handle = handle;
+        this.task = task;
         this.autoClose = autoClose;
         submission = null;
         queued.set(false);
@@ -177,28 +177,28 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
         runningInBackground.set(false);
         updateButtons();
 
-        taskListPane.setHandle(handle);
-        if (handle != null) {
-            handle.addTaskListener(new TaskListener() {
-                /// Registers this dialog when its current handle starts.
+        taskListPane.setTask(task);
+        if (task != null) {
+            task.addTaskListener(new TaskListener() {
+                /// Registers this dialog when its current task starts.
                 @Override
-                public void onExecutionStarted(TaskHandle handle) {
+                public void onExecutionStarted(Task<?> task) {
                     runInFX(() -> {
-                        if (TaskHandleDialogPane.this.handle != handle)
+                        if (TaskDialogPane.this.task != task)
                             return;
                         running = true;
                         queued.set(false);
                         lblProgress.setText("");
-                        TaskManager.getInstance().register(TaskHandleDialogPane.this);
+                        TaskManager.getInstance().register(TaskDialogPane.this);
                         updateButtons();
                     });
                 }
 
                 /// Retains a successful task's pending action, otherwise removes the completed task.
                 @Override
-                public void onExecutionFinished(TaskHandle handle, boolean success) {
+                public void onExecutionFinished(Task<?> task, boolean success) {
                     Platform.runLater(() -> {
-                        if (TaskHandleDialogPane.this.handle == handle)
+                        if (TaskDialogPane.this.task == task)
                             finish(success);
                     });
                 }
@@ -226,59 +226,59 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
         }
     }
 
-    /// Submits this dialog's handle to the serial task queue, once per attached handle.
+    /// Submits this dialog's task to the serial task queue, once per attached task.
     ///
     /// @return a future completed after execution and listener cleanup
-    public CompletableFuture<Boolean> startHandle() {
-        return startHandle(null);
+    public CompletableFuture<Boolean> startTask() {
+        return startTask(null);
     }
 
-    /// Submits this handle, optionally sharing an executing parent's exclusive slot.
+    /// Submits this task, optionally sharing an executing parent's exclusive slot.
     /// Only a required child of the parent's business operation may share its slot.
-    /// Must be called on the JavaFX thread after all handle listeners are installed.
+    /// Must be called on the JavaFX thread after all task listeners are installed.
     ///
     /// @param parent the executing parent dialog, or `null` to queue an independent task
     /// @return a future completed after execution and listener cleanup
-    /// @throws IllegalStateException if this dialog has no handle
-    public CompletableFuture<Boolean> startHandle(@Nullable TaskHandleDialogPane parent) {
+    /// @throws IllegalStateException if this dialog has no task
+    public CompletableFuture<Boolean> startTask(@Nullable TaskDialogPane parent) {
         FXUtils.checkFxUserThread();
         if (submission != null)
             return submission;
-        if (handle == null)
-            throw new IllegalStateException("No handle is attached");
-        @Nullable TaskHandle parentHandle = parent == null
+        if (task == null)
+            throw new IllegalStateException("No task is attached");
+        @Nullable Task<?> parentTask = parent == null
                 ? null
-                : Objects.requireNonNull(parent.handle, "parent handle");
-        TaskHandle submittedHandle = handle;
+                : Objects.requireNonNull(parent.task, "parent task");
+        Task<?> submittedTask = task;
         queued.set(true);
         lblProgress.setText(i18n("task.queued"));
         TaskManager.getInstance().register(this);
         updateButtons();
         CompletableFuture<Boolean> submitted;
         try {
-            submitted = TaskManager.getInstance().submit(submittedHandle, parentHandle, () -> {
-                if (handle == submittedHandle)
+            submitted = TaskManager.getInstance().submit(submittedTask, parentTask, () -> {
+                if (task == submittedTask)
                     finish(false);
             });
         } catch (IllegalArgumentException failure) {
             finish(false);
             throw failure;
         }
-        if (handle == submittedHandle)
+        if (task == submittedTask)
             submission = submitted;
         return submitted;
     }
 
-    /// Returns whether this dialog's submitted handle is waiting for its execution slot.
+    /// Returns whether this dialog's submitted task is waiting for its execution slot.
     public ReadOnlyBooleanProperty queuedProperty() {
         return queued.getReadOnlyProperty();
     }
 
-    /// Returns whether this dialog has a running handle that has not requested cancellation.
+    /// Returns whether this dialog has a running task that has not requested cancellation.
     /// Required child workflows should check this on the JavaFX thread before opening their dialogs.
     public boolean canStartChild() {
         FXUtils.checkFxUserThread();
-        return running && handle != null && !handle.isCancelled();
+        return running && task != null && !task.isCancelled();
     }
 
     /// Hides an active or queued dialog without invoking cancellation or changing execution.
@@ -306,9 +306,9 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
     }
 
     /// Runs a successful task's next step immediately in the foreground, or retains it in the
-    /// task list when this dialog is in the background. Must be called from the handle's
-    /// completion callback on the JavaFX thread, before the handle reports that it has stopped.
-    /// A failed handle or a replacement handle discards the retained action.
+    /// task list when this dialog is in the background. Must be called from the task's
+    /// completion callback on the JavaFX thread, before the task reports that it has stopped.
+    /// A failed task or a replacement task discards the retained action.
     ///
     /// @param text the action button label
     /// @param description the pending task's status text
@@ -345,7 +345,7 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
     ///
     /// @param text the action button label
     /// @param description the status displayed in the task list
-    /// @param action the operation performed by [TaskHandleDialogPane#runPendingAction()]
+    /// @param action the operation performed by [TaskDialogPane#runPendingAction()]
     @NotNullByDefault
     public record PendingAction(String text, String description, Runnable action) {
     }
@@ -353,7 +353,7 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
     /// Returns a read-only property indicating whether the active or queued task was sent to the background
     /// and has not been shown again.
     ///
-    /// The value becomes false when execution stops or the handle is detached or replaced.
+    /// The value becomes false when execution stops or the task is detached or replaced.
     public ReadOnlyBooleanProperty runningInBackgroundProperty() {
         return runningInBackground.getReadOnlyProperty();
     }
@@ -376,7 +376,7 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
     private void updateButtons() {
         btnBackground.setDisable(!running && !queued.get());
         btnCancel.setDisable((!running && !queued.get()) || onCancel == null || !onCancel.isEnabled()
-                || handle == null || handle.isCancelled());
+                || task == null || task.isCancelled());
     }
 
     /// Returns the writable title property, which may be bound to a task's current state.

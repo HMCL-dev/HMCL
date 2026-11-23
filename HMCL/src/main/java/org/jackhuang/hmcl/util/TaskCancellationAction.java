@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.ui.construct.TaskHandleDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskDialogPane;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.function.Consumer;
@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 /// Handles a cancellation request from a task dialog.
 @NotNullByDefault
 @FunctionalInterface
-public interface TaskCancellationAction extends Consumer<TaskHandleDialogPane> {
+public interface TaskCancellationAction extends Consumer<TaskDialogPane> {
 
     /// Disables cancellation from the dialog.
     TaskCancellationAction NO_CANCEL = new TaskCancellationAction() {
@@ -22,7 +22,7 @@ public interface TaskCancellationAction extends Consumer<TaskHandleDialogPane> {
 
         /// {@inheritDoc}
         @Override
-        public void accept(TaskHandleDialogPane pane) {
+        public void accept(TaskDialogPane pane) {
         }
     };
 

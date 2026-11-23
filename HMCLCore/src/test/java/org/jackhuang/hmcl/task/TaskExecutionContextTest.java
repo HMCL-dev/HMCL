@@ -72,10 +72,9 @@ final class TaskExecutionContextTest {
                 assertSame(failure, cause);
                 return 42;
             });
-            TaskHandle handle = root.newHandle();
-            assertTrue(handle.test());
+            assertTrue(root.test());
             assertEquals(42, root.resultNow());
-            assertNull(handle.getException());
+            assertNull(root.exceptionNowOrNull());
             assertSame(failure, child.exceptionNow());
             assertSame(failure, source.exceptionNow());
         }
@@ -187,7 +186,8 @@ final class TaskExecutionContextTest {
             return null;
         });
         StageEvents events = new StageEvents();
-        assertTrue(composed.newHandle(events).test());
+        composed.addTaskListener(events);
+        assertTrue(composed.test());
         assertNull(composed.resultNow());
         assertEquals(List.of(source, composed), events.completions.stream().map(TaskCompletion::task).toList());
 
@@ -220,21 +220,21 @@ final class TaskExecutionContextTest {
             assertInstanceOf(CancellationException.class, cause);
             cleanups.incrementAndGet();
         });
-        TaskHandle handle = root.newHandle(new TaskListener() {
+        root.addTaskListener(new TaskListener() {
             /// Signals the test thread after cancellation has finished propagating.
             @Override
-            public void onExecutionFinished(TaskHandle handle, boolean success) {
+            public void onExecutionFinished(Task<?> rootTask, boolean success) {
                 stopped.complete(success);
             }
         });
-        handle.start();
+        root.start();
         try {
             assertTrue(entered.await(10, TimeUnit.SECONDS));
             assertThrows(IllegalStateException.class, child::resultNow);
             assertThrows(IllegalStateException.class, child::exceptionNow);
             assertNull(child.resultNowOrNull());
             assertNull(child.exceptionNowOrNull());
-            handle.cancel();
+            root.cancel();
         } finally {
             release.countDown();
         }
@@ -283,23 +283,23 @@ final class TaskExecutionContextTest {
     void tryRunPropagatesCancellation(boolean batch) {
         Task<?> child = Task.completed(0);
         AtomicInteger continued = new AtomicInteger();
-        TaskHandle handle = task(context -> {
+        Task<?> root = task(context -> {
             if (batch)
                 context.tryRunAll(List.of(child));
             else
                 context.tryRun(child);
             return continued.incrementAndGet();
-        }).newHandle();
-        handle.addTaskListener(new TaskListener() {
+        });
+        root.addTaskListener(new TaskListener() {
             /// Cancels the tree once the child begins.
             @Override
             public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
                 if (task == child)
-                    handle.cancel();
+                    root.cancel();
             }
         });
-        assertFalse(handle.test());
-        assertInstanceOf(CancellationException.class, handle.getException());
+        assertFalse(root.test());
+        assertInstanceOf(CancellationException.class, root.exceptionNowOrNull());
         assertEquals(0, continued.get());
     }
 
@@ -379,14 +379,15 @@ final class TaskExecutionContextTest {
         });
         Task<@Nullable String> second = Task.completed(null);
         Task<List<@Nullable String>> batch = Task.allOf(first, second);
-        assertTrue(batch.newHandle(new TaskListener() {
+        batch.addTaskListener(new TaskListener() {
             /// Releases the first child after the second child's result has been published.
             @Override
             public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
                 if (task == second)
                     released.countDown();
             }
-        }).test());
+        });
+        assertTrue(batch.test());
         assertEquals(Arrays.asList("first", null), batch.resultNow());
         assertTrue(Task.allOf().run().isEmpty());
     }
@@ -442,7 +443,8 @@ final class TaskExecutionContextTest {
         Task<?> source = Task.supplyAsync(() -> 1);
         Task<?> continuation = source.withRunAsync(() -> {});
         StageEvents events = new StageEvents();
-        assertTrue(continuation.newHandle(events).test());
+        continuation.addTaskListener(events);
+        assertTrue(continuation.test());
         assertEquals(List.of(TaskSignificance.MODERATE, TaskSignificance.MAJOR, TaskSignificance.MODERATE),
                 events.completions.stream().map(event -> event.task().getSignificance()).toList());
     }
@@ -508,7 +510,7 @@ final class TaskExecutionContextTest {
     void observersSeeTerminalStateOnce() {
         Task<Integer> root = task(context -> 42);
         AtomicInteger completions = new AtomicInteger();
-        assertTrue(root.newHandle(new TaskListener() {
+        root.addTaskListener(new TaskListener() {
             /// Observes the published state and result, then exercises listener failure isolation.
             @Override
             public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
@@ -520,20 +522,20 @@ final class TaskExecutionContextTest {
                 completions.incrementAndGet();
                 throw new IllegalStateException("Observer failed");
             }
-        }).test());
+        });
+        assertTrue(root.test());
         assertEquals(1, completions.get());
         assertNull(root.exceptionNowOrNull());
     }
 
-    /// Running a root directly consumes the same execution that its handles would start.
+    /// All root submission methods share the same single-use claim.
     @Test
     void rejectsAnotherRootExecutionAfterRun() throws Exception {
         AtomicInteger calls = new AtomicInteger();
         Task<Integer> root = Task.supplyAsync(calls::incrementAndGet);
-        TaskHandle handle = root.newHandle();
         assertEquals(1, root.run());
         assertThrows(IllegalStateException.class, root::run);
-        assertThrows(IllegalStateException.class, handle::test);
+        assertThrows(IllegalStateException.class, root::test);
         assertThrows(IllegalStateException.class, root::start);
         assertEquals(1, calls.get());
         assertEquals(Task.TaskState.SUCCEEDED, root.getState());
@@ -541,7 +543,87 @@ final class TaskExecutionContextTest {
         assertNull(root.exceptionNowOrNull());
     }
 
-    /// Competing callers are rejected while the first handle is still announcing its start.
+    /// Root configuration reserves the task for direct submission, including after a rejected child submission.
+    @Test
+    void reservesConfiguredRoots() throws Exception {
+        Task<Integer> observed = Task.completed(1);
+        StageEvents events = new StageEvents();
+        observed.addTaskListener(events);
+        Task<Integer> cancelled = Task.completed(2);
+        cancelled.cancel();
+        task(context -> {
+            assertThrows(IllegalStateException.class, () -> context.run(observed));
+            assertThrows(IllegalStateException.class, () -> context.runAll(List.of(cancelled)));
+            return null;
+        }).run();
+
+        assertEquals(1, observed.run());
+        assertEquals(1, events.completions.size());
+        assertTrue(cancelled.isCancelled());
+        assertThrows(CancellationException.class, cancelled::run);
+    }
+
+    /// Reading an unsubmitted task leaves it available as a child, which cannot control the enclosing tree.
+    @Test
+    void rejectsRootControlsOnChildren() throws Exception {
+        StageEvents listener = new StageEvents();
+        Task<Integer> child = new Task<>() {
+            /// Attempts root-only operations while the task is running as a child.
+            @Override
+            public Integer execute(TaskExecutionContext context) {
+                assertThrows(IllegalStateException.class, this::cancel);
+                assertThrows(IllegalStateException.class, this::isCancelled);
+                assertThrows(IllegalStateException.class, () -> addTaskListener(listener));
+                assertThrows(IllegalStateException.class, () -> removeTaskListener(listener));
+                assertFalse(context.isCancelled());
+                return 42;
+            }
+        };
+        assertFalse(child.isCancelled());
+        child.removeTaskListener(listener);
+        assertEquals(42, Task.composeAsync(() -> child).run());
+        assertThrows(IllegalStateException.class, child::cancel);
+        assertThrows(IllegalStateException.class, () -> child.addTaskListener(listener));
+    }
+
+    /// Interrupting a synchronous test's waiting thread preserves its interrupt status and the root's outcome.
+    @Test
+    void interruptedTestWaitReportsRootOutcome() throws Exception {
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        Task<Integer> root = Task.supplyAsync(Schedulers.io(), () -> {
+            started.countDown();
+            assertTrue(release.await(10, TimeUnit.SECONDS));
+            return 42;
+        });
+        List<Boolean> finished = new CopyOnWriteArrayList<>();
+        root.addTaskListener(new TaskListener() {
+            /// Records the outcome published to observers of the same root.
+            @Override
+            public void onExecutionFinished(Task<?> rootTask, boolean success) {
+                finished.add(success);
+            }
+        });
+        FutureTask<Boolean> outcome = new FutureTask<>(() -> {
+            boolean success = root.test();
+            assertTrue(Thread.currentThread().isInterrupted());
+            return success;
+        });
+        Thread caller = new Thread(outcome);
+        caller.start();
+        try {
+            assertTrue(started.await(10, TimeUnit.SECONDS));
+            caller.interrupt();
+        } finally {
+            release.countDown();
+        }
+        assertTrue(outcome.get(10, TimeUnit.SECONDS));
+        assertEquals(List.of(true), finished);
+        assertEquals(42, root.resultNow());
+        assertNull(root.exceptionNowOrNull());
+    }
+
+    /// Competing submissions are rejected while the winning caller announces the root.
     @Test
     void claimsRootBeforeNotifyingStartListeners() throws Exception {
         AtomicInteger bodies = new AtomicInteger();
@@ -549,59 +631,57 @@ final class TaskExecutionContextTest {
         CountDownLatch entered = new CountDownLatch(1);
         CompletableFuture<@Nullable Void> release = new CompletableFuture<>();
         CompletableFuture<Boolean> stopped = new CompletableFuture<>();
-        List<TaskHandle> starts = new CopyOnWriteArrayList<>();
-        List<TaskHandle> stops = new CopyOnWriteArrayList<>();
+        List<Task<?>> starts = new CopyOnWriteArrayList<>();
+        List<Task<?>> stops = new CopyOnWriteArrayList<>();
         StageEvents events = new StageEvents() {
             /// Pauses the winning start call before it can submit the root body.
             @Override
-            public void onExecutionStarted(TaskHandle handle) {
-                starts.add(handle);
+            public void onExecutionStarted(Task<?> rootTask) {
+                starts.add(rootTask);
                 if (starts.size() == 1) {
                     entered.countDown();
                     release.orTimeout(10, TimeUnit.SECONDS).join();
                 }
             }
 
-            /// Records each handle stop and releases the test thread.
+            /// Records the completed root and releases the test thread.
             @Override
-            public void onExecutionFinished(TaskHandle handle, boolean success) {
-                stops.add(handle);
+            public void onExecutionFinished(Task<?> rootTask, boolean success) {
+                stops.add(rootTask);
                 stopped.complete(success);
             }
         };
-        TaskHandle first = root.newHandle(events);
-        TaskHandle second = root.newHandle(events);
+        root.addTaskListener(events);
         assertEquals(Task.TaskState.NEW, root.getState());
         ExecutorService caller = Executors.newSingleThreadExecutor();
         try {
-            var start = caller.submit(first::start);
+            var start = caller.submit(root::start);
             try {
                 assertTrue(entered.await(10, TimeUnit.SECONDS));
                 assertEquals(Task.TaskState.READY, root.getState());
                 assertThrows(IllegalStateException.class, root::resultNow);
-                assertThrows(IllegalStateException.class, second::start);
-                assertThrows(IllegalStateException.class, first::test);
+                assertThrows(IllegalStateException.class, root::start);
+                assertThrows(IllegalStateException.class, root::test);
                 assertThrows(IllegalStateException.class, root::run);
                 assertFalse(release.isDone());
                 assertEquals(0, bodies.get());
             } finally {
                 release.complete(null);
             }
-            assertSame(first, start.get(10, TimeUnit.SECONDS));
+            assertSame(root, start.get(10, TimeUnit.SECONDS));
             assertTrue(stopped.get(10, TimeUnit.SECONDS));
         } finally {
             caller.shutdownNow();
         }
-        assertThrows(IllegalStateException.class, second::test);
-        assertEquals(List.of(first), starts);
-        assertEquals(List.of(first), stops);
+        assertThrows(IllegalStateException.class, root::test);
+        assertEquals(List.of(root), starts);
+        assertEquals(List.of(root), stops);
         assertEquals(1, events.started.size());
         assertEquals(events.started, events.finished);
         assertEquals(1, bodies.get());
         assertEquals(1, root.resultNow());
         assertEquals(Task.TaskState.SUCCEEDED, root.getState());
         assertNull(root.exceptionNowOrNull());
-        assertNull(second.getException());
     }
 
     /// A repeated child fails the batch once its siblings finish and retains its own successful result.
@@ -625,8 +705,9 @@ final class TaskExecutionContextTest {
     }
 
     /// A notification uses the registration order captured before a callback changes the listeners.
-    @Test
-    void snapshotsListenersForEachNotification() {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void snapshotsListenersForEachNotification(boolean useRun) throws Exception {
         List<TaskListener> started = new ArrayList<>();
         List<TaskListener> finished = new ArrayList<>();
 
@@ -634,13 +715,13 @@ final class TaskExecutionContextTest {
         class RecordingListener extends TaskListener {
             /// {@inheritDoc}
             @Override
-            public void onExecutionStarted(TaskHandle handle) {
+            public void onExecutionStarted(Task<?> rootTask) {
                 started.add(this);
             }
 
             /// {@inheritDoc}
             @Override
-            public void onExecutionFinished(TaskHandle handle, boolean success) {
+            public void onExecutionFinished(Task<?> rootTask, boolean success) {
                 finished.add(this);
             }
         }
@@ -650,17 +731,21 @@ final class TaskExecutionContextTest {
         TaskListener middle = new RecordingListener() {
             /// Removes the first registration of the repeated listener and appends a new listener.
             @Override
-            public void onExecutionStarted(TaskHandle handle) {
-                super.onExecutionStarted(handle);
-                handle.removeTaskListener(repeated);
-                handle.addTaskListener(added);
+            public void onExecutionStarted(Task<?> rootTask) {
+                super.onExecutionStarted(rootTask);
+                rootTask.removeTaskListener(repeated);
+                rootTask.addTaskListener(added);
             }
         };
-        TaskHandle handle = Task.completed(1).newHandle(repeated);
-        handle.addTaskListener(middle);
-        handle.addTaskListener(repeated);
+        Task<Integer> root = Task.completed(1);
+        root.addTaskListener(repeated);
+        root.addTaskListener(middle);
+        root.addTaskListener(repeated);
 
-        assertTrue(handle.test());
+        if (useRun)
+            assertEquals(1, root.run());
+        else
+            assertTrue(root.test());
         assertEquals(List.of(repeated, middle, repeated), started);
         assertEquals(List.of(middle, repeated, added), finished);
     }
@@ -690,13 +775,14 @@ final class TaskExecutionContextTest {
         /// A fraction and the task to which it was attributed.
         record Report(Task<?> task, double fraction) {}
         List<Report> reports = new CopyOnWriteArrayList<>();
-        assertTrue(root.newHandle(new TaskListener() {
+        root.addTaskListener(new TaskListener() {
             /// Collects progress from both the task thread and participating workers.
             @Override
             public void onTaskProgress(Task<?> task, double fraction) {
                 reports.add(new Report(task, fraction));
             }
-        }).test());
+        });
+        assertTrue(root.test());
         assertEquals(List.of(new Report(root, 0.125),
                 new Report(child, 0.25), new Report(child, 0.5), new Report(child, 0.5),
                 new Report(child, 0.0), new Report(child, 1.0), new Report(root, 1.0)), reports);
@@ -746,7 +832,8 @@ final class TaskExecutionContextTest {
             }
         };
 
-        assertTrue(root.newHandle(events).test());
+        root.addTaskListener(events);
+        assertTrue(root.test());
         assertEquals(7, root.resultNow());
         assertEquals(2, events.started.size());
         TaskStage.Scope first = events.started.get(0);
@@ -795,7 +882,8 @@ final class TaskExecutionContextTest {
         });
 
         StageEvents events = new StageEvents();
-        assertTrue(root.newHandle(events).test());
+        root.addTaskListener(events);
+        assertTrue(root.test());
         assertEquals(42, root.resultNow());
         assertEquals(List.of(root, failed, broken, rejected), events.started.stream().map(TaskStage.Scope::task).toList());
         TaskStage.Scope outer = events.started.get(0);
@@ -816,15 +904,14 @@ final class TaskExecutionContextTest {
     void closesStageOfPreCancelledRoot() {
         StageEvents events = new StageEvents();
         Task<?> root = task(null, new TaskStage("cancelled"), context -> fail("Unexpected execution"));
-        TaskHandle handle = root.newHandle(events);
-        handle.cancel();
-        assertFalse(handle.test());
+        root.addTaskListener(events);
+        root.cancel();
+        assertFalse(root.test());
         CancellationException failure = assertInstanceOf(CancellationException.class, root.exceptionNow());
-        assertThrows(IllegalStateException.class, handle::test);
-        assertThrows(IllegalStateException.class, root.newHandle(events)::start);
+        assertThrows(IllegalStateException.class, root::test);
+        assertThrows(IllegalStateException.class, root::start);
         assertThrows(IllegalStateException.class, root::run);
         assertSame(failure, root.exceptionNow());
-        assertSame(failure, handle.getException());
         assertEquals(Task.TaskState.FAILED, root.getState());
         assertEquals(1, events.started.size());
         assertSame(root, events.started.get(0).task());
@@ -845,7 +932,7 @@ final class TaskExecutionContextTest {
                 .withStageHints(check, install);
         List<TaskStage.Hint> declarations = new ArrayList<>();
         List<TaskStage.Hint> atStageStart = new ArrayList<>();
-        assertTrue(root.newHandle(new TaskListener() {
+        root.addTaskListener(new TaskListener() {
             /// Preserves declaration order across callbacks.
             @Override
             public void onStagesDeclared(@Unmodifiable List<TaskStage.Hint> hints) {
@@ -857,7 +944,8 @@ final class TaskExecutionContextTest {
             public void onStageStarted(TaskStage.Scope scope) {
                 atStageStart.addAll(declarations);
             }
-        }).test());
+        });
+        assertTrue(root.test());
         assertEquals(List.of(check, install, runtime), declarations);
         assertEquals(declarations, atStageStart);
     }

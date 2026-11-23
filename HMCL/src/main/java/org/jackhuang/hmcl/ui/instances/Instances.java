@@ -22,14 +22,13 @@ import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.CreateAccountPane;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
-import org.jackhuang.hmcl.ui.construct.TaskHandleDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskDialogPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
@@ -89,9 +88,9 @@ public final class Instances {
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
-        TaskHandleDialogPane pane = new TaskHandleDialogPane(TaskCancellationAction.NORMAL);
+        TaskDialogPane pane = new TaskDialogPane(TaskCancellationAction.NORMAL);
         pane.setTitle(i18n("modpack.download.title", file.file().filename()));
-        TaskHandle handle = new FileDownloadTask(downloadURLs, modpack)
+        Task<?> task = new FileDownloadTask(downloadURLs, modpack)
                 .setName(file.name())
                 .whenComplete(Schedulers.javafx(), (@Nullable Throwable e) -> {
                     if (e == null) {
@@ -111,10 +110,10 @@ public final class Instances {
                                 i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
                                 i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
                     }
-                }).newHandle();
-        pane.setHandle(handle);
+                });
+        pane.setTask(task);
         Controllers.dialog(pane);
-        pane.startHandle();
+        pane.startTask();
     }
 
     public static void deleteInstance(HMCLGameInstance gameInstance) {

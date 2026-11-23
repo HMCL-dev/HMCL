@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -656,10 +655,10 @@ public final class Controllers {
         return pane.getCompletableFuture();
     }
 
-    /// Creates a task dialog and submits its handle to the serial business-task queue.
+    /// Creates a task dialog and submits it to the serial business-task queue.
     ///
-    /// Submits the handle even if the pane cannot be shown, and returns the pane.
-    public static TaskHandleDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel) {
+    /// Submits the task even if the pane cannot be shown, and returns the pane.
+    public static TaskDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel) {
         return taskDialog(task, title, onCancel, null);
     }
 
@@ -670,14 +669,13 @@ public final class Controllers {
     /// @param onCancel the cancellation action
     /// @param parent the executing parent dialog, or `null` to queue an independent operation
     /// @return the submitted task dialog
-    public static TaskHandleDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel,
-                                                  @Nullable TaskHandleDialogPane parent) {
-        TaskHandle handle = task.newHandle();
-        TaskHandleDialogPane pane = new TaskHandleDialogPane(onCancel);
+    public static TaskDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel,
+                                            @Nullable TaskDialogPane parent) {
+        TaskDialogPane pane = new TaskDialogPane(onCancel);
         pane.setTitle(title);
-        pane.setHandle(handle);
+        pane.setTask(task);
         dialog(pane);
-        pane.startHandle(parent);
+        pane.startTask(parent);
         return pane;
     }
 

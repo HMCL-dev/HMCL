@@ -21,7 +21,6 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -40,13 +39,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-/// Displays running tasks, retained failures, and the stages reported by a handle.
+/// Displays running tasks, retained failures, and the stages reported by a root task.
 public final class TaskListPane extends StackPane {
     private static final Insets DEFAULT_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 0);
     private static final Insets STAGED_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 26);
 
-    /// The handle whose queued notifications may update the list.
-    private @Nullable TaskHandle handle;
+    /// The root task whose queued notifications may update the list.
+    private @Nullable Task<?> rootTask;
     private final JFXListView<Node> listView = new JFXListView<>();
     /// The listener receiving updates for this pane.
     private @Nullable TaskListener listener;
@@ -115,20 +114,20 @@ public final class TaskListPane extends StackPane {
         listView.getItems().add(index, node);
     }
 
-    /// Clears the display and observes subsequent events from the supplied handle, or detaches on null.
+    /// Clears the display and observes subsequent events from the supplied root task, or detaches on null.
     @FXThread
-    public void setHandle(@Nullable TaskHandle handle) {
-        if (this.handle == handle)
+    public void setTask(@Nullable Task<?> rootTask) {
+        if (this.rootTask == rootTask)
             return;
-        if (this.handle != null && listener != null)
-            this.handle.removeTaskListener(listener);
-        this.handle = handle;
+        if (this.rootTask != null && listener != null)
+            this.rootTask.removeTaskListener(listener);
+        this.rootTask = rootTask;
         listener = null;
         stageNodes.clear();
         activeScopes.clear();
         listView.getItems().clear();
         progressNodePadding.set(DEFAULT_PROGRESS_NODE_PADDING);
-        if (handle == null)
+        if (rootTask == null)
             return;
         listener = new TaskListener() {
             /// Displayable tasks that can still receive progress from workers.
@@ -177,7 +176,7 @@ public final class TaskListPane extends StackPane {
                 }
             }
 
-            /// Queues a change on the JavaFX thread while this handle is attached.
+            /// Queues a change on the JavaFX thread while this root task is attached.
             private void update(Runnable action) {
                 Platform.runLater(() -> {
                     if (listener == this)
@@ -249,7 +248,7 @@ public final class TaskListPane extends StackPane {
                 update(() -> stageNode(scope.stage()).addProgress(completedDelta, totalDelta));
             }
         };
-        handle.addTaskListener(listener);
+        rootTask.addTaskListener(listener);
     }
 
     private final class Cell extends ListCell<Node> {

@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +60,7 @@ public class TaskTest {
         AtomicReference<@Nullable Boolean> stopSuccess = new AtomicReference<>();
         AtomicReference<@Nullable Throwable> uncaught = new AtomicReference<>();
 
-        TaskHandle handle = task.newHandle(new TaskListener() {
+        task.addTaskListener(new TaskListener() {
             /// Records the original error after the task has published its failure.
             @Override
             public void onTaskFinished(Task<?> failedTask, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
@@ -72,9 +71,9 @@ public class TaskTest {
                 failedThrowable.set(failure);
             }
 
-            /// Records the final outcome reported by the handle.
+            /// Records the final outcome of the root task.
             @Override
-            public void onExecutionFinished(TaskHandle handle, boolean success) {
+            public void onExecutionFinished(Task<?> root, boolean success) {
                 stopCount.incrementAndGet();
                 stopSuccess.set(success);
             }
@@ -83,7 +82,7 @@ public class TaskTest {
         @Nullable Thread.UncaughtExceptionHandler previousHandler = Thread.getDefaultUncaughtExceptionHandler();
         try {
             Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> uncaught.set(throwable));
-            assertFalse(handle.test());
+            assertFalse(task.test());
         } finally {
             Thread.setDefaultUncaughtExceptionHandler(previousHandler);
         }
@@ -94,7 +93,6 @@ public class TaskTest {
         assertEquals(Boolean.FALSE, stopSuccess.get());
         assertEquals(Task.TaskState.FAILED, task.getState());
         assertSame(error, task.exceptionNowOrNull());
-        assertSame(error, handle.getException());
         assertSame(error, uncaught.get());
     }
 
@@ -204,24 +202,23 @@ public class TaskTest {
             releaseTask.await();
             taskCompleted.set(true);
         }).thenRunAsync(() -> continuationExecuted.set(true)).recover(failure -> null);
-        TaskHandle handle = task.newHandle(new TaskListener() {
+        task.addTaskListener(new TaskListener() {
             /// Publishes the execution result to the waiting test thread.
             @Override
-            public void onExecutionFinished(TaskHandle handle, boolean success) {
+            public void onExecutionFinished(Task<?> root, boolean success) {
                 stopped.complete(success);
             }
         });
         try {
-            handle.start();
+            task.start();
             assertTrue(taskStarted.await(30, TimeUnit.SECONDS), "Task should start before cancellation");
-            handle.cancel();
+            task.cancel();
         } finally {
             // Keep the task running until cancellation is requested, and release it even if setup fails.
             releaseTask.countDown();
         }
 
         assertFalse(stopped.get(30, TimeUnit.SECONDS), "Task should fail because we have cancelled it");
-        assertInstanceOf(CancellationException.class, handle.getException(), "CancellationException should be recorded");
         assertInstanceOf(CancellationException.class, task.exceptionNow(), "CancellationException should be recorded");
         assertTrue(taskCompleted.get(), "Cancellation should not interrupt the running task");
         assertFalse(continuationExecuted.get(), "Continuation should not run after cancellation");

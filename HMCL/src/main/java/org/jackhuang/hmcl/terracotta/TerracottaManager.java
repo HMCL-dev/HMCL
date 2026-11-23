@@ -174,7 +174,7 @@ public final class TerracottaManager {
                     } else {
                         compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
                     }
-                }).newHandle(preparing.downloadListener()).start();
+                }).addTaskListener(preparing.downloadListener()).start();
 
         return compareAndSet(state, preparing) ? preparing : null;
     }

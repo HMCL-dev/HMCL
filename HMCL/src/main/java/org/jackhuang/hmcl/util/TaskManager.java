@@ -9,10 +9,10 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.jackhuang.hmcl.task.TaskHandle;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.TaskHandleDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskDialogPane;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
@@ -27,7 +27,7 @@ import java.util.concurrent.CompletableFuture;
 /// Entries remain registered while hidden. Completed entries remain until their pending action
 /// is activated. Entries without a pending action are removed when their executions finish.
 /// Explicit child executions share their parent's execution slot. The next independent task
-/// starts only after every handle in that slot has reported completion and its cleanup listeners
+/// starts only after every task in that slot has reported completion and its cleanup listeners
 /// have run. Hiding or detaching a dialog does not release its slot.
 @NotNullByDefault
 public final class TaskManager {
@@ -46,20 +46,20 @@ public final class TaskManager {
     private static final TaskManager INSTANCE = new TaskManager();
 
     /// Queued and active dialogs and completed dialogs awaiting user action.
-    private final ObservableList<TaskHandleDialogPane> tasks =
+    private final ObservableList<TaskDialogPane> tasks =
             FXCollections.observableArrayList(pane -> new Observable[]{pane.runningInBackgroundProperty(), pane.pendingActionProperty(), pane.queuedProperty()});
 
     /// Independent executions waiting in submission order.
     private final ArrayDeque<Execution> queue = new ArrayDeque<>();
 
     /// Submitted executions, retained independently of their dialogs' visibility or attachment.
-    private final IdentityHashMap<TaskHandle, Execution> executions = new IdentityHashMap<>();
+    private final IdentityHashMap<Task<?>, Execution> executions = new IdentityHashMap<>();
 
     /// The group currently owning the execution slot, or `null` when idle.
     private @Nullable Group activeGroup;
 
     /// A live view that prevents callers from modifying the task list.
-    private final @UnmodifiableView ObservableList<TaskHandleDialogPane> tasksView =
+    private final @UnmodifiableView ObservableList<TaskDialogPane> tasksView =
             FXCollections.unmodifiableObservableList(tasks);
 
     /// The aggregate status, with background execution taking priority over waiting tasks.
@@ -69,7 +69,7 @@ public final class TaskManager {
     private TaskManager() {
         status.bind(Bindings.createObjectBinding(() -> {
             boolean pending = false;
-            for (TaskHandleDialogPane pane : tasks) {
+            for (TaskDialogPane pane : tasks) {
                 if (pane.pendingActionProperty().get() != null || pane.queuedProperty().get())
                     pending = true;
                 else if (pane.runningInBackgroundProperty().get())
@@ -85,7 +85,7 @@ public final class TaskManager {
     }
 
     /// Returns an unmodifiable, observable view of queued tasks, active dialogs, and pending completion actions.
-    public @UnmodifiableView ObservableList<TaskHandleDialogPane> getTasks() {
+    public @UnmodifiableView ObservableList<TaskDialogPane> getTasks() {
         FXUtils.checkFxUserThread();
         return tasksView;
     }
@@ -99,26 +99,26 @@ public final class TaskManager {
         return status.getReadOnlyProperty();
     }
 
-    /// Submits an unstarted handle, returning the same future while it remains registered.
-    /// All handle listeners must be installed before submission. Callers must not subsequently
-    /// invoke [TaskHandle#start()] or [TaskHandle#test()] directly.
+    /// Submits an unstarted task, returning the same future while it remains registered.
+    /// All task listeners must be installed before submission. Callers must not subsequently
+    /// invoke [Task#start()] or [Task#test()] directly.
     ///
-    /// @param handle the handle to submit, which must not have completed
-    /// @param parent an executing parent whose slot this handle shares, or `null` to queue
+    /// @param task the task to submit, which must not have completed
+    /// @param parent an executing parent whose slot this task shares, or `null` to queue
     ///               an independent execution; a parent must still belong to the active group
-    /// @return a future completed after the handle's completion listeners and their preceding JavaFX
-    ///         callbacks have run. Its value indicates execution success. If the handle
+    /// @return a future completed after the task's completion listeners and their preceding JavaFX
+    ///         callbacks have run. Its value indicates execution success. If the task
     ///         rejects the start request, the future completes exceptionally with that failure.
     /// @throws IllegalArgumentException if `parent` is not executing in the active group
-    public CompletableFuture<Boolean> submit(TaskHandle handle, @Nullable TaskHandle parent) {
-        return submit(handle, parent, null);
+    public CompletableFuture<Boolean> submit(Task<?> task, @Nullable Task<?> parent) {
+        return submit(task, parent, null);
     }
 
-    /// Submits the handle and invokes `onStartRejected` on the JavaFX thread if starting it throws.
+    /// Submits the task and invokes `onStartRejected` on the JavaFX thread if starting it throws.
     /// Changes made by callers to the returned future do not trigger the callback.
-    public CompletableFuture<Boolean> submit(TaskHandle handle, @Nullable TaskHandle parent, @Nullable Runnable onStartRejected) {
+    public CompletableFuture<Boolean> submit(Task<?> task, @Nullable Task<?> parent, @Nullable Runnable onStartRejected) {
         FXUtils.checkFxUserThread();
-        @Nullable Execution existing = executions.get(handle);
+        @Nullable Execution existing = executions.get(task);
         if (existing != null)
             return existing.observe(onStartRejected);
 
@@ -128,11 +128,11 @@ public final class TaskManager {
         } else {
             @Nullable Execution owner = executions.get(parent);
             if (owner == null || owner.group != activeGroup)
-                throw new IllegalArgumentException("Parent handle is not running");
+                throw new IllegalArgumentException("Parent task is not running");
             group = owner.group;
         }
-        Execution execution = new Execution(handle, group);
-        executions.put(handle, execution);
+        Execution execution = new Execution(task, group);
+        executions.put(task, execution);
         if (parent == null) {
             queue.addLast(execution);
             startNext();
@@ -154,9 +154,10 @@ public final class TaskManager {
     /// Starts a group member while retaining the group's exclusive slot.
     private void start(Execution execution) {
         execution.group.members++;
-        execution.handle.addTaskListener(execution);
         try {
-            execution.handle.start();
+            execution.task.addTaskListener(execution);
+            execution.listening = true;
+            execution.task.start();
         } catch (RuntimeException | Error failure) {
             release(execution);
             execution.completion.completeExceptionally(failure);
@@ -165,9 +166,10 @@ public final class TaskManager {
 
     /// Releases this submission once, ignoring late notifications from previous submissions.
     private boolean release(Execution execution) {
-        if (!executions.remove(execution.handle, execution))
+        if (!executions.remove(execution.task, execution))
             return false;
-        execution.handle.removeTaskListener(execution);
+        if (execution.listening)
+            execution.task.removeTaskListener(execution);
         if (--execution.group.members == 0)
             activeGroup = null;
         return true;
@@ -181,18 +183,20 @@ public final class TaskManager {
 
     /// Retains scheduling state even if its progress dialog is hidden or detached.
     private final class Execution extends TaskListener {
-        /// The handle started when its group owns the slot.
-        private final TaskHandle handle;
+        /// The task started when its group owns the slot.
+        private final Task<?> task;
         /// The execution slot shared with explicitly declared children.
         private final Group group;
+        /// Whether the root accepted this listener before its start was attempted.
+        private boolean listening;
         /// Completion observed after cleanup listeners have run.
         private final CompletableFuture<Boolean> completion = new CompletableFuture<>();
         /// The shared caller-visible future, which callers may cancel independently.
         private final CompletableFuture<Boolean> clientCompletion = completion.copy();
 
         /// Creates an unstarted execution in the supplied group.
-        private Execution(TaskHandle handle, Group group) {
-            this.handle = handle;
+        private Execution(Task<?> task, Group group) {
+            this.task = task;
             this.group = group;
         }
 
@@ -209,7 +213,7 @@ public final class TaskManager {
 
         /// Releases the slot after earlier completion listeners and their JavaFX callbacks.
         @Override
-        public void onExecutionFinished(TaskHandle handle, boolean success) {
+        public void onExecutionFinished(Task<?> task, boolean success) {
             Platform.runLater(() -> {
                 if (release(this)) {
                     completion.complete(success);
@@ -220,14 +224,14 @@ public final class TaskManager {
     }
 
     /// Registers a dialog; registering an existing entry has no effect.
-    public void register(TaskHandleDialogPane pane) {
+    public void register(TaskDialogPane pane) {
         FXUtils.checkFxUserThread();
         if (!tasks.contains(pane))
             tasks.add(pane);
     }
 
     /// Removes a dialog; removing an absent entry has no effect.
-    public void unregister(TaskHandleDialogPane pane) {
+    public void unregister(TaskDialogPane pane) {
         FXUtils.checkFxUserThread();
         tasks.remove(pane);
     }

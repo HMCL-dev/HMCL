@@ -13,19 +13,19 @@ import java.util.List;
 /// A task publishes its terminal state and outcome before its finish notification.
 /// Different tasks can invoke the same listener concurrently, including progress updates for the same stage.
 ///
-/// @see TaskHandle#addTaskListener(TaskListener)
+/// @see Task#addTaskListener(TaskListener)
 /// @author huangyuhui
 @NotNullByDefault
 public abstract class TaskListener implements EventListener {
 
-    /// Called on the thread that starts the handle, before the root task runs.
-    public void onExecutionStarted(TaskHandle handle) {
+    /// Called on the submitting thread before the root runs.
+    public void onExecutionStarted(Task<?> root) {
     }
 
-    /// Called after the handle finishes executing its task tree.
+    /// Called after the root publishes its terminal outcome.
     ///
     /// @param success whether execution succeeded, including when the root recovered from a child failure
-    public void onExecutionFinished(TaskHandle handle, boolean success) {
+    public void onExecutionFinished(Task<?> root, boolean success) {
     }
 
     /// Called after the task enters [Task.TaskState#RUNNING], before its body is invoked.

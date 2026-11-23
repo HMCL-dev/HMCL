@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.ui.wizard;
 import javafx.scene.control.Label;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.ui.construct.TaskListPane;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskManager;
@@ -22,19 +21,19 @@ public abstract class AbstractWizardDisplayer implements WizardDisplayer {
     /// Displays task progress and submits the wizard's execution to the serial business-task queue.
     @Override
     public void handleTask(SettingsMap settings, Task<?> task) {
-        TaskHandle handle = task.withRunAsync(Schedulers.javafx(), this::navigateToSuccess).newHandle();
+        Task<?> rootTask = task.withRunAsync(Schedulers.javafx(), this::navigateToSuccess);
         TaskListPane pane = new TaskListPane();
-        pane.setHandle(handle);
+        pane.setTask(rootTask);
         navigateTo(pane, Navigation.NavigationDirection.FINISH);
-        cancelQueue.add(handle);
-        TaskManager.getInstance().submit(handle, null);
+        cancelQueue.add(rootTask);
+        TaskManager.getInstance().submit(rootTask, null);
     }
 
     @Override
     public void onCancel() {
         while (!cancelQueue.isEmpty()) {
             Object x = cancelQueue.poll();
-            if (x instanceof TaskHandle) ((TaskHandle) x).cancel();
+            if (x instanceof Task<?> task) task.cancel();
             else if (x instanceof Thread) ((Thread) x).interrupt();
             else throw new IllegalStateException("Unrecognized cancel queue element: " + x);
         }

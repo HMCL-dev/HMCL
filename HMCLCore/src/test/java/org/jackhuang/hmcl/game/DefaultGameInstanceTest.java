@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -94,17 +93,14 @@ public final class DefaultGameInstanceTest {
         GameInstanceID id = new GameInstanceID("instance");
         Path output = Files.writeString(directory.resolve("export.zip"), "previous archive");
         var task = new ModpackExportTask(repository.publish(id, new GameInstanceManifest(id)), new ModpackExportInfo(), output) {
-            /// The execution cancelled immediately after writing the archive contents.
-            final TaskHandle handle = newHandle();
-
             /// Writes one entry and requests cancellation before the archive is published.
             @Override
             protected void writeArchive(Zipper zip, Predicate<String> include, TaskProgress progress) throws IOException {
                 zip.putTextFile("content", "example.txt");
-                handle.cancel();
+                cancel();
             }
         };
-        assertFalse(task.handle.test());
+        assertFalse(task.test());
         assertInstanceOf(CancellationException.class, task.exceptionNow());
         assertEquals("previous archive", Files.readString(output));
         try (var paths = Files.list(directory)) {
@@ -180,7 +176,7 @@ public final class DefaultGameInstanceTest {
                 LaunchManifestNormalizer.repairForLaunch(instance.getResolvedManifest()),
                 true);
 
-        assertTrue(repair.newHandle().test());
+        assertTrue(repair.test());
         assertEquals(gameVersion, dependencyManager.requestedGameVersion);
         assertEquals(optiFineVersion, dependencyManager.requestedComponentVersion);
     }
@@ -306,7 +302,7 @@ public final class DefaultGameInstanceTest {
         var task = new GameDownloadTask(dependencyManager, manifest)
                 .thenAcceptAsync(cachedJar -> Files.copy(cachedJar, destination));
 
-        assertTrue(task.newHandle().test());
+        assertTrue(task.test());
         assertEquals("client", Files.readString(destination));
         assertEquals("client", Files.readString(cached));
     }
@@ -333,7 +329,7 @@ public final class DefaultGameInstanceTest {
 
         GameDownloadTask task = new GameDownloadTask(dependencyManager, manifest);
 
-        assertTrue(task.newHandle().test());
+        assertTrue(task.test());
         assertEquals(cached, task.resultNow());
         assertFalse(Files.exists(cacheDirectory.resolve("jars")));
         assertFalse(cached.startsWith(repository.getLayout().getInstanceRoot(manifest.id())));
@@ -371,8 +367,7 @@ public final class DefaultGameInstanceTest {
                 "forge-test",
                 installer);
 
-        var handle = task.newHandle();
-        assertTrue(handle.test(), () -> String.valueOf(handle.getException()));
+        assertTrue(task.test(), () -> String.valueOf(task.exceptionNowOrNull()));
         assertTrue(Files.isRegularFile(minecraftJar));
     }
 
@@ -404,7 +399,7 @@ public final class DefaultGameInstanceTest {
                 "forge-test",
                 installer);
 
-        assertFalse(task.newHandle().test());
+        assertFalse(task.test());
         assertEquals("client", Files.readString(minecraftJar));
     }
 
@@ -632,7 +627,7 @@ public final class DefaultGameInstanceTest {
                 manifest,
                 instanceId);
 
-        assertFalse(task.newHandle().test());
+        assertFalse(task.test());
 
         assertEquals(
                 "Game instance already exists: instance",

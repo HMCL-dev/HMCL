@@ -16,7 +16,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.TaskHandleDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.TaskManager;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -36,7 +36,7 @@ public final class TaskListPage extends StackPane {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
 
-        JFXListView<TaskHandleDialogPane> list = new JFXListView<>();
+        JFXListView<TaskDialogPane> list = new JFXListView<>();
         list.setItems(TaskManager.getInstance().getTasks());
         list.setCellFactory(view -> new TaskCell());
         list.setPadding(Insets.EMPTY);
@@ -54,7 +54,7 @@ public final class TaskListPage extends StackPane {
 
     /// Displays a live task title and an action to restore progress or continue a completed task.
     @NotNullByDefault
-    private static final class TaskCell extends ListCell<@Nullable TaskHandleDialogPane> {
+    private static final class TaskCell extends ListCell<@Nullable TaskDialogPane> {
 
         /// The list item whose title is bound to the current dialog.
         private final TwoLineListItem content = new TwoLineListItem();
@@ -96,7 +96,7 @@ public final class TaskListPage extends StackPane {
 
         /// Invokes a pending action or restores the current task's progress dialog.
         private void activateTask() {
-            @Nullable TaskHandleDialogPane pane = getItem();
+            @Nullable TaskDialogPane pane = getItem();
             if (pane != null) {
                 if (pane.pendingActionProperty().get() != null)
                     pane.runPendingAction();
@@ -107,7 +107,7 @@ public final class TaskListPage extends StackPane {
 
         /// Rebinds a reused cell and updates its progress or pending-action presentation.
         @Override
-        protected void updateItem(@Nullable TaskHandleDialogPane pane, boolean empty) {
+        protected void updateItem(@Nullable TaskDialogPane pane, boolean empty) {
             super.updateItem(pane, empty);
             graphic.resetFeedback();
             content.titleProperty().unbind();
@@ -118,7 +118,7 @@ public final class TaskListPage extends StackPane {
                 setGraphic(null);
             } else {
                 content.titleProperty().bind(pane.titleProperty());
-                @Nullable TaskHandleDialogPane.PendingAction action = pane.pendingActionProperty().get();
+                @Nullable TaskDialogPane.PendingAction action = pane.pendingActionProperty().get();
                 actionButton.getStyleClass().removeAll("toggle-icon4", "jfx-button-border");
                 if (action != null) {
                     actionButton.getStyleClass().add("jfx-button-border");

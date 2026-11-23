@@ -183,7 +183,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 pageCount.set(-1);
                 retrySearch = () -> search(userGameVersion, category, pageOffset, searchFilter, sort);
             }
-        }).newHandle(true);
+        }).start();
     }
 
     protected String getLocalizedCategory(String category, Object self) {

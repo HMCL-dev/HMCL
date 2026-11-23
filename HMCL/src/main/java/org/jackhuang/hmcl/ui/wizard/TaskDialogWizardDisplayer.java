@@ -4,14 +4,14 @@ package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.TaskHandleDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskDialogPane;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Queue;
@@ -20,9 +20,12 @@ import java.util.concurrent.CancellationException;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public abstract class TaskHandleDialogWizardDisplayer extends AbstractWizardDisplayer {
+/// Displays a wizard's root task and reports its outcome through the dialog.
+@NotNullByDefault
+public abstract class TaskDialogWizardDisplayer extends AbstractWizardDisplayer {
 
-    public TaskHandleDialogWizardDisplayer(Queue<Object> cancelQueue) {
+    /// Tracks tasks and threads cancelled when this wizard closes.
+    public TaskDialogWizardDisplayer(Queue<Object> cancelQueue) {
         super(cancelQueue);
     }
 
@@ -30,7 +33,7 @@ public abstract class TaskHandleDialogWizardDisplayer extends AbstractWizardDisp
     @Override
     public void handleTask(SettingsMap settings, Task<?> task) {
         @Nullable WizardProvider.TaskCleanup cleanup = settings.remove(WizardProvider.TaskCleanup.KEY);
-        TaskHandleDialogPane pane = new TaskHandleDialogPane(it -> {
+        TaskDialogPane pane = new TaskDialogPane(it -> {
             if (cleanup != null) {
                 // Keep the installation modal until the completion listener releases its repository draft.
                 it.setCancel(null);
@@ -43,7 +46,7 @@ public abstract class TaskHandleDialogWizardDisplayer extends AbstractWizardDisp
 
         pane.setTitle(i18n("message.doing"));
         if (settings.containsKey("title")) {
-            Object title = settings.get("title");
+            @Nullable Object title = settings.get("title");
             if (title instanceof StringProperty titleProperty)
                 pane.titleProperty().bind(titleProperty);
             else if (title instanceof String titleMessage)
@@ -51,11 +54,11 @@ public abstract class TaskHandleDialogWizardDisplayer extends AbstractWizardDisp
         }
 
         runInFX(() -> {
-            TaskHandle handle = task.newHandle(new TaskListener() {
+            task.addTaskListener(new TaskListener() {
                 /// Releases wizard resources and reports the outcome on the JavaFX thread.
                 @Override
-                public void onExecutionFinished(TaskHandle handle, boolean success) {
-                    @Nullable Throwable failure = success ? null : handle.getException();
+                public void onExecutionFinished(Task<?> rootTask, boolean success) {
+                    @Nullable Throwable failure = rootTask.exceptionNowOrNull();
                     if (cleanup != null) {
                         try {
                             cleanup.cleanup();
@@ -108,9 +111,9 @@ public abstract class TaskHandleDialogWizardDisplayer extends AbstractWizardDisp
                     });
                 }
             });
-            pane.setHandle(handle);
+            pane.setTask(task);
             Controllers.dialog(pane);
-            pane.startHandle();
+            pane.startTask();
         });
     }
 }

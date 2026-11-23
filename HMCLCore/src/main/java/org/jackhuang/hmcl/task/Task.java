@@ -25,10 +25,10 @@ import java.util.function.*;
 import java.util.stream.Stream;
 
 /// A single-use unit of work with a result, lifecycle notifications, and optional progress.
-/// Creating a task or composing it with another task does not start either body. Submit the
-/// outermost task using [#start()], [#run()], or a [TaskHandle]. Submitting the same instance
-/// again throws [IllegalStateException], even through a different handle or parent task.
-/// Create a new instance to repeat an operation.
+/// Submit the root using [#start()], [#run()], or [#test()]. Each task can be submitted only
+/// once, either as a root or as a child. Create a new instance to repeat an operation.
+/// Registering a listener or requesting cancellation before submission reserves the task as a root.
+/// Its listeners and cancellation request apply to the whole execution tree.
 ///
 /// An omitted or `null` executor leaves a task body on its parent's executor, or on the
 /// task scheduler for a root. A continuation with an omitted or `null` callback executor
@@ -76,19 +76,57 @@ public abstract class Task<T extends @Nullable Object> {
     /// Atomically claims [#state] on the first submission.
     private static final VarHandle STATE_HANDLE;
 
+    /// Marks a submitted child without retaining its parent or the execution tree.
+    private static final Object CHILD = new Object();
+
+    /// Null until reserved, then the root's [TaskExecution] or [#CHILD].
+    private volatile @Nullable Object executionRole;
+
+    /// Atomically selects the task's permanent role before it can be submitted.
+    private static final VarHandle EXECUTION_ROLE;
+
     static {
         try {
-            STATE_HANDLE = MethodHandles.lookup()
-                    .findVarHandle(Task.class, "state", TaskState.class);
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            STATE_HANDLE = lookup.findVarHandle(Task.class, "state", TaskState.class);
+            EXECUTION_ROLE = lookup.findVarHandle(Task.class, "executionRole", Object.class);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new ExceptionInInitializerError(e);
         }
     }
 
-    /// Reserves this task for its first submission, before any execution notifications.
-    final void claimExecution() {
+    /// Returns the execution associated with a reserved root.
+    private static TaskExecution asRootExecution(Object role) {
+        if (role instanceof TaskExecution execution)
+            return execution;
+        throw new IllegalStateException("Task has been submitted as a child");
+    }
+
+    /// Reserves the root's execution for configuration or submission.
+    private TaskExecution rootExecution() {
+        @Nullable Object role = executionRole;
+        if (role == null) {
+            TaskExecution execution = new TaskExecution();
+            role = EXECUTION_ROLE.compareAndExchange(this, null, execution);
+            if (role == null)
+                return execution;
+        }
+        return asRootExecution(role);
+    }
+
+    /// Claims a root exactly once before its execution starts notifying listeners.
+    private TaskExecution claimAsRoot() {
+        TaskExecution execution = rootExecution();
         if (!STATE_HANDLE.compareAndSet(this, TaskState.NEW, TaskState.READY))
             throw new IllegalStateException("Task has already been submitted: " + (name != null ? name : getClass().getName()));
+        return execution;
+    }
+
+    /// Claims an unreserved task as a child of the calling execution.
+    final void claimAsChild() {
+        if (!EXECUTION_ROLE.compareAndSet(this, null, CHILD))
+            throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name : getClass().getName()));
+        state = TaskState.READY;
     }
 
     /// Returns the current execution state.
@@ -206,37 +244,63 @@ public abstract class Task<T extends @Nullable Object> {
     /// @throws Exception if execution fails, is cancelled, or the wait is interrupted
     /// @throws IllegalStateException if this task was already submitted
     public final T run() throws Exception {
-        return DefaultTaskHandle.run(this);
+        return claimAsRoot().run(this);
     }
 
-    /// Creates a handle for this task. Call [TaskHandle#start()] to begin execution.
-    public final TaskHandle newHandle() {
-        return new DefaultTaskHandle(this);
+    /// Starts this root asynchronously and returns it.
+    ///
+    /// @throws IllegalStateException if this task was already submitted
+    public final Task<T> start() {
+        claimAsRoot().start(this);
+        return this;
     }
 
-    /// Creates a handle for this task and starts it if `start` is true.
-    public final TaskHandle newHandle(boolean start) {
-        TaskHandle handle = newHandle();
-        if (start)
-            handle.start();
-        return handle;
-    }
-
-    /// Creates a handle with the supplied listener registered before execution starts.
-    public final TaskHandle newHandle(TaskListener taskListener) {
-        TaskHandle handle = newHandle();
-        handle.addTaskListener(taskListener);
-        return handle;
-    }
-
-    /// Starts an asynchronous execution of this task.
-    public final void start() {
-        newHandle().start();
-    }
-
-    /// Runs this task, waits for termination, and returns whether it succeeded.
+    /// Runs this root and returns whether it succeeded. A thread interrupted while waiting for
+    /// another worker's result waits for completion and retains its interrupt status.
+    ///
+    /// @throws IllegalStateException if this task was already submitted
     public final boolean test() {
-        return newHandle().test();
+        return claimAsRoot().test(this);
+    }
+
+    /// Registers a listener for subsequent events in this root's execution tree and returns this task.
+    /// Register before submitting the root to observe the entire execution.
+    ///
+    /// @throws IllegalStateException if this task was submitted as a child
+    public final Task<T> addTaskListener(TaskListener listener) {
+        Objects.requireNonNull(listener);
+        rootExecution().addTaskListener(listener);
+        return this;
+    }
+
+    /// Removes the first matching listener registration from this root's execution.
+    ///
+    /// @throws IllegalStateException if this task was submitted as a child
+    public final void removeTaskListener(TaskListener listener) {
+        @Nullable Object role = executionRole;
+        if (role != null)
+            asRootExecution(role).removeTaskListener(listener);
+    }
+
+    /// Requests cooperative cancellation of this root and its children, including before submission.
+    ///
+    /// @throws IllegalStateException if this task was submitted as a child
+    public final void cancel() {
+        rootExecution().cancel();
+    }
+
+    /// Returns whether cancellation was requested on this root. An unreserved task returns false.
+    ///
+    /// @throws IllegalStateException if this task was submitted as a child
+    public final boolean isCancelled() {
+        @Nullable Object role = executionRole;
+        return role != null && asRootExecution(role).isCancelled();
+    }
+
+    /// Sets the handler for unexpected runtime exceptions reported by [#start()] and [#test()].
+    /// Pass null to clear the handler.
+    public static void setUncaughtExceptionHandler(Thread.@Nullable UncaughtExceptionHandler handler) {
+        TaskExecution.setUncaughtExceptionHandler(handler);
     }
 
     /// Returns a task that applies `fn` to the successful result on the continuation's thread.
@@ -411,7 +475,7 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Passes through the result on success or calls `recovery` on the continuation's thread
     /// with the source failure, including an error or child cancellation. A failure thrown by
-    /// `recovery` propagates. Cancelling the handle still prevents publication of a fallback result.
+    /// `recovery` propagates. Cancelling the root still prevents publication of a fallback result.
     public Task<T> recover(Recovery<? extends T> recovery) {
         Objects.requireNonNull(recovery);
         return Task.<T>of(context -> {
@@ -428,7 +492,7 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Represents the result or any source failure as a [Result], including errors and child cancellation.
-    /// Cancelling the handle still prevents publication of the result.
+    /// Cancelling the root still prevents publication of the result.
     public Task<Result<T>> wrapResult() {
         return Task.<Result<T>>of(context -> {
             T value;
@@ -642,7 +706,7 @@ public abstract class Task<T extends @Nullable Object> {
         });
     }
 
-    /// Creates a task that waits for `future` and returns its result. Cancelling the task handle
+    /// Creates a task that waits for `future` and returns its result. Cancelling the root
     /// does not cancel the future or interrupt a running wait. Future cancellation propagates
     /// as a [CancellationException].
     public static <T extends @Nullable Object> Task<T> fromCompletableFuture(CompletableFuture<T> future) {
