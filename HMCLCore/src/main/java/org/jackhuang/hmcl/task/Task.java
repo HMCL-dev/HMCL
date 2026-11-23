@@ -43,9 +43,6 @@ import java.util.stream.Stream;
 @NotNullByDefault
 public abstract class Task<T extends @Nullable Object> {
 
-    /// Marks a submitted child without retaining its parent or the execution tree.
-    private static final Object CHILD = new Object();
-
     /// Atomically transitions a root from [TaskState#NEW] to [TaskState#READY].
     ///
     /// @see #state
@@ -60,7 +57,7 @@ public abstract class Task<T extends @Nullable Object> {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             STATE_HANDLE = lookup.findVarHandle(Task.class, "state", TaskState.class);
-            EXECUTION_ROLE = lookup.findVarHandle(Task.class, "executionRole", Object.class);
+            EXECUTION_ROLE = lookup.findVarHandle(Task.class, "executionRole", ExecutionRole.class);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -90,11 +87,11 @@ public abstract class Task<T extends @Nullable Object> {
     /// Controls execution logging and visibility in the task list.
     private TaskSignificance significance = TaskSignificance.MAJOR;
 
-    /// Null until reserved, then the root's [TaskExecution] or [#CHILD].
+    /// Permanent role selected on root reservation or first submission, or `null` while unreserved.
     ///
     /// @see #EXECUTION_ROLE
     @SuppressWarnings("unused")
-    private volatile @Nullable Object executionRole;
+    private volatile @Nullable ExecutionRole executionRole;
 
     /// Most recent execution state, initially [TaskState#NEW].
     private volatile TaskState state = TaskState.NEW;
@@ -201,7 +198,7 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// @throws IllegalStateException if this task was submitted as a child
     public final boolean isCancelled() {
-        @Nullable Object role = executionRole;
+        @Nullable ExecutionRole role = executionRole;
         return role != null && asRootExecution(role).isCancelled();
     }
 
@@ -219,7 +216,7 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// @throws IllegalStateException if this task was submitted as a child
     public final void removeTaskListener(TaskListener listener) {
-        @Nullable Object role = executionRole;
+        @Nullable ExecutionRole role = executionRole;
         if (role != null)
             asRootExecution(role).removeTaskListener(listener);
     }
@@ -650,20 +647,20 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Returns the execution associated with a reserved root.
-    private static TaskExecution asRootExecution(Object role) {
-        if (role instanceof TaskExecution execution)
-            return execution;
+    private static TaskExecution asRootExecution(ExecutionRole role) {
+        if (role instanceof Root root)
+            return root.execution();
         throw new IllegalStateException("Task has been submitted as a child");
     }
 
     /// Reserves the root's execution for configuration or submission.
     private TaskExecution rootExecution() {
-        @Nullable Object role = executionRole;
+        @Nullable ExecutionRole role = executionRole;
         if (role == null) {
-            TaskExecution execution = new TaskExecution();
-            role = EXECUTION_ROLE.compareAndExchange(this, null, execution);
+            Root root = new Root(new TaskExecution());
+            role = (ExecutionRole) EXECUTION_ROLE.compareAndExchange(this, null, root);
             if (role == null)
-                return execution;
+                return root.execution();
         }
         return asRootExecution(role);
     }
@@ -678,7 +675,7 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Marks an unreserved task as ready for execution as a child.
     final void markReadyAsChild() {
-        if (!EXECUTION_ROLE.compareAndSet(this, null, CHILD))
+        if (!EXECUTION_ROLE.compareAndSet(this, null, Child.INSTANCE))
             throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name : getClass().getName()));
         state = TaskState.READY;
     }
@@ -781,6 +778,22 @@ public abstract class Task<T extends @Nullable Object> {
     public interface FinalizedCallbackWithResult<T extends @Nullable Object> {
         /// Receives the result and a null failure on success, or a null result and the cause on failure.
         void execute(@Nullable T result, @Nullable Throwable failure) throws Exception;
+    }
+
+    /// A task's role in its execution tree.
+    private sealed interface ExecutionRole permits Root, Child {
+    }
+
+    /// The root role holds the execution shared by the task tree.
+    ///
+    /// @param execution the execution controlled by this root
+    private record Root(TaskExecution execution) implements ExecutionRole {
+    }
+
+    /// The role of a task submitted through its parent's execution context.
+    private enum Child implements ExecutionRole {
+        /// Shared by all submitted children.
+        INSTANCE
     }
 
     /// Provides an enclosing stage for the wrapped task.
