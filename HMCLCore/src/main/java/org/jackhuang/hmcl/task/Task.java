@@ -735,22 +735,6 @@ public abstract class Task<T extends @Nullable Object> {
         }.setSignificance(TaskSignificance.MINOR);
     }
 
-    /// Returns a task that runs the children in array order, stopping at the first failure.
-    /// The result is the last child's result, or `null` for an empty array. The array is retained.
-    public static Task<?> runSequentially(Task<?>... tasks) {
-        return new Task<@Nullable Object>() {
-            /// {@inheritDoc}
-            @Override
-            public @Nullable Object execute(TaskExecutionContext context) throws Exception {
-                @Nullable Object last = null;
-                for (Task<?> task : tasks) {
-                    last = context.run(task);
-                }
-                return last;
-            }
-        };
-    }
-
     /// Reserves the root's execution for configuration or submission.
     private TaskExecution rootExecution() {
         @Nullable ExecutionBinding binding = executionBinding;
