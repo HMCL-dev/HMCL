@@ -95,6 +95,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         GameList gameList = new GameList();
         setContent(gameList);
 
+        addEventHandler(Navigator.NavigationEvent.NAVIGATED, e -> gameList.scrollToSelected());
+
         addEventFilter(KeyEvent.KEY_PRESSED, e -> {
             if (e.isShortcutDown() && e.getCode() == KeyCode.F) {
                 gameList.openSearch();
@@ -229,6 +231,17 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             }
 
             setLoading(false);
+            scrollToSelected();
+        }
+
+        /// Scrolls the list view to the currently selected instance.
+        public void scrollToSelected() {
+            for (int i = 0; i < filteredList.size(); i++) {
+                if (filteredList.get(i).selectedProperty().get()) {
+                    getListView().scrollTo(i);
+                    break;
+                }
+            }
         }
 
         private Predicate<GameListItem> createPredicate(String searchText) {
