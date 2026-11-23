@@ -115,7 +115,7 @@ final class TaskExecution {
         }
     }
 
-    /// Starts a claimed root asynchronously and reports submission failures to the caller.
+    /// Starts a ready root asynchronously and reports submission failures to the caller.
     void start(Task<?> root) {
         notifyListeners(listener -> listener.onExecutionStarted(root));
         try {
@@ -128,13 +128,13 @@ final class TaskExecution {
         }
     }
 
-    /// Runs a claimed root and returns its outcome, preserving the waiting thread's interrupt status.
+    /// Runs a ready root and returns its outcome, preserving the waiting thread's interrupt status.
     boolean test(Task<?> root) {
         notifyListeners(listener -> listener.onExecutionStarted(root));
         return runToCompletion(root);
     }
 
-    /// Runs a claimed root synchronously and propagates its failure to the caller.
+    /// Runs a ready root synchronously and propagates its failure to the caller.
     <T extends @Nullable Object> T run(Task<T> root) throws Exception {
         notifyListeners(listener -> listener.onExecutionStarted(root));
         try {
@@ -166,7 +166,7 @@ final class TaskExecution {
     /// Publishes a root failure even if its executor could not be reached.
     private <T extends @Nullable Object> T runRoot(Task<T> root, boolean propagateWaitInterruption) throws Exception {
         try {
-            return runClaimed(null, root, propagateWaitInterruption);
+            return runReadyTask(null, root, propagateWaitInterruption);
         } catch (Throwable failure) {
             if (root.getState() == Task.TaskState.READY)
                 fail(root, null, failure);
@@ -225,9 +225,9 @@ final class TaskExecution {
         }
     }
 
-    /// Dispatches a claimed task, running it inline on a worker of its effective executor.
-    private <T extends @Nullable Object> T runClaimed(@Nullable Context<?> parent, Task<T> child, boolean propagateWaitInterruption) throws Exception {
-        Context<T> context = prepare(parent, child);
+    /// Dispatches a ready task, running it inline on a worker of its effective executor.
+    private <T extends @Nullable Object> T runReadyTask(@Nullable Context<?> parent, Task<T> task, boolean propagateWaitInterruption) throws Exception {
+        Context<T> context = prepare(parent, task);
         if (context.executor == currentExecutor())
             return execute(context);
         return await(submitChild(context), propagateWaitInterruption);
@@ -364,8 +364,8 @@ final class TaskExecution {
         /// {@inheritDoc}
         @Override
         public <T extends @Nullable Object> T run(Task<T> task) throws Exception {
-            task.claimAsChild();
-            return runClaimed(this, task, true);
+            task.markReadyAsChild();
+            return runReadyTask(this, task, true);
         }
 
         /// {@inheritDoc}
@@ -376,7 +376,7 @@ final class TaskExecution {
             @Nullable Throwable failure = null;
             for (Task<? extends T> child : List.copyOf(tasks)) {
                 try {
-                    child.claimAsChild();
+                    child.markReadyAsChild();
                     children.add(submitChild(prepare(this, child)));
                 } catch (Throwable e) {
                     failure = batchFailure(failure, e);

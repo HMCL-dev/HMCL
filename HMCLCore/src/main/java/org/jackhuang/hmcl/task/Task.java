@@ -73,7 +73,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// Most recent execution state, initially [TaskState#NEW].
     private volatile TaskState state = TaskState.NEW;
 
-    /// Atomically claims [#state] on the first submission.
+    /// Atomically transitions a root from [TaskState#NEW] to [TaskState#READY].
     private static final VarHandle STATE_HANDLE;
 
     /// Marks a submitted child without retaining its parent or the execution tree.
@@ -114,16 +114,16 @@ public abstract class Task<T extends @Nullable Object> {
         return asRootExecution(role);
     }
 
-    /// Claims a root exactly once before its execution starts notifying listeners.
-    private TaskExecution claimAsRoot() {
+    /// Marks a new root as ready and returns its execution.
+    private TaskExecution markReadyAsRoot() {
         TaskExecution execution = rootExecution();
         if (!STATE_HANDLE.compareAndSet(this, TaskState.NEW, TaskState.READY))
             throw new IllegalStateException("Task has already been submitted: " + (name != null ? name : getClass().getName()));
         return execution;
     }
 
-    /// Claims an unreserved task as a child of the calling execution.
-    final void claimAsChild() {
+    /// Marks an unreserved task as ready for execution as a child.
+    final void markReadyAsChild() {
         if (!EXECUTION_ROLE.compareAndSet(this, null, CHILD))
             throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name : getClass().getName()));
         state = TaskState.READY;
@@ -244,14 +244,14 @@ public abstract class Task<T extends @Nullable Object> {
     /// @throws Exception if execution fails, is cancelled, or the wait is interrupted
     /// @throws IllegalStateException if this task was already submitted
     public final T run() throws Exception {
-        return claimAsRoot().run(this);
+        return markReadyAsRoot().run(this);
     }
 
     /// Starts this root asynchronously and returns it.
     ///
     /// @throws IllegalStateException if this task was already submitted
     public final Task<T> start() {
-        claimAsRoot().start(this);
+        markReadyAsRoot().start(this);
         return this;
     }
 
@@ -260,7 +260,7 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// @throws IllegalStateException if this task was already submitted
     public final boolean test() {
-        return claimAsRoot().test(this);
+        return markReadyAsRoot().test(this);
     }
 
     /// Registers a listener for subsequent events in this root's execution tree and returns this task.

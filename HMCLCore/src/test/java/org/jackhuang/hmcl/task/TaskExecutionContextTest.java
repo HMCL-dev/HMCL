@@ -528,7 +528,7 @@ final class TaskExecutionContextTest {
         assertNull(root.exceptionNowOrNull());
     }
 
-    /// All root submission methods share the same single-use claim.
+    /// All root submission methods reject a task that has already run.
     @Test
     void rejectsAnotherRootExecutionAfterRun() throws Exception {
         AtomicInteger calls = new AtomicInteger();
@@ -625,9 +625,9 @@ final class TaskExecutionContextTest {
 
     /// Competing submissions are rejected while the winning caller announces the root.
     @Test
-    void claimsRootBeforeNotifyingStartListeners() throws Exception {
+    void marksRootReadyBeforeNotifyingStartListeners() throws Exception {
         AtomicInteger bodies = new AtomicInteger();
-        Task<Integer> root = task(null, new TaskStage("claimed"), context -> bodies.incrementAndGet());
+        Task<Integer> root = task(null, new TaskStage("root"), context -> bodies.incrementAndGet());
         CountDownLatch entered = new CountDownLatch(1);
         CompletableFuture<@Nullable Void> release = new CompletableFuture<>();
         CompletableFuture<Boolean> stopped = new CompletableFuture<>();
