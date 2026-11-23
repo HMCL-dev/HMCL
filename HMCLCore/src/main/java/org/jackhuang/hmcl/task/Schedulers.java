@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.task;
 
 import javafx.application.Platform;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.MathUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
@@ -118,7 +119,7 @@ public final class Schedulers {
             if (virtualThreads != null)
                 return virtualThreads;
 
-            int workers = Math.min(64, Math.max(4, Runtime.getRuntime().availableProcessors() * 4));
+            int workers = MathUtils.clamp(Runtime.getRuntime().availableProcessors() * 4, 4, 64);
             ThreadPoolExecutor pool = new ThreadPoolExecutor(workers, workers, 60L, TimeUnit.SECONDS,
                     new LinkedBlockingQueue<>(), Lang.counterThreadFactory("Task", true));
             pool.allowCoreThreadTimeOut(true);
