@@ -398,7 +398,7 @@ final class TaskExecutionContextTest {
         assertThrows(IllegalArgumentException.class, () -> Task.allOf(List.of(), 0).run());
     }
 
-    /// A full batch can serve a callback on its own worker and refill behind a slow continuation.
+    /// A bounded batch serves callbacks and counts only unfinished branches, even when they start during submission.
     @Test
     void refillsBoundedBatchWhenAnyBranchFinishes() throws Exception {
         ExecutorService parent = Executors.newSingleThreadExecutor();
@@ -406,31 +406,31 @@ final class TaskExecutionContextTest {
         try {
             Thread parentThread = parent.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
             AtomicInteger submissions = new AtomicInteger();
+            CompletableFuture<@Nullable Void> inContinuation = new CompletableFuture<>();
             Executor children = command -> {
-                submissions.incrementAndGet();
+                int submission = submissions.incrementAndGet();
                 workers.execute(command);
+                if (submission == 1)
+                    inContinuation.orTimeout(10, TimeUnit.SECONDS).join();
             };
-            CountDownLatch inContinuation = new CountDownLatch(1);
             CountDownLatch lastStarted = new CountDownLatch(1);
+            Task<Integer> inline = Task.supplyAsync(Runnable::run, () -> 0);
             Task<Integer> first = task(children, context -> context.run(Task.completed(1).thenApplyAsync(value -> {
-                inContinuation.countDown();
+                inContinuation.complete(null);
                 assertTrue(lastStarted.await(10, TimeUnit.SECONDS));
                 return value;
             })));
-            Task<@Nullable Integer> second = task(children, context -> {
-                assertTrue(inContinuation.await(10, TimeUnit.SECONDS));
-                return context.call(parent, () -> {
-                    assertSame(parentThread, Thread.currentThread());
-                    assertEquals(2, submissions.get());
-                    return null;
-                });
-            });
+            Task<@Nullable Integer> second = task(children, context -> context.call(parent, () -> {
+                assertSame(parentThread, Thread.currentThread());
+                assertEquals(2, submissions.get());
+                return null;
+            }));
             Task<Integer> last = task(children, context -> {
                 lastStarted.countDown();
                 return 3;
             });
-            Task<List<@Nullable Integer>> batch = Task.allOf(List.of(first, second, last), 2);
-            assertEquals(Arrays.asList(1, null, 3), task(parent, context -> context.run(batch)).run());
+            Task<List<@Nullable Integer>> batch = Task.allOf(List.of(inline, first, second, last), 2);
+            assertEquals(Arrays.asList(0, 1, null, 3), task(parent, context -> context.run(batch)).run());
             assertEquals(3, submissions.get());
         } finally {
             workers.shutdownNow();

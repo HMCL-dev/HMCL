@@ -239,8 +239,6 @@ final class TaskExecution {
     /// Schedules a child and records task failure if the executor rejects the submission.
     private <T extends @Nullable Object> Work<T> submitChild(Context<T> context, @Nullable BatchWindow window) {
         Work<T> work = new Work<>(context.executor, () -> execute(context), window);
-        if (window != null)
-            window.add(work);
         try {
             checkCancellation();
             work.submit();
@@ -442,7 +440,7 @@ final class TaskExecution {
         /// Maximum number of admitted branches.
         private final int limit;
 
-        /// Admitted branches in submission order, guarded by the execution lock.
+        /// Accepted branches tracked until completion, in submission order and guarded by the execution lock.
         private final Set<Work<?>> active = new LinkedHashSet<>();
 
         /// Wakes the submitting worker on branch completion or arrival of runnable descendants.
@@ -451,16 +449,6 @@ final class TaskExecution {
         /// Creates a window for a batch larger than its limit.
         BatchWindow(int limit) {
             this.limit = limit;
-        }
-
-        /// Tracks a branch before the executor can run or reject it.
-        void add(Work<?> work) {
-            lock.lock();
-            try {
-                active.add(work);
-            } finally {
-                lock.unlock();
-            }
         }
 
         /// Waits for any branch to finish, servicing work that needs the submitting worker.
@@ -535,6 +523,9 @@ final class TaskExecution {
         /// Executor whose workers may run this submission.
         private final Executor executor;
 
+        /// Whether a waiting worker may take this submission from its executor.
+        private final boolean canBeHelped;
+
         /// The admission window to release on completion, if this submission is a bounded batch item.
         private final @Nullable BatchWindow window;
 
@@ -550,7 +541,7 @@ final class TaskExecution {
         /// Whether this work has been made available to waiting workers.
         private boolean queued;
 
-        /// Indicates that a worker has claimed this submission, guarded by the enclosing lock.
+        /// Whether a worker has claimed a submission eligible for helping, guarded by the enclosing lock.
         private boolean started;
 
         /// Creates a submission for the given executor.
@@ -562,6 +553,9 @@ final class TaskExecution {
         Work(Executor executor, Callable<T> action, @Nullable BatchWindow window) {
             super(action);
             this.executor = executor;
+            // Executors with a worker per active task do not need waiting workers to help them.
+            this.canBeHelped = executor != Schedulers.io()
+                    && (executor != Schedulers.tasks() || Runtime.version().feature() < 21);
             this.window = window;
             this.changed = window == null ? null : window.changed;
             @Nullable Work<?> current = CURRENT_WORK.get();
@@ -581,16 +575,17 @@ final class TaskExecution {
             return available != null ? available.iterator().next() : null;
         }
 
-        /// Offers this submission to its executor before making it available to waiting workers.
+        /// Submits the work, then registers it with its batch window and waiting workers as needed.
         void submit() {
             executor.execute(this);
-            // These executors provide a worker per active task. Waiting parents need only help
-            // constrained executors, where they could otherwise occupy every available worker.
-            if (executor == Schedulers.io() || executor == Schedulers.tasks() && Runtime.version().feature() >= 21)
+            if ((!canBeHelped && window == null) || isDone())
                 return;
             lock.lock();
             try {
-                if (!started) {
+                // Only the submitter admits branches. Completion may race with registration.
+                if (window != null && !isDone())
+                    window.active.add(this);
+                if (canBeHelped && !started) {
                     queued = true;
                     // Index only this work's ancestors. A waiting worker can then claim a
                     // descendant without scanning or recursively entering unrelated siblings.
@@ -612,13 +607,12 @@ final class TaskExecution {
             setException(failure);
         }
 
-        /// Claims this work and executes it once in its assigned executor context.
-        @Override
-        public void run() {
+        /// Claims work eligible for helping and removes it from its ancestors' indexes.
+        private boolean tryStart() {
             lock.lock();
             try {
                 if (started)
-                    return;
+                    return false;
                 started = true;
                 if (queued) {
                     queued = false;
@@ -630,10 +624,17 @@ final class TaskExecution {
                             index.remove(executor);
                     }
                 }
+                return true;
             } finally {
                 lock.unlock();
             }
+        }
 
+        /// Runs this submission once in its assigned executor context.
+        @Override
+        public void run() {
+            if (canBeHelped && !tryStart())
+                return;
             @Nullable Work<?> previous = CURRENT_WORK.get();
             CURRENT_WORK.set(this);
             try {
