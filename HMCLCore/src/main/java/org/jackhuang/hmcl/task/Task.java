@@ -581,6 +581,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// Represents the result or any source failure as a [Result], including errors and child cancellation.
     /// Cancelling the root still prevents publication of the result.
     public Task<Result<T>> wrapResult() {
+        //noinspection NullableProblems
         return handle((value, failure) -> failure == null ? Result.success(value) : Result.failure(failure));
     }
 
