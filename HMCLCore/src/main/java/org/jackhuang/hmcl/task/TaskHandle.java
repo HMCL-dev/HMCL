@@ -26,6 +26,7 @@ public abstract class TaskHandle {
     /// Current listeners in registration order. Each notification reads one snapshot.
     private volatile TaskListener @Unmodifiable [] taskListeners = NO_LISTENERS;
 
+    /// Atomically replaces the listener snapshot when registrations change.
     private static final VarHandle TASK_LISTENERS_HANDLE;
 
     static {
@@ -51,10 +52,9 @@ public abstract class TaskHandle {
     /// Registers a listener for subsequent notifications. Register before starting to observe the entire execution.
     public void addTaskListener(TaskListener taskListener) {
         while (true) {
-            TaskListener[] current = taskListeners;
+            TaskListener @Unmodifiable [] current = taskListeners;
             TaskListener[] updated = Arrays.copyOf(current, current.length + 1);
             updated[current.length] = taskListener;
-            taskListeners = updated;
 
             if (TASK_LISTENERS_HANDLE.compareAndSet(this, current, updated)) {
                 return;
@@ -65,7 +65,7 @@ public abstract class TaskHandle {
     /// Removes the first matching registration from subsequent notifications.
     public void removeTaskListener(TaskListener taskListener) {
         while (true) {
-            TaskListener[] current = taskListeners;
+            TaskListener @Unmodifiable [] current = taskListeners;
 
             int index = 0;
             while (index < current.length && current[index] != taskListener) {
