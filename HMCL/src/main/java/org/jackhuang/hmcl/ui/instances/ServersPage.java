@@ -21,6 +21,8 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
@@ -185,6 +187,21 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
                     changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
                 } else {
                     changeToolbar(toolbarSelecting);
+                }
+            });
+
+            addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+                if (e.isShortcutDown() && e.getCode() == KeyCode.F) {
+                    changeToolbar(searchBar);
+                    e.consume();
+                } else if (e.getCode() == KeyCode.ESCAPE) {
+                    if (listView.getSelectionModel().getSelectedItem() != null) {
+                        listView.getSelectionModel().clearSelection();
+                        e.consume();
+                    } else if (isSearching.get()) {
+                        closeSearchBar.fire();
+                        e.consume();
+                    }
                 }
             });
         }
@@ -942,6 +959,8 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             if (newToolbar == searchBar) {
                 Platform.runLater(searchField::requestFocus);
             }
+        } else if (newToolbar == searchBar) {
+            Platform.runLater(searchField::requestFocus);
         }
     }
 

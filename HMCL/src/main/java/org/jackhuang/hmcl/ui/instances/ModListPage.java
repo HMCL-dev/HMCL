@@ -248,11 +248,16 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
 
             setToolbar(toolbarPane);
 
-            // Clear selection when pressing ESC
-            addEventHandler(KeyEvent.KEY_PRESSED, e -> {
-                if (e.getCode() == KeyCode.ESCAPE) {
+            addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+                if (e.isShortcutDown() && e.getCode() == KeyCode.F) {
+                    changeToolbar(searchBar);
+                    e.consume();
+                } else if (e.getCode() == KeyCode.ESCAPE) {
                     if (listView.getSelectionModel().getSelectedItem() != null) {
                         listView.getSelectionModel().clearSelection();
+                        e.consume();
+                    } else if (isSearching.get()) {
+                        closeSearchBar.fire();
                         e.consume();
                     }
                 }
@@ -505,6 +510,8 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
             if (newToolbar == searchBar) {
                 Platform.runLater(searchField::requestFocus);
             }
+        } else if (newToolbar == searchBar) {
+            Platform.runLater(searchField::requestFocus);
         }
     }
 
