@@ -51,6 +51,7 @@ public enum DocumentLocale {
     SPANISH("es"),
     RUSSIAN("ru"),
     UKRAINIAN("uk"),
+    GERMAN("de"),
     ;
 
     public record LocaleAndName(DocumentLocale locale, String name) {
