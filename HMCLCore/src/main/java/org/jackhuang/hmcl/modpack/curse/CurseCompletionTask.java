@@ -11,7 +11,9 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskProgress;
@@ -21,6 +23,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -111,6 +114,7 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
     /// Resolves missing files and waits for all requested downloads to finish.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        @Nullable CurseManifest manifest = this.manifest;
         if (manifest == null)
             return null;
 
@@ -122,7 +126,7 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
 
         // Because in China, Curse is too difficult to visit,
         // if failed, ignore it and retry next time.
-        CurseManifest newManifest = manifest.setFiles(
+        CurseManifest newManifest = manifest.setFiles(context.call(Schedulers.io(), () ->
                 manifest.files().parallelStream()
                         .map(file -> {
                             progress.update(finished.incrementAndGet(), manifest.files().size());
@@ -146,7 +150,7 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
                                 return file;
                             }
                         })
-                        .toList());
+                        .toList()));
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
         if (excludedFiles != null) {
             JsonUtils.writeToJsonFile(
@@ -158,7 +162,7 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
         Path resourcePacksRoot = versionRoot.resolve("resourcepacks");
         Path shaderPacksRoot = versionRoot.resolve("shaderpacks");
         finished.set(0);
-        List<Task<?>> dependencies = newManifest.files()
+        @Unmodifiable List<Task<?>> dependencies = context.call(Schedulers.io(), () -> newManifest.files()
                 .stream().parallel()
                 .filter(f -> f.fileName() != null)
                 .filter(f -> excludedFiles == null || !excludedFiles.contains(f.key()))
@@ -180,14 +184,14 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
                         progress.update(finished.incrementAndGet(), newManifest.files().size());
                     }
                 })
-                .toList();
+                .toList());
 
         if (!dependencies.isEmpty()) {
             context.addStageItems(dependencies.size());
         }
 
         try {
-            context.runAll(dependencies);
+            context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
         } catch (InterruptedException | CancellationException cancelled) {
             throw cancelled;
         } catch (Exception failure) {

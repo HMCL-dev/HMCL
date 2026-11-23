@@ -616,6 +616,17 @@ public abstract class Task<T extends @Nullable Object> {
         return Task.of(context -> context.runAll(tasks)).setSignificance(TaskSignificance.MINOR);
     }
 
+    /// Returns a batch task that admits at most `maxConcurrency` independent branches at a time.
+    /// The collection is snapshotted when execution starts. See [TaskExecutionContext#runAll(Collection, int)].
+    ///
+    /// @throws IllegalArgumentException if `maxConcurrency` is not positive
+    public static <T extends @Nullable Object> Task<List<T>> allOf(Collection<? extends Task<? extends T>> tasks, int maxConcurrency) {
+        if (maxConcurrency <= 0)
+            throw new IllegalArgumentException("maxConcurrency must be positive");
+        //noinspection NullableProblems
+        return Task.of(context -> context.runAll(tasks, maxConcurrency)).setSignificance(TaskSignificance.MINOR);
+    }
+
     /// Returns a task that waits for both children and pairs their results in argument order.
     /// The children may run concurrently. Failure of either child fails the combined task.
     public static <T extends @Nullable Object, U extends @Nullable Object> Task<Pair<T, U>> combine(Task<? extends T> task1, Task<? extends U> task2) {

@@ -11,6 +11,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -74,9 +75,8 @@ public final class Schedulers {
         return Holder.IO_EXECUTOR;
     }
 
-    /// Executes task bodies on virtual threads when available, or on a bounded pool of
-    /// platform threads. A worker waiting through [TaskExecutionContext] can execute
-    /// pending work from the child it is waiting for.
+    /// Executes task bodies on virtual threads when available, or on a private fork/join
+    /// pool that can compensate for workers waiting on child tasks.
     static Executor tasks() {
         return Holder.TASK_EXECUTOR;
     }
@@ -106,17 +106,20 @@ public final class Schedulers {
         /// Workers used by task bodies that synchronously coordinate child tasks.
         private static final ExecutorService TASK_EXECUTOR = newTaskExecutor();
 
-        /// Bounds the number of platform threads used by parallel branches on older runtimes.
+        /// Supplies virtual threads or a platform pool with a CPU-based target parallelism.
         private static ExecutorService newTaskExecutor() {
             @Nullable ExecutorService virtualThreads = newVirtualThreadPerTaskExecutor("Task");
             if (virtualThreads != null)
                 return virtualThreads;
 
-            int workers = MathUtils.clamp(Runtime.getRuntime().availableProcessors() * 4, 4, 64);
-            ThreadPoolExecutor pool = new ThreadPoolExecutor(workers, workers, 60L, TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<>(), Lang.counterThreadFactory("Task", true));
-            pool.allowCoreThreadTimeOut(true);
-            return pool;
+            int parallelism = MathUtils.clamp(Runtime.getRuntime().availableProcessors() * 4, 4, 64);
+            AtomicInteger workerIds = new AtomicInteger();
+            // Task submissions are not joined as ForkJoinTasks, so use local FIFO scheduling.
+            return new ForkJoinPool(parallelism, pool -> {
+                ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
+                worker.setName("Task-" + workerIds.incrementAndGet());
+                return worker;
+            }, null, true);
         }
 
         /// Creates an executor in which a waiting parent does not occupy a child's only worker.

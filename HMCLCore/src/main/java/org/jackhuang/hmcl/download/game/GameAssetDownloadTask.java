@@ -7,6 +7,7 @@ import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
@@ -107,7 +108,7 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
         if (!dependencies.isEmpty()) {
             context.addStageItems(dependencies.size());
         }
-        context.runAll(dependencies);
+        context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
         return null;
     }
 

@@ -176,7 +176,7 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
         }
 
         McbbsModpackManifest updated = remoteManifest.setFiles(newFiles);
-        context.runAll(tasks);
+        context.runAll(tasks, FetchTask.getDownloadExecutorConcurrency());
         JsonUtils.writeToJsonFile(configurationFile,
                 new ModpackConfiguration<>(updated, configuration.getType(), updated.getName(), updated.getVersion(),
                         updated.getFiles().stream()
@@ -199,7 +199,7 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
         List<Task<?>> dependencies = new ArrayList<>();
         // Because in China, Curse is too difficult to visit,
         // if failed, ignore it and retry next time.
-        McbbsModpackManifest newManifest = manifest.setFiles(
+        McbbsModpackManifest newManifest = manifest.setFiles(context.call(Schedulers.io(), () ->
                 manifest.getFiles().parallelStream()
                         .map(rawFile -> {
                             progress.update(finished.incrementAndGet(), manifest.getFiles().size());
@@ -242,7 +242,7 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
                                 return rawFile;
                             }
                         })
-                        .collect(Collectors.toList()));
+                        .collect(Collectors.toList())));
 
         configuration = configuration.setManifest(newManifest);
         JsonUtils.writeToJsonFile(configurationFile, configuration);
@@ -264,7 +264,7 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
             context.addStageItems(dependencies.size());
         }
 
-        context.runAll(dependencies);
+        context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
         if (notFound.get())
             throw new ModpackCompletionException(new FileNotFoundException());
         if (!allNameKnown.get())

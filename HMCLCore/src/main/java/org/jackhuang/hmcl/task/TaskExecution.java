@@ -233,12 +233,14 @@ final class TaskExecution {
     private <T extends @Nullable Object> T runReadyTask(Context<T> context, boolean propagateWaitInterruption) throws Exception {
         if (context.executor == currentExecutor())
             return execute(context);
-        return await(submitChild(context), propagateWaitInterruption);
+        return await(submitChild(context, null), propagateWaitInterruption);
     }
 
     /// Schedules a child and records task failure if the executor rejects the submission.
-    private <T extends @Nullable Object> Work<T> submitChild(Context<T> context) {
-        Work<T> work = new Work<>(context.executor, () -> execute(context));
+    private <T extends @Nullable Object> Work<T> submitChild(Context<T> context, @Nullable BatchWindow window) {
+        Work<T> work = new Work<>(context.executor, () -> execute(context), window);
+        if (window != null)
+            window.add(work);
         try {
             checkCancellation();
             work.submit();
@@ -299,7 +301,7 @@ final class TaskExecution {
     }
 
     /// Retains the first batch failure, giving errors precedence over ordinary exceptions.
-    private static Throwable batchFailure(@Nullable Throwable previous, Throwable next) {
+    static Throwable batchFailure(@Nullable Throwable previous, Throwable next) {
         return previous == null || next instanceof Error && !(previous instanceof Error) ? next : previous;
     }
 
@@ -385,13 +387,25 @@ final class TaskExecution {
         /// {@inheritDoc}
         @Override
         public <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> tasks) throws Exception {
+            return runAll(tasks, Integer.MAX_VALUE);
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> tasks, int maxConcurrency) throws Exception {
+            if (maxConcurrency <= 0)
+                throw new IllegalArgumentException("maxConcurrency must be positive");
             checkCancellation();
-            List<Work<? extends T>> children = new ArrayList<>(tasks.size());
+            @Unmodifiable List<? extends Task<? extends T>> batch = List.copyOf(tasks);
+            @Nullable BatchWindow window = batch.size() > maxConcurrency ? new BatchWindow(maxConcurrency) : null;
+            List<Work<? extends T>> children = new ArrayList<>(batch.size());
             @Nullable Throwable failure = null;
-            for (Task<? extends T> child : List.copyOf(tasks)) {
+            for (Task<? extends T> child : batch) {
                 try {
+                    if (window != null)
+                        window.awaitSlot();
                     child.markReadyAsChild();
-                    children.add(submitChild(prepare(child, executor, stageScope)));
+                    children.add(submitChild(prepare(child, executor, stageScope), window));
                 } catch (Throwable e) {
                     failure = batchFailure(failure, e);
                 }
@@ -423,6 +437,60 @@ final class TaskExecution {
         }
     }
 
+    /// Limits the number of unfinished branches submitted by one batch.
+    private final class BatchWindow {
+        /// Maximum number of admitted branches.
+        private final int limit;
+
+        /// Admitted branches in submission order, guarded by the execution lock.
+        private final Set<Work<?>> active = new LinkedHashSet<>();
+
+        /// Wakes the submitting worker on branch completion or arrival of runnable descendants.
+        private final Condition changed = lock.newCondition();
+
+        /// Creates a window for a batch larger than its limit.
+        BatchWindow(int limit) {
+            this.limit = limit;
+        }
+
+        /// Tracks a branch before the executor can run or reject it.
+        void add(Work<?> work) {
+            lock.lock();
+            try {
+                active.add(work);
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        /// Waits for any branch to finish, servicing work that needs the submitting worker.
+        void awaitSlot() {
+            @Nullable Executor current = currentExecutor();
+            // The task scheduler supplies workers for queued branches. Its submitting worker
+            // can service callbacks without getting stuck inside a slow branch itself.
+            boolean helpQueuedBranches = current != Schedulers.tasks();
+            while (true) {
+                @Nullable Work<?> next = null;
+                lock.lock();
+                try {
+                    if (active.size() < limit)
+                        return;
+                    for (Work<?> branch : active) {
+                        next = branch.availableFor(current, helpQueuedBranches);
+                        if (next != null)
+                            break;
+                    }
+                    if (next == null)
+                        changed.awaitUninterruptibly();
+                } finally {
+                    lock.unlock();
+                }
+                if (next != null)
+                    next.run();
+            }
+        }
+    }
+
     /// Waits for completion while allowing a constrained worker to run other work for its executor.
     /// Restores any interruption after the work stops. A caller reporting the root's outcome
     /// observes that outcome even if the waiting thread was interrupted.
@@ -435,7 +503,7 @@ final class TaskExecution {
             try {
                 if (work.isDone())
                     break;
-                next = work.availableFor(current);
+                next = work.availableFor(current, true);
                 if (next == null) {
                     if (work.changed == null)
                         work.changed = lock.newCondition();
@@ -467,7 +535,10 @@ final class TaskExecution {
         /// Executor whose workers may run this submission.
         private final Executor executor;
 
-        /// Created under the execution lock on the first wait for completion or runnable descendants.
+        /// The admission window to release on completion, if this submission is a bounded batch item.
+        private final @Nullable BatchWindow window;
+
+        /// Shared with the batch window or created on the first wait for this submission.
         private @Nullable Condition changed;
 
         /// Submission in this task tree that created this work.
@@ -484,8 +555,15 @@ final class TaskExecution {
 
         /// Creates a submission for the given executor.
         Work(Executor executor, Callable<T> action) {
+            this(executor, action, null);
+        }
+
+        /// Creates a submission and associates it with its batch window, when present.
+        Work(Executor executor, Callable<T> action, @Nullable BatchWindow window) {
             super(action);
             this.executor = executor;
+            this.window = window;
+            this.changed = window == null ? null : window.changed;
             @Nullable Work<?> current = CURRENT_WORK.get();
             this.parent = current != null && current.owner() == TaskExecution.this ? current : null;
         }
@@ -495,9 +573,9 @@ final class TaskExecution {
             return TaskExecution.this;
         }
 
-        /// Finds waiting work in this branch that the given worker can run.
-        private @Nullable Work<?> availableFor(@Nullable Executor worker) {
-            if (queued && executor == worker)
+        /// Finds work for the given worker among the descendants or, if allowed, this submission.
+        private @Nullable Work<?> availableFor(@Nullable Executor worker, boolean includeSelf) {
+            if (includeSelf && queued && executor == worker)
                 return this;
             @Nullable Set<Work<?>> available = pending == null ? null : pending.get(worker);
             return available != null ? available.iterator().next() : null;
@@ -573,6 +651,8 @@ final class TaskExecution {
         protected void done() {
             lock.lock();
             try {
+                if (window != null)
+                    window.active.remove(this);
                 if (changed != null)
                     changed.signal();
             } finally {

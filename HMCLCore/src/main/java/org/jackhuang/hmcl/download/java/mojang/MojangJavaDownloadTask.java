@@ -7,6 +7,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DownloadInfo;
 import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.java.JavaInfo;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
@@ -152,7 +153,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                 Files.createSymbolicLink(dest, Paths.get(link.getTarget()));
             }
         }
-        context.runAll(dependencies);
+        context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
 
         FileUtils.cleanDirectory(target);
 

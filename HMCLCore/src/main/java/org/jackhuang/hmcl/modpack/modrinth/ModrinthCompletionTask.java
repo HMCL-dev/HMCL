@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
@@ -148,7 +149,7 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
         }
 
         try {
-            context.runAll(dependencies);
+            context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
         } catch (InterruptedException | CancellationException cancelled) {
             throw cancelled;
         } catch (Exception failure) {

@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
@@ -173,7 +174,7 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
         context.addStageItems(dependencies.size());
 
         try {
-            context.runAll(dependencies);
+            context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
             writeConfiguration(installed, remoteManifest);
             if (updateComponents) {
                 Modpack.installWithGameBuilder(dependencyManager, instance.getId(), instance, false, builder -> {

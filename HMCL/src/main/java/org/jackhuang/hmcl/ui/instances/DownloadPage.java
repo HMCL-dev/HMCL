@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -613,7 +614,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                             .setSignificance(TaskSignificance.MINOR));
                 }
 
-                return Task.allOf(queue).thenSupplyAsync(() -> {
+                return Task.allOf(queue, FetchTask.getDownloadExecutorConcurrency()).thenSupplyAsync(() -> {
                     var dependenciesStream = dependencies.values().stream().flatMap(types -> {
                         if (types.value().isEmpty()) return Stream.empty();
                         return Stream.concat(

@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -71,6 +72,36 @@ public interface TaskExecutionContext {
     /// @return a mutable list of successful results in the input's iteration order
     /// @throws Exception if a child fails or execution is cancelled or interrupted
     <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> tasks) throws Exception;
+
+    /// Runs independent children with at most `maxConcurrency` unfinished branches admitted at once.
+    /// Children must be able to finish without waiting for a sibling that has yet to be admitted.
+    /// Result order and failure handling follow [#runAll(Collection)].
+    ///
+    /// @implSpec The default implementation uses successive batches. The task scheduler can
+    /// refill a slot when any admitted branch finishes.
+    /// @throws IllegalArgumentException if `maxConcurrency` is not positive
+    default <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> tasks, int maxConcurrency) throws Exception {
+        if (maxConcurrency <= 0)
+            throw new IllegalArgumentException("maxConcurrency must be positive");
+        @Unmodifiable List<? extends Task<? extends T>> batch = List.copyOf(tasks);
+        if (batch.size() <= maxConcurrency)
+            return runAll(batch);
+
+        List<T> results = new ArrayList<>(batch.size());
+        @Nullable Throwable failure = null;
+        for (int start = 0; start < batch.size();) {
+            int end = start + Math.min(maxConcurrency, batch.size() - start);
+            try {
+                results.addAll(runAll(batch.subList(start, end)));
+            } catch (Throwable e) {
+                failure = TaskExecution.batchFailure(failure, e);
+            }
+            start = end;
+        }
+        if (failure != null)
+            throw Task.rethrow(failure);
+        return results;
+    }
 
     /// Runs the children as a batch and waits for all of them, even if one fails.
     /// A reported failure is logged as in [#tryRun(Task)].

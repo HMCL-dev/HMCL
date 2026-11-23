@@ -394,6 +394,106 @@ final class TaskExecutionContextTest {
         assertTrue(batch.test());
         assertEquals(Arrays.asList("first", null), batch.resultNow());
         assertTrue(Task.allOf().run().isEmpty());
+        assertTrue(Task.allOf(List.of(), 1).run().isEmpty());
+        assertThrows(IllegalArgumentException.class, () -> Task.allOf(List.of(), 0).run());
+    }
+
+    /// A full batch can serve a callback on its own worker and refill behind a slow continuation.
+    @Test
+    void refillsBoundedBatchWhenAnyBranchFinishes() throws Exception {
+        ExecutorService parent = Executors.newSingleThreadExecutor();
+        ExecutorService workers = Executors.newFixedThreadPool(3);
+        try {
+            Thread parentThread = parent.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            AtomicInteger submissions = new AtomicInteger();
+            Executor children = command -> {
+                submissions.incrementAndGet();
+                workers.execute(command);
+            };
+            CountDownLatch inContinuation = new CountDownLatch(1);
+            CountDownLatch lastStarted = new CountDownLatch(1);
+            Task<Integer> first = task(children, context -> context.run(Task.completed(1).thenApplyAsync(value -> {
+                inContinuation.countDown();
+                assertTrue(lastStarted.await(10, TimeUnit.SECONDS));
+                return value;
+            })));
+            Task<@Nullable Integer> second = task(children, context -> {
+                assertTrue(inContinuation.await(10, TimeUnit.SECONDS));
+                return context.call(parent, () -> {
+                    assertSame(parentThread, Thread.currentThread());
+                    assertEquals(2, submissions.get());
+                    return null;
+                });
+            });
+            Task<Integer> last = task(children, context -> {
+                lastStarted.countDown();
+                return 3;
+            });
+            Task<List<@Nullable Integer>> batch = Task.allOf(List.of(first, second, last), 2);
+            assertEquals(Arrays.asList(1, null, 3), task(parent, context -> context.run(batch)).run());
+            assertEquals(3, submissions.get());
+        } finally {
+            workers.shutdownNow();
+            parent.shutdownNow();
+        }
+    }
+
+    /// A duplicate or failed submission does not consume a slot or hide a later error.
+    @Test
+    void drainsBoundedBatchAfterFailures() throws Exception {
+        Task<Integer> shared = Task.completed(1);
+        RejectedExecutionException rejection = new RejectedExecutionException("Download unavailable");
+        Task<Integer> rejected = Task.supplyAsync(command -> {
+            throw rejection;
+        }, () -> fail("Unexpected execution"));
+        IOException failure = new IOException("Download failed");
+        Task<Integer> failed = Task.failed(failure);
+        AssertionError error = new AssertionError("Fatal download failure");
+        Task<Integer> fatal = Task.failed(error);
+        Task<Integer> last = Task.completed(6);
+        task(context -> {
+            assertSame(error, assertThrows(AssertionError.class, () ->
+                    context.runAll(List.of(shared, shared, rejected, failed, fatal, last), 2)));
+            assertEquals(1, shared.resultNow());
+            assertSame(rejection, rejected.exceptionNow());
+            assertSame(failure, failed.exceptionNow());
+            assertSame(error, fatal.exceptionNow());
+            assertEquals(6, last.resultNow());
+            return null;
+        }).run();
+    }
+
+    /// Cancelling a full batch drains the running sibling and skips pending bodies.
+    @Test
+    void drainsBoundedBatchOnCancellation() {
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch cancelled = new CountDownLatch(1);
+        Task<Integer> running = task(Schedulers.io(), context -> {
+            entered.countDown();
+            assertTrue(cancelled.await(10, TimeUnit.SECONDS));
+            return 1;
+        });
+        Task<Integer> trigger = task(Schedulers.io(), context -> {
+            assertTrue(entered.await(10, TimeUnit.SECONDS));
+            return 2;
+        });
+        AtomicInteger pendingRuns = new AtomicInteger();
+        Task<Integer> pending = Task.supplyAsync(pendingRuns::incrementAndGet);
+        Task<?> root = Task.allOf(List.of(running, trigger, pending), 2);
+        root.addTaskListener(new TaskListener() {
+            /// Cancels the root before the successful child releases its slot.
+            @Override
+            public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+                if (task == trigger) {
+                    root.cancel();
+                    cancelled.countDown();
+                }
+            }
+        });
+        assertThrows(CancellationException.class, root::run);
+        assertTrue(running.isCancelled());
+        assertEquals(2, trigger.resultNow());
+        assertEquals(0, pendingRuns.get());
     }
 
     /// A root continuation runs its default callback on the same task worker as its inherited source.
@@ -811,14 +911,19 @@ final class TaskExecutionContextTest {
     }
 
     /// A repeated child fails the batch once its siblings finish and retains its own successful result.
-    @Test
-    void rejectsRepeatedChildWithoutFailingItsFirstExecution() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void rejectsRepeatedChildWithoutFailingItsFirstExecution(boolean bounded) throws Exception {
         AtomicInteger calls = new AtomicInteger();
         Task<Integer> shared = Task.supplyAsync(calls::incrementAndGet);
         Task<Integer> first = Task.completed(11);
         Task<Integer> last = Task.completed(22);
         task(context -> {
-            assertThrows(IllegalStateException.class, () -> context.runAll(List.of(first, shared, shared, last)));
+            @Unmodifiable List<Task<Integer>> children = List.of(first, shared, shared, last);
+            assertThrows(IllegalStateException.class, () -> {
+                if (bounded) context.runAll(children, 1);
+                else context.runAll(children);
+            });
             assertEquals(11, first.resultNow());
             assertEquals(22, last.resultNow());
             assertThrows(IllegalStateException.class, () -> context.run(shared));

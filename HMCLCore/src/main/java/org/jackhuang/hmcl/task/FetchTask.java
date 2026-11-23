@@ -698,7 +698,9 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
     }
 
     public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
-    private static int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
+
+    /// The configured download limit shared by the settings thread and download batches.
+    private static volatile int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
 
     // For Java 21 or later, DOWNLOAD_EXECUTOR dispatches tasks to virtual threads, and concurrency is controlled by SEMAPHORE.
     // For versions earlier than Java 21, DOWNLOAD_EXECUTOR is a ThreadPoolExecutor, SEMAPHORE is null, and concurrency is controlled by the thread pool size.
@@ -757,6 +759,7 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
         }
     }
 
+    /// Returns the current limit on concurrent downloads.
     public static int getDownloadExecutorConcurrency() {
         return downloadExecutorConcurrency;
     }

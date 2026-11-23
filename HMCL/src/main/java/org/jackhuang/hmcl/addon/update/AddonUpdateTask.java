@@ -6,6 +6,7 @@ import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -92,7 +93,7 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         context.addStageItems(updates.size());
-        context.runAll(updates);
+        context.runAll(updates, FetchTask.getDownloadExecutorConcurrency());
         return null;
     }
 }

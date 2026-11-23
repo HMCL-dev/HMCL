@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackInstallTask;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
@@ -210,7 +211,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         @Override
         public List<MultiMCInstancePatch> execute(TaskExecutionContext context) throws Exception {
             Map<String, MultiMCInstancePatch> existed = new LinkedHashMap<>();
-            for (MultiMCInstancePatch patch : context.runAll(patches)) {
+            for (MultiMCInstancePatch patch : context.runAll(patches, FetchTask.getDownloadExecutorConcurrency())) {
                 existed.put(patch.getID(), patch);
             }
 
