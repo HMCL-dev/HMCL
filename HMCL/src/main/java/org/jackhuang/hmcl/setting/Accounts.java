@@ -489,7 +489,8 @@ public final class Accounts {
     }
     // ====
 
-    public static String localizeErrorMessage(Exception exception) {
+    /// Returns a localized description of an account failure, or null if its message is absent.
+    public static @Nullable String localizeErrorMessage(Throwable exception) {
         if (exception instanceof NoCharacterException) {
             return i18n("account.failed.no_character");
         } else if (exception instanceof ServerDisconnectException) {

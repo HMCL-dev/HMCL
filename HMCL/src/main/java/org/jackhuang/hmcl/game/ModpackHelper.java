@@ -158,7 +158,7 @@ public final class ModpackHelper {
             repository.getInstance(instanceId).enableIsolation();
         };
 
-        ExceptionalConsumer<Exception, ?> failure = ex -> {
+        ExceptionalConsumer<Throwable, ?> failure = ex -> {
             if (ex instanceof ModpackCompletionException && !(ex.getCause() instanceof FileNotFoundException)) {
                 success.run();
                 // This is tolerable and we will not delete the game
@@ -220,7 +220,7 @@ public final class ModpackHelper {
             repository.getInstance(instanceId).enableIsolation();
         };
 
-        ExceptionalConsumer<Exception, ?> failure = ex -> {
+        ExceptionalConsumer<Throwable, ?> failure = ex -> {
             if (ex instanceof ModpackCompletionException && !(ex.getCause() instanceof FileNotFoundException)) {
                 success.run();
                 // This is tolerable and we will not delete the game

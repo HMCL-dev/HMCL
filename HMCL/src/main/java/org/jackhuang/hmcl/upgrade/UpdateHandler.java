@@ -134,7 +134,7 @@ public final class UpdateHandler {
                         requestUpdate(downloaded, getCurrentLocation());
                         EntryPoint.exit(0);
                     })
-                    .whenComplete(Schedulers.javafx(), (@Nullable Exception exception) -> {
+                    .whenComplete(Schedulers.javafx(), (@Nullable Throwable exception) -> {
                         if (exception != null && !(exception instanceof CancellationException)) {
                             LOG.warning("Failed to update to " + version, exception);
                             Controllers.dialog(StringUtils.getStackTrace(exception), i18n("update.failed"), MessageType.ERROR);

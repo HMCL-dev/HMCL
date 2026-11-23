@@ -119,7 +119,8 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         return true;
     }
 
-    public static void alertFailureMessage(Exception exception, Runnable next) {
+    /// Shows the installation failure and invokes the optional `next` after the dialog closes. Cancellation is ignored.
+    public static void alertFailureMessage(Throwable exception, @Nullable Runnable next) {
         if (exception instanceof LibraryDownloadException) {
             String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().name()) + "\n";
             if (exception.getCause() instanceof ResponseCodeException rce) {

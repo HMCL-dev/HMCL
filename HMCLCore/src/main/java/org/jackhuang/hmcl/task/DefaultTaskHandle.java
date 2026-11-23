@@ -73,8 +73,9 @@ public final class DefaultTaskHandle extends TaskHandle {
                     && !(e instanceof JsonParseException) && !(e instanceof RejectedExecutionException)) {
                 handler.uncaughtException(Thread.currentThread(), e);
             }
-        } catch (Error e) {
-            Lang.handleUncaughtException(e);
+        } catch (Throwable failure) {
+            exception = failure;
+            Lang.handleUncaughtException(failure);
         } finally {
             boolean completed = success;
             notifyListeners(listener -> listener.onExecutionFinished(this, completed));
@@ -114,7 +115,7 @@ public final class DefaultTaskHandle extends TaskHandle {
             if (executor == null)
                 executor = parent == null ? Schedulers.tasks() : parent.executor;
             return new Context<>(task, executor, scope);
-        } catch (RuntimeException | Error failure) {
+        } catch (Throwable failure) {
             fail(task, scope, failure);
             throw failure;
         }
@@ -134,7 +135,7 @@ public final class DefaultTaskHandle extends TaskHandle {
         try {
             checkCancellation();
             work.submit();
-        } catch (RuntimeException | Error failure) {
+        } catch (Throwable failure) {
             fail(context.task, context.stageScope, failure);
             work.reject(failure);
         }
@@ -164,7 +165,7 @@ public final class DefaultTaskHandle extends TaskHandle {
             if (cause instanceof InterruptedException)
                 cause = new CancellationException(cause.getMessage());
             fail(task, context.stageScope, cause);
-            throw asException(cause);
+            throw Task.rethrow(cause);
         }
 
         task.publishResult(result);
@@ -174,11 +175,10 @@ public final class DefaultTaskHandle extends TaskHandle {
         return result;
     }
 
-    /// Records the checked failure exposed by a task and delivers its terminal notifications.
+    /// Records the failure before delivering terminal notifications.
     private void fail(Task<?> task, TaskStage.@Nullable Scope scope, Throwable cause) {
-        Exception recorded = cause instanceof Exception e ? e : new Exception(cause);
-        exception = recorded;
-        task.publishException(recorded);
+        exception = cause;
+        task.publishException(cause);
         notifyTaskFinished(task, scope, cause);
     }
 
@@ -187,13 +187,6 @@ public final class DefaultTaskHandle extends TaskHandle {
         notifyListeners(listener -> listener.onTaskFinished(task, scope, failure));
         if (scope != null && scope.task() == task)
             notifyListeners(listener -> listener.onStageFinished(scope, failure));
-    }
-
-    /// Returns an exception for propagation, preserving errors as errors.
-    private static Exception asException(Throwable failure) {
-        if (failure instanceof Error e)
-            throw e;
-        return failure instanceof Exception e ? e : new Exception(failure);
     }
 
     /// Retains the first batch failure, giving errors precedence over ordinary exceptions.
@@ -279,7 +272,7 @@ public final class DefaultTaskHandle extends TaskHandle {
                 try {
                     child.claimExecution();
                     children.add(submitChild(prepare(this, child)));
-                } catch (RuntimeException | Error e) {
+                } catch (Throwable e) {
                     failure = batchFailure(failure, e);
                 }
             }
@@ -289,12 +282,12 @@ public final class DefaultTaskHandle extends TaskHandle {
                 try {
                     results.add(await(child));
                 } catch (Throwable e) {
-                    // Drain every sibling, including after failure. Errors must reach the global handler.
+                    // Drain every sibling before propagating the batch failure.
                     failure = batchFailure(failure, e);
                 }
             }
             if (failure != null)
-                throw asException(failure);
+                throw Task.rethrow(failure);
             checkCancellation();
             return results;
         }
@@ -342,7 +335,7 @@ public final class DefaultTaskHandle extends TaskHandle {
         try {
             return work.get();
         } catch (ExecutionException e) {
-            throw asException(e.getCause());
+            throw Task.rethrow(Objects.requireNonNull(e.getCause()));
         }
     }
 

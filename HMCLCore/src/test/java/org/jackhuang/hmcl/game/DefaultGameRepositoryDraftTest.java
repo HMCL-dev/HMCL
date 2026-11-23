@@ -881,6 +881,21 @@ public final class DefaultGameRepositoryDraftTest {
         }
     }
 
+    /// Releases the draft when the updater's task raises an error during execution.
+    @Test
+    public void testUpdateInstanceAsyncAbortsDraftOnTaskError(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        repository.save(new GameInstanceManifest(id));
+
+        AssertionError error = new AssertionError("updater task");
+        Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, instance -> Task.failed(error));
+        assertSame(error, assertThrows(AssertionError.class, update::run));
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            assertTrue(draft.isOpen());
+        }
+    }
+
     /// Writes a minimal client JAR whose version can be detected after committing and refreshing.
     private static void writeVersionJar(Path jar, String version) throws IOException {
         try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(jar))) {

@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -160,7 +161,10 @@ public final class JavaDownloadDialog extends StackPane {
             if (selectedVersions.isEmpty())
                 return;
 
-            Task<Void> task = Task.allOf(selectedVersions.stream().map(javaVersion -> JavaManager.getDownloadJavaTask(downloadProvider, platform, javaVersion).wrapResult()).toList())
+            Task<@Nullable Void> task = Task.allOf(selectedVersions.stream()
+                            .map(javaVersion -> JavaManager.getDownloadJavaTask(downloadProvider, platform, javaVersion)
+                                    .wrapResult())
+                            .toList())
                     .whenComplete(Schedulers.javafx(), (results, exception) -> {
                         Throwable exceptionToDisplay;
                         if (exception == null) {

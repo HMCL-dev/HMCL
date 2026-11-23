@@ -93,7 +93,7 @@ public final class Instances {
         pane.setTitle(i18n("modpack.download.title", file.file().filename()));
         TaskHandle handle = new FileDownloadTask(downloadURLs, modpack)
                 .setName(file.name())
-                .whenComplete(Schedulers.javafx(), (@Nullable Exception e) -> {
+                .whenComplete(Schedulers.javafx(), (@Nullable Throwable e) -> {
                     if (e == null) {
                         ModpackInstallWizardProvider installWizardProvider;
                         if (instanceId != null)

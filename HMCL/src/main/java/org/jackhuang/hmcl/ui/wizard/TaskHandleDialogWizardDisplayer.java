@@ -55,7 +55,7 @@ public abstract class TaskHandleDialogWizardDisplayer extends AbstractWizardDisp
                 /// Releases wizard resources and reports the outcome on the JavaFX thread.
                 @Override
                 public void onExecutionFinished(TaskHandle handle, boolean success) {
-                    @Nullable Exception failure = success ? null : handle.getException();
+                    @Nullable Throwable failure = success ? null : handle.getException();
                     if (cleanup != null) {
                         try {
                             cleanup.cleanup();
@@ -67,7 +67,7 @@ public abstract class TaskHandleDialogWizardDisplayer extends AbstractWizardDisp
                             }
                         }
                     }
-                    @Nullable Exception completedFailure = failure;
+                    @Nullable Throwable completedFailure = failure;
                     runInFX(() -> {
                         if (success && completedFailure == null) {
                             if (settings.get("success_message") instanceof String successMessage)
@@ -85,7 +85,9 @@ public abstract class TaskHandleDialogWizardDisplayer extends AbstractWizardDisp
                                 return;
                             }
 
-                            if (completedFailure.getCause() instanceof OutOfMemoryError outOfMemoryError) {
+                            @Nullable Throwable cause = completedFailure instanceof OutOfMemoryError
+                                    ? completedFailure : completedFailure.getCause();
+                            if (cause instanceof OutOfMemoryError outOfMemoryError) {
                                 try {
                                     Controllers.dialog(StringUtils.getStackTrace(outOfMemoryError), null, MessageType.ERROR, () -> onEnd());
                                 } catch (OutOfMemoryError ignored) {

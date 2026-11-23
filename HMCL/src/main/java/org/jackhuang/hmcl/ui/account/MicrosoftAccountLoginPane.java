@@ -285,8 +285,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         fireEvent(new DialogCloseEvent());
     }
 
-    private void onLoginCompleted(MicrosoftAccount account, Exception exception) {
+    /// Completes a successful login or displays the failure unless the login was cancelled.
+    private void onLoginCompleted(@Nullable MicrosoftAccount account, @Nullable Throwable exception) {
         if (exception == null) {
+            Objects.requireNonNull(account);
             boolean storageReadOnly = accountToRelogin != null
                     ? Accounts.isAccountFilesReadOnly(accountToRelogin)
                     : Accounts.isAccountFilesReadOnly(account);

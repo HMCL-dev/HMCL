@@ -41,7 +41,7 @@ public abstract class TaskHandle {
     protected volatile boolean cancelled;
 
     /// The recorded task failure, if any.
-    protected volatile @Nullable Exception exception;
+    protected volatile @Nullable Throwable exception;
 
     /// Creates a handle for the task and its children.
     public TaskHandle(Task<?> task) {
@@ -102,8 +102,9 @@ public abstract class TaskHandle {
         }
     }
 
-    /// Returns the recorded failure, or null if none has been recorded.
-    public @Nullable Exception getException() {
+    /// Returns the most recently recorded failure during execution, or null if none has been recorded.
+    /// After execution finishes, returns the root failure or null if the root succeeded.
+    public @Nullable Throwable getException() {
         return exception;
     }
 

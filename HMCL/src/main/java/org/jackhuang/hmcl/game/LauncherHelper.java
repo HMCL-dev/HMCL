@@ -355,7 +355,7 @@ public final class LauncherHelper {
                     if (!Controllers.isStopped()) {
                         launchingStepsPane.fireEvent(new DialogCloseEvent());
                         if (!success) {
-                            @Nullable Exception ex = handle.getException();
+                            @Nullable Throwable ex = handle.getException();
                             if (ex != null && !(ex instanceof CancellationException)) {
                                 String message;
                                 if (ex instanceof ModpackCompletionException) {
