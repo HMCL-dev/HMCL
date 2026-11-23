@@ -48,16 +48,16 @@ public abstract class Task<T extends @Nullable Object> {
     /// @see #state
     private static final VarHandle STATE_HANDLE;
 
-    /// Atomically selects the task's permanent role before it can be submitted.
+    /// Atomically installs the task's execution binding.
     ///
-    /// @see #executionRole
-    private static final VarHandle EXECUTION_ROLE;
+    /// @see #executionBinding
+    private static final VarHandle EXECUTION_BINDING;
 
     static {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             STATE_HANDLE = lookup.findVarHandle(Task.class, "state", TaskState.class);
-            EXECUTION_ROLE = lookup.findVarHandle(Task.class, "executionRole", ExecutionRole.class);
+            EXECUTION_BINDING = lookup.findVarHandle(Task.class, "executionBinding", ExecutionBinding.class);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -87,11 +87,11 @@ public abstract class Task<T extends @Nullable Object> {
     /// Controls execution logging and visibility in the task list.
     private TaskSignificance significance = TaskSignificance.MAJOR;
 
-    /// Permanent role selected on root reservation or first submission, or `null` while unreserved.
+    /// Null until root reservation or first submission, then permanently bound.
     ///
-    /// @see #EXECUTION_ROLE
+    /// @see #EXECUTION_BINDING
     @SuppressWarnings("unused")
-    private volatile @Nullable ExecutionRole executionRole;
+    private volatile @Nullable ExecutionBinding executionBinding;
 
     /// Most recent execution state, initially [TaskState#NEW].
     private volatile TaskState state = TaskState.NEW;
@@ -198,8 +198,8 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// @throws IllegalStateException if this task was submitted as a child
     public final boolean isCancelled() {
-        @Nullable ExecutionRole role = executionRole;
-        return role != null && asRootExecution(role).isCancelled();
+        @Nullable ExecutionBinding binding = executionBinding;
+        return binding != null && binding.requireRootExecution().isCancelled();
     }
 
     /// Registers a listener for subsequent events in this root's execution tree and returns this task.
@@ -216,9 +216,9 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// @throws IllegalStateException if this task was submitted as a child
     public final void removeTaskListener(TaskListener listener) {
-        @Nullable ExecutionRole role = executionRole;
-        if (role != null)
-            asRootExecution(role).removeTaskListener(listener);
+        @Nullable ExecutionBinding binding = executionBinding;
+        if (binding != null)
+            binding.requireRootExecution().removeTaskListener(listener);
     }
 
     /// Sets the handler for unexpected runtime exceptions reported by [#start()] and [#test()].
@@ -646,23 +646,17 @@ public abstract class Task<T extends @Nullable Object> {
         });
     }
 
-    /// Returns the execution associated with a reserved root.
-    private static TaskExecution asRootExecution(ExecutionRole role) {
-        if (role instanceof Root root)
-            return root.execution();
-        throw new IllegalStateException("Task has been submitted as a child");
-    }
-
     /// Reserves the root's execution for configuration or submission.
     private TaskExecution rootExecution() {
-        @Nullable ExecutionRole role = executionRole;
-        if (role == null) {
-            Root root = new Root(new TaskExecution());
-            role = (ExecutionRole) EXECUTION_ROLE.compareAndExchange(this, null, root);
-            if (role == null)
-                return root.execution();
+        @Nullable ExecutionBinding binding = executionBinding;
+        if (binding == null) {
+            TaskExecution execution = new TaskExecution();
+            binding = (@Nullable ExecutionBinding) EXECUTION_BINDING.compareAndExchange(
+                    this, null, new ExecutionBinding(execution));
+            if (binding == null)
+                return execution;
         }
-        return asRootExecution(role);
+        return binding.requireRootExecution();
     }
 
     /// Marks a new root as ready and returns its execution.
@@ -675,7 +669,7 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Marks an unreserved task as ready for execution as a child.
     final void markReadyAsChild() {
-        if (!EXECUTION_ROLE.compareAndSet(this, null, Child.INSTANCE))
+        if (!EXECUTION_BINDING.compareAndSet(this, null, ExecutionBinding.CHILD))
             throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name : getClass().getName()));
         state = TaskState.READY;
     }
@@ -780,20 +774,19 @@ public abstract class Task<T extends @Nullable Object> {
         void execute(@Nullable T result, @Nullable Throwable failure) throws Exception;
     }
 
-    /// A task's role in its execution tree.
-    private sealed interface ExecutionRole permits Root, Child {
-    }
-
-    /// The root role holds the execution shared by the task tree.
+    /// Binds a task as a root or a child.
     ///
-    /// @param execution the execution controlled by this root
-    private record Root(TaskExecution execution) implements ExecutionRole {
-    }
+    /// @param rootExecution the execution controlled by the root, or `null` for a child
+    private record ExecutionBinding(@Nullable TaskExecution rootExecution) {
+        /// Binding shared by all submitted children.
+        private static final ExecutionBinding CHILD = new ExecutionBinding(null);
 
-    /// The role of a task submitted through its parent's execution context.
-    private enum Child implements ExecutionRole {
-        /// Shared by all submitted children.
-        INSTANCE
+        /// Returns the root's execution or throws if this task was submitted as a child.
+        private TaskExecution requireRootExecution() {
+            if (rootExecution == null)
+                throw new IllegalStateException("Task has been submitted as a child");
+            return rootExecution;
+        }
     }
 
     /// Provides an enclosing stage for the wrapped task.
