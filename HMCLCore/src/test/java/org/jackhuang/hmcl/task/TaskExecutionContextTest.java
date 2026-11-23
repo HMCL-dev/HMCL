@@ -322,6 +322,52 @@ final class TaskExecutionContextTest {
         assertTrue(Task.allOf().run().isEmpty());
     }
 
+    /// A root continuation runs its default callback on the same task worker as its inherited source.
+    @Test
+    void rootContinuationUsesTaskWorker() throws Exception {
+        Task<Thread> source = Task.supplyAsync(Thread::currentThread);
+        Thread callback = source.thenApplyAsync(ignored -> Thread.currentThread()).run();
+        assertNotSame(Thread.currentThread(), callback);
+        assertSame(source.resultNow(), callback);
+    }
+
+    /// Default callbacks inherit the enclosing task's worker even when the source runs elsewhere.
+    @Test
+    void nestedContinuationsUseEnclosingWorker() throws Exception {
+        Thread caller = Thread.currentThread();
+        Task<Thread> source = Task.supplyAsync(Schedulers.io(), Thread::currentThread);
+        Task<Thread> supplied = source.thenComposeOptionalAsync(sourceThread -> {
+            assertNotSame(caller, sourceThread);
+            assertSame(caller, Thread.currentThread());
+            return Task.completed(1);
+        }).thenSupplyAsync(Thread::currentThread);
+        Task<@Nullable Void> finished = supplied.whenComplete(failure -> {
+            assertNull(failure);
+            assertSame(caller, Thread.currentThread());
+        });
+        task(Runnable::run, context -> context.run(finished)).run();
+        assertSame(caller, supplied.resultNow());
+    }
+
+    /// A null executor uses the enclosing worker for task factories and callbacks, preserving checked failures.
+    @Test
+    void nullExecutorUsesEnclosingWorker() {
+        Thread caller = Thread.currentThread();
+        @Nullable Executor executor = null;
+        IOException failure = new IOException("Callback failed");
+        Task<Thread> source = Task.composeAsync(executor, () -> {
+            assertSame(caller, Thread.currentThread());
+            return Task.supplyAsync(executor, Thread::currentThread);
+        });
+        Task<?> continuation = source.thenApplyAsync(executor, worker -> {
+            assertSame(caller, worker);
+            assertSame(caller, Thread.currentThread());
+            throw failure;
+        });
+        Task<?> root = task(Runnable::run, context -> context.run(continuation));
+        assertSame(failure, assertThrows(IOException.class, root::run));
+    }
+
     /// A continuation's body inherits its parent's executor and dispatches the callback on the selected executor.
     @Test
     void separatesContinuationBodyAndCallbackExecutors() throws Exception {

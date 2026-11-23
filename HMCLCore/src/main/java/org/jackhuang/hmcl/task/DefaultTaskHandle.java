@@ -299,9 +299,10 @@ public final class DefaultTaskHandle extends TaskHandle {
             return results;
         }
 
+        /// {@inheritDoc}
         @Override
-        public <T extends @Nullable Object> T call(Executor executor, Callable<T> action) throws Exception {
-            if (executor == currentExecutor())
+        public <T extends @Nullable Object> T call(@Nullable Executor executor, Callable<T> action) throws Exception {
+            if (executor == null || executor == currentExecutor())
                 return action.call();
             Work<T> work = new Work<>(executor, action);
             work.submit();

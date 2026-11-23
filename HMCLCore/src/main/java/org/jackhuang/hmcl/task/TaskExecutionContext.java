@@ -52,9 +52,10 @@ public interface TaskExecutionContext {
     <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> tasks) throws Exception;
 
     /// Executes an action on the specified executor and returns its result without creating
-    /// a task or sending lifecycle notifications. May run inline on the current executor.
+    /// a task or sending lifecycle notifications. A `null` executor runs the action directly
+    /// on the calling thread. An action targeting the current executor may also run inline.
     /// An already running task may call this method after cancellation to perform cleanup.
     ///
     /// @throws Exception if the action fails or the wait is interrupted
-    <T extends @Nullable Object> T call(Executor executor, Callable<T> action) throws Exception;
+    <T extends @Nullable Object> T call(@Nullable Executor executor, Callable<T> action) throws Exception;
 }

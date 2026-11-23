@@ -131,7 +131,7 @@ public final class DefaultGameRepositoryDraftTest {
 
             /// Reports any unexpected callback dispatch.
             @Override
-            public <T extends @Nullable Object> T call(Executor executor, Callable<T> action) {
+            public <T extends @Nullable Object> T call(@Nullable Executor executor, Callable<T> action) {
                 return fail("Unexpected callback");
             }
         };
