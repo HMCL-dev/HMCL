@@ -525,7 +525,9 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// @param k positive finite scale controlling the rate at which the estimate approaches its upper bound
     public Task<T> withFakeProgress(TaskName name, BooleanSupplier done, double k) {
-        return new FakeProgressTask(done, k).setName(name).setSignificance(TaskSignificance.MAJOR);
+        return new FakeProgressTask(this, done, k)
+                .setName(name)
+                .setSignificance(TaskSignificance.MAJOR);
     }
 
     /// Creates a task that returns `value` when run.
@@ -852,9 +854,12 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Waits for an external condition after the wrapped task has completed.
-    private final class FakeProgressTask extends Task<T> {
+    private static final class FakeProgressTask<T extends @Nullable Object> extends Task<T> {
         /// Upper bound approached by the progress estimate before the condition is satisfied.
         private static final double MAX_VALUE = 0.98D;
+
+        /// The child whose executor and result this wrapper shares.
+        private final Task<? extends T> source;
 
         /// Condition indicating that the wrapper may complete.
         private final BooleanSupplier done;
@@ -863,7 +868,8 @@ public abstract class Task<T extends @Nullable Object> {
         private final double k;
 
         /// Creates a wrapper that reports estimated progress until the supplied condition is true.
-        private FakeProgressTask(BooleanSupplier done, double k) {
+        private FakeProgressTask(Task<? extends T> source, BooleanSupplier done, double k) {
+            this.source = source;
             this.done = done;
             this.k = k;
         }
@@ -871,7 +877,7 @@ public abstract class Task<T extends @Nullable Object> {
         /// {@inheritDoc}
         @Override
         public T execute(TaskExecutionContext context) throws Exception {
-            T value = context.run(Task.this);
+            T value = context.run(source);
             TaskProgress progress = context.progress();
             if (!done.getAsBoolean()) {
                 progress.update(0.0D);
