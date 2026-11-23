@@ -184,6 +184,7 @@ final class TaskExecutionContextTest {
         CountDownLatch release = new CountDownLatch(1);
         AtomicInteger cleanups = new AtomicInteger();
         CompletableFuture<Boolean> stopped = new CompletableFuture<>();
+        Task<Integer> completedChild = Task.completed(42);
         Task<@Nullable Void> child = task(Schedulers.io(), context -> {
             assertFalse(context.isCancelled());
             entered.countDown();
@@ -193,6 +194,7 @@ final class TaskExecutionContextTest {
         });
         Task<?> root = task(parent -> {
             assertFalse(parent.isCancelled());
+            parent.run(completedChild);
             try {
                 return parent.run(child);
             } finally {
@@ -217,11 +219,18 @@ final class TaskExecutionContextTest {
             assertNull(child.resultNowOrNull());
             assertNull(child.exceptionNowOrNull());
             root.cancel();
+            assertTrue(root.isCancellationRequested());
+            assertFalse(root.isCancelled());
+            assertFalse(child.isCancelled());
         } finally {
             release.countDown();
         }
         assertFalse(stopped.get(10, TimeUnit.SECONDS));
         assertEquals(1, cleanups.get());
+        assertTrue(root.isCancelled());
+        assertTrue(child.isCancelled());
+        assertFalse(completedChild.isCancelled());
+        assertEquals(42, completedChild.resultNow());
         CancellationException cancellation = assertInstanceOf(CancellationException.class, root.exceptionNow());
         assertSame(cancellation, root.exceptionNowOrNull());
         assertNull(root.resultNowOrNull());
@@ -246,7 +255,7 @@ final class TaskExecutionContextTest {
     /// A successful batch, including an empty one, returns true. A failed child retains its cause.
     @Test
     void reportsTryRunOutcome() throws Exception {
-        task(context -> {
+        Task<?> root = task(context -> {
             assertTrue(context.tryRunAll(List.of()));
             assertTrue(context.tryRun(Task.completed(false)));
             assertTrue(context.tryRunAll(List.of(Task.completed(1), Task.completed(2))));
@@ -254,9 +263,12 @@ final class TaskExecutionContextTest {
                 Task<?> child = Task.failed(failure);
                 assertFalse(context.tryRun(child));
                 assertSame(failure, child.exceptionNow());
+                assertEquals(failure instanceof CancellationException, child.isCancelled());
             }
             return null;
-        }).run();
+        });
+        root.run();
+        assertFalse(root.isCancellationRequested());
     }
 
     /// Cancelling the task tree interrupts a sequence that otherwise tolerates child failures.
@@ -541,8 +553,10 @@ final class TaskExecutionContextTest {
 
         assertEquals(1, observed.run());
         assertEquals(1, events.completions.size());
-        assertTrue(cancelled.isCancelled());
+        assertTrue(cancelled.isCancellationRequested());
+        assertFalse(cancelled.isCancelled());
         assertThrows(CancellationException.class, cancelled::run);
+        assertTrue(cancelled.isCancelled());
     }
 
     /// Reading an unsubmitted task leaves it available as a child, which cannot control the enclosing tree.
@@ -554,7 +568,8 @@ final class TaskExecutionContextTest {
             @Override
             public Integer execute(TaskExecutionContext context) {
                 assertThrows(IllegalStateException.class, this::cancel);
-                assertThrows(IllegalStateException.class, this::isCancelled);
+                assertThrows(IllegalStateException.class, this::isCancellationRequested);
+                assertFalse(isCancelled());
                 assertThrows(IllegalStateException.class, () -> addTaskListener(listener));
                 assertThrows(IllegalStateException.class, () -> removeTaskListener(listener));
                 assertFalse(context.isCancelled());
@@ -562,6 +577,7 @@ final class TaskExecutionContextTest {
             }
         };
         assertFalse(child.isCancelled());
+        assertFalse(child.isCancellationRequested());
         child.removeTaskListener(listener);
         assertEquals(42, Task.composeAsync(() -> child).run());
         assertThrows(IllegalStateException.class, child::cancel);

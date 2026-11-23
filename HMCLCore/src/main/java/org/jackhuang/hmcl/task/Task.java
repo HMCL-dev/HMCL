@@ -194,12 +194,14 @@ public abstract class Task<T extends @Nullable Object> {
         rootExecution().cancel();
     }
 
-    /// Returns whether cancellation was requested on this root. An unreserved task returns false.
+    /// Returns true as soon as [#cancel()] requests cancellation on this root, even before submission.
+    /// An unreserved task returns false.
     ///
     /// @throws IllegalStateException if this task was submitted as a child
-    public final boolean isCancelled() {
+    /// @see #isCancelled()
+    public final boolean isCancellationRequested() {
         @Nullable ExecutionBinding binding = executionBinding;
-        return binding != null && binding.requireRootExecution().isCancelled();
+        return binding != null && binding.requireRootExecution().isCancellationRequested();
     }
 
     /// Registers a listener for subsequent events in this root's execution tree and returns this task.
@@ -230,6 +232,11 @@ public abstract class Task<T extends @Nullable Object> {
     /// Returns the current execution state.
     public final TaskState getState() {
         return state;
+    }
+
+    /// Returns true once this task, whether root or child, has completed with a [CancellationException].
+    public final boolean isCancelled() {
+        return exceptionNowOrNull() instanceof CancellationException;
     }
 
     /// Returns the successful result without waiting. A task with a nullable result type may return `null`.

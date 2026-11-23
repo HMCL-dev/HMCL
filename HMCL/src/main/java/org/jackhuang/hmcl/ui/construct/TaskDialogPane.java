@@ -130,7 +130,7 @@ public class TaskDialogPane extends BorderPane implements DialogAware {
             @Nullable TaskCancellationAction action = onCancel;
             if ((!running && !queued.get()) || action == null || !action.isEnabled())
                 return;
-            if (task != null && !task.isCancelled())
+            if (task != null && !task.isCancellationRequested())
                 task.cancel();
             action.accept(this);
             btnCancel.setDisable(true);
@@ -278,7 +278,7 @@ public class TaskDialogPane extends BorderPane implements DialogAware {
     /// Required child workflows should check this on the JavaFX thread before opening their dialogs.
     public boolean canStartChild() {
         FXUtils.checkFxUserThread();
-        return running && task != null && !task.isCancelled();
+        return running && task != null && !task.isCancellationRequested();
     }
 
     /// Hides an active or queued dialog without invoking cancellation or changing execution.
@@ -376,7 +376,7 @@ public class TaskDialogPane extends BorderPane implements DialogAware {
     private void updateButtons() {
         btnBackground.setDisable(!running && !queued.get());
         btnCancel.setDisable((!running && !queued.get()) || onCancel == null || !onCancel.isEnabled()
-                || task == null || task.isCancelled());
+                || task == null || task.isCancellationRequested());
     }
 
     /// Returns the writable title property, which may be bound to a task's current state.

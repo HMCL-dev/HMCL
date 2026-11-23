@@ -53,7 +53,7 @@ final class TaskExecution {
     }
 
     /// Whether cancellation has been requested.
-    private volatile boolean cancelled;
+    private volatile boolean cancellationRequested;
 
     /// Creates an execution for one root and its descendants.
     TaskExecution() {
@@ -186,12 +186,12 @@ final class TaskExecution {
 
     /// Requests cancellation of this execution.
     void cancel() {
-        cancelled = true;
+        cancellationRequested = true;
     }
 
     /// Returns whether cancellation was requested for this execution.
-    boolean isCancelled() {
-        return cancelled;
+    boolean isCancellationRequested() {
+        return cancellationRequested;
     }
 
     /// Returns the executor whose work the caller can execute inline.
@@ -299,7 +299,7 @@ final class TaskExecution {
 
     /// Returns whether this task tree was cancelled or the calling thread is interrupted.
     private boolean isCancelledOrInterrupted() {
-        return isCancelled() || Thread.currentThread().isInterrupted();
+        return isCancellationRequested() || Thread.currentThread().isInterrupted();
     }
 
     /// Throws when cancellation has been requested or the current worker is interrupted.
