@@ -374,7 +374,7 @@ public final class TaskListPane extends StackPane {
         }
     }
 
-    private static abstract class Node {
+    private static sealed abstract class Node {
 
     }
 
