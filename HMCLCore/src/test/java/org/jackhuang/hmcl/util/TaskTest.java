@@ -135,22 +135,12 @@ public class TaskTest {
         assertSame(successCallback, observedFailure.get());
     }
 
-    /// Explicit recovery and result wrapping preserve the identity of every kind of source failure.
+    /// Wrapping a failed task preserves the original throwable.
     @Test
-    public void testRecoverAndWrapResult() throws Exception {
+    public void testWrapResultPreservesFailure() throws Exception {
         for (Throwable source : List.of(new IOException(), new AssertionError(), new CancellationException(), new Throwable())) {
-            assertEquals(42, Task.<Integer>failed(source).recover(failure -> {
-                assertSame(source, failure);
-                return 42;
-            }).run());
             assertSame(source, Task.failed(source).wrapResult().run().getException());
-            Task<?> rethrown = Task.failed(source).recover(failure -> { throw failure; });
-            assertSame(source, assertThrows(source.getClass(), rethrown::run));
         }
-        assertEquals(1, Task.completed(1).recover(failure -> fail("Successful source invoked recovery")).run());
-        IOException recovery = new IOException("recovery");
-        Task<?> failed = Task.failed(new AssertionError()).recover(failure -> { throw recovery; });
-        assertSame(recovery, assertThrows(IOException.class, failed::run));
     }
 
     /// Implicit continuations run after ordinary exceptions but propagate cancellation and errors.
@@ -201,7 +191,7 @@ public class TaskTest {
             taskStarted.countDown();
             releaseTask.await();
             taskCompleted.set(true);
-        }).thenRunAsync(() -> continuationExecuted.set(true)).recover(failure -> null);
+        }).thenRunAsync(() -> continuationExecuted.set(true));
         task.addTaskListener(new TaskListener() {
             /// Publishes the execution result to the waiting test thread.
             @Override

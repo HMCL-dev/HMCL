@@ -61,25 +61,6 @@ final class TaskExecutionContextTest {
         }
     }
 
-    /// A raw throwable from either task source survives a worker boundary and can be recovered by the root.
-    @Test
-    void recoversOriginalThrowableAcrossExecutors() {
-        Throwable failure = new Throwable("source");
-        for (Task<Integer> source : List.of(Task.<Integer>failed(failure),
-                Task.fromCompletableFuture(CompletableFuture.<Integer>failedFuture(failure)))) {
-            Task<Integer> child = task(Schedulers.io(), context -> context.run(source));
-            Task<Integer> root = child.recover(cause -> {
-                assertSame(failure, cause);
-                return 42;
-            });
-            assertTrue(root.test());
-            assertEquals(42, root.resultNow());
-            assertNull(root.exceptionNowOrNull());
-            assertSame(failure, child.exceptionNow());
-            assertSame(failure, source.exceptionNow());
-        }
-    }
-
     /// A root's executor preference is resolved once, independently of its caller's executor.
     @Test
     void defaultsRootToTaskScheduler() throws Exception {

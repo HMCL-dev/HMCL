@@ -476,24 +476,6 @@ public abstract class Task<T extends @Nullable Object> {
         return rethrow(failure);
     }
 
-    /// Passes through the result on success or calls `recovery` on the continuation's thread
-    /// with the source failure, including an error or child cancellation. A failure thrown by
-    /// `recovery` propagates. Cancelling the root still prevents publication of a fallback result.
-    public Task<T> recover(Recovery<? extends T> recovery) {
-        Objects.requireNonNull(recovery);
-        return Task.<T>of(context -> {
-            try {
-                return context.run(this);
-            } catch (Throwable failure) {
-                try {
-                    return recovery.recover(failure);
-                } catch (Throwable replacement) {
-                    throw rethrow(replacement);
-                }
-            }
-        }).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
-    }
-
     /// Represents the result or any source failure as a [Result], including errors and child cancellation.
     /// Cancelling the root still prevents publication of the result.
     public Task<Result<T>> wrapResult() {
@@ -737,13 +719,6 @@ public abstract class Task<T extends @Nullable Object> {
         SUCCEEDED,
         /// The executor has recorded a failure, including cancellation.
         FAILED
-    }
-
-    /// Supplies a fallback result for a failed task.
-    @FunctionalInterface
-    public interface Recovery<T extends @Nullable Object> {
-        /// Returns a fallback value or throws to propagate a failure.
-        T recover(Throwable failure) throws Throwable;
     }
 
     /// Receives the failure outcome of a task.
