@@ -47,9 +47,13 @@ public abstract class Task<T extends @Nullable Object> {
     private static final Object CHILD = new Object();
 
     /// Atomically transitions a root from [TaskState#NEW] to [TaskState#READY].
+    ///
+    /// @see #state
     private static final VarHandle STATE_HANDLE;
 
     /// Atomically selects the task's permanent role before it can be submitted.
+    ///
+    /// @see #executionRole
     private static final VarHandle EXECUTION_ROLE;
 
     static {
