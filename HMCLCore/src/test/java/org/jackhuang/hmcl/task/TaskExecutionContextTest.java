@@ -87,7 +87,8 @@ final class TaskExecutionContextTest {
         AtomicInteger resolutions = new AtomicInteger();
         Task<Thread> root = new Task<>() {
             @Override
-            public @Nullable Executor getExecutor() {
+            @Nullable
+            protected Executor getExecutor() {
                 resolutions.incrementAndGet();
                 return null;
             }
@@ -338,7 +339,7 @@ final class TaskExecutionContextTest {
         IllegalStateException failure = new IllegalStateException("No executor available");
         Task<Integer> broken = new Task<>() {
             @Override
-            public Executor getExecutor() {
+            protected Executor getExecutor() {
                 throw failure;
             }
 
@@ -1020,7 +1021,8 @@ final class TaskExecutionContextTest {
 
             /// Returns the test task's executor preference.
             @Override
-            public @Nullable Executor getExecutor() {
+            @Nullable
+            protected Executor getExecutor() {
                 return executor;
             }
 

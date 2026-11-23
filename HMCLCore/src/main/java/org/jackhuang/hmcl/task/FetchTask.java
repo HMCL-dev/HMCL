@@ -53,7 +53,7 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
 
     /// Returns the shared executor for downloads.
     @Override
-    public Executor getExecutor() {
+    protected Executor getExecutor() {
         return DOWNLOAD_EXECUTOR;
     }
 

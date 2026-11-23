@@ -9,6 +9,7 @@ import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -55,6 +56,7 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Sets the logging and display policy and returns this task.
+    @Contract("_ -> this")
     public final Task<T> setSignificance(TaskSignificance significance) {
         this.significance = significance;
         return this;
@@ -144,7 +146,8 @@ public abstract class Task<T extends @Nullable Object> {
     /// runs on the task scheduler. The scheduler queries this method once per dispatch.
     ///
     /// @implSpec The default implementation returns `null`.
-    public @Nullable Executor getExecutor() {
+    @Nullable
+    protected Executor getExecutor() {
         return null;
     }
 
@@ -641,7 +644,8 @@ public abstract class Task<T extends @Nullable Object> {
         return new Task<>() {
             /// Returns the executor supplied to the factory.
             @Override
-            public @Nullable Executor getExecutor() {
+            @Nullable
+            protected Executor getExecutor() {
                 return executor;
             }
 
