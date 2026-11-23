@@ -96,11 +96,9 @@ public abstract class Task<T extends @Nullable Object> {
     /// Most recent execution state, initially [State#NEW].
     private volatile State state = State.NEW;
 
-    /// Return value published by the transition to [State#SUCCEEDED].
-    private @Nullable T result;
-
-    /// Exception published by the transition to [State#FAILED] or [State#CANCELLED].
-    private @Nullable Throwable exception;
+    /// Holds the return value in [State#SUCCEEDED] or the exception in [State#FAILED] or [State#CANCELLED].
+    /// The volatile transition to the terminal state publishes this field.
+    private @Nullable Object outcome;
 
     /// Creates an unsubmitted task.
     public Task() {
@@ -246,12 +244,12 @@ public abstract class Task<T extends @Nullable Object> {
         State currentState = state;
         if (currentState != State.SUCCEEDED)
             throw new IllegalStateException("Task has not completed successfully: " + currentState);
-        return result;
+        return successfulResult();
     }
 
     /// Returns the result without waiting, or `null` if the task has not succeeded or returned `null`.
     public final @Nullable T resultNowOrNull() {
-        return state == State.SUCCEEDED ? result : null;
+        return state == State.SUCCEEDED ? successfulResult() : null;
     }
 
     /// Returns the recorded failure without waiting. Cancellation is recorded as a [CancellationException].
@@ -261,13 +259,13 @@ public abstract class Task<T extends @Nullable Object> {
         State currentState = state;
         if (currentState != State.FAILED && currentState != State.CANCELLED)
             throw new IllegalStateException("Task has not failed: " + currentState);
-        return Objects.requireNonNull(exception);
+        return (Throwable) Objects.requireNonNull(outcome);
     }
 
     /// Returns the recorded exception in [State#FAILED] or [State#CANCELLED], or `null` in any other state.
     public final @Nullable Throwable exceptionNowOrNull() {
         State currentState = state;
-        return currentState == State.FAILED || currentState == State.CANCELLED ? exception : null;
+        return currentState == State.FAILED || currentState == State.CANCELLED ? (Throwable) outcome : null;
     }
 
     /// Returns a task that applies `fn` to the successful result on the continuation's thread.
@@ -687,15 +685,22 @@ public abstract class Task<T extends @Nullable Object> {
         state = State.RUNNING;
     }
 
+    /// Reads the return value after the caller has observed [State#SUCCEEDED].
+    @SuppressWarnings("unchecked")
+    private T successfulResult() {
+        //noinspection DataFlowIssue
+        return (T) outcome;
+    }
+
     /// Publishes the value returned by the body and marks the task successful.
     final void publishResult(T value) {
-        result = value;
+        outcome = value;
         state = State.SUCCEEDED;
     }
 
     /// Publishes the exception and marks the task as failed or cancelled.
     final void publishException(Throwable failure) {
-        exception = failure;
+        outcome = failure;
         state = failure instanceof CancellationException ? State.CANCELLED : State.FAILED;
     }
 

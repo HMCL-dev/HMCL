@@ -504,10 +504,11 @@ final class TaskExecutionContextTest {
         assertNull(root.exceptionNowOrNull());
     }
 
-    /// A successful task publishes its result before observers, even when an observer throws.
+    /// Observers see a throwable returned by a successful task as its value, even when an observer throws.
     @Test
     void observersSeeTerminalStateOnce() {
-        Task<Integer> root = task(context -> 42);
+        CancellationException value = new CancellationException();
+        Task<CancellationException> root = Task.completed(value);
         AtomicInteger completions = new AtomicInteger();
         root.addTaskListener(new TaskListener() {
             /// Observes the published state and result, then exercises listener failure isolation.
@@ -516,14 +517,16 @@ final class TaskExecutionContextTest {
                 assertSame(root, task);
                 assertNull(failure);
                 assertEquals(Task.State.SUCCEEDED, task.getState());
-                assertEquals(42, task.resultNow());
-                assertEquals(42, task.resultNowOrNull());
+                assertSame(value, task.resultNow());
+                assertSame(value, task.resultNowOrNull());
                 completions.incrementAndGet();
                 throw new IllegalStateException("Observer failed");
             }
         });
         assertTrue(root.test());
         assertEquals(1, completions.get());
+        assertFalse(root.isCancelled());
+        assertThrows(IllegalStateException.class, root::exceptionNow);
         assertNull(root.exceptionNowOrNull());
     }
 
