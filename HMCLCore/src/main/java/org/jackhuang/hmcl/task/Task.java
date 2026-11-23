@@ -243,7 +243,7 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Returns a task that applies `fn` to the successful result on `executor`.
     public <U extends @Nullable Object, E extends Exception> Task<U> thenApplyAsync(@Nullable Executor executor, ExceptionalFunction<T, U, E> fn) {
-        return Task.<U>of(context -> {
+        return Task.of(context -> {
             T value = context.run(this);
             return context.call(executor, () -> fn.apply(value));
         }).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
@@ -303,7 +303,7 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Returns a task that maps the successful result to a child on `executor` and runs that child.
     public <U extends @Nullable Object, E extends Exception> Task<U> thenComposeAsync(@Nullable Executor executor, ExceptionalFunction<T, Task<U>, E> fn) {
-        return Task.<U>of(context -> {
+        return Task.of(context -> {
             T value = context.run(this);
             Task<U> next = context.call(executor, () -> fn.apply(value));
             return context.run(next);
@@ -333,7 +333,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// and runs the supplied task.
     /// Cancellation and errors propagate.
     public final <U extends @Nullable Object> Task<U> withComposeAsync(ExceptionalSupplier<Task<U>, ?> fn) {
-        return Task.<U>of(context -> {
+        return Task.of(context -> {
             try {
                 context.run(this);
             } catch (CancellationException e) {
@@ -522,7 +522,7 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Calls `fn` on `executor`, or on the composed task's thread if `null`, and runs the supplied child.
     public static <T extends @Nullable Object> Task<T> composeAsync(@Nullable Executor executor, ExceptionalSupplier<Task<T>, ?> fn) {
-        return Task.<T>of(context -> context.run(context.call(executor, fn::get)))
+        return Task.of(context -> context.run(context.call(executor, fn::get)))
                 .setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
@@ -591,13 +591,13 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// The returned task retains the collection and snapshots its elements when execution starts.
     public static <T extends @Nullable Object> Task<List<T>> allOf(Collection<? extends Task<? extends T>> tasks) {
-        return Task.<List<T>>of(context -> context.runAll(tasks)).setSignificance(TaskSignificance.MINOR);
+        return Task.of(context -> context.runAll(tasks)).setSignificance(TaskSignificance.MINOR);
     }
 
     /// Returns a task that waits for both children and pairs their results in argument order.
     /// The children may run concurrently. Failure of either child fails the combined task.
     public static <T extends @Nullable Object, U extends @Nullable Object> Task<Pair<T, U>> combine(Task<? extends T> task1, Task<? extends U> task2) {
-        return Task.<Pair<T, U>>of(context -> {
+        return Task.of(context -> {
             context.runAll(List.of(task1, task2));
             return Pair.pair(task1.resultNow(), task2.resultNow());
         }).setSignificance(TaskSignificance.MINOR);
@@ -618,7 +618,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// Creates a task that waits for `future` and returns its result. Cancelling the task handle
     /// does not cancel the future or interrupt a running wait. Future cancellation propagates
     /// as a [CancellationException].
-    public static <T extends @Nullable Object> Task<T> fromCompletableFuture(CompletableFuture<T> future)   {
+    public static <T extends @Nullable Object> Task<T> fromCompletableFuture(CompletableFuture<T> future) {
         return of(context -> {
             try {
                 return future.get();
