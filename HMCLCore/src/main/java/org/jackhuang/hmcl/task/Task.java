@@ -43,46 +43,11 @@ import java.util.stream.Stream;
 @NotNullByDefault
 public abstract class Task<T extends @Nullable Object> {
 
-    /// Creates an unsubmitted task.
-    public Task() {
-    }
-
-    /// Controls execution logging and visibility in the task list.
-    private TaskSignificance significance = TaskSignificance.MAJOR;
-
-    /// Returns the logging and display policy for this task.
-    public final TaskSignificance getSignificance() {
-        return significance;
-    }
-
-    /// Sets the logging and display policy and returns this task.
-    @Contract("_ -> this")
-    public final Task<T> setSignificance(TaskSignificance significance) {
-        this.significance = significance;
-        return this;
-    }
-
-    /// Returns the stage this task declares when dispatched, or `null` to
-    /// inherit its parent's stage. A root task returning `null` runs outside any stage.
-    /// The stage covers this task and is inherited by children until they declare their own.
-    /// The stage succeeds if this task succeeds, even if it recovers from a child failure.
-    ///
-    /// @implSpec The default implementation returns `null`.
-    public @Nullable TaskStage getStage() {
-        return null;
-    }
-
-    /// Most recent execution state, initially [TaskState#NEW].
-    private volatile TaskState state = TaskState.NEW;
-
-    /// Atomically transitions a root from [TaskState#NEW] to [TaskState#READY].
-    private static final VarHandle STATE_HANDLE;
-
     /// Marks a submitted child without retaining its parent or the execution tree.
     private static final Object CHILD = new Object();
 
-    /// Null until reserved, then the root's [TaskExecution] or [#CHILD].
-    private volatile @Nullable Object executionRole;
+    /// Atomically transitions a root from [TaskState#NEW] to [TaskState#READY].
+    private static final VarHandle STATE_HANDLE;
 
     /// Atomically selects the task's permanent role before it can be submitted.
     private static final VarHandle EXECUTION_ROLE;
@@ -97,62 +62,48 @@ public abstract class Task<T extends @Nullable Object> {
         }
     }
 
-    /// Returns the execution associated with a reserved root.
-    private static TaskExecution asRootExecution(Object role) {
-        if (role instanceof TaskExecution execution)
-            return execution;
-        throw new IllegalStateException("Task has been submitted as a child");
-    }
+    /// Prefix identifying framework frames excluded from generated task names.
+    private static final String PACKAGE_PREFIX = Task.class.getPackageName() + ".";
 
-    /// Reserves the root's execution for configuration or submission.
-    private TaskExecution rootExecution() {
-        @Nullable Object role = executionRole;
-        if (role == null) {
-            TaskExecution execution = new TaskExecution();
-            role = EXECUTION_ROLE.compareAndExchange(this, null, execution);
-            if (role == null)
-                return execution;
-        }
-        return asRootExecution(role);
-    }
+    /// Selects caller frames outside the task package.
+    private static final Predicate<StackWalker.StackFrame> PREDICATE = stackFrame -> !stackFrame.getClassName().startsWith(PACKAGE_PREFIX);
 
-    /// Marks a new root as ready and returns its execution.
-    private TaskExecution markReadyAsRoot() {
-        TaskExecution execution = rootExecution();
-        if (!STATE_HANDLE.compareAndSet(this, TaskState.NEW, TaskState.READY))
-            throw new IllegalStateException("Task has already been submitted: " + (name != null ? name : getClass().getName()));
-        return execution;
-    }
+    /// Finds the first external frame for the generated task name.
+    private static final Function<Stream<StackWalker.StackFrame>, Optional<StackWalker.StackFrame>> FUNCTION = stream -> stream.filter(PREDICATE).findFirst();
 
-    /// Marks an unreserved task as ready for execution as a child.
-    final void markReadyAsChild() {
-        if (!EXECUTION_ROLE.compareAndSet(this, null, CHILD))
-            throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name : getClass().getName()));
-        state = TaskState.READY;
-    }
-
-    /// Returns the current execution state.
-    public final TaskState getState() {
-        return state;
-    }
-
-    /// Publishes a nonterminal lifecycle transition.
-    final void setState(TaskState state) {
-        this.state = state;
-    }
-
-    /// Returns the executor requested for [#execute(TaskExecutionContext)], or `null` to
-    /// inherit the executor running the parent task's body. A root task returning `null`
-    /// runs on the task scheduler. The scheduler queries this method once per dispatch.
-    ///
-    /// @implSpec The default implementation returns `null`.
-    @Nullable
-    protected Executor getExecutor() {
-        return null;
-    }
+    /// Formats a caller frame, including the source location when available.
+    private static final Function<StackWalker.StackFrame, String> FRAME_MAPPING = frame -> {
+        @Nullable String fileName = frame.getFileName();
+        if (fileName != null)
+            return frame.getClassName() + '.' + frame.getMethodName() + '(' + fileName + ':' + frame.getLineNumber() + ')';
+        else
+            return frame.getClassName() + '.' + frame.getMethodName();
+    };
 
     /// Optional name used for logging and display.
     private @Nullable String name;
+
+    /// Controls execution logging and visibility in the task list.
+    private TaskSignificance significance = TaskSignificance.MAJOR;
+
+    /// Null until reserved, then the root's [TaskExecution] or [#CHILD].
+    ///
+    /// @see #EXECUTION_ROLE
+    @SuppressWarnings("unused")
+    private volatile @Nullable Object executionRole;
+
+    /// Most recent execution state, initially [TaskState#NEW].
+    private volatile TaskState state = TaskState.NEW;
+
+    /// Return value published by the transition to [TaskState#SUCCEEDED].
+    private @Nullable T result;
+
+    /// Failure published by the transition to [TaskState#FAILED].
+    private @Nullable Throwable exception;
+
+    /// Creates an unsubmitted task.
+    public Task() {
+    }
 
     /// Returns the configured display name, or the class name if none was supplied.
     public String getName() {
@@ -174,58 +125,26 @@ public abstract class Task<T extends @Nullable Object> {
             return getClass().getName() + "[" + getName() + "]";
     }
 
-    /// Return value published by the transition to [TaskState#SUCCEEDED].
-    private @Nullable T result;
+    /// Returns the logging and display policy for this task.
+    public final TaskSignificance getSignificance() {
+        return significance;
+    }
 
-    /// Returns the successful result without waiting. A task with a nullable result type may return `null`.
+    /// Sets the logging and display policy and returns this task.
+    @Contract("_ -> this")
+    public final Task<T> setSignificance(TaskSignificance significance) {
+        this.significance = significance;
+        return this;
+    }
+
+    /// Returns the executor requested for [#execute(TaskExecutionContext)], or `null` to
+    /// inherit the executor running the parent task's body. A root task returning `null`
+    /// runs on the task scheduler. The scheduler queries this method once per dispatch.
     ///
-    /// @throws IllegalStateException if the task is not in [TaskState#SUCCEEDED]
-    public final T resultNow() {
-        TaskState currentState = state;
-        if (currentState != TaskState.SUCCEEDED)
-            throw new IllegalStateException("Task has not completed successfully: " + currentState);
-        return result;
-    }
-
-    /// Returns the result without waiting, or `null` if the task has not succeeded or returned `null`.
-    public final @Nullable T resultNowOrNull() {
-        return state == TaskState.SUCCEEDED ? result : null;
-    }
-
-    /// Publishes the value returned by the body and marks the task successful.
-    final void publishResult(T value) {
-        result = value;
-        state = TaskState.SUCCEEDED;
-    }
-
-    /// Failure published by the transition to [TaskState#FAILED].
-    private @Nullable Throwable exception;
-
-    /// Returns the recorded failure without waiting. Cancellation is recorded as a [CancellationException].
-    ///
-    /// @throws IllegalStateException if the task is not in [TaskState#FAILED]
-    public final Throwable exceptionNow() {
-        TaskState currentState = state;
-        if (currentState != TaskState.FAILED)
-            throw new IllegalStateException("Task has not failed: " + currentState);
-        return Objects.requireNonNull(exception);
-    }
-
-    /// Returns the same failure as [#exceptionNow()] without waiting, or `null` unless the task is in [TaskState#FAILED].
-    public final @Nullable Throwable exceptionNowOrNull() {
-        return state == TaskState.FAILED ? exception : null;
-    }
-
-    /// Publishes the failure and marks the task failed.
-    final void publishException(Throwable failure) {
-        exception = failure;
-        state = TaskState.FAILED;
-    }
-
-    /// Rethrows the original failure across task APIs that declare checked exceptions as [Exception].
-    @SuppressWarnings("unchecked")
-    static <E extends Throwable> RuntimeException rethrow(Throwable failure) throws E {
-        throw (E) failure;
+    /// @implSpec The default implementation returns `null`.
+    @Nullable
+    protected Executor getExecutor() {
+        return null;
     }
 
     /// Runs the task body using the supplied context to execute children and obtain their results.
@@ -266,6 +185,21 @@ public abstract class Task<T extends @Nullable Object> {
         return markReadyAsRoot().test(this);
     }
 
+    /// Requests cooperative cancellation of this root and its children, including before submission.
+    ///
+    /// @throws IllegalStateException if this task was submitted as a child
+    public final void cancel() {
+        rootExecution().cancel();
+    }
+
+    /// Returns whether cancellation was requested on this root. An unreserved task returns false.
+    ///
+    /// @throws IllegalStateException if this task was submitted as a child
+    public final boolean isCancelled() {
+        @Nullable Object role = executionRole;
+        return role != null && asRootExecution(role).isCancelled();
+    }
+
     /// Registers a listener for subsequent events in this root's execution tree and returns this task.
     /// Register before submitting the root to observe the entire execution.
     ///
@@ -285,25 +219,45 @@ public abstract class Task<T extends @Nullable Object> {
             asRootExecution(role).removeTaskListener(listener);
     }
 
-    /// Requests cooperative cancellation of this root and its children, including before submission.
-    ///
-    /// @throws IllegalStateException if this task was submitted as a child
-    public final void cancel() {
-        rootExecution().cancel();
-    }
-
-    /// Returns whether cancellation was requested on this root. An unreserved task returns false.
-    ///
-    /// @throws IllegalStateException if this task was submitted as a child
-    public final boolean isCancelled() {
-        @Nullable Object role = executionRole;
-        return role != null && asRootExecution(role).isCancelled();
-    }
-
     /// Sets the handler for unexpected runtime exceptions reported by [#start()] and [#test()].
     /// Pass null to clear the handler.
     public static void setUncaughtExceptionHandler(Thread.@Nullable UncaughtExceptionHandler handler) {
         TaskExecution.setUncaughtExceptionHandler(handler);
+    }
+
+    /// Returns the current execution state.
+    public final TaskState getState() {
+        return state;
+    }
+
+    /// Returns the successful result without waiting. A task with a nullable result type may return `null`.
+    ///
+    /// @throws IllegalStateException if the task is not in [TaskState#SUCCEEDED]
+    public final T resultNow() {
+        TaskState currentState = state;
+        if (currentState != TaskState.SUCCEEDED)
+            throw new IllegalStateException("Task has not completed successfully: " + currentState);
+        return result;
+    }
+
+    /// Returns the result without waiting, or `null` if the task has not succeeded or returned `null`.
+    public final @Nullable T resultNowOrNull() {
+        return state == TaskState.SUCCEEDED ? result : null;
+    }
+
+    /// Returns the recorded failure without waiting. Cancellation is recorded as a [CancellationException].
+    ///
+    /// @throws IllegalStateException if the task is not in [TaskState#FAILED]
+    public final Throwable exceptionNow() {
+        TaskState currentState = state;
+        if (currentState != TaskState.FAILED)
+            throw new IllegalStateException("Task has not failed: " + currentState);
+        return Objects.requireNonNull(exception);
+    }
+
+    /// Returns the same failure as [#exceptionNow()] without waiting, or `null` unless the task is in [TaskState#FAILED].
+    public final @Nullable Throwable exceptionNowOrNull() {
+        return state == TaskState.FAILED ? exception : null;
     }
 
     /// Returns a task that applies `fn` to the successful result on the continuation's thread.
@@ -465,31 +419,6 @@ public abstract class Task<T extends @Nullable Object> {
         }).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /// Notifies the observer and propagates the primary failure even if notification also fails.
-    private static RuntimeException notifyAndRethrow(Throwable failure, ExceptionalRunnable<?> observer) {
-        try {
-            observer.run();
-        } catch (Throwable secondary) {
-            if (secondary != failure)
-                failure.addSuppressed(secondary);
-        }
-        return rethrow(failure);
-    }
-
-    /// Represents the result or any source failure as a [Result], including errors and child cancellation.
-    /// Cancelling the root still prevents publication of the result.
-    public Task<Result<T>> wrapResult() {
-        return Task.<Result<T>>of(context -> {
-            T value;
-            try {
-                value = context.run(this);
-            } catch (Throwable failure) {
-                return Result.failure(failure);
-            }
-            return Result.success(value);
-        }).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
-    }
-
     /// Invokes the corresponding optional callback on `executor`. If `success` throws, its failure
     /// is also reported to `failure`. The first failure propagates, with any distinct later failure suppressed.
     public final <E1 extends Exception, E2 extends Exception> Task<@Nullable Void> whenComplete(@Nullable Executor executor, @Nullable ExceptionalRunnable<E1> success, @Nullable ExceptionalConsumer<? super Throwable, E2> failure) {
@@ -516,18 +445,34 @@ public abstract class Task<T extends @Nullable Object> {
         return whenComplete(executor, () -> success.accept(resultNow()), failure);
     }
 
+    /// Represents the result or any source failure as a [Result], including errors and child cancellation.
+    /// Cancelling the root still prevents publication of the result.
+    public Task<Result<T>> wrapResult() {
+        return Task.<Result<T>>of(context -> {
+            T value;
+            try {
+                value = context.run(this);
+            } catch (Throwable failure) {
+                return Result.failure(failure);
+            }
+            return Result.success(value);
+        }).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
+    }
+
+    /// Returns the stage this task declares when dispatched, or `null` to
+    /// inherit its parent's stage. A root task returning `null` runs outside any stage.
+    /// The stage covers this task and is inherited by children until they declare their own.
+    /// The stage succeeds if this task succeeds, even if it recovers from a child failure.
+    ///
+    /// @implSpec The default implementation returns `null`.
+    public @Nullable TaskStage getStage() {
+        return null;
+    }
+
     /// Returns a task that declares `stage` and runs this task as its child.
     /// If this task declares its own stage, that stage is nested inside `stage`.
     public Task<T> withStage(TaskStage stage) {
         return new StageTask(stage);
-    }
-
-    /// Returns a named task that runs this task and then reports estimated progress while waiting for `done`.
-    /// The wrapper returns the original result once `done` is true.
-    ///
-    /// @param k positive finite scale controlling the rate at which the estimate approaches its upper bound
-    public Task<T> withFakeProgress(String name, BooleanSupplier done, double k) {
-        return new FakeProgressTask(done, k).setName(name).setSignificance(TaskSignificance.MAJOR);
     }
 
     /// Returns the stage rows this task declares for display, in presentation order.
@@ -580,6 +525,29 @@ public abstract class Task<T extends @Nullable Object> {
         }).setSignificance(TaskSignificance.MINOR);
     }
 
+    /// Returns a named task that runs this task and then reports estimated progress while waiting for `done`.
+    /// The wrapper returns the original result once `done` is true.
+    ///
+    /// @param k positive finite scale controlling the rate at which the estimate approaches its upper bound
+    public Task<T> withFakeProgress(String name, BooleanSupplier done, double k) {
+        return new FakeProgressTask(done, k).setName(name).setSignificance(TaskSignificance.MAJOR);
+    }
+
+    /// Creates a task that returns `value` when run.
+    public static <V extends @Nullable Object> Task<V> completed(V value) {
+        return of(context -> value);
+    }
+
+    /// Creates a task that throws `failure` when its body runs.
+    ///
+    /// @throws NullPointerException if `failure` is null
+    public static <V extends @Nullable Object> Task<V> failed(Throwable failure) {
+        Objects.requireNonNull(failure);
+        return of(context -> {
+            throw rethrow(failure);
+        });
+    }
+
     /// Creates a task with no executor preference that runs `closure` and returns `null`.
     public static Task<@Nullable Void> runAsync(ExceptionalRunnable<?> closure) {
         return runAsync(null, closure);
@@ -588,6 +556,16 @@ public abstract class Task<T extends @Nullable Object> {
     /// Creates a task that runs `closure` and returns `null`, with an optional executor preference.
     public static Task<@Nullable Void> runAsync(@Nullable Executor executor, ExceptionalRunnable<?> closure) {
         return supplyAsync(executor, closure.toCallable());
+    }
+
+    /// Creates a task with no executor preference that returns the value of `callable`.
+    public static <V extends @Nullable Object> Task<V> supplyAsync(Callable<V> callable) {
+        return supplyAsync(null, callable);
+    }
+
+    /// Creates a task that returns the value of `callable`, with an optional executor preference.
+    public static <V extends @Nullable Object> Task<V> supplyAsync(@Nullable Executor executor, Callable<V> callable) {
+        return of(executor, callable).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Creates a task that calls `fn` on its own thread and returns the supplied child's result.
@@ -611,46 +589,16 @@ public abstract class Task<T extends @Nullable Object> {
         }).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /// Creates a task with no executor preference that returns the value of `callable`.
-    public static <V extends @Nullable Object> Task<V> supplyAsync(Callable<V> callable) {
-        return supplyAsync(null, callable);
-    }
-
-    /// Creates a task that returns the value of `callable`, with an optional executor preference.
-    public static <V extends @Nullable Object> Task<V> supplyAsync(@Nullable Executor executor, Callable<V> callable) {
-        return of(executor, callable).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
-    }
-
-    /// Creates a task whose body invokes `callable` with the given executor preference.
-    private static <V extends @Nullable Object> Task<V> of(@Nullable Executor executor, Callable<V> callable) {
-        return new Task<>() {
-            /// Returns the executor supplied to the factory.
-            @Override
-            @Nullable
-            protected Executor getExecutor() {
-                return executor;
-            }
-
-            /// Returns the result of the supplied callable.
-            @Override
-            public V execute(TaskExecutionContext context) throws Exception {
-                return callable.call();
-            }
-        };
-    }
-
-    /// Creates a task that returns `value` when run.
-    public static <V extends @Nullable Object> Task<V> completed(V value) {
-        return of(context -> value);
-    }
-
-    /// Creates a task that throws `failure` when its body runs.
-    ///
-    /// @throws NullPointerException if `failure` is null
-    public static <V extends @Nullable Object> Task<V> failed(Throwable failure) {
-        Objects.requireNonNull(failure);
+    /// Creates a task that waits for `future` and returns its result. Cancelling the root
+    /// does not cancel the future or interrupt a running wait. Future cancellation propagates
+    /// as a [CancellationException].
+    public static <T extends @Nullable Object> Task<T> fromCompletableFuture(CompletableFuture<T> future) {
         return of(context -> {
-            throw rethrow(failure);
+            try {
+                return future.get();
+            } catch (ExecutionException e) {
+                throw rethrow(Objects.requireNonNullElse(Lang.resolveException(e), e));
+            }
         });
     }
 
@@ -692,17 +640,106 @@ public abstract class Task<T extends @Nullable Object> {
         });
     }
 
-    /// Creates a task that waits for `future` and returns its result. Cancelling the root
-    /// does not cancel the future or interrupt a running wait. Future cancellation propagates
-    /// as a [CancellationException].
-    public static <T extends @Nullable Object> Task<T> fromCompletableFuture(CompletableFuture<T> future) {
-        return of(context -> {
-            try {
-                return future.get();
-            } catch (ExecutionException e) {
-                throw rethrow(Objects.requireNonNullElse(Lang.resolveException(e), e));
+    /// Returns the execution associated with a reserved root.
+    private static TaskExecution asRootExecution(Object role) {
+        if (role instanceof TaskExecution execution)
+            return execution;
+        throw new IllegalStateException("Task has been submitted as a child");
+    }
+
+    /// Reserves the root's execution for configuration or submission.
+    private TaskExecution rootExecution() {
+        @Nullable Object role = executionRole;
+        if (role == null) {
+            TaskExecution execution = new TaskExecution();
+            role = EXECUTION_ROLE.compareAndExchange(this, null, execution);
+            if (role == null)
+                return execution;
+        }
+        return asRootExecution(role);
+    }
+
+    /// Marks a new root as ready and returns its execution.
+    private TaskExecution markReadyAsRoot() {
+        TaskExecution execution = rootExecution();
+        if (!STATE_HANDLE.compareAndSet(this, TaskState.NEW, TaskState.READY))
+            throw new IllegalStateException("Task has already been submitted: " + (name != null ? name : getClass().getName()));
+        return execution;
+    }
+
+    /// Marks an unreserved task as ready for execution as a child.
+    final void markReadyAsChild() {
+        if (!EXECUTION_ROLE.compareAndSet(this, null, CHILD))
+            throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name : getClass().getName()));
+        state = TaskState.READY;
+    }
+
+    /// Publishes a nonterminal lifecycle transition.
+    final void setState(TaskState state) {
+        this.state = state;
+    }
+
+    /// Publishes the value returned by the body and marks the task successful.
+    final void publishResult(T value) {
+        result = value;
+        state = TaskState.SUCCEEDED;
+    }
+
+    /// Publishes the failure and marks the task failed.
+    final void publishException(Throwable failure) {
+        exception = failure;
+        state = TaskState.FAILED;
+    }
+
+    /// Notifies the observer and propagates the primary failure even if notification also fails.
+    private static RuntimeException notifyAndRethrow(Throwable failure, ExceptionalRunnable<?> observer) {
+        try {
+            observer.run();
+        } catch (Throwable secondary) {
+            if (secondary != failure)
+                failure.addSuppressed(secondary);
+        }
+        return rethrow(failure);
+    }
+
+    /// Rethrows the original failure across task APIs that declare checked exceptions as [Exception].
+    @SuppressWarnings("unchecked")
+    static <E extends Throwable> RuntimeException rethrow(Throwable failure) throws E {
+        throw (E) failure;
+    }
+
+    /// Creates a task whose body invokes `callable` with the given executor preference.
+    private static <V extends @Nullable Object> Task<V> of(@Nullable Executor executor, Callable<V> callable) {
+        return new Task<>() {
+            /// Returns the executor supplied to the factory.
+            @Override
+            @Nullable
+            protected Executor getExecutor() {
+                return executor;
             }
-        });
+
+            /// Returns the result of the supplied callable.
+            @Override
+            public V execute(TaskExecutionContext context) throws Exception {
+                return callable.call();
+            }
+        };
+    }
+
+    /// Creates a task that invokes `body` with its execution context.
+    private static <T extends @Nullable Object> Task<T> of(ExceptionalFunction<TaskExecutionContext, T, ?> body) {
+        return new Task<>() {
+            /// {@inheritDoc}
+            @Override
+            public T execute(TaskExecutionContext context) throws Exception {
+                return body.apply(context);
+            }
+        };
+    }
+
+    /// Returns a display name derived from the first caller outside the task package.
+    private static String getCaller() {
+        return StackWalker.getInstance().walk(FUNCTION).map(FRAME_MAPPING).orElse("Unknown");
     }
 
     /// Execution state published by the task executor.
@@ -735,37 +772,6 @@ public abstract class Task<T extends @Nullable Object> {
     public interface FinalizedCallbackWithResult<T extends @Nullable Object> {
         /// Receives the result and a null failure on success, or a null result and the cause on failure.
         void execute(@Nullable T result, @Nullable Throwable failure) throws Exception;
-    }
-
-    /// Prefix identifying framework frames excluded from generated task names.
-    private static final String PACKAGE_PREFIX = Task.class.getPackageName() + ".";
-    /// Selects caller frames outside the task package.
-    private static final Predicate<StackWalker.StackFrame> PREDICATE = stackFrame -> !stackFrame.getClassName().startsWith(PACKAGE_PREFIX);
-    /// Finds the first external frame for the generated task name.
-    private static final Function<Stream<StackWalker.StackFrame>, Optional<StackWalker.StackFrame>> FUNCTION = stream -> stream.filter(PREDICATE).findFirst();
-    /// Formats a caller frame, including the source location when available.
-    private static final Function<StackWalker.StackFrame, String> FRAME_MAPPING = frame -> {
-        @Nullable String fileName = frame.getFileName();
-        if (fileName != null)
-            return frame.getClassName() + '.' + frame.getMethodName() + '(' + fileName + ':' + frame.getLineNumber() + ')';
-        else
-            return frame.getClassName() + '.' + frame.getMethodName();
-    };
-
-    /// Returns a display name derived from the first caller outside the task package.
-    private static String getCaller() {
-        return StackWalker.getInstance().walk(FUNCTION).map(FRAME_MAPPING).orElse("Unknown");
-    }
-
-    /// Creates a task that invokes `body` with its execution context.
-    private static <T extends @Nullable Object> Task<T> of(ExceptionalFunction<TaskExecutionContext, T, ?> body) {
-        return new Task<>() {
-            /// {@inheritDoc}
-            @Override
-            public T execute(TaskExecutionContext context) throws Exception {
-                return body.apply(context);
-            }
-        };
     }
 
     /// Provides an enclosing stage for the wrapped task.
