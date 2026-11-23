@@ -90,11 +90,12 @@ final class TaskExecutionContextTest {
         try {
             Thread worker = other.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
             Task<List<Thread>> branch = task(context -> {
-                context.run(Task.runAsync(() -> assertSame(caller, Thread.currentThread())));
+                context.run(Task.runAsync(null, () -> assertSame(caller, Thread.currentThread())));
                 return context.runAll(List.of(
                         Task.supplyAsync(Thread::currentThread),
                         task(other, child -> child.run(Task.supplyAsync(Thread::currentThread))),
-                        Task.supplyAsync("last", Thread::currentThread)));
+                        Task.supplyAsync(Thread::currentThread).setName("last")
+                                .setSignificance(Task.TaskSignificance.MAJOR)));
             });
             assertEquals(List.of(caller, worker, caller),
                     task(Runnable::run, context -> context.run(branch)).run());
@@ -353,19 +354,29 @@ final class TaskExecutionContextTest {
     @Test
     void nullExecutorUsesEnclosingWorker() {
         Thread caller = Thread.currentThread();
-        @Nullable Executor executor = null;
         IOException failure = new IOException("Callback failed");
-        Task<Thread> source = Task.composeAsync(executor, () -> {
+        Task<Thread> source = Task.composeAsync(null, () -> {
             assertSame(caller, Thread.currentThread());
-            return Task.supplyAsync(executor, Thread::currentThread);
+            return Task.supplyAsync(null, Thread::currentThread);
         });
-        Task<?> continuation = source.thenApplyAsync(executor, worker -> {
+        Task<?> continuation = source.thenApplyAsync(null, worker -> {
             assertSame(caller, worker);
             assertSame(caller, Thread.currentThread());
             throw failure;
         });
         Task<?> root = task(Runnable::run, context -> context.run(continuation));
         assertSame(failure, assertThrows(IOException.class, root::run));
+    }
+
+    /// The follow-up action remains visible while its continuation wrapper stays hidden.
+    @Test
+    void showsWithRunActionAsAChild() {
+        Task<?> source = Task.supplyAsync(() -> 1);
+        Task<?> continuation = source.withRunAsync(() -> {});
+        StageEvents events = new StageEvents();
+        assertTrue(continuation.newHandle(events).test());
+        assertEquals(List.of(Task.TaskSignificance.MODERATE, Task.TaskSignificance.MAJOR, Task.TaskSignificance.MODERATE),
+                events.completions.stream().map(event -> event.task().getSignificance()).toList());
     }
 
     /// A continuation's body inherits its parent's executor and dispatches the callback on the selected executor.

@@ -202,8 +202,11 @@ public final class JavaManager {
         }).start();
     }
 
+    /// Creates a task that checks the Java executable and registers it in writable user settings.
     public static Task<JavaRuntime> getAddJavaTask(Path binary) {
-        return Task.supplyAsync("Get Java", () -> JavaManager.getJava(binary))
+        return Task.supplyAsync(() -> JavaManager.getJava(binary))
+                .setName("Get Java")
+                .setSignificance(Task.TaskSignificance.MAJOR)
                 .thenApplyAsync(Schedulers.javafx(), javaRuntime -> {
                     if (!JavaManager.isCompatible(javaRuntime.getPlatform())) {
                         throw new UnsupportedPlatformException("Incompatible platform: " + javaRuntime.getPlatform());

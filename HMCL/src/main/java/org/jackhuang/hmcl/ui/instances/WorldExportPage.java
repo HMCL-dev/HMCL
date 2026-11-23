@@ -58,8 +58,11 @@ public class WorldExportPage extends WizardSinglePage {
         return i18n("world.export.wizard", world.getFileName());
     }
 
+    /// Creates the task that exports the world to the selected path.
     @Override
     protected Object finish() {
-        return Task.runAsync(i18n("world.export.wizard", worldName.get()), () -> world.export(Paths.get(path.get()), worldName.get()));
+        return Task.runAsync(() -> world.export(Path.of(path.get()), worldName.get()))
+                .setName(i18n("world.export.wizard", worldName.get()))
+                .setSignificance(Task.TaskSignificance.MAJOR);
     }
 }

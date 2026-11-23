@@ -340,6 +340,7 @@ public class DownloadSettingsPage extends StackPane {
     @FXThread
     private boolean cleaningCache = false;
 
+    /// Clears the common cache directory and shows a spinner until the operation finishes.
     private void clearCacheDirectory(JFXButton cleanButton) {
         if (cleaningCache) return;
         String commonDirectory = settings().getResolvedCommonDirectory();
@@ -351,7 +352,9 @@ public class DownloadSettingsPage extends StackPane {
             var spinner = new JFXSpinner();
             spinner.setRadius(8);
             cleanButton.setGraphic(spinner);
-            Task.runAsync("Clear Cache Directory", Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")))
+            Task.runAsync(Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")))
+                    .setName("Clear Cache Directory")
+                    .setSignificance(Task.TaskSignificance.MAJOR)
                     .whenComplete(Schedulers.javafx(), ignored -> {
                         cleanButton.setGraphic(null);
                         cleanButton.setText(txt);
