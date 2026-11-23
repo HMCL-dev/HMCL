@@ -42,7 +42,8 @@ import java.util.function.*;
 ///
 /// Cancellation is cooperative. A running body may check [TaskExecutionContext#isCancelled()] and release its
 /// resources before returning. The executor also checks for cancellation before invoking
-/// a body and before publishing its result.
+/// a body and before publishing its result. The `then` continuations check for cancellation
+/// on the callback's executor before invoking user code.
 ///
 /// @param <T> the result type, which may be nullable
 @NotNullByDefault
@@ -289,7 +290,7 @@ public abstract class Task<T extends @Nullable Object> {
             @Override
             public U execute(TaskExecutionContext context) throws Exception {
                 T value = context.run(Task.this);
-                return context.call(executor, () -> fn.apply(value));
+                return callIfActive(context, executor, () -> fn.apply(value));
             }
         }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
@@ -394,7 +395,7 @@ public abstract class Task<T extends @Nullable Object> {
             @Override
             public U execute(TaskExecutionContext context) throws Exception {
                 T value = context.run(Task.this);
-                Task<U> next = context.call(executor, () -> fn.apply(value));
+                Task<U> next = callIfActive(context, executor, () -> fn.apply(value));
                 return context.run(next);
             }
         }.setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
@@ -421,7 +422,7 @@ public abstract class Task<T extends @Nullable Object> {
             @Override
             public @Nullable U execute(TaskExecutionContext context) throws Exception {
                 T value = context.run(Task.this);
-                @Nullable Task<U> next = context.call(executor, () -> fn.apply(value));
+                @Nullable Task<U> next = callIfActive(context, executor, () -> fn.apply(value));
                 return next == null ? null : context.run(next);
             }
         }.setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
@@ -451,6 +452,7 @@ public abstract class Task<T extends @Nullable Object> {
                 } catch (Exception ignored) {
                     // This continuation also runs after an ordinary failure.
                 }
+                checkCancellation(context);
                 return context.run(fn.get());
             }
         }.setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
@@ -725,7 +727,7 @@ public abstract class Task<T extends @Nullable Object> {
             /// {@inheritDoc}
             @Override
             public T execute(TaskExecutionContext context) throws Exception {
-                return context.run(context.call(executor, fn::get));
+                return context.run(callIfActive(context, executor, fn::get));
             }
         }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
@@ -870,6 +872,24 @@ public abstract class Task<T extends @Nullable Object> {
     final void publishException(Throwable failure) {
         outcome = failure;
         state = failure instanceof CancellationException ? State.CANCELLED : State.FAILED;
+    }
+
+    /// Checks cancellation on the submitting thread and again before a dispatched callback starts.
+    private static <V extends @Nullable Object> V callIfActive(TaskExecutionContext context, @Nullable Executor executor,
+                                                              Callable<V> callback) throws Exception {
+        checkCancellation(context);
+        if (executor == null)
+            return callback.call();
+        return context.call(executor, () -> {
+            checkCancellation(context);
+            return callback.call();
+        });
+    }
+
+    /// Stops a callback when its task tree is cancelled or its thread is interrupted.
+    private static void checkCancellation(TaskExecutionContext context) {
+        if (context.isCancelled())
+            throw new CancellationException("Cancelled by user");
     }
 
     /// Rethrows the original failure across task APIs that declare checked exceptions as [Exception].

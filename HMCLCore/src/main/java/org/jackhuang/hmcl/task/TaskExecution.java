@@ -262,6 +262,7 @@ final class TaskExecution {
             }
             task.markRunning();
             notifyListeners(listener -> listener.onTaskStarted(task, context.stageScope));
+            checkCancellation();
             result = task.execute(context);
             checkCancellation();
         } catch (Throwable failure) {
@@ -388,6 +389,7 @@ final class TaskExecution {
                 execute(source);
                 return task.resultNow();
             }
+            checkCancellation();
             task.markReadyAsChild();
             return runReadyTask(prepare(task, executor, stageScope), true);
         }

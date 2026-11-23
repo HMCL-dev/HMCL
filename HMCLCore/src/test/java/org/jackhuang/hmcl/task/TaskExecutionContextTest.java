@@ -242,6 +242,56 @@ final class TaskExecutionContextTest {
         assertThrows(IllegalStateException.class, root::resultNow);
     }
 
+    /// A queued success callback observes cancellation before doing work, and its observer can still clean up.
+    @ParameterizedTest
+    @ValueSource(strings = {"thenApply", "thenRun", "thenCompose", "thenComposeOptional"})
+    void skipsQueuedSuccessCallbackAfterCancellation(String method) throws Exception {
+        CompletableFuture<Runnable> submitted = new CompletableFuture<>();
+        Executor executor = submitted::complete;
+        AtomicInteger calls = new AtomicInteger();
+        Task<Integer> source = Task.completed(1);
+        Task<?> continuation = switch (method) {
+            case "thenApply" -> source.thenApplyAsync(executor, value -> calls.incrementAndGet());
+            case "thenRun" -> source.thenRunAsync(executor, calls::incrementAndGet);
+            case "thenCompose" -> source.thenComposeAsync(executor, value -> Task.completed(calls.incrementAndGet()));
+            case "thenComposeOptional" -> source.thenComposeOptionalAsync(executor, value -> Task.completed(calls.incrementAndGet()));
+            default -> throw new AssertionError(method);
+        };
+        CompletableFuture<@Nullable Throwable> observed = new CompletableFuture<>();
+        Task<?> root = continuation.whenComplete((value, cause) -> observed.complete(cause));
+        FutureTask<CancellationException> outcome = new FutureTask<>(() -> assertThrows(CancellationException.class, root::run));
+        Schedulers.io().execute(outcome);
+        Runnable callback = submitted.get(10, TimeUnit.SECONDS);
+        root.cancel();
+        callback.run();
+
+        assertSame(outcome.get(10, TimeUnit.SECONDS), observed.get(10, TimeUnit.SECONDS));
+        assertEquals(0, calls.get());
+        assertEquals(1, source.resultNow());
+    }
+
+    /// A cancelled parent leaves an unsubmitted child available for reuse through either submission API.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void leavesNewChildUnsubmittedAfterCancellation(boolean batch) throws Exception {
+        Task<Integer> child = Task.completed(42).withStage(new TaskStage("child"));
+        Task<Integer> root = new Task<>() {
+            /// Cancels the tree before attempting to submit the child.
+            @Override
+            public Integer execute(TaskExecutionContext context) throws Exception {
+                cancel();
+                return batch ? context.runAll(List.of(child)).get(0) : context.run(child);
+            }
+        };
+        StageEvents events = new StageEvents();
+        root.addTaskListener(events);
+        assertThrows(CancellationException.class, root::run);
+        assertEquals(Task.State.NEW, child.getState());
+        assertTrue(events.started.isEmpty());
+        assertEquals(List.of(root), events.completions.stream().map(TaskCompletion::task).toList());
+        assertEquals(42, child.run());
+    }
+
     /// Querying cancellation observes the worker's interrupt status and leaves it set.
     @Test
     void observesInterruptionWithoutClearingIt() throws Exception {
@@ -283,7 +333,7 @@ final class TaskExecutionContextTest {
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void tryRunPropagatesCancellation(boolean batch) {
-        Task<?> child = Task.completed(0);
+        Task<?> child = Task.supplyAsync(() -> fail("Child body ran after cancellation"));
         AtomicInteger continued = new AtomicInteger();
         Task<?> root = task(context -> {
             if (batch)
@@ -302,6 +352,7 @@ final class TaskExecutionContextTest {
         });
         assertFalse(root.test());
         assertInstanceOf(CancellationException.class, root.exceptionNowOrNull());
+        assertTrue(child.isCancelled());
         assertEquals(0, continued.get());
     }
 

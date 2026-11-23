@@ -20,7 +20,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Stage, hint and counter decorators share their source's executor. A child without an
 /// executor preference inherits the executor running the current task's body.
 /// Children whose [Task#getStage()] returns `null` inherit the current task's stage.
-/// A task must use its context only on the thread executing its body and before the body returns.
+/// A task must use its context before its body returns and on the thread executing its body,
+/// except that an action dispatched by [#call(Executor, Callable)] may query [#isCancelled()].
 /// While waiting, a worker may execute submissions from the awaited child's subtree on its
 /// own executor. Use the same executor instance for work requiring the same worker.
 /// Tasks using constrained executors must avoid wait cycles between independent
@@ -44,6 +45,8 @@ public interface TaskExecutionContext {
     void completeStageItem();
 
     /// Runs a child to completion and returns its published result.
+    /// A child that has not yet been admitted remains available for later submission
+    /// if the caller observes cancellation or interruption before admission.
     ///
     /// @throws Exception if the child fails or execution is cancelled or interrupted
     /// @throws IllegalStateException if the child was already submitted
