@@ -21,12 +21,13 @@ public final class InstallStages {
     /// Download of files required by a modpack.
     public static final TaskStage MODPACK_DOWNLOAD = new TaskStage("hmcl.modpack.download");
 
-    /// Prevents instantiation.
-    private InstallStages() {
-    }
-
     /// Identifies installation of the given component version.
     public static TaskStage component(GameComponentType type, String version) {
         return new TaskStage("hmcl.install." + type.getPatchId(), version);
     }
+
+    /// Prevents instantiation.
+    private InstallStages() {
+    }
+
 }
