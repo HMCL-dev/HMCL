@@ -721,6 +721,43 @@ final class TaskExecutionContextTest {
         }
     }
 
+    /// Handlers dispatch successful and failed outcomes to the selected callback executor.
+    @Test
+    void dispatchesHandleCallbacks() throws Exception {
+        Thread caller = Thread.currentThread();
+        ExecutorService callbacks = Executors.newSingleThreadExecutor();
+        try {
+            Thread explicitWorker = callbacks.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            IOException cause = new IOException("Handler failed");
+            Task<Thread> chain = Task.supplyAsync(callbacks, Thread::currentThread)
+                    .handle((sourceThread, failure) -> {
+                        assertNull(failure);
+                        assertSame(explicitWorker, sourceThread);
+                        return Thread.currentThread();
+                    })
+                    .handleAsync((inlineThread, failure) -> {
+                        assertNull(failure);
+                        assertSame(caller, inlineThread);
+                        Thread worker = Thread.currentThread();
+                        assertNotSame(caller, worker);
+                        assertSame(worker, Task.supplyAsync(Schedulers.tasks(), Thread::currentThread).run());
+                        throw cause;
+                    })
+                    .handleAsync(callbacks, (value, failure) -> {
+                        assertSame(cause, failure);
+                        return Thread.currentThread();
+                    })
+                    .handleAsync(null, (callbackThread, failure) -> {
+                        assertNull(failure);
+                        assertSame(explicitWorker, callbackThread);
+                        return Thread.currentThread();
+                    });
+            assertSame(caller, task(Runnable::run, context -> context.run(chain)).run());
+        } finally {
+            callbacks.shutdownNow();
+        }
+    }
+
     /// Stacked stage decorators share the source worker and preserve their separate lifecycle events.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})

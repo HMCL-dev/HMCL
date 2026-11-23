@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -48,6 +47,7 @@ import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -147,6 +147,7 @@ public final class JavaDownloadDialog extends StackPane {
                 setActions(warningLabel, acceptPane, cancelButton);
         }
 
+        /// Closes the dialog and downloads the selected Java versions, reporting failures together.
         @Override
         protected void onAccept() {
             fireEvent(new DialogCloseEvent());
@@ -163,14 +164,13 @@ public final class JavaDownloadDialog extends StackPane {
 
             Task<@Nullable Void> task = Task.allOf(selectedVersions.stream()
                             .map(javaVersion -> JavaManager.getDownloadJavaTask(downloadProvider, platform, javaVersion)
-                                    .wrapResult())
+                                    .handle((runtime, failure) -> failure))
                             .toList())
                     .whenComplete(Schedulers.javafx(), (results, exception) -> {
-                        Throwable exceptionToDisplay;
+                        @Nullable Throwable exceptionToDisplay;
                         if (exception == null) {
-                            List<Throwable> exceptions = results.stream()
-                                    .filter(Result::isFailure)
-                                    .map(Result::getException)
+                            @Unmodifiable List<Throwable> exceptions = results.stream()
+                                    .filter(Objects::nonNull)
                                     .map(Lang::resolveException)
                                     .filter(it -> !(it instanceof CancellationException))
                                     .toList();

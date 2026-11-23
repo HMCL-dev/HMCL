@@ -179,6 +179,67 @@ public class TaskTest {
         assertSame(successCallback, observedFailure.get());
     }
 
+    /// A handler can transform a success, return null, or recover from a child failure.
+    @Test
+    public void testHandleOutcome() throws Exception {
+        assertEquals("42", Task.completed(42).handle((value, failure) -> {
+            assertNull(failure);
+            return String.valueOf(value);
+        }).run());
+        assertEquals("empty", Task.completed(null).handle((value, failure) -> {
+            assertNull(value);
+            assertNull(failure);
+            return "empty";
+        }).run());
+        assertNull(Task.completed(42).handle((value, failure) -> null).run());
+
+        for (Throwable cause : List.of(new IOException(), new AssertionError(), new CancellationException())) {
+            assertEquals("recovered", Task.failed(cause).handle((value, failure) -> {
+                assertNull(value);
+                assertSame(cause, failure);
+                return "recovered";
+            }).run());
+        }
+    }
+
+    /// A throwing handler determines the failure and is never called again with its own exception.
+    @Test
+    public void testHandleFailure() {
+        IOException cause = new IOException("Source failed");
+        IOException callbackFailure = new IOException("Handler failed");
+        for (Task<Integer> source : List.of(Task.completed(42), Task.<Integer>failed(cause))) {
+            AtomicInteger calls = new AtomicInteger();
+            Task<?> handled = source.handle((value, failure) -> {
+                calls.incrementAndGet();
+                throw callbackFailure;
+            });
+            assertSame(callbackFailure, assertThrows(IOException.class, handled::run));
+            assertEquals(1, calls.get());
+        }
+    }
+
+    /// A handler cannot recover from root cancellation, and a pre-cancelled root skips the handler.
+    @Test
+    public void testHandleRootCancellation() {
+        Task<?> skipped = Task.completed(1).handle((value, failure) -> fail("Unexpected handler"));
+        skipped.cancel();
+        assertThrows(CancellationException.class, skipped::run);
+
+        Task<Integer> source = Task.completed(1);
+        Task<Integer> root = source.handle((value, failure) -> 2);
+        root.addTaskListener(new TaskListener() {
+            /// Cancels the whole tree while the source is running.
+            @Override
+            public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
+                if (task == source)
+                    root.cancel();
+            }
+        });
+        assertThrows(CancellationException.class, root::run);
+        assertTrue(source.isCancelled());
+        assertTrue(root.isCancelled());
+    }
+
     /// Wrapping a failed task preserves the original throwable.
     @Test
     public void testWrapResultPreservesFailure() throws Exception {

@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.Result;
+import org.jackhuang.hmcl.util.function.ExceptionalBiFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -549,22 +550,51 @@ public abstract class Task<T extends @Nullable Object> {
         return whenComplete(executor, () -> success.accept(resultNow()), failure);
     }
 
-    /// Represents the result or any source failure as a [Result], including errors and child cancellation.
-    /// Cancelling the root still prevents publication of the result.
-    public Task<Result<T>> wrapResult() {
-        return new Task<Result<T>>() {
+    /// Returns a continuation that maps this task's result or failure on the continuation's thread.
+    /// See [#handleAsync(Executor, ExceptionalBiFunction)] for the handler arguments and outcome.
+    public <U extends @Nullable Object> Task<U> handle(ExceptionalBiFunction<? super @Nullable T, ? super @Nullable Throwable, ? extends U, ?> fn) {
+        return handleAsync(null, fn);
+    }
+
+    /// Returns a continuation that maps this task's result or failure on the default task scheduler.
+    /// See [#handleAsync(Executor, ExceptionalBiFunction)] for the handler arguments and outcome.
+    public <U extends @Nullable Object> Task<U> handleAsync(ExceptionalBiFunction<? super @Nullable T, ? super @Nullable Throwable, ? extends U, ?> fn) {
+        return handleAsync(Schedulers.tasks(), fn);
+    }
+
+    /// Returns a continuation that runs this task and maps its result or failure to a new value.
+    /// On success, `fn` receives the result (which may be null) and a null failure.
+    /// On failure, it receives a null result and the cause, including an [Error] or a
+    /// [CancellationException]. If `fn` throws, its failure propagates even if this task failed.
+    ///
+    /// Cancellation before the continuation starts skips the handler. A cancellation request
+    /// for the task tree is still checked before the continuation publishes the handler's result.
+    ///
+    /// @param <U> the result type of the continuation, which may be nullable
+    /// @param executor the executor for the handler, or `null` to run it on the continuation's thread
+    /// @param fn the function that computes the continuation's result
+    /// @throws NullPointerException if `fn` is null
+    public <U extends @Nullable Object> Task<U> handleAsync(@Nullable Executor executor, ExceptionalBiFunction<? super @Nullable T, ? super @Nullable Throwable, ? extends U, ?> fn) {
+        Objects.requireNonNull(fn);
+        return new Task<U>() {
             /// {@inheritDoc}
             @Override
-            public Result<T> execute(TaskExecutionContext context) {
+            public U execute(TaskExecutionContext context) throws Exception {
                 T value;
                 try {
                     value = context.run(Task.this);
                 } catch (Throwable failure) {
-                    return Result.failure(failure);
+                    return context.call(executor, () -> fn.apply(null, failure));
                 }
-                return Result.success(value);
+                return context.call(executor, () -> fn.apply(value, null));
             }
         }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
+    }
+
+    /// Represents the result or any source failure as a [Result], including errors and child cancellation.
+    /// Cancelling the root still prevents publication of the result.
+    public Task<Result<T>> wrapResult() {
+        return handle((value, failure) -> failure == null ? Result.success(value) : Result.failure(failure));
     }
 
     /// Returns the stage this task declares when dispatched, or `null` to
