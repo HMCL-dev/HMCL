@@ -702,16 +702,16 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
     /// The configured download limit shared by the settings thread and download batches.
     private static volatile int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
 
-    // For Java 21 or later, DOWNLOAD_EXECUTOR dispatches tasks to virtual threads, and concurrency is controlled by SEMAPHORE.
-    // For versions earlier than Java 21, DOWNLOAD_EXECUTOR is a ThreadPoolExecutor, SEMAPHORE is null, and concurrency is controlled by the thread pool size.
-
+    /// Runs downloads on virtual threads when available, otherwise on a bounded platform thread pool.
     private static final ExecutorService DOWNLOAD_EXECUTOR;
+
+    /// Limits concurrent downloads when each submission has its own virtual thread.
     private static final @Nullable Semaphore SEMAPHORE;
 
     static {
-        ExecutorService executorService = Schedulers.newVirtualThreadPerTaskExecutor("Download");
-        if (executorService != null) {
-            DOWNLOAD_EXECUTOR = executorService;
+        @Nullable ExecutorService virtualThreads = Schedulers.newVirtualThreadPerTaskExecutor("Download");
+        if (virtualThreads != null) {
+            DOWNLOAD_EXECUTOR = virtualThreads;
             SEMAPHORE = new Semaphore(DEFAULT_CONCURRENCY);
         } else {
             DOWNLOAD_EXECUTOR = threadPool("Download", true, downloadExecutorConcurrency, 10, TimeUnit.SECONDS);

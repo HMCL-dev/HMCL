@@ -57,13 +57,14 @@ public final class Schedulers {
         }
     }
 
-    /// @return Returns null if the Java version is below 21, otherwise always returns a non-null value.
+    /// Creates an unbounded service that starts a named virtual thread for each submission.
+    /// Returns `null` on runtimes older than Java 21.
     public static @Nullable ExecutorService newVirtualThreadPerTaskExecutor(String name) {
         if (NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR == null) {
             return null;
         }
 
-        return NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR.apply(name);
+        return new UnboundedExecutorService(NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR.apply(name));
     }
 
     /// This thread pool is suitable for network and local I/O operations.
@@ -125,7 +126,9 @@ public final class Schedulers {
         /// Creates an executor in which a waiting parent does not occupy a child's only worker.
         private static ExecutorService newIoExecutor() {
             @Nullable ExecutorService virtualThreads = newVirtualThreadPerTaskExecutor("IO");
-            return virtualThreads != null ? virtualThreads : Executors.newCachedThreadPool(Lang.counterThreadFactory("IO", true));
+            if (virtualThreads != null)
+                return virtualThreads;
+            return new UnboundedExecutorService(Executors.newCachedThreadPool(Lang.counterThreadFactory("IO", true)));
         }
     }
 

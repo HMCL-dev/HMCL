@@ -64,13 +64,17 @@ public interface TaskExecutionContext {
         return childExecutionSucceeded(task, null);
     }
 
-    /// Schedules the children on their respective executors and waits for all of them.
+    /// Schedules the children on their respective executors and waits for all admitted children.
     /// Siblings on executors with available workers may run concurrently. A failure in
     /// one child does not cancel the others. An empty collection schedules no work.
     /// Submitting an instance twice is a failure of the batch. Other children are still awaited.
+    /// Tree cancellation or interruption of the calling thread stops admission. Children
+    /// not yet admitted remain available for later submission. The caller's interrupt status is preserved.
+    /// The batch reports its first observed failure, giving errors precedence.
     ///
     /// @return a mutable list of successful results in the input's iteration order
-    /// @throws Exception if a child fails or execution is cancelled or interrupted
+    /// @throws InterruptedException if the calling thread is interrupted during admission or while waiting
+    /// @throws Exception if a child fails or the task tree is cancelled
     <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> tasks) throws Exception;
 
     /// Runs independent children with at most `maxConcurrency` unfinished branches admitted at once.
@@ -83,6 +87,8 @@ public interface TaskExecutionContext {
     default <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> tasks, int maxConcurrency) throws Exception {
         if (maxConcurrency <= 0)
             throw new IllegalArgumentException("maxConcurrency must be positive");
+        if (isCancelled())
+            throw TaskExecution.batchCancellation();
         @Unmodifiable List<? extends Task<? extends T>> batch = List.copyOf(tasks);
         if (batch.size() <= maxConcurrency)
             return runAll(batch);
@@ -90,9 +96,15 @@ public interface TaskExecutionContext {
         List<T> results = new ArrayList<>(batch.size());
         @Nullable Throwable failure = null;
         for (int start = 0; start < batch.size();) {
+            if (isCancelled())
+                break;
             int end = start + Math.min(maxConcurrency, batch.size() - start);
             try {
                 results.addAll(runAll(batch.subList(start, end)));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                failure = TaskExecution.batchFailure(failure, e);
+                break;
             } catch (Throwable e) {
                 failure = TaskExecution.batchFailure(failure, e);
             }
@@ -100,6 +112,8 @@ public interface TaskExecutionContext {
         }
         if (failure != null)
             throw Task.rethrow(failure);
+        if (isCancelled())
+            throw TaskExecution.batchCancellation();
         return results;
     }
 

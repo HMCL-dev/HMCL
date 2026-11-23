@@ -303,6 +303,13 @@ final class TaskExecution {
         return previous == null || next instanceof Error && !(previous instanceof Error) ? next : previous;
     }
 
+    /// Reports why batch admission stopped, preserving the caller's interrupt status.
+    static Exception batchCancellation() {
+        return Thread.currentThread().isInterrupted()
+                ? new InterruptedException()
+                : new CancellationException("Cancelled by user");
+    }
+
     /// Returns whether this task tree was cancelled or the calling thread is interrupted.
     private boolean isCancelledOrInterrupted() {
         return isCancellationRequested() || Thread.currentThread().isInterrupted();
@@ -393,7 +400,8 @@ final class TaskExecution {
         public <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> tasks, int maxConcurrency) throws Exception {
             if (maxConcurrency <= 0)
                 throw new IllegalArgumentException("maxConcurrency must be positive");
-            checkCancellation();
+            if (isCancelled())
+                throw batchCancellation();
             @Unmodifiable List<? extends Task<? extends T>> batch = List.copyOf(tasks);
             @Nullable BatchWindow window = batch.size() > maxConcurrency ? new BatchWindow(maxConcurrency) : null;
             List<Work<? extends T>> children = new ArrayList<>(batch.size());
@@ -402,6 +410,10 @@ final class TaskExecution {
                 try {
                     if (window != null)
                         window.awaitSlot();
+                    if (isCancelled()) {
+                        failure = batchFailure(failure, batchCancellation());
+                        break;
+                    }
                     child.markReadyAsChild();
                     children.add(submitChild(prepare(child, executor, stageScope), window));
                 } catch (Throwable e) {
@@ -410,17 +422,33 @@ final class TaskExecution {
             }
 
             List<T> results = new ArrayList<>(children.size());
-            for (Work<? extends T> child : children) {
-                try {
-                    results.add(await(child, true));
-                } catch (Throwable e) {
-                    // Drain every sibling before propagating the batch failure.
-                    failure = batchFailure(failure, e);
+            // Defer interruption while servicing callbacks needed by admitted children.
+            boolean interrupted = Thread.interrupted();
+            if (interrupted && failure == null)
+                failure = new InterruptedException();
+            try {
+                for (Work<? extends T> child : children) {
+                    @Nullable Throwable childFailure = null;
+                    try {
+                        results.add(await(child, false));
+                    } catch (Throwable e) {
+                        childFailure = e;
+                    }
+                    if (Thread.interrupted() && !interrupted) {
+                        interrupted = true;
+                        failure = batchFailure(failure, new InterruptedException());
+                    }
+                    if (childFailure != null)
+                        failure = batchFailure(failure, childFailure);
                 }
+            } finally {
+                if (interrupted)
+                    Thread.currentThread().interrupt();
             }
             if (failure != null)
                 throw Task.rethrow(failure);
-            checkCancellation();
+            if (isCancelled())
+                throw batchCancellation();
             return results;
         }
 
@@ -451,7 +479,7 @@ final class TaskExecution {
             this.limit = limit;
         }
 
-        /// Waits for any branch to finish, servicing work that needs the submitting worker.
+        /// Waits for a slot, cancellation, or interruption, servicing work that needs the submitting worker.
         void awaitSlot() {
             @Nullable Executor current = currentExecutor();
             // The task scheduler supplies workers for queued branches. Its submitting worker
@@ -461,7 +489,7 @@ final class TaskExecution {
                 @Nullable Work<?> next = null;
                 lock.lock();
                 try {
-                    if (active.size() < limit)
+                    if (active.size() < limit || isCancelledOrInterrupted())
                         return;
                     for (Work<?> branch : active) {
                         next = branch.availableFor(current, helpQueuedBranches);
@@ -469,7 +497,10 @@ final class TaskExecution {
                             break;
                     }
                     if (next == null)
-                        changed.awaitUninterruptibly();
+                        changed.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
                 } finally {
                     lock.unlock();
                 }
@@ -553,9 +584,7 @@ final class TaskExecution {
         Work(Executor executor, Callable<T> action, @Nullable BatchWindow window) {
             super(action);
             this.executor = executor;
-            // Executors with a worker per active task do not need waiting workers to help them.
-            this.canBeHelped = executor != Schedulers.io()
-                    && (executor != Schedulers.tasks() || Runtime.version().feature() < 21);
+            this.canBeHelped = !(executor instanceof UnboundedExecutorService);
             this.window = window;
             this.changed = window == null ? null : window.changed;
             @Nullable Work<?> current = CURRENT_WORK.get();
