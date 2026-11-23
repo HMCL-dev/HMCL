@@ -917,10 +917,11 @@ final class TaskHandleDialogPaneTest {
             super(Task.runAsync(() -> { }));
         }
 
+        /// Records a start request and notifies the registered listeners.
         @Override
         public TaskHandle start() {
             starts++;
-            taskListeners.forEach(listener -> listener.onExecutionStarted(this));
+            notifyListeners(listener -> listener.onExecutionStarted(this));
             return this;
         }
 
@@ -937,7 +938,7 @@ final class TaskHandleDialogPaneTest {
 
         /// Reports completion with the supplied result.
         private void stop(boolean success) {
-            taskListeners.forEach(listener -> listener.onExecutionFinished(this, success));
+            notifyListeners(listener -> listener.onExecutionFinished(this, success));
         }
     }
 }

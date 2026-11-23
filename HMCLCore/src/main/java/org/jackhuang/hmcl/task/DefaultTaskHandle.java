@@ -13,7 +13,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -188,23 +187,6 @@ public final class DefaultTaskHandle extends TaskHandle {
         notifyListeners(listener -> listener.onTaskFinished(task, scope, failure));
         if (scope != null && scope.task() == task)
             notifyListeners(listener -> listener.onStageFinished(scope, failure));
-    }
-
-    /// Delivers a notification to each listener even if another listener fails.
-    private void notifyListeners(Consumer<TaskListener> notification) {
-        for (TaskListener listener : taskListeners)
-            notifySafely(() -> notification.accept(listener));
-    }
-
-    /// Reports a listener failure independently of the observed task's outcome.
-    private static void notifySafely(Runnable notification) {
-        try {
-            notification.run();
-        } catch (RuntimeException e) {
-            LOG.warning("Task listener failed", e);
-        } catch (Error e) {
-            Lang.handleUncaughtException(e);
-        }
     }
 
     /// Returns an exception for propagation, preserving errors as errors.

@@ -499,6 +499,47 @@ final class TaskExecutionContextTest {
         assertNull(shared.exceptionNowOrNull());
     }
 
+    /// A notification uses the registration order captured before a callback changes the listeners.
+    @Test
+    void snapshotsListenersForEachNotification() {
+        List<TaskListener> started = new ArrayList<>();
+        List<TaskListener> finished = new ArrayList<>();
+
+        /// Records which registrations receive each lifecycle event.
+        class RecordingListener extends TaskListener {
+            /// {@inheritDoc}
+            @Override
+            public void onExecutionStarted(TaskHandle handle) {
+                started.add(this);
+            }
+
+            /// {@inheritDoc}
+            @Override
+            public void onExecutionFinished(TaskHandle handle, boolean success) {
+                finished.add(this);
+            }
+        }
+
+        TaskListener repeated = new RecordingListener();
+        TaskListener added = new RecordingListener();
+        TaskListener middle = new RecordingListener() {
+            /// Removes the first registration of the repeated listener and appends a new listener.
+            @Override
+            public void onExecutionStarted(TaskHandle handle) {
+                super.onExecutionStarted(handle);
+                handle.removeTaskListener(repeated);
+                handle.addTaskListener(added);
+            }
+        };
+        TaskHandle handle = Task.completed(1).newHandle(repeated);
+        handle.addTaskListener(middle);
+        handle.addTaskListener(repeated);
+
+        assertTrue(handle.test());
+        assertEquals(List.of(repeated, middle, repeated), started);
+        assertEquals(List.of(middle, repeated, added), finished);
+    }
+
     /// A reporter follows its task across workers and delivers every update, including retries and completion.
     @Test
     void reportsProgressForTheExecutingTask() {
