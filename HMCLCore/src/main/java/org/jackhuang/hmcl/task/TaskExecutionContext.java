@@ -16,8 +16,9 @@ import java.util.concurrent.Executor;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Executes children within the current task's cancellation and listener scope.
-/// Children whose [Task#getExecutor()] returns `null` inherit the executor running the current
-/// task's body. Children whose [Task#getStage()] returns `null` inherit the current task's stage.
+/// Stage, hint and counter decorators share their source's executor. A child without an
+/// executor preference inherits the executor running the current task's body.
+/// Children whose [Task#getStage()] returns `null` inherit the current task's stage.
 /// A task must use its context only on the thread executing its body and before the body returns.
 /// While waiting, a worker may execute submissions from the awaited child's subtree on its
 /// own executor. Use the same executor instance for work requiring the same worker.

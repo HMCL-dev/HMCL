@@ -31,8 +31,9 @@ import java.util.function.*;
 /// Its listeners and cancellation request apply to the whole execution tree.
 ///
 /// An omitted or `null` executor leaves a task body on its parent's executor, or on the
-/// task scheduler for a root. A continuation with an omitted or `null` callback executor
-/// invokes the callback on the thread running the continuation.
+/// task scheduler for a root. Stage, hint and counter decorators are dispatched together
+/// with their source on its effective executor. A continuation with an omitted or `null`
+/// callback executor invokes the callback on the thread running the continuation.
 ///
 /// Cancellation is cooperative. A running body may check [TaskExecutionContext#isCancelled()] and release its
 /// resources before returning. The executor also checks for cancellation before invoking
@@ -468,10 +469,10 @@ public abstract class Task<T extends @Nullable Object> {
         return null;
     }
 
-    /// Returns a task that declares `stage` and runs this task as its child.
+    /// Returns a task that declares `stage` and shares this task's executor.
     /// If this task declares its own stage, that stage is nested inside `stage`.
     public Task<T> withStage(TaskStage stage) {
-        return new StageTask(stage);
+        return new StageTask<>(this, stage);
     }
 
     /// Returns the stage rows this task declares for display, in presentation order.
@@ -492,36 +493,31 @@ public abstract class Task<T extends @Nullable Object> {
         return withStageHints(List.of(hints));
     }
 
-    /// Returns a wrapper that declares the supplied rows in order before dispatching this task.
+    /// Returns a wrapper that declares the supplied rows in order and uses this task's executor.
     /// The wrapper takes an immutable snapshot of the hints.
     public Task<T> withStageHints(List<TaskStage.Hint> hints) {
         @Unmodifiable List<TaskStage.Hint> rows = List.copyOf(hints);
-        return new Task<>() {
-            {
-                setSignificance(TaskSignificance.MODERATE);
-            }
-
+        return new Decorator<>(this, TaskSignificance.MODERATE) {
             /// Returns the stage rows supplied to the wrapper.
             @Override
             public @Unmodifiable List<TaskStage.Hint> getStageHints() {
                 return rows;
             }
-
-            /// Runs the wrapped task and returns its result.
-            @Override
-            public T execute(TaskExecutionContext context) throws Exception {
-                return context.run(Task.this);
-            }
         };
     }
 
-    /// Returns a wrapper that reports one completed item in its inherited stage after this task succeeds.
+    /// Returns a wrapper that reports one completed item in its inherited stage on this task's
+    /// executor after this task succeeds.
     public Task<T> withCounter() {
-        return Task.of(context -> {
-            T value = context.run(this);
-            context.completeStageItem();
-            return value;
-        }).setSignificance(TaskSignificance.MINOR);
+        return new Decorator<>(this, TaskSignificance.MINOR) {
+            /// Reports the item after the source publishes its result.
+            @Override
+            public T execute(TaskExecutionContext context) throws Exception {
+                T value = super.execute(context);
+                context.completeStageItem();
+                return value;
+            }
+        };
     }
 
     /// Returns a named task that runs this task and then reports estimated progress while waiting for `done`.
@@ -808,27 +804,39 @@ public abstract class Task<T extends @Nullable Object> {
         }
     }
 
+    /// A stage decorator dispatched together with its source on the source's effective executor.
+    abstract static class Decorator<T extends @Nullable Object> extends Task<T> {
+        /// The child whose executor and result this decorator shares.
+        final Task<T> source;
+
+        /// Wraps the source with the given logging and display policy.
+        private Decorator(Task<T> source, TaskSignificance significance) {
+            this.source = source;
+            setSignificance(significance);
+        }
+
+        /// Runs the source as a child in this decorator's stage.
+        @Override
+        public T execute(TaskExecutionContext context) throws Exception {
+            return context.run(source);
+        }
+    }
+
     /// Provides an enclosing stage for the wrapped task.
-    private final class StageTask extends Task<T> {
+    private static final class StageTask<T extends @Nullable Object> extends Decorator<T> {
         /// The stage declared by the wrapper.
         private final TaskStage stage;
 
         /// Creates a stage wrapper for the enclosing task.
-        private StageTask(TaskStage stage) {
+        private StageTask(Task<T> source, TaskStage stage) {
+            super(source, TaskSignificance.MODERATE);
             this.stage = Objects.requireNonNull(stage);
-            setSignificance(TaskSignificance.MODERATE);
         }
 
         /// Returns the stage enclosing the wrapped task.
         @Override
         public TaskStage getStage() {
             return stage;
-        }
-
-        /// {@inheritDoc}
-        @Override
-        public T execute(TaskExecutionContext context) throws Exception {
-            return context.run(Task.this);
         }
     }
 

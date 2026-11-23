@@ -331,9 +331,10 @@ final class TaskExecutionContextTest {
         }).run();
     }
 
-    /// Failure to resolve a child's executor fails that child and allows every sibling to finish.
-    @Test
-    void drainsSiblingsWhenExecutorSelectionFails() {
+    /// Failure to resolve a child's executor propagates through its decorators and allows every sibling to finish.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void drainsSiblingsWhenExecutorSelectionFails(boolean decorate) {
         IllegalStateException failure = new IllegalStateException("No executor available");
         Task<Integer> broken = new Task<>() {
             @Override
@@ -346,6 +347,8 @@ final class TaskExecutionContextTest {
                 return fail("A task with a failed executor selection should not start");
             }
         };
+        Task<Integer> counted = decorate ? broken.withCounter() : broken;
+        Task<Integer> branch = decorate ? counted.withStage(new TaskStage("download")) : broken;
         CountDownLatch release = new CountDownLatch(1);
         Task<Integer> first = Task.supplyAsync(() -> {
             assertTrue(release.await(10, TimeUnit.SECONDS));
@@ -356,7 +359,9 @@ final class TaskExecutionContextTest {
             return 2;
         });
         try {
-            assertSame(failure, assertThrows(IllegalStateException.class, Task.allOf(first, broken, last)::run));
+            assertSame(failure, assertThrows(IllegalStateException.class, Task.allOf(first, branch, last)::run));
+            assertSame(failure, branch.exceptionNow());
+            assertSame(failure, counted.exceptionNow());
             assertSame(failure, broken.exceptionNow());
             assertSame(failure, broken.exceptionNowOrNull());
             assertNull(broken.resultNowOrNull());
@@ -465,6 +470,121 @@ final class TaskExecutionContextTest {
         } finally {
             callbacks.shutdownNow();
         }
+    }
+
+    /// Stacked stage decorators share the source worker and preserve their separate lifecycle events.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void dispatchesStageDecoratorsOnSourceExecutor(boolean explicit) throws Exception {
+        ExecutorService sourcePool = Executors.newSingleThreadExecutor();
+        try {
+            Thread expected = explicit ? sourcePool.submit(Thread::currentThread).get(10, TimeUnit.SECONDS) : Thread.currentThread();
+            AtomicInteger resolutions = new AtomicInteger();
+            Task<Thread> source = new Task<>() {
+                /// Records each query for the source's executor preference.
+                @Override
+                protected @Nullable Executor getExecutor() {
+                    assertEquals(Task.State.READY, getState());
+                    resolutions.incrementAndGet();
+                    return explicit ? sourcePool : null;
+                }
+
+                /// Returns the worker executing the source body.
+                @Override
+                public Thread execute(TaskExecutionContext context) {
+                    return Thread.currentThread();
+                }
+            };
+            TaskStage.Hint hint = new TaskStage.Hint(new TaskStage("download"));
+            Task<Thread> counted = source.withCounter();
+            Task<Thread> staged = counted.withStage(hint.stage());
+            Task<Thread> hinted = staged.withStageHints(hint);
+            Task<List<Thread>> root = task(Runnable::run, context -> context.runAll(List.of(hinted)));
+            Map<Task<?>, Thread> workers = new HashMap<>();
+            StageEvents events = new StageEvents() {
+                /// Records the worker entering each task body.
+                @Override
+                public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
+                    workers.put(task, Thread.currentThread());
+                }
+            };
+            root.addTaskListener(events);
+
+            assertEquals(0, resolutions.get());
+            assertEquals(List.of(expected), root.run());
+            assertEquals(1, resolutions.get());
+            assertEquals(Map.of(root, Thread.currentThread(), hinted, expected, staged, expected,
+                    counted, expected, source, expected), workers);
+            assertEquals(List.of(source, counted, staged, hinted, root),
+                    events.completions.stream().map(TaskCompletion::task).toList());
+        } finally {
+            sourcePool.shutdownNow();
+        }
+    }
+
+    /// Counted downloads can fill their pool while an independent job uses a spare parent worker.
+    @Test
+    void countedBatchLeavesParentWorkerAvailable() throws Exception {
+        ExecutorService parents = Executors.newFixedThreadPool(2);
+        ExecutorService downloads = Executors.newFixedThreadPool(3);
+        try {
+            CountDownLatch entered = new CountDownLatch(3);
+            List<Task<Integer>> children = new ArrayList<>();
+            for (int i = 0; i < 3; i++) {
+                children.add(task(downloads, context -> {
+                    entered.countDown();
+                    assertTrue(entered.await(10, TimeUnit.SECONDS));
+                    return parents.submit(() -> 1).get(10, TimeUnit.SECONDS);
+                }).withCounter());
+            }
+            assertEquals(List.of(1, 1, 1), task(parents, context -> context.runAll(children)).run());
+        } finally {
+            parents.shutdownNow();
+            downloads.shutdownNow();
+        }
+    }
+
+    /// Rejection or cancellation before execution closes every reserved decorator from the inside out.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void closesDecoratorsBeforeBodyEntry(boolean cancel) throws Exception {
+        RejectedExecutionException rejection = new RejectedExecutionException("Download unavailable");
+        CompletableFuture<Runnable> submitted = new CompletableFuture<>();
+        Task<Integer> source = Task.supplyAsync(command -> {
+            if (!cancel)
+                throw rejection;
+            submitted.complete(command);
+        }, () -> fail("Download should not start"));
+        Task<Integer> counted = source.withCounter();
+        Task<Integer> root = counted.withStage(new TaskStage("download"));
+        AtomicInteger completedItems = new AtomicInteger();
+        StageEvents events = new StageEvents() {
+            /// Records items reported before the stage closes.
+            @Override
+            public void onStageProgress(TaskStage.Scope scope, int completedDelta, int totalDelta) {
+                completedItems.addAndGet(completedDelta);
+            }
+        };
+        root.addTaskListener(events);
+        FutureTask<RuntimeException> outcome = new FutureTask<>(() -> assertThrows(RuntimeException.class, root::run));
+        Schedulers.io().execute(outcome);
+        if (cancel) {
+            Runnable command = submitted.get(10, TimeUnit.SECONDS);
+            root.cancel();
+            command.run();
+        }
+        RuntimeException failure = outcome.get(10, TimeUnit.SECONDS);
+        if (cancel)
+            assertInstanceOf(CancellationException.class, failure);
+        else
+            assertSame(rejection, failure);
+        assertEquals(List.of(source, counted, root), events.completions.stream().map(TaskCompletion::task).toList());
+        for (TaskCompletion completion : events.completions) {
+            assertSame(failure, completion.failure());
+            assertSame(failure, completion.task().exceptionNow());
+            assertEquals(cancel ? Task.State.CANCELLED : Task.State.FAILED, completion.task().getState());
+        }
+        assertEquals(0, completedItems.get());
     }
 
     /// Thousands of wrappers around download-like children can complete on bounded executors.
@@ -710,6 +830,44 @@ final class TaskExecutionContextTest {
         assertNull(shared.exceptionNowOrNull());
     }
 
+    /// Competing decorators cannot resolve or fail a source already executing in another root.
+    @Test
+    void rejectsCompetingDecoratorWithoutChangingSource() throws Exception {
+        AtomicInteger resolutions = new AtomicInteger();
+        CountDownLatch running = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        Task<Integer> source = new Task<>() {
+            /// Counts how many dispatches inspect the source's executor preference.
+            @Override
+            protected Executor getExecutor() {
+                resolutions.incrementAndGet();
+                return Schedulers.io();
+            }
+
+            /// Keeps the source running while the other root tries to dispatch it.
+            @Override
+            public Integer execute(TaskExecutionContext context) throws InterruptedException {
+                running.countDown();
+                assertTrue(release.await(10, TimeUnit.SECONDS));
+                return 42;
+            }
+        };
+        Task<Integer> winner = source.withCounter();
+        Task<Integer> contender = source.withStage(new TaskStage("download"));
+        FutureTask<Integer> result = new FutureTask<>(winner::run);
+        Schedulers.io().execute(result);
+        try {
+            assertTrue(running.await(10, TimeUnit.SECONDS));
+            assertSame(assertThrows(IllegalStateException.class, contender::run), contender.exceptionNow());
+            assertEquals(Task.State.RUNNING, source.getState());
+        } finally {
+            release.countDown();
+        }
+        assertEquals(42, result.get(10, TimeUnit.SECONDS));
+        assertEquals(42, source.resultNow());
+        assertEquals(1, resolutions.get());
+    }
+
     /// A notification uses the registration order captured before a callback changes the listeners.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
@@ -925,6 +1083,18 @@ final class TaskExecutionContextTest {
         assertEquals(List.of(new TaskCompletion(root, events.started.get(0), failure)), events.completions);
         assertEquals(events.started, events.finished);
         assertEquals(List.of(failure), events.failures);
+    }
+
+    /// Cancelling a decorator before dispatch leaves its source available for a later submission.
+    @Test
+    void preCancelledDecoratorLeavesSourceUnsubmitted() throws Exception {
+        Task<Integer> source = Task.completed(42);
+        Task<Integer> root = source.withCounter();
+        root.cancel();
+
+        assertThrows(CancellationException.class, root::run);
+        assertEquals(Task.State.NEW, source.getState());
+        assertEquals(42, source.run());
     }
 
     /// Hints declared during execution follow root hints and precede the staged task they describe.

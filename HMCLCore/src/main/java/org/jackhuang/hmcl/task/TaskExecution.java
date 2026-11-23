@@ -166,7 +166,7 @@ final class TaskExecution {
     /// Publishes a root failure even if its executor could not be reached.
     private <T extends @Nullable Object> T runRoot(Task<T> root, boolean propagateWaitInterruption) throws Exception {
         try {
-            return runReadyTask(null, root, propagateWaitInterruption);
+            return runReadyTask(prepare(root, Schedulers.tasks(), null), propagateWaitInterruption);
         } catch (Throwable failure) {
             if (root.getState() == Task.State.READY)
                 fail(root, null, failure);
@@ -202,9 +202,9 @@ final class TaskExecution {
         return Platform.isFxApplicationThread() ? Schedulers.javafx() : null;
     }
 
-    /// Announces the task's presentation hints and stage, then resolves its executor.
-    private <T extends @Nullable Object> Context<T> prepare(@Nullable Context<?> parent, Task<T> task) {
-        TaskStage.@Nullable Scope scope = parent == null ? null : parent.stageScope;
+    /// Opens stages from the outermost decorator inward and resolves the source executor once.
+    private <T extends @Nullable Object> Context<T> prepare(Task<T> task, Executor inheritedExecutor,
+                                                             TaskStage.@Nullable Scope scope) {
         try {
             @Unmodifiable List<TaskStage.Hint> hints = task.getStageHints();
             if (!hints.isEmpty())
@@ -215,10 +215,14 @@ final class TaskExecution {
                 scope = declared;
                 notifyListeners(listener -> listener.onStageStarted(declared));
             }
+            if (task instanceof Task.Decorator<T> decorator) {
+                checkCancellation();
+                decorator.source.markReadyAsChild();
+                Context<T> source = prepare(decorator.source, inheritedExecutor, scope);
+                return new Context<>(task, source.executor, scope, source);
+            }
             @Nullable Executor executor = task.getExecutor();
-            if (executor == null)
-                executor = parent == null ? Schedulers.tasks() : parent.executor;
-            return new Context<>(task, executor, scope);
+            return new Context<>(task, executor != null ? executor : inheritedExecutor, scope, null);
         } catch (Throwable failure) {
             fail(task, scope, failure);
             throw failure;
@@ -226,8 +230,7 @@ final class TaskExecution {
     }
 
     /// Dispatches a ready task, running it inline on a worker of its effective executor.
-    private <T extends @Nullable Object> T runReadyTask(@Nullable Context<?> parent, Task<T> task, boolean propagateWaitInterruption) throws Exception {
-        Context<T> context = prepare(parent, task);
+    private <T extends @Nullable Object> T runReadyTask(Context<T> context, boolean propagateWaitInterruption) throws Exception {
         if (context.executor == currentExecutor())
             return execute(context);
         return await(submitChild(context), propagateWaitInterruption);
@@ -240,7 +243,7 @@ final class TaskExecution {
             checkCancellation();
             work.submit();
         } catch (Throwable failure) {
-            fail(context.task, context.stageScope, failure);
+            fail(context, failure);
             work.reject(failure);
         }
         return work;
@@ -264,7 +267,7 @@ final class TaskExecution {
             Throwable cause = Objects.requireNonNullElse(Lang.resolveException(failure), failure);
             if (cause instanceof InterruptedException)
                 cause = new CancellationException(cause.getMessage());
-            fail(task, context.stageScope, cause);
+            fail(context, cause);
             throw Task.rethrow(cause);
         }
 
@@ -279,6 +282,13 @@ final class TaskExecution {
     private void fail(Task<?> task, TaskStage.@Nullable Scope scope, Throwable cause) {
         task.publishException(cause);
         notifyTaskFinished(task, scope, cause);
+    }
+
+    /// Publishes a submission failure, closing any prepared sources whose bodies were skipped.
+    private void fail(Context<?> context, Throwable cause) {
+        if (context.source != null && context.source.task.getState() == Task.State.READY)
+            fail(context.source, cause);
+        fail(context.task, context.stageScope, cause);
     }
 
     /// Reports the task's published outcome, then closes its stage if it declared one.
@@ -316,11 +326,15 @@ final class TaskExecution {
         /// Stage scope opened by the running task or inherited from its parent.
         private final TaskStage.@Nullable Scope stageScope;
 
-        /// Binds the task to its effective executor and stage for this execution.
-        Context(Task<R> task, Executor executor, TaskStage.@Nullable Scope stageScope) {
+        /// Source reserved with a stage decorator, ready to run inline when its body dispatches it.
+        private final @Nullable Context<R> source;
+
+        /// Binds the task to its effective executor, stage and any source in the same submission.
+        Context(Task<R> task, Executor executor, TaskStage.@Nullable Scope stageScope, @Nullable Context<R> source) {
             this.task = task;
             this.executor = executor;
             this.stageScope = stageScope;
+            this.source = source;
         }
 
         /// {@inheritDoc}
@@ -360,8 +374,12 @@ final class TaskExecution {
         /// {@inheritDoc}
         @Override
         public <T extends @Nullable Object> T run(Task<T> task) throws Exception {
+            if (source != null && source.task == task) {
+                execute(source);
+                return task.resultNow();
+            }
             task.markReadyAsChild();
-            return runReadyTask(this, task, true);
+            return runReadyTask(prepare(task, executor, stageScope), true);
         }
 
         /// {@inheritDoc}
@@ -373,7 +391,7 @@ final class TaskExecution {
             for (Task<? extends T> child : List.copyOf(tasks)) {
                 try {
                     child.markReadyAsChild();
-                    children.add(submitChild(prepare(this, child)));
+                    children.add(submitChild(prepare(child, executor, stageScope)));
                 } catch (Throwable e) {
                     failure = batchFailure(failure, e);
                 }
