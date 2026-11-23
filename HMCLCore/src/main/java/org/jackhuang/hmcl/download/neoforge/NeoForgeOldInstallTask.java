@@ -15,6 +15,7 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -380,12 +381,13 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
             vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
 
             List<Processor> processors = profile.getProcessors();
-            updateProgress(0, processors.size());
+            TaskProgress progress = context.progress();
+            progress.update(0, processors.size());
 
             int completed = 0;
             for (Processor processor : processors) {
                 context.run(createProcessorTask(processor, vars));
-                updateProgress(++completed, processors.size());
+                progress.update(++completed, processors.size());
             }
             context.run(dependencyManager.checkComponentCompletionAsync(neoForgeVersion, true));
 

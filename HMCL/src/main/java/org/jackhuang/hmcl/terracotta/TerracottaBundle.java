@@ -7,7 +7,6 @@ import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -53,7 +52,7 @@ public final class TerracottaBundle {
 
     public Task<Path> download(AbstractTerracottaProvider.DownloadContext context) {
         return Task.supplyAsync(() -> Files.createTempFile("terracotta-", ".tar.gz"))
-                .thenComposeAsync(Schedulers.javafx(), pkg -> {
+                .thenComposeAsync(pkg -> {
                     FileDownloadTask download = new FileDownloadTask(links, pkg, hash) {
                         @Override
                         protected Context<@Nullable Void> getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
@@ -79,7 +78,7 @@ public final class TerracottaBundle {
                         }
                     };
 
-                    context.bindProgress(download.progressProperty());
+                    context.trackDownload(download);
                     return download.thenSupplyAsync(() -> pkg);
                 });
     }

@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.ModpackExportTask;
+import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -37,7 +38,7 @@ public class ServerModpackExportTask extends ModpackExportTask {
 
     /// {@inheritDoc}
     @Override
-    protected void writeArchive(Zipper zip, Predicate<String> include) throws IOException {
+    protected void writeArchive(Zipper zip, Predicate<String> include, TaskProgress progress) throws IOException {
         Path runDirectory = instance.getRunDirectory();
         List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
         zip.putDirectoryProgressed(runDirectory, "overrides", path -> {
@@ -51,7 +52,7 @@ public class ServerModpackExportTask extends ModpackExportTask {
             } else {
                 return false;
             }
-        }, this::updateProgress);
+        }, progress::update);
 
         GameVersionNumber version = instance.getVersion();
         if (version == GameVersionNumber.unknown()) {

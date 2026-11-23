@@ -230,6 +230,49 @@ public final class DefaultTaskHandle extends TaskHandle {
             throw new CancellationException("Cancelled by user");
     }
 
+    /// Delivers progress from one task's workers to the handle's current listeners.
+    private final class Progress implements TaskProgress {
+        /// Task identified in progress notifications.
+        private final Task<?> task;
+
+        /// Earliest time for the next intermediate update, guarded by this reporter.
+        private long nextUpdateNanos = System.nanoTime();
+
+        /// Creates the reporter for the given task.
+        Progress(Task<?> task) {
+            this.task = task;
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public void update(double fraction) {
+            checkFraction(fraction);
+            if (taskListeners.isEmpty())
+                return;
+            synchronized (this) {
+                long now = System.nanoTime();
+                if (fraction != 0 && fraction != 1 && now - nextUpdateNanos < 0)
+                    return;
+                nextUpdateNanos = now + TimeUnit.SECONDS.toNanos(1);
+            }
+            notifyListeners(listener -> listener.onTaskProgress(task, fraction));
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public void updateImmediately(double fraction) {
+            checkFraction(fraction);
+            if (!taskListeners.isEmpty())
+                notifyListeners(listener -> listener.onTaskProgress(task, fraction));
+        }
+
+        /// Rejects invalid fractions, including NaN.
+        private static void checkFraction(double fraction) {
+            if (!(fraction >= 0 && fraction <= 1))
+                throw new IllegalArgumentException("Invalid progress: " + fraction);
+        }
+    }
+
     /// Executes children under a single parent and shares the handle's listeners and cancellation.
     @NotNullByDefault
     private final class Context<R extends @Nullable Object> implements TaskExecutionContext {
@@ -242,6 +285,9 @@ public final class DefaultTaskHandle extends TaskHandle {
         /// Stage scope opened by the running task or inherited from its parent.
         private final TaskStage.@Nullable Scope stageScope;
 
+        /// Reporter created on the task thread when the body first requests it.
+        private @Nullable TaskProgress progress;
+
         /// Binds the task to its effective executor and stage for this execution.
         Context(Task<R> task, Executor executor, TaskStage.@Nullable Scope stageScope) {
             this.task = task;
@@ -252,6 +298,14 @@ public final class DefaultTaskHandle extends TaskHandle {
         @Override
         public boolean isCancelled() {
             return isCancelledOrInterrupted();
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public TaskProgress progress() {
+            if (progress == null)
+                progress = new Progress(task);
+            return progress;
         }
 
         /// {@inheritDoc}

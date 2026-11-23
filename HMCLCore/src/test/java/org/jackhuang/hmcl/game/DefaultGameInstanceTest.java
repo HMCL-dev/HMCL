@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskHandle;
+import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -98,7 +99,7 @@ public final class DefaultGameInstanceTest {
 
             /// Writes one entry and requests cancellation before the archive is published.
             @Override
-            protected void writeArchive(Zipper zip, Predicate<String> include) throws IOException {
+            protected void writeArchive(Zipper zip, Predicate<String> include, TaskProgress progress) throws IOException {
                 zip.putTextFile("content", "example.txt");
                 handle.cancel();
             }
@@ -111,14 +112,9 @@ public final class DefaultGameInstanceTest {
         }
     }
 
-    /// Creates a server export whose file operations can run without a JavaFX toolkit.
+    /// Creates a server export with a file API URL for the manifest.
     private static Task<?> serverExport(DefaultGameInstance instance, Path output) {
-        return new ServerModpackExportTask(instance, new ModpackExportInfo().setFileApi("https://example.org/"), output) {
-            /// Ignores progress updates while testing the archive contents.
-            @Override
-            protected void updateProgress(double progress) {
-            }
-        };
+        return new ServerModpackExportTask(instance, new ModpackExportInfo().setFileApi("https://example.org/"), output);
     }
 
     /// Launch repair for ModLauncher adds support metadata without materializing bundled files.
@@ -373,12 +369,7 @@ public final class DefaultGameInstanceTest {
                 new GameInstanceManifest(new GameInstanceID("instance")),
                 minecraftJar,
                 "forge-test",
-                installer) {
-            @Override
-            protected void updateProgressImmediately(double progress) {
-                // Avoid JavaFX toolkit initialization in this isolated processor test.
-            }
-        };
+                installer);
 
         var handle = task.newHandle();
         assertTrue(handle.test(), () -> String.valueOf(handle.getException()));
@@ -411,12 +402,7 @@ public final class DefaultGameInstanceTest {
                 new GameInstanceManifest(new GameInstanceID("instance")),
                 minecraftJar,
                 "forge-test",
-                installer) {
-            @Override
-            protected void updateProgressImmediately(double progress) {
-                // Avoid JavaFX toolkit initialization in this isolated processor test.
-            }
-        };
+                installer);
 
         assertFalse(task.newHandle().test());
         assertEquals("client", Files.readString(minecraftJar));

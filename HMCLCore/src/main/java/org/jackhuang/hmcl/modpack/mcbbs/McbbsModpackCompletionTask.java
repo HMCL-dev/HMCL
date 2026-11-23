@@ -193,6 +193,7 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
                                     ModpackConfiguration<McbbsModpackManifest> configuration,
                                     McbbsModpackManifest manifest) throws Exception {
         AtomicBoolean allNameKnown = new AtomicBoolean(true);
+        TaskProgress progress = context.progress();
         AtomicInteger finished = new AtomicInteger();
         AtomicBoolean notFound = new AtomicBoolean();
         List<Task<?>> dependencies = new ArrayList<>();
@@ -201,7 +202,7 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
         McbbsModpackManifest newManifest = manifest.setFiles(
                 manifest.getFiles().parallelStream()
                         .map(rawFile -> {
-                            updateProgress(finished.incrementAndGet(), manifest.getFiles().size());
+                            progress.update(finished.incrementAndGet(), manifest.getFiles().size());
                             if (rawFile instanceof McbbsModpackManifest.CurseFile) {
                                 McbbsModpackManifest.CurseFile file = (McbbsModpackManifest.CurseFile) rawFile;
                                 if (StringUtils.isBlank(file.getFileName())) {

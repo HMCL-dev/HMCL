@@ -24,6 +24,10 @@ public interface TaskExecutionContext {
     /// is interrupted. This method preserves the thread's interrupted status.
     boolean isCancelled();
 
+    /// Returns the current task's progress reporter. Obtain it on the task's thread
+    /// before sharing it with workers contributing to this task.
+    TaskProgress progress();
+
     /// Adds `count` items to the total for the task's declared or inherited stage.
     /// Has no effect outside a stage.
     void addStageItems(int count);

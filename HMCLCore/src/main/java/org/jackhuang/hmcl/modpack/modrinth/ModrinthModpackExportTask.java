@@ -12,6 +12,7 @@ import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.ModpackExportTask;
+import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -111,7 +112,7 @@ public class ModrinthModpackExportTask extends ModpackExportTask {
 
     /// {@inheritDoc}
     @Override
-    protected void writeArchive(Zipper zip, Predicate<String> include) throws IOException {
+    protected void writeArchive(Zipper zip, Predicate<String> include, TaskProgress progress) throws IOException {
         Path runDirectory = instance.getRunDirectory();
         List<ModrinthManifest.File> files = new ArrayList<>();
         Set<String> filesInManifest = new HashSet<>();
@@ -127,7 +128,7 @@ public class ModrinthModpackExportTask extends ModpackExportTask {
 
         long current = 0;
         for (var file : paths) {
-            updateProgress(0.5 * ++current / paths.size());
+            progress.update(0.5 * ++current / paths.size());
             String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
 
             if (!info.getWhitelist().contains(relativePath) || !include.test(relativePath)) {
@@ -151,7 +152,7 @@ public class ModrinthModpackExportTask extends ModpackExportTask {
                 return false;
             }
             return include.test(path);
-        }, progress -> updateProgress(0.5 + 0.5 * progress));
+        }, fraction -> progress.update(0.5 + 0.5 * fraction));
 
         GameVersionNumber version = instance.getVersion();
         if (version == GameVersionNumber.unknown()) {

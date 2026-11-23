@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskHandle;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -89,6 +90,12 @@ public final class DefaultGameRepositoryDraftTest {
             @Override
             public boolean isCancelled() {
                 return Thread.currentThread().isInterrupted();
+            }
+
+            /// Reports any unexpected request for individual task progress.
+            @Override
+            public TaskProgress progress() {
+                return fail("Unexpected task progress");
             }
 
             /// Verifies the batch size reported before the simulated download failure.

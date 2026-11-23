@@ -246,6 +246,7 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
         try (var counter = new CounterInputStream(inputStream);
              var input = contentEncoding.wrap(counter)) {
             long lastDownloaded = 0L;
+            TaskProgress progress = execution.progress();
             byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
             while (true) {
                 if (execution.isCancelled()) break;
@@ -263,10 +264,8 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
                 if (resume != null)
                     resume.countUncompressed += len;
 
-                if (contentLength >= 0) {
-                    // Update progress information per second
-                    updateProgress(counter.downloaded, contentLength);
-                }
+                if (contentLength >= 0)
+                    progress.update(counter.downloaded, contentLength);
 
                 updateDownloadSpeed(counter.downloaded - lastDownloaded);
                 lastDownloaded = counter.downloaded;
@@ -312,7 +311,7 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
                 @Nullable List<WebURL> redirects = null;
                 try {
                     beforeDownload(url);
-                    updateProgress(0);
+                    execution.progress().update(0);
 
                     @Nullable HttpURLConnection connection;
                     UrlResponseInfo responseInfo;
@@ -516,7 +515,7 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
 
             try {
                 beforeDownload(url);
-                updateProgress(0);
+                execution.progress().update(0);
 
                 URLConnection conn = NetworkUtils.createConnection(url);
                 conn.setConnectTimeout((int) connectTimeout.toMillis());

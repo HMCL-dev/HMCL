@@ -499,6 +499,54 @@ final class TaskExecutionContextTest {
         assertNull(shared.exceptionNowOrNull());
     }
 
+    /// A reporter follows its task across workers and delivers retry and completion updates.
+    @Test
+    void reportsProgressForTheExecutingTask() {
+        Task<?> child = task(context -> {
+            TaskProgress progress = context.progress();
+            context.call(Schedulers.io(), () -> {
+                progress.update(1, 4);
+                return null;
+            });
+            progress.updateImmediately(0.5);
+            progress.update(0.0);
+            progress.update(3, 2);
+            return null;
+        });
+        Task<?> root = task(Runnable::run, context -> {
+            context.progress().update(0.125);
+            context.run(child);
+            context.progress().update(0, 0);
+            return null;
+        });
+
+        /// A fraction and the task to which it was attributed.
+        record Report(Task<?> task, double fraction) {}
+        List<Report> reports = new CopyOnWriteArrayList<>();
+        assertTrue(root.newHandle(new TaskListener() {
+            /// Collects progress from both the task thread and participating workers.
+            @Override
+            public void onTaskProgress(Task<?> task, double fraction) {
+                reports.add(new Report(task, fraction));
+            }
+        }).test());
+        assertEquals(List.of(new Report(root, 0.125), new Report(child, 0.25), new Report(child, 0.5),
+                new Report(child, 0.0), new Report(child, 1.0), new Report(root, 1.0)), reports);
+    }
+
+    /// Progress validation also applies when no listener observes the task.
+    @Test
+    void rejectsInvalidProgressWithoutListeners() throws Exception {
+        task(Runnable::run, context -> {
+            TaskProgress progress = context.progress();
+            assertThrows(IllegalArgumentException.class, () -> progress.update(Double.NaN));
+            assertThrows(IllegalArgumentException.class, () -> progress.updateImmediately(1.5));
+            assertThrows(IllegalArgumentException.class, () -> progress.update(-1, 1));
+            assertThrows(IllegalArgumentException.class, () -> progress.update(1, -1));
+            return null;
+        }).run();
+    }
+
     /// A task owns its declared stage from the running notification onward. Children on other
     /// workers inherit it, even when an enclosing task uses the same identifier.
     @Test

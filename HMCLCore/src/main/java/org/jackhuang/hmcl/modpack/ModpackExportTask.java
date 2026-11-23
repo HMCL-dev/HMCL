@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.modpack;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,7 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
 
     /// Writes the format-specific entries. The predicate selects files and directories by their
     /// slash-separated paths relative to the instance's run directory.
-    protected abstract void writeArchive(Zipper zip, Predicate<String> include) throws IOException;
+    protected abstract void writeArchive(Zipper zip, Predicate<String> include, TaskProgress progress) throws IOException;
 
     /// Writes and closes a temporary archive before replacing the destination. A failure while
     /// writing or cancellation observed before replacement leaves an existing destination intact.
@@ -65,7 +66,7 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
         try {
             try (Zipper zip = new Zipper(temporary)) {
                 writeArchive(zip, path -> !output.equals(runDirectory.resolve(path))
-                        && Modpack.acceptFile(path, exclusions, info.getWhitelist()));
+                        && Modpack.acceptFile(path, exclusions, info.getWhitelist()), context.progress());
             }
             if (context.isCancelled())
                 throw new CancellationException();

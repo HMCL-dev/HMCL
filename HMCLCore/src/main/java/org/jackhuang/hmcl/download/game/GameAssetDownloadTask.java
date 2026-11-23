@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -71,7 +72,8 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
             throw new GameAssetIndexDownloadTask.GameAssetIndexMalformedException();
         }
 
-        int progress = 0;
+        TaskProgress progress = context.progress();
+        int completed = 0;
         for (AssetObject assetObject : index.getObjects().values()) {
             if (context.isCancelled())
                 throw new InterruptedException();
@@ -98,7 +100,7 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
                 dependencyManager.getCacheRepository().tryCacheFile(file, CacheRepository.SHA1, assetObject.hash());
             }
 
-            updateProgress(++progress, index.getObjects().size());
+            progress.update(++completed, index.getObjects().size());
         }
 
         if (!dependencies.isEmpty()) {

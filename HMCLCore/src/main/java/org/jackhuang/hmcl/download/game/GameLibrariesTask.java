@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -117,7 +118,8 @@ public final class GameLibrariesTask extends Task<@Nullable Void> {
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         List<Task<?>> dependencies = new ArrayList<>();
-        int progress = 0;
+        TaskProgress progress = context.progress();
+        int completed = 0;
         GameRepository gameRepository = dependencyManager.getGameRepository();
         for (Library library : libraries) {
             if (!library.appliesToCurrentEnvironment()) {
@@ -184,7 +186,7 @@ public final class GameLibrariesTask extends Task<@Nullable Void> {
                 dependencyManager.getCacheRepository().tryCacheLibrary(library, file);
             }
 
-            updateProgress(++progress, libraries.size());
+            progress.update(++completed, libraries.size());
         }
 
         if (!dependencies.isEmpty()) {

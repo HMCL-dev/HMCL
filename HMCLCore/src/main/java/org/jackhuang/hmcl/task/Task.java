@@ -2,10 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.task;
 
-import javafx.application.Platform;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.Result;
@@ -44,7 +40,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public abstract class Task<T extends @Nullable Object> {
 
-    /// Creates an unsubmitted task with indeterminate progress.
+    /// Creates an unsubmitted task.
     public Task() {
     }
 
@@ -195,69 +191,6 @@ public abstract class Task<T extends @Nullable Object> {
     /// @return the value to publish on success
     /// @throws Exception if execution cannot complete
     public abstract T execute(TaskExecutionContext context) throws Exception;
-
-    /// JavaFX progress property, initially `-1` to indicate indeterminate progress.
-    private final DoubleProperty progress = new SimpleDoubleProperty(this, "progress", -1);
-
-    /// Returns the read-only progress property. Its initial value is `-1`.
-    public ReadOnlyDoubleProperty progressProperty() {
-        return progress;
-    }
-
-    /// Wall-clock time in milliseconds of the latest accepted throttled progress update.
-    private long lastUpdateProgressTime = 0L;
-
-    /// Updates progress using completed and total units. A zero total or a count at or above
-    /// the total denotes completion.
-    ///
-    /// @throws IllegalArgumentException if either argument is negative
-    protected void updateProgress(long count, long total) {
-        if (count < 0 || total < 0)
-            throw new IllegalArgumentException("Invalid count or total: count=" + count + ", total=" + total);
-
-        updateProgress(count < total ? (double) count / total : 1.0);
-    }
-
-    /// Queues a progress update in the range zero to one. Intermediate updates are rate-limited
-    /// and multiple pending updates may be coalesced.
-    ///
-    /// @throws IllegalArgumentException if the value is outside the range or is NaN
-    protected void updateProgress(double progress) {
-        if (progress < 0 || progress > 1.0 || Double.isNaN(progress))
-            throw new IllegalArgumentException("Invalid progress: " + progress);
-
-        long now = System.currentTimeMillis();
-        if (progress == 1.0 || now - lastUpdateProgressTime >= 1000L) {
-            updateProgressImmediately(progress);
-            lastUpdateProgressTime = now;
-        }
-    }
-
-    /// Latest queued progress value, or `-1` when no JavaFX update is pending.
-    @SuppressWarnings("FieldMayBeFinal")
-    private volatile double pendingProgress = -1.0;
-
-    /// Provides atomic access to [#pendingProgress].
-    private static final VarHandle PENDING_PROGRESS_HANDLE;
-
-    static {
-        try {
-            PENDING_PROGRESS_HANDLE = MethodHandles.lookup()
-                    .findVarHandle(Task.class, "pendingProgress", double.class);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
-
-    /// Queues an unthrottled JavaFX progress update, coalescing it with any pending value.
-    ///
-    /// @param progress a progress fraction in the range zero to one
-    protected void updateProgressImmediately(double progress) {
-        // assert progress >= 0 && progress <= 1.0;
-        if ((double) PENDING_PROGRESS_HANDLE.getAndSet(this, progress) == -1.0) {
-            Platform.runLater(() -> this.progress.set((double) PENDING_PROGRESS_HANDLE.getAndSet(this, -1.0)));
-        }
-    }
 
     /// Runs this task and waits for its result. If interrupted while waiting on another worker,
     /// the caller waits for the submitted work to finish before the interruption is reported.
@@ -872,20 +805,22 @@ public abstract class Task<T extends @Nullable Object> {
         @Override
         public T execute(TaskExecutionContext context) throws Exception {
             T value = context.run(Task.this);
+            TaskProgress progress = context.progress();
             if (!done.getAsBoolean()) {
-                updateProgress(0.0D);
+                progress.update(0.0D);
 
-                final long start = System.currentTimeMillis();
-                final double k2 = k / MAX_VALUE;
+                final long start = System.nanoTime();
                 while (!done.getAsBoolean()) {
                     if (context.isCancelled()) throw new CancellationException();
-                    updateProgressImmediately(-k / ((System.currentTimeMillis() - start) / 1000D + k2) + MAX_VALUE);
+                    double elapsedSeconds = (System.nanoTime() - start) / 1_000_000_000.0;
+                    double scaledTime = elapsedSeconds * MAX_VALUE;
+                    progress.updateImmediately(MAX_VALUE * scaledTime / (k + scaledTime));
 
                     Thread.sleep(1000);
                 }
             }
 
-            updateProgress(1.0D);
+            progress.update(1.0D);
             return value;
         }
     }

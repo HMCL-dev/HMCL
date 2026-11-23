@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.FXThread;
+import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -35,6 +36,8 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -46,7 +49,8 @@ public final class TaskListPane extends StackPane {
     /// The handle whose queued notifications may update the list.
     private @Nullable TaskHandle handle;
     private final JFXListView<Node> listView = new JFXListView<>();
-    private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
+    /// The listener receiving updates for this pane.
+    private @Nullable TaskListener listener;
     /// Maps each stage to its row for the current execution.
     private final Map<TaskStage, StageNode> stageNodes = new HashMap<>();
     /// Tracks the outermost active stage scopes contributing to each display row.
@@ -107,35 +111,35 @@ public final class TaskListPane extends StackPane {
 
     /// Displays a task below its stage or at the top of the list when it has no stage.
     @FXThread
-    private ProgressListNode addTaskRow(Task<?> task, TaskStage.@Nullable Scope scope) {
-        ProgressListNode node = new ProgressListNode(task);
+    private void addTaskRow(ProgressListNode node, TaskStage.@Nullable Scope scope) {
         int index = scope == null ? 0 : listView.getItems().indexOf(stageNode(scope.stage())) + 1;
         listView.getItems().add(index, node);
-        return node;
     }
 
-    /// Displays subsequent stage and task events from the supplied handle.
-    public void setHandle(TaskHandle handle) {
+    /// Clears the display and observes subsequent events from the supplied handle, or detaches on null.
+    @FXThread
+    public void setHandle(@Nullable TaskHandle handle) {
+        if (this.handle == handle)
+            return;
+        if (this.handle != null && listener != null)
+            this.handle.removeTaskListener(listener);
         this.handle = handle;
-        handle.addTaskListener(new TaskListener() {
+        listener = null;
+        stageNodes.clear();
+        activeScopes.clear();
+        listView.getItems().clear();
+        progressNodePadding.set(DEFAULT_PROGRESS_NODE_PADDING);
+        if (handle == null)
+            return;
+        listener = new TaskListener() {
+            /// Visible rows that can receive progress from worker threads.
+            private final Map<Task<?>, ProgressListNode> nodes = new ConcurrentHashMap<>();
+
             /// Queues a change on the JavaFX thread while this handle is attached.
             private void update(Runnable action) {
                 Platform.runLater(() -> {
-                    if (TaskListPane.this.handle == handle)
+                    if (listener == this)
                         action.run();
-                });
-            }
-
-            /// Clears progress from the previous execution.
-            @Override
-            public void onExecutionStarted(TaskHandle handle) {
-                update(() -> {
-                    nodes.values().forEach(ProgressListNode::unbind);
-                    nodes.clear();
-                    stageNodes.clear();
-                    activeScopes.clear();
-                    listView.getItems().clear();
-                    progressNodePadding.set(DEFAULT_PROGRESS_NODE_PADDING);
                 });
             }
 
@@ -170,8 +174,19 @@ public final class TaskListPane extends StackPane {
             /// Adds visible running tasks to their stage.
             @Override
             public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
-                if (prepareTaskRow(task, scope))
-                    update(() -> nodes.put(task, addTaskRow(task, scope)));
+                if (prepareTaskRow(task, scope)) {
+                    ProgressListNode node = new ProgressListNode(task, this::update);
+                    nodes.put(task, node);
+                    update(() -> addTaskRow(node, scope));
+                }
+            }
+
+            /// Submits the latest progress for a visible row to the JavaFX thread.
+            @Override
+            public void onTaskProgress(Task<?> task, double fraction) {
+                @Nullable ProgressListNode node = nodes.get(task);
+                if (node != null)
+                    node.progressUpdates.accept(fraction);
             }
 
             /// Removes successful tasks and retains visible failures, including failures before the body starts.
@@ -182,10 +197,10 @@ public final class TaskListPane extends StackPane {
                     if (node == null) {
                         if (failure == null || !prepareTaskRow(task, scope))
                             return;
-                        node = addTaskRow(task, scope);
+                        node = new ProgressListNode(task, this::update);
+                        addTaskRow(node, scope);
                     }
                     if (failure == null) {
-                        node.unbind();
                         listView.getItems().remove(node);
                     } else {
                         node.setThrowable(failure);
@@ -198,7 +213,8 @@ public final class TaskListPane extends StackPane {
             public void onStageProgress(TaskStage.Scope scope, int completedDelta, int totalDelta) {
                 update(() -> stageNode(scope.stage()).addProgress(completedDelta, totalDelta));
             }
-        });
+        };
+        handle.addTaskListener(listener);
     }
 
     private final class Cell extends ListCell<Node> {
@@ -400,19 +416,19 @@ public final class TaskListPane extends StackPane {
     private static final class ProgressListNode extends Node {
         private final String title;
         private final StringProperty message = new SimpleStringProperty("");
-        private final DoubleProperty progress = new SimpleDoubleProperty(0.0);
+        /// The progress shown on this row, initially indeterminate.
+        private final DoubleProperty progress = new SimpleDoubleProperty(ProgressIndicator.INDETERMINATE_PROGRESS);
+        /// Publishes the latest reported fraction when the JavaFX thread processes the update.
+        private final InvocationDispatcher<Double> progressUpdates;
 
-        private ProgressListNode(Task<?> task) {
+        /// Creates a row whose progress is updated on the supplied JavaFX executor.
+        private ProgressListNode(Task<?> task, Executor executor) {
             this.title = task.getName();
-            progress.bind(task.progressProperty());
+            progressUpdates = InvocationDispatcher.runOn(executor, progress::set);
         }
 
-        public void unbind() {
-            progress.unbind();
-        }
-
+        /// Retains the failure message on the row and resets its progress.
         public void setThrowable(Throwable throwable) {
-            unbind();
             message.set(throwable.getLocalizedMessage());
             progress.set(0.);
         }

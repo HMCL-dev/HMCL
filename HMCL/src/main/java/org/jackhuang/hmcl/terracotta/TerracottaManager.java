@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.terracotta;
 
 import com.google.gson.JsonObject;
 import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import org.glavo.url.WebURL;
@@ -152,7 +151,7 @@ public final class TerracottaManager {
             return null;
         }
 
-        TerracottaState.Preparing preparing = new TerracottaState.Preparing(new ReadOnlyDoubleWrapper(-1), true);
+        TerracottaState.Preparing preparing = new TerracottaState.Preparing(true);
 
         Task.composeAsync(() -> getProvider().download(preparing))
                 .thenComposeOptionalAsync(pkg -> {
@@ -174,7 +173,7 @@ public final class TerracottaManager {
                     } else {
                         compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
                     }
-                }).start();
+                }).newHandle(preparing.downloadListener()).start();
 
         return compareAndSet(state, preparing) ? preparing : null;
     }
@@ -191,7 +190,7 @@ public final class TerracottaManager {
         if (state instanceof TerracottaState.Preparing previousPreparing && previousPreparing.requestInstallFence()) {
             preparing = previousPreparing;
         } else if (state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable()) {
-            preparing = new TerracottaState.Preparing(new ReadOnlyDoubleWrapper(-1), false);
+            preparing = new TerracottaState.Preparing(false);
         } else {
             return null;
         }

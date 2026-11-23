@@ -34,6 +34,11 @@ public abstract class TaskListener implements EventListener {
     public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
     }
 
+    /// Called on the reporting worker with this task's progress in the range zero to one.
+    /// Workers contributing to the same task may report concurrently.
+    public void onTaskProgress(Task<?> task, double fraction) {
+    }
+
     /// Called once when the task succeeds or fails. A failure before the body starts can
     /// produce this notification without a preceding [#onTaskStarted(Task, TaskStage.Scope)].
     ///

@@ -177,9 +177,8 @@ public class TaskHandleDialogPane extends BorderPane implements DialogAware {
         runningInBackground.set(false);
         updateButtons();
 
+        taskListPane.setHandle(handle);
         if (handle != null) {
-            taskListPane.setHandle(handle);
-
             handle.addTaskListener(new TaskListener() {
                 /// Registers this dialog when its current handle starts.
                 @Override

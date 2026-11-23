@@ -9,6 +9,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.SVGPath;
@@ -201,6 +203,24 @@ final class TaskHandleDialogPaneTest {
         });
     }
 
+    /// Detaching the dialog drops row updates that the previous handle has queued.
+    @Test
+    void dropsQueuedRowsWhenDetached() throws Exception {
+        TaskHandleDialogPane pane = onFxThread(() -> {
+            TaskHandleDialogPane dialog = new TaskHandleDialogPane(null);
+            TaskHandle handle = Task.failed(new IOException("Download failed")).newHandle();
+            dialog.setHandle(handle, false);
+            assertFalse(handle.test());
+            dialog.setHandle(null);
+            return dialog;
+        });
+        onFxThread(() -> {
+            ListView<?> list = (ListView<?>) Objects.requireNonNull(pane.lookup(".list-view"));
+            assertTrue(list.getItems().isEmpty());
+            return true;
+        });
+    }
+
     /// Displays a task rejected before its body starts under its inherited stage.
     @Test
     void displaysRejectedTaskUnderItsStage() throws Exception {
@@ -225,7 +245,7 @@ final class TaskHandleDialogPaneTest {
         });
     }
 
-    /// Places both a declaring task and its child between their stage heading and the next stage.
+    /// Groups a task and its child under their stage with independent progress bars.
     @Test
     void groupsOwnerAndInheritingChildUnderTheirStage() throws Exception {
         CountDownLatch entered = new CountDownLatch(1);
@@ -238,6 +258,7 @@ final class TaskHandleDialogPaneTest {
 
             @Override
             public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                context.progress().update(1, 4);
                 return context.run(Task.runAsync("Child task", () -> {
                     entered.countDown();
                     assertTrue(release.await(10, TimeUnit.SECONDS));
@@ -252,10 +273,13 @@ final class TaskHandleDialogPaneTest {
             onFxThread(() -> {
                 int start = findRow(pane, i18n("update.checking")).getIndex();
                 int end = findRow(pane, i18n("launch.state.logging_in")).getIndex();
-                int ownerIndex = findRow(pane, "Owner task").getIndex();
-                int childIndex = findRow(pane, "Child task").getIndex();
-                assertTrue(start < ownerIndex && ownerIndex < end);
-                assertTrue(start < childIndex && childIndex < end);
+                ListCell<?> ownerRow = findRow(pane, "Owner task");
+                ListCell<?> childRow = findRow(pane, "Child task");
+                assertTrue(start < ownerRow.getIndex() && ownerRow.getIndex() < end);
+                assertTrue(start < childRow.getIndex() && childRow.getIndex() < end);
+                assertEquals(0.25, ((ProgressBar) ((BorderPane) ownerRow.getGraphic()).getBottom()).getProgress());
+                assertEquals(ProgressBar.INDETERMINATE_PROGRESS,
+                        ((ProgressBar) ((BorderPane) childRow.getGraphic()).getBottom()).getProgress());
                 return true;
             });
         } finally {

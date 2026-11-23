@@ -14,6 +14,7 @@ import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -114,6 +115,7 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
 
         AtomicBoolean notFound = new AtomicBoolean();
         AtomicBoolean allNameKnown = new AtomicBoolean(true);
+        TaskProgress progress = context.progress();
         AtomicInteger finished = new AtomicInteger();
         Path root = instance.getInstanceRoot();
 
@@ -122,7 +124,7 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
         CurseManifest newManifest = manifest.setFiles(
                 manifest.files().parallelStream()
                         .map(file -> {
-                            updateProgress(finished.incrementAndGet(), manifest.files().size());
+                            progress.update(finished.incrementAndGet(), manifest.files().size());
                             if (StringUtils.isBlank(file.fileName()) || file.url() == null) {
                                 try {
                                     RemoteAddon.File remoteFile = CurseForgeRemoteAddonRepository.getInstance().getAddonFile(Integer.toString(file.projectID()), Integer.toString(file.fileID()));
@@ -174,7 +176,7 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
                         LOG.warning("Could not query api.curseforge.com for mod: " + f.projectID() + ", " + f.fileID(), e);
                         return Stream.empty(); // Ignore this file.
                     } finally {
-                        updateProgress(finished.incrementAndGet(), newManifest.files().size());
+                        progress.update(finished.incrementAndGet(), newManifest.files().size());
                     }
                 })
                 .toList();

@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.modpack.ModpackExportTask;
 import org.jackhuang.hmcl.modpack.curse.CurseManifest;
 import org.jackhuang.hmcl.modpack.curse.CurseManifestMinecraft;
 import org.jackhuang.hmcl.modpack.curse.CurseManifestModLoader;
+import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -47,7 +48,7 @@ public class McbbsModpackExportTask extends ModpackExportTask {
 
     /// {@inheritDoc}
     @Override
-    protected void writeArchive(Zipper zip, Predicate<String> include) throws IOException {
+    protected void writeArchive(Zipper zip, Predicate<String> include, TaskProgress progress) throws IOException {
         Path runDirectory = instance.getRunDirectory();
 
         List<Path> paths = new ArrayList<>();
@@ -61,14 +62,14 @@ public class McbbsModpackExportTask extends ModpackExportTask {
             } else {
                 return false;
             }
-        }, progress -> updateProgress(0.5 * progress));
+        }, fraction -> progress.update(0.5 * fraction));
 
         List<McbbsModpackManifest.File> files = new ArrayList<>();
         long current = 0;
         for (Path file : paths) {
             String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
             files.add(new McbbsModpackManifest.AddonFile(true, relativePath, DigestUtils.digestToString("SHA-1", file)));
-            updateProgress(0.5 + 0.5 * ++current / paths.size());
+            progress.update(0.5 + 0.5 * ++current / paths.size());
         }
 
         GameVersionNumber version = instance.getVersion();
@@ -112,7 +113,7 @@ public class McbbsModpackExportTask extends ModpackExportTask {
         // OptiFine and LiteLoader are not supported by CurseForge modpack.
         CurseManifest curseManifest = new CurseManifest(CurseManifest.MINECRAFT_MODPACK, 1, info.getName(), info.getVersion(), info.getAuthor(), "overrides", new CurseManifestMinecraft(gameVersion, modLoaders), Collections.emptyList());
         zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
-        updateProgress(1);
+        progress.update(1);
     }
 
     /// Export options supported by the MCBBS format.

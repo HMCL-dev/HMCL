@@ -8,7 +8,6 @@ import org.jackhuang.hmcl.download.DownloadCandidate;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -21,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,35 +29,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Verifies result publication and cleanup for streamed downloads and cache hits.
 @NotNullByDefault
 class FetchTaskResultTest {
-    /// Streams through the supplied task's response sink without requiring a JavaFX event loop.
-    private static <T extends @Nullable Object> FetchTask<T> streamWithoutUI(FetchTask<T> task, CacheRepository repository) {
+    /// Runs a fresh task against the test's cache repository.
+    private static <T extends @Nullable Object> T runWithCache(FetchTask<T> task, CacheRepository repository) throws Exception {
         task.setCacheRepository(repository);
-        FetchTask<T> stream = new FetchTask<>(task.candidates) {
-            /// Cached responses use the same representation as the underlying task.
-            @Override
-            protected T useCachedResult(Path file) throws IOException {
-                return task.useCachedResult(file);
-            }
-
-            /// Uses the underlying task's caching policy during HTTP requests.
-            @Override
-            protected boolean shouldCheckETag() {
-                return task.shouldCheckETag();
-            }
-
-            /// Opens the production response sink for the transfer.
-            @Override
-            protected Context<T> getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String hash) throws IOException {
-                return task.getContext(response, checkETag, hash);
-            }
-
-            /// Discards progress notifications in this headless fixture.
-            @Override
-            protected void updateProgressImmediately(double progress) {
-            }
-        };
-        stream.setCacheRepository(repository);
-        return stream;
+        return task.run();
     }
 
     /// Checks HTTP decoding, verified file publication, and reuse of both cache representations.
@@ -83,15 +58,14 @@ class FetchTaskResultTest {
         server.start();
         try {
             WebURL url = WebURL.parse("http://127.0.0.1:" + server.getAddress().getPort() + "/artifact");
-            GetTask textTask = new GetTask(url);
-            assertEquals(text, streamWithoutUI(textTask, repository).run());
-            assertEquals(text, textTask.run());
+            assertEquals(text, runWithCache(new GetTask(url), repository));
+            assertEquals(text, runWithCache(new GetTask(url), repository));
             assertEquals(1, requests.get());
 
-            CacheFileTask fileTask = new CacheFileTask(DownloadCandidates.of(url), sha1);
-            Path streamedFile = streamWithoutUI(fileTask, repository).run();
+            DownloadCandidates candidates = DownloadCandidates.of(url);
+            Path streamedFile = Objects.requireNonNull(runWithCache(new CacheFileTask(candidates, sha1), repository));
             assertArrayEquals(bytes, Files.readAllBytes(streamedFile));
-            assertEquals(streamedFile, fileTask.run());
+            assertEquals(streamedFile, runWithCache(new CacheFileTask(candidates, sha1), repository));
             assertEquals(2, requests.get());
         } finally {
             server.stop(0);
@@ -114,9 +88,9 @@ class FetchTaskResultTest {
 
         CacheRepository repository = new CacheRepository();
         repository.changeDirectory(directory);
-        FetchTask<@Nullable Void> stream = streamWithoutUI(task, repository);
-        assertThrows(DownloadException.class, stream::run);
-        assertThrows(IllegalStateException.class, stream::resultNow);
+        task.setCacheRepository(repository);
+        assertThrows(DownloadException.class, task::run);
+        assertThrows(IllegalStateException.class, task::resultNow);
         assertEquals("previous", Files.readString(destination));
         assertEquals(1, temporaryFiles.size());
         assertFalse(Files.exists(temporaryFiles.get(0)));
@@ -130,20 +104,23 @@ class FetchTaskResultTest {
         var candidate = new DownloadCandidate(WebURL.parse(source.toUri().toString()), null, 2, null, null);
         AtomicInteger attempts = new AtomicInteger();
         var download = new FileDownloadTask(DownloadCandidates.of(candidate), destination) {
-            /// The execution cancelled after the transfer starts writing.
-            final TaskHandle handle = newHandle();
-
-            /// Counts each attempt and requests cancellation when bytes have reached the sink.
+            /// Counts each attempt independently of progress delivery.
             @Override
-            protected void updateProgress(double progress) {
-                if (progress == 0)
-                    attempts.incrementAndGet();
-                else
-                    handle.cancel();
+            protected void beforeDownload(WebURL url) {
+                attempts.incrementAndGet();
             }
         };
+        TaskHandle handle = download.newHandle();
+        handle.addTaskListener(new TaskListener() {
+            /// Cancels the transfer after bytes have reached the sink.
+            @Override
+            public void onTaskProgress(Task<?> task, double fraction) {
+                if (task == download && fraction > 0)
+                    handle.cancel();
+            }
+        });
 
-        assertFalse(download.handle.test());
+        assertFalse(handle.test());
         assertInstanceOf(CancellationException.class, download.exceptionNow());
         assertEquals(1, attempts.get());
         assertEquals("previous", Files.readString(destination));
