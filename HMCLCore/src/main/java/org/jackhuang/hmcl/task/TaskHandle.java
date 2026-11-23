@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -93,14 +94,12 @@ public abstract class TaskHandle {
     }
 
     /// Notifies a snapshot in registration order and reports each listener's failure independently.
-    protected final void notifyListeners(Consumer<TaskListener> notification) {
+    protected final void notifyListeners(ExceptionalConsumer<TaskListener, ?> notification) {
         for (TaskListener listener : taskListeners) {
             try {
                 notification.accept(listener);
-            } catch (RuntimeException e) {
+            } catch (Throwable e) {
                 LOG.warning("Task listener failed", e);
-            } catch (Error e) {
-                Lang.handleUncaughtException(e);
             }
         }
     }
