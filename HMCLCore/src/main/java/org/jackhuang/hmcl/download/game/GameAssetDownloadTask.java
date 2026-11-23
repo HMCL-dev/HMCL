@@ -11,7 +11,6 @@ import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
-import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.CacheRepository;
@@ -92,7 +91,7 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
             if (download) {
                 DownloadCandidates candidates = dependencyManager.getDownloadProvider().getAssetObjectCandidates(assetObject);
                 var task = new FileDownloadTask(candidates, file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.hash()));
-                task.setName(new TaskName.Simple(assetObject.hash()));
+                task.setName(assetObject.hash());
                 task.setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
                         .resolve("assets").resolve("objects").resolve(assetObject.getLocation()));
                 task.setCacheRepository(dependencyManager.getCacheRepository());

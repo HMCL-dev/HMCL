@@ -97,11 +97,6 @@ public abstract class Task<T extends @Nullable Object> {
         return name;
     }
 
-    /// Returns whether a name has been configured with [#setName(TaskName)].
-    public final boolean hasExplicitName() {
-        return name != null;
-    }
-
     /// Sets the display name and returns this task. Passing `null` clears the name.
     @Contract("_ -> this")
     public Task<T> setName(@Nullable TaskName name) {
@@ -109,7 +104,15 @@ public abstract class Task<T extends @Nullable Object> {
         return this;
     }
 
-    /// Returns the class name, followed by the display name in brackets if present and different.
+    /// Sets the display name and returns this task. Passing `null` clears the name.
+    @Contract("_ -> this")
+    public Task<T> setName(@Nullable String name) {
+        this.name = name != null ? new TaskName.Simple(name) : null;
+        return this;
+    }
+
+    /// Returns the class name followed by the display name in brackets, or the
+    /// [Object#toString()] representation if this task has no name.
     @Override
     public String toString() {
         @Nullable TaskName name = getName();
@@ -334,7 +337,7 @@ public abstract class Task<T extends @Nullable Object> {
             T value = context.run(this);
             Task<U> next = context.call(executor, () -> fn.apply(value));
             return context.run(next);
-        }).setName(new TaskName.Simple(fn.toString())).setSignificance(TaskSignificance.MODERATE);
+        }).setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Maps the successful result to an optional child on the continuation's thread.
@@ -344,7 +347,7 @@ public abstract class Task<T extends @Nullable Object> {
             T value = context.run(this);
             @Nullable Task<U> next = fn.apply(value);
             return next == null ? null : context.run(next);
-        }).setName(new TaskName.Simple(fn.toString())).setSignificance(TaskSignificance.MODERATE);
+        }).setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Returns a task that runs `other` after success or ordinary failure, yielding its result.
@@ -369,7 +372,7 @@ public abstract class Task<T extends @Nullable Object> {
                 // This continuation also runs after an ordinary failure.
             }
             return context.run(fn.get());
-        }).setName(new TaskName.Simple(fn.toString())).setSignificance(TaskSignificance.MODERATE);
+        }).setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Returns a task that runs `action` on the continuation's executor after success or ordinary failure.

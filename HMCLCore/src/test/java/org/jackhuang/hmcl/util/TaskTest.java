@@ -21,22 +21,31 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TaskTest {
-    /// A task retains a diagnostic description when its display name is absent or cleared.
+    /// Structured and literal names can be assigned and cleared through either overload.
     @Test
     public void testCustomTaskName() {
         Task<?> task = Task.completed(42);
         String className = task.getClass().getName();
         assertNull(task.getName());
-        assertEquals(className, task.toString());
+        String unnamedDescription = task.toString();
+        assertFalse(unnamedDescription.isBlank());
 
         TaskName name = () -> "custom";
         task.setName(name);
         assertSame(name, task.getName());
         assertEquals(className + "[custom]", task.toString());
 
-        task.setName(null);
+        task.setName((TaskName) null);
         assertNull(task.getName());
-        assertEquals(className, task.toString());
+        assertEquals(unnamedDescription, task.toString());
+
+        assertSame(task, task.setName("literal"));
+        assertEquals(new TaskName.Simple("literal"), task.getName());
+        assertEquals(className + "[literal]", task.toString());
+
+        task.setName((String) null);
+        assertNull(task.getName());
+        assertEquals(unnamedDescription, task.toString());
     }
 
     /// A factory captures its caller before the task name is read.

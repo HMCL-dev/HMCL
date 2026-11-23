@@ -9,7 +9,6 @@ import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
-import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.Pair;
@@ -59,7 +58,7 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
 
                     if (candidate == null) return null; // If there's no candidate for all channels, then no candidate for release channel
                     return Pair.pair(candidate, candidateRelease);
-                }).setName(new TaskName.Simple(addon.getFileName())).setSignificance(TaskSignificance.MAJOR).withCounter()
+                }).setName(addon.getFileName()).setSignificance(TaskSignificance.MAJOR).withCounter()
         ).toList();
     }
 

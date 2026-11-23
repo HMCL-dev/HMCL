@@ -24,18 +24,18 @@ public final class GetTask extends FetchTask<String> {
     /// Creates a text download task for one URL.
     public GetTask(WebURL url) {
         this(List.of(url));
-        setName(new TaskName.Simple(url.toString()));
+        setName(url.toString());
     }
 
     /// Creates a text download task with a snapshot of nonempty candidate URLs in attempt order.
     public GetTask(List<WebURL> url) {
         super(DownloadCandidates.ofUrls(url));
-        setName(new TaskName.Simple(url.get(0).toString()));
+        setName(url.get(0).toString());
     }
 
     public GetTask(DownloadCandidates candidates) {
         super(candidates);
-        setName(new TaskName.Simple(candidates.getPrimaryCandidate().displayUrl()));
+        setName(candidates.getPrimaryCandidate().displayUrl());
     }
 
     @Override

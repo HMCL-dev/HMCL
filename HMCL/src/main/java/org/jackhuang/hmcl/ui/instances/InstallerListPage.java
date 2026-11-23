@@ -12,7 +12,6 @@ import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -161,7 +160,7 @@ public class InstallerListPage extends ListPaneBase<InstallerItem> {
         Task<?> task = repository.getDependency().updateInstanceAsync(
                 gameInstance.getId(),
                 publishedInstance -> repository.getDependency().installComponentLocalAsync(publishedInstance, file));
-        task.setName(new TaskName.Simple(i18n("install.installer.install_offline")));
+        task.setName(i18n("install.installer.install_offline"));
         Controllers.taskDialog(task.whenComplete(Schedulers.javafx(), (@Nullable Throwable exception) -> {
             if (exception == null) {
                 reloadCurrentInstance();

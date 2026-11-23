@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
-import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.util.io.Unzipper;
 
 import java.nio.file.Path;
@@ -21,7 +20,7 @@ public class ManuallyCreatedModpackInstallTask extends Task<Path> {
         this.zipFile = zipFile;
         this.name = name;
 
-        setName(new TaskName.Simple(i18n("modpack.installing")));
+        setName(i18n("modpack.installing"));
     }
 
     /// Extracts the game directory and returns its installation path.

@@ -11,7 +11,6 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
-import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +44,7 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
                     .supplyAsync(Schedulers.io(), () -> Files.createTempFile("hmcl-addon-update-", ".tmp"))
                     .thenComposeAsync(tempFile ->
                             new FileDownloadTask(downloadProvider.getDownloadCandidates(remote.file().url()), tempFile)
-                                    .setName(new TaskName.Simple(remote.name()))
+                                    .setName(remote.name())
                                     .thenRunAsync(Schedulers.javafx(), () -> local.setOld(true))
                                     .thenRunAsync(Schedulers.io(), () -> Files.move(tempFile, targetFile))
                                     .whenComplete(Schedulers.javafx(), exception -> {

@@ -15,7 +15,6 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -207,7 +206,7 @@ public final class JavaManager {
     /// Creates a task that checks the Java executable and registers it in writable user settings.
     public static Task<JavaRuntime> getAddJavaTask(Path binary) {
         return Task.supplyAsync(() -> JavaManager.getJava(binary))
-                .setName(new TaskName.Simple("Get Java"))
+                .setName("Get Java")
                 .setSignificance(TaskSignificance.MAJOR)
                 .thenApplyAsync(Schedulers.javafx(), javaRuntime -> {
                     if (!JavaManager.isCompatible(javaRuntime.getPlatform())) {

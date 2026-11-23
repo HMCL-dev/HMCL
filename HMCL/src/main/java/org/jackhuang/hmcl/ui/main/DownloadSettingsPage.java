@@ -18,7 +18,6 @@ import org.jackhuang.hmcl.setting.ProxyType;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ScrollUtils;
@@ -355,7 +354,7 @@ public class DownloadSettingsPage extends StackPane {
             spinner.setRadius(8);
             cleanButton.setGraphic(spinner);
             Task.runAsync(Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")))
-                    .setName(new TaskName.Simple("Clear Cache Directory"))
+                    .setName("Clear Cache Directory")
                     .setSignificance(TaskSignificance.MAJOR)
                     .whenComplete(Schedulers.javafx(), ignored -> {
                         cleanButton.setGraphic(null);

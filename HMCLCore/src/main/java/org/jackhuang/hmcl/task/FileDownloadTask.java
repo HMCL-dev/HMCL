@@ -87,7 +87,7 @@ public class FileDownloadTask extends FetchTask<@Nullable Void> {
         this.file = path;
         this.integrityCheck = integrityCheck;
 
-        setName(new TaskName.Simple(path.getFileName().toString()));
+        setName(path.getFileName().toString());
     }
 
     public FileDownloadTask(DownloadCandidates candidates, Path file) {
@@ -99,7 +99,7 @@ public class FileDownloadTask extends FetchTask<@Nullable Void> {
         this.file = path;
         this.integrityCheck = integrityCheck;
 
-        setName(new TaskName.Simple(path.getFileName().toString()));
+        setName(path.getFileName().toString());
     }
 
     public Path getPath() {

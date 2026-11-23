@@ -18,7 +18,6 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -130,7 +129,7 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
     }
 
     void createBackup() {
-        Controllers.taskDialog(new WorldBackupTask(world, backupsDir, false).setName(new TaskName.Simple(i18n("world.backup.processing"))).thenApplyAsync(path -> {
+        Controllers.taskDialog(new WorldBackupTask(world, backupsDir, false).setName(i18n("world.backup.processing")).thenApplyAsync(path -> {
             Matcher matcher = backupFileNamePattern.matcher(path.getFileName().toString());
             if (!matcher.matches()) {
                 throw new AssertionError("Wrong backup file name" + path);
