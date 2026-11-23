@@ -40,7 +40,7 @@ public final class LegacyFabricInstallTask extends Task<GameInstancePatch> {
     public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
         GameInstancePatch patch = getPatch(JsonUtils.GSON.fromJson(context.run(launchMetaTask), FabricInstallTask.FabricInfo.class), remote.getGameVersion(), remote.getSelfVersion());
 
-        context.run(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()).wrapResult());
+        context.tryRun(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()));
         return patch;
     }
 

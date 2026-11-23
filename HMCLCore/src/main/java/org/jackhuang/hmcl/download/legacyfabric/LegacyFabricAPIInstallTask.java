@@ -40,7 +40,7 @@ public final class LegacyFabricAPIInstallTask extends Task<@Nullable GameInstanc
         context.run(new FileDownloadTask(
                 remote.getVersion().file().url(),
                 modsDirectory.resolve("legacy-fabric-api-" + remote.getVersion().version() + ".jar"),
-                remote.getVersion().file().getIntegrityCheck()).wrapResult());
+                remote.getVersion().file().getIntegrityCheck()));
         return null;
     }
 }

@@ -59,7 +59,7 @@ public final class FabricInstallTask extends Task<GameInstancePatch> {
 
         GameInstancePatch patch = getPatch(fabricInfo, remote.getGameVersion(), remote.getSelfVersion());
 
-        context.run(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()).wrapResult());
+        context.tryRun(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()));
         return patch;
     }
 

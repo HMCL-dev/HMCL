@@ -45,7 +45,7 @@ public final class QuiltAPIInstallTask extends Task<@Nullable GameInstancePatch>
         context.run(new FileDownloadTask(
                 remote.getVersion().file().url(),
                 modsDirectory.resolve("quilt-api-" + remote.getVersion().version() + ".jar"),
-                remote.getVersion().file().getIntegrityCheck()).wrapResult());
+                remote.getVersion().file().getIntegrityCheck()));
         return null;
     }
 }

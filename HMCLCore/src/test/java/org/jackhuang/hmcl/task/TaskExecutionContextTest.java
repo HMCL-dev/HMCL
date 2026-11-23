@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -259,9 +261,52 @@ final class TaskExecutionContextTest {
         }).run();
     }
 
-    /// A failed sibling does not prevent concurrent work from completing before the batch returns.
+    /// A successful batch, including an empty one, returns true. A failed child retains its cause.
     @Test
-    void drainsConcurrentSiblingsOnFailure() throws Exception {
+    void reportsTryRunOutcome() throws Exception {
+        task(context -> {
+            assertTrue(context.tryRunAll(List.of()));
+            assertTrue(context.tryRun(Task.completed(false)));
+            assertTrue(context.tryRunAll(List.of(Task.completed(1), Task.completed(2))));
+            for (Throwable failure : List.of(new IOException(), new AssertionError(), new CancellationException())) {
+                Task<?> child = Task.failed(failure);
+                assertFalse(context.tryRun(child));
+                assertSame(failure, child.exceptionNow());
+            }
+            return null;
+        }).run();
+    }
+
+    /// Cancelling the task tree interrupts a sequence that otherwise tolerates child failures.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void tryRunPropagatesCancellation(boolean batch) {
+        Task<?> child = Task.completed(0);
+        AtomicInteger continued = new AtomicInteger();
+        TaskHandle handle = task(context -> {
+            if (batch)
+                context.tryRunAll(List.of(child));
+            else
+                context.tryRun(child);
+            return continued.incrementAndGet();
+        }).newHandle();
+        handle.addTaskListener(new TaskListener() {
+            /// Cancels the tree once the child begins.
+            @Override
+            public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
+                if (task == child)
+                    handle.cancel();
+            }
+        });
+        assertFalse(handle.test());
+        assertInstanceOf(CancellationException.class, handle.getException());
+        assertEquals(0, continued.get());
+    }
+
+    /// A failed sibling does not prevent concurrent work from completing before the batch returns.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void drainsConcurrentSiblingsOnFailure(boolean ignoreFailures) throws Exception {
         CountDownLatch entered = new CountDownLatch(2);
         AtomicInteger finished = new AtomicInteger();
         IOException failure = new IOException("Child failed");
@@ -276,7 +321,10 @@ final class TaskExecutionContextTest {
             return finished.incrementAndGet();
         });
         task(context -> {
-            assertSame(failure, assertThrows(IOException.class, () -> context.runAll(List.of(first, second))));
+            if (ignoreFailures)
+                assertFalse(context.tryRunAll(List.of(first, second)));
+            else
+                assertSame(failure, assertThrows(IOException.class, () -> context.runAll(List.of(first, second))));
             assertEquals(1, finished.get());
             assertEquals(1, second.resultNow());
             assertEquals(Task.TaskState.FAILED, first.getState());

@@ -208,7 +208,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
                     libraries
             );
 
-            context.run(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()).wrapResult());
+            context.tryRun(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()));
             return patch;
         }
     }

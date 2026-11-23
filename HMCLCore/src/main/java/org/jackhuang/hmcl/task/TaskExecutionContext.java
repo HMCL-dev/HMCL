@@ -4,11 +4,16 @@ package org.jackhuang.hmcl.task;
 
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Executes children within the current task's cancellation and listener scope.
 /// Children whose [Task#getExecutor()] returns `null` inherit the executor running the current
@@ -42,6 +47,21 @@ public interface TaskExecutionContext {
     /// @throws IllegalStateException if the child was already submitted
     <T extends @Nullable Object> T run(Task<T> task) throws Exception;
 
+    /// Runs one child to completion. A reported failure, including an error or independent
+    /// child cancellation, is logged.
+    ///
+    /// @return true if the child succeeded
+    /// @throws CancellationException if this task tree is cancelled or the calling thread is interrupted
+    default boolean tryRun(Task<?> task) {
+        Objects.requireNonNull(task);
+        try {
+            run(task);
+        } catch (Throwable failure) {
+            return childExecutionSucceeded(task, failure);
+        }
+        return childExecutionSucceeded(task, null);
+    }
+
     /// Schedules the children on their respective executors and waits for all of them.
     /// Siblings on executors with available workers may run concurrently. A failure in
     /// one child does not cancel the others. An empty collection schedules no work.
@@ -50,6 +70,33 @@ public interface TaskExecutionContext {
     /// @return a mutable list of successful results in the input's iteration order
     /// @throws Exception if a child fails or execution is cancelled or interrupted
     <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> tasks) throws Exception;
+
+    /// Runs the children as a batch and waits for all of them, even if one fails.
+    /// A reported failure is logged as in [#tryRun(Task)].
+    ///
+    /// @return true if all children succeeded or none were supplied, false if execution reported a failure
+    /// @throws CancellationException if this task tree is cancelled or the calling thread is interrupted
+    default boolean tryRunAll(List<? extends Task<?>> tasks) {
+        @Unmodifiable List<? extends Task<?>> children = List.copyOf(tasks);
+        try {
+            runAll(children);
+        } catch (Throwable failure) {
+            return childExecutionSucceeded(children, failure);
+        }
+        return childExecutionSucceeded(children, null);
+    }
+
+    /// Reports a child or batch failure and propagates cancellation before the caller continues.
+    private boolean childExecutionSucceeded(Object children, @Nullable Throwable failure) {
+        if (failure != null) {
+            if (failure instanceof CancellationException cancelled && isCancelled())
+                throw cancelled;
+            LOG.warning("Child task failed: " + children, failure);
+        }
+        if (isCancelled())
+            throw new CancellationException("Cancelled while waiting for child tasks");
+        return failure == null;
+    }
 
     /// Executes an action on the specified executor and returns its result without creating
     /// a task or sending lifecycle notifications. A `null` executor runs the action directly

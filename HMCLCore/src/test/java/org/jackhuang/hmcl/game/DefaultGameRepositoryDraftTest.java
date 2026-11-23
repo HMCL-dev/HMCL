@@ -3,19 +3,24 @@
 package org.jackhuang.hmcl.game;
 
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.ComponentRemoteVersionList;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.InstallStages;
+import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricAPIRemoteVersion;
+import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
+import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
@@ -41,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -177,6 +183,29 @@ public final class DefaultGameRepositoryDraftTest {
         dispatched.clear();
         assertTrue(install.newHandle(listener).test(), () -> String.valueOf(install.exceptionNowOrNull()));
         assertEquals(List.of(expected, expected), dispatched);
+    }
+
+    /// API mods cannot complete an instance update when their sole JAR is unavailable.
+    @Test
+    void apiModUpdateFailsWhenJarIsMissing(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        repository.save(new GameInstanceManifest(id).withMainClass(GameComponentAnalyzer.VANILLA_MAIN));
+        DefaultDependencyManager manager = createDependencyManager(repository);
+        GameVersionNumber game = GameVersionNumber.asGameVersion("1.20.1");
+        String url = directory.resolve("missing.jar").toUri().toString();
+        RemoteAddon.File file = new RemoteAddon.File(Map.of(), url, "mod.jar");
+        RemoteAddon.Version version = new RemoteAddon.Version(RemoteAddon.Source.MODRINTH, "v1", "mod", "Mod", "1",
+                Instant.EPOCH, RemoteAddon.VersionType.Release, file, List.of(), List.of("1.20.1"), List.of());
+
+        for (ComponentRemoteVersion remote : List.of(
+                new FabricAPIRemoteVersion(game, "1", "1", Instant.EPOCH, version, List.of(url)),
+                new LegacyFabricAPIRemoteVersion(game, "1", "1", Instant.EPOCH, version, List.of(url)),
+                new QuiltAPIRemoteVersion(game, "1", "1", Instant.EPOCH, version, List.of(url)))) {
+            Task<?> update = manager.updateInstanceAsync(id, instance ->
+                    manager.installComponentRemoteAsync(instance, instance.getManifest(), remote));
+            assertThrows(DownloadException.class, update::run, remote.getComponentType().getPatchId());
+        }
     }
 
     /// Only formats allowing manual completion retain a committed instance after a completion failure.

@@ -56,10 +56,10 @@ public class GameInstallTask extends Task<GameInstancePatch> {
                 GameInstancePatch.PRIORITY_MC).withJar(null);
 
         GameInstanceManifest newManifest = new GameInstanceManifest(this.manifest.id()).addPatch(patch).reconstructByPatches();
-        context.runAll(List.of(
-                new GameDownloadTask(dependencyManager, newManifest).wrapResult(),
-                new GameAssetDownloadTask(dependencyManager, newManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true).wrapResult(),
-                new GameLibrariesTask(dependencyManager, newManifest, true).wrapResult()));
+        context.tryRunAll(List.of(
+                new GameDownloadTask(dependencyManager, newManifest),
+                new GameAssetDownloadTask(dependencyManager, newManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
+                new GameLibrariesTask(dependencyManager, newManifest, true)));
         return patch;
     }
 }

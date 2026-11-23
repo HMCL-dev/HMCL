@@ -50,7 +50,7 @@ public final class QuiltInstallTask extends Task<GameInstancePatch> {
 
         GameInstancePatch patch = getPatch(JsonUtils.GSON.fromJson(context.run(launchMetaTask), QuiltInfo.class), remote.getSelfVersion());
 
-        context.run(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()).wrapResult());
+        context.tryRun(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()));
         return patch;
     }
 

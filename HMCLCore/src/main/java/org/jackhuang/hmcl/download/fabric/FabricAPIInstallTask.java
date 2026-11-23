@@ -45,7 +45,7 @@ public final class FabricAPIInstallTask extends Task<@Nullable GameInstancePatch
         context.run(new FileDownloadTask(
                 remote.getVersion().file().url(),
                 modsDirectory.resolve("fabric-api-" + remote.getVersion().version() + ".jar"),
-                remote.getVersion().file().getIntegrityCheck()).wrapResult());
+                remote.getVersion().file().getIntegrityCheck()));
         return null;
     }
 }
