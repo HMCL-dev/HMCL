@@ -161,7 +161,7 @@ public class InstallerListPage extends ListPaneBase<InstallerItem> {
                 gameInstance.getId(),
                 publishedInstance -> repository.getDependency().installComponentLocalAsync(publishedInstance, file));
         task.setName(i18n("install.installer.install_offline"));
-        Controllers.taskDialog(task.whenComplete(Schedulers.javafx(), (@Nullable Throwable exception) -> {
+        Controllers.taskDialog(task.whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
             if (exception == null) {
                 reloadCurrentInstance();
                 Controllers.dialog(i18n("install.success"));

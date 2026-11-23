@@ -226,7 +226,7 @@ public class TerracottaControllerPage extends StackPane {
                     Controllers.prompt(i18n("terracotta.status.waiting.guest.prompt.title"), (code, handler) -> {
                         Task<TerracottaState.GuestConnecting> task = TerracottaManager.setGuesting(code);
                         if (task != null) {
-                            task.whenComplete(Schedulers.javafx(), (s, e) -> {
+                            task.whenCompleteAsync(Schedulers.javafx(), (s, e) -> {
                                 if (e != null) {
                                     handler.reject(i18n("terracotta.status.waiting.guest.prompt.invalid"));
                                 } else {
@@ -457,9 +457,9 @@ public class TerracottaControllerPage extends StackPane {
                         FXUtils.showFileInExplorer(path);
                     }).thenRunAsync(
                             () -> Thread.sleep(3000)
-                    ).whenComplete(
+                    ).whenCompleteAsync(
                             Schedulers.javafx(),
-                            e -> exportLog.setLoading(false)
+                            (ignored, e) -> exportLog.setLoading(false)
                     ).start();
                 });
 

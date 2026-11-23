@@ -92,7 +92,7 @@ public final class Instances {
         pane.setTitle(i18n("modpack.download.title", file.file().filename()));
         Task<?> task = new FileDownloadTask(downloadURLs, modpack)
                 .setName(file.name())
-                .whenComplete(Schedulers.javafx(), (@Nullable Throwable e) -> {
+                .whenCompleteAsync(Schedulers.javafx(), (ignored, e) -> {
                     if (e == null) {
                         ModpackInstallWizardProvider installWizardProvider;
                         if (instanceId != null)
@@ -128,7 +128,7 @@ public final class Instances {
         deleteButton.getStyleClass().add("dialog-error");
         deleteButton.setOnAction(e -> {
             Task.supplyAsync(Schedulers.io(), () -> repository.removeInstanceFromDisk(instanceId))
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null || !Boolean.TRUE.equals(result)) {
                             Controllers.dialog(i18n("instance.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                         }
@@ -225,13 +225,13 @@ public final class Instances {
                                 draft.putPrimaryJar(instanceId, gameDownloadTask.resultNow());
                                 draft.commit();
                             })
-                            .whenComplete(exception -> {
+                            .whenComplete((ignored, exception) -> {
                                 GameRepositoryDraft draft = activeDraft.getAndSet(null);
                                 if (draft != null && draft.isOpen()) {
                                     draft.abort();
                                 }
                             })
-                            .whenComplete(Schedulers.javafx(), (exception) -> {
+                            .whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
                                 if (exception == null) {
                                     repository.setSelectedInstance(repository.getInstance(instanceId));
                                 } else {
@@ -252,7 +252,7 @@ public final class Instances {
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
                     Task.runAsync(() -> repository.duplicateInstance(instanceId, newInstanceId, copySaves))
                             .thenComposeAsync(repository.refreshAsync())
-                            .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
                                     handler.resolve();
                                 } else {

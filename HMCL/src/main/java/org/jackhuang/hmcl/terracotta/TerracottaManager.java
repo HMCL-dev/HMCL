@@ -166,7 +166,7 @@ public final class TerracottaManager {
                             launch(launching, true);
                         }
                     });
-                }).whenComplete(exception -> {
+                }).whenComplete((ignored, exception) -> {
                     if (exception instanceof CancellationException) {
                         // no-op
                     } else if (exception instanceof DownloadException) {
@@ -203,7 +203,7 @@ public final class TerracottaManager {
                         launch(launching, true);
                     }
                 })
-                .whenComplete(exception -> {
+                .whenComplete((ignored, exception) -> {
                     compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
                 }).start();
 
@@ -258,7 +258,7 @@ public final class TerracottaManager {
                     }
                 }
             }
-        }).whenComplete(Schedulers.javafx(), (port, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (port, exception) -> {
             TerracottaState next;
             if (exception == null) {
                 next = new TerracottaState.Unknown(port);

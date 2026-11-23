@@ -366,7 +366,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                                 .thenApplyAsync(ignored -> repository.getInstance(instanceId));
                     }
                 })
-                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         repository.setSelectedInstance(result);
                         Instances.launch(result);

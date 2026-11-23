@@ -111,7 +111,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
             try {
                 if (url.endsWith("server-manifest.json")) {
                     // if urlString ends with .json, we assume that the url is server-manifest.json
-                    Controllers.taskDialog(new GetTask(WebURL.parse(url)).whenComplete(Schedulers.javafx(), (result, e) -> {
+                    Controllers.taskDialog(new GetTask(WebURL.parse(url)).whenCompleteAsync(Schedulers.javafx(), (result, e) -> {
                         ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
                         if (manifest == null) {
                             handler.reject(i18n("modpack.type.server.malformed"));
@@ -129,7 +129,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                     Path modpack = Files.createTempFile("modpack", ".zip");
                     Controllers.taskDialog(
                             new FileDownloadTask(url, modpack)
-                                    .whenComplete(Schedulers.javafx(), e -> {
+                                    .whenCompleteAsync(Schedulers.javafx(), (ignored, e) -> {
                                         if (e == null) {
                                             handler.resolve();
                                             controller.getSettings().put(MODPACK_FILE, modpack);

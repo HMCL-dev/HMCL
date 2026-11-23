@@ -184,7 +184,7 @@ public final class TexturesLoader {
 
                 binding.set(uuidFallback);
                 if (skin != null) {
-                    skin.load(profileName, POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    skin.load(profileName, POOL).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load texture", exception);
                         } else if (result != null && result.skin() != null && result.skin().image() != null) {

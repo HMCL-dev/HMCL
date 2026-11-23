@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.Result;
+import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalBiFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -483,22 +484,16 @@ public abstract class Task<T extends @Nullable Object> {
         }.setName(name));
     }
 
-    /// Reports completion to `action` on the continuation's thread and preserves this task's result.
-    /// See [#whenComplete(Executor, FinalizedCallbackWithResult)] for failure propagation.
-    public final Task<T> whenComplete(FinalizedCallback action) {
-        return whenComplete(null, action);
-    }
-
-    /// Reports completion to `action` on `executor` and preserves this task's result.
-    /// See [#whenComplete(Executor, FinalizedCallbackWithResult)] for failure propagation.
-    public final Task<T> whenComplete(@Nullable Executor executor, FinalizedCallback action) {
-        return whenComplete(executor, (value, failure) -> action.execute(failure));
-    }
-
     /// Reports this task's result or failure to `action` on the continuation's thread.
-    /// See [#whenComplete(Executor, FinalizedCallbackWithResult)] for the returned task's outcome.
-    public final Task<T> whenComplete(FinalizedCallbackWithResult<? super T> action) {
-        return whenComplete(null, action);
+    /// See [#whenCompleteAsync(Executor, ExceptionalBiConsumer)] for the returned task's outcome.
+    public final Task<T> whenComplete(ExceptionalBiConsumer<? super @Nullable T, ? super @Nullable Throwable, ?> action) {
+        return whenCompleteAsync(null, action);
+    }
+
+    /// Reports this task's result or failure to `action` on the default task scheduler.
+    /// See [#whenCompleteAsync(Executor, ExceptionalBiConsumer)] for the returned task's outcome.
+    public final Task<T> whenCompleteAsync(ExceptionalBiConsumer<? super @Nullable T, ? super @Nullable Throwable, ?> action) {
+        return whenCompleteAsync(Schedulers.tasks(), action);
     }
 
     /// Returns a continuation that invokes `action` with this task's result or failure.
@@ -511,7 +506,10 @@ public abstract class Task<T extends @Nullable Object> {
     /// Cancellation before the returned task starts skips the callback.
     ///
     /// @param executor the executor for the callback, or `null` to run it on the continuation's thread
-    public Task<T> whenComplete(@Nullable Executor executor, FinalizedCallbackWithResult<? super T> action) {
+    /// @param action the observer of the source result or failure
+    /// @throws NullPointerException if `action` is null
+    public Task<T> whenCompleteAsync(@Nullable Executor executor, ExceptionalBiConsumer<? super @Nullable T, ? super @Nullable Throwable, ?> action) {
+        Objects.requireNonNull(action);
         return new Task<T>() {
             /// {@inheritDoc}
             @Override
@@ -520,45 +518,23 @@ public abstract class Task<T extends @Nullable Object> {
                 try {
                     value = context.run(Task.this);
                 } catch (Throwable failure) {
-                    throw notifyAndRethrow(failure, () -> context.call(executor, () -> {
-                        action.execute(null, failure);
-                        return null;
-                    }));
+                    try {
+                        context.call(executor, () -> {
+                            action.accept(null, failure);
+                            return null;
+                        });
+                    } catch (Throwable callbackFailure) {
+                        if (callbackFailure != failure)
+                            failure.addSuppressed(callbackFailure);
+                    }
+                    throw failure;
                 }
                 return context.call(executor, () -> {
-                    action.execute(value, null);
+                    action.accept(value, null);
                     return value;
                 });
             }
         }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
-    }
-
-    /// Invokes the corresponding optional callback on `executor` and preserves the source result.
-    /// If `success` throws, its exception is also reported to `failure`.
-    /// The first failure propagates, with any distinct later failure suppressed.
-    public final <E1 extends Exception, E2 extends Exception> Task<T> whenComplete(@Nullable Executor executor, @Nullable ExceptionalRunnable<E1> success, @Nullable ExceptionalConsumer<? super Throwable, E2> failure) {
-        return whenComplete(executor, exception -> {
-            if (exception != null) {
-                if (failure != null)
-                    failure.accept(exception);
-            } else if (success != null) {
-                try {
-                    success.run();
-                } catch (Throwable callbackFailure) {
-                    if (failure != null)
-                        throw notifyAndRethrow(callbackFailure, () -> failure.accept(callbackFailure));
-                    throw callbackFailure;
-                }
-            }
-        });
-    }
-
-    /// Passes the successful result to `success` or the failure to `failure` on `executor`.
-    /// The returned task preserves the successful result.
-    /// A failure thrown by `success` is reported to the optional failure callback,
-    /// as in [#whenComplete(Executor, ExceptionalRunnable, ExceptionalConsumer)].
-    public <E1 extends Exception, E2 extends Exception> Task<T> whenComplete(@Nullable Executor executor, ExceptionalConsumer<T, E1> success, @Nullable ExceptionalConsumer<? super Throwable, E2> failure) {
-        return whenComplete(executor, () -> success.accept(resultNow()), failure);
     }
 
     /// Returns a continuation that maps this task's result or failure on the continuation's thread.
@@ -895,17 +871,6 @@ public abstract class Task<T extends @Nullable Object> {
         state = failure instanceof CancellationException ? State.CANCELLED : State.FAILED;
     }
 
-    /// Notifies the observer and propagates the primary failure even if notification also fails.
-    private static RuntimeException notifyAndRethrow(Throwable failure, ExceptionalRunnable<?> observer) {
-        try {
-            observer.run();
-        } catch (Throwable secondary) {
-            if (secondary != failure)
-                failure.addSuppressed(secondary);
-        }
-        return rethrow(failure);
-    }
-
     /// Rethrows the original failure across task APIs that declare checked exceptions as [Exception].
     @SuppressWarnings("unchecked")
     static <E extends Throwable> RuntimeException rethrow(Throwable failure) throws E {
@@ -934,22 +899,6 @@ public abstract class Task<T extends @Nullable Object> {
         FAILED,
         /// The executor has recorded a [CancellationException].
         CANCELLED
-    }
-
-    /// Receives the failure outcome of a task.
-    @FunctionalInterface
-    public interface FinalizedCallback {
-        /// Receives null on success or the cause on failure.
-        void execute(@Nullable Throwable failure) throws Exception;
-    }
-
-    /// Receives the result and failure outcome of a task.
-    ///
-    /// @param <T> the task result type
-    @FunctionalInterface
-    public interface FinalizedCallbackWithResult<T extends @Nullable Object> {
-        /// Receives the result and a null failure on success, or a null result and the cause on failure.
-        void execute(@Nullable T result, @Nullable Throwable failure) throws Exception;
     }
 
     /// Binds a task as a root or a child.

@@ -167,7 +167,7 @@ public class DefaultGameBuilder extends GameBuilder {
                                     return instance;
                                 });
                     })
-                    .whenComplete(exception -> {
+                    .whenComplete((ignored, exception) -> {
                         if (draft.isOpen()) {
                             draft.abort();
                         }

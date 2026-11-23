@@ -80,7 +80,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
         actions.getChildren().setAll(saveButton, cancelButton);
 
         Task.supplyAsync(() -> type.read(file))
-                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         setLoading(false);
 

@@ -117,7 +117,7 @@ public final class TerracottaBundle {
                     }
                 }
             }
-        }).whenComplete(exception -> {
+        }).whenComplete((ignored, exception) -> {
             if (exception != null) {
                 FileUtils.deleteDirectory(root);
             }

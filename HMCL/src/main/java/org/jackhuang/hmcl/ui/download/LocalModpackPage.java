@@ -105,7 +105,7 @@ public final class LocalModpackPage extends ModpackPage {
 
         showSpinner();
         Task.supplyAsync(() -> ModpackHelper.readModpackManifest(selectedFile))
-                .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
+                .whenCompleteAsync(Schedulers.javafx(), (manifest, exception) -> {
                     if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
                         nameProperty.set(FileUtils.getName(selectedFile));
@@ -161,7 +161,7 @@ public final class LocalModpackPage extends ModpackPage {
         loadingOptionalFiles.set(true);
         loadedOptionalFiles.set(false);
         Task.supplyAsync(Schedulers.io(), () -> manifest.getManifest().getProvider().loadFiles(DownloadProviders.getDownloadProvider(), manifest.getManifest()))
-                .whenComplete(Schedulers.javafx(), (manifest1, exception) -> {
+                .whenCompleteAsync(Schedulers.javafx(), (manifest1, exception) -> {
                     loadingOptionalFiles.set(false);
                     List<? extends ModpackFile> files = ((ModpackManifest.SupportOptional) manifest1).getFiles();
                     manifest.setManifest(manifest1);

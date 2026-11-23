@@ -313,7 +313,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         var libraries = getRepository().getBaseDirectory().resolve("libraries");
         Task.runAsync(Schedulers.io(), () -> {
             FileUtils.deleteDirectoryQuietly(libraries);
-        }).whenComplete(Schedulers.javafx(), (exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
             if (exception != null) {
                 Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             }
@@ -333,7 +333,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
             if (resourcesDir != null) {
                 FileUtils.deleteDirectoryQuietly(resourcesDir);
             }
-        }).whenComplete(Schedulers.javafx(), (exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
             if (exception != null) {
                 Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             }

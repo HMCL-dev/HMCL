@@ -74,7 +74,7 @@ public class TaskTest {
         try {
             Thread.setDefaultUncaughtExceptionHandler((thread, failure) -> uncaught.set(failure));
             assertFalse(Task.composeAsync(() -> Task.allOf(Task.allOf(Task.failed(error))))
-                    .whenComplete(observed::set).test());
+                    .whenComplete((ignored, failure) -> observed.set(failure)).test());
         } finally {
             Thread.setDefaultUncaughtExceptionHandler(previous);
         }
@@ -144,24 +144,15 @@ public class TaskTest {
     @Test
     public void testWhenCompletePreservesResult() throws Exception {
         StringBuilder value = new StringBuilder("result");
-        Task<StringBuilder> observed = Task.completed(value)
-                .whenComplete(failure -> assertNull(failure))
-                .whenComplete(null, failure -> assertNull(failure))
-                .whenComplete((result, failure) -> {
-                    assertSame(value, result);
-                    assertNull(failure);
-                    value.append('s');
-                })
-                .whenComplete(null, (result, failure) -> {
-                    assertSame(value, result);
-                    assertNull(failure);
-                })
-                .whenComplete(null, () -> value.append('!'), null)
-                .whenComplete(null, result -> assertSame(value, result), null);
-        assertEquals("results!", observed.thenApply(StringBuilder::toString).run());
+        Task<StringBuilder> observed = Task.completed(value).whenComplete((result, failure) -> {
+            assertSame(value, result);
+            assertNull(failure);
+            value.append('!');
+        });
+        assertEquals("result!", observed.thenApply(StringBuilder::toString).run());
         assertSame(value, observed.resultNow());
 
-        Task<@Nullable String> nullable = Task.<@Nullable String>completed(null).whenComplete(null, (result, failure) -> {
+        Task<@Nullable String> nullable = Task.<@Nullable String>completed(null).whenComplete((result, failure) -> {
             assertNull(result);
             assertNull(failure);
         });
@@ -173,7 +164,7 @@ public class TaskTest {
     public void testWhenComplete() {
         AssertionError source = new AssertionError("source");
         IOException callback = new IOException("callback");
-        Task<?> observed = Task.failed(source).whenComplete(null, (value, failure) -> {
+        Task<?> observed = Task.failed(source).whenComplete((value, failure) -> {
             assertNull(value);
             assertSame(source, failure);
             throw callback;
@@ -183,15 +174,15 @@ public class TaskTest {
 
         IOException sourceException = new IOException("source");
         AssertionError callbackError = new AssertionError("callback");
-        Task<?> failedCleanup = Task.failed(sourceException).whenComplete(failure -> { throw callbackError; });
+        Task<?> failedCleanup = Task.failed(sourceException).whenComplete((value, failure) -> { throw callbackError; });
         assertSame(sourceException, assertThrows(IOException.class, failedCleanup::run));
         assertArrayEquals(new Throwable[]{callbackError}, sourceException.getSuppressed());
 
-        Task<?> rethrown = Task.failed(callback).whenComplete(failure -> { throw callback; });
+        Task<?> rethrown = Task.failed(callback).whenComplete((value, failure) -> { throw callback; });
         assertSame(callback, assertThrows(IOException.class, rethrown::run));
         assertEquals(0, callback.getSuppressed().length);
 
-        Task<?> successfulSource = Task.completed(1).whenComplete(null, (value, failure) -> {
+        Task<?> successfulSource = Task.completed(1).whenComplete((value, failure) -> {
             assertEquals(1, value);
             assertNull(failure);
             throw callback;
@@ -200,9 +191,9 @@ public class TaskTest {
 
         AtomicReference<@Nullable Throwable> observedFailure = new AtomicReference<>();
         AssertionError successCallback = new AssertionError("success callback");
-        Task<?> paired = Task.completed(1).whenComplete(null, value -> {
-            throw successCallback;
-        }, observedFailure::set);
+        Task<?> paired = Task.completed(1)
+                .thenAcceptAsync(Schedulers.io(), value -> { throw successCallback; })
+                .whenCompleteAsync(Schedulers.io(), (ignored, failure) -> observedFailure.set(failure));
         assertSame(successCallback, assertThrows(AssertionError.class, paired::run));
         assertSame(successCallback, observedFailure.get());
     }

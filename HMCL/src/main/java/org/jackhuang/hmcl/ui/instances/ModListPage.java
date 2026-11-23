@@ -444,7 +444,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
                                 return null;
                             }
                         })
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                             if (exception instanceof CancellationException) return;
                             if (exception != null || result == null) {
                                 Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);

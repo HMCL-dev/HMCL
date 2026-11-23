@@ -96,7 +96,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     private void load(boolean refresh) {
         status.set(Status.LOADING);
         Task<?> task = downloadProvider.getVersionsAsync(componentType, gameVersion, refresh)
-                .whenComplete(Schedulers.javafx(), (items, exception) -> {
+                .whenCompleteAsync(Schedulers.javafx(), (items, exception) -> {
                     if (exception == null) {
                         versions.setAll(items);
                         status.set(Status.SUCCESS);

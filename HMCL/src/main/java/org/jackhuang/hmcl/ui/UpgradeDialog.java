@@ -73,7 +73,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
 
             renderer.mergeLineBreaks();
             return renderer.render();
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 if (result != null) {
                     ScrollPane scrollPane = new ScrollPane(result);

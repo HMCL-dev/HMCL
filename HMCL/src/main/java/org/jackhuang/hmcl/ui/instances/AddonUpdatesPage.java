@@ -164,7 +164,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                         .toList()
         );
         Controllers.taskDialog(
-                task.whenComplete(Schedulers.javafx(), exception -> {
+                task.whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
                     fireEvent(new PageCloseEvent());
                     if (!task.getFailedAddons().isEmpty()) {
                         Controllers.dialog(i18n("addon.check_update.failed_download") + "\n" +
@@ -202,7 +202,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             csvTable.write(path);
 
             FXUtils.showFileInExplorer(path);
-        }).whenComplete(Schedulers.javafx(), exception -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
             if (exception == null) {
                 Controllers.dialog(path.toString(), i18n("message.success"));
             } else {
@@ -447,7 +447,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 String raw = repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.projectId(), version.versionId());
                 if ("238222".equals(object.data.targetVersion().projectId())) return raw;
                 return StringUtils.convertToHtml(raw);
-            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     object.changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, repo.getBaseUrl()));
@@ -463,7 +463,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button) {
             Task.supplyAsync(() ->
                     object.data.targetVersion().source().getRepository().getVersionPageUrl(object.data.targetVersion())
-            ).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            ).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null && StringUtils.isNotBlank(result)) {
                     button.setExternalLink(result);
                     button.setDisable(false);

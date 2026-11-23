@@ -23,8 +23,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.PortablePath;
-import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
-import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -153,22 +151,19 @@ public final class ModpackHelper {
 
     /// Creates a server modpack installation task that refreshes the repository and enables instance isolation.
     public static Task<?> getInstallTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId, Modpack modpack) {
-        ExceptionalRunnable<?> success = () -> {
-            repository.refresh();
-            repository.getInstance(instanceId).enableIsolation();
-        };
-
-        ExceptionalConsumer<Throwable, ?> failure = ex -> {
-            if (ex instanceof ModpackCompletionException && !(ex.getCause() instanceof FileNotFoundException)) {
-                success.run();
-                // This is tolerable and we will not delete the game
-            }
-        };
-
         return new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId)
-                .whenComplete(Schedulers.io(), success, failure)
+                .whenCompleteAsync(Schedulers.io(), (ignored, failure) -> refreshInstalledInstance(repository, instanceId, failure))
                 .withStage(InstallStages.MODPACK)
                 .withStageHints(MODPACK_STAGE_HINTS);
+    }
+
+    /// Refreshes the repository and enables isolation after a successful installation or a
+    /// [ModpackCompletionException] whose cause is not a [FileNotFoundException].
+    private static void refreshInstalledInstance(HMCLGameRepository repository, GameInstanceID instanceId, @Nullable Throwable failure) {
+        if (failure == null || (failure instanceof ModpackCompletionException && !(failure.getCause() instanceof FileNotFoundException))) {
+            repository.refresh();
+            repository.getInstance(instanceId).enableIsolation();
+        }
     }
 
     public static boolean isExternalGameNameConflicts(String name) {
@@ -215,35 +210,13 @@ public final class ModpackHelper {
             Modpack modpack,
             @Nullable String iconUrl,
             @Nullable Set<String> excludedFiles) {
-        ExceptionalRunnable<?> success = () -> {
-            repository.refresh();
-            repository.getInstance(instanceId).enableIsolation();
-        };
-
-        ExceptionalConsumer<Throwable, ?> failure = ex -> {
-            if (ex instanceof ModpackCompletionException && !(ex.getCause() instanceof FileNotFoundException)) {
-                success.run();
-                // This is tolerable and we will not delete the game
-            }
-        };
-
-        if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
-                    .whenComplete(Schedulers.io(), success, failure)
-                    .thenComposeAsync(createMultiMCPostInstallTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
-                    .withStage(InstallStages.MODPACK)
-                    .withStageHints(MODPACK_STAGE_HINTS);
-        else if (modpack.getManifest() instanceof McbbsModpackManifest)
-            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
-                    .whenComplete(Schedulers.io(), success, failure)
-                    .thenComposeAsync(createMcbbsPostInstallTask(repository, (McbbsModpackManifest) modpack.getManifest(), instanceId))
-                    .withStage(InstallStages.MODPACK)
-                    .withStageHints(MODPACK_STAGE_HINTS);
-        else
-            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
-                    .whenComplete(Schedulers.io(), success, failure)
-                    .withStage(InstallStages.MODPACK)
-                    .withStageHints(MODPACK_STAGE_HINTS);
+        Task<?> task = modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
+                .whenCompleteAsync(Schedulers.io(), (ignored, failure) -> refreshInstalledInstance(repository, instanceId, failure));
+        if (modpack.getManifest() instanceof MultiMCInstanceConfiguration manifest)
+            task = task.thenComposeAsync(createMultiMCPostInstallTask(repository, manifest, instanceId));
+        else if (modpack.getManifest() instanceof McbbsModpackManifest manifest)
+            task = task.thenComposeAsync(createMcbbsPostInstallTask(repository, manifest, instanceId));
+        return task.withStage(InstallStages.MODPACK).withStageHints(MODPACK_STAGE_HINTS);
     }
 
     /// Updates a server modpack with backup, repository refresh, and modpack stage hints.

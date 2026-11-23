@@ -202,7 +202,8 @@ final class TaskExecutionContextTest {
             } finally {
                 assertTrue(parent.isCancelled());
             }
-        }).whenComplete(cause -> {
+        }).whenComplete((value, cause) -> {
+            assertNull(value);
             assertInstanceOf(CancellationException.class, cause);
             cleanups.incrementAndGet();
         });
@@ -630,9 +631,14 @@ final class TaskExecutionContextTest {
                 .thenRunAsync(checkWorker::call)
                 .thenComposeAsync(() -> Task.completed(checkWorker.call()))
                 .thenComposeAsync(value -> Task.completed(checkWorker.call()))
+                .whenCompleteAsync((value, failure) -> {
+                    assertNull(failure);
+                    assertEquals(5, value);
+                    checkWorker.call();
+                })
                 .thenSupplyAsync(checkWorker)
                 .thenComposeOptionalAsync(value -> Task.completed(checkWorker.call()));
-        assertEquals(7, task(Runnable::run, context -> context.run(chain)).run());
+        assertEquals(8, task(Runnable::run, context -> context.run(chain)).run());
     }
 
     /// Inline continuations inherit the enclosing task's worker even when the source runs elsewhere.
@@ -645,8 +651,9 @@ final class TaskExecutionContextTest {
             assertSame(caller, Thread.currentThread());
             return Task.completed(1);
         }).thenSupply(Thread::currentThread);
-        Task<Thread> finished = supplied.whenComplete(failure -> {
+        Task<Thread> finished = supplied.whenComplete((value, failure) -> {
             assertNull(failure);
+            assertSame(caller, value);
             assertSame(caller, Thread.currentThread());
         });
         assertSame(caller, task(Runnable::run, context -> context.run(finished)).run());
@@ -686,6 +693,11 @@ final class TaskExecutionContextTest {
                 .thenComposeAsync(null, supplierThread -> {
                     assertSame(caller, supplierThread);
                     return Task.completed(Thread.currentThread());
+                })
+                .whenCompleteAsync(null, (value, failure) -> {
+                    assertNull(failure);
+                    assertSame(caller, value);
+                    assertSame(caller, Thread.currentThread());
                 });
         assertSame(caller, task(Runnable::run, context -> context.run(continuation)).run());
     }
@@ -710,10 +722,16 @@ final class TaskExecutionContextTest {
         try {
             Thread worker = callbacks.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
             Task<Thread> source = Task.supplyAsync(Thread::currentThread);
-            Task<Thread> continuation = source.thenApplyAsync(callbacks, dispatchThread -> {
-                assertSame(caller, dispatchThread);
-                return Thread.currentThread();
-            });
+            Task<Thread> continuation = source
+                    .whenCompleteAsync(callbacks, (value, failure) -> {
+                        assertNull(failure);
+                        assertSame(caller, value);
+                        assertSame(worker, Thread.currentThread());
+                    })
+                    .thenApplyAsync(callbacks, dispatchThread -> {
+                        assertSame(caller, dispatchThread);
+                        return Thread.currentThread();
+                    });
             Thread actual = task(Runnable::run, context -> context.run(continuation)).run();
             assertSame(worker, actual);
         } finally {

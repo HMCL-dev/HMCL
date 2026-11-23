@@ -166,7 +166,7 @@ public final class JavaDownloadDialog extends StackPane {
                             .map(javaVersion -> JavaManager.getDownloadJavaTask(downloadProvider, platform, javaVersion)
                                     .handle((runtime, failure) -> failure))
                             .toList())
-                    .whenComplete(Schedulers.javafx(), (results, exception) -> {
+                    .whenCompleteAsync(Schedulers.javafx(), (results, exception) -> {
                         @Nullable Throwable exceptionToDisplay;
                         if (exception == null) {
                             @Unmodifiable List<Throwable> exceptions = results.stream()
@@ -402,7 +402,7 @@ public final class JavaDownloadDialog extends StackPane {
                                 })
                                 .thenSupplyAsync(() -> targetFile);
                     })
-                    .whenComplete(Schedulers.javafx(), ((result, exception) -> {
+                    .whenCompleteAsync(Schedulers.javafx(), ((result, exception) -> {
                         if (exception == null) {
                             String javaVersion = version.getJavaVersion();
                             JavaInfo info = new JavaInfo(platform, javaVersion, distribution.getVendor());
@@ -450,7 +450,7 @@ public final class JavaDownloadDialog extends StackPane {
                     for (List<DiscoJavaRemoteVersion> l : result.values())
                         Collections.reverse(l);
                     return result;
-                }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
+                }).whenCompleteAsync(Schedulers.javafx(), ((result, exception) -> {
                     if (exception == null) {
                         versionList.status = DiscoJavaVersionList.Status.SUCCESS;
                         versionList.versions = result;

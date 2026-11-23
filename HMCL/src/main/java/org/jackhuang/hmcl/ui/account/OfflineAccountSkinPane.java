@@ -125,7 +125,7 @@ public class OfflineAccountSkinPane extends StackPane {
 
         Runnable loadSkin = () -> {
             getSkin().load(account.getProfileName())
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load skin", exception);
                             Controllers.showToast(i18n("message.failed"));

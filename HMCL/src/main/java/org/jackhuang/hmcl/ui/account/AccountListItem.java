@@ -160,7 +160,7 @@ public class AccountListItem extends RadioButton {
                     account.uploadSkin(skin.isSlim(), selectedFile);
                 })
                 .thenComposeAsync(refreshAsync())
-                .whenComplete(Schedulers.javafx(), e -> {
+                .whenCompleteAsync(Schedulers.javafx(), (ignored, e) -> {
                     if (e != null) {
                         Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("account.skin.upload.failed"), MessageType.ERROR);
                     }

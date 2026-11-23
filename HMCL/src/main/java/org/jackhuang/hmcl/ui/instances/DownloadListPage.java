@@ -168,7 +168,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
             }
         }).thenApplyAsync(
                 gameVersion -> repository.search(downloadProvider, type, gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteAddonRepository.SortOrder.DESC)
-        ).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        ).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             if (searchID != currentSearchID) {
                 return;
             }

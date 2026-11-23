@@ -759,7 +759,7 @@ public final class LauncherHelper {
                     }
                     DownloadProvider downloadProvider = repository.getDependency().getDownloadProvider();
                     Controllers.taskDialog(JavaManager.getDownloadJavaTask(downloadProvider, SYSTEM_PLATFORM, javaVersion)
-                            .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
                                     future.complete(result);
                                 } else {

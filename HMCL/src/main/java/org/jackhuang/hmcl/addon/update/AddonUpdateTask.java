@@ -47,7 +47,7 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
                                     .setName(remote.name())
                                     .thenRunAsync(Schedulers.javafx(), () -> local.setOld(true))
                                     .thenRunAsync(Schedulers.io(), () -> Files.move(tempFile, targetFile))
-                                    .whenComplete(Schedulers.javafx(), exception -> {
+                                    .whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
                                         try {
                                             Files.deleteIfExists(tempFile);
                                         } catch (Exception e) {
@@ -69,7 +69,7 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
                                             }
                                         }
                                     })
-                    ).whenComplete(Schedulers.javafx(), exception -> {
+                    ).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to update addon", exception);
                             failedAddons.add(local);

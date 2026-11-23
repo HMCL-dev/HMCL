@@ -157,7 +157,7 @@ public final class ScreenshotsPage extends ListPaneBase<ScreenshotsPage.Screensh
             try (Stream<Path> stream = Files.list(screenshotsDir)) {
                 return stream.map(Screenshot::fromFile).filter(Objects::nonNull).sorted(Comparator.reverseOrder()).toList();
             }
-        }).whenComplete(Schedulers.javafx(), (list, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (list, exception) -> {
             if (exception != null) {
                 LOG.warning("Failed to load screenshots in: " + screenshotsDir, exception);
                 getItems().clear();

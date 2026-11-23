@@ -76,7 +76,7 @@ public abstract class RemoteImageLoader {
             }
         }
 
-        createLoadTask(downloadProvider.getDownloadCandidates(url)).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        createLoadTask(downloadProvider.getDownloadCandidates(url)).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             @Nullable Image image;
             if (exception == null) {
                 image = result;

@@ -193,7 +193,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                             return null;
                         }).thenRunAsync(() -> {
                             draft.commit();
-                        }).whenComplete(exception -> {
+                        }).whenComplete((ignored, exception) -> {
                             if (draft.isOpen()) {
                                 draft.abort();
                             }

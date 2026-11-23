@@ -82,7 +82,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         Task.supplyAsync(() -> {
             Stream<RemoteAddon.Version> versions = addon.data().loadVersions(repository, page.getDownloadProvider());
             return sortVersions(versions);
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 this.versions = result;
 
@@ -632,7 +632,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         );
                     }
                 });
-            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     dependenciesList.getContent().setAll(result.toList());
                     spinnerPane.setFailedReason(null);
@@ -646,7 +646,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         private void loadVersionPageUrl(RemoteAddon.Version version, RemoteAddonRepository repo, JFXHyperlink button) {
             Task.supplyAsync(() -> repo.getVersionPageUrl(version))
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                         if (exception == null && StringUtils.isNotBlank(result)) {
                             button.setExternalLink(result);
                             button.setDisable(false);
@@ -701,7 +701,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 if ("238222".equals(version.projectId())) // https://github.com/HMCL-dev/HMCL/pull/4828#issuecomment-3791068569 FUCK YOU JEI, FUCK YOU CURSEFORGE
                     return raw;
                 return StringUtils.convertToHtml(raw);
-            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     String changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));

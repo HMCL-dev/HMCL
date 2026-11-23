@@ -36,7 +36,7 @@ public final class WebPage extends SpinnerPane implements DecoratorPage {
             renderer.appendNode(document);
             renderer.mergeLineBreaks();
             return renderer.render();
-        }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), ((result, exception) -> {
             if (exception == null) {
                 ScrollPane scrollPane = new ScrollPane();
                 scrollPane.setFitToWidth(true);

@@ -214,7 +214,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             logging.set(true);
 
             loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
-                    .whenComplete(Schedulers.javafx(), account -> {
+                    .thenAcceptAsync(Schedulers.javafx(), account -> {
                         if (Accounts.isAccountFilesReadOnly(account)) {
                             body.setDisable(false);
                             spinner.hideSpinner();
@@ -226,7 +226,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         }
 
                         completeLogin(account);
-                    }, exception -> {
+                    }).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
+                        if (exception == null) return;
+
                         if (exception instanceof NoSelectedCharacterException) {
                             fireEvent(new DialogCloseEvent());
                         } else {

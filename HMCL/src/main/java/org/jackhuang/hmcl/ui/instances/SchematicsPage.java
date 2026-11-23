@@ -262,7 +262,7 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
                 }
             }
             return target;
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             if (!Objects.equals(currentGameInstance, this.gameInstance)) return;
             if (exception == null) {
                 navigateTo(result);
@@ -290,7 +290,7 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
                     && gameVersionNumber.isAtLeast("1.16.4", "20w45a"))
                 return forgematicaLazy.get();
             return litematicaLazy.get();
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             if (!Objects.equals(currentGameInstance, gameInstance)) return;
             if (exception == null) {
                 downloadTarget.set(result);
@@ -385,7 +385,7 @@ public final class SchematicsPage extends ListPaneBase<SchematicsPage.Item> {
         currentDirectoryProperty().set(item);
         isRootProperty().set(item.parent == null);
         setLoading(true);
-        Task.runAsync(item::load).whenComplete(Schedulers.javafx(), exception -> {
+        Task.runAsync(item::load).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
             if (currentDirectoryProperty().get() == item) {
                 getItems().setAll(item.children);
                 setLoading(false);

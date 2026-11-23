@@ -117,7 +117,7 @@ public final class JavaRestorePage extends ListPaneBase<JavaRestorePage.Disabled
 
         void onRestore() {
             disabledJava.remove(path);
-            JavaManager.getAddJavaTask(realPath).whenComplete(Schedulers.javafx(), exception -> {
+            JavaManager.getAddJavaTask(realPath).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
                 if (exception != null) {
                     LOG.warning("Failed to add java", exception);
                     Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);

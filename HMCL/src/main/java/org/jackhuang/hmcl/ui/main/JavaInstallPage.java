@@ -62,7 +62,7 @@ public final class JavaInstallPage extends WizardSinglePage {
     @Override
     protected Object finish() {
         Task<JavaRuntime> installTask = JavaManager.getInstallJavaTask(info.getPlatform(), nameProperty.get(), update, file);
-        return remoteVersion == null ? installTask : installTask.whenComplete(exception -> {
+        return remoteVersion == null ? installTask : installTask.whenComplete((ignored, exception) -> {
             try {
                 Files.delete(file);
             } catch (IOException e) {

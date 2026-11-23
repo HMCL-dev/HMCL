@@ -936,7 +936,7 @@ public final class FXUtils {
     public static ObservableValue<Image> newRemoteImage(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         var image = new SimpleObjectProperty<Image>();
         getRemoteImageTask(url, requestedWidth, requestedHeight, preserveRatio, smooth)
-                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         image.set(result);
                     } else {

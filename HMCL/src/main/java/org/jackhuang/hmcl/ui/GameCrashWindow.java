@@ -138,7 +138,7 @@ public class GameCrashWindow extends Stage {
             }
 
             return pair(CrashReportAnalyzer.analyze(log), CrashReportAnalyzer.findKeywordsFromCrashReport(log));
-        })).whenComplete(Schedulers.javafx(), (taskResult, exception) -> {
+        })).whenCompleteAsync(Schedulers.javafx(), (taskResult, exception) -> {
             loading.set(false);
 
             if (exception != null) {

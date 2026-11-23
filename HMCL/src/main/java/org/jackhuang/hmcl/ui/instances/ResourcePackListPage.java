@@ -282,7 +282,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
             } finally {
                 lock.unlock();
             }
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 if (result != null) {
                     sourceItems.setAll(result);
@@ -406,7 +406,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
                                 return null;
                             }
                         })
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null || result == null) {
                                 Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
                             } else if (result.commonUpdates().isEmpty()) {

@@ -475,7 +475,7 @@ public final class Controllers {
                             return ModpackHelper.getInstallTask(
                                     repository, modpackFile, new GameInstanceID(modpack.getName()), modpack, null);
                         })
-                        .whenComplete(Schedulers.javafx(), (ignored, exception) -> {
+                        .whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
                             if (exception != null) {
                                 LOG.warning("Failed to install bundled modpack", exception);
                                 return;

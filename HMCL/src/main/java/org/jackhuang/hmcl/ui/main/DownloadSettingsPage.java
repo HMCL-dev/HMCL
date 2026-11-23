@@ -356,7 +356,7 @@ public class DownloadSettingsPage extends StackPane {
             Task.runAsync(Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")))
                     .setName("Clear Cache Directory")
                     .setSignificance(TaskSignificance.MAJOR)
-                    .whenComplete(Schedulers.javafx(), ignored -> {
+                    .whenCompleteAsync(Schedulers.javafx(), (ignored, failure) -> {
                         cleanButton.setGraphic(null);
                         cleanButton.setText(txt);
                         cleaningCache = false;

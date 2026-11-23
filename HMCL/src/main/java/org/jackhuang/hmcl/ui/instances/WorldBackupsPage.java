@@ -118,7 +118,7 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
             } else {
                 return new ArrayList<BackupInfo>();
             }
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             this.setLoading(false);
             if (exception == null) {
                 getItems().setAll(result);
@@ -143,7 +143,7 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
             }
 
             return Pair.pair(path, new BackupInfo(path, new World(path), time, count));
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
                 WorldBackupsPage.this.getItems().sort(Comparator.naturalOrder());
