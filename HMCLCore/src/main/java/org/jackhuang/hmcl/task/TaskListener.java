@@ -39,8 +39,8 @@ public abstract class TaskListener implements EventListener {
     public void onTaskProgress(Task<?> task, double fraction) {
     }
 
-    /// Called once when the task succeeds or fails. A failure before the body starts can
-    /// produce this notification without a preceding [#onTaskStarted(Task, TaskStage.Scope)].
+    /// Called once after the task succeeds, fails, or is cancelled. If it finishes before
+    /// its body starts, this can occur without a preceding [#onTaskStarted(Task, TaskStage.Scope)].
     ///
     /// @param scope the task's declared or inherited stage scope, or `null` if neither applies
     /// @param failure the failure cause, including cancellation or an [Error], or `null`

@@ -220,6 +220,8 @@ final class TaskExecutionContextTest {
             assertNull(child.exceptionNowOrNull());
             root.cancel();
             assertTrue(root.isCancellationRequested());
+            assertEquals(Task.State.RUNNING, root.getState());
+            assertEquals(Task.State.RUNNING, child.getState());
             assertFalse(root.isCancelled());
             assertFalse(child.isCancelled());
         } finally {
@@ -263,7 +265,10 @@ final class TaskExecutionContextTest {
                 Task<?> child = Task.failed(failure);
                 assertFalse(context.tryRun(child));
                 assertSame(failure, child.exceptionNow());
-                assertEquals(failure instanceof CancellationException, child.isCancelled());
+                assertSame(failure, child.exceptionNowOrNull());
+                boolean cancelled = failure instanceof CancellationException;
+                assertEquals(cancelled ? Task.State.CANCELLED : Task.State.FAILED, child.getState());
+                assertEquals(cancelled, child.isCancelled());
             }
             return null;
         });
@@ -910,7 +915,7 @@ final class TaskExecutionContextTest {
         assertThrows(IllegalStateException.class, root::start);
         assertThrows(IllegalStateException.class, root::run);
         assertSame(failure, root.exceptionNow());
-        assertEquals(Task.State.FAILED, root.getState());
+        assertEquals(Task.State.CANCELLED, root.getState());
         assertEquals(1, events.started.size());
         assertSame(root, events.started.get(0).task());
         assertTrue(events.running.isEmpty());

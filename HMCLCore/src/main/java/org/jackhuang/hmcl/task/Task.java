@@ -99,7 +99,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// Return value published by the transition to [State#SUCCEEDED].
     private @Nullable T result;
 
-    /// Failure published by the transition to [State#FAILED].
+    /// Exception published by the transition to [State#FAILED] or [State#CANCELLED].
     private @Nullable Throwable exception;
 
     /// Creates an unsubmitted task.
@@ -236,7 +236,7 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Returns true once this task, whether root or child, has completed with a [CancellationException].
     public final boolean isCancelled() {
-        return exceptionNowOrNull() instanceof CancellationException;
+        return state == State.CANCELLED;
     }
 
     /// Returns the successful result without waiting. A task with a nullable result type may return `null`.
@@ -256,17 +256,18 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Returns the recorded failure without waiting. Cancellation is recorded as a [CancellationException].
     ///
-    /// @throws IllegalStateException if the task is not in [State#FAILED]
+    /// @throws IllegalStateException unless the task is in [State#FAILED] or [State#CANCELLED]
     public final Throwable exceptionNow() {
         State currentState = state;
-        if (currentState != State.FAILED)
+        if (currentState != State.FAILED && currentState != State.CANCELLED)
             throw new IllegalStateException("Task has not failed: " + currentState);
         return Objects.requireNonNull(exception);
     }
 
-    /// Returns the same failure as [#exceptionNow()] without waiting, or `null` unless the task is in [State#FAILED].
+    /// Returns the recorded exception in [State#FAILED] or [State#CANCELLED], or `null` in any other state.
     public final @Nullable Throwable exceptionNowOrNull() {
-        return state == State.FAILED ? exception : null;
+        State currentState = state;
+        return currentState == State.FAILED || currentState == State.CANCELLED ? exception : null;
     }
 
     /// Returns a task that applies `fn` to the successful result on the continuation's thread.
@@ -692,10 +693,10 @@ public abstract class Task<T extends @Nullable Object> {
         state = State.SUCCEEDED;
     }
 
-    /// Publishes the failure and marks the task failed.
+    /// Publishes the exception and marks the task as failed or cancelled.
     final void publishException(Throwable failure) {
         exception = failure;
-        state = State.FAILED;
+        state = failure instanceof CancellationException ? State.CANCELLED : State.FAILED;
     }
 
     /// Notifies the observer and propagates the primary failure even if notification also fails.
@@ -759,8 +760,10 @@ public abstract class Task<T extends @Nullable Object> {
         RUNNING,
         /// The executor has published the successful result.
         SUCCEEDED,
-        /// The executor has recorded a failure, including cancellation.
-        FAILED
+        /// The executor has recorded a failure other than cancellation.
+        FAILED,
+        /// The executor has recorded a [CancellationException].
+        CANCELLED
     }
 
     /// Receives the failure outcome of a task.
