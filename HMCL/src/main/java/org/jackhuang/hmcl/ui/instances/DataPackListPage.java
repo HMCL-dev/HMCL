@@ -74,6 +74,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
     private final HBox searchBar = new HBox();
     /// Text used to filter the list.
     private final JFXTextField searchField = new JFXTextField();
+    private boolean typingFirstWord;
     /// Whether the search mechanism is currently active.
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
     /// Timer for debouncing search input to avoid executing search on every keystroke.
@@ -211,6 +212,35 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
 
             listView.getItems().addListener(listener);
         }
+
+        // type to search
+        // Initialize the search field during the first layout so the list can receive the first IME event.
+        toolbarPane.prewarm(searchBar);
+        listView.inputMethodRequestsProperty().bind(searchField.inputMethodRequestsProperty());
+        listView.setOnInputMethodTextChanged(e -> { // ime
+            typingFirstWord = !e.getComposed().isEmpty();
+            isSearching.set(true);
+            listView.getSelectionModel().clearSelection();
+            changeToolbar(searchBar);
+            searchField.fireEvent(e.copyFor(searchField, searchField));
+            // Changing the IME client during native event dispatch can interrupt the first commit.
+            if (!typingFirstWord)
+                Platform.runLater(() -> {
+                    searchField.requestFocus();
+                    searchField.positionCaret(searchField.getLength());
+                });
+            e.consume();
+        });
+        listView.addEventHandler(KeyEvent.KEY_TYPED, e -> { // char
+            if (e.getCharacter().isEmpty() || e.getCharacter().codePoints().anyMatch(Character::isISOControl))
+                return;
+            isSearching.set(true);
+            listView.getSelectionModel().clearSelection();
+            changeToolbar(searchBar);
+            searchField.fireEvent(e.copyFor(searchField, searchField));
+            Platform.runLater(() -> searchField.positionCaret(searchField.getLength()));
+            e.consume();
+        });
     }
 
     private void installMultiDataPack(List<Path> dataPackPath) {
@@ -314,7 +344,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         @Nullable Node oldToolbar = toolbarPane.getCurrentNode();
         if (newToolbar != oldToolbar) {
             toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
-            if (newToolbar == searchBar) {
+            if (newToolbar == searchBar && !typingFirstWord) {
                 // search button click will get focus while searchField request focus, this cause conflict.
                 // Defer focus request to next pulse avoids this conflict.
                 Platform.runLater(searchField::requestFocus);
