@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -132,8 +131,51 @@ public final class TaskListPane extends StackPane {
         if (handle == null)
             return;
         listener = new TaskListener() {
-            /// Visible rows that can receive progress from worker threads.
-            private final Map<Task<?>, ProgressListNode> nodes = new ConcurrentHashMap<>();
+            /// Displayable tasks that can still receive progress from workers.
+            private final Map<Task<?>, TaskRowUpdate> running = new ConcurrentHashMap<>();
+
+            /// Creates the display row only when the JavaFX thread needs it.
+            private final class TaskRowUpdate {
+                /// Title captured when the task is first reported.
+                private final String title;
+                /// Stage under which the row belongs.
+                private final TaskStage.@Nullable Scope scope;
+                /// Applies only the latest pending row change on the JavaFX thread.
+                private final InvocationDispatcher<Runnable> updates = InvocationDispatcher.runOn(action -> update(action), Runnable::run);
+                /// Displayed row, accessed only on the JavaFX thread.
+                private @Nullable ProgressListNode row;
+
+                /// Captures the display details before the task body runs or its rejection is reported.
+                TaskRowUpdate(Task<?> task, TaskStage.@Nullable Scope scope) {
+                    this.title = task.getName();
+                    this.scope = scope;
+                }
+
+                /// Returns the displayed row, adding it on first use.
+                @FXThread
+                private ProgressListNode show() {
+                    if (row == null) {
+                        row = new ProgressListNode(title);
+                        addTaskRow(row, scope);
+                    }
+                    return row;
+                }
+
+                /// Shows the latest fraction on the row.
+                void report(double fraction) {
+                    updates.accept(() -> show().progress.set(fraction));
+                }
+
+                /// Replaces any pending progress with the final display change.
+                void finish(@Nullable Throwable failure) {
+                    updates.accept(() -> {
+                        if (failure != null)
+                            show().setThrowable(failure);
+                        else if (row != null)
+                            listView.getItems().remove(row);
+                    });
+                }
+            }
 
             /// Queues a change on the JavaFX thread while this handle is attached.
             private void update(Runnable action) {
@@ -175,37 +217,30 @@ public final class TaskListPane extends StackPane {
             @Override
             public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
                 if (prepareTaskRow(task, scope)) {
-                    ProgressListNode node = new ProgressListNode(task, this::update);
-                    nodes.put(task, node);
-                    update(() -> addTaskRow(node, scope));
+                    TaskRowUpdate pending = new TaskRowUpdate(task, scope);
+                    running.put(task, pending);
+                    pending.report(ProgressIndicator.INDETERMINATE_PROGRESS);
                 }
             }
 
             /// Submits the latest progress for a visible row to the JavaFX thread.
             @Override
             public void onTaskProgress(Task<?> task, double fraction) {
-                @Nullable ProgressListNode node = nodes.get(task);
-                if (node != null)
-                    node.progressUpdates.accept(fraction);
+                @Nullable TaskRowUpdate pending = running.get(task);
+                if (pending != null)
+                    pending.report(fraction);
             }
 
             /// Removes successful tasks and retains visible failures, including failures before the body starts.
             @Override
             public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
-                update(() -> {
-                    @Nullable ProgressListNode node = nodes.remove(task);
-                    if (node == null) {
-                        if (failure == null || !prepareTaskRow(task, scope))
-                            return;
-                        node = new ProgressListNode(task, this::update);
-                        addTaskRow(node, scope);
-                    }
-                    if (failure == null) {
-                        listView.getItems().remove(node);
-                    } else {
-                        node.setThrowable(failure);
-                    }
-                });
+                @Nullable TaskRowUpdate pending = running.remove(task);
+                if (pending == null) {
+                    if (failure == null || !prepareTaskRow(task, scope))
+                        return;
+                    pending = new TaskRowUpdate(task, scope);
+                }
+                pending.finish(failure);
             }
 
             /// Applies both increments to the display row for this stage.
@@ -418,13 +453,10 @@ public final class TaskListPane extends StackPane {
         private final StringProperty message = new SimpleStringProperty("");
         /// The progress shown on this row, initially indeterminate.
         private final DoubleProperty progress = new SimpleDoubleProperty(ProgressIndicator.INDETERMINATE_PROGRESS);
-        /// Publishes the latest reported fraction when the JavaFX thread processes the update.
-        private final InvocationDispatcher<Double> progressUpdates;
 
-        /// Creates a row whose progress is updated on the supplied JavaFX executor.
-        private ProgressListNode(Task<?> task, Executor executor) {
-            this.title = task.getName();
-            progressUpdates = InvocationDispatcher.runOn(executor, progress::set);
+        /// Creates a row with the task's display title.
+        private ProgressListNode(String title) {
+            this.title = title;
         }
 
         /// Retains the failure message on the row and resets its progress.

@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXSpinner;
 import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
@@ -176,6 +177,32 @@ final class TaskHandleDialogPaneTest {
             }
             return true;
         });
+    }
+
+    /// A task that reports progress and succeeds before the FX update never changes the displayed rows.
+    @Test
+    void skipsRowForImmediatelySuccessfulTask() throws Exception {
+        TaskHandle handle = new Task<Integer>() {
+            /// Reports progress before finishing in the same FX update interval.
+            @Override
+            public Integer execute(TaskExecutionContext context) {
+                context.progress().update(0.5);
+                return 1;
+            }
+        }.newHandle();
+        TaskListPane pane = showTaskList(handle);
+        AtomicInteger changedRows = new AtomicInteger();
+        onFxThread(() -> {
+            ListView<?> list = (ListView<?>) Objects.requireNonNull(pane.lookup(".list-view"));
+            list.getItems().addListener((ListChangeListener<Object>) change -> {
+                while (change.next())
+                    changedRows.addAndGet(change.getAddedSize() + change.getRemovedSize());
+            });
+            assertTrue(handle.test());
+            return true;
+        });
+        int changes = onFxThread(changedRows::get);
+        assertEquals(0, changes);
     }
 
     /// Displays the failure even when both task notifications arrive before the next JavaFX pulse.
