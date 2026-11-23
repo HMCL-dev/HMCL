@@ -111,6 +111,7 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Sets the display name and returns this task. Passing `null` restores the class name.
+    @Contract("_ -> this")
     public Task<T> setName(@Nullable String name) {
         this.name = name;
         return this;
@@ -606,6 +607,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// See [#allOf(Collection)]. The array is retained until execution.
     @SafeVarargs
     public static <T extends @Nullable Object> Task<List<T>> allOf(Task<? extends T>... tasks) {
+        //noinspection NullableProblems
         return allOf(Arrays.asList(tasks));
     }
 
@@ -616,13 +618,16 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// The returned task retains the collection and snapshots its elements when execution starts.
     public static <T extends @Nullable Object> Task<List<T>> allOf(Collection<? extends Task<? extends T>> tasks) {
+        //noinspection NullableProblems
         return Task.of(context -> context.runAll(tasks)).setSignificance(TaskSignificance.MINOR);
     }
 
     /// Returns a task that waits for both children and pairs their results in argument order.
     /// The children may run concurrently. Failure of either child fails the combined task.
     public static <T extends @Nullable Object, U extends @Nullable Object> Task<Pair<T, U>> combine(Task<? extends T> task1, Task<? extends U> task2) {
+        //noinspection NullableProblems
         return Task.of(context -> {
+            //noinspection NullableProblems
             context.runAll(List.of(task1, task2));
             return Pair.pair(task1.resultNow(), task2.resultNow());
         }).setSignificance(TaskSignificance.MINOR);
