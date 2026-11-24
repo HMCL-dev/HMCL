@@ -150,6 +150,9 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
             return new ServerStatus.ServerModType(containsIsModdedElement ? NEO_FORGED : FORGE, modList);
         }
 
+        if (containsIsModdedElement) {
+            return new ServerStatus.ServerModType(NEO_FORGED, null);
+        }
         return null;
     }
 
@@ -345,13 +348,6 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
         return out;
     }
 
-    private String readUtf(@NotNull DataInputStream in) throws IOException {
-        int len = readVarInt(in);
-        byte[] bytes = new byte[len];
-        in.readFully(bytes);
-        return new String(bytes, StandardCharsets.UTF_8);
-    }
-
     private @NotNull Set<ServerStatus.ServerModType.Mod> decodeForgeDataD(@NotNull String dInput) {
         Set<ServerStatus.ServerModType.Mod> mods = new LinkedHashSet<>();
         if (dInput.length() < 2) return mods;
@@ -365,17 +361,19 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
                 int channelCount = flags >>> 1;
                 boolean isServerOnly = (flags & 1) != 0;
 
-                String modid = readUtf(in);
-                String marker = isServerOnly ? "" : readUtf(in);
+                String modid = readVarString(in);
+                String marker = isServerOnly ? "<server-only>" : readVarString(in);
 
                 for (int j = 0; j < channelCount; j++) {
-                    readUtf(in);              // channel name
-                    readUtf(in);              // channel version
+                    readVarString(in);        // channel name
+                    readVarString(in);        // channel version
                     in.readBoolean();         // required
                 }
 
                 mods.add(new ServerStatus.ServerModType.Mod(modid, marker));
             }
+        } catch (EOFException ignored) {
+
         } catch (Exception e) {
             LOG.error("Error while decoding forge data d.", e);
         }
