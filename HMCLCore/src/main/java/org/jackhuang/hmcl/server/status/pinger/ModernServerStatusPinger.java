@@ -376,7 +376,7 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
 
                 mods.add(new ServerStatus.ServerModType.Mod(modid, marker));
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error("Error while decoding forge data d.", e);
         }
         return mods;
