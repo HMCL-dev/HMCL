@@ -58,7 +58,7 @@ final class TaskExecution {
     @NotNullByDefault
     static final class Binding {
         /// Marker retaining the root-only API restrictions after a child completes.
-        static final Binding FINISHED_CHILD = new Binding(null, null);
+        static final Binding FINISHED_CHILD = new Binding(null);
 
         /// The tree that schedules this task.
         private final @Nullable TaskExecution execution;
@@ -66,23 +66,29 @@ final class TaskExecution {
         /// Parent in the execution tree, including decorators executed inline.
         private final @Nullable Binding parent;
 
-        /// Submission whose work a shared observer may help, when this task was dispatched separately.
+        /// Binding that owns the dispatch. A decorator and its reserved sources are dispatched together.
+        private final Binding dispatch;
+
+        /// Work a shared observer may help once the dispatch has been decided.
         private volatile @Nullable Work<?> work;
 
-        /// Binds a task to its tree and parent.
-        private Binding(@Nullable TaskExecution execution, @Nullable Binding parent) {
+        /// Creates a root binding, or the completed-child marker if `execution` is null.
+        private Binding(@Nullable TaskExecution execution) {
             this.execution = execution;
+            this.parent = null;
+            this.dispatch = this;
+        }
+
+        /// Binds a child to its parent's tree. A decorator's source shares the decorator's dispatch.
+        Binding(Binding parent, boolean decoratorSource) {
+            this.execution = parent.owner();
             this.parent = parent;
+            this.dispatch = decoratorSource ? parent.dispatch : this;
         }
 
         /// Reserves a new root execution.
         static Binding root() {
-            return new Binding(new TaskExecution(), null);
-        }
-
-        /// Binds a child to the same tree.
-        Binding child() {
-            return new Binding(owner(), this);
+            return new Binding(new TaskExecution());
         }
 
         /// Returns the execution controlling this active task or root.
@@ -106,16 +112,6 @@ final class TaskExecution {
         void setWork(@Nullable Work<?> work) {
             this.work = work;
             owner().signalSharedWaiters();
-        }
-
-        /// Finds the enclosing submission for a task running inline.
-        private @Nullable Work<?> enclosingWork() {
-            for (@Nullable Binding b = this; b != null; b = b.parent) {
-                @Nullable Work<?> found = b.work;
-                if (found != null)
-                    return found;
-            }
-            return null;
         }
 
         /// Tracks user code that must return before this task or its ancestors can finish.
@@ -143,17 +139,9 @@ final class TaskExecution {
                 return;
             for (Binding frame : active) {
                 for (@Nullable Binding b = frame; b != null; b = b.parent != null ? b.parent : b.owner().synchronousCaller) {
-                    if (b == this)
-                        throw new IllegalStateException("Cannot wait for the current task or an ancestor");
-                }
-            }
-            // An inline source cannot start until its enclosing decorator's callback returns.
-            if (work == null) {
-                for (@Nullable Binding b = parent; b != null; b = b.parent) {
-                    if (active.contains(b))
-                        throw new IllegalStateException("Cannot wait for an inline task from its enclosing task");
-                    if (b.work != null)
-                        break;
+                    // An enclosing decorator cannot enter its inline source until its callback returns.
+                    if (b.dispatch == dispatch)
+                        throw new IllegalStateException("Cannot wait for the current task, an ancestor, or its inline source");
                 }
             }
         }
@@ -207,7 +195,7 @@ final class TaskExecution {
             root.binding().setWork(work);
             work.submit();
         } catch (Throwable failure) {
-            fail(root, null, failure);
+            finishTask(root, null, null, failure);
             notifyExecutionFinished(root);
             throw failure;
         }
@@ -267,7 +255,7 @@ final class TaskExecution {
             return prepare(root, Schedulers.tasks(), null).runReady(propagateWaitInterruption);
         } catch (Throwable failure) {
             if (root.getState() == Task.State.READY)
-                fail(root, null, failure);
+                finishTask(root, null, null, failure);
             throw failure;
         }
     }
@@ -325,7 +313,7 @@ final class TaskExecution {
             if (task instanceof Task.Decorator<T> decorator) {
                 if (isCancelledOrInterrupted())
                     throw new CancellationException("Cancelled by user");
-                if (!decorator.source.tryMarkReadyAsChild(binding))
+                if (!decorator.source.tryMarkReadyAsChild(binding, true))
                     return new Context<>(task, inheritedExecutor, scope, null);
                 Context<T> source = prepare(decorator.source, inheritedExecutor, scope);
                 return new Context<>(task, source.executor, scope, source);
@@ -333,21 +321,17 @@ final class TaskExecution {
             @Nullable Executor executor = task.getExecutor();
             return new Context<>(task, executor != null ? executor : inheritedExecutor, scope, null);
         } catch (Throwable failure) {
-            fail(task, scope, failure);
+            finishTask(task, scope, null, failure);
             throw failure;
         } finally {
             binding.leave();
         }
     }
 
-    /// Records the failure before delivering terminal notifications.
-    private void fail(Task<?> task, TaskStage.@Nullable Scope scope, Throwable cause) {
-        task.finish(null, cause);
-        notifyTaskFinished(task, scope, cause);
-    }
-
-    /// Reports the task's published outcome, then closes its stage if it declared one.
-    private void notifyTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+    /// Publishes the outcome, notifies task listeners, then closes the stage declared by this task, if any.
+    private <T extends @Nullable Object> void finishTask(Task<T> task, TaskStage.@Nullable Scope scope,
+                                                         @Nullable T result, @Nullable Throwable failure) {
+        task.finish(result, failure);
         notifyListeners(listener -> listener.onTaskFinished(task, scope, failure));
         if (scope != null && scope.task() == task)
             notifyListeners(listener -> listener.onStageFinished(scope, failure));
@@ -398,8 +382,10 @@ final class TaskExecution {
             if (executor != currentExecutor())
                 return submit(null).await(propagateWaitInterruption);
             @Nullable Work<?> current = CURRENT_WORK.get();
-            if (current != null && current.owner() == TaskExecution.this)
+            if (current != null && current.owner() == TaskExecution.this) {
+                task.binding().setWork(current);
                 return execute();
+            }
             // A root entered from another tree or directly on JavaFX needs its own helping index.
             Work<R> inline = new Work<>(executor, this::execute);
             task.binding().setWork(inline);
@@ -431,8 +417,7 @@ final class TaskExecution {
             binding.enter();
             try {
                 R result = invokeBody();
-                task.finish(result, null);
-                notifyTaskFinished(task, stageScope, null);
+                finishTask(task, stageScope, result, null);
                 if (task.getSignificance().shouldLog()) {
                     try {
                         LOG.trace("Task finished: " + task.displayName());
@@ -473,7 +458,7 @@ final class TaskExecution {
         private void fail(Throwable cause) {
             if (source != null && source.task.getState() == Task.State.READY)
                 source.fail(cause);
-            TaskExecution.this.fail(task, stageScope, cause);
+            finishTask(task, stageScope, null, cause);
         }
 
         /// {@inheritDoc}
@@ -518,7 +503,7 @@ final class TaskExecution {
                 return child.resultNow();
             }
             checkCancellation();
-            if (!child.tryMarkReadyAsChild(task.binding()))
+            if (!child.tryMarkReadyAsChild(task.binding(), false))
                 return child.completedOutcome();
             return prepare(child, executor, stageScope).runReady(true);
         }
@@ -554,7 +539,7 @@ final class TaskExecution {
                     if (submissions.containsKey(child))
                         throw new IllegalStateException("Duplicate task in batch");
                     submissions.put(child, null);
-                    if (child.tryMarkReadyAsChild(parent))
+                    if (child.tryMarkReadyAsChild(parent, false))
                         submissions.put(child, prepare(child, executor, stageScope).submit(window));
                     admitted.add(child);
                 } catch (Throwable e) {
@@ -678,7 +663,7 @@ final class TaskExecution {
                 return false;
             binding.checkWait();
             while (!task.isDone()) {
-                @Nullable Work<?> anchor = binding.enclosingWork();
+                @Nullable Work<?> anchor = binding.dispatch.work;
                 @Nullable Work<?> next = anchor == null ? null : anchor.availableFor(worker, true);
                 if (next == null) {
                     try {

@@ -9,6 +9,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -99,6 +101,58 @@ final class TaskSharedWaitTest {
         }
     }
 
+    /// An observer waiting for a child's submission leaves queued siblings on its executor alone.
+    @Test
+    void observesPreparingChildWithoutRunningSibling() throws Exception {
+        ExecutorService worker = Executors.newSingleThreadExecutor();
+        CountDownLatch preparing = new CountDownLatch(1);
+        CountDownLatch observing = new CountDownLatch(1);
+        CompletableFuture<@Nullable Executor> executor = new CompletableFuture<>();
+        AtomicBoolean observed = new AtomicBoolean();
+        try {
+            Thread observerThread = worker.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            Task<Integer> target = new Task<>() {
+                /// Holds the child in READY after the sibling has been queued.
+                @Override
+                protected @Nullable Executor getExecutor() {
+                    preparing.countDown();
+                    return executor.orTimeout(10, TimeUnit.SECONDS).join();
+                }
+
+                /// {@inheritDoc}
+                @Override
+                public Integer execute(TaskExecutionContext context) {
+                    return 42;
+                }
+            };
+            Task<Boolean> sibling = Task.supplyAsync(worker, observed::get);
+            Task<?> parent = Task.allOf(List.of(sibling, target));
+            Task<Integer> observer = Task.supplyAsync(worker, () -> {
+                parent.start();
+                assertTrue(preparing.await(10, TimeUnit.SECONDS));
+                observing.countDown();
+                int result = target.run();
+                observed.set(true);
+                return result;
+            });
+            assertTimeoutPreemptively(Duration.ofSeconds(10), () -> {
+                observer.start();
+                assertTrue(observing.await(10, TimeUnit.SECONDS));
+                // The sole worker is now in target.run() or on its way there. Let it park
+                // before allowing the target to finish selecting its executor.
+                while (observerThread.getState() != Thread.State.WAITING)
+                    Thread.sleep(1);
+                executor.complete(null);
+                assertEquals(42, observer.run());
+                parent.run();
+                assertTrue(sibling.resultNow());
+            });
+        } finally {
+            executor.complete(null);
+            worker.shutdownNow();
+        }
+    }
+
     /// Both inline and dispatched children reject waits on themselves and on the parent awaiting them.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
@@ -166,18 +220,37 @@ final class TaskSharedWaitTest {
         }
     }
 
+    /// A nested root cannot wait for a source that needs the enclosing decorator's listener to return.
+    @Test
+    void rejectsWaitOnInlineSourceFromNestedRoot() throws Exception {
+        ExecutorService worker = Executors.newSingleThreadExecutor();
+        try {
+            Task<Integer> source = Task.completed(42);
+            Task<Integer> decorated = source.withCounter().withStage(new TaskStage("download"));
+            AtomicBoolean rejected = new AtomicBoolean();
+            decorated.addTaskListener(new TaskListener() {
+                /// Tries to observe the reserved source on another worker before the decorator starts it.
+                @Override
+                public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
+                    if (task == decorated) {
+                        Task<Integer> nested = Task.supplyAsync(boundedDispatch(worker), source::run);
+                        assertThrows(IllegalStateException.class, nested::run);
+                        rejected.set(true);
+                    }
+                }
+            });
+            assertEquals(42, decorated.run());
+            assertTrue(rejected.get());
+        } finally {
+            worker.shutdownNow();
+        }
+    }
+
     /// A nested root's synchronous caller waits until its completion listener returns.
     @Test
     void rejectsWaitingOnCallerFromNestedCompletion() throws Exception {
         ExecutorService worker = Executors.newSingleThreadExecutor();
-        // Bound dispatch so a missed cycle releases the caller and the listener can unwind.
-        Executor dispatch = command -> {
-            try {
-                worker.submit(command).get(10, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                throw new AssertionError(e);
-            }
-        };
+        Executor dispatch = boundedDispatch(worker);
         AtomicBoolean listenerReturned = new AtomicBoolean();
         try {
             Task<Integer> root = new Task<>() {
@@ -221,5 +294,16 @@ final class TaskSharedWaitTest {
         });
         assertTimeoutPreemptively(Duration.ofSeconds(10), () -> assertEquals(42, root.run()));
         assertTrue(listenerReturned.get());
+    }
+
+    /// Bounds the wait for dispatched work so a missed cycle releases the caller and its listener.
+    private static Executor boundedDispatch(ExecutorService worker) {
+        return command -> {
+            try {
+                worker.submit(command).get(10, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                throw new AssertionError(e);
+            }
+        };
     }
 }

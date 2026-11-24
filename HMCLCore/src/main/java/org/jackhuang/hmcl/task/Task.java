@@ -158,7 +158,8 @@ public abstract class Task<T extends @Nullable Object> {
     /// requires that executor. Use [TaskExecutionContext#run(Task)] from another task.
     ///
     /// @throws Exception if execution fails, is cancelled, or the wait is interrupted
-    /// @throws IllegalStateException if the caller would wait on itself or an active ancestor
+    /// @throws IllegalStateException if the caller would wait on itself, an active ancestor,
+    ///         or a source dispatched inline with either
     public final T run() throws Exception {
         @Nullable TaskExecution execution = tryRootSubmission();
         if (execution != null)
@@ -182,7 +183,8 @@ public abstract class Task<T extends @Nullable Object> {
     /// Starts this task if necessary and returns whether it succeeded. A thread interrupted while waiting for
     /// another worker's result waits for completion and retains its interrupt status.
     ///
-    /// @throws IllegalStateException if the caller would wait on itself or an active ancestor
+    /// @throws IllegalStateException if the caller would wait on itself, an active ancestor,
+    ///         or a source dispatched inline with either
     public final boolean test() {
         @Nullable TaskExecution execution = tryRootSubmission();
         if (execution != null)
@@ -891,9 +893,10 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Reserves a new child, or returns false if its published outcome can be reused.
     ///
+    /// @param decoratorSource whether the child is the source dispatched together with its parent decorator
     /// @throws IllegalStateException if the task is reserved or already executing
-    final boolean tryMarkReadyAsChild(Binding parent) {
-        if (executionBinding == null && EXECUTION_BINDING.compareAndSet(this, null, parent.child())) {
+    final boolean tryMarkReadyAsChild(Binding parent, boolean decoratorSource) {
+        if (executionBinding == null && EXECUTION_BINDING.compareAndSet(this, null, new Binding(parent, decoratorSource))) {
             state = State.READY;
             return true;
         }
