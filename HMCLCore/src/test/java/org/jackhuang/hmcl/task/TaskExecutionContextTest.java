@@ -205,9 +205,11 @@ final class TaskExecutionContextTest {
         Task<Integer> completedChild = Task.completed(42);
         Task<@Nullable Void> child = task(Schedulers.io(), context -> {
             assertFalse(context.isCancelled());
+            context.checkCancellation();
             entered.countDown();
             assertTrue(release.await(10, TimeUnit.SECONDS));
             assertTrue(context.isCancelled());
+            assertThrows(CancellationException.class, context::checkCancellation);
             return null;
         });
         Task<?> root = task(parent -> {
@@ -319,6 +321,7 @@ final class TaskExecutionContextTest {
             Thread.currentThread().interrupt();
             try {
                 assertTrue(context.isCancelled());
+                assertThrows(CancellationException.class, context::checkCancellation);
                 assertTrue(Thread.currentThread().isInterrupted());
             } finally {
                 Thread.interrupted();

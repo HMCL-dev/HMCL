@@ -323,7 +323,8 @@ final class TaskExecution {
                 notifyListeners(listener -> listener.onStageStarted(declared));
             }
             if (task instanceof Task.Decorator<T> decorator) {
-                checkCancellation();
+                if (isCancelledOrInterrupted())
+                    throw new CancellationException("Cancelled by user");
                 if (!decorator.source.tryMarkReadyAsChild(binding))
                     return new Context<>(task, inheritedExecutor, scope, null);
                 Context<T> source = prepare(decorator.source, inheritedExecutor, scope);
@@ -367,12 +368,6 @@ final class TaskExecution {
     /// Returns whether this task tree was cancelled or the calling thread is interrupted.
     private boolean isCancelledOrInterrupted() {
         return isCancellationRequested() || Thread.currentThread().isInterrupted();
-    }
-
-    /// Throws when cancellation has been requested or the current worker is interrupted.
-    private void checkCancellation() {
-        if (isCancelledOrInterrupted())
-            throw new CancellationException("Cancelled by user");
     }
 
     /// A prepared task with its executor, stage and child execution context.

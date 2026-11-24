@@ -25,7 +25,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// inherits the executor running the current task's body.
 /// Children whose [Task#getStage()] returns `null` inherit the current task's stage.
 /// A task must use its context before its body returns and on the thread executing its body,
-/// except that an action dispatched by [#call(Executor, Callable)] may query [#isCancelled()].
+/// except that an action dispatched by [#call(Executor, Callable)] may use [#isCancelled()]
+/// and [#checkCancellation()].
 /// While waiting, a worker may execute submissions from the awaited child's subtree on its
 /// own executor. Use the same executor instance for work requiring the same worker.
 /// Tasks using constrained executors must avoid wait cycles between independent
@@ -35,6 +36,13 @@ public interface TaskExecutionContext {
     /// Returns true if cancellation has been requested for this task tree or the calling thread
     /// is interrupted. This method preserves the thread's interrupted status.
     boolean isCancelled();
+
+    /// Throws [CancellationException] if [#isCancelled()] is true, preserving the
+    /// calling thread's interrupted status.
+    default void checkCancellation() {
+        if (isCancelled())
+            throw new CancellationException("Cancelled by user");
+    }
 
     /// Returns the current task's progress reporter. Obtain it on the task's thread
     /// before sharing it with workers contributing to this task.

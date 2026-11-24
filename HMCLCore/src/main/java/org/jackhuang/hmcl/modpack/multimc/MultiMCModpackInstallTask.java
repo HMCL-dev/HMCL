@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.CancellationException;
 
 /// A task transforming MultiMC Modpack Scheme to Official Launcher Scheme.
 /// The transforming process contains 7 stage:
@@ -251,8 +250,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
             draft.put(new GameInstanceManifest(instanceId));
             MultiMCInstancePatch.ResolvedInstance artifact = install(context);
-            if (context.isCancelled())
-                throw new CancellationException();
+            context.checkCancellation();
             draft.put(artifact.getManifest());
             draft.commit();
             return artifact;

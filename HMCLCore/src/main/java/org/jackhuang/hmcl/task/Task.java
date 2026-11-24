@@ -47,8 +47,8 @@ import java.util.function.BooleanSupplier;
 /// overloads passed a `null` executor use the continuation's thread. A callback targeting
 /// the current executor may run inline.
 ///
-/// Cancellation is cooperative. A running body may check [TaskExecutionContext#isCancelled()] and release its
-/// resources before returning. The executor also checks for cancellation before invoking
+/// Cancellation is cooperative. A running body may call [TaskExecutionContext#checkCancellation()]
+/// to stop early. The executor also checks for cancellation before invoking
 /// a body and before publishing its result. The `then` continuations check for cancellation
 /// on the callback's executor before invoking user code.
 ///
@@ -311,9 +311,9 @@ public abstract class Task<T extends @Nullable Object> {
             @Override
             public U execute(TaskExecutionContext context) throws Exception {
                 T value = context.run(Task.this);
-                checkCancellation(context);
+                context.checkCancellation();
                 return context.call(executor, () -> {
-                    checkCancellation(context);
+                    context.checkCancellation();
                     return fn.apply(value);
                 });
             }
@@ -420,9 +420,9 @@ public abstract class Task<T extends @Nullable Object> {
             @Override
             public U execute(TaskExecutionContext context) throws Exception {
                 T value = context.run(Task.this);
-                checkCancellation(context);
+                context.checkCancellation();
                 Task<U> next = context.call(executor, () -> {
-                    checkCancellation(context);
+                    context.checkCancellation();
                     return fn.apply(value);
                 });
                 return context.run(next);
@@ -451,9 +451,9 @@ public abstract class Task<T extends @Nullable Object> {
             @Override
             public @Nullable U execute(TaskExecutionContext context) throws Exception {
                 T value = context.run(Task.this);
-                checkCancellation(context);
+                context.checkCancellation();
                 @Nullable Task<U> next = context.call(executor, () -> {
-                    checkCancellation(context);
+                    context.checkCancellation();
                     return fn.apply(value);
                 });
                 return next == null ? null : context.run(next);
@@ -485,7 +485,7 @@ public abstract class Task<T extends @Nullable Object> {
                 } catch (Exception ignored) {
                     // This continuation also runs after an ordinary failure.
                 }
-                checkCancellation(context);
+                context.checkCancellation();
                 return context.run(fn.get());
             }
         }.setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
@@ -691,8 +691,7 @@ public abstract class Task<T extends @Nullable Object> {
                     progress.update(0.0D);
                     long start = System.nanoTime();
                     while (!done.getAsBoolean()) {
-                        if (context.isCancelled())
-                            throw new CancellationException();
+                        context.checkCancellation();
                         double elapsedSeconds = (System.nanoTime() - start) / 1_000_000_000.0;
                         double scaledTime = elapsedSeconds * MAX_ESTIMATED_PROGRESS;
                         progress.update(MAX_ESTIMATED_PROGRESS * scaledTime / (k + scaledTime));
@@ -779,9 +778,9 @@ public abstract class Task<T extends @Nullable Object> {
             /// {@inheritDoc}
             @Override
             public T execute(TaskExecutionContext context) throws Exception {
-                checkCancellation(context);
+                context.checkCancellation();
                 Task<T> child = context.call(executor, () -> {
-                    checkCancellation(context);
+                    context.checkCancellation();
                     return fn.get();
                 });
                 return context.run(child);
@@ -957,12 +956,6 @@ public abstract class Task<T extends @Nullable Object> {
         binding.setWork(null);
         if (!binding.isRoot())
             executionBinding = Binding.FINISHED_CHILD;
-    }
-
-    /// Stops a callback when its task tree is cancelled or its thread is interrupted.
-    private static void checkCancellation(TaskExecutionContext context) {
-        if (context.isCancelled())
-            throw new CancellationException("Cancelled by user");
     }
 
     /// Rethrows the original failure across task APIs that declare checked exceptions as [Exception].

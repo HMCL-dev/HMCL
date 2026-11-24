@@ -17,7 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 import java.util.function.Predicate;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -68,8 +67,7 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
                 writeArchive(zip, path -> !output.equals(runDirectory.resolve(path))
                         && Modpack.acceptFile(path, exclusions, info.getWhitelist()), context.progress());
             }
-            if (context.isCancelled())
-                throw new CancellationException();
+            context.checkCancellation();
             try {
                 Files.move(temporary, output, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             } catch (AtomicMoveNotSupportedException e) {
