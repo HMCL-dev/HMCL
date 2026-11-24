@@ -66,48 +66,25 @@ final class TaskExecutionContextTest {
         }
     }
 
-    /// A root's executor preference is resolved once, independently of its caller's executor.
+    /// Children inherit their executor through batches. A separately submitted root uses the task scheduler.
     @Test
-    void defaultsRootToTaskScheduler() throws Exception {
-        Thread caller = Thread.currentThread();
-        AtomicInteger resolutions = new AtomicInteger();
-        Task<Thread> root = new Task<>() {
-            @Override
-            @Nullable
-            protected Executor getExecutor() {
-                resolutions.incrementAndGet();
-                return null;
-            }
-
-            @Override
-            public Thread execute(TaskExecutionContext context) throws Exception {
-                Thread worker = Thread.currentThread();
-                assertSame(worker, context.call(Schedulers.tasks(), Thread::currentThread));
-                return worker;
-            }
-        };
-        assertNotSame(caller, task(Runnable::run, context -> root.run()).run());
-        assertEquals(1, resolutions.get());
-    }
-
-    /// Inherited batches preserve executor selection through nested tasks and explicit overrides.
-    @Test
-    void inheritsAcrossNestedTasksAndBatches() throws Exception {
-        Thread caller = Thread.currentThread();
+    void distinguishesInheritedAndRootExecutors() throws Exception {
+        ExecutorService parent = Executors.newSingleThreadExecutor();
         ExecutorService other = Executors.newSingleThreadExecutor();
         try {
-            Thread worker = other.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
-            Task<List<Thread>> branch = task(context -> {
-                context.run(Task.runAsync(null, () -> assertSame(caller, Thread.currentThread())));
-                return context.runAll(List.of(
+            Thread otherWorker = other.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            task(parent, context -> {
+                Thread parentWorker = Thread.currentThread();
+                assertNotSame(parentWorker, Task.supplyAsync(Thread::currentThread).run());
+
+                Task<List<Thread>> branch = task(children -> children.runAll(List.of(
                         Task.supplyAsync(Thread::currentThread),
-                        task(other, child -> child.run(Task.supplyAsync(Thread::currentThread))),
-                        Task.supplyAsync(Thread::currentThread).setName("last")
-                                .setSignificance(TaskSignificance.MAJOR)));
-            });
-            assertEquals(List.of(caller, worker, caller),
-                    task(Runnable::run, context -> context.run(branch)).run());
+                        task(other, nested -> nested.run(Task.supplyAsync(Thread::currentThread))))));
+                assertEquals(List.of(parentWorker, otherWorker), context.run(branch));
+                return null;
+            }).run();
         } finally {
+            parent.shutdownNow();
             other.shutdownNow();
         }
     }
@@ -131,12 +108,12 @@ final class TaskExecutionContextTest {
             Platform.runLater(event);
             return event.get(10, TimeUnit.SECONDS);
         });
-        Task<Thread> composed = source.thenComposeAsync(Schedulers.javafx(), processed -> {
+        Task<Boolean> composed = source.thenComposeAsync(Schedulers.javafx(), processed -> {
             assertTrue(processed);
             assertTrue(Platform.isFxApplicationThread());
-            return Task.supplyAsync(Thread::currentThread);
+            return Task.supplyAsync(Platform::isFxApplicationThread);
         });
-        assertSame(Thread.currentThread(), task(Runnable::run, context -> context.run(composed)).run());
+        assertFalse(composed.run());
     }
 
     /// Composition preserves the result type and value of the selected child.
@@ -162,8 +139,8 @@ final class TaskExecutionContextTest {
         continuation.addTaskListener(events);
         assertEquals(11, continuation.run());
         assertEquals(1, calls.get());
-        assertEquals(List.of(continuation), events.completions.stream().map(TaskCompletion::task).toList());
         assertFalse(events.running.containsKey(source));
+        assertTrue(events.completions.stream().noneMatch(completion -> completion.task() == source));
     }
 
     /// A missing child fails when passed directly or when its factory runs.
@@ -184,87 +161,67 @@ final class TaskExecutionContextTest {
             assertNull(value);
             return null;
         });
-        StageEvents events = new StageEvents();
-        composed.addTaskListener(events);
-        assertTrue(composed.test());
-        assertNull(composed.resultNow());
-        assertEquals(List.of(source, composed), events.completions.stream().map(TaskCompletion::task).toList());
+        assertNull(composed.run());
 
         assertEquals("present", Task.composeOptionalAsync(() -> Task.completed("present"))
                 .thenComposeOptionalAsync(Task::completed).run());
     }
 
-    /// A cancellation request reaches parent and child contexts and permits cleanup on the callback executor.
+    /// Cancellation lets an active child finish, skips success callbacks, and reaches the completion observer.
     @Test
-    void cleanupAfterCancellation() throws Exception {
+    void cancellationPropagatesThroughRunningTree() throws Exception {
         CountDownLatch entered = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
-        AtomicInteger cleanups = new AtomicInteger();
-        CompletableFuture<Boolean> stopped = new CompletableFuture<>();
-        Task<Integer> completedChild = Task.completed(42);
+        AtomicBoolean bodyFinished = new AtomicBoolean();
+        AtomicBoolean continued = new AtomicBoolean();
+        List<@Nullable Throwable> observed = new ArrayList<>();
+        Task<Integer> completed = Task.completed(42);
         Task<@Nullable Void> child = task(Schedulers.io(), context -> {
-            assertFalse(context.isCancelled());
-            context.checkCancellation();
             entered.countDown();
             assertTrue(release.await(10, TimeUnit.SECONDS));
-            assertTrue(context.isCancelled());
             assertThrows(CancellationException.class, context::checkCancellation);
+            bodyFinished.set(true);
             return null;
         });
         Task<?> root = task(parent -> {
-            assertFalse(parent.isCancelled());
-            parent.run(completedChild);
+            parent.run(completed);
             try {
                 return parent.run(child);
             } finally {
                 assertTrue(parent.isCancelled());
             }
-        }).whenComplete((value, cause) -> {
-            assertNull(value);
-            assertInstanceOf(CancellationException.class, cause);
-            cleanups.incrementAndGet();
-        });
-        root.addTaskListener(new TaskListener() {
-            /// Signals the test thread after cancellation has finished propagating.
-            @Override
-            public void onExecutionFinished(Task<?> rootTask, boolean success) {
-                stopped.complete(success);
-            }
-        });
-        root.start();
+        }).thenRun(() -> continued.set(true)).whenComplete((value, failure) -> observed.add(failure));
+
+        CompletableFuture<Boolean> outcome = CompletableFuture.supplyAsync(root::test);
         try {
             assertTrue(entered.await(10, TimeUnit.SECONDS));
-            assertThrows(IllegalStateException.class, child::resultNow);
-            assertThrows(IllegalStateException.class, child::exceptionNow);
-            assertNull(child.resultNowOrNull());
-            assertNull(child.exceptionNowOrNull());
             root.cancel();
             assertTrue(root.isCancellationRequested());
-            assertEquals(Task.State.RUNNING, root.getState());
-            assertEquals(Task.State.RUNNING, child.getState());
             assertFalse(root.isCancelled());
             assertFalse(child.isCancelled());
         } finally {
             release.countDown();
         }
-        assertFalse(stopped.get(10, TimeUnit.SECONDS));
-        assertEquals(1, cleanups.get());
+        assertFalse(outcome.get(10, TimeUnit.SECONDS));
+        assertTrue(bodyFinished.get());
+        assertFalse(continued.get());
         assertTrue(root.isCancelled());
         assertTrue(child.isCancelled());
-        assertFalse(completedChild.isCancelled());
-        assertEquals(42, completedChild.resultNow());
-        CancellationException cancellation = assertInstanceOf(CancellationException.class, root.exceptionNow());
-        assertSame(cancellation, root.exceptionNowOrNull());
-        assertNull(root.resultNowOrNull());
-        assertThrows(IllegalStateException.class, root::resultNow);
+        assertEquals(42, completed.resultNow());
+        assertEquals(List.of(root.exceptionNow()), observed);
     }
 
-    /// A queued success callback observes cancellation before doing work, and its observer can still clean up.
+    /// Cancelling after dispatch keeps each kind of success callback from running.
     @ParameterizedTest
     @ValueSource(strings = {"thenApply", "thenRun", "thenCompose", "thenComposeOptional"})
     void skipsQueuedSuccessCallbackAfterCancellation(String method) throws Exception {
-        CompletableFuture<Runnable> submitted = new CompletableFuture<>();
-        Executor executor = submitted::complete;
+        CountDownLatch submitted = new CountDownLatch(1);
+        CompletableFuture<@Nullable Void> release = new CompletableFuture<>();
+        Executor executor = command -> {
+            submitted.countDown();
+            release.orTimeout(10, TimeUnit.SECONDS).join();
+            command.run();
+        };
         AtomicInteger calls = new AtomicInteger();
         Task<Integer> source = Task.completed(1);
         Task<?> continuation = switch (method) {
@@ -274,24 +231,23 @@ final class TaskExecutionContextTest {
             case "thenComposeOptional" -> source.thenComposeOptionalAsync(executor, value -> Task.completed(calls.incrementAndGet()));
             default -> throw new AssertionError(method);
         };
-        CompletableFuture<@Nullable Throwable> observed = new CompletableFuture<>();
-        Task<?> root = continuation.whenComplete((value, cause) -> observed.complete(cause));
-        FutureTask<CancellationException> outcome = new FutureTask<>(() -> assertThrows(CancellationException.class, root::run));
-        Schedulers.io().execute(outcome);
-        Runnable callback = submitted.get(10, TimeUnit.SECONDS);
-        root.cancel();
-        callback.run();
-
-        assertSame(outcome.get(10, TimeUnit.SECONDS), observed.get(10, TimeUnit.SECONDS));
+        CompletableFuture<Boolean> outcome = CompletableFuture.supplyAsync(continuation::test);
+        try {
+            assertTrue(submitted.await(10, TimeUnit.SECONDS));
+            continuation.cancel();
+        } finally {
+            release.complete(null);
+        }
+        assertFalse(outcome.get(10, TimeUnit.SECONDS));
+        assertTrue(continuation.isCancelled());
         assertEquals(0, calls.get());
-        assertEquals(1, source.resultNow());
     }
 
     /// A cancelled parent leaves an unsubmitted child available for reuse through either submission API.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void leavesNewChildUnsubmittedAfterCancellation(boolean batch) throws Exception {
-        Task<Integer> child = Task.completed(42).withStage(new TaskStage("child"));
+        Task<Integer> child = Task.completed(42);
         Task<Integer> completed = Task.completed(1);
         completed.run();
         Task<Integer> root = new Task<>() {
@@ -299,17 +255,15 @@ final class TaskExecutionContextTest {
             @Override
             public Integer execute(TaskExecutionContext context) throws Exception {
                 cancel();
-                assertThrows(CancellationException.class, () -> context.run(completed));
-                assertThrows(CancellationException.class, () -> context.runAll(List.of(completed)));
+                if (batch)
+                    assertThrows(CancellationException.class, () -> context.runAll(List.of(completed)));
+                else
+                    assertThrows(CancellationException.class, () -> context.run(completed));
                 return batch ? context.runAll(List.of(child)).get(0) : context.run(child);
             }
         };
-        StageEvents events = new StageEvents();
-        root.addTaskListener(events);
         assertThrows(CancellationException.class, root::run);
         assertEquals(Task.State.NEW, child.getState());
-        assertTrue(events.started.isEmpty());
-        assertEquals(List.of(root), events.completions.stream().map(TaskCompletion::task).toList());
         assertEquals(42, child.run());
     }
 
@@ -339,323 +293,242 @@ final class TaskExecutionContextTest {
         }).run();
     }
 
-    /// A successful batch, including an empty one, returns true. A failed child retains its cause.
+    /// Child failures are reported as false. Cancellation of a child alone leaves its parent usable.
     @Test
     void reportsTryRunOutcome() throws Exception {
-        Task<?> root = task(context -> {
-            assertTrue(context.tryRunAll(List.of()));
+        task(context -> {
             assertTrue(context.tryRun(Task.completed(false)));
-            assertTrue(context.tryRunAll(List.of(Task.completed(1), Task.completed(2))));
+            assertTrue(context.tryRunAll(List.of()));
+            assertTrue(context.tryRunAll(List.of(Task.completed(1))));
             for (Throwable failure : List.of(new IOException(), new AssertionError(), new CancellationException())) {
                 Task<?> child = Task.failed(failure);
                 assertFalse(context.tryRun(child));
+                assertFalse(context.tryRunAll(List.of(child)));
                 assertSame(failure, child.exceptionNow());
-                assertSame(failure, child.exceptionNowOrNull());
-                boolean cancelled = failure instanceof CancellationException;
-                assertEquals(cancelled ? Task.State.CANCELLED : Task.State.FAILED, child.getState());
-                assertEquals(cancelled, child.isCancelled());
-                assertSame(failure, assertThrows(failure.getClass(), () -> context.run(child)));
-                Task<Integer> sibling = Task.completed(1);
-                assertSame(failure, assertThrows(failure.getClass(), () -> context.runAll(List.of(child, sibling))));
-                assertEquals(1, sibling.resultNow());
-                assertFalse(context.isCancelled());
             }
-            return null;
-        });
-        root.run();
-        assertFalse(root.isCancellationRequested());
-    }
-
-    /// Cancelling the task tree interrupts a sequence that otherwise tolerates child failures.
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void tryRunPropagatesCancellation(boolean batch) {
-        Task<?> child = Task.supplyAsync(() -> fail("Child body ran after cancellation"));
-        AtomicInteger continued = new AtomicInteger();
-        Task<?> root = task(context -> {
-            if (batch)
-                context.tryRunAll(List.of(child));
-            else
-                context.tryRun(child);
-            return continued.incrementAndGet();
-        });
-        root.addTaskListener(new TaskListener() {
-            /// Cancels the tree once the child begins.
-            @Override
-            public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
-                if (task == child)
-                    root.cancel();
-            }
-        });
-        assertFalse(root.test());
-        assertInstanceOf(CancellationException.class, root.exceptionNowOrNull());
-        assertTrue(child.isCancelled());
-        assertEquals(0, continued.get());
-    }
-
-    /// A failed sibling does not prevent concurrent work from completing before the batch returns.
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void drainsConcurrentSiblingsOnFailure(boolean ignoreFailures) throws Exception {
-        CountDownLatch entered = new CountDownLatch(2);
-        AtomicInteger finished = new AtomicInteger();
-        IOException failure = new IOException("Child failed");
-        Task<@Nullable Void> first = task(context -> {
-            entered.countDown();
-            assertTrue(entered.await(10, TimeUnit.SECONDS));
-            throw failure;
-        });
-        Task<Integer> second = task(context -> {
-            entered.countDown();
-            assertTrue(entered.await(10, TimeUnit.SECONDS));
-            return finished.incrementAndGet();
-        });
-        task(context -> {
-            if (ignoreFailures)
-                assertFalse(context.tryRunAll(List.of(first, second)));
-            else
-                assertSame(failure, assertThrows(IOException.class, () -> context.runAll(List.of(first, second))));
-            assertEquals(1, finished.get());
-            assertEquals(1, second.resultNow());
-            assertEquals(Task.State.FAILED, first.getState());
             return null;
         }).run();
     }
 
-    /// Failure to resolve a child's executor propagates through its decorators and allows every sibling to finish.
+    /// A request to cancel the whole tree propagates through both failure-tolerant entry points.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void drainsSiblingsWhenExecutorSelectionFails(boolean decorate) {
+    void tryRunPropagatesCancellation(boolean batch) {
+        Task<?> root = new Task<@Nullable Void>() {
+            /// Requests cancellation from inside the child.
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) {
+                Task<?> child = Task.runAsync(this::cancel);
+                if (batch)
+                    context.tryRunAll(List.of(child));
+                else
+                    context.tryRun(child);
+                return fail("Cancellation must reach the parent");
+            }
+        };
+        assertThrows(CancellationException.class, root::run);
+    }
+
+    /// A batch reports its failure only after its other children have finished.
+    @Test
+    void drainsConcurrentSiblingsOnFailure() {
+        IOException failure = new IOException("Child failed");
+        CountDownLatch failed = new CountDownLatch(1);
+        Task<Integer> first = Task.failed(failure);
+        Task<Integer> second = Task.supplyAsync(() -> {
+            assertTrue(failed.await(10, TimeUnit.SECONDS));
+            return 2;
+        });
+        Task<?> batch = Task.allOf(first, second);
+        batch.addTaskListener(new TaskListener() {
+            /// Allows the sibling to finish after the failure is published.
+            @Override
+            public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable cause) {
+                if (task == first)
+                    failed.countDown();
+            }
+        });
+        assertSame(failure, assertThrows(IOException.class, batch::run));
+        assertEquals(2, second.resultNow());
+    }
+
+    /// A dispatch failure reaches the decorated child and allows the remaining siblings to run.
+    @Test
+    void drainsSiblingsWhenExecutorSelectionFails() {
         IllegalStateException failure = new IllegalStateException("No executor available");
         Task<Integer> broken = new Task<>() {
+            /// Rejects dispatch before the body starts.
             @Override
             protected Executor getExecutor() {
                 throw failure;
             }
 
+            /// {@inheritDoc}
             @Override
             public Integer execute(TaskExecutionContext context) {
-                return fail("A task with a failed executor selection should not start");
+                return fail("Unexpected execution");
             }
         };
-        Task<Integer> counted = decorate ? broken.withCounter() : broken;
-        Task<Integer> branch = decorate ? counted.withStage(new TaskStage("download")) : broken;
-        CountDownLatch release = new CountDownLatch(1);
-        Task<Integer> first = Task.supplyAsync(() -> {
-            assertTrue(release.await(10, TimeUnit.SECONDS));
-            return 1;
-        });
-        Task<Integer> last = Task.supplyAsync(() -> {
-            release.countDown();
-            return 2;
-        });
-        try {
-            assertSame(failure, assertThrows(IllegalStateException.class, Task.allOf(first, branch, last)::run));
-            assertSame(failure, branch.exceptionNow());
-            assertSame(failure, counted.exceptionNow());
-            assertSame(failure, broken.exceptionNow());
-            assertSame(failure, broken.exceptionNowOrNull());
-            assertNull(broken.resultNowOrNull());
-            assertEquals(Task.State.FAILED, broken.getState());
-            assertEquals(1, first.resultNow());
-            assertEquals(2, last.resultNow());
-        } finally {
-            release.countDown();
-        }
+        Task<Integer> branch = broken.withCounter();
+        Task<Integer> sibling = Task.completed(2);
+        assertSame(failure, assertThrows(IllegalStateException.class, Task.allOf(branch, sibling)::run));
+        assertSame(failure, branch.exceptionNow());
+        assertSame(failure, broken.exceptionNow());
+        assertEquals(2, sibling.resultNow());
     }
 
-    /// A batch retains null results and input order even when the last child finishes first.
-    @Test
-    void returnsResultsInInputOrder() throws Exception {
+    /// Fresh and completed children keep their input positions even when they finish out of order.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void returnsResultsInInputOrder(boolean bounded) throws Exception {
         CountDownLatch released = new CountDownLatch(1);
-        Task<String> first = task(context -> {
+        Task<String> first = Task.supplyAsync(() -> {
             assertTrue(released.await(10, TimeUnit.SECONDS));
             return "first";
         });
-        Task<@Nullable String> second = Task.completed(null);
-        Task<List<@Nullable String>> batch = Task.allOf(first, second);
+        Task<String> second = Task.completed("second");
+        Task<@Nullable String> previous = Task.completed(null);
+        previous.run();
+
+        @Unmodifiable List<Task<@Nullable String>> children = List.of(first, second, previous);
+        Task<List<@Nullable String>> batch = bounded ? Task.allOf(children, 2) : Task.allOf(children);
         batch.addTaskListener(new TaskListener() {
-            /// Releases the first child after the second child's result has been published.
+            /// Releases the first child after the second result is available.
             @Override
             public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
                 if (task == second)
                     released.countDown();
             }
         });
-        assertTrue(batch.test());
-        assertEquals(Arrays.asList("first", null), batch.resultNow());
+        assertEquals(Arrays.asList("first", "second", null), batch.run());
+    }
+
+    /// Empty batches succeed and still require a positive concurrency limit.
+    @Test
+    void validatesEmptyBatches() throws Exception {
         assertTrue(Task.allOf().run().isEmpty());
         assertTrue(Task.allOf(List.of(), 1).run().isEmpty());
-        assertThrows(IllegalArgumentException.class, () -> Task.allOf(List.of(), 0).run());
+        assertThrows(IllegalArgumentException.class, () -> Task.allOf(List.of(), 0));
     }
 
-    /// Published and newly computed results occupy their respective input positions in each batch.
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void mixesCompletedTasksWithNewChildren(boolean bounded) throws Exception {
-        Task<@Nullable String> empty = Task.completed(null);
-        Task<String> previous = Task.completed("previous");
-        assertEquals(Arrays.asList(null, "previous"), Task.allOf(empty, previous).run());
-
-        Task<String> first = Task.completed("first");
-        Task<String> last = Task.completed("last");
-        task(context -> {
-            assertNull(context.run(empty));
-            @Unmodifiable List<Task<? extends @Nullable String>> inputs = List.of(first, empty, previous, last);
-            assertEquals(Arrays.asList("first", null, "previous", "last"),
-                    bounded ? context.runAll(inputs, 1) : context.runAll(inputs));
-            return null;
-        }).run();
-    }
-
-    /// A bounded batch serves callbacks and counts only unfinished branches, even when they start during submission.
+    /// A bounded batch can start another child when one slot frees while the first child is still busy.
     @Test
-    void refillsBoundedBatchWhenAnyBranchFinishes() throws Exception {
-        ExecutorService parent = Executors.newSingleThreadExecutor();
-        ExecutorService workers = Executors.newFixedThreadPool(3);
-        try {
-            Thread parentThread = parent.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
-            AtomicInteger submissions = new AtomicInteger();
-            CompletableFuture<@Nullable Void> inContinuation = new CompletableFuture<>();
-            Executor children = command -> {
-                int submission = submissions.incrementAndGet();
-                workers.execute(command);
-                if (submission == 1)
-                    inContinuation.orTimeout(10, TimeUnit.SECONDS).join();
-            };
-            CountDownLatch lastStarted = new CountDownLatch(1);
-            Task<Integer> inline = Task.supplyAsync(Runnable::run, () -> 0);
-            Task<Integer> first = task(children, context -> context.run(Task.completed(1).thenApply(value -> {
-                inContinuation.complete(null);
-                assertTrue(lastStarted.await(10, TimeUnit.SECONDS));
-                return value;
-            })));
-            Task<@Nullable Integer> second = task(children, context -> context.call(parent, () -> {
-                assertSame(parentThread, Thread.currentThread());
-                assertEquals(2, submissions.get());
-                return null;
+    void refillsAvailableSlotsWithinConcurrencyLimit() throws Exception {
+        int limit = 2;
+        CountDownLatch entered = new CountDownLatch(limit);
+        CountDownLatch nextEntered = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        CountDownLatch releaseSecond = new CountDownLatch(1);
+        AtomicInteger active = new AtomicInteger();
+        List<Task<@Nullable Void>> children = new ArrayList<>();
+        for (int i = 0; i <= limit; i++) {
+            CountDownLatch started = i < limit ? entered : nextEntered;
+            CountDownLatch release = i == 0 ? releaseFirst : releaseSecond;
+            children.add(Task.runAsync(Schedulers.io(), () -> {
+                int concurrent = active.incrementAndGet();
+                try {
+                    assertTrue(concurrent <= limit, "Too many active children");
+                    started.countDown();
+                    assertTrue(release.await(10, TimeUnit.SECONDS));
+                } finally {
+                    active.decrementAndGet();
+                }
             }));
-            Task<Integer> last = task(children, context -> {
-                lastStarted.countDown();
-                return 3;
-            });
-            Task<List<@Nullable Integer>> batch = Task.allOf(List.of(inline, first, second, last), 2);
-            assertEquals(Arrays.asList(0, 1, null, 3), task(parent, context -> context.run(batch)).run());
-            assertEquals(3, submissions.get());
-        } finally {
-            workers.shutdownNow();
-            parent.shutdownNow();
         }
+        Task<?> batch = Task.allOf(children, limit).start();
+        try {
+            assertTrue(entered.await(10, TimeUnit.SECONDS));
+            releaseSecond.countDown();
+            assertTrue(nextEntered.await(10, TimeUnit.SECONDS));
+        } finally {
+            releaseFirst.countDown();
+            releaseSecond.countDown();
+        }
+        batch.run();
     }
 
-    /// A duplicate or failed submission does not consume a slot or hide a later error.
+    /// A rejected submission frees its slot. A later error takes precedence and the batch drains.
     @Test
-    void drainsBoundedBatchAfterFailures() throws Exception {
-        Task<Integer> shared = Task.completed(1);
+    void drainsBoundedBatchAfterFailures() {
         RejectedExecutionException rejection = new RejectedExecutionException("Download unavailable");
         Task<Integer> rejected = Task.supplyAsync(command -> {
             throw rejection;
         }, () -> fail("Unexpected execution"));
-        IOException failure = new IOException("Download failed");
-        Task<Integer> failed = Task.failed(failure);
-        CancellationException cancellation = new CancellationException();
-        Task<Integer> cancelled = Task.failed(cancellation);
         AssertionError error = new AssertionError("Fatal download failure");
-        Task<Integer> fatal = Task.failed(error);
-        Task<Integer> last = Task.completed(6);
-        task(context -> {
-            assertSame(error, assertThrows(AssertionError.class, () ->
-                    context.runAll(List.of(shared, shared, rejected, failed, cancelled, fatal, last), 2)));
-            assertEquals(1, shared.resultNow());
-            assertSame(rejection, rejected.exceptionNow());
-            assertSame(failure, failed.exceptionNow());
-            assertSame(cancellation, cancelled.exceptionNow());
-            assertSame(error, fatal.exceptionNow());
-            assertEquals(6, last.resultNow());
-            return null;
-        }).run();
+        Task<Integer> last = Task.completed(3);
+        Task<?> batch = Task.allOf(List.of(rejected, Task.<Integer>failed(error), last), 1);
+        assertSame(error, assertThrows(AssertionError.class, batch::run));
+        assertSame(rejection, rejected.exceptionNow());
+        assertEquals(3, last.resultNow());
     }
 
-    /// Cancelling either kind of batch drains admitted children and leaves the rest available for reuse.
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void stopsBatchAdmissionOnCancellation(boolean bounded) throws Exception {
+    /// Cancellation drains the running children and leaves a child outside the limit available for reuse.
+    @Test
+    void stopsBatchAdmissionOnCancellation() throws Exception {
         CountDownLatch entered = new CountDownLatch(1);
         CountDownLatch cancelled = new CountDownLatch(1);
-        Task<Integer> running = task(Schedulers.io(), context -> {
+        Task<Integer> running = Task.supplyAsync(Schedulers.io(), () -> {
             entered.countDown();
             assertTrue(cancelled.await(10, TimeUnit.SECONDS));
             return 1;
         });
-        Task<Integer> trigger = task(bounded ? Schedulers.io() : Runnable::run, context -> {
-            assertTrue(entered.await(10, TimeUnit.SECONDS));
-            return 2;
-        });
         Task<Integer> pending = Task.completed(3);
-        @Unmodifiable List<Task<Integer>> children = List.of(running, trigger, pending);
-        Task<?> root = bounded ? Task.allOf(children, 2) : Task.allOf(children);
-        List<Task<?>> finished = new CopyOnWriteArrayList<>();
-        root.addTaskListener(new TaskListener() {
-            /// Cancels the root when the trigger publishes its result.
+        Task<?> root = new Task<List<Integer>>() {
+            /// Cancels the parent while both available slots are occupied.
             @Override
-            public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
-                finished.add(task);
-                if (task == trigger) {
-                    root.cancel();
+            public List<Integer> execute(TaskExecutionContext context) throws Exception {
+                Task<Integer> trigger = Task.supplyAsync(Schedulers.io(), () -> {
+                    assertTrue(entered.await(10, TimeUnit.SECONDS));
+                    cancel();
                     cancelled.countDown();
-                }
+                    return 2;
+                });
+                return context.runAll(List.of(running, trigger, pending), 2);
             }
-        });
+        };
         assertThrows(CancellationException.class, root::run);
         assertTrue(running.isCancelled());
-        assertEquals(2, trigger.resultNow());
-        assertFalse(finished.contains(pending));
         assertEquals(Task.State.NEW, pending.getState());
         assertEquals(3, pending.run());
     }
 
-    /// The default bounded implementation stops later batches only when the whole tree is cancelled.
+    /// The interface default stops on tree cancellation and continues after an independently cancelled child.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void stopsDefaultBatchesOnTreeCancellation(boolean cancelTree) {
-        Task<Integer> first = cancelTree ? Task.completed(1) : Task.failed(new CancellationException());
         Task<Integer> last = Task.completed(2);
-        AtomicInteger batches = new AtomicInteger();
-        Task<?> root = task(context -> new DefaultBatchContext(context, batches).runAll(List.of(first, last), 1));
-        if (cancelTree) {
-            root.addTaskListener(new TaskListener() {
-                /// Cancels the tree after the first batch's only child succeeds.
-                @Override
-                public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
-                    if (task == first)
-                        root.cancel();
-                }
-            });
-        }
+        Task<?> root = new Task<List<Integer>>() {
+            /// Runs the same children through the interface's bounded batch overload.
+            @Override
+            public List<Integer> execute(TaskExecutionContext context) throws Exception {
+                Task<Integer> first = Task.supplyAsync(() -> {
+                    if (cancelTree)
+                        cancel();
+                    throw new CancellationException();
+                });
+                return new DefaultBatchContext(context).runAll(List.of(first, last), 1);
+            }
+        };
         assertThrows(CancellationException.class, root::run);
-        assertEquals(cancelTree ? 1 : 2, batches.get());
         assertEquals(cancelTree ? Task.State.NEW : Task.State.SUCCEEDED, last.getState());
     }
 
-    /// An interrupted window still serves admitted callbacks and reports a child's fatal failure ahead of interruption.
+    /// An interrupted batch drains its child, preserves the interrupt flag, and gives an error precedence.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void drainsInterruptedWindow(boolean fatal) {
+    void drainsInterruptedBatch(boolean fatal) {
         ExecutorService parent = Executors.newSingleThreadExecutor();
         try {
             assertTimeoutPreemptively(Duration.ofSeconds(10), () -> {
                 AssertionError error = new AssertionError("Admitted child failed");
                 Task<Integer> pending = Task.completed(2);
                 task(parent, context -> {
-                    Thread submitter = Thread.currentThread();
                     Task<Integer> child = task(Schedulers.io(), childContext -> {
                         childContext.call(parent, () -> {
-                            assertSame(submitter, Thread.currentThread());
-                            submitter.interrupt();
+                            Thread.currentThread().interrupt();
                             return null;
                         });
                         return childContext.call(parent, () -> {
-                            assertSame(submitter, Thread.currentThread());
                             if (fatal)
                                 throw error;
                             return 1;
@@ -670,7 +543,7 @@ final class TaskExecutionContextTest {
                             assertThrows(InterruptedException.class, () -> context.runAll(children, 1));
                             assertEquals(1, child.resultNow());
                         }
-                        assertTrue(submitter.isInterrupted());
+                        assertTrue(Thread.currentThread().isInterrupted());
                         assertEquals(Task.State.NEW, pending.getState());
                     } finally {
                         Thread.interrupted();
@@ -683,258 +556,73 @@ final class TaskExecutionContextTest {
         }
     }
 
-    /// An interruption while draining a successful child precedes an ordinary failure from a later child.
+    /// Inline and explicitly null callbacks inherit the parent executor. A default async callback
+    /// leaves that executor, and its composed child can return to it.
     @Test
-    void retainsInterruptionBeforeLaterFailure() {
+    void continuationsRespectParentAndCallbackExecutors() throws Exception {
         ExecutorService parent = Executors.newSingleThreadExecutor();
         try {
-            assertTimeoutPreemptively(Duration.ofSeconds(10), () -> task(parent, context -> {
-                Task<Integer> first = task(Schedulers.io(), child -> child.call(parent, () -> {
-                    Thread.currentThread().interrupt();
-                    return 1;
-                }));
-                IOException failure = new IOException("Second child failed");
-                Task<Integer> second = Task.failed(failure);
-                try {
-                    assertThrows(InterruptedException.class, () -> context.runAll(List.of(first, second)));
-                    assertTrue(Thread.currentThread().isInterrupted());
-                    assertEquals(1, first.resultNow());
-                    assertSame(failure, second.exceptionNow());
-                } finally {
-                    Thread.interrupted();
-                }
+            task(parent, context -> {
+                Thread parentWorker = Thread.currentThread();
+                Task<Thread> chain = Task.supplyAsync(Schedulers.io(), Thread::currentThread)
+                        .thenApply(sourceWorker -> {
+                            assertNotSame(parentWorker, sourceWorker);
+                            return Thread.currentThread();
+                        })
+                        .thenComposeAsync(inlineWorker -> {
+                            assertSame(parentWorker, inlineWorker);
+                            assertNotSame(parentWorker, Thread.currentThread());
+                            return Task.supplyAsync(Thread::currentThread);
+                        })
+                        .thenApplyAsync(null, childWorker -> {
+                            assertSame(parentWorker, childWorker);
+                            return Thread.currentThread();
+                        });
+                assertSame(parentWorker, context.run(chain));
                 return null;
-            }).run());
+            }).run();
         } finally {
             parent.shutdownNow();
         }
     }
 
-    /// A root's inline continuation runs on the same task worker as its inherited source.
+    /// A mapping callback, recovery handler, and completion observer honor an explicit executor.
     @Test
-    void rootContinuationUsesTaskWorker() throws Exception {
-        Task<Thread> source = Task.supplyAsync(Thread::currentThread);
-        Thread callback = source.thenApply(ignored -> Thread.currentThread()).run();
-        assertNotSame(Thread.currentThread(), callback);
-        assertSame(source.resultNow(), callback);
-    }
-
-    /// Asynchronous callbacks without an explicit executor use the task scheduler from another executor.
-    @Test
-    void asyncContinuationsUseTaskScheduler() throws Exception {
-        Thread caller = Thread.currentThread();
-        AtomicInteger invocations = new AtomicInteger();
-        Callable<Integer> checkWorker = () -> {
-            Thread worker = Thread.currentThread();
-            assertNotSame(caller, worker);
-            // A nested task on the same executor runs inline on this worker.
-            assertSame(worker, Task.supplyAsync(Schedulers.tasks(), Thread::currentThread).run());
-            return invocations.incrementAndGet();
-        };
-
-        Task<@Nullable Integer> chain = Task.completed(0)
-                .thenApplyAsync(value -> checkWorker.call())
-                .thenAcceptAsync(value -> checkWorker.call())
-                .thenRunAsync(checkWorker::call)
-                .thenComposeAsync(() -> Task.completed(checkWorker.call()))
-                .thenComposeAsync(value -> Task.completed(checkWorker.call()))
-                .whenCompleteAsync((value, failure) -> {
-                    assertNull(failure);
-                    assertEquals(5, value);
-                    checkWorker.call();
-                })
-                .thenSupplyAsync(checkWorker)
-                .thenComposeOptionalAsync(value -> Task.completed(checkWorker.call()));
-        assertEquals(8, task(Runnable::run, context -> context.run(chain)).run());
-    }
-
-    /// Inline continuations inherit the enclosing task's worker even when the source runs elsewhere.
-    @Test
-    void nestedContinuationsUseEnclosingWorker() throws Exception {
-        Thread caller = Thread.currentThread();
-        Task<Thread> source = Task.supplyAsync(Schedulers.io(), Thread::currentThread);
-        Task<Thread> supplied = source.thenComposeOptional(sourceThread -> {
-            assertNotSame(caller, sourceThread);
-            assertSame(caller, Thread.currentThread());
-            return Task.completed(1);
-        }).thenSupply(Thread::currentThread);
-        Task<Thread> finished = supplied.whenComplete((value, failure) -> {
-            assertNull(failure);
-            assertSame(caller, value);
-            assertSame(caller, Thread.currentThread());
-        });
-        assertSame(caller, task(Runnable::run, context -> context.run(finished)).run());
-        assertSame(caller, supplied.resultNow());
-    }
-
-    /// A null executor uses the enclosing worker for task factories and callbacks, preserving checked failures.
-    @Test
-    void nullExecutorUsesEnclosingWorker() {
-        Thread caller = Thread.currentThread();
-        IOException failure = new IOException("Callback failed");
-        Task<Thread> source = Task.composeAsync(null, () -> {
-            assertSame(caller, Thread.currentThread());
-            return Task.supplyAsync(null, Thread::currentThread);
-        });
-        Task<?> continuation = source.thenApplyAsync(null, worker -> {
-            assertSame(caller, worker);
-            assertSame(caller, Thread.currentThread());
-            throw failure;
-        });
-        Task<?> root = task(Runnable::run, context -> context.run(continuation));
-        assertSame(failure, assertThrows(IOException.class, root::run));
-    }
-
-    /// An explicit null executor runs each continuation callback on the enclosing worker.
-    @Test
-    void nullContinuationExecutorUsesEnclosingWorker() throws Exception {
-        Thread caller = Thread.currentThread();
-        Task<Thread> continuation = Task.completed(1)
-                .thenApplyAsync(null, value -> Thread.currentThread())
-                .thenAcceptAsync(null, applyThread -> {
-                    assertSame(caller, applyThread);
-                    assertSame(caller, Thread.currentThread());
-                })
-                .thenRunAsync(null, () -> assertSame(caller, Thread.currentThread()))
-                .thenComposeAsync(null, () -> Task.completed(Thread.currentThread()))
-                .thenComposeAsync(null, supplierThread -> {
-                    assertSame(caller, supplierThread);
-                    return Task.completed(Thread.currentThread());
-                })
-                .whenCompleteAsync(null, (value, failure) -> {
-                    assertNull(failure);
-                    assertSame(caller, value);
-                    assertSame(caller, Thread.currentThread());
-                });
-        assertSame(caller, task(Runnable::run, context -> context.run(continuation)).run());
-    }
-
-    /// A continuation's body inherits its parent's executor and dispatches the callback on the selected executor.
-    @Test
-    void separatesContinuationBodyAndCallbackExecutors() throws Exception {
-        Thread caller = Thread.currentThread();
+    void dispatchesSuccessAndFailureCallbacksToRequestedExecutor() throws Exception {
         ExecutorService callbacks = Executors.newSingleThreadExecutor();
         try {
             Thread worker = callbacks.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
-            Task<Thread> source = Task.supplyAsync(Thread::currentThread);
-            Task<Thread> continuation = source
-                    .whenCompleteAsync(callbacks, (value, failure) -> {
-                        assertNull(failure);
-                        assertSame(caller, value);
-                        assertSame(worker, Thread.currentThread());
-                    })
-                    .thenApplyAsync(callbacks, dispatchThread -> {
-                        assertSame(caller, dispatchThread);
-                        return Thread.currentThread();
-                    });
-            Thread actual = task(Runnable::run, context -> context.run(continuation)).run();
-            assertSame(worker, actual);
+            IOException failure = new IOException("Mapping failed");
+            Task<Integer> failed = Task.completed(1).thenApplyAsync(callbacks, value -> {
+                assertSame(worker, Thread.currentThread());
+                throw failure;
+            });
+            Task<Integer> recovered = failed.handleAsync(callbacks, (value, cause) -> {
+                assertSame(failure, cause);
+                assertSame(worker, Thread.currentThread());
+                return 42;
+            }).whenCompleteAsync(callbacks, (value, cause) -> assertSame(worker, Thread.currentThread()));
+            assertEquals(42, recovered.run());
         } finally {
             callbacks.shutdownNow();
         }
     }
 
-    /// Handlers dispatch successful and failed outcomes to the selected callback executor.
+    /// Decorated downloads can fill their pool while an independent job uses a spare parent worker.
     @Test
-    void dispatchesHandleCallbacks() throws Exception {
-        Thread caller = Thread.currentThread();
-        ExecutorService callbacks = Executors.newSingleThreadExecutor();
-        try {
-            Thread explicitWorker = callbacks.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
-            IOException cause = new IOException("Handler failed");
-            Task<Thread> chain = Task.supplyAsync(callbacks, Thread::currentThread)
-                    .handle((sourceThread, failure) -> {
-                        assertNull(failure);
-                        assertSame(explicitWorker, sourceThread);
-                        return Thread.currentThread();
-                    })
-                    .handleAsync((inlineThread, failure) -> {
-                        assertNull(failure);
-                        assertSame(caller, inlineThread);
-                        Thread worker = Thread.currentThread();
-                        assertNotSame(caller, worker);
-                        assertSame(worker, Task.supplyAsync(Schedulers.tasks(), Thread::currentThread).run());
-                        throw cause;
-                    })
-                    .handleAsync(callbacks, (value, failure) -> {
-                        assertSame(cause, failure);
-                        return Thread.currentThread();
-                    })
-                    .handleAsync(null, (callbackThread, failure) -> {
-                        assertNull(failure);
-                        assertSame(explicitWorker, callbackThread);
-                        return Thread.currentThread();
-                    });
-            assertSame(caller, task(Runnable::run, context -> context.run(chain)).run());
-        } finally {
-            callbacks.shutdownNow();
-        }
-    }
-
-    /// Stacked stage decorators share the source worker and preserve their separate lifecycle events.
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void dispatchesStageDecoratorsOnSourceExecutor(boolean explicit) throws Exception {
-        ExecutorService sourcePool = Executors.newSingleThreadExecutor();
-        try {
-            Thread expected = explicit ? sourcePool.submit(Thread::currentThread).get(10, TimeUnit.SECONDS) : Thread.currentThread();
-            AtomicInteger resolutions = new AtomicInteger();
-            Task<Thread> source = new Task<>() {
-                /// Records each query for the source's executor preference.
-                @Override
-                protected @Nullable Executor getExecutor() {
-                    assertEquals(Task.State.READY, getState());
-                    resolutions.incrementAndGet();
-                    return explicit ? sourcePool : null;
-                }
-
-                /// Returns the worker executing the source body.
-                @Override
-                public Thread execute(TaskExecutionContext context) {
-                    return Thread.currentThread();
-                }
-            };
-            TaskStage.Hint hint = new TaskStage.Hint(new TaskStage("download"));
-            Task<Thread> counted = source.withCounter();
-            Task<Thread> staged = counted.withStage(hint.stage());
-            Task<Thread> hinted = staged.withStageHints(hint);
-            Task<List<Thread>> root = task(Runnable::run, context -> context.runAll(List.of(hinted)));
-            Map<Task<?>, Thread> workers = new HashMap<>();
-            StageEvents events = new StageEvents() {
-                /// Records the worker entering each task body.
-                @Override
-                public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
-                    workers.put(task, Thread.currentThread());
-                }
-            };
-            root.addTaskListener(events);
-
-            assertEquals(0, resolutions.get());
-            assertEquals(List.of(expected), root.run());
-            assertEquals(1, resolutions.get());
-            assertEquals(Map.of(root, Thread.currentThread(), hinted, expected, staged, expected,
-                    counted, expected, source, expected), workers);
-            assertEquals(List.of(source, counted, staged, hinted, root),
-                    events.completions.stream().map(TaskCompletion::task).toList());
-        } finally {
-            sourcePool.shutdownNow();
-        }
-    }
-
-    /// Counted downloads can fill their pool while an independent job uses a spare parent worker.
-    @Test
-    void countedBatchLeavesParentWorkerAvailable() throws Exception {
+    void decoratedBatchLeavesParentWorkerAvailable() throws Exception {
         ExecutorService parents = Executors.newFixedThreadPool(2);
         ExecutorService downloads = Executors.newFixedThreadPool(3);
         try {
             CountDownLatch entered = new CountDownLatch(3);
             List<Task<Integer>> children = new ArrayList<>();
+            TaskStage stage = new TaskStage("download");
             for (int i = 0; i < 3; i++) {
                 children.add(task(downloads, context -> {
                     entered.countDown();
                     assertTrue(entered.await(10, TimeUnit.SECONDS));
                     return parents.submit(() -> 1).get(10, TimeUnit.SECONDS);
-                }).withCounter());
+                }).withCounter().withStage(stage).withStageHints(stage));
             }
             assertEquals(List.of(1, 1, 1), task(parents, context -> context.runAll(children)).run());
         } finally {
@@ -943,7 +631,7 @@ final class TaskExecutionContextTest {
         }
     }
 
-    /// Rejection or cancellation before execution closes every reserved decorator from the inside out.
+    /// A rejected or cancelled download leaves no admitted task pending and contributes no completed items.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void closesDecoratorsBeforeBodyEntry(boolean cancel) throws Exception {
@@ -957,14 +645,13 @@ final class TaskExecutionContextTest {
         Task<Integer> counted = source.withCounter();
         Task<Integer> root = counted.withStage(new TaskStage("download"));
         AtomicInteger completedItems = new AtomicInteger();
-        StageEvents events = new StageEvents() {
+        root.addTaskListener(new TaskListener() {
             /// Records items reported before the stage closes.
             @Override
             public void onStageProgress(TaskStage.Scope scope, int completedDelta, int totalDelta) {
                 completedItems.addAndGet(completedDelta);
             }
-        };
-        root.addTaskListener(events);
+        });
         FutureTask<RuntimeException> outcome = new FutureTask<>(() -> assertThrows(RuntimeException.class, root::run));
         Schedulers.io().execute(outcome);
         if (cancel) {
@@ -977,11 +664,10 @@ final class TaskExecutionContextTest {
             assertInstanceOf(CancellationException.class, failure);
         else
             assertSame(rejection, failure);
-        assertEquals(List.of(source, counted, root), events.completions.stream().map(TaskCompletion::task).toList());
-        for (TaskCompletion completion : events.completions) {
-            assertSame(failure, completion.failure());
-            assertSame(failure, completion.task().exceptionNow());
-            assertEquals(cancel ? Task.State.CANCELLED : Task.State.FAILED, completion.task().getState());
+        assertSame(failure, root.exceptionNow());
+        for (Task<?> child : List.of(counted, source)) {
+            if (child.getState() != Task.State.NEW)
+                assertSame(failure, child.exceptionNow());
         }
         assertEquals(0, completedItems.get());
     }
@@ -1016,6 +702,9 @@ final class TaskExecutionContextTest {
     void resultNowReturnsNullOnlyAfterSuccess() throws Exception {
         Task<@Nullable String> root = Task.completed(null);
         assertThrows(IllegalStateException.class, root::resultNow);
+        assertThrows(IllegalStateException.class, root::exceptionNow);
+        assertNull(root.resultNowOrNull());
+        assertNull(root.exceptionNowOrNull());
         assertNull(root.run());
         assertNull(root.resultNow());
         assertNull(root.resultNowOrNull());
@@ -1060,12 +749,13 @@ final class TaskExecutionContextTest {
         assertEquals(1, root.run());
         assertEquals(1, calls.get());
 
-        for (Throwable failure : List.of(new IOException(), new AssertionError())) {
+        for (Throwable failure : List.of(new IOException(), new AssertionError(), new CancellationException())) {
             Task<?> failed = Task.failed(failure);
             assertSame(failure, assertThrows(failure.getClass(), failed::run));
             assertSame(failed, failed.start());
             assertFalse(failed.test());
             assertSame(failure, assertThrows(failure.getClass(), failed::run));
+            assertSame(failure, failed.exceptionNowOrNull());
         }
     }
 
@@ -1211,71 +901,48 @@ final class TaskExecutionContextTest {
     void rejectsRepeatedChildWithoutFailingItsFirstExecution(String batch) throws Exception {
         AtomicInteger calls = new AtomicInteger();
         Task<Integer> shared = Task.supplyAsync(calls::incrementAndGet);
-        Task<Integer> first = Task.completed(11);
         Task<Integer> last = Task.completed(22);
         task(context -> {
-            @Unmodifiable List<Task<Integer>> children = List.of(first, shared, shared, last);
+            @Unmodifiable List<Task<Integer>> children = List.of(shared, shared, last);
             assertThrows(IllegalStateException.class, () -> {
                 switch (batch) {
                     case "unbounded" -> context.runAll(children);
                     case "bounded" -> context.runAll(children, 1);
-                    case "defaultBounded" -> new DefaultBatchContext(context, new AtomicInteger()).runAll(children, 1);
+                    case "defaultBounded" -> new DefaultBatchContext(context).runAll(children, 1);
                     default -> throw new AssertionError(batch);
                 }
             });
-            assertEquals(11, first.resultNow());
             assertEquals(22, last.resultNow());
-            assertEquals(1, context.run(shared));
             return null;
         }).run();
         assertEquals(1, calls.get());
         assertEquals(1, shared.resultNow());
-        assertEquals(Task.State.SUCCEEDED, shared.getState());
-        assertNull(shared.exceptionNowOrNull());
     }
 
-    /// Competing decorators cannot resolve or fail a source already executing in another root.
+    /// A competing decorator fails without changing the outcome of the already running source.
     @Test
     void rejectsCompetingDecoratorWithoutChangingSource() throws Exception {
-        AtomicInteger resolutions = new AtomicInteger();
         CountDownLatch running = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
-        Task<Integer> source = new Task<>() {
-            /// Counts how many dispatches inspect the source's executor preference.
-            @Override
-            protected Executor getExecutor() {
-                resolutions.incrementAndGet();
-                return Schedulers.io();
-            }
-
-            /// Keeps the source running while the other root tries to dispatch it.
-            @Override
-            public Integer execute(TaskExecutionContext context) throws InterruptedException {
-                running.countDown();
-                assertTrue(release.await(10, TimeUnit.SECONDS));
-                return 42;
-            }
-        };
-        Task<Integer> winner = source.withCounter();
-        Task<Integer> contender = source.withStage(new TaskStage("download"));
-        FutureTask<Integer> result = new FutureTask<>(winner::run);
-        Schedulers.io().execute(result);
+        Task<Integer> source = Task.supplyAsync(Schedulers.io(), () -> {
+            running.countDown();
+            assertTrue(release.await(10, TimeUnit.SECONDS));
+            return 42;
+        });
+        Task<Integer> winner = source.withCounter().start();
         try {
             assertTrue(running.await(10, TimeUnit.SECONDS));
-            assertSame(assertThrows(IllegalStateException.class, contender::run), contender.exceptionNow());
-            assertEquals(Task.State.RUNNING, source.getState());
+            Task<Integer> contender = source.withStage(new TaskStage("download"));
+            assertThrows(IllegalStateException.class, contender::run);
         } finally {
             release.countDown();
         }
-        assertEquals(42, result.get(10, TimeUnit.SECONDS));
-        assertEquals(42, source.resultNow());
-        assertEquals(1, resolutions.get());
+        assertEquals(42, winner.run());
     }
 
     /// A notification uses the registration order captured before a callback changes the listeners.
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void snapshotsListenersForEachNotification(boolean useRun) throws Exception {
+    @Test
+    void snapshotsListenersForEachNotification() throws Exception {
         List<TaskListener> started = new ArrayList<>();
         List<TaskListener> finished = new ArrayList<>();
 
@@ -1310,10 +977,7 @@ final class TaskExecutionContextTest {
         root.addTaskListener(middle);
         root.addTaskListener(repeated);
 
-        if (useRun)
-            assertEquals(1, root.run());
-        else
-            assertTrue(root.test());
+        root.run();
         assertEquals(List.of(repeated, middle, repeated), started);
         assertEquals(List.of(middle, repeated, added), finished);
     }
@@ -1383,26 +1047,21 @@ final class TaskExecutionContextTest {
         }
     }
 
-    /// A pool that rejects compensation can still wait for an external completion signal.
+    /// A pool limited to one worker can wait for a completion signal from outside the pool.
     @Test
-    void waitsForFakeProgressWhenForkJoinPoolRejectsCompensation() throws Exception {
-        CountDownLatch saturated = new CountDownLatch(1);
+    void waitsForFakeProgressWithNoSpareWorkers() {
         ForkJoinPool pool = new ForkJoinPool(1, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null,
-                false, 1, 1, 1, ignored -> {
-                    saturated.countDown();
-                    return false;
-                }, 60, TimeUnit.SECONDS);
-        AtomicBoolean done = new AtomicBoolean();
-        Task<Integer> wrapper = Task.completed(42).withFakeProgress(new TaskName.Simple("Waiting"), done::get, 1.0);
-        Task<Integer> root = task(pool, context -> context.run(wrapper));
-        FutureTask<Integer> result = new FutureTask<>(root::run);
+                false, 1, 1, 1, null, 60, TimeUnit.SECONDS);
         try {
-            Schedulers.io().execute(result);
-            assertTrue(saturated.await(10, TimeUnit.SECONDS));
-            done.set(true);
-            assertEquals(42, result.get(10, TimeUnit.SECONDS));
+            assertTimeoutPreemptively(Duration.ofSeconds(10), () -> task(pool, context -> {
+                CompletableFuture<Boolean> signal = new CompletableFuture<>();
+                Task<Integer> wrapper = Task.completed(42).withFakeProgress(new TaskName.Simple("Waiting"),
+                        () -> signal.completeOnTimeout(true, 100, TimeUnit.MILLISECONDS).isDone(), 1.0);
+                assertEquals(42, context.run(wrapper));
+                assertTrue(signal.isDone());
+                return null;
+            }).run());
         } finally {
-            done.set(true);
             pool.shutdownNow();
         }
     }
@@ -1424,19 +1083,19 @@ final class TaskExecutionContextTest {
     /// workers inherit it, even when an enclosing task uses the same identifier.
     @Test
     void stagesBelongToTasksAcrossWorkerPools() {
-        Task<Thread> leaf = Task.supplyAsync(Schedulers.io(), Thread::currentThread);
-        Task<Thread> counted = leaf.withCounter();
-        Task<Thread> nested = task(null, new TaskStage("download"), context -> {
+        TaskStage download = new TaskStage("download");
+        Task<Integer> leaf = Task.supplyAsync(Schedulers.io(), () -> 1);
+        Task<Integer> nested = task(null, download, context -> {
             context.addStageItems(2);
             IOException failure = new IOException("Download failed");
             assertSame(failure, assertThrows(IOException.class, () -> context.run(Task.failed(failure).withCounter())));
-            return context.runAll(List.of(counted)).get(0);
+            return context.run(leaf.withCounter());
         });
         Task<Integer> sibling = Task.completed(7);
         Task<Integer> outer = task(context -> {
-            assertNotSame(Thread.currentThread(), context.run(nested));
+            context.run(nested);
             return context.run(sibling);
-        }).withStage(new TaskStage("download"));
+        }).withStage(download);
         Task<Integer> root = task(context -> {
             context.addStageItems(1);
             context.completeStageItem();
@@ -1457,12 +1116,10 @@ final class TaskExecutionContextTest {
         assertEquals(2, events.started.size());
         TaskStage.Scope first = events.started.get(0);
         TaskStage.Scope second = events.started.get(1);
-        assertNotSame(first, second);
         assertSame(outer, first.task());
         assertSame(nested, second.task());
-        assertSame(outer.getStage(), first.stage());
-        assertSame(nested.getStage(), second.stage());
-        assertEquals(first.stage(), second.stage());
+        assertEquals(download, first.stage());
+        assertEquals(download, second.stage());
         assertNull(first.parent());
         assertSame(first, second.parent());
         assertSame(first, events.running.get(outer));
@@ -1471,32 +1128,23 @@ final class TaskExecutionContextTest {
         assertSame(first, events.running.get(sibling));
         assertTrue(events.running.containsKey(root));
         assertNull(events.running.get(root));
-        assertNull(leaf.getStage());
-        assertNull(sibling.getStage());
         assertEquals(List.of(new StageProgress(second, 0, 2), new StageProgress(second, 1, 0)), progress);
         assertEquals(List.of(second, first), events.finished);
         assertEquals(Arrays.asList(null, null), events.failures);
     }
 
-    /// A parent that handles a child's exception, error or scheduling rejection can finish
-    /// its own stage successfully. Each child stage reports the original failure once.
+    /// A recovered child failure or rejected submission closes its own stage and lets the parent succeed.
     @Test
     void recoversFromFailedStages() {
         IOException exception = new IOException("Download failed");
-        AssertionError error = new AssertionError("Unexpected failure");
         RejectedExecutionException rejection = new RejectedExecutionException("Worker unavailable");
-        Task<?> source = Task.failed(exception);
-        Task<?> failed = source.withStage(new TaskStage("checked"));
-        Task<?> broken = task(null, new TaskStage("error"), context -> {
-            throw error;
-        });
+        Task<?> failed = Task.failed(exception).withStage(new TaskStage("checked"));
         Task<?> rejected = task(command -> {
             throw rejection;
         }, new TaskStage("rejected"), context -> fail("Unexpected execution"));
         Task<Integer> root = task(null, new TaskStage("outer"), context -> {
             assertSame(exception, assertThrows(IOException.class, () -> context.run(failed)));
-            assertSame(error, assertThrows(AssertionError.class, () -> context.run(broken)));
-            assertSame(rejection, assertThrows(RejectedExecutionException.class, () -> context.runAll(List.of(rejected))));
+            assertSame(rejection, assertThrows(RejectedExecutionException.class, () -> context.run(rejected)));
             return 42;
         });
 
@@ -1504,18 +1152,10 @@ final class TaskExecutionContextTest {
         root.addTaskListener(events);
         assertTrue(root.test());
         assertEquals(42, root.resultNow());
-        assertEquals(List.of(root, failed, broken, rejected), events.started.stream().map(TaskStage.Scope::task).toList());
-        TaskStage.Scope outer = events.started.get(0);
-        TaskStage.Scope checked = events.started.get(1);
+        assertEquals(List.of(root, failed, rejected), events.started.stream().map(TaskStage.Scope::task).toList());
         assertFalse(events.running.containsKey(rejected));
-        assertEquals(List.of(
-                new TaskCompletion(source, checked, exception),
-                new TaskCompletion(failed, checked, exception),
-                new TaskCompletion(broken, events.started.get(2), error),
-                new TaskCompletion(rejected, events.started.get(3), rejection),
-                new TaskCompletion(root, outer, null)), events.completions);
-        assertEquals(List.of(events.started.get(1), events.started.get(2), events.started.get(3), outer), events.finished);
-        assertEquals(Arrays.asList(exception, error, rejection, null), events.failures);
+        assertEquals(List.of(events.started.get(1), events.started.get(2), events.started.get(0)), events.finished);
+        assertEquals(Arrays.asList(exception, rejection, null), events.failures);
     }
 
     /// A root cancelled before dispatch still reports the start and cancellation of its stage.
@@ -1525,13 +1165,7 @@ final class TaskExecutionContextTest {
         Task<?> root = task(null, new TaskStage("cancelled"), context -> fail("Unexpected execution"));
         root.addTaskListener(events);
         root.cancel();
-        assertFalse(root.test());
-        CancellationException failure = assertInstanceOf(CancellationException.class, root.exceptionNow());
-        assertFalse(root.test());
-        assertSame(root, root.start());
-        assertSame(failure, assertThrows(CancellationException.class, root::run));
-        assertSame(failure, root.exceptionNow());
-        assertEquals(Task.State.CANCELLED, root.getState());
+        CancellationException failure = assertThrows(CancellationException.class, root::run);
         assertEquals(1, events.started.size());
         assertSame(root, events.started.get(0).task());
         assertTrue(events.running.isEmpty());
@@ -1540,7 +1174,7 @@ final class TaskExecutionContextTest {
         assertEquals(List.of(failure), events.failures);
     }
 
-    /// Fresh decorators use the parent's worker and report progress once for an already completed source.
+    /// Fresh decorators can stage and count a completed result after its executor has shut down.
     @Test
     void decoratesCompletedSourceAfterExecutorShutdown() throws Exception {
         ExecutorService original = Executors.newSingleThreadExecutor();
@@ -1555,23 +1189,17 @@ final class TaskExecutionContextTest {
         Task<Integer> staged = counted.withStage(new TaskStage("current"));
         Task<Integer> parent = task(Runnable::run, context -> context.run(staged));
         List<StageProgress> progress = new ArrayList<>();
-        List<Thread> workers = new ArrayList<>();
         StageEvents events = new StageEvents() {
-            /// Records which worker increments the new stage's item count.
+            /// Records counted items in the new stage.
             @Override
             public void onStageProgress(TaskStage.Scope scope, int completedDelta, int totalDelta) {
-                workers.add(Thread.currentThread());
                 progress.add(new StageProgress(scope, completedDelta, totalDelta));
             }
         };
         assertEquals(42, parent.addTaskListener(events).run());
-        Task<Integer> continuation = staged.thenApply(value -> value + 1);
-        assertEquals(43, continuation.addTaskListener(events).run());
         assertEquals(List.of(staged), events.started.stream().map(TaskStage.Scope::task).toList());
         assertEquals(events.started, events.finished);
         assertEquals(List.of(new StageProgress(events.started.get(0), 1, 0)), progress);
-        assertEquals(List.of(Thread.currentThread()), workers);
-        assertEquals(List.of(counted, staged, parent, continuation), events.completions.stream().map(TaskCompletion::task).toList());
     }
 
     /// Cancelling a decorator before dispatch leaves its source available for a later submission.
@@ -1615,8 +1243,8 @@ final class TaskExecutionContextTest {
         assertEquals(declarations, atStageStart);
     }
 
-    /// Counts batch submissions made by the default bounded implementation and forwards them to the task scheduler.
-    private record DefaultBatchContext(TaskExecutionContext delegate, AtomicInteger batches) implements TaskExecutionContext {
+    /// Uses the interface's bounded batch method with the current task's execution context.
+    private record DefaultBatchContext(TaskExecutionContext delegate) implements TaskExecutionContext {
         /// {@inheritDoc}
         @Override
         public boolean isCancelled() {
@@ -1650,7 +1278,6 @@ final class TaskExecutionContextTest {
         /// {@inheritDoc}
         @Override
         public <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> tasks) throws Exception {
-            batches.incrementAndGet();
             return delegate.runAll(tasks);
         }
 

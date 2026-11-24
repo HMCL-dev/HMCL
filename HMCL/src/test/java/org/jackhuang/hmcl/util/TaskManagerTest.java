@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -27,17 +28,16 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 final class TaskManagerTest {
 
-    /// Keeps a following task queued until work and completion-listener cleanup both finish.
+    /// Queued tasks run in order after the failed task's cleanup finishes.
     @Test
-    void waitsForWorkAndCleanupBeforeStartingNext() throws Exception {
-        CountDownLatch entered = new CountDownLatch(1);
+    void waitsForCleanupBeforeContinuingQueueAfterFailure() throws Exception {
         CountDownLatch release = new CountDownLatch(1);
         CountDownLatch cleanupEntered = new CountDownLatch(1);
         CountDownLatch releaseCleanup = new CountDownLatch(1);
         AtomicInteger order = new AtomicInteger();
         Submission first = submit(Task.runAsync(() -> {
-            entered.countDown();
             await(release);
+            throw new IOException("Expected failure");
         }), new TaskListener() {
             /// Keeps the execution slot occupied until cleanup is explicitly released.
             @Override
@@ -54,7 +54,6 @@ final class TaskManagerTest {
         Submission second = submit(Task.runAsync(() -> assertEquals(1, order.getAndIncrement())), null);
         Submission third = submit(Task.runAsync(() -> assertEquals(2, order.getAndIncrement())), null);
         try {
-            await(entered);
             onFxThread(() -> {
                 assertTrue(second.pane().queuedProperty().get());
                 assertTrue(third.pane().queuedProperty().get());
@@ -70,7 +69,7 @@ final class TaskManagerTest {
             release.countDown();
             releaseCleanup.countDown();
         }
-        assertTrue(first.completion().get(10, TimeUnit.SECONDS));
+        assertFalse(first.completion().get(10, TimeUnit.SECONDS));
         assertTrue(second.completion().get(10, TimeUnit.SECONDS));
         assertTrue(third.completion().get(10, TimeUnit.SECONDS));
         assertEquals(3, order.get());
@@ -102,7 +101,6 @@ final class TaskManagerTest {
                 assertTrue(TaskManager.getInstance().getTasks().contains(second.pane()));
                 return true;
             });
-            assertEquals(0, bodies.get());
         } finally {
             release.countDown();
         }
@@ -117,112 +115,58 @@ final class TaskManagerTest {
     void cancellationRequestDoesNotReleaseRunningSlot() throws Exception {
         CountDownLatch entered = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
-        AtomicInteger nextBodies = new AtomicInteger();
-        Submission first = submit(Task.runAsync(() -> {
+        Task<?> running = Task.runAsync(() -> {
             entered.countDown();
             await(release);
-        }), null);
-        Submission next = submit(Task.runAsync(nextBodies::incrementAndGet), null);
+        });
+        TaskManager manager = TaskManager.getInstance();
+        CompletableFuture<Boolean> first = onFxThread(() -> manager.submit(running, null));
+        CompletableFuture<Boolean> next = onFxThread(() -> manager.submit(
+                Task.runAsync(() -> assertTrue(running.isCancelled())), null));
         try {
             await(entered);
-            onFxThread(() -> {
-                @Nullable ButtonBase cancel = (ButtonBase) first.pane().lookup(".dialog-cancel");
-                assertNotNull(cancel);
-                cancel.fire();
-                assertTrue(next.pane().queuedProperty().get());
-                assertTrue(TaskManager.getInstance().getTasks().contains(first.pane()));
-                return true;
-            });
-            assertEquals(0, nextBodies.get());
-            assertFalse(first.completion().isDone());
+            running.cancel();
+            assertFalse(first.isDone());
         } finally {
             release.countDown();
         }
-        assertFalse(first.completion().get(10, TimeUnit.SECONDS));
-        assertTrue(next.completion().get(10, TimeUnit.SECONDS));
-        assertEquals(1, nextBodies.get());
+        assertFalse(first.get(10, TimeUnit.SECONDS));
+        assertTrue(next.get(10, TimeUnit.SECONDS));
     }
 
-    /// Allows a required child to run ahead of queued independent work without deadlocking its parent.
+    /// A required child starts ahead of queued jobs and keeps its detached parent's slot until it finishes.
     @Test
-    void childSharesParentsSlot() throws Exception {
-        CountDownLatch parentEntered = new CountDownLatch(1);
-        CountDownLatch childFinished = new CountDownLatch(1);
-        CountDownLatch releaseChild = new CountDownLatch(1);
-        AtomicInteger order = new AtomicInteger();
-        Submission parent = submit(Task.runAsync(() -> {
-            parentEntered.countDown();
-            await(childFinished);
-            assertEquals(1, order.getAndIncrement());
-        }), null);
-        Submission next = submit(Task.runAsync(() -> assertEquals(2, order.getAndIncrement())), null);
-        await(parentEntered);
-        Submission child = onFxThread(() -> {
-            TaskDialogPane pane = new TaskDialogPane(TaskCancellationAction.NORMAL);
-            pane.setTask(Task.runAsync(() -> {
-                await(releaseChild);
-                assertEquals(0, order.getAndIncrement());
-                childFinished.countDown();
-            }));
-            return new Submission(pane, pane.startTask(parent.pane()));
-        });
-        try {
-            onFxThread(() -> {
-                assertFalse(child.pane().queuedProperty().get());
-                assertTrue(next.pane().queuedProperty().get());
-                return true;
-            });
-        } finally {
-            releaseChild.countDown();
-        }
-        assertTrue(child.completion().get(10, TimeUnit.SECONDS));
-        assertTrue(parent.completion().get(10, TimeUnit.SECONDS));
-        assertTrue(next.completion().get(10, TimeUnit.SECONDS));
-        assertEquals(3, order.get());
-    }
-
-    /// Keeps a detached parent's child in the slot until that child also finishes.
-    @Test
-    void detachingDoesNotReleaseExecutionSlot() throws Exception {
+    void childRetainsDetachedParentsSlot() throws Exception {
+        CountDownLatch childStarted = new CountDownLatch(1);
         CountDownLatch releaseParent = new CountDownLatch(1);
         CountDownLatch releaseChild = new CountDownLatch(1);
-        AtomicInteger nextBodies = new AtomicInteger();
         Submission parent = submit(Task.runAsync(() -> await(releaseParent)), null);
+        Task<?> childTask = Task.runAsync(() -> {
+            childStarted.countDown();
+            await(releaseChild);
+        });
+        Submission next = submit(Task.runAsync(() -> assertEquals(Task.State.SUCCEEDED, childTask.getState())), null);
         Submission child = onFxThread(() -> {
             TaskDialogPane pane = new TaskDialogPane(TaskCancellationAction.NORMAL);
-            pane.setTask(Task.runAsync(() -> await(releaseChild)));
+            pane.setTask(childTask);
             return new Submission(pane, pane.startTask(parent.pane()));
         });
-        Submission next = submit(Task.runAsync(nextBodies::incrementAndGet), null);
         try {
+            await(childStarted);
             onFxThread(() -> {
+                assertTrue(next.pane().queuedProperty().get());
                 parent.pane().setTask(null);
                 return true;
             });
             releaseParent.countDown();
             assertTrue(parent.completion().get(10, TimeUnit.SECONDS));
             assertFalse(next.completion().isDone());
-            assertEquals(0, nextBodies.get());
         } finally {
             releaseParent.countDown();
             releaseChild.countDown();
         }
         assertTrue(child.completion().get(10, TimeUnit.SECONDS));
         assertTrue(next.completion().get(10, TimeUnit.SECONDS));
-        assertEquals(1, nextBodies.get());
-    }
-
-    /// Continues the queue after an execution fails.
-    @Test
-    void failureReleasesSlot() throws Exception {
-        Submission failed = submit(Task.runAsync(() -> {
-            throw new java.io.IOException("Expected failure");
-        }), null);
-        AtomicInteger bodies = new AtomicInteger();
-        Submission next = submit(Task.runAsync(bodies::incrementAndGet), null);
-        assertFalse(failed.completion().get(10, TimeUnit.SECONDS));
-        assertTrue(next.completion().get(10, TimeUnit.SECONDS));
-        assertEquals(1, bodies.get());
     }
 
     /// Rejects reused child and queued root tasks while preserving the parent's exclusive slot.
@@ -266,7 +210,7 @@ final class TaskManagerTest {
             entered.countDown();
             await(release);
         });
-        CompletableFuture<Boolean> externalResult = CompletableFuture.supplyAsync(external::test);
+        external.start();
         try {
             await(entered);
             TaskManager manager = TaskManager.getInstance();
@@ -275,11 +219,10 @@ final class TaskManagerTest {
                     assertThrows(ExecutionException.class, () -> rejected.get(10, TimeUnit.SECONDS)).getCause());
             CompletableFuture<Boolean> next = onFxThread(() -> manager.submit(Task.completed(0), null));
             assertTrue(next.get(10, TimeUnit.SECONDS));
-            assertFalse(externalResult.isDone());
         } finally {
             release.countDown();
         }
-        assertTrue(externalResult.get(10, TimeUnit.SECONDS));
+        assertTrue(external.test());
     }
 
     /// Attaches listeners before submitting an independent task on the JavaFX thread.

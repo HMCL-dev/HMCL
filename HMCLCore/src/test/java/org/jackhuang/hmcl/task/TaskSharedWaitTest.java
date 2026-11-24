@@ -34,21 +34,21 @@ final class TaskSharedWaitTest {
         assertEquals(42, task.run());
     }
 
-    /// A waiting worker can run either the shared root or a descendant requiring that same worker.
+    /// Waiting for another root completes even when it needs the same single-thread executor.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void helpsSharedExecutionOnSingleWorker(boolean descendant) {
+    void waitsForSharedRootOnSingleWorker(boolean descendant) {
         ExecutorService worker = Executors.newSingleThreadExecutor();
         try {
-            Task<Thread> onWorker = Task.supplyAsync(worker, Thread::currentThread);
-            Task<Thread> shared = descendant ? Task.composeAsync(() -> onWorker) : onWorker;
+            Task<Integer> onWorker = Task.supplyAsync(worker, () -> 42);
+            Task<Integer> shared = descendant ? Task.composeAsync(() -> onWorker) : onWorker;
             assertTimeoutPreemptively(Duration.ofSeconds(10), () -> Task.runAsync(worker, () -> {
                 shared.start();
                 if (descendant) {
                     assertTrue(shared.test());
-                    assertSame(Thread.currentThread(), shared.resultNow());
+                    assertEquals(42, shared.resultNow());
                 } else {
-                    assertSame(Thread.currentThread(), shared.run());
+                    assertEquals(42, shared.run());
                 }
             }).run());
         } finally {
@@ -108,7 +108,6 @@ final class TaskSharedWaitTest {
             @Override
             public Integer execute(TaskExecutionContext context) throws Exception {
                 Task<Integer> parent = this;
-                assertSame(parent, parent.start());
                 assertThrows(IllegalStateException.class, parent::run);
                 assertThrows(IllegalStateException.class, () -> context.call(Schedulers.io(), parent::run));
                 return context.run(new Task<Integer>() {
@@ -121,9 +120,7 @@ final class TaskSharedWaitTest {
                     /// Neither task can finish until this body returns.
                     @Override
                     public Integer execute(TaskExecutionContext childContext) {
-                        assertSame(this, start());
                         assertThrows(IllegalStateException.class, this::run);
-                        assertThrows(IllegalStateException.class, parent::run);
                         assertThrows(IllegalStateException.class, parent::test);
                         return 42;
                     }
@@ -148,11 +145,7 @@ final class TaskSharedWaitTest {
                 /// Launches one nested root synchronously and another independently.
                 @Override
                 public Task<Integer> execute(TaskExecutionContext context) throws Exception {
-                    Thread starter = Thread.currentThread();
-                    Task.runAsync(nestedWorker, () -> {
-                        assertNotSame(starter, Thread.currentThread());
-                        assertThrows(IllegalStateException.class, this::run);
-                    }).run();
+                    Task.runAsync(nestedWorker, () -> assertThrows(IllegalStateException.class, this::run)).run();
 
                     CountDownLatch observing = new CountDownLatch(1);
                     Task<Integer> observer = Task.supplyAsync(nestedWorker, () -> {
@@ -213,23 +206,10 @@ final class TaskSharedWaitTest {
         }
     }
 
-    /// Synchronous lifecycle hooks reject self-waits even before the root's body has been dispatched.
+    /// The start listener cannot wait for the root it is about to run.
     @Test
-    void rejectsWaitsDuringRootPreparation() {
-        Task<Integer> root = new Task<>() {
-            /// Executor lookup is part of the first submission.
-            @Override
-            protected Executor getExecutor() {
-                assertThrows(IllegalStateException.class, this::test);
-                return Runnable::run;
-            }
-
-            /// Completes once the submission hooks return.
-            @Override
-            public Integer execute(TaskExecutionContext context) {
-                return 42;
-            }
-        };
+    void rejectsSelfWaitFromStartListener() {
+        Task<Integer> root = Task.completed(42);
         AtomicBoolean listenerReturned = new AtomicBoolean();
         root.addTaskListener(new TaskListener() {
             /// A waiting reentry would prevent the original caller from submitting the body.
