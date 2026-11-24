@@ -33,8 +33,8 @@ final class TaskExecution {
     /// Guards the waiting threads and the work they can execute without losing thread affinity.
     private final ReentrantLock lock = new ReentrantLock();
 
-    /// Shared observers wait here for a published outcome or eligible work.
-    private final Condition sharedChanged = lock.newCondition();
+    /// Condition for shared observers, created under the lock on the first shared wait.
+    private @Nullable Condition sharedChanged;
 
     /// Number of shared observers, updated under the lock.
     private volatile int sharedWaiters;
@@ -118,7 +118,8 @@ final class TaskExecution {
         private void enter() {
             @Nullable ArrayDeque<Binding> active = ACTIVE_TASKS.get();
             if (active == null) {
-                active = new ArrayDeque<>();
+                // A worker usually enters only a few tasks before its stack is cleared.
+                active = new ArrayDeque<>(4);
                 ACTIVE_TASKS.set(active);
             }
             active.push(this);
@@ -662,6 +663,8 @@ final class TaskExecution {
             if (task.isDone())
                 return false;
             binding.checkWait();
+            if (sharedChanged == null)
+                sharedChanged = lock.newCondition();
             while (!task.isDone()) {
                 @Nullable Work<?> anchor = binding.dispatch.work;
                 @Nullable Work<?> next = anchor == null ? null : anchor.availableFor(worker, true);
@@ -700,7 +703,8 @@ final class TaskExecution {
             return;
         lock.lock();
         try {
-            sharedChanged.signalAll();
+            if (sharedChanged != null)
+                sharedChanged.signalAll();
         } finally {
             lock.unlock();
         }
@@ -793,7 +797,7 @@ final class TaskExecution {
                     if (node.changed != null)
                         node.changed.signal();
                 }
-                if (sharedWaiters != 0)
+                if (sharedChanged != null)
                     sharedChanged.signalAll();
             } finally {
                 lock.unlock();
