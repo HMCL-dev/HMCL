@@ -26,7 +26,6 @@ public class ServerModpackRemoteInstallTask extends Task<@Nullable Void> {
     private final @Nullable DefaultGameInstance updateTarget;
 
     private final DefaultDependencyManager dependency;
-    private final DefaultGameRepository repository;
     private final ServerModpackManifest manifest;
 
     /// Creates a task that installs a new remote server modpack instance.
@@ -72,10 +71,9 @@ public class ServerModpackRemoteInstallTask extends Task<@Nullable Void> {
         if (updateTarget != null)
             dependencyManager.validateGameInstance(updateTarget);
         this.dependency = dependencyManager;
-        this.repository = dependencyManager.getGameRepository();
         this.manifest = manifest;
 
-        Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
+        Path json = dependencyManager.getGameRepository().getLayout().getModpackConfigurationFile(instanceId);
         if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
 
@@ -103,10 +101,10 @@ public class ServerModpackRemoteInstallTask extends Task<@Nullable Void> {
                 if (componentType != null)
                     builder.component(componentType, addon.getVersion());
             }
-            context.run(builder.buildAsync());
+            DefaultGameInstance instance = builder.build(context);
             context.run(new ServerModpackCompletionTask(
                     dependency,
-                    repository.getInstance(instanceId),
+                    instance,
                     new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList())));
         });
         return null;

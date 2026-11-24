@@ -4,7 +4,7 @@ package org.jackhuang.hmcl.modpack.mcbbs;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
@@ -125,21 +125,19 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
     }
 
     /// Installs the MCBBS pack into the target reserved by the builder.
-    private void install(TaskExecutionContext context, GameBuilder builder) throws Exception {
+    private void install(TaskExecutionContext context, DefaultGameBuilder builder) throws Exception {
         builder.enableIsolation();
         for (McbbsModpackManifest.Addon addon : manifest.getAddons()) {
             @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
             if (componentType != null)
                 builder.component(componentType, addon.getVersion());
         }
-        Task<?> game = builder.buildAsync();
         Path run = repository.getLayout().getInstanceRoot(instanceId);
         Task<?> overrides = new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage(InstallStages.MODPACK);
         var instanceTask = new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, McbbsModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId));
 
         context.runAll(List.of(overrides, instanceTask.withStage(InstallStages.MODPACK)));
-        context.run(game);
-        DefaultGameInstance instance = repository.getInstance(instanceId);
+        DefaultGameInstance instance = builder.build(context);
         GameInstanceManifest instanceManifest = instance.getManifest();
         Task<?> completion = new McbbsModpackCompletionTask(dependencyManager, instance, instanceTask.resultNow());
         if (this.updateTarget == null) {

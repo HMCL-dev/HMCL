@@ -463,7 +463,7 @@ final class TaskExecution {
             } catch (Throwable failure) {
                 Throwable cause = Objects.requireNonNullElse(Lang.resolveException(failure), failure);
                 if (cause instanceof InterruptedException)
-                    cause = new CancellationException(cause.getMessage());
+                    cause = new CancellationException(cause.getMessage()).initCause(cause);
                 fail(cause);
                 throw Task.rethrow(cause);
             }

@@ -76,6 +76,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         var excludedFiles = settings.get(LocalModpackPage.MODPACK_EXCLUDED_FILES);
 
         if (isManuallyCreated) {
+            settings.put(WAIT_FOR_CANCELLATION, true);
             return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name);
         }
 

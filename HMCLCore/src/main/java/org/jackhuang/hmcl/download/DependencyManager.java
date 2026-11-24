@@ -58,8 +58,7 @@ public interface DependencyManager {
     /// Creates a builder for installing a new game instance and optional components.
     ///
     /// This operation opens an exclusive repository draft and reserves the target id immediately.
-    /// The returned builder must be closed if it is abandoned before [GameBuilder#buildAsync()]. A
-    /// synchronous failure from that method aborts the draft itself.
+    /// Close the returned builder if the installation is abandoned before it runs.
     ///
     /// @param instanceId the id of the new instance
     /// @return a new game builder
@@ -71,10 +70,8 @@ public interface DependencyManager {
     ///
     /// This operation opens an exclusive repository draft immediately. `instance` must be the exact
     /// object in the current published snapshot; an instance invalidated by any intervening
-    /// repository publication is rejected. The returned builder must be closed if it is abandoned
-    /// before [GameBuilder#buildAsync()]; a synchronous failure from that method aborts the draft
-    /// itself. The resulting manifest is rebuilt from the configured components; components that
-    /// are not configured are not retained.
+    /// repository publication is rejected. Close the builder if the update is abandoned before it
+    /// runs. The replacement manifest contains the configured components.
     ///
     /// @param instance the existing game instance to update
     /// @return a game builder targeting the existing instance

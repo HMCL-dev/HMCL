@@ -5,8 +5,8 @@ package org.jackhuang.hmcl.modpack.curse;
 import com.google.gson.JsonParseException;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.*;
@@ -182,7 +182,7 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
     }
 
     /// Installs the CurseForge pack into the target reserved by the builder.
-    private void install(TaskExecutionContext context, GameBuilder builder) throws Exception {
+    private void install(TaskExecutionContext context, DefaultGameBuilder builder) throws Exception {
         builder.enableIsolation()
                 .component(GameComponentType.GAME, manifest.minecraft().gameVersion());
         for (CurseManifestModLoader modLoader : manifest.minecraft().modLoaders()) {
@@ -194,7 +194,6 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
                 builder.component(GameComponentType.NEO_FORGE, modLoader.id().substring("neoforge-".length()));
             }
         }
-        Task<?> game = builder.buildAsync();
         List<Task<?>> preparation = new ArrayList<>(4);
         preparation.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(manifest.overrides()), any -> true, config).withStage(InstallStages.MODPACK));
         preparation.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage(InstallStages.MODPACK));
@@ -213,7 +212,7 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
         }
 
         context.runAll(preparation);
-        context.run(game);
+        DefaultGameInstance instance = builder.build(context);
         if (config != null) {
             Set<String> newOverridesMods = getNewOverridesMods();
             Set<CurseManifestFile> newManifestFiles = manifest.files() != null ? new HashSet<>(manifest.files()) : Collections.emptySet();
@@ -262,6 +261,6 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
         }
 
         // The game builder publishes the instance before file completion starts.
-        context.run(new CurseCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest, excludedFiles));
+        context.run(new CurseCompletionTask(dependencyManager, instance, manifest, excludedFiles));
     }
 }

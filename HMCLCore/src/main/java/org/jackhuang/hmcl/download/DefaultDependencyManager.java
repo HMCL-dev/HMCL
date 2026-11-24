@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -142,7 +143,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     ///
     /// @param draft   the draft to abort
     /// @param failure the triggering failure that receives any cleanup failure as suppressed
-    static void abortDraftAfterFailure(
+    private static void abortDraftAfterFailure(
             DefaultGameRepositoryDraft draft,
             Throwable failure) {
         try {
@@ -161,48 +162,42 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// checksums identify the same client even when the URLs differ. Referenced JARs are not modified.
     ///
     /// A replacement is obtained through this manager's download provider and cache before the
-    /// manifest and JAR are committed together. A task failure aborts the draft and retains the
-    /// previously published instance files. Shared cache files written by the tasks are retained.
+    /// manifest and JAR are committed together. Failure or cancellation before commit aborts the
+    /// draft and retains the previously published instance files. Shared cache files are retained.
     ///
     /// @param <E>        the checked exception type thrown while creating the update task
     /// @param instanceId the instance to update
     /// @param updater    the asynchronous manifest update
     /// @return the task that commits the updated instance
-    public <E extends Exception> Task<Void> updateInstanceAsync(
+    public <E extends Exception> Task<@Nullable Void> updateInstanceAsync(
             GameInstanceID instanceId,
             ExceptionalFunction<GameInstance, Task<GameInstanceManifest>, E> updater) {
-        return Task.composeAsync(() -> {
-            DefaultGameRepositoryDraft draft = repository.openDraft();
-            try {
-                GameInstance instance = draft.getBaseSnapshot().getInstance(instanceId);
-                return Objects.requireNonNull(updater.apply(instance), "Instance updater returned null")
-                        .thenComposeOptionalAsync(manifest -> {
-                            if (!instanceId.equals(manifest.id())) {
-                                throw new IllegalArgumentException(
-                                        "Instance updater changed id from " + instanceId + " to " + manifest.id());
-                            }
-                            GameInstanceManifest previous = instance.getResolvedManifest();
-                            GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
-                            draft.put(manifest);
-                            if (instanceId.equals(resolved.jar())
-                                    && (!instanceId.equals(previous.jar())
-                                    || !isSameClientDownload(previous.getDownloadInfo(), resolved.getDownloadInfo()))) {
-                                return new GameDownloadTask(this, resolved).thenAcceptAsync(
-                                        jar -> draft.putPrimaryJar(instanceId, jar));
-                            }
-                            return null;
-                        }).thenRunAsync(() -> {
-                            draft.commit();
-                        }).whenComplete((ignored, exception) -> {
-                            if (draft.isOpen()) {
-                                draft.abort();
-                            }
-                        });
-            } catch (Throwable exception) {
-                abortDraftAfterFailure(draft, exception);
-                throw exception;
+        return new Task<@Nullable Void>() {
+            /// Owns the draft until the update and any JAR download have finished.
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+                    GameInstance instance = draft.getBaseSnapshot().getInstance(instanceId);
+                    Task<GameInstanceManifest> update = Objects.requireNonNull(updater.apply(instance), "Instance updater returned null");
+                    return context.run(update.thenComposeOptionalAsync(manifest -> {
+                        if (!instanceId.equals(manifest.id())) {
+                            throw new IllegalArgumentException(
+                                    "Instance updater changed id from " + instanceId + " to " + manifest.id());
+                        }
+                        GameInstanceManifest previous = instance.getResolvedManifest();
+                        GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
+                        draft.put(manifest);
+                        if (instanceId.equals(resolved.jar())
+                                && (!instanceId.equals(previous.jar())
+                                || !isSameClientDownload(previous.getDownloadInfo(), resolved.getDownloadInfo()))) {
+                            return new GameDownloadTask(DefaultDependencyManager.this, resolved).thenAcceptAsync(
+                                    jar -> draft.putPrimaryJar(instanceId, jar));
+                        }
+                        return null;
+                    }).thenRunAsync(draft::commit));
+                }
             }
-        });
+        }.setName("Update instance " + instanceId).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Compares client identity by checksum, falling back to URL and size when neither has one.

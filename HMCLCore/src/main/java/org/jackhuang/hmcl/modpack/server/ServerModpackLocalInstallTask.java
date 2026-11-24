@@ -128,12 +128,11 @@ public class ServerModpackLocalInstallTask extends Task<@Nullable Void> {
                 if (componentType != null)
                     builder.component(componentType, addon.getVersion());
             }
-            Task<?> game = builder.buildAsync();
             Path run = repository.getLayout().getInstanceRoot(instanceId);
             Task<?> overrides = new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config);
             Task<?> instance = new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId));
             context.runAll(List.of(overrides.withStage(InstallStages.MODPACK), instance.withStage(InstallStages.MODPACK)));
-            context.run(game);
+            builder.build(context);
         });
         return null;
     }

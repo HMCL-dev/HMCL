@@ -29,13 +29,12 @@ public abstract class TaskDialogWizardDisplayer extends AbstractWizardDisplayer 
         super(cancelQueue);
     }
 
-    /// Displays a task and releases its optional resources after execution stops.
+    /// Displays a task and reports its outcome after execution stops.
     @Override
     public void handleTask(SettingsMap settings, Task<?> task) {
-        @Nullable WizardProvider.TaskCleanup cleanup = settings.remove(WizardProvider.TaskCleanup.KEY);
+        boolean waitForCancellation = Boolean.TRUE.equals(settings.remove(WizardProvider.WAIT_FOR_CANCELLATION));
         TaskDialogPane pane = new TaskDialogPane(it -> {
-            if (cleanup != null) {
-                // Keep the installation modal until the completion listener releases its repository draft.
+            if (waitForCancellation) {
                 it.setCancel(null);
                 return;
             }
@@ -55,24 +54,12 @@ public abstract class TaskDialogWizardDisplayer extends AbstractWizardDisplayer 
 
         runInFX(() -> {
             task.addTaskListener(new TaskListener() {
-                /// Releases wizard resources and reports the outcome on the JavaFX thread.
+                /// Reports the outcome on the JavaFX thread.
                 @Override
                 public void onExecutionFinished(Task<?> rootTask, boolean success) {
-                    @Nullable Throwable failure = rootTask.exceptionNowOrNull();
-                    if (cleanup != null) {
-                        try {
-                            cleanup.cleanup();
-                        } catch (Exception cleanupFailure) {
-                            if (failure == null || failure instanceof CancellationException) {
-                                failure = cleanupFailure;
-                            } else if (failure != cleanupFailure) {
-                                failure.addSuppressed(cleanupFailure);
-                            }
-                        }
-                    }
-                    @Nullable Throwable completedFailure = failure;
+                    @Nullable Throwable completedFailure = rootTask.exceptionNowOrNull();
                     runInFX(() -> {
-                        if (success && completedFailure == null) {
+                        if (success) {
                             if (settings.get("success_message") instanceof String successMessage)
                                 Controllers.dialog(successMessage, null, MessageType.SUCCESS, () -> onEnd());
                             else if (!settings.containsKey("forbid_success_message"))
@@ -84,7 +71,14 @@ public abstract class TaskDialogWizardDisplayer extends AbstractWizardDisplayer 
                             }
 
                             if (completedFailure instanceof CancellationException) {
-                                onEnd();
+                                @Nullable Throwable cause = completedFailure.getCause();
+                                if (completedFailure.getSuppressed().length > 0
+                                        || cause instanceof InterruptedException && cause.getSuppressed().length > 0) {
+                                    Controllers.dialog(StringUtils.getStackTrace(completedFailure),
+                                            i18n("wizard.failed"), MessageType.ERROR, () -> onEnd());
+                                } else {
+                                    onEnd();
+                                }
                                 return;
                             }
 

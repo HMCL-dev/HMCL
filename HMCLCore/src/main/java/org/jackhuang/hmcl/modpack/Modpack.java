@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.modpack;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
-import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.task.Task;
@@ -125,17 +124,16 @@ public abstract class Modpack {
     /// @param updateTarget the exact published instance to update, or `null` for a new installation
     /// @param keepIncompleteInstance whether a new instance remains available for manual completion
     /// @param install the action that configures the builder and runs the installation to completion.
-    ///                Preparatory writes must finish before the build task starts so that it can safely
-    ///                abort its draft. All instance writes must have stopped when the action exits.
+    ///                Preparatory writes must finish before calling the builder's build method.
+    ///                All instance writes must have stopped when the action exits.
     /// @throws Exception if reservation, installation, or cleanup fails
     public static void installWithGameBuilder(
             DefaultDependencyManager dependencyManager, GameInstanceID instanceId,
             @Nullable DefaultGameInstance updateTarget, boolean keepIncompleteInstance,
-            ExceptionalConsumer<GameBuilder, Exception> install) throws Exception {
+            ExceptionalConsumer<? super DefaultGameBuilder, Exception> install) throws Exception {
         DefaultGameBuilder builder = updateTarget == null
                 ? dependencyManager.newGameBuilder(instanceId)
                 : dependencyManager.newGameBuilder(updateTarget);
-        // A build task that is rejected or cancelled before it starts cannot abort its draft.
         try {
             install.accept(builder);
         } catch (Exception | Error failure) {

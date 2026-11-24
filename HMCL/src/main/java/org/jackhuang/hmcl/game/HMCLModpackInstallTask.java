@@ -144,7 +144,7 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
                     builder.component(mark.componentType(), componentVersion);
                 }
             }
-            context.run(builder.buildAsync());
+            builder.build(context);
         });
         return null;
     }

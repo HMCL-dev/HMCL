@@ -13,7 +13,6 @@ import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLDependencyManager;
-import org.jackhuang.hmcl.game.HMCLGameBuilder;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -52,7 +51,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -311,8 +309,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         /// Captures the installation selections and defers reserving the instance until execution.
-        /// Registers cleanup for the eventual builder, including cancellation before its build task
-        /// starts. Successful completion selects the installed instance in the original repository.
+        /// Successful completion selects the installed instance in the original repository.
         ///
         /// @param settings the installer selections and target instance id
         /// @return a deferred build task retaining the builder task's stage hints
@@ -334,25 +331,13 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     .anyMatch(componentType -> settings.get(componentType.getPatchId()) instanceof ComponentRemoteVersion);
             boolean isolated = repository.shouldIsolateNewInstance(modded);
 
-            AtomicReference<@Nullable HMCLGameBuilder> builderReference = new AtomicReference<>();
-            settings.put(TaskCleanup.KEY, () -> {
-                @Nullable HMCLGameBuilder builder = builderReference.get();
-                if (builder != null)
-                    builder.abort();
-            });
-
-            return Task.composeAsync(() -> {
-                try (HMCLGameBuilder builder = dependencyManager.newGameBuilder(instanceId)) {
-                    builderReference.set(builder);
-                    builder.component(GameComponentType.GAME, selectedGameVersion);
-                    components.forEach(builder::component);
-                    if (isolated) {
-                        builder.enableIsolation();
-                    }
-
-                    return builder.buildAsync();
-                }
-            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
+            settings.put(WAIT_FOR_CANCELLATION, true);
+            return dependencyManager.installGameAsync(instanceId, builder -> {
+                builder.component(GameComponentType.GAME, selectedGameVersion);
+                components.forEach(builder::component);
+                if (isolated)
+                    builder.enableIsolation();
+            }).thenAcceptAsync(Schedulers.javafx(), repository::setSelectedInstance);
         }
 
         @Override

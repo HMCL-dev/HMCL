@@ -7,6 +7,7 @@ import org.jackhuang.hmcl.util.Lang;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -170,6 +171,21 @@ public final class ManagedProcess {
     public void stop() {
         process.destroy();
         destroyRelatedThreads();
+    }
+
+    /// Interrupts the monitors and waits for the direct child to exit. If it does not exit
+    /// within one second, or the caller is interrupted, termination is forced.
+    /// Preserves the caller's interrupted status.
+    public void stopAndWait() {
+        destroyRelatedThreads();
+        process.destroy();
+        try {
+            if (process.waitFor(1, TimeUnit.SECONDS))
+                return;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        process.destroyForcibly().onExit().join();
     }
 
     public void destroyRelatedThreads() {

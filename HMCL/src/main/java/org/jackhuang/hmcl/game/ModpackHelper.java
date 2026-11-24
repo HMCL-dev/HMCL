@@ -22,9 +22,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
@@ -172,19 +170,12 @@ public final class ModpackHelper {
 
     /// Extracts a manually created modpack and selects its new external game directory.
     public static Task<?> getInstallManuallyCreatedModpackTask(Path zipFile, String name) {
-        if (isExternalGameNameConflicts(name)) {
+        Path destination = Paths.get("externalgames").resolve(name);
+        if (Files.exists(destination)) {
             throw new IllegalArgumentException("name existing");
         }
 
-        return new ManuallyCreatedModpackInstallTask(zipFile, name)
-                .thenAcceptAsync(Schedulers.javafx(), location -> {
-                    GameDirectory newGameDirectory = new GameDirectory(
-                            GameDirectoryManager.newGameDirectoryId(),
-                            LocalizedText.plain(name),
-                            PortablePath.fromPath(location));
-                    GameDirectoryManager.addLocalGameDirectory(newGameDirectory);
-                    GameDirectoryManager.setSelectedGameDirectory(newGameDirectory);
-                })
+        return new ManuallyCreatedModpackInstallTask(zipFile, destination, name)
                 .withStage(InstallStages.MODPACK)
                 .withStageHints(InstallStages.MODPACK);
     }

@@ -5,7 +5,12 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jetbrains.annotations.NotNullByDefault;
+
+import java.util.function.Consumer;
 
 /// Provides HMCL-specific game builders for an HMCL game repository.
 @NotNullByDefault
@@ -34,6 +39,20 @@ public class HMCLDependencyManager extends DefaultDependencyManager {
         GameInstanceManifest initialManifest = new GameInstanceManifest(instanceId);
         DefaultGameRepositoryDraft draft = openGameBuilderDraft(initialManifest, null);
         return new HMCLGameBuilder(this, instanceId, null, draft, initialManifest);
+    }
+
+    /// Reserves and installs a new instance when the returned task runs.
+    public Task<HMCLGameInstance> installGameAsync(GameInstanceID instanceId, Consumer<? super HMCLGameBuilder> configure) {
+        return new Task<HMCLGameInstance>() {
+            /// Holds the reservation until configuration and all installation work have finished.
+            @Override
+            public HMCLGameInstance execute(TaskExecutionContext context) throws Exception {
+                try (HMCLGameBuilder builder = newGameBuilder(instanceId)) {
+                    configure.accept(builder);
+                    return (HMCLGameInstance) builder.build(context);
+                }
+            }
+        }.setName("Install instance " + instanceId).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// {@inheritDoc}

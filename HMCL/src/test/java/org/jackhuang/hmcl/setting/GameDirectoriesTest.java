@@ -769,7 +769,7 @@ public final class GameDirectoriesTest {
     }
 
     /// Temporary static state override for game directory tests.
-    private static final class GameDirectoryEnvironment implements AutoCloseable {
+    public static final class GameDirectoryEnvironment implements AutoCloseable {
         /// The reflected SettingsManager local game directories field.
         private final Field localGameDirectoriesField;
 
@@ -825,7 +825,7 @@ public final class GameDirectoriesTest {
         private final boolean previousInitialized;
 
         /// The previous selected game directory.
-        private final GameDirectory previousSelectedGameDirectory;
+        private final @Nullable GameDirectory previousSelectedGameDirectory;
 
         /// The previous selected repository.
         private final HMCLGameRepository previousSelectedRepository;
@@ -837,7 +837,7 @@ public final class GameDirectoriesTest {
         private final Map<GameDirectory, HMCLGameRepository> previousRepositories;
 
         /// Replaces game-directory-related static state with the given stores and an empty preset store.
-        private GameDirectoryEnvironment(GameDirectories localDirectories, GameDirectories userDirectories)
+        public GameDirectoryEnvironment(GameDirectories localDirectories, GameDirectories userDirectories)
                 throws ReflectiveOperationException {
             this(localDirectories, userDirectories, new GameSettingsPresets());
         }
@@ -928,7 +928,7 @@ public final class GameDirectoriesTest {
         /// Restores the previous static state.
         @Override
         public void close() throws ReflectiveOperationException {
-            if (previousSelectedGameDirectory != null) {
+            if (previousSelectedGameDirectory != null || !initializedField.getBoolean(null)) {
                 selectedGameDirectory.set(previousSelectedGameDirectory);
             }
             selectedRepository.set(previousSelectedRepository);

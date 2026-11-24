@@ -9,6 +9,7 @@ import org.jackhuang.hmcl.download.ComponentRemoteVersionList;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
@@ -33,6 +34,7 @@ import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -160,8 +162,15 @@ public final class DefaultGameRepositoryDraftTest {
         assertNotEquals(expected, InstallStages.component(GameComponentType.FORGE, version));
         assertNotEquals(expected, InstallStages.component(GameComponentType.GAME, "1.21.2"));
 
+        List<TaskStage.Hint> declared = new ArrayList<>();
         List<TaskStage> dispatched = new ArrayList<>();
         TaskListener listener = new TaskListener() {
+            /// Records the plan's stage hints as the build enters the task tree.
+            @Override
+            public void onStagesDeclared(@Unmodifiable List<TaskStage.Hint> hints) {
+                declared.addAll(hints);
+            }
+
             /// Records each installation stage before its task body starts.
             @Override
             public void onStageStarted(TaskStage.Scope scope) {
@@ -169,11 +178,13 @@ public final class DefaultGameRepositoryDraftTest {
             }
         };
         try (var builder = manager.newGameBuilder(id)) {
-            Task<?> build = builder.component(GameComponentType.GAME, version).buildAsync();
-            assertEquals(expected, build.getStageHints().get(0).stage());
+            Task<GameInstance> build = buildTask(builder.component(GameComponentType.GAME, version));
             build.addTaskListener(listener);
             assertTrue(build.test(), () -> String.valueOf(build.exceptionNowOrNull()));
+            assertSame(repository.getInstance(id), build.resultNow());
         }
+        assertEquals(List.of(new TaskStage.Hint(expected), new TaskStage.Hint(InstallStages.LIBRARIES),
+                new TaskStage.Hint(InstallStages.ASSETS)), declared);
         // The version lookup, resolved component and client download each declare the game stage.
         assertEquals(List.of(expected, expected, expected), dispatched);
 
@@ -184,6 +195,42 @@ public final class DefaultGameRepositoryDraftTest {
         install.addTaskListener(listener);
         assertTrue(install.test(), () -> String.valueOf(install.exceptionNowOrNull()));
         assertEquals(List.of(expected, expected), dispatched);
+    }
+
+    /// Cancellation before the first build child starts releases the reservation and removes prepared files.
+    @Test
+    void cancelledBuildReleasesPreparedInstance(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        DefaultDependencyManager manager = createDependencyManager(repository);
+        Path instanceRoot = repository.getLayout().getInstanceRoot(id);
+        Task<GameInstance> build = new Task<>() {
+            /// Cancels after reserving and preparing the target, just before the build starts.
+            @Override
+            public GameInstance execute(TaskExecutionContext context) throws Exception {
+                GameBuilder builder = manager.newGameBuilder(id).component(GameComponentType.GAME, "1.21.2");
+                Files.createDirectories(instanceRoot);
+                Files.writeString(instanceRoot.resolve("override.txt"), "prepared");
+                cancel();
+                return builder.build(context);
+            }
+        };
+        List<Task<?>> started = new ArrayList<>();
+        build.addTaskListener(new TaskListener() {
+            /// Records which task bodies started in the cancelled tree.
+            @Override
+            public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
+                started.add(task);
+            }
+        });
+
+        assertThrows(CancellationException.class, build::run);
+        assertEquals(List.of(build), started);
+        assertFalse(repository.hasInstance(id));
+        assertFalse(Files.exists(instanceRoot));
+        try (DefaultGameRepositoryDraft next = repository.openDraft()) {
+            assertTrue(next.isOpen());
+        }
     }
 
     /// API mods cannot complete an instance update when their sole JAR is unavailable.
@@ -220,7 +267,7 @@ public final class DefaultGameRepositoryDraftTest {
         Exception failure = completionFailure ? new ModpackCompletionException() : new IOException();
         assertSame(failure, assertThrows(Exception.class, () ->
                 Modpack.installWithGameBuilder(manager, id, null, keepIncomplete, builder -> {
-                    builder.component(GameComponentType.GAME, "1.21.2").buildAsync().run();
+                    buildTask(builder.component(GameComponentType.GAME, "1.21.2")).run();
                     assertTrue(repository.hasInstance(id));
                     throw failure;
                 })));
@@ -238,7 +285,7 @@ public final class DefaultGameRepositoryDraftTest {
         Path marker = repository.getLayout().getInstanceRoot(id).resolve("replacement.txt");
         assertSame(failure, assertThrows(IOException.class, () ->
                 Modpack.installWithGameBuilder(manager, id, null, false, builder -> {
-                    builder.component(GameComponentType.GAME, "1.21.2").buildAsync().run();
+                    buildTask(builder.component(GameComponentType.GAME, "1.21.2")).run();
                     assertTrue(repository.removeInstanceFromDisk(id));
                     repository.save(new GameInstanceManifest(id).withMainClass("replacement.Main"));
                     Files.writeString(marker, "replacement");
@@ -910,6 +957,34 @@ public final class DefaultGameRepositoryDraftTest {
         }
     }
 
+    /// Cancellation in the updater releases the draft even when its returned task never starts.
+    @Test
+    public void testUpdateInstanceAsyncAbortsDraftBeforeChildStarts(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceManifest original = new GameInstanceManifest(id).withMainClass("original.Main");
+        repository.save(original);
+        DefaultDependencyManager manager = createDependencyManager(repository);
+        Task<GameInstanceManifest> replacement = Task.completed(original.withMainClass("updated.Main"));
+        Task<@Nullable Void> root = new Task<>() {
+            /// Cancels the tree while the updater owns the draft.
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                return context.run(manager.updateInstanceAsync(id, instance -> {
+                    cancel();
+                    return replacement;
+                }));
+            }
+        };
+
+        assertThrows(CancellationException.class, root::run);
+        assertEquals(Task.State.NEW, replacement.getState());
+        assertEquals(original, repository.getInstance(id).getManifest());
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            assertTrue(draft.isOpen());
+        }
+    }
+
     /// Releases the draft when the updater's task raises an error during execution.
     @Test
     public void testUpdateInstanceAsyncAbortsDraftOnTaskError(@TempDir Path tempDirectory) throws IOException {
@@ -923,6 +998,17 @@ public final class DefaultGameRepositoryDraftTest {
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
             assertTrue(draft.isOpen());
         }
+    }
+
+    /// Runs a configured game build as a root task.
+    private static Task<GameInstance> buildTask(GameBuilder builder) {
+        return new Task<>() {
+            /// Installs and publishes the instance in the root's task tree.
+            @Override
+            public GameInstance execute(TaskExecutionContext context) throws Exception {
+                return builder.build(context);
+            }
+        };
     }
 
     /// Writes a minimal client JAR whose version can be detected after committing and refreshing.

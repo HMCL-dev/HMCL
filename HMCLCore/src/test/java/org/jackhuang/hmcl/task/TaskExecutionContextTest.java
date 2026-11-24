@@ -313,6 +313,19 @@ final class TaskExecutionContextTest {
         assertEquals(42, child.run());
     }
 
+    /// A cleanup failure attached to an interruption remains visible in the published cancellation.
+    @Test
+    void interruptedTaskRetainsCleanupFailure() {
+        InterruptedException interrupted = new InterruptedException();
+        IOException cleanup = new IOException("Cleanup failed");
+        interrupted.addSuppressed(cleanup);
+        Task<?> task = Task.runAsync(() -> { throw interrupted; });
+
+        CancellationException cancellation = assertThrows(CancellationException.class, task::run);
+        assertSame(interrupted, cancellation.getCause());
+        assertSame(cleanup, interrupted.getSuppressed()[0]);
+    }
+
     /// Querying cancellation observes the worker's interrupt status and leaves it set.
     @Test
     void observesInterruptionWithoutClearingIt() throws Exception {

@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -153,12 +154,15 @@ public final class LauncherHelper {
             volatile GameInstanceManifest launchManifest;
             volatile JavaRuntime javaRuntime;
             volatile Path javaExecutable;
+            /// Held until the root launch task publishes its outcome.
+            volatile @Nullable ManagedProcess process;
         };
 
         HMCLGameRepository repository = repository();
         DefaultDependencyManager dependencyManager = repository.getDependency();
         boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
         CountDownLatch launchingLatch = new CountDownLatch(1);
+        CompletableFuture<Boolean> launchSucceeded = new CompletableFuture<>();
         List<String> javaAgents = new ArrayList<>(0);
         List<String> javaArguments = new ArrayList<>(0);
 
@@ -308,32 +312,25 @@ public final class LauncherHelper {
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
                                     : new HMCLProcessListener(authInfo, launchOptions, launchingLatch, gameInstance.getVersion().compareTo(GameVersionNumber.unknown()) != 0)
                     );
-                }).thenComposeAsync(launcher -> { // launcher is prev task's result
-                    if (scriptFile == null) {
-                        return Task.supplyAsync(launcher::launch);
-                    } else {
-                        return Task.supplyAsync(() -> {
+                }).thenComposeAsync(launcher -> {
+                    if (scriptFile != null) {
+                        return Task.runAsync(() -> {
                             launcher.makeLaunchScript(scriptFile);
                             launchingLatch.countDown();
+                        });
+                    }
+                    return new Task<@Nullable Void>() {
+                        /// Records the process before cancellation can discard this task's result.
+                        @Override
+                        public @Nullable Void execute(TaskExecutionContext execution) throws IOException, InterruptedException {
+                            ManagedProcess process = launcher.launch(execution::checkCancellation, launchSucceeded::join);
+                            context.process = process;
+                            PROCESSES.add(new WeakReference<>(process));
+                            if (launcherVisibility == LauncherVisibility.CLOSE)
+                                launchingLatch.countDown();
                             return null;
-                        });
-                    }
-                }).thenAcceptAsync(process -> { // process is LaunchTask's result
-                    if (scriptFile == null) {
-                        PROCESSES.add(new WeakReference<>(process));
-                        if (launcherVisibility == LauncherVisibility.CLOSE)
-                            Launcher.stopApplication();
-                        else
-                            launchingStepsPane.setCancel(it -> {
-                                process.stop();
-                                it.fireEvent(new DialogCloseEvent());
-                            });
-                    } else {
-                        runLater(() -> {
-                            launchingStepsPane.fireEvent(new DialogCloseEvent());
-                            Controllers.dialog(i18n("instance.launch_script.success", FileUtils.getAbsolutePath(scriptFile)));
-                        });
-                    }
+                        }
+                    }.setSignificance(TaskSignificance.MODERATE);
                 }).withFakeProgress(
                         new TaskName.Simple(i18n("message.doing")),
                         () -> launchingLatch.getCount() == 0, 6.95
@@ -346,14 +343,26 @@ public final class LauncherHelper {
         launchingStepsPane.setTask(task, false);
         task.addTaskListener(new TaskListener() {
 
-            /// Reports the launch outcome on the JavaFX thread.
+            /// Releases the game process on failure and reports the outcome on the JavaFX thread.
             @Override
             public void onExecutionFinished(Task<?> task, boolean success) {
+                launchSucceeded.complete(success);
+                @Nullable ManagedProcess process = context.process;
+                context.process = null;
+                if (!success && process != null)
+                    process.stopAndWait();
+
                 runLater(() -> {
                     // The executor service may have shut down before the launch finished.
                     if (!Controllers.isStopped()) {
                         launchingStepsPane.fireEvent(new DialogCloseEvent());
-                        if (!success) {
+                        if (success) {
+                            if (scriptFile != null) {
+                                Controllers.dialog(i18n("instance.launch_script.success", FileUtils.getAbsolutePath(scriptFile)));
+                            } else if (process != null) {
+                                finishLaunch(process);
+                            }
+                        } else {
                             @Nullable Throwable ex = task.exceptionNowOrNull();
                             if (ex != null && !(ex instanceof CancellationException)) {
                                 String message;
@@ -816,6 +825,29 @@ public final class LauncherHelper {
         });
     }
 
+    /// Applies the selected launcher visibility on the JavaFX thread after a successful launch.
+    private void finishLaunch(ManagedProcess process) {
+        @Nullable Stage stage = Controllers.getStage();
+        switch (launcherVisibility) {
+            case CLOSE -> Launcher.stopApplication();
+            case HIDE_AND_REOPEN -> {
+                if (stage != null && process.isRunning()) {
+                    stage.setIconified(false);
+                    stage.hide();
+                }
+            }
+            case HIDE -> {
+                if (stage != null && process.isRunning()) {
+                    stage.close();
+                    Controllers.shutdown();
+                    Schedulers.shutdown();
+                    System.gc();
+                }
+            }
+            case KEEP -> {}
+        }
+    }
+
     private void checkExit() {
         switch (launcherVisibility) {
             case HIDE_AND_REOPEN:
@@ -861,8 +893,8 @@ public final class LauncherHelper {
         private final ReentrantLock lock = new ReentrantLock();
         private final LaunchOptions launchOptions;
         private ManagedProcess process;
-        private volatile boolean lwjgl;
-        private LogWindow logWindow;
+        /// Log window owned by the JavaFX thread once initialization succeeds.
+        private @Nullable LogWindow logWindow;
         private final boolean detectWindow;
         private final CircularArrayList<Log> logs;
         private final CountDownLatch launchingLatch;
@@ -892,30 +924,27 @@ public final class LauncherHelper {
             }
 
             if (showLogs) {
-                CountDownLatch logWindowLatch = new CountDownLatch(1);
+                // JavaFX runs this before any log updates queued by the submitter below.
                 runLater(() -> {
                     logWindow = new LogWindow(process, logs);
                     logWindow.show();
-                    logWindowLatch.countDown();
                 });
 
                 logBuffer = new LinkedBlockingQueue<>();
                 submitLogThread = Lang.thread(new Runnable() {
+                    /// Pending messages collected by the submitter.
                     private final ArrayList<Log> currentLogs = new ArrayList<>();
-                    private final Semaphore semaphore = new Semaphore(0);
 
+                    /// Queues a stable batch so process cleanup can finish even after JavaFX stops.
                     private void submitLogs() {
-                        if (currentLogs.size() == 1) {
-                            Log log = currentLogs.get(0);
-                            runLater(() -> logWindow.logLine(log));
-                        } else {
-                            runLater(() -> {
-                                logWindow.logLines(currentLogs);
-                                semaphore.release();
-                            });
-                            semaphore.acquireUninterruptibly();
-                        }
+                        if (currentLogs.isEmpty())
+                            return;
+                        @Unmodifiable List<Log> batch = List.copyOf(currentLogs);
                         currentLogs.clear();
+                        runLater(() -> {
+                            if (logWindow != null)
+                                logWindow.logLines(batch);
+                        });
                     }
 
                     @Override
@@ -938,48 +967,7 @@ public final class LauncherHelper {
                         } while (logBuffer.drainTo(currentLogs) > 0);
                     }
                 }, "Game Log Submitter", true);
-
-                try {
-                    logWindowLatch.await();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-
-        private void finishLaunch() {
-            switch (launcherVisibility) {
-                case HIDE_AND_REOPEN:
-                    runLater(() -> {
-                        // If application was stopped and execution services did not finish termination,
-                        // these codes will be executed.
-                        @Nullable Stage stage = Controllers.getStage();
-                        if (stage != null) {
-                            stage.setIconified(false);
-                            stage.hide();
-                            launchingLatch.countDown();
-                        }
-                    });
-                    break;
-                case CLOSE:
-                    // Never come to here.
-                    break;
-                case KEEP:
-                    runLater(launchingLatch::countDown);
-                    break;
-                case HIDE:
-                    launchingLatch.countDown();
-                    runLater(() -> {
-                        // If application was stopped and execution services did not finish termination,
-                        // these codes will be executed.
-                        if (Controllers.getStage() != null) {
-                            Controllers.getStage().close();
-                            Controllers.shutdown();
-                            Schedulers.shutdown();
-                            System.gc();
-                        }
-                    });
-                    break;
+                process.addRelatedThread(submitLogThread);
             }
         }
 
@@ -1010,19 +998,10 @@ public final class LauncherHelper {
                 }
             }
 
-            if (!lwjgl) {
+            if (launchingLatch.getCount() != 0) {
                 String lowerCaseLog = log.toLowerCase(Locale.ROOT);
-                if (!detectWindow || lowerCaseLog.contains("lwjgl version") || lowerCaseLog.contains("lwjgl openal")) {
-                    lock.lock();
-                    try {
-                        if (!lwjgl) {
-                            lwjgl = true;
-                            finishLaunch();
-                        }
-                    } finally {
-                        lock.unlock();
-                    }
-                }
+                if (!detectWindow || lowerCaseLog.contains("lwjgl version") || lowerCaseLog.contains("lwjgl openal"))
+                    launchingLatch.countDown();
             }
         }
 
@@ -1042,17 +1021,6 @@ public final class LauncherHelper {
 
             if (exitType == ExitType.INTERRUPTED)
                 return;
-
-            // Game crashed before opening the game window.
-            if (!lwjgl) {
-                lock.lock();
-                try {
-                    if (!lwjgl)
-                        finishLaunch();
-                } finally {
-                    lock.unlock();
-                }
-            }
 
             if (exitType != ExitType.NORMAL) {
                 gameInstance.markLaunchedAbnormally();

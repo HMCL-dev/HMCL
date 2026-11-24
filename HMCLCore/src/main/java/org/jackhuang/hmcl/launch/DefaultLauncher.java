@@ -31,6 +31,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -681,8 +683,17 @@ public class DefaultLauncher extends Launcher {
         );
     }
 
+    /// {@inheritDoc}
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
+        return launch(() -> {}, () -> true);
+    }
+
+    /// Launches the game, checking for cancellation while waiting for the pre-launch
+    /// command and before handing the running process to the caller. After the listener
+    /// observes the game's exit, `launchSucceeded` may wait for handoff before allowing the post-exit command.
+    protected ManagedProcess launch(Runnable checkCancellation, BooleanSupplier launchSucceeded) throws IOException, InterruptedException {
+        checkCancellation.run();
         final Command command = generateCommandLine();
         final Map<String, String> envVars = generateEnvVars();
 
@@ -710,28 +721,41 @@ public class DefaultLauncher extends Launcher {
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
             ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), envVars)).directory(runDirectory.toFile());
             builder.environment().putAll(envVars);
-            SystemUtils.callExternalProcess(builder);
+            SystemUtils.callExternalProcess(builder, checkCancellation);
         }
 
-        Process process;
-        try {
-            ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory.toFile());
-            if (listener == null) {
-                builder.inheritIO();
-            }
-            Path appdata = options.getGameDir().toAbsolutePath().getParent();
-            if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
+        ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory.toFile());
+        if (listener == null)
+            builder.inheritIO();
+        @Nullable Path appdata = options.getGameDir().toAbsolutePath().getParent();
+        if (appdata != null)
+            builder.environment().put("APPDATA", appdata.toString());
+        builder.environment().putAll(envVars);
+        return startGameProcess(builder, checkCancellation, process -> {
+            if (listener != null)
+                startMonitors(process, envVars, listener, command.encoding, daemon, launchSucceeded);
+        });
+    }
 
-            builder.environment().putAll(envVars);
-            process = builder.start();
+    /// Starts the configured game process and its monitors, stopping the process if setup or handoff fails.
+    static ManagedProcess startGameProcess(ProcessBuilder builder, Runnable checkCancellation, Consumer<ManagedProcess> startMonitors) throws IOException {
+        checkCancellation.run();
+        ManagedProcess process;
+        try {
+            process = new ManagedProcess(builder.start(), builder.command());
         } catch (IOException e) {
             throw new ProcessCreationException(e);
         }
 
-        ManagedProcess p = new ManagedProcess(process, rawCommandLine);
-        if (listener != null)
-            startMonitors(p, envVars, listener, command.encoding, daemon);
-        return p;
+        try {
+            checkCancellation.run();
+            startMonitors.accept(process);
+            checkCancellation.run();
+            return process;
+        } catch (RuntimeException | Error e) {
+            process.stopAndWait();
+            throw e;
+        }
     }
 
     @Contract(value = " -> new", pure = true)
@@ -1042,7 +1066,9 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, Map<String, String> envVars, ProcessListener processListener, Charset encoding, boolean isDaemon) {
+    /// Forwards game output and exit notifications, then runs the post-exit command for a successful launch.
+    private void startMonitors(ManagedProcess managedProcess, Map<String, String> envVars, ProcessListener processListener,
+                               Charset encoding, boolean isDaemon, BooleanSupplier launchSucceeded) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, false);
@@ -1056,17 +1082,21 @@ public class DefaultLauncher extends Launcher {
         managedProcess.addRelatedThread(stderr);
         managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), (exitCode, exitType) -> {
             processListener.onExit(exitCode, exitType);
-
-            if (StringUtils.isNotBlank(options.getPostExitCommand())) {
-                try {
-                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), envVars)).directory(options.getGameDir().toFile());
-                    builder.environment().putAll(envVars);
-                    SystemUtils.callExternalProcess(builder);
-                } catch (Throwable e) {
-                    LOG.warning("An Exception happened while running exit command.", e);
-                }
-            }
+            runPostExitCommand(options.getPostExitCommand(), options.getGameDir(), envVars, launchSucceeded);
         }), "exit-waiter", isDaemon));
+    }
+
+    /// Runs the configured post-exit command once the caller confirms the game was successfully handed off.
+    static void runPostExitCommand(@Nullable String command, Path directory, Map<String, String> envVars, BooleanSupplier launchSucceeded) {
+        if (StringUtils.isBlank(command) || !launchSucceeded.getAsBoolean())
+            return;
+        try {
+            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(command, envVars)).directory(directory.toFile());
+            builder.environment().putAll(envVars);
+            SystemUtils.callExternalProcess(builder);
+        } catch (Throwable e) {
+            LOG.warning("An Exception happened while running exit command.", e);
+        }
     }
 
     private record Command(

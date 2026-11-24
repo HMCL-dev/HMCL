@@ -183,7 +183,7 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
                         if (componentType != null)
                             builder.component(componentType, addon.getVersion());
                     }
-                    context.run(builder.buildAsync());
+                    builder.build(context);
                 });
             }
         } catch (Exception | Error failure) {

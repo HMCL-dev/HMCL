@@ -354,17 +354,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))
                 .thenComposeAsync(version -> {
-                    HMCLDependencyManager dependency = repository.getDependency();
-
                     String gameVersion = version.getGameVersion().toString();
-                    GameInstanceID instanceId = new GameInstanceID(gameVersion);
-
-                    try (HMCLGameBuilder builder = dependency.newGameBuilder(instanceId)) {
-                        return builder
-                                .component(GameComponentType.GAME, gameVersion)
-                                .buildAsync()
-                                .thenApplyAsync(ignored -> repository.getInstance(instanceId));
-                    }
+                    return repository.getDependency().installGameAsync(new GameInstanceID(gameVersion),
+                            builder -> builder.component(GameComponentType.GAME, gameVersion));
                 })
                 .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {

@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -565,7 +566,14 @@ public final class DefaultGameInstanceTest {
                 cacheRepository);
         DefaultGameBuilder builder = dependencyManager.newGameBuilder(new GameInstanceID("instance"));
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class, builder::buildAsync);
+        Task<GameInstance> build = new Task<>() {
+            /// Tries to build without configuring a game version.
+            @Override
+            public GameInstance execute(TaskExecutionContext context) throws Exception {
+                return builder.build(context);
+            }
+        };
+        IllegalStateException exception = assertThrows(IllegalStateException.class, build::run);
 
         assertEquals("GameBuilder.gameVersion must be set", exception.getMessage());
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {

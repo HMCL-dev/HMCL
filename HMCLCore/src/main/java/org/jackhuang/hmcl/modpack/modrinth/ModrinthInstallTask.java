@@ -5,8 +5,8 @@ package org.jackhuang.hmcl.modpack.modrinth;
 import com.google.gson.JsonParseException;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.*;
@@ -155,7 +155,7 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
     }
 
     /// Installs the Modrinth pack into the target reserved by the builder.
-    private void install(TaskExecutionContext context, GameBuilder builder) throws Exception {
+    private void install(TaskExecutionContext context, DefaultGameBuilder builder) throws Exception {
         builder.enableIsolation();
         builder.component(GameComponentType.GAME, manifest.getGameVersion());
         for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
@@ -180,7 +180,6 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
                     throw new IllegalStateException("Unsupported mod loader " + modLoader.getKey());
             }
         }
-        Task<?> game = builder.buildAsync();
         List<Task<?>> preparation = new ArrayList<>(4);
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
         preparation.add(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config).withStage(InstallStages.MODPACK));
@@ -201,7 +200,7 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
         }
 
         context.runAll(preparation);
-        context.run(game);
+        DefaultGameInstance instance = builder.build(context);
         if (config != null) {
             // For update, remove mods not listed in new manifest
             for (ModrinthManifest.File oldManifestFile : config.getManifest().getFiles()) {
@@ -228,6 +227,6 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
         }
 
         // The game builder publishes the instance before file completion starts.
-        context.run(new ModrinthCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest, excludedFiles));
+        context.run(new ModrinthCompletionTask(dependencyManager, instance, manifest, excludedFiles));
     }
 }
