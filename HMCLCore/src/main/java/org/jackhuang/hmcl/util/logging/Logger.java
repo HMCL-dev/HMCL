@@ -312,51 +312,78 @@ public final class Logger {
     }
 
     public void log(Level level, String msg) {
-        log(level, CallerFinder.getCaller(), msg, null);
+        log(level, getCaller(), msg, null);
     }
 
     public void log(Level level, String msg, Throwable exception) {
-        log(level, CallerFinder.getCaller(), msg, exception);
+        log(level, getCaller(), msg, exception);
     }
 
     public void error(String msg) {
-        log(Level.ERROR, CallerFinder.getCaller(), msg, null);
+        log(Level.ERROR, getCaller(), msg, null);
     }
 
     public void error(String msg, Throwable exception) {
-        log(Level.ERROR, CallerFinder.getCaller(), msg, exception);
+        log(Level.ERROR, getCaller(), msg, exception);
     }
 
     public void warning(String msg) {
-        log(Level.WARNING, CallerFinder.getCaller(), msg, null);
+        log(Level.WARNING, getCaller(), msg, null);
     }
 
     public void warning(String msg, Throwable exception) {
-        log(Level.WARNING, CallerFinder.getCaller(), msg, exception);
+        log(Level.WARNING, getCaller(), msg, exception);
     }
 
     public void info(String msg) {
-        log(Level.INFO, CallerFinder.getCaller(), msg, null);
+        log(Level.INFO, getCaller(), msg, null);
     }
 
     public void info(String msg, Throwable exception) {
-        log(Level.INFO, CallerFinder.getCaller(), msg, exception);
+        log(Level.INFO, getCaller(), msg, exception);
     }
 
     public void debug(String msg) {
-        log(Level.DEBUG, CallerFinder.getCaller(), msg, null);
+        log(Level.DEBUG, getCaller(), msg, null);
     }
 
     public void debug(String msg, Throwable exception) {
-        log(Level.DEBUG, CallerFinder.getCaller(), msg, exception);
+        log(Level.DEBUG, getCaller(), msg, exception);
     }
 
     public void trace(String msg) {
-        log(Level.TRACE, CallerFinder.getCaller(), msg, null);
+        log(Level.TRACE, getCaller(), msg, null);
     }
 
     public void trace(String msg, Throwable exception) {
-        log(Level.TRACE, CallerFinder.getCaller(), msg, exception);
+        log(Level.TRACE, getCaller(), msg, exception);
+    }
+
+    /// The stack walker used to find the caller of a logging method.
+    ///
+    /// Compared to `StackWalker.getInstance()`, this walker has a smaller estimated depth, so it incurs lower overhead.
+    ///
+    /// If the call stack depth in the implementation of `Logger` ever exceeds 3 frames, the configuration of this walker needs to be changed.
+    private static final StackWalker WALKER = StackWalker.getInstance(Set.of(), 3);
+
+    /// Returns the first stack frame that does not belong to the logging utility classes.
+    ///
+    /// The returned value is formatted as `className.methodName`. Frames whose class name starts
+    /// with [#PACKAGE_PREFIX] are skipped, because they are internal to the logging implementation.
+    ///
+    /// @return the formatted caller location, or `null` if no non-logging frame is found
+    ///         within the examined stack frames
+    private static @Nullable String getCaller() {
+        return WALKER.walk(stream -> {
+            Iterator<StackWalker.StackFrame> it = stream.iterator();
+            while (it.hasNext()) {
+                StackWalker.StackFrame frame = it.next();
+                if (!frame.getClassName().equals(CLASS_NAME)) {
+                    return frame.getClassName() + "." + frame.getMethodName();
+                }
+            }
+            return null;
+        });
     }
 
     private record LogFile(Path file,
