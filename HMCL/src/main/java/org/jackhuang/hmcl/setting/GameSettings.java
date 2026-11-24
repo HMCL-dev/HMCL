@@ -398,6 +398,19 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return jvmOptions;
     }
 
+    /// Property name for the garbage collector preference.
+    public static final String PROPERTY_GARBAGE_COLLECTOR = "garbageCollector";
+
+    /// Preferred garbage collector for the game JVM.
+    @SerializedName(PROPERTY_GARBAGE_COLLECTOR)
+    private final InheritableProperty<GarbageCollector> garbageCollector =
+            newInheritableProperty(PROPERTY_GARBAGE_COLLECTOR, GarbageCollector.DEFAULT);
+
+    /// Returns the garbage collector preference property.
+    public InheritableProperty<GarbageCollector> garbageCollectorProperty() {
+        return garbageCollector;
+    }
+
     /// Property name for disabling generated JVM options.
     public static final String PROPERTY_NO_JVM_OPTIONS = "noJVMOptions";
 

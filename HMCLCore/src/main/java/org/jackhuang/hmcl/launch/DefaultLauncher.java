@@ -55,6 +55,17 @@ public class DefaultLauncher extends Launcher {
         }
     }
 
+    /// Adds HMCL's default tuning options for G1GC.
+    ///
+    /// @param res the command builder receiving the options
+    private static void addG1OptimizingOptions(@NotNull CommandBuilder res) {
+        res.addUnstableDefault("G1MixedGCCountTarget", "5");
+        res.addUnstableDefault("G1NewSizePercent", "20");
+        res.addUnstableDefault("G1ReservePercent", "20");
+        res.addUnstableDefault("MaxGCPauseMillis", "50");
+        res.addUnstableDefault("G1HeapRegionSize", "32m");
+    }
+
     @Contract(value = " -> new", pure = true)
     private @NotNull Command generateCommandLine() throws IOException {
         CommandBuilder res = new CommandBuilder();
@@ -200,19 +211,32 @@ public class DefaultLauncher extends Launcher {
             final int javaVersion = options.getJava().getParsedVersion();
             final boolean is64bit = options.getJava().getBits() == Bits.BIT_64;
 
+            boolean hasCustomGarbageCollector = !res.noneMatch(arg ->
+                    "-XX:-UseG1GC".equals(arg) || (arg.startsWith("-XX:+Use") && arg.endsWith("GC")));
+            @NotNull GarbageCollector configuredGarbageCollector = options.getGarbageCollector();
+            boolean useDefaultG1 = configuredGarbageCollector == GarbageCollector.DEFAULT
+                    && javaVersion >= 8 && !options.isNoGeneratedOptimizingJVMArgs();
+            @NotNull GarbageCollector effectiveGarbageCollector = useDefaultG1
+                    ? GarbageCollector.G1
+                    : configuredGarbageCollector.resolve(javaVersion);
+            boolean addGarbageCollector = !hasCustomGarbageCollector
+                    && effectiveGarbageCollector != GarbageCollector.DEFAULT;
+
+            if (addGarbageCollector) {
+                if (configuredGarbageCollector != GarbageCollector.DEFAULT
+                        && effectiveGarbageCollector != configuredGarbageCollector) {
+                    LOG.info("Garbage collector " + configuredGarbageCollector + " is not supported by Java "
+                            + javaVersion + "; using " + effectiveGarbageCollector + " instead");
+                }
+                res.addAllDefault(effectiveGarbageCollector.getJvmArguments(javaVersion));
+            }
+
             if (!options.isNoGeneratedOptimizingJVMArgs()) {
                 res.addUnstableDefault("UnlockExperimentalVMOptions", true);
                 res.addUnstableDefault("UnlockDiagnosticVMOptions", true);
 
-                // Using G1GC with its settings by default
-                if (javaVersion >= 8
-                        && res.noneMatch(arg -> "-XX:-UseG1GC".equals(arg) || (arg.startsWith("-XX:+Use") && arg.endsWith("GC")))) {
-                    res.addUnstableDefault("UseG1GC", true);
-                    res.addUnstableDefault("G1MixedGCCountTarget", "5");
-                    res.addUnstableDefault("G1NewSizePercent", "20");
-                    res.addUnstableDefault("G1ReservePercent", "20");
-                    res.addUnstableDefault("MaxGCPauseMillis", "50");
-                    res.addUnstableDefault("G1HeapRegionSize", "32m");
+                if (addGarbageCollector && effectiveGarbageCollector == GarbageCollector.G1) {
+                    addG1OptimizingOptions(res);
                 }
 
                 res.addUnstableDefault("OmitStackTraceInFastThrow", false);

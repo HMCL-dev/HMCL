@@ -38,6 +38,8 @@ public class LaunchOptions implements Serializable {
     private ProxyOption proxyOption;
     private boolean noGeneratedJVMArgs;
     private boolean noGeneratedOptimizingJVMArgs;
+    /// Preferred garbage collector for the game JVM.
+    private @NotNull GarbageCollector garbageCollector = GarbageCollector.DEFAULT;
     private String preLaunchCommand;
     private String postExitCommand;
     private boolean useCustomNatives;
@@ -211,6 +213,11 @@ public class LaunchOptions implements Serializable {
      */
     public boolean isNoGeneratedOptimizingJVMArgs() {
         return noGeneratedOptimizingJVMArgs;
+    }
+
+    /// Returns the preferred garbage collector for the game JVM.
+    public @NotNull GarbageCollector getGarbageCollector() {
+        return garbageCollector;
     }
 
     /**
@@ -434,6 +441,15 @@ public class LaunchOptions implements Serializable {
 
         public Builder setNoGeneratedOptimizingJVMArgs(boolean noGeneratedOptimizingJVMArgs) {
             options.noGeneratedOptimizingJVMArgs = noGeneratedOptimizingJVMArgs;
+            return this;
+        }
+
+        /// Sets the preferred garbage collector for the game JVM.
+        ///
+        /// @param garbageCollector the collector preference, never `null`
+        /// @return this builder
+        public @NotNull Builder setGarbageCollector(@NotNull GarbageCollector garbageCollector) {
+            options.garbageCollector = Objects.requireNonNull(garbageCollector);
             return this;
         }
 

@@ -633,6 +633,19 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             notUseJavawPane.setTitle(i18n("settings.advanced.not_use_javaw"));
             notUseJavawPane.setSubtitle(i18n("settings.advanced.windows_only"));
 
+            var gcHelpIcon = new StackPane(SVG.HELP.createIcon(16));
+            FXUtils.installFastTooltip(gcHelpIcon, i18n("settings.advanced.gc.manual_args.tooltip"));
+            var garbageCollectorPane = createInheritableButton(
+                    GameSettings::garbageCollectorProperty,
+                    e -> i18n("settings.advanced.gc." + e.name().toLowerCase(Locale.ROOT)),
+                    e -> i18n("settings.advanced.gc." + e.name().toLowerCase(Locale.ROOT) + ".desc"),
+                    gcHelpIcon,
+                    GarbageCollector.values()
+            );
+            jvmSettings.getContent().add(garbageCollectorPane);
+            garbageCollectorPane.setTitle(i18n("settings.advanced.gc"));
+            garbageCollectorPane.setSubtitle(i18n("settings.advanced.gc.subtitle"));
+
             var noJVMArgsPane = createInheritableBooleanButton(GameSettings::noJVMOptionsProperty);
             jvmSettings.getContent().add(noJVMArgsPane);
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
@@ -2348,7 +2361,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// Binds an inheritable select editor to an inheritable setting.
     private <T> void bindInheritableLineSelectButton(
             LineSelectButton<T> button,
-            Function<GameSettings, InheritableProperty<T>> propertyGetter) {
+            Function<GameSettings, InheritableProperty<T>> propertyGetter,
+            @Nullable Node titleTrailing) {
         ObjectProperty<@Nullable InheritableProperty<T>> activeProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<T>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
@@ -2356,7 +2370,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         @Nullable JFXButton inheritButton = null;
         if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
-            button.setTitleTrailing(inheritButton);
+            if (titleTrailing == null) {
+                button.setTitleTrailing(inheritButton);
+            } else {
+                var titleTrailingBox = new HBox(4, titleTrailing, inheritButton);
+                titleTrailingBox.setAlignment(Pos.CENTER_LEFT);
+                button.setTitleTrailing(titleTrailingBox);
+            }
+        } else if (titleTrailing != null) {
+            button.setTitleTrailing(titleTrailing);
         }
         @Nullable JFXButton finalInheritButton = inheritButton;
 
@@ -2610,11 +2632,25 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }
 
+    /// Creates an inheritable select editor without an additional title decoration.
     @SafeVarargs
     private <T extends @UnknownNullability Object> LineSelectButton<T> createInheritableButton(
             Function<GameSettings, InheritableProperty<T>> propertyGetter,
             Function<T, String> convert,
             @Nullable Function<T, String> descriptionConverter,
+            T... items
+    ) {
+        return createInheritableButton(propertyGetter, convert, descriptionConverter, null, items);
+    }
+
+    /// Creates an inheritable select editor with an optional node displayed after its title.
+    /// Instance settings retain the inheritance button beside the additional node.
+    @SafeVarargs
+    private <T extends @UnknownNullability Object> LineSelectButton<T> createInheritableButton(
+            Function<GameSettings, InheritableProperty<T>> propertyGetter,
+            Function<T, String> convert,
+            @Nullable Function<T, String> descriptionConverter,
+            @Nullable Node titleTrailing,
             T... items
     ) {
         var button = new LineSelectButton<T>();
@@ -2623,7 +2659,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         if (descriptionConverter != null)
             button.setDescriptionConverter(value -> value != null ? descriptionConverter.apply(value) : "");
         button.setItems(items);
-        bindInheritableLineSelectButton(button, propertyGetter);
+        bindInheritableLineSelectButton(button, propertyGetter, titleTrailing);
 
         return button;
     }

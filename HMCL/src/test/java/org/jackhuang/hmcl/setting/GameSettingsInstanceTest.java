@@ -6,6 +6,7 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.jackhuang.hmcl.game.GarbageCollector;
 import org.jackhuang.hmcl.game.Renderer;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
@@ -63,6 +64,42 @@ public final class GameSettingsInstanceTest {
 
         assertEquals(Renderer.OpenGL.LLVMPIPE, deserialized.openGLRendererProperty().getValue());
         assertEquals(Renderer.Vulkan.LAVAPIPE, deserialized.vulkanRendererProperty().getValue());
+    }
+
+    /// Tests that the garbage collector preference is serialized and restored by its stable property name.
+    @Test
+    public void roundTripsGarbageCollector() {
+        GameSettings.Instance instance = new GameSettings.Instance();
+        assertEquals(GarbageCollector.DEFAULT, instance.garbageCollectorProperty().getValue());
+        instance.garbageCollectorProperty().setValue(GarbageCollector.GENERATIONAL_ZGC);
+        instance.getOverrideProperties().add(GameSettings.PROPERTY_GARBAGE_COLLECTOR);
+
+        String serialized = LauncherSettings.SETTINGS_GSON.toJson(instance, GameSettings.Instance.class);
+        JsonObject jsonObject = JsonParser.parseString(serialized).getAsJsonObject();
+        assertEquals("GENERATIONAL_ZGC",
+                jsonObject.get(GameSettings.PROPERTY_GARBAGE_COLLECTOR).getAsString());
+
+        GameSettings.Instance deserialized =
+                LauncherSettings.SETTINGS_GSON.fromJson(serialized, GameSettings.Instance.class);
+        assertEquals(GarbageCollector.GENERATIONAL_ZGC, deserialized.garbageCollectorProperty().getValue());
+        assertTrue(deserialized.getOverrideProperties().contains(GameSettings.PROPERTY_GARBAGE_COLLECTOR));
+    }
+
+    /// Tests that an instance inherits the collector preference until it supplies an explicit override.
+    @Test
+    public void inheritsAndOverridesGarbageCollector() {
+        GameSettings.Preset parent = new GameSettings.Preset(
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000"));
+        parent.garbageCollectorProperty().setValue(GarbageCollector.ZGC);
+        GameSettings.Instance instance = new GameSettings.Instance();
+
+        assertEquals(GarbageCollector.ZGC,
+                GameSettings.resolve(parent, instance).getInheritable(GameSettings::garbageCollectorProperty));
+
+        instance.garbageCollectorProperty().setValue(GarbageCollector.CMS);
+        instance.getOverrideProperties().add(GameSettings.PROPERTY_GARBAGE_COLLECTOR);
+        assertEquals(GarbageCollector.CMS,
+                GameSettings.resolve(parent, instance).getInheritable(GameSettings::garbageCollectorProperty));
     }
 
     /// Tests that legacy default Java selections are migrated to automatic selection.

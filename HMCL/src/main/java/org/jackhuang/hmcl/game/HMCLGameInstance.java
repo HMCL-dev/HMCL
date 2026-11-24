@@ -584,6 +584,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.getInheritable(GameSettings::gameArgumentsProperty)))
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.getInheritable(GameSettings::jvmOptionsProperty)))
+                .setGarbageCollector(vs.getInheritable(GameSettings::garbageCollectorProperty))
                 .setMaxMemory(maxMemory)
                 .setMinMemory(vs.getInheritable(GameSettings::minMemoryProperty))
                 .setMetaspace(Lang.toIntOrNull(vs.getInheritable(GameSettings::permSizeProperty)))

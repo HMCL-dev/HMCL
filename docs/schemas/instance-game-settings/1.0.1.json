@@ -89,6 +89,19 @@
         "jvmOptions": {
           "type": "string"
         },
+        "garbageCollector": {
+          "enum": [
+            "DEFAULT",
+            "GENERATIONAL_ZGC",
+            "ZGC",
+            "SHENANDOAH",
+            "G1",
+            "PARALLEL",
+            "PAR_NEW",
+            "CMS",
+            "SERIAL"
+          ]
+        },
         "noJVMOptions": {
           "type": "boolean"
         },
