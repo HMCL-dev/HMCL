@@ -658,8 +658,8 @@ final class TaskExecution {
         @Nullable Executor worker = currentExecutor();
         boolean interrupted = false;
         lock.lock();
-        sharedWaiters++;
         try {
+            sharedWaiters++;
             if (task.isDone())
                 return false;
             binding.checkWait();
