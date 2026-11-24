@@ -398,11 +398,6 @@ public abstract class Task<T extends @Nullable Object> {
         }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /// Returns a task that calls `fn` on the continuation's thread after success, then runs the supplied task.
-    public final <U extends @Nullable Object> Task<U> thenCompose(ExceptionalSupplier<Task<U>, ?> fn) {
-        return thenComposeAsync(null, fn);
-    }
-
     /// Selects `other` on the default task scheduler after this task succeeds, then runs it
     /// with its own or the continuation's executor and returns its result.
     ///
@@ -422,6 +417,11 @@ public abstract class Task<T extends @Nullable Object> {
                 return context.run(next);
             }
         }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
+    }
+
+    /// Returns a task that calls `fn` on the continuation's thread after success, then runs the supplied task.
+    public final <U extends @Nullable Object> Task<U> thenCompose(ExceptionalSupplier<Task<U>, ?> fn) {
+        return thenComposeAsync(null, fn);
     }
 
     /// Returns a task that calls `fn` on the default task scheduler after success,
