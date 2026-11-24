@@ -25,34 +25,31 @@ import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- *
- * @author huangyuhui
- */
+/// Downloads the assets listed by a game manifest's asset index.
+///
+/// @author huangyuhui
 public final class GameAssetDownloadTask extends Task<@Nullable Void> {
 
+    /// Supplies the asset layout, download sources and cache.
     private final AbstractDependencyManager dependencyManager;
+    /// Identifies the asset index to install.
     private final GameInstanceManifest manifest;
-    private final AssetIndexInfo assetIndexInfo;
-    private final Path assetIndexFile;
+    /// Whether to download the index even when a valid local copy exists.
+    private final boolean forceDownloadingIndex;
+    /// Whether to verify existing asset files against their recorded hashes.
     private final boolean integrityCheck;
-    /// The index that must be available before asset files can be enumerated.
-    private final GameAssetIndexDownloadTask indexTask;
 
-    /// Constructor.
+    /// Creates a task that installs the asset index and its referenced assets.
     ///
-    /// @param dependencyManager the dependency manager that can provides [GameRepository]
-    /// @param manifest the game version
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param manifest the game manifest that declares the asset index
+    /// @param forceDownloadingIndex whether to download the index even if the local copy is valid
+    /// @param integrityCheck whether to verify the hashes of existing asset files
     public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean forceDownloadingIndex, boolean integrityCheck) {
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
-        this.assetIndexInfo = this.manifest.getAssetIndex();
-        GameRepository gameRepository = dependencyManager.getGameRepository();
-        String assetId = assetIndexInfo.getId();
-        this.assetIndexFile = gameRepository.getLayout().getAssetIndexFile(assetId);
+        this.forceDownloadingIndex = forceDownloadingIndex;
         this.integrityCheck = integrityCheck;
-
-        indexTask = new GameAssetIndexDownloadTask(dependencyManager, this.manifest, forceDownloadingIndex);
     }
 
     /// Returns the stage for game asset downloads.
@@ -64,7 +61,9 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
     /// Obtains the asset index, verifies existing assets and downloads the missing or invalid files in parallel.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        context.run(indexTask);
+        context.run(new GameAssetIndexDownloadTask(dependencyManager, manifest, forceDownloadingIndex));
+        GameRepositoryLayout layout = dependencyManager.getGameRepository().getLayout();
+        Path assetIndexFile = layout.getAssetIndexFile(manifest.getAssetIndex().getId());
         List<Task<?>> dependencies = new ArrayList<>();
         AssetIndex index;
         try {
@@ -79,8 +78,7 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
             if (context.isCancelled())
                 throw new InterruptedException();
 
-            GameRepository gameRepository = dependencyManager.getGameRepository();
-            Path file = gameRepository.getLayout().getAssetObject(assetObject);
+            Path file = layout.getAssetObject(assetObject);
             boolean download = !Files.isRegularFile(file);
             try {
                 if (!download && integrityCheck && !assetObject.validateChecksum(file, true))
@@ -111,6 +109,8 @@ public final class GameAssetDownloadTask extends Task<@Nullable Void> {
         return null;
     }
 
+    /// Downloads the index even when the local copy is valid.
     public static final boolean DOWNLOAD_INDEX_FORCIBLY = true;
+    /// Reuses a valid local index.
     public static final boolean DOWNLOAD_INDEX_IF_NECESSARY = false;
 }

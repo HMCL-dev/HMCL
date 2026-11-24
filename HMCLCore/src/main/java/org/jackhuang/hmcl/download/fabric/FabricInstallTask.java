@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.download.fabric;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
@@ -15,6 +14,7 @@ import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -31,8 +31,10 @@ public final class FabricInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final FabricRemoteVersion remote;
-    private final GetTask launchMetaTask;
 
+    /// Creates an installation task for the selected Fabric loader version.
+    ///
+    /// @throws IllegalArgumentException if `manifest` is not modifiable
     public FabricInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, FabricRemoteVersion remoteVersion) {
         if (!manifest.isModifiable()) {
             throw new IllegalArgumentException("Manifest is not modifiable");
@@ -41,10 +43,6 @@ public final class FabricInstallTask extends Task<GameInstancePatch> {
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
         this.remote = remoteVersion;
-
-        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
-        launchMetaTask = new GetTask(downloadProvider.getDownloadCandidates(remoteVersion));
-        launchMetaTask.setCacheRepository(dependencyManager.getCacheRepository());
     }
 
     /// Reads the loader metadata and returns its patch after attempting to download the required libraries.
@@ -53,7 +51,9 @@ public final class FabricInstallTask extends Task<GameInstancePatch> {
         if (!Objects.equals(GameComponentAnalyzer.VANILLA_MAIN, manifest.mainClass()))
             throw new UnsupportedInstallationException(FABRIC_NOT_COMPATIBLE_WITH_FORGE);
 
-        FabricInfo fabricInfo = JsonUtils.GSON.fromJson(context.run(launchMetaTask), FabricInfo.class);
+        GetTask launchMetaTask = new GetTask(dependencyManager.getDownloadProvider().getDownloadCandidates(remote));
+        launchMetaTask.setCacheRepository(dependencyManager.getCacheRepository());
+        @Nullable FabricInfo fabricInfo = JsonUtils.GSON.fromJson(context.run(launchMetaTask), FabricInfo.class);
         if (fabricInfo == null)
             throw new IOException("Fabric metadata is invalid");
 

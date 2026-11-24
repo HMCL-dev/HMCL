@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.download.quilt;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
@@ -30,16 +29,12 @@ public final class QuiltInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final QuiltRemoteVersion remote;
-    private final GetTask launchMetaTask;
 
+    /// Creates an installation task for the selected Quilt loader version.
     public QuiltInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, QuiltRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
         this.remote = remoteVersion;
-
-        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
-        launchMetaTask = new GetTask(downloadProvider.getDownloadCandidates(remoteVersion));
-        launchMetaTask.setCacheRepository(dependencyManager.getCacheRepository());
     }
 
     /// Reads the loader metadata and returns its patch after attempting to download the required libraries.
@@ -48,6 +43,8 @@ public final class QuiltInstallTask extends Task<GameInstancePatch> {
         if (!Objects.equals(GameComponentAnalyzer.VANILLA_MAIN, manifest.mainClass()))
             throw new UnsupportedInstallationException(FABRIC_NOT_COMPATIBLE_WITH_FORGE);
 
+        GetTask launchMetaTask = new GetTask(dependencyManager.getDownloadProvider().getDownloadCandidates(remote));
+        launchMetaTask.setCacheRepository(dependencyManager.getCacheRepository());
         GameInstancePatch patch = getPatch(JsonUtils.GSON.fromJson(context.run(launchMetaTask), QuiltInfo.class), remote.getSelfVersion());
 
         context.tryRun(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()));

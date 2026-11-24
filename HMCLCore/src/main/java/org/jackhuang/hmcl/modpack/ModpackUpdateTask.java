@@ -10,8 +10,10 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.ThreadLocalRandom;
 
 /// Runs a modpack update with an instance-directory backup and rollback on failure.
 @NotNullByDefault
@@ -23,9 +25,6 @@ public class ModpackUpdateTask extends Task<@Nullable Void> {
     /// The task that applies the modpack update after the backup is created.
     private final Task<?> updateTask;
 
-    /// A randomly named backup directory that was unused when this task was created.
-    private final Path backupFolder;
-
     /// Creates an update task that backs up and restores a registered instance as one operation.
     ///
     /// @param instance   the registered instance to update
@@ -33,14 +32,17 @@ public class ModpackUpdateTask extends Task<@Nullable Void> {
     public ModpackUpdateTask(DefaultGameInstance instance, Task<?> updateTask) {
         this.instance = instance;
         this.updateTask = updateTask;
+    }
 
-        Path backup = instance.getLayout().getBaseDirectory().resolve("backup");
+    /// Creates a new directory for this update beneath the repository's backup directory.
+    private Path createBackupDirectory() throws IOException {
+        Path parent = Files.createDirectories(instance.getLayout().getBaseDirectory().resolve("backup"));
         while (true) {
-            int num = (int) (Math.random() * 10000000);
-            Path candidate = backup.resolve(instance.getId() + "-" + num);
-            if (!Files.exists(candidate)) {
-                backupFolder = candidate;
-                break;
+            int suffix = ThreadLocalRandom.current().nextInt(10_000_000);
+            try {
+                return Files.createDirectory(parent.resolve(instance.getId() + "-" + suffix));
+            } catch (FileAlreadyExistsException ignored) {
+                // Leave the existing backup intact and try another name.
             }
         }
     }
@@ -48,6 +50,7 @@ public class ModpackUpdateTask extends Task<@Nullable Void> {
     /// Backs up the instance and restores it if applying the update fails.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        Path backupFolder = createBackupDirectory();
         FileUtils.copyDirectory(instance.getInstanceRoot(), backupFolder);
         try {
             context.run(updateTask);
