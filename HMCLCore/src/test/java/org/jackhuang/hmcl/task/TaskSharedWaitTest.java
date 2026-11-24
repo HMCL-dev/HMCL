@@ -56,9 +56,10 @@ final class TaskSharedWaitTest {
         }
     }
 
-    /// A shared wait for an inline child finishes while its parent is still using the same worker.
-    @Test
-    void waitsForInlineChildIndependentlyOfParent() {
+    /// A shared wait ends when the child finishes, even if the caller was interrupted or the parent is still active.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void waitsForInlineChildIndependentlyOfParent(boolean interrupted) {
         ExecutorService worker = Executors.newSingleThreadExecutor();
         try {
             CountDownLatch childRunning = new CountDownLatch(1);
@@ -76,9 +77,17 @@ final class TaskSharedWaitTest {
             Task<Integer> observer = Task.supplyAsync(worker, () -> {
                 assertTrue(childRunning.await(10, TimeUnit.SECONDS));
                 observing.countDown();
-                int value = child.run();
-                observed.countDown();
-                return value;
+                try {
+                    if (interrupted) {
+                        Thread.currentThread().interrupt();
+                        assertThrows(InterruptedException.class, child::run);
+                        assertTrue(Thread.interrupted());
+                        return child.resultNow();
+                    }
+                    return child.run();
+                } finally {
+                    observed.countDown();
+                }
             });
             assertTimeoutPreemptively(Duration.ofSeconds(10), () -> {
                 parent.start();

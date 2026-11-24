@@ -769,7 +769,7 @@ public final class GameDirectoriesTest {
     }
 
     /// Temporary static state override for game directory tests.
-    public static final class GameDirectoryEnvironment implements AutoCloseable {
+    private static final class GameDirectoryEnvironment implements AutoCloseable {
         /// The reflected SettingsManager local game directories field.
         private final Field localGameDirectoriesField;
 
@@ -837,7 +837,7 @@ public final class GameDirectoriesTest {
         private final Map<GameDirectory, HMCLGameRepository> previousRepositories;
 
         /// Replaces game-directory-related static state with the given stores and an empty preset store.
-        public GameDirectoryEnvironment(GameDirectories localDirectories, GameDirectories userDirectories)
+        private GameDirectoryEnvironment(GameDirectories localDirectories, GameDirectories userDirectories)
                 throws ReflectiveOperationException {
             this(localDirectories, userDirectories, new GameSettingsPresets());
         }

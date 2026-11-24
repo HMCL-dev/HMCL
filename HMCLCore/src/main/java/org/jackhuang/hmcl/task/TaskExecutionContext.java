@@ -19,26 +19,20 @@ import java.util.concurrent.Executor;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Executes children within the current task's cancellation and listener scope.
-/// Stage, hint and counter decorators share their source's executor while running that source.
-/// A decorator consuming a completed source, like a child without an executor preference,
-/// inherits the executor running the current task's body.
-/// Children whose [Task#getStage()] returns `null` inherit the current task's stage.
-/// A task must use its context before its body returns and on the thread executing its body,
-/// except that an action dispatched by [#call(Executor, Callable)] may use [#isCancelled()]
-/// and [#checkCancellation()].
-/// While waiting, a worker may execute submissions from the awaited child's subtree on its
-/// own executor. Use the same executor instance for work requiring the same worker.
-/// Tasks using constrained executors must avoid wait cycles between independent
-/// branches and must not hold resources that their children need to complete.
+/// Runs children in the current task's execution tree. Children inherit the current stage
+/// unless they declare one. Use this context on the task body's thread during its invocation.
+/// Actions dispatched by [#call(Executor, Callable)] can also check cancellation.
+///
+/// A waiting worker can run descendant work scheduled on the same executor instance.
+/// On constrained executors, avoid wait cycles between independent branches and release
+/// resources that children need before waiting for them.
 @NotNullByDefault
 public interface TaskExecutionContext {
     /// Returns true if cancellation has been requested for this task tree or the calling thread
     /// is interrupted. This method preserves the thread's interrupted status.
     boolean isCancelled();
 
-    /// Throws [CancellationException] if [#isCancelled()] is true, preserving the
-    /// calling thread's interrupted status.
+    /// Throws [CancellationException] if [#isCancelled()] is true.
     default void checkCancellation() {
         if (isCancelled())
             throw new CancellationException("Cancelled by user");
@@ -56,11 +50,8 @@ public interface TaskExecutionContext {
     /// Has no effect outside a stage.
     void completeStageItem();
 
-    /// Runs a new child to completion or reads the outcome of a completed task.
-    /// Reusing an outcome preserves the original result or failure and emits no lifecycle events.
-    /// Cancellation of the calling context takes precedence over a completed outcome.
-    /// A child that has not yet been admitted remains available for later submission
-    /// if the caller observes cancellation or interruption before admission.
+    /// Runs a new child or reuses its completed outcome without repeating lifecycle events.
+    /// Checks cancellation first, leaving an unsubmitted child available for later use.
     ///
     /// @throws Exception if the child fails or execution is cancelled or interrupted
     /// @throws IllegalStateException if the child is already submitted or reserved as a root and has not completed
@@ -81,15 +72,13 @@ public interface TaskExecutionContext {
         return childExecutionSucceeded(task, null);
     }
 
-    /// Schedules new children on their respective executors, reuses completed outcomes as in
-    /// [#run(Task)], and waits for all admitted children.
-    /// Siblings on executors with available workers may run concurrently. A failure in
-    /// one child does not cancel the others. An empty collection schedules no work.
-    /// Listing the same task instance twice in one batch is a failure, even if it has completed.
-    /// Other children are still awaited.
-    /// Tree cancellation or interruption of the calling thread stops admission. Children
-    /// not yet admitted remain available for later submission. The caller's interrupt status is preserved.
-    /// The batch reports its first observed failure, giving errors precedence.
+    /// Runs independent children concurrently where their executors allow, reusing completed
+    /// outcomes as in [#run(Task)]. A duplicate task instance or a child failure fails the
+    /// batch. Other children can still run. The first observed failure is reported, with errors
+    /// taking precedence.
+    ///
+    /// Cancellation or interruption stops admission. The batch waits for all admitted children
+    /// and preserves the caller's interrupt status. Unsubmitted children remain available for reuse.
     ///
     /// @return a mutable list of successful results in the input's iteration order
     /// @throws InterruptedException if the calling thread is interrupted during admission or while waiting

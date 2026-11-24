@@ -32,7 +32,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -448,11 +447,7 @@ public class DefaultLauncher extends Launcher {
         return new Command(res, tempNativeFolder, javaNativeFolder, encoding);
     }
 
-    /// Returns the feature flags used to evaluate conditional game arguments.
-    /// The `has_custom_resolution` flag is enabled when both dimensions are non-null and nonzero
-    /// and the game version is at least `1.6` (snapshot `13w25a`).
-    ///
-    /// @return an unmodifiable snapshot containing the custom resolution flag
+    /// The `has_custom_resolution` flag requires nonzero dimensions and Minecraft 1.6 (13w25a) or later.
     public @Unmodifiable Map<String, Boolean> getFeatures() {
         boolean hasCustomResolution = options.getHeight() != null && options.getHeight() != 0
                 && options.getWidth() != null && options.getWidth() != 0
@@ -477,11 +472,7 @@ public class DefaultLauncher extends Launcher {
         return Arguments.DEFAULT_GAME_ARGUMENTS;
     }
 
-    /// Do something here.
-    /// i.e.
-    /// -Dminecraft.launcher.version=<Your launcher name>
-    /// -Dminecraft.launcher.brand=<Your launcher version>
-    /// -Dlog4j.configurationFile=<Your custom log4j configuration>
+    /// Allows subclasses to append launcher-specific JVM arguments.
     protected void appendJvmArgs(CommandBuilder result) {
     }
 
@@ -689,9 +680,8 @@ public class DefaultLauncher extends Launcher {
         return launch(() -> {}, () -> true);
     }
 
-    /// Launches the game, checking for cancellation while waiting for the pre-launch
-    /// command and before handing the running process to the caller. After the listener
-    /// observes the game's exit, `launchSucceeded` may wait for handoff before allowing the post-exit command.
+    /// Cancelling during the pre-launch command or game startup stops the active child process.
+    /// After game exit, the monitor may wait on `launchSucceeded` before running the post-exit command.
     protected ManagedProcess launch(Runnable checkCancellation, BooleanSupplier launchSucceeded) throws IOException, InterruptedException {
         checkCancellation.run();
         final Command command = generateCommandLine();
@@ -731,14 +721,6 @@ public class DefaultLauncher extends Launcher {
         if (appdata != null)
             builder.environment().put("APPDATA", appdata.toString());
         builder.environment().putAll(envVars);
-        return startGameProcess(builder, checkCancellation, process -> {
-            if (listener != null)
-                startMonitors(process, envVars, listener, command.encoding, daemon, launchSucceeded);
-        });
-    }
-
-    /// Starts the configured game process and its monitors, stopping the process if setup or handoff fails.
-    static ManagedProcess startGameProcess(ProcessBuilder builder, Runnable checkCancellation, Consumer<ManagedProcess> startMonitors) throws IOException {
         checkCancellation.run();
         ManagedProcess process;
         try {
@@ -749,7 +731,8 @@ public class DefaultLauncher extends Launcher {
 
         try {
             checkCancellation.run();
-            startMonitors.accept(process);
+            if (listener != null)
+                startMonitors(process, envVars, listener, command.encoding, daemon, launchSucceeded);
             checkCancellation.run();
             return process;
         } catch (RuntimeException | Error e) {
@@ -1066,7 +1049,7 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    /// Forwards game output and exit notifications, then runs the post-exit command for a successful launch.
+    /// Forwards game output and notifies the listener before evaluating the post-exit command.
     private void startMonitors(ManagedProcess managedProcess, Map<String, String> envVars, ProcessListener processListener,
                                Charset encoding, boolean isDaemon, BooleanSupplier launchSucceeded) {
         processListener.setProcess(managedProcess);
@@ -1086,8 +1069,8 @@ public class DefaultLauncher extends Launcher {
         }), "exit-waiter", isDaemon));
     }
 
-    /// Runs the configured post-exit command once the caller confirms the game was successfully handed off.
-    static void runPostExitCommand(@Nullable String command, Path directory, Map<String, String> envVars, BooleanSupplier launchSucceeded) {
+    /// Runs the configured command after a successful launch.
+    private static void runPostExitCommand(@Nullable String command, Path directory, Map<String, String> envVars, BooleanSupplier launchSucceeded) {
         if (StringUtils.isBlank(command) || !launchSucceeded.getAsBoolean())
             return;
         try {

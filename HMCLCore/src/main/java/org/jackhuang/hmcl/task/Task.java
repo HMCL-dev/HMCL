@@ -30,27 +30,20 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 
-/// A unit of work with a shared result, lifecycle notifications, and optional progress.
-/// [#start()], [#run()], and [#test()] start a new task or observe its existing execution,
-/// including when another task submitted it as a child. Each body runs at most once.
-/// Create a new instance to repeat an operation.
-/// A completed task can supply its published outcome to any subsequent child execution.
-/// Registering a listener or requesting cancellation before submission reserves the task as a root.
-/// Its listeners and cancellation request apply to the whole execution tree.
+/// A unit of work that runs at most once. Root callers share its execution, and a completed
+/// task can be reused as a child. Adding a listener or requesting cancellation before
+/// submission reserves the task as a root. Both apply to the whole execution tree.
 ///
-/// An omitted or `null` executor leaves a task body on its parent's executor, or on the
-/// task scheduler for a root. Stage, hint and counter decorators are dispatched together
-/// with their source on its effective executor. A new decorator around a completed source
-/// inherits its parent's executor. The `then` methods create unsubmitted
-/// continuations. The single-argument `then*Async` methods run their callbacks on the
-/// default task scheduler. The corresponding methods without the `Async` suffix and
-/// overloads passed a `null` executor use the continuation's thread. A callback targeting
-/// the current executor may run inline.
+/// A task inherits its parent's executor unless it requests one. Roots default to the task
+/// scheduler. Stage, hint, and counter decorators share their source's executor, or inherit
+/// the parent's executor if the source has already completed.
 ///
-/// Cancellation is cooperative. A running body may call [TaskExecutionContext#checkCancellation()]
-/// to stop early. The executor also checks for cancellation before invoking
-/// a body and before publishing its result. The `then` continuations check for cancellation
-/// on the callback's executor before invoking user code.
+/// Continuations are lazy. `then*Async` callbacks default to the task scheduler. Passing
+/// a `null` executor or using the synchronous overload runs the callback on the continuation's
+/// thread. A callback targeting the current executor may also run inline.
+///
+/// Cancellation is checked before a task body starts, before a `then` callback runs, and
+/// before a result is published. Running bodies can call [TaskExecutionContext#checkCancellation()].
 ///
 /// @param <T> the result type, which may be nullable
 @NotNullByDefault
@@ -163,15 +156,8 @@ public abstract class Task<T extends @Nullable Object> {
         return null;
     }
 
-    /// Runs the task body using the supplied context to execute children and obtain their results.
-    /// Call [#run()] or [TaskExecutionContext#run(Task)] to submit a task through its lifecycle.
-    ///
-    /// @implSpec Implementations that need child work must use the context within this invocation
-    /// and on its calling thread. The executor publishes the returned value after its final
-    /// cancellation check and records an exception if execution fails.
-    /// @param context the execution scope for this invocation
-    /// @return the value to publish on success
-    /// @throws Exception if execution cannot complete
+    /// Computes the result and uses the supplied context to run children. Submit a task
+    /// through [#run()] or [TaskExecutionContext#run(Task)] to observe its lifecycle.
     public abstract T execute(TaskExecutionContext context) throws Exception;
 
     /// Starts this task if necessary and returns the shared result or rethrows its failure.
@@ -197,9 +183,7 @@ public abstract class Task<T extends @Nullable Object> {
         return this;
     }
 
-    /// Starts this task asynchronously as a root if it has not yet been submitted.
-    ///
-    /// @return true if this call submitted the task, false if it was already submitted as a root or child
+    /// Starts a new root asynchronously. Returns true only for the caller that submitted it.
     public final boolean tryStart() {
         @Nullable TaskExecution execution = tryRootSubmission();
         if (execution == null)

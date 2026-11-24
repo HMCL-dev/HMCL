@@ -29,7 +29,7 @@ public abstract class TaskDialogWizardDisplayer extends AbstractWizardDisplayer 
         super(cancelQueue);
     }
 
-    /// Displays a task and reports its outcome after execution stops.
+    /// {@inheritDoc}
     @Override
     public void handleTask(SettingsMap settings, Task<?> task) {
         boolean waitForCancellation = Boolean.TRUE.equals(settings.remove(WizardProvider.WAIT_FOR_CANCELLATION));
@@ -54,7 +54,7 @@ public abstract class TaskDialogWizardDisplayer extends AbstractWizardDisplayer 
 
         runInFX(() -> {
             task.addTaskListener(new TaskListener() {
-                /// Reports the outcome on the JavaFX thread.
+                /// Reports cleanup failures even when the task was cancelled.
                 @Override
                 public void onExecutionFinished(Task<?> rootTask, boolean success) {
                     @Nullable Throwable completedFailure = rootTask.exceptionNowOrNull();

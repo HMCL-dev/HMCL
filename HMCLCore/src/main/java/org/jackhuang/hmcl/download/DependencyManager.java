@@ -55,26 +55,14 @@ public interface DependencyManager {
     /// @throws IllegalArgumentException if `instance` belongs to another repository
     Task<?> checkPatchCompletionAsync(GameInstance instance, GameInstanceManifest manifest, boolean integrityCheck);
 
-    /// Creates a builder for installing a new game instance and optional components.
+    /// Reserves the id of a new instance in an exclusive repository draft.
     ///
-    /// This operation opens an exclusive repository draft and reserves the target id immediately.
-    /// Close the returned builder if the installation is abandoned before it runs.
-    ///
-    /// @param instanceId the id of the new instance
-    /// @return a new game builder
     /// @throws IllegalStateException if the id is already registered, its root cannot be reserved,
     ///                               or another repository draft is open
     GameBuilder newGameBuilder(GameInstanceID instanceId);
 
-    /// Creates a builder for replacing the components of an existing game instance.
+    /// Opens an exclusive draft to replace the instance's components with the builder's selections.
     ///
-    /// This operation opens an exclusive repository draft immediately. `instance` must be the exact
-    /// object in the current published snapshot; an instance invalidated by any intervening
-    /// repository publication is rejected. Close the builder if the update is abandoned before it
-    /// runs. The replacement manifest contains the configured components.
-    ///
-    /// @param instance the existing game instance to update
-    /// @return a game builder targeting the existing instance
     /// @throws IllegalArgumentException if `instance` belongs to another repository
     /// @throws IllegalStateException    if `instance` is no longer the exact published instance or
     ///                                  another repository draft is open

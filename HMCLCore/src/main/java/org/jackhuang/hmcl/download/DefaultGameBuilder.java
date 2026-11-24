@@ -17,18 +17,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 
-/// Installs a new game instance or replaces an existing instance in an exclusive
-/// [GameRepositoryDraft], then publishes the completed instance once.
-///
-/// Each builder receives a target already reserved by its dependency manager in an exclusive
-/// draft. An update requires the supplied snapshot-bound instance to remain the exact currently
-/// published object when the manager creates the builder.
-///
-/// Replacement starts from an empty manifest with the target id and installs only the configured
-/// components. It retains the existing run directory unless isolation is explicitly enabled.
-///
-/// Shared libraries, assets, and download caches may remain after failure. The instance manifest
-/// and primary JAR enter the instance tree only when the draft commits.
+/// Publishes the manifest and primary JAR together. Replacement builds retain the existing run
+/// directory unless isolation is enabled. Shared libraries, assets, and caches may remain after failure.
 @NotNullByDefault
 public class DefaultGameBuilder extends GameBuilder {
 
@@ -56,15 +46,8 @@ public class DefaultGameBuilder extends GameBuilder {
     /// Whether instance isolation was requested for this build.
     protected boolean isolationEnabled;
 
-    /// Creates a builder around a target already reserved by its dependency manager.
-    ///
-    /// @param dependencyManager the dependency manager for the target repository
-    /// @param instanceId        the id of the reserved instance and `initialManifest`
-    /// @param updateTarget      the exact update target retained by the draft, or `null` for install
-    /// @param draft             the open draft containing `initialManifest`; it must belong to
-    ///                          `dependencyManager`
-    /// @param initialManifest   the empty target manifest retained by `draft`; its id must equal
-    ///                          `instanceId`
+    /// Uses the manager's open draft containing the empty manifest for `instanceId`.
+    /// For an update, `updateTarget` must be the published instance reserved in that draft.
     protected DefaultGameBuilder(
             DefaultDependencyManager dependencyManager,
             GameInstanceID instanceId,
@@ -79,8 +62,6 @@ public class DefaultGameBuilder extends GameBuilder {
     }
 
     /// Returns the dependency manager used by this builder.
-    ///
-    /// @return the dependency manager
     public DefaultDependencyManager getDependencyManager() {
         return dependencyManager;
     }
@@ -95,9 +76,6 @@ public class DefaultGameBuilder extends GameBuilder {
     }
 
     /// {@inheritDoc}
-    ///
-    /// Installs the configured game and optional loaders into the draft reserved by this builder,
-    /// resolves the launch view, and commits it with the original patches once.
     @Override
     public DefaultGameInstance build(TaskExecutionContext context) throws Exception {
         checkOpen();
@@ -210,13 +188,7 @@ public class DefaultGameBuilder extends GameBuilder {
         }
     }
 
-    /// Performs repository-specific initialization after an instance is committed.
-    ///
-    /// This method is invoked after the repository has published the committed snapshot and before
-    /// the build task completes. The default implementation does nothing. An unchecked exception
-    /// prevents the task from completing successfully but does not roll back the committed instance.
-    ///
-    /// @param instance the committed instance from the published snapshot
+    /// Runs after publication. If initialization fails, the build fails and the instance remains published.
     protected void onInstanceCommitted(DefaultGameInstance instance) {
     }
 

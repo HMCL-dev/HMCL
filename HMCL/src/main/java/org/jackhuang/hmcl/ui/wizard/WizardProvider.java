@@ -28,6 +28,6 @@ public interface WizardProvider {
         void onFail(SettingsMap settings, Throwable exception, Runnable next);
     }
 
-    /// Keeps the dialog open after cancellation until the task has released its resources.
+    /// Keeps the dialog open until the cancelled task finishes.
     SettingsMap.Key<Boolean> WAIT_FOR_CANCELLATION = new SettingsMap.Key<>("wait_for_cancellation");
 }

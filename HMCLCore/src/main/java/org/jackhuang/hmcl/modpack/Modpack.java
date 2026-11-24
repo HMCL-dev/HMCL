@@ -113,20 +113,13 @@ public abstract class Modpack {
             String iconUrl,
             @Nullable Set<String> excludedFiles);
 
-    /// Reserves the target instance for a synchronous installation and aborts any draft still open
-    /// when the action finishes. A failed new installation rolls back the instance published by the
-    /// builder if its stored manifest is still current, unless the action reports [ModpackCompletionException]
-    /// and `keepIncompleteInstance` is true. A reservation failure skips the installation action.
+    /// Reserves the target before installation and releases any open draft when the action finishes.
+    /// Failure rolls back a newly published instance if its manifest is still current, except when
+    /// `keepIncompleteInstance` allows manual recovery from a [ModpackCompletionException].
     /// Cleanup failures are suppressed on the installation failure.
     ///
-    /// @param dependencyManager the manager that creates the game builder
-    /// @param instanceId the id to reserve for a new installation
     /// @param updateTarget the exact published instance to update, or `null` for a new installation
-    /// @param keepIncompleteInstance whether a new instance remains available for manual completion
-    /// @param install the action that configures the builder and runs the installation to completion.
-    ///                Preparatory writes must finish before calling the builder's build method.
-    ///                All instance writes must have stopped when the action exits.
-    /// @throws Exception if reservation, installation, or cleanup fails
+    /// @param install must finish preparatory writes before building and all instance writes before returning
     public static void installWithGameBuilder(
             DefaultDependencyManager dependencyManager, GameInstanceID instanceId,
             @Nullable DefaultGameInstance updateTarget, boolean keepIncompleteInstance,

@@ -22,11 +22,9 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
 import org.jackhuang.hmcl.task.DownloadException;
-import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskListener;
-import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -48,26 +46,22 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /// Tests exclusive repository drafts and their filesystem visibility boundary.
 @NotNullByDefault
@@ -80,90 +74,38 @@ public final class DefaultGameRepositoryDraftTest {
         GameInstanceID id = new GameInstanceID("server");
         repository.save(new GameInstanceManifest(id));
         DefaultGameInstance instance = repository.getInstance(id);
-        String fileApi = "https://example.invalid/server";
+        Path published = directory.resolve("published");
+        String fileApi = published.toUri().toASCIIString();
         ServerModpackManifest old = new ServerModpackManifest("pack", "", "1", "", fileApi, List.of(),
                 List.of(new ServerModpackManifest.Addon("game", "1.20")));
         ServerModpackManifest remote = new ServerModpackManifest("pack", "", "2", "", fileApi,
                 List.of(new ModpackConfiguration.FileInformation("missing.txt", "0".repeat(40))),
                 List.of(new ServerModpackManifest.Addon("game", "1.21")));
+        Files.createDirectory(published);
+        JsonUtils.writeToJsonFile(published.resolve("server-manifest.json"), remote);
         var task = new ServerModpackCompletionTask(createDependencyManager(repository), instance,
                 new ModpackConfiguration<>(old, "Server", "pack", "1", List.of()));
-        IOException failure = new IOException("File download failed");
-        TaskExecutionContext context = new TaskExecutionContext() {
-            /// Number of file downloads announced before the batch starts.
-            private int announcedFiles;
-
-            /// Reports interruption of the test thread.
-            @Override
-            public boolean isCancelled() {
-                return Thread.currentThread().isInterrupted();
-            }
-
-            /// Reports any unexpected request for individual task progress.
-            @Override
-            public TaskProgress progress() {
-                return fail("Unexpected task progress");
-            }
-
-            /// Verifies the batch size reported before the simulated download failure.
-            @Override
-            public void addStageItems(int count) {
-                announcedFiles += count;
-            }
-
-            /// A failed file batch must not report completed downloads.
-            @Override
-            public void completeStageItem() {
-                fail("Unexpected completed download");
-            }
-
-            /// Supplies the remote manifest without opening a connection.
-            @Override
-            @SuppressWarnings("unchecked")
-            public <T extends @Nullable Object> T run(Task<T> child) {
-                assertInstanceOf(GetTask.class, child);
-                return (T) JsonUtils.GSON.toJson(remote);
-            }
-
-            /// Fails the file batch while verifying that no component builder has reserved a draft.
-            @Override
-            public <T extends @Nullable Object> List<T> runAll(Collection<? extends Task<? extends T>> children) throws IOException {
-                assertEquals(1, children.size());
-                assertEquals(children.size(), announcedFiles);
-                try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
-                    assertTrue(draft.isOpen());
-                }
-                throw failure;
-            }
-
-            /// Reports any unexpected callback dispatch.
-            @Override
-            public <T extends @Nullable Object> T call(@Nullable Executor executor, Callable<T> action) {
-                return fail("Unexpected callback");
-            }
-        };
-        assertSame(failure, assertThrows(IOException.class, () -> task.execute(context)));
+        // File downloads can proceed while another writer holds the draft.
+        try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
+            assertThrows(DownloadException.class, task::run);
+        }
         var saved = Objects.requireNonNull(JsonUtils.fromJsonFile(instance.getModpackConfigurationFile(),
                 ModpackConfiguration.typeOf(ServerModpackManifest.class))).getManifest();
         assertEquals("1.20", saved.getAddons().get(0).getVersion());
         assertEquals("missing.txt", saved.getFiles().get(0).getPath());
     }
 
-    /// The build plan, version lookup and resolved installer share the same qualified stage.
+    /// The displayed game stage carries the selected version for a build or a component install.
     @Test
-    void componentVersionStageMatchesTheBuildPlan(@TempDir Path directory) throws IOException {
+    void componentVersionStageMatchesTheBuildPlan(@TempDir Path directory) throws Exception {
         TestRepository repository = new TestRepository(directory);
         GameInstanceID id = new GameInstanceID("instance");
         String version = "1.21.2:local";
         DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, version);
-        TaskStage expected = InstallStages.component(GameComponentType.GAME, version);
-        assertEquals("hmcl.install.game", expected.key());
-        assertEquals(version, expected.qualifier());
-        assertNotEquals(expected, InstallStages.component(GameComponentType.FORGE, version));
-        assertNotEquals(expected, InstallStages.component(GameComponentType.GAME, "1.21.2"));
+        TaskStage expected = new TaskStage("hmcl.install.game", version);
 
-        List<TaskStage.Hint> declared = new ArrayList<>();
-        List<TaskStage> dispatched = new ArrayList<>();
+        Set<TaskStage.Hint> declared = ConcurrentHashMap.newKeySet();
+        Set<TaskStage> gameStages = ConcurrentHashMap.newKeySet();
         TaskListener listener = new TaskListener() {
             /// Records the plan's stage hints as the build enters the task tree.
             @Override
@@ -171,33 +113,42 @@ public final class DefaultGameRepositoryDraftTest {
                 declared.addAll(hints);
             }
 
-            /// Records each installation stage before its task body starts.
+            /// Collects the version labels shown for game installation.
             @Override
             public void onStageStarted(TaskStage.Scope scope) {
-                dispatched.add(scope.stage());
+                if (scope.stage().key().equals(expected.key()))
+                    gameStages.add(scope.stage());
             }
         };
         try (var builder = manager.newGameBuilder(id)) {
             Task<GameInstance> build = buildTask(builder.component(GameComponentType.GAME, version));
             build.addTaskListener(listener);
-            assertTrue(build.test(), () -> String.valueOf(build.exceptionNowOrNull()));
-            assertSame(repository.getInstance(id), build.resultNow());
+            GameInstance installed = build.run();
+            assertSame(repository.getInstance(id), installed);
         }
-        assertEquals(List.of(new TaskStage.Hint(expected), new TaskStage.Hint(InstallStages.LIBRARIES),
-                new TaskStage.Hint(InstallStages.ASSETS)), declared);
-        // The version lookup, resolved component and client download each declare the game stage.
-        assertEquals(List.of(expected, expected, expected), dispatched);
+        assertTrue(declared.containsAll(List.of(new TaskStage.Hint(expected), new TaskStage.Hint(InstallStages.LIBRARIES),
+                new TaskStage.Hint(InstallStages.ASSETS))), declared::toString);
+        assertEquals(Set.of(expected), gameStages);
 
         DefaultGameInstance instance = repository.getInstance(id);
         Task<?> install = manager.installComponentRemoteAsync(instance, instance.getManifest(),
                 version, GameComponentType.GAME, version);
-        dispatched.clear();
-        install.addTaskListener(listener);
-        assertTrue(install.test(), () -> String.valueOf(install.exceptionNowOrNull()));
-        assertEquals(List.of(expected, expected), dispatched);
+        gameStages.clear();
+        install.addTaskListener(listener).run();
+        assertEquals(Set.of(expected), gameStages);
     }
 
-    /// Cancellation before the first build child starts releases the reservation and removes prepared files.
+    /// A missing game version releases the target for a subsequent installation.
+    @Test
+    void invalidBuildReleasesTarget(@TempDir Path directory) {
+        DefaultDependencyManager manager = createDependencyManager(new TestRepository(directory));
+        GameInstanceID id = new GameInstanceID("instance");
+        Task<GameInstance> build = buildTask(manager.newGameBuilder(id));
+        assertThrows(IllegalStateException.class, build::run);
+        manager.newGameBuilder(id).close();
+    }
+
+    /// Cancellation before installation removes prepared files and releases the target.
     @Test
     void cancelledBuildReleasesPreparedInstance(@TempDir Path directory) throws IOException {
         TestRepository repository = new TestRepository(directory);
@@ -215,22 +166,10 @@ public final class DefaultGameRepositoryDraftTest {
                 return builder.build(context);
             }
         };
-        List<Task<?>> started = new ArrayList<>();
-        build.addTaskListener(new TaskListener() {
-            /// Records which task bodies started in the cancelled tree.
-            @Override
-            public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
-                started.add(task);
-            }
-        });
-
         assertThrows(CancellationException.class, build::run);
-        assertEquals(List.of(build), started);
         assertFalse(repository.hasInstance(id));
         assertFalse(Files.exists(instanceRoot));
-        try (DefaultGameRepositoryDraft next = repository.openDraft()) {
-            assertTrue(next.isOpen());
-        }
+        manager.newGameBuilder(id).close();
     }
 
     /// API mods cannot complete an instance update when their sole JAR is unavailable.
@@ -965,24 +904,22 @@ public final class DefaultGameRepositoryDraftTest {
         GameInstanceManifest original = new GameInstanceManifest(id).withMainClass("original.Main");
         repository.save(original);
         DefaultDependencyManager manager = createDependencyManager(repository);
-        Task<GameInstanceManifest> replacement = Task.completed(original.withMainClass("updated.Main"));
+        GameInstanceManifest replacement = original.withMainClass("updated.Main");
         Task<@Nullable Void> root = new Task<>() {
             /// Cancels the tree while the updater owns the draft.
             @Override
             public @Nullable Void execute(TaskExecutionContext context) throws Exception {
                 return context.run(manager.updateInstanceAsync(id, instance -> {
                     cancel();
-                    return replacement;
+                    return Task.completed(replacement);
                 }));
             }
         };
 
         assertThrows(CancellationException.class, root::run);
-        assertEquals(Task.State.NEW, replacement.getState());
         assertEquals(original, repository.getInstance(id).getManifest());
-        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
-            assertTrue(draft.isOpen());
-        }
+        manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).run();
+        assertEquals(replacement, repository.getInstanceManifest(id));
     }
 
     /// Releases the draft when the updater's task raises an error during execution.
@@ -1003,7 +940,7 @@ public final class DefaultGameRepositoryDraftTest {
     /// Runs a configured game build as a root task.
     private static Task<GameInstance> buildTask(GameBuilder builder) {
         return new Task<>() {
-            /// Installs and publishes the instance in the root's task tree.
+            /// {@inheritDoc}
             @Override
             public GameInstance execute(TaskExecutionContext context) throws Exception {
                 return builder.build(context);

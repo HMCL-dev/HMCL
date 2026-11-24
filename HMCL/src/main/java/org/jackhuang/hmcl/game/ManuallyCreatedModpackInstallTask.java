@@ -26,12 +26,12 @@ final class ManuallyCreatedModpackInstallTask extends Task<@Nullable Void> {
 
     /// Archive containing the game directory.
     private final Path zipFile;
-    /// Installation path reserved exclusively for this extraction.
+    /// Destination that must be available when installation starts.
     private final Path destination;
     /// Display name of the registered directory.
     private final String gameDirectoryName;
 
-    /// Installs the archive into a new directory under the given display name.
+    /// Creates an unstarted installation for the given destination.
     ManuallyCreatedModpackInstallTask(Path zipFile, Path destination, String gameDirectoryName) {
         this.zipFile = zipFile;
         this.destination = destination;
@@ -40,7 +40,7 @@ final class ManuallyCreatedModpackInstallTask extends Task<@Nullable Void> {
         setName(i18n("modpack.installing"));
     }
 
-    /// Removes an incomplete installation if extraction or registration fails or is cancelled.
+    /// Removes the new directory on failure or cancellation until registration succeeds.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         String subdirectory = ModpackHelper.findMinecraftDirectoryInManuallyCreatedModpack(zipFile.toString(), zipFile);

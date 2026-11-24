@@ -353,7 +353,6 @@ public final class LauncherHelper {
                     process.stopAndWait();
 
                 runLater(() -> {
-                    // The executor service may have shut down before the launch finished.
                     if (!Controllers.isStopped()) {
                         launchingStepsPane.fireEvent(new DialogCloseEvent());
                         if (success) {
@@ -885,9 +884,7 @@ public final class LauncherHelper {
         }
     }
 
-    /// The managed process listener.
-    /// Guarantee that one Java [Process], one [HMCLProcessListener].
-    /// Because every time we launched a game, we generates a new [HMCLProcessListener]
+    /// Collects logs and handles exit for a single game process.
     private final class HMCLProcessListener implements ProcessListener {
 
         private final ReentrantLock lock = new ReentrantLock();

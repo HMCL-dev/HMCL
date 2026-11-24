@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -549,33 +548,6 @@ public final class DefaultGameInstanceTest {
                 IllegalStateException.class,
                 () -> builder.component(GameComponentType.GAME, "1.21.1"));
         assertEquals("GameBuilder is closed", exception.getMessage());
-        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
-            assertTrue(draft.isOpen());
-        }
-    }
-
-    /// A synchronous build-configuration failure aborts the builder's reserved draft.
-    @Test
-    public void testGameBuilderBuildFailureAbortsReservedDraft(@TempDir Path tempDirectory)
-            throws IOException {
-        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
-        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("cache"));
-        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
-                repository,
-                new TestDownloadProvider(cacheRepository),
-                cacheRepository);
-        DefaultGameBuilder builder = dependencyManager.newGameBuilder(new GameInstanceID("instance"));
-
-        Task<GameInstance> build = new Task<>() {
-            /// Tries to build without configuring a game version.
-            @Override
-            public GameInstance execute(TaskExecutionContext context) throws Exception {
-                return builder.build(context);
-            }
-        };
-        IllegalStateException exception = assertThrows(IllegalStateException.class, build::run);
-
-        assertEquals("GameBuilder.gameVersion must be set", exception.getMessage());
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
             assertTrue(draft.isOpen());
         }

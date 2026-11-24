@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,25 +30,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class HMCLGameLauncher extends DefaultLauncher {
 
     /// Creates a launcher with daemon process monitors.
-    ///
-    /// @param instance the instance being launched
-    /// @param manifest the effective launch-time manifest
-    /// @param authInfo authentication information for the game process
-    /// @param options  launch options
-    /// @param listener process listener, or `null` to inherit IO
-    public HMCLGameLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
+    public HMCLGameLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, @Nullable ProcessListener listener) {
         this(instance, manifest, authInfo, options, listener, true);
     }
 
-    /// Creates a launcher for the given instance and launch plan.
-    ///
-    /// @param instance the instance being launched
-    /// @param manifest the effective launch-time manifest
-    /// @param authInfo authentication information for the game process
-    /// @param options  launch options
-    /// @param listener process listener, or `null` to inherit IO
-    /// @param daemon   whether monitors should be daemon threads
-    public HMCLGameLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+    /// Uses daemon monitors when requested. A null listener lets the game inherit the launcher's IO.
+    public HMCLGameLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, @Nullable ProcessListener listener, boolean daemon) {
         super(instance, manifest, authInfo, options, listener, daemon);
     }
 

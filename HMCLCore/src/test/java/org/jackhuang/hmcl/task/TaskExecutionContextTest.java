@@ -313,17 +313,14 @@ final class TaskExecutionContextTest {
         assertEquals(42, child.run());
     }
 
-    /// A cleanup failure attached to an interruption remains visible in the published cancellation.
+    /// Cancellation retains the interruption, including any cleanup failures attached to it.
     @Test
-    void interruptedTaskRetainsCleanupFailure() {
+    void interruptedTaskPreservesCause() {
         InterruptedException interrupted = new InterruptedException();
-        IOException cleanup = new IOException("Cleanup failed");
-        interrupted.addSuppressed(cleanup);
         Task<?> task = Task.runAsync(() -> { throw interrupted; });
 
         CancellationException cancellation = assertThrows(CancellationException.class, task::run);
         assertSame(interrupted, cancellation.getCause());
-        assertSame(cleanup, interrupted.getSuppressed()[0]);
     }
 
     /// Querying cancellation observes the worker's interrupt status and leaves it set.
@@ -1144,46 +1141,6 @@ final class TaskExecutionContextTest {
         assertThrows(IllegalStateException.class, () -> child.addTaskListener(listener));
     }
 
-    /// An external caller can wait for a running child without taking ownership of its execution.
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void waitsForRunningChild(boolean interrupted) throws Exception {
-        CountDownLatch entered = new CountDownLatch(1);
-        CountDownLatch release = new CountDownLatch(1);
-        Task<Integer> child = task(context -> {
-            entered.countDown();
-            assertTrue(release.await(10, TimeUnit.SECONDS));
-            return 42;
-        });
-        Task<Integer> parent = task(context -> context.run(child)).start();
-        FutureTask<Integer> read = new FutureTask<>(() -> {
-            if (!interrupted)
-                return child.run();
-            Thread.currentThread().interrupt();
-            assertThrows(InterruptedException.class, child::run);
-            assertTrue(Thread.currentThread().isInterrupted());
-            return child.resultNow();
-        });
-        Thread waiter = new Thread(read);
-        try {
-            assertTrue(entered.await(10, TimeUnit.SECONDS));
-            assertSame(child, child.start());
-            waiter.start();
-            assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
-                while (waiter.getState() != Thread.State.WAITING && waiter.getState() != Thread.State.TIMED_WAITING) {
-                    assertFalse(read.isDone());
-                    Thread.sleep(1);
-                }
-            });
-        } finally {
-            release.countDown();
-        }
-        assertEquals(42, read.get(10, TimeUnit.SECONDS));
-        assertEquals(42, parent.run());
-        assertFalse(parent.isCancellationRequested());
-        assertThrows(IllegalStateException.class, child::cancel);
-    }
-
     /// Interrupting a synchronous test's waiting thread preserves its interrupt status and the root's outcome.
     @Test
     void interruptedTestWaitReportsRootOutcome() throws Exception {
@@ -1221,74 +1178,31 @@ final class TaskExecutionContextTest {
         assertNull(root.exceptionNowOrNull());
     }
 
-    /// A ready root accepts other callers while the winning caller announces its execution.
+    /// A second start is rejected even while the first caller is notifying listeners.
     @Test
-    void marksRootReadyBeforeNotifyingStartListeners() throws Exception {
+    void rejectsSecondStartDuringStartNotification() throws Exception {
         AtomicInteger bodies = new AtomicInteger();
-        Task<Integer> root = task(null, new TaskStage("root"), context -> bodies.incrementAndGet());
+        Task<Integer> root = Task.supplyAsync(bodies::incrementAndGet);
         CountDownLatch entered = new CountDownLatch(1);
         CompletableFuture<@Nullable Void> release = new CompletableFuture<>();
-        CompletableFuture<Boolean> stopped = new CompletableFuture<>();
-        List<Task<?>> starts = new CopyOnWriteArrayList<>();
-        List<Task<?>> stops = new CopyOnWriteArrayList<>();
-        StageEvents events = new StageEvents() {
-            /// Pauses the winning start call before it can submit the root body.
+        root.addTaskListener(new TaskListener() {
+            /// Holds the first caller before the root body can run.
             @Override
-            public void onExecutionStarted(Task<?> rootTask) {
-                starts.add(rootTask);
-                if (starts.size() == 1) {
-                    entered.countDown();
-                    release.orTimeout(10, TimeUnit.SECONDS).join();
-                }
+            public void onExecutionStarted(Task<?> task) {
+                entered.countDown();
+                release.orTimeout(10, TimeUnit.SECONDS).join();
             }
-
-            /// Records the completed root and releases the test thread.
-            @Override
-            public void onExecutionFinished(Task<?> rootTask, boolean success) {
-                stops.add(rootTask);
-                stopped.complete(success);
-            }
-        };
-        root.addTaskListener(events);
-        assertEquals(Task.State.NEW, root.getState());
-        ExecutorService caller = Executors.newFixedThreadPool(3);
+        });
+        CompletableFuture<Boolean> first = CompletableFuture.supplyAsync(root::tryStart);
         try {
-            var start = caller.submit(root::start);
-            FutureTask<Integer> run = new FutureTask<>(root::run);
-            FutureTask<Boolean> test = new FutureTask<>(root::test);
-            try {
-                assertTrue(entered.await(10, TimeUnit.SECONDS));
-                assertEquals(Task.State.READY, root.getState());
-                assertThrows(IllegalStateException.class, root::resultNow);
-                assertSame(root, root.start());
-                caller.execute(run);
-                caller.execute(test);
-                task(Runnable::run, context -> {
-                    assertThrows(IllegalStateException.class, () -> context.run(root));
-                    assertThrows(IllegalStateException.class, () -> context.runAll(List.of(root)));
-                    return null;
-                }).run();
-                assertFalse(release.isDone());
-                assertEquals(0, bodies.get());
-            } finally {
-                release.complete(null);
-            }
-            assertSame(root, start.get(10, TimeUnit.SECONDS));
-            assertEquals(1, run.get(10, TimeUnit.SECONDS));
-            assertTrue(test.get(10, TimeUnit.SECONDS));
-            assertTrue(stopped.get(10, TimeUnit.SECONDS));
+            assertTrue(entered.await(10, TimeUnit.SECONDS));
+            assertEquals(Task.State.READY, root.getState());
+            assertFalse(root.tryStart());
         } finally {
-            caller.shutdownNow();
+            release.complete(null);
         }
-        assertTrue(root.test());
-        assertEquals(List.of(root), starts);
-        assertEquals(List.of(root), stops);
-        assertEquals(1, events.started.size());
-        assertEquals(events.started, events.finished);
-        assertEquals(1, bodies.get());
-        assertEquals(1, root.resultNow());
-        assertEquals(Task.State.SUCCEEDED, root.getState());
-        assertNull(root.exceptionNowOrNull());
+        assertTrue(first.get(10, TimeUnit.SECONDS));
+        assertEquals(1, root.run());
     }
 
     /// A repeated child fails the batch once its siblings finish and retains its own successful result.

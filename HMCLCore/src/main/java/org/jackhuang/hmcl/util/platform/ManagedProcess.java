@@ -173,8 +173,7 @@ public final class ManagedProcess {
         destroyRelatedThreads();
     }
 
-    /// Interrupts the monitors and waits for the direct child to exit. If it does not exit
-    /// within one second, or the caller is interrupted, termination is forced.
+    /// Interrupts the monitors and waits for the direct child to exit, forcing termination if needed.
     /// Preserves the caller's interrupted status.
     public void stopAndWait() {
         destroyRelatedThreads();

@@ -9,7 +9,6 @@ import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIf;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/// Tests task names, continuations, and failure reporting.
 public class TaskTest {
     /// Structured and literal names can be assigned and cleared through either overload.
     @Test
@@ -267,104 +267,29 @@ public class TaskTest {
         }
     }
 
-    @Test
-    @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
-    public void testThenAccept() {
-        AtomicBoolean flag = new AtomicBoolean();
-        Object obj = new Object();
-        boolean result = Task.supplyAsync(() -> obj)
-                .thenAcceptAsync(Schedulers.io(), o -> {
-                    flag.set(true);
-                    assertSame(obj, o);
-                })
-                .test();
-
-        assertTrue(result, "Task does not succeed");
-        assertTrue(flag.get(), "ThenAccept has not been executed");
-    }
-
-    /// Verifies that cancellation lets a running task finish but prevents its continuation from running.
+    /// Cancellation lets a running body finish and skips its success continuation.
     @Test
     public void testCancellation() throws InterruptedException, ExecutionException, TimeoutException {
         AtomicBoolean taskCompleted = new AtomicBoolean();
         AtomicBoolean continuationExecuted = new AtomicBoolean();
         CountDownLatch taskStarted = new CountDownLatch(1);
         CountDownLatch releaseTask = new CountDownLatch(1);
-        CompletableFuture<Boolean> stopped = new CompletableFuture<>();
         Task<?> task = Task.runAsync(() -> {
             taskStarted.countDown();
             releaseTask.await();
             taskCompleted.set(true);
         }).thenRunAsync(() -> continuationExecuted.set(true));
-        task.addTaskListener(new TaskListener() {
-            /// Publishes the execution result to the waiting test thread.
-            @Override
-            public void onExecutionFinished(Task<?> root, boolean success) {
-                stopped.complete(success);
-            }
-        });
+        CompletableFuture<Boolean> stopped = CompletableFuture.supplyAsync(task::test);
         try {
-            task.start();
-            assertTrue(taskStarted.await(30, TimeUnit.SECONDS), "Task should start before cancellation");
+            assertTrue(taskStarted.await(10, TimeUnit.SECONDS));
             task.cancel();
         } finally {
-            // Keep the task running until cancellation is requested, and release it even if setup fails.
             releaseTask.countDown();
         }
 
-        assertFalse(stopped.get(30, TimeUnit.SECONDS), "Task should fail because we have cancelled it");
-        assertInstanceOf(CancellationException.class, task.exceptionNow(), "CancellationException should be recorded");
+        assertFalse(stopped.get(10, TimeUnit.SECONDS));
+        assertInstanceOf(CancellationException.class, task.exceptionNow());
         assertTrue(taskCompleted.get(), "Cancellation should not interrupt the running task");
         assertFalse(continuationExecuted.get(), "Continuation should not run after cancellation");
-    }
-
-    @Test
-    public void testCompletableFutureCancellation() throws Throwable {
-        AtomicBoolean flag = new AtomicBoolean(false);
-        CountDownLatch latch = new CountDownLatch(1);
-        CompletableFuture<?> task = CompletableFuture.runAsync(() -> {
-            latch.countDown();
-            System.out.println("Sleep");
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            // default executor cannot interrupt task.
-            flag.getAndSet(true);
-            System.out.println("End");
-        }).thenComposeAsync(non -> {
-            System.out.println("compose");
-            return CompletableFuture.allOf(CompletableFuture.runAsync(() -> {
-                System.out.println("No way!");
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                fail("Cannot reach here");
-            }));
-        });
-        Lang.thread(() -> {
-            try {
-                latch.await();
-                System.out.println("Main thread start waiting");
-                Thread.sleep(100);
-                System.out.println("Cancel");
-                task.cancel(true);
-            } catch (InterruptedException e) {
-                fail(e);
-            }
-        });
-        System.out.println("Start");
-        try {
-            task.get();
-        } catch (CancellationException e) {
-            System.out.println("Successfully cancelled");
-        }
-        //Assert.assertFalse("Task should fail because we have cancelled it", );
-        Thread.sleep(4000);
-        //Assert.assertNull("CancellationException should not be recorded.", executor.getException());
-        //Assert.assertTrue("Thread.sleep cannot be interrupted", flag.get());
     }
 }

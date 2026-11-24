@@ -99,17 +99,14 @@ public final class TaskManager {
         return status.getReadOnlyProperty();
     }
 
-    /// Submits an unstarted task, returning the same future while it remains registered.
-    /// All task listeners must be installed before submission. Callers must not subsequently
-    /// start the task outside this manager.
+    /// Submits a task after its listeners have been installed. Repeated submissions
+    /// share a future while the task is registered.
     ///
-    /// @param task the task to submit, which must still be unstarted when its turn arrives
     /// @param parent an executing parent whose slot this task shares, or `null` to queue
-    ///               an independent execution; a parent must still belong to the active group
-    /// @return a future completed after the task's completion listeners and their preceding JavaFX
-    ///         callbacks have run. Its value indicates execution success. If the task has already
-    ///         been started when its turn arrives, the future completes exceptionally with [IllegalStateException].
-    ///         Other startup failures also complete the future exceptionally.
+    ///               an independent execution
+    /// @return a future reporting success after the completion listeners and their preceding JavaFX
+    ///         callbacks have run. Startup failures complete it exceptionally, including
+    ///         [IllegalStateException] if the task was already started when its turn arrived.
     /// @throws IllegalArgumentException if `parent` is not executing in the active group
     public CompletableFuture<Boolean> submit(Task<?> task, @Nullable Task<?> parent) {
         return submit(task, parent, null);

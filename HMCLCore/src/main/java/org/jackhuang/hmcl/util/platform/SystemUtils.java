@@ -77,8 +77,8 @@ public final class SystemUtils {
         return callExternalProcess(processBuilder, null);
     }
 
-    /// Runs the command while polling an optional cancellation check. If waiting fails,
-    /// the child process and its output pumps are stopped before the failure is propagated.
+    /// Runs the command and returns its exit code. Cancellation or interruption stops the direct
+    /// child before the exception propagates. A null check disables cancellation polling.
     public static int callExternalProcess(ProcessBuilder processBuilder, @Nullable Runnable checkCancellation) throws IOException, InterruptedException {
         if (checkCancellation != null)
             checkCancellation.run();

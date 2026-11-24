@@ -15,11 +15,7 @@ import java.util.function.Consumer;
 /// Provides HMCL-specific game builders for an HMCL game repository.
 @NotNullByDefault
 public class HMCLDependencyManager extends DefaultDependencyManager {
-    /// Creates a dependency manager for a repository and download context.
-    ///
-    /// @param repository       the associated game repository
-    /// @param downloadProvider the remote download provider
-    /// @param cacheRepository  the artifact cache
+    /// Creates a dependency manager for the given repository, download provider, and cache.
     public HMCLDependencyManager(
             HMCLGameRepository repository,
             DownloadProvider downloadProvider,
@@ -44,7 +40,7 @@ public class HMCLDependencyManager extends DefaultDependencyManager {
     /// Reserves and installs a new instance when the returned task runs.
     public Task<HMCLGameInstance> installGameAsync(GameInstanceID instanceId, Consumer<? super HMCLGameBuilder> configure) {
         return new Task<HMCLGameInstance>() {
-            /// Holds the reservation until configuration and all installation work have finished.
+            /// {@inheritDoc}
             @Override
             public HMCLGameInstance execute(TaskExecutionContext context) throws Exception {
                 try (HMCLGameBuilder builder = newGameBuilder(instanceId)) {

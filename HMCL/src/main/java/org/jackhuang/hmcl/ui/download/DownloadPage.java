@@ -308,11 +308,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.put(GameComponentType.GAME.getPatchId(), gameVersion);
         }
 
-        /// Captures the installation selections and defers reserving the instance until execution.
-        /// Successful completion selects the installed instance in the original repository.
-        ///
-        /// @param settings the installer selections and target instance id
-        /// @return a deferred build task retaining the builder task's stage hints
+        /// Returns a task that installs the configured instance and selects it on success.
         private Task<?> finishVersionDownloadingAsync(SettingsMap settings) {
             @Nullable GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
             if (instanceId == null) {
