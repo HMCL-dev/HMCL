@@ -9,6 +9,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
@@ -18,7 +19,6 @@ import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.MemoryStatusBar;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.construct.LineComponent;
 import org.jackhuang.hmcl.ui.construct.LineInheritableSwitch;
 import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
 import org.jackhuang.hmcl.util.Holder;
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -43,39 +44,36 @@ final class IndependentSettingBinder {
     private IndependentSettingBinder() {
     }
 
-    /// Binds a text field to a setting property with independent override state.
-    static void bindTextField(
-            boolean presetSetting,
+    /// Displays the effective setting as text and stores edits in the current setting.
+    /// Editing an inherited value enables its instance override. The optional button
+    /// switches between inheriting and copying the current effective value.
+    ///
+    /// A null setting value is displayed as empty text. The parser receives
+    /// empty text when the editor is cleared.
+    static <T extends @UnknownNullability Object> void bindText(
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
-            LineComponent line,
-            JFXTextField textField,
-            Function<GameSettings, SettingProperty<String>> propertyGetter,
-            Supplier<JFXButton> inheritanceButtonFactory,
+            Property<@Nullable String> textProperty,
+            Function<GameSettings, ? extends SettingProperty<T>> propertyGetter,
+            Function<String, T> parse,
+            @Nullable JFXButton inheritButton,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             WeakListenerHolder listenerHolder,
             Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
             Observable parentSettingsInvalidation) {
-        ObjectProperty<@Nullable SettingProperty<String>> activeProperty = new SimpleObjectProperty<>();
-        ObjectProperty<@Nullable SettingProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<T>> activeProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<T>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton;
-        if (presetSetting) {
-            inheritButton = null;
-        } else {
-            inheritButton = inheritanceButtonFactory.get();
-            line.setTitleTrailing(inheritButton);
-        }
 
         InvalidationListener refresh = observable -> {
-            GameSettings setting = currentSetting.get();
+            @Nullable GameSettings setting = currentSetting.get();
             updateParentPropertyListener(
                     setting,
                     activeParentProperty,
                     propertyGetter,
                     parentGetter,
                     refreshHolder.value);
-            SettingProperty<String> property = activeProperty.get();
+            @Nullable SettingProperty<T> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
             }
@@ -83,8 +81,7 @@ final class IndependentSettingBinder {
             updating.value = true;
             try {
                 boolean overridden = isOverridden(setting, property);
-                textField.setText(empty(getEffectiveValue(setting, propertyGetter, parentGetter)));
-                textField.setDisable(!overridden);
+                textProperty.setValue(Objects.toString(getEffectiveValue(setting, propertyGetter, parentGetter), ""));
                 if (inheritButton != null) {
                     inheritanceButtonUpdater.accept(inheritButton, !overridden);
                 }
@@ -96,17 +93,17 @@ final class IndependentSettingBinder {
         refreshHolder.value = weakRefresh;
         parentSettingsInvalidation.addListener(weakRefresh);
 
-        textField.textProperty().addListener((observable, oldValue, newValue) -> {
-            GameSettings setting = currentSetting.get();
-            SettingProperty<String> property = activeProperty.get();
+        textProperty.addListener((observable, oldValue, newValue) -> {
+            @Nullable GameSettings setting = currentSetting.get();
+            @Nullable SettingProperty<T> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
             }
 
             updating.value = true;
             try {
+                property.setValue(parse.apply(Objects.toString(newValue, "")));
                 setOverridden(setting, property, true);
-                property.setValue(newValue != null ? newValue : "");
                 if (inheritButton != null) {
                     inheritanceButtonUpdater.accept(inheritButton, false);
                 }
@@ -117,108 +114,8 @@ final class IndependentSettingBinder {
 
         if (inheritButton != null) {
             inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                GameSettings setting = currentSetting.get();
-                SettingProperty<String> property = activeProperty.get();
-                if (setting == null || property == null || updating.value) {
-                    return;
-                }
-
-                updating.value = true;
-                try {
-                    if (isOverridden(setting, property)) {
-                        setOverridden(setting, property, false);
-                    } else {
-                        property.setValue(empty(getEffectiveValue(setting, propertyGetter, parentGetter)));
-                        setOverridden(setting, property, true);
-                    }
-                } finally {
-                    updating.value = false;
-                }
-                refresh.invalidated(property);
-                event.consume();
-            });
-        }
-
-        bindActiveProperty(currentSetting, activeProperty, propertyGetter, refresh, weakRefresh);
-    }
-
-    /// Binds an integer text field to a setting property with independent override state.
-    static void bindIntegerTextField(
-            boolean presetSetting,
-            ObjectProperty<? extends @Nullable GameSettings> currentSetting,
-            LineComponent line,
-            JFXTextField textField,
-            Function<GameSettings, ? extends SettingProperty<Integer>> propertyGetter,
-            Supplier<JFXButton> inheritanceButtonFactory,
-            BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
-            WeakListenerHolder listenerHolder,
-            Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
-            Observable parentSettingsInvalidation) {
-        ObjectProperty<@Nullable SettingProperty<Integer>> activeProperty = new SimpleObjectProperty<>();
-        ObjectProperty<@Nullable SettingProperty<Integer>> activeParentProperty = new SimpleObjectProperty<>();
-        final Holder<Boolean> updating = new Holder<>(false);
-        final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton;
-        if (presetSetting) {
-            inheritButton = null;
-        } else {
-            inheritButton = inheritanceButtonFactory.get();
-            line.setTitleTrailing(inheritButton);
-        }
-
-        InvalidationListener refresh = observable -> {
-            GameSettings setting = currentSetting.get();
-            updateParentPropertyListener(
-                    setting,
-                    activeParentProperty,
-                    propertyGetter,
-                    parentGetter,
-                    refreshHolder.value);
-            SettingProperty<Integer> property = activeProperty.get();
-            if (setting == null || property == null || updating.value) {
-                return;
-            }
-
-            updating.value = true;
-            try {
-                boolean overridden = isOverridden(setting, property);
-                Integer value = getEffectiveValue(setting, propertyGetter, parentGetter);
-                textField.setText(value != null ? value.toString() : "");
-                textField.setDisable(!overridden);
-                if (inheritButton != null) {
-                    inheritanceButtonUpdater.accept(inheritButton, !overridden);
-                }
-            } finally {
-                updating.value = false;
-            }
-        };
-        InvalidationListener weakRefresh = listenerHolder.weak(refresh);
-        refreshHolder.value = weakRefresh;
-        parentSettingsInvalidation.addListener(weakRefresh);
-
-        textField.textProperty().addListener((observable, oldValue, newValue) -> {
-            GameSettings setting = currentSetting.get();
-            SettingProperty<Integer> property = activeProperty.get();
-            if (setting == null || property == null || updating.value) {
-                return;
-            }
-
-            updating.value = true;
-            try {
-                setOverridden(setting, property, true);
-                property.setValue(parseInteger(newValue, true));
-                if (inheritButton != null) {
-                    inheritanceButtonUpdater.accept(inheritButton, false);
-                }
-            } finally {
-                updating.value = false;
-            }
-        });
-
-        if (inheritButton != null) {
-            inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                GameSettings setting = currentSetting.get();
-                SettingProperty<Integer> property = activeProperty.get();
+                @Nullable GameSettings setting = currentSetting.get();
+                @Nullable SettingProperty<T> property = activeProperty.get();
                 if (setting == null || property == null || updating.value) {
                     return;
                 }
@@ -239,12 +136,7 @@ final class IndependentSettingBinder {
             });
         }
 
-        bindActiveProperty(
-                currentSetting,
-                activeProperty,
-                setting -> (SettingProperty<Integer>) propertyGetter.apply(setting),
-                refresh,
-                weakRefresh);
+        bindActiveProperty(currentSetting, activeProperty, propertyGetter, refresh, weakRefresh);
     }
 
     /// Binds the game memory radio options and manual memory slider.
@@ -642,10 +534,11 @@ final class IndependentSettingBinder {
         refresh.invalidated(property);
     }
 
-    private static <T> void bindActiveProperty(
-            ObjectProperty<? extends GameSettings> currentSetting,
+    /// Moves the refresh listener to the newly selected setting and its property.
+    private static <T extends @UnknownNullability Object> void bindActiveProperty(
+            ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             ObjectProperty<@Nullable SettingProperty<T>> activeProperty,
-            Function<GameSettings, SettingProperty<T>> propertyGetter,
+            Function<GameSettings, ? extends SettingProperty<T>> propertyGetter,
             InvalidationListener refresh,
             InvalidationListener weakRefresh) {
         currentSetting.addListener((observable, oldValue, newValue) -> {
@@ -653,12 +546,12 @@ final class IndependentSettingBinder {
                 oldValue.removeListener(weakRefresh);
             }
 
-            SettingProperty<T> oldProperty = activeProperty.get();
+            @Nullable SettingProperty<T> oldProperty = activeProperty.get();
             if (oldProperty != null) {
                 oldProperty.removeListener(weakRefresh);
             }
 
-            SettingProperty<T> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
+            @Nullable SettingProperty<T> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
             activeProperty.set(newProperty);
             if (newValue != null) {
                 newValue.addListener(weakRefresh);
@@ -668,29 +561,13 @@ final class IndependentSettingBinder {
             }
             refresh.invalidated(newProperty);
         });
-        GameSettings setting = currentSetting.get();
+        @Nullable GameSettings setting = currentSetting.get();
         if (setting != null) {
             SettingProperty<T> property = propertyGetter.apply(setting);
             activeProperty.set(property);
             setting.addListener(weakRefresh);
             property.addListener(weakRefresh);
             refresh.invalidated(property);
-        }
-    }
-
-    private static String empty(@Nullable String value) {
-        return value != null ? value : "";
-    }
-
-    private static @Nullable Integer parseInteger(@Nullable String value, boolean nullable) {
-        if (StringUtils.isBlank(value)) {
-            return nullable ? null : 0;
-        }
-
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (NumberFormatException ignored) {
-            return nullable ? null : 0;
         }
     }
 
