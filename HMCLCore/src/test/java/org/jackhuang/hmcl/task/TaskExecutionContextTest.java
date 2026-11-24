@@ -128,6 +128,23 @@ final class TaskExecutionContextTest {
         assertEquals(Task.State.SUCCEEDED, child.getState());
     }
 
+    /// A bound child without an executor inherits the continuation's worker and runs only after success.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void runsBoundChildAfterSuccess(boolean async) throws Exception {
+        Task<Thread> child = Task.supplyAsync(Thread::currentThread);
+        IOException failure = new IOException("Source failed");
+        Task<?> failed = Task.failed(failure);
+        Task<Thread> skipped = async ? failed.thenComposeAsync(child) : failed.thenCompose(child);
+        assertSame(failure, assertThrows(IOException.class, skipped::run));
+        assertEquals(Task.State.NEW, child.getState());
+
+        Task<Integer> source = Task.completed(1);
+        Task<Thread> composed = async ? source.thenComposeAsync(child) : source.thenCompose(child);
+        assertSame(Thread.currentThread(), task(Runnable::run, context -> context.run(composed)).run());
+        assertSame(child.resultNow(), composed.resultNow());
+    }
+
     /// A continuation added after its source finishes observes its result without running the source again.
     @Test
     void composesAfterSourceCompletion() throws Exception {
@@ -213,7 +230,7 @@ final class TaskExecutionContextTest {
 
     /// Cancelling after dispatch keeps each kind of success callback from running.
     @ParameterizedTest
-    @ValueSource(strings = {"thenApply", "thenRun", "thenCompose", "thenComposeOptional"})
+    @ValueSource(strings = {"thenApply", "thenAccept", "thenRun", "thenSupply", "thenCompose", "thenComposeSupplier", "thenComposeOptional"})
     void skipsQueuedSuccessCallbackAfterCancellation(String method) throws Exception {
         CountDownLatch submitted = new CountDownLatch(1);
         CompletableFuture<@Nullable Void> release = new CompletableFuture<>();
@@ -226,8 +243,11 @@ final class TaskExecutionContextTest {
         Task<Integer> source = Task.completed(1);
         Task<?> continuation = switch (method) {
             case "thenApply" -> source.thenApplyAsync(executor, value -> calls.incrementAndGet());
+            case "thenAccept" -> source.thenAcceptAsync(executor, value -> calls.incrementAndGet());
             case "thenRun" -> source.thenRunAsync(executor, calls::incrementAndGet);
+            case "thenSupply" -> source.thenSupplyAsync(executor, calls::incrementAndGet);
             case "thenCompose" -> source.thenComposeAsync(executor, value -> Task.completed(calls.incrementAndGet()));
+            case "thenComposeSupplier" -> source.thenComposeAsync(executor, () -> Task.completed(calls.incrementAndGet()));
             case "thenComposeOptional" -> source.thenComposeOptionalAsync(executor, value -> Task.completed(calls.incrementAndGet()));
             default -> throw new AssertionError(method);
         };
@@ -584,6 +604,34 @@ final class TaskExecutionContextTest {
             }).run();
         } finally {
             parent.shutdownNow();
+        }
+    }
+
+    /// Suppliers use their selected executors and report only the declared tasks to listeners.
+    @Test
+    void dispatchesSuppliersWithoutExtraChildren() throws Exception {
+        ExecutorService callbacks = Executors.newSingleThreadExecutor();
+        try {
+            Thread worker = callbacks.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            Task<Integer> source = Task.completed(1);
+            Task<Thread> inline = source.thenSupply(Thread::currentThread);
+            Task<Thread> async = inline.thenSupplyAsync(() -> {
+                Thread current = Thread.currentThread();
+                assertSame(current, Task.supplyAsync(Schedulers.tasks(), Thread::currentThread).run());
+                return current;
+            });
+            Task<Thread> explicit = async.thenSupplyAsync(callbacks, Thread::currentThread);
+            Task<Thread> root = task(Runnable::run, context -> context.run(explicit));
+            StageEvents events = new StageEvents();
+            root.addTaskListener(events);
+
+            assertSame(worker, root.run());
+            assertSame(Thread.currentThread(), inline.resultNow());
+            assertNotSame(Thread.currentThread(), async.resultNow());
+            assertEquals(List.of(source, inline, async, explicit, root),
+                    events.completions.stream().map(TaskCompletion::task).toList());
+        } finally {
+            callbacks.shutdownNow();
         }
     }
 

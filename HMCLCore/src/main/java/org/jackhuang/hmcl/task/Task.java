@@ -313,10 +313,19 @@ public abstract class Task<T extends @Nullable Object> {
     /// Returns a task that passes the successful result to `action` on `executor`,
     /// or on the continuation's thread if `executor` is null.
     public Task<@Nullable Void> thenAcceptAsync(@Nullable Executor executor, ExceptionalConsumer<T, ?> action) {
-        return thenApplyAsync(executor, result -> {
-            action.accept(result);
-            return null;
-        });
+        return new Task<@Nullable Void>() {
+            /// {@inheritDoc}
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                T value = context.run(Task.this);
+                context.checkCancellation();
+                return context.call(executor, () -> {
+                    context.checkCancellation();
+                    action.accept(value);
+                    return null;
+                });
+            }
+        }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Returns a task that runs `action` on the continuation's thread after this task succeeds.
@@ -332,17 +341,46 @@ public abstract class Task<T extends @Nullable Object> {
     /// Returns a task that runs `action` after this task succeeds, on `executor`
     /// or on the continuation's thread if `executor` is null.
     public Task<@Nullable Void> thenRunAsync(@Nullable Executor executor, ExceptionalRunnable<?> action) {
-        return thenAcceptAsync(executor, ignored -> action.run());
+        return new Task<@Nullable Void>() {
+            /// {@inheritDoc}
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                context.run(Task.this);
+                context.checkCancellation();
+                return context.call(executor, () -> {
+                    context.checkCancellation();
+                    action.run();
+                    return null;
+                });
+            }
+        }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Returns a task that calls `fn` on the continuation's executor after this task succeeds.
     public final <U extends @Nullable Object> Task<U> thenSupply(Callable<U> fn) {
-        return thenCompose(() -> Task.supplyAsync(fn));
+        return thenSupplyAsync(null, fn);
     }
 
     /// Returns a task that calls `fn` on the default task scheduler after this task succeeds.
     public final <U extends @Nullable Object> Task<U> thenSupplyAsync(Callable<U> fn) {
-        return thenCompose(() -> Task.supplyAsync(Schedulers.tasks(), fn));
+        return thenSupplyAsync(Schedulers.tasks(), fn);
+    }
+
+    /// Returns a task that calls `fn` after this task succeeds, on `executor` or on the
+    /// continuation's thread if `executor` is null, and returns its result.
+    public final <U extends @Nullable Object> Task<U> thenSupplyAsync(@Nullable Executor executor, Callable<U> fn) {
+        return new Task<U>() {
+            /// {@inheritDoc}
+            @Override
+            public U execute(TaskExecutionContext context) throws Exception {
+                context.run(Task.this);
+                context.checkCancellation();
+                return context.call(executor, () -> {
+                    context.checkCancellation();
+                    return fn.call();
+                });
+            }
+        }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Returns a task that runs `other` after this task succeeds and returns its result.
@@ -350,7 +388,14 @@ public abstract class Task<T extends @Nullable Object> {
     /// @throws NullPointerException if `other` is null
     public final <U extends @Nullable Object> Task<U> thenCompose(Task<U> other) {
         Objects.requireNonNull(other);
-        return thenCompose(() -> other);
+        return new Task<U>() {
+            /// {@inheritDoc}
+            @Override
+            public U execute(TaskExecutionContext context) throws Exception {
+                context.run(Task.this);
+                return context.run(other);
+            }
+        }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Returns a task that calls `fn` on the continuation's thread after success, then runs the supplied task.
@@ -358,12 +403,25 @@ public abstract class Task<T extends @Nullable Object> {
         return thenComposeAsync(null, fn);
     }
 
-    /// Equivalent to [#thenComposeAsync(ExceptionalSupplier)] with a supplier that returns `other`.
+    /// Selects `other` on the default task scheduler after this task succeeds, then runs it
+    /// with its own or the continuation's executor and returns its result.
     ///
     /// @throws NullPointerException if `other` is null
     public final <U extends @Nullable Object> Task<U> thenComposeAsync(Task<U> other) {
         Objects.requireNonNull(other);
-        return thenComposeAsync(() -> other);
+        return new Task<U>() {
+            /// {@inheritDoc}
+            @Override
+            public U execute(TaskExecutionContext context) throws Exception {
+                context.run(Task.this);
+                context.checkCancellation();
+                Task<U> next = context.call(Schedulers.tasks(), () -> {
+                    context.checkCancellation();
+                    return other;
+                });
+                return context.run(next);
+            }
+        }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Returns a task that calls `fn` on the default task scheduler after success,
@@ -376,7 +434,19 @@ public abstract class Task<T extends @Nullable Object> {
     /// thread if `executor` is null, then runs the supplied task.
     /// The child inherits the continuation's executor unless it requests its own.
     public final <U extends @Nullable Object> Task<U> thenComposeAsync(@Nullable Executor executor, ExceptionalSupplier<Task<U>, ?> fn) {
-        return thenComposeAsync(executor, ignored -> fn.get());
+        return new Task<U>() {
+            /// {@inheritDoc}
+            @Override
+            public U execute(TaskExecutionContext context) throws Exception {
+                context.run(Task.this);
+                context.checkCancellation();
+                Task<U> next = context.call(executor, () -> {
+                    context.checkCancellation();
+                    return fn.get();
+                });
+                return context.run(next);
+            }
+        }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Returns a task that maps the successful result to a child on the continuation's thread and runs that child.
