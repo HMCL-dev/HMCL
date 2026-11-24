@@ -164,6 +164,46 @@ final class TaskSharedWaitTest {
         }
     }
 
+    /// A nested root's synchronous caller waits until its completion listener returns.
+    @Test
+    void rejectsWaitingOnCallerFromNestedCompletion() throws Exception {
+        ExecutorService worker = Executors.newSingleThreadExecutor();
+        // Bound dispatch so a missed cycle releases the caller and the listener can unwind.
+        Executor dispatch = command -> {
+            try {
+                worker.submit(command).get(10, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                throw new AssertionError(e);
+            }
+        };
+        AtomicBoolean listenerReturned = new AtomicBoolean();
+        try {
+            Task<Integer> root = new Task<>() {
+                /// Runs the nested root synchronously on the other worker.
+                @Override
+                public Integer execute(TaskExecutionContext context) throws Exception {
+                    Task<Integer> caller = this;
+                    Task<Integer> nested = Task.supplyAsync(dispatch, () -> 42);
+                    nested.addTaskListener(new TaskListener() {
+                        /// Checks reentry after the nested result has been published.
+                        @Override
+                        public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+                            if (failure == null) {
+                                assertThrows(IllegalStateException.class, caller::run);
+                                listenerReturned.set(true);
+                            }
+                        }
+                    });
+                    return nested.run();
+                }
+            };
+            assertEquals(42, root.run());
+            assertTrue(listenerReturned.get());
+        } finally {
+            worker.shutdownNow();
+        }
+    }
+
     /// Synchronous lifecycle hooks reject self-waits even before the root's body has been dispatched.
     @Test
     void rejectsWaitsDuringRootPreparation() {

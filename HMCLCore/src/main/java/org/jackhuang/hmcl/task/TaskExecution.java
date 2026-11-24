@@ -9,10 +9,9 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -47,26 +46,13 @@ final class TaskExecution {
     private static final TaskListener @Unmodifiable [] FINISHED = {};
 
     /// Current listeners in registration order. Each notification reads one snapshot.
-    private volatile TaskListener @Unmodifiable [] taskListeners = NO_LISTENERS;
-
-    /// Atomically replaces the listener snapshot when registrations change.
-    private static final VarHandle TASK_LISTENERS_HANDLE;
-
-    static {
-        try {
-            TASK_LISTENERS_HANDLE = MethodHandles.lookup()
-                    .findVarHandle(TaskExecution.class, "taskListeners", TaskListener[].class);
-        } catch (ReflectiveOperationException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
+    private final AtomicReference<TaskListener @Unmodifiable []> taskListeners = new AtomicReference<>(NO_LISTENERS);
 
     /// Whether cancellation has been requested.
     private volatile boolean cancellationRequested;
 
-    /// Creates an execution for one root and its descendants.
-    TaskExecution() {
-    }
+    /// The task waiting for this root's synchronous submission, through its completion callbacks.
+    private volatile @Nullable Binding synchronousCaller;
 
     /// The execution and logical parent of an admitted task. A completed child drops both references.
     @NotNullByDefault
@@ -79,9 +65,6 @@ final class TaskExecution {
 
         /// Parent in the execution tree, including decorators executed inline.
         private final @Nullable Binding parent;
-
-        /// Task blocked in the first synchronous submission of this otherwise independent root.
-        private volatile @Nullable Binding caller;
 
         /// Submission whose work a shared observer may help, when this task was dispatched separately.
         private volatile @Nullable Work<?> work;
@@ -119,24 +102,10 @@ final class TaskExecution {
             return owner();
         }
 
-        /// Publishes the work that can advance this task.
-        void attach(Work<?> work) {
+        /// Wakes observers when work becomes available or the task finishes, including inline tasks.
+        void setWork(@Nullable Work<?> work) {
             this.work = work;
             owner().signalSharedWaiters();
-        }
-
-        /// Releases the submission after its task publishes a terminal state.
-        void finished() {
-            work = null;
-            caller = null;
-            owner().signalSharedWaiters();
-        }
-
-        /// Records a synchronous root's caller so its workers can detect waits back into that caller.
-        private void bindCaller() {
-            @Nullable ArrayDeque<Binding> active = ACTIVE_TASKS.get();
-            if (active != null)
-                caller = active.peek();
         }
 
         /// Finds the enclosing submission for a task running inline.
@@ -170,12 +139,21 @@ final class TaskExecution {
         /// Rejects a synchronous wait for a task that depends on the caller returning.
         private void checkWait() {
             @Nullable ArrayDeque<Binding> active = ACTIVE_TASKS.get();
-            if (active != null) {
-                for (Binding frame : active) {
-                    for (@Nullable Binding b = frame; b != null; b = b.parent != null ? b.parent : b.caller) {
-                        if (b == this)
-                            throw new IllegalStateException("Cannot wait for the current task or an ancestor");
-                    }
+            if (active == null)
+                return;
+            for (Binding frame : active) {
+                for (@Nullable Binding b = frame; b != null; b = b.parent != null ? b.parent : b.owner().synchronousCaller) {
+                    if (b == this)
+                        throw new IllegalStateException("Cannot wait for the current task or an ancestor");
+                }
+            }
+            // An inline source cannot start until its enclosing decorator's callback returns.
+            if (work == null) {
+                for (@Nullable Binding b = parent; b != null; b = b.parent) {
+                    if (active.contains(b))
+                        throw new IllegalStateException("Cannot wait for an inline task from its enclosing task");
+                    if (b.work != null)
+                        break;
                 }
             }
         }
@@ -183,52 +161,35 @@ final class TaskExecution {
 
     /// Registers a listener for subsequent notifications. Register before starting to observe the entire execution.
     void addTaskListener(TaskListener taskListener) {
-        while (true) {
-            TaskListener @Unmodifiable [] current = taskListeners;
+        taskListeners.updateAndGet(current -> {
             if (current == FINISHED)
-                return;
+                return current;
             TaskListener[] updated = Arrays.copyOf(current, current.length + 1);
             updated[current.length] = taskListener;
-
-            if (TASK_LISTENERS_HANDLE.compareAndSet(this, current, updated)) {
-                return;
-            }
-        }
+            return updated;
+        });
     }
 
     /// Removes the first matching registration from subsequent notifications.
     void removeTaskListener(TaskListener taskListener) {
-        while (true) {
-            TaskListener @Unmodifiable [] current = taskListeners;
-
+        taskListeners.updateAndGet(current -> {
             int index = 0;
-            while (index < current.length && current[index] != taskListener) {
+            while (index < current.length && current[index] != taskListener)
                 index++;
-            }
-
-            if (index == current.length) {
-                return;
-            }
-
-            TaskListener[] updated;
-
-            if (current.length == 1) {
-                updated = NO_LISTENERS;
-            } else {
-                updated = new TaskListener[current.length - 1];
-                System.arraycopy(current, 0, updated, 0, index);
-                System.arraycopy(current, index + 1, updated, index, updated.length - index);
-            }
-
-            if (TASK_LISTENERS_HANDLE.compareAndSet(this, current, updated)) {
-                return;
-            }
-        }
+            if (index == current.length)
+                return current;
+            if (current.length == 1)
+                return NO_LISTENERS;
+            TaskListener[] updated = new TaskListener[current.length - 1];
+            System.arraycopy(current, 0, updated, 0, index);
+            System.arraycopy(current, index + 1, updated, index, updated.length - index);
+            return updated;
+        });
     }
 
     /// Notifies a snapshot in registration order and reports each listener's failure independently.
     private void notifyListeners(Consumer<TaskListener> notification) {
-        for (TaskListener listener : taskListeners) {
+        for (TaskListener listener : taskListeners.get()) {
             try {
                 notification.accept(listener);
             } catch (Throwable e) {
@@ -243,7 +204,7 @@ final class TaskExecution {
         try {
             Executor scheduler = Schedulers.tasks();
             Work<Boolean> work = new Work<>(scheduler, () -> runToCompletion(root));
-            root.binding().attach(work);
+            root.binding().setWork(work);
             work.submit();
         } catch (Throwable failure) {
             fail(root, null, failure);
@@ -254,14 +215,14 @@ final class TaskExecution {
 
     /// Runs a ready root and returns its outcome, preserving the waiting thread's interrupt status.
     boolean test(Task<?> root) {
-        root.binding().bindCaller();
+        synchronousCaller = currentTask();
         notifyExecutionStarted(root);
         return runToCompletion(root);
     }
 
     /// Runs a ready root synchronously and propagates its failure to the caller.
     <T extends @Nullable Object> T run(Task<T> root) throws Exception {
-        root.binding().bindCaller();
+        synchronousCaller = currentTask();
         notifyExecutionStarted(root);
         try {
             return runRoot(root, true);
@@ -303,7 +264,7 @@ final class TaskExecution {
     /// Publishes a root failure even if its executor could not be reached.
     private <T extends @Nullable Object> T runRoot(Task<T> root, boolean propagateWaitInterruption) throws Exception {
         try {
-            return runReadyTask(prepare(root, Schedulers.tasks(), null), propagateWaitInterruption);
+            return prepare(root, Schedulers.tasks(), null).runReady(propagateWaitInterruption);
         } catch (Throwable failure) {
             if (root.getState() == Task.State.READY)
                 fail(root, null, failure);
@@ -317,7 +278,8 @@ final class TaskExecution {
         try {
             notifyListeners(listener -> listener.onExecutionFinished(root, success));
         } finally {
-            taskListeners = FINISHED;
+            taskListeners.set(FINISHED);
+            synchronousCaller = null;
         }
     }
 
@@ -329,6 +291,12 @@ final class TaskExecution {
     /// Returns whether cancellation was requested for this execution.
     boolean isCancellationRequested() {
         return cancellationRequested;
+    }
+
+    /// Returns the innermost task whose user code is running on this thread.
+    private static @Nullable Binding currentTask() {
+        @Nullable ArrayDeque<Binding> active = ACTIVE_TASKS.get();
+        return active == null ? null : active.peek();
     }
 
     /// Returns the executor whose work the caller can execute inline.
@@ -371,98 +339,10 @@ final class TaskExecution {
         }
     }
 
-    /// Dispatches a ready task, running it inline on a worker of its effective executor.
-    private <T extends @Nullable Object> T runReadyTask(Context<T> context, boolean propagateWaitInterruption) throws Exception {
-        if (context.executor == currentExecutor()) {
-            @Nullable Work<?> current = CURRENT_WORK.get();
-            if (current != null && current.owner() == this)
-                return execute(context);
-            // A root entered from another tree or directly on JavaFX needs its own helping index.
-            Work<T> inline = new Work<>(context.executor, () -> execute(context));
-            context.task.binding().attach(inline);
-            inline.run();
-            return await(inline, propagateWaitInterruption);
-        }
-        return await(submitChild(context, null), propagateWaitInterruption);
-    }
-
-    /// Schedules a child and records task failure if the executor rejects the submission.
-    private <T extends @Nullable Object> Work<T> submitChild(Context<T> context, @Nullable BatchWindow window) {
-        Work<T> work = new Work<>(context.executor, () -> execute(context), window);
-        Binding binding = context.task.binding();
-        binding.enter();
-        try {
-            checkCancellation();
-            binding.attach(work);
-            work.submit();
-        } catch (Throwable failure) {
-            fail(context, failure);
-            work.reject(failure);
-        } finally {
-            binding.leave();
-        }
-        return work;
-    }
-
-    /// Executes the body and publishes its result before notifying listeners of success.
-    private <T extends @Nullable Object> T execute(Context<T> context) throws Exception {
-        Binding binding = context.task.binding();
-        binding.enter();
-        try {
-            return executeBody(context);
-        } finally {
-            binding.leave();
-        }
-    }
-
-    /// Invokes the task and publishes its terminal state before delivering completion events.
-    private <T extends @Nullable Object> T executeBody(Context<T> context) throws Exception {
-        Task<T> task = context.task;
-        T result;
-        try {
-            checkCancellation();
-            if (task.getSignificance().shouldLog()) {
-                @Nullable TaskName name = task.getName();
-                LOG.trace("Executing task: " + (name != null ? name.text() : task.toString()));
-                checkCancellation();
-            }
-            task.markRunning();
-            notifyListeners(listener -> listener.onTaskStarted(task, context.stageScope));
-            checkCancellation();
-            result = task.execute(context);
-            checkCancellation();
-        } catch (Throwable failure) {
-            Throwable cause = Objects.requireNonNullElse(Lang.resolveException(failure), failure);
-            if (cause instanceof InterruptedException)
-                cause = new CancellationException(cause.getMessage());
-            fail(context, cause);
-            throw Task.rethrow(cause);
-        }
-
-        task.publishResult(result);
-        notifyTaskFinished(task, context.stageScope, null);
-        if (task.getSignificance().shouldLog()) {
-            try {
-                @Nullable TaskName name = task.getName();
-                LOG.trace("Task finished: " + (name != null ? name.text() : task.toString()));
-            } catch (Throwable failure) {
-                LOG.warning("Failed to log task completion", failure);
-            }
-        }
-        return result;
-    }
-
     /// Records the failure before delivering terminal notifications.
     private void fail(Task<?> task, TaskStage.@Nullable Scope scope, Throwable cause) {
         task.publishException(cause);
         notifyTaskFinished(task, scope, cause);
-    }
-
-    /// Publishes a submission failure, closing any prepared sources whose bodies were skipped.
-    private void fail(Context<?> context, Throwable cause) {
-        if (context.source != null && context.source.task.getState() == Task.State.READY)
-            fail(context.source, cause);
-        fail(context.task, context.stageScope, cause);
     }
 
     /// Reports the task's published outcome, then closes its stage if it declared one.
@@ -495,7 +375,7 @@ final class TaskExecution {
             throw new CancellationException("Cancelled by user");
     }
 
-    /// Executes children under a single parent and shares the root's listeners and cancellation.
+    /// A prepared task with its executor, stage and child execution context.
     @NotNullByDefault
     private final class Context<R extends @Nullable Object> implements TaskExecutionContext, TaskProgress {
         /// The task executed in this context.
@@ -516,6 +396,89 @@ final class TaskExecution {
             this.executor = executor;
             this.stageScope = stageScope;
             this.source = source;
+        }
+
+        /// Runs on the current worker when possible, otherwise submits and waits.
+        private R runReady(boolean propagateWaitInterruption) throws Exception {
+            if (executor != currentExecutor())
+                return await(submit(null), propagateWaitInterruption);
+            @Nullable Work<?> current = CURRENT_WORK.get();
+            if (current != null && current.owner() == TaskExecution.this)
+                return execute();
+            // A root entered from another tree or directly on JavaFX needs its own helping index.
+            Work<R> inline = new Work<>(executor, this::execute);
+            task.binding().setWork(inline);
+            inline.run();
+            return await(inline, propagateWaitInterruption);
+        }
+
+        /// Submits the prepared task and publishes any rejection to its waiters.
+        private Work<R> submit(@Nullable BatchWindow window) {
+            Work<R> work = new Work<>(executor, this::execute, window);
+            Binding binding = task.binding();
+            binding.enter();
+            try {
+                checkCancellation();
+                binding.setWork(work);
+                work.submit();
+            } catch (Throwable failure) {
+                fail(failure);
+                work.reject(failure);
+            } finally {
+                binding.leave();
+            }
+            return work;
+        }
+
+        /// Publishes a successful result before delivering completion notifications.
+        private R execute() throws Exception {
+            Binding binding = task.binding();
+            binding.enter();
+            try {
+                R result = invokeBody();
+                task.publishResult(result);
+                notifyTaskFinished(task, stageScope, null);
+                if (task.getSignificance().shouldLog()) {
+                    try {
+                        LOG.trace("Task finished: " + task.displayName());
+                    } catch (Throwable failure) {
+                        LOG.warning("Failed to log task completion", failure);
+                    }
+                }
+                return result;
+            } finally {
+                binding.leave();
+            }
+        }
+
+        /// Checks cancellation around user code and records a failure before propagating it.
+        private R invokeBody() throws Exception {
+            try {
+                checkCancellation();
+                if (task.getSignificance().shouldLog()) {
+                    LOG.trace("Executing task: " + task.displayName());
+                    checkCancellation();
+                }
+                task.markRunning();
+                notifyListeners(listener -> listener.onTaskStarted(task, stageScope));
+                checkCancellation();
+                R result = task.execute(this);
+                checkCancellation();
+                return result;
+            } catch (Throwable failure) {
+                Throwable cause = Objects.requireNonNullElse(Lang.resolveException(failure), failure);
+                if (cause instanceof InterruptedException)
+                    cause = new CancellationException(cause.getMessage());
+                fail(cause);
+                throw Task.rethrow(cause);
+            }
+        }
+
+        /// Closes any prepared sources whose bodies were skipped before reporting this task's failure.
+        private void fail(Throwable cause) {
+            if (source != null && source.task.getState() == Task.State.READY)
+                source.fail(cause);
+            TaskExecution.this.fail(task, stageScope, cause);
         }
 
         /// {@inheritDoc}
@@ -554,15 +517,15 @@ final class TaskExecution {
 
         /// {@inheritDoc}
         @Override
-        public <T extends @Nullable Object> T run(Task<T> task) throws Exception {
-            if (source != null && source.task == task) {
-                execute(source);
-                return task.resultNow();
+        public <T extends @Nullable Object> T run(Task<T> child) throws Exception {
+            if (source != null && source.task == child) {
+                source.execute();
+                return child.resultNow();
             }
             checkCancellation();
-            if (!task.tryMarkReadyAsChild(this.task.binding()))
-                return task.completedOutcome();
-            return runReadyTask(prepare(task, executor, stageScope), true);
+            if (!child.tryMarkReadyAsChild(task.binding()))
+                return child.completedOutcome();
+            return prepare(child, executor, stageScope).runReady(true);
         }
 
         /// {@inheritDoc}
@@ -580,6 +543,7 @@ final class TaskExecution {
                 throw batchCancellation();
             @Unmodifiable List<? extends Task<? extends T>> batch = List.copyOf(tasks);
             @Nullable BatchWindow window = batch.size() > maxConcurrency ? new BatchWindow(maxConcurrency) : null;
+            Binding parent = task.binding();
             // Every encountered instance gets one entry. Only newly scheduled children have work to await.
             Map<Task<? extends T>, @Nullable Work<? extends T>> submissions = new IdentityHashMap<>(batch.size());
             List<Task<? extends T>> admitted = new ArrayList<>(batch.size());
@@ -595,14 +559,21 @@ final class TaskExecution {
                     if (submissions.containsKey(child))
                         throw new IllegalStateException("Duplicate task in batch");
                     submissions.put(child, null);
-                    if (child.tryMarkReadyAsChild(task.binding()))
-                        submissions.put(child, submitChild(prepare(child, executor, stageScope), window));
+                    if (child.tryMarkReadyAsChild(parent))
+                        submissions.put(child, prepare(child, executor, stageScope).submit(window));
                     admitted.add(child);
                 } catch (Throwable e) {
                     failure = batchFailure(failure, e);
                 }
             }
 
+            return awaitBatch(admitted, submissions, failure);
+        }
+
+        /// Drains admitted tasks in input order, including after a submission or a wait fails.
+        private <T extends @Nullable Object> List<T> awaitBatch(
+                List<Task<? extends T>> admitted, Map<Task<? extends T>, @Nullable Work<? extends T>> submissions,
+                @Nullable Throwable failure) throws Exception {
             List<T> results = new ArrayList<>(admitted.size());
             // Defer interruption while servicing callbacks needed by admitted children.
             boolean interrupted = Thread.interrupted();
@@ -711,16 +682,6 @@ final class TaskExecution {
             if (task.isDone())
                 return false;
             binding.checkWait();
-            // An inline source cannot start until its decorator's current callback returns.
-            @Nullable ArrayDeque<Binding> active = ACTIVE_TASKS.get();
-            if (active != null && binding.work == null) {
-                for (@Nullable Binding parent = binding.parent; parent != null; parent = parent.parent) {
-                    if (active.contains(parent))
-                        throw new IllegalStateException("Cannot wait for an inline task from its enclosing task");
-                    if (parent.work != null)
-                        break;
-                }
-            }
             while (!task.isDone()) {
                 @Nullable Work<?> anchor = binding.enclosingWork();
                 @Nullable Work<?> next = anchor == null ? null : anchor.availableFor(worker, true);
@@ -853,6 +814,8 @@ final class TaskExecution {
 
         /// Finds work for the given worker among the descendants or, if allowed, this submission.
         private @Nullable Work<?> availableFor(@Nullable Executor worker, boolean includeSelf) {
+            if (worker == null)
+                return null;
             if (includeSelf && queued && executor == worker)
                 return this;
             @Nullable Set<Work<?>> available = pending == null ? null : pending.get(worker);
@@ -869,20 +832,20 @@ final class TaskExecution {
                 // Only the submitter admits branches. Completion may race with registration.
                 if (window != null && !isDone())
                     window.active.add(this);
-                if (canBeHelped && !started) {
-                    queued = true;
-                    // Index only this work's ancestors. A waiting worker can then claim a
-                    // descendant without scanning or recursively entering unrelated siblings.
-                    for (@Nullable Work<?> node = parent; node != null; node = node.parent) {
-                        if (node.pending == null)
-                            node.pending = new IdentityHashMap<>();
-                        node.pending.computeIfAbsent(executor, ignored -> new LinkedHashSet<>()).add(this);
-                        if (node.changed != null)
-                            node.changed.signal();
-                    }
-                    if (sharedWaiters != 0)
-                        sharedChanged.signalAll();
+                if (!canBeHelped || started)
+                    return;
+                queued = true;
+                // Index only this work's ancestors. A waiting worker can then claim a
+                // descendant without scanning or recursively entering unrelated siblings.
+                for (@Nullable Work<?> node = parent; node != null; node = node.parent) {
+                    if (node.pending == null)
+                        node.pending = new IdentityHashMap<>();
+                    node.pending.computeIfAbsent(executor, ignored -> new LinkedHashSet<>()).add(this);
+                    if (node.changed != null)
+                        node.changed.signal();
                 }
+                if (sharedWaiters != 0)
+                    sharedChanged.signalAll();
             } finally {
                 lock.unlock();
             }
@@ -900,15 +863,15 @@ final class TaskExecution {
                 if (started)
                     return false;
                 started = true;
-                if (queued) {
-                    queued = false;
-                    for (@Nullable Work<?> node = parent; node != null; node = node.parent) {
-                        Map<Executor, Set<Work<?>>> index = Objects.requireNonNull(node.pending);
-                        Set<Work<?>> available = index.get(executor);
-                        available.remove(this);
-                        if (available.isEmpty())
-                            index.remove(executor);
-                    }
+                if (!queued)
+                    return true;
+                queued = false;
+                for (@Nullable Work<?> node = parent; node != null; node = node.parent) {
+                    Map<Executor, Set<Work<?>>> index = Objects.requireNonNull(node.pending);
+                    Set<Work<?>> available = index.get(executor);
+                    available.remove(this);
+                    if (available.isEmpty())
+                        index.remove(executor);
                 }
                 return true;
             } finally {

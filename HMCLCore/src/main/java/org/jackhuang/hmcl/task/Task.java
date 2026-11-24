@@ -19,13 +19,16 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.function.*;
+import java.util.function.BooleanSupplier;
 
 /// A unit of work with a shared result, lifecycle notifications, and optional progress.
 /// [#start()], [#run()], and [#test()] start a new task or observe its existing execution,
@@ -88,7 +91,6 @@ public abstract class Task<T extends @Nullable Object> {
     /// Identifies the owning execution until a completed child releases it.
     ///
     /// @see #EXECUTION_BINDING
-    @SuppressWarnings("unused")
     private volatile @Nullable Binding executionBinding;
 
     /// Most recent execution state, initially [State#NEW].
@@ -131,6 +133,12 @@ public abstract class Task<T extends @Nullable Object> {
         }
         String className = getClass().getName();
         return className + "[" + name.text() + "]";
+    }
+
+    /// Returns the task name for logs and diagnostics, falling back to the task's string representation.
+    final String displayName() {
+        @Nullable TaskName name = getName();
+        return name == null ? toString() : name.text();
     }
 
     /// Returns the logging and display policy for this task.
@@ -482,22 +490,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// Cancellation and errors propagate.
     public <E extends Exception> Task<@Nullable Void> withRunAsync(@Nullable Executor executor, ExceptionalRunnable<E> action) {
         TaskName name = getCaller();
-        return withComposeAsync(() -> new Task<@Nullable Void>() {
-            /// The action adapted when this child is created.
-            private final Callable<@Nullable Void> callable = action.toCallable();
-
-            /// {@inheritDoc}
-            @Override
-            protected @Nullable Executor getExecutor() {
-                return executor;
-            }
-
-            /// {@inheritDoc}
-            @Override
-            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-                return callable.call();
-            }
-        }.setName(name));
+        return withComposeAsync(() -> Task.<@Nullable Void>callableTask(executor, action.toCallable()).setName(name));
     }
 
     /// Reports this task's result or failure to `action` on the continuation's thread.
@@ -614,7 +607,14 @@ public abstract class Task<T extends @Nullable Object> {
     /// Returns a wrapper that declares `stage` around this task. Stages opened by
     /// this task during execution are nested inside `stage`.
     public Task<T> withStage(TaskStage stage) {
-        return new StageTask<>(this, stage);
+        Objects.requireNonNull(stage);
+        return new Decorator<>(this, TaskSignificance.MODERATE) {
+            /// Returns the stage enclosing the wrapped task.
+            @Override
+            public TaskStage getStage() {
+                return stage;
+            }
+        };
     }
 
     /// Returns the stage rows this task declares for display, in presentation order.
@@ -667,9 +667,31 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// @param k positive finite scale controlling the rate at which the estimate approaches its upper bound
     public Task<T> withFakeProgress(TaskName name, BooleanSupplier done, double k) {
-        return new FakeProgressTask(this, done, k)
-                .setName(name)
-                .setSignificance(TaskSignificance.MAJOR);
+        return new Task<T>() {
+            /// Upper bound approached by the progress estimate before the condition is satisfied.
+            private static final double MAX_ESTIMATED_PROGRESS = 0.98D;
+
+            /// {@inheritDoc}
+            @Override
+            public T execute(TaskExecutionContext context) throws Exception {
+                T value = context.run(Task.this);
+                TaskProgress progress = context.progress();
+                if (!done.getAsBoolean()) {
+                    progress.update(0.0D);
+                    long start = System.nanoTime();
+                    while (!done.getAsBoolean()) {
+                        if (context.isCancelled())
+                            throw new CancellationException();
+                        double elapsedSeconds = (System.nanoTime() - start) / 1_000_000_000.0;
+                        double scaledTime = elapsedSeconds * MAX_ESTIMATED_PROGRESS;
+                        progress.update(MAX_ESTIMATED_PROGRESS * scaledTime / (k + scaledTime));
+                        Thread.sleep(1000);
+                    }
+                }
+                progress.update(1.0D);
+                return value;
+            }
+        }.setName(name);
     }
 
     /// Creates a task that returns `value` when run.
@@ -714,7 +736,12 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Creates a task that returns the value of `callable`, with an optional executor preference.
     public static <V extends @Nullable Object> Task<V> supplyAsync(@Nullable Executor executor, Callable<V> callable) {
-        return new Task<V>() {
+        return callableTask(executor, callable).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
+    }
+
+    /// Adapts a callable for execution as a task on its requested executor.
+    private static <V extends @Nullable Object> Task<V> callableTask(@Nullable Executor executor, Callable<V> callable) {
+        return new Task<>() {
             /// {@inheritDoc}
             @Override
             protected @Nullable Executor getExecutor() {
@@ -726,7 +753,7 @@ public abstract class Task<T extends @Nullable Object> {
             public V execute(TaskExecutionContext context) throws Exception {
                 return callable.call();
             }
-        }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
+        };
     }
 
     /// Creates a task that calls `fn` on its own thread and returns the supplied child's result.
@@ -878,8 +905,7 @@ public abstract class Task<T extends @Nullable Object> {
         }
         if (isDone())
             return false;
-        @Nullable TaskName name = getName();
-        throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name.text() : toString()));
+        throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + displayName());
     }
 
     /// Returns the published result of a completed task or rethrows its recorded failure.
@@ -917,7 +943,7 @@ public abstract class Task<T extends @Nullable Object> {
     private void finish(State terminalState) {
         Binding binding = binding();
         state = terminalState;
-        binding.finished();
+        binding.setWork(null);
         if (!binding.isRoot())
             executionBinding = Binding.FINISHED_CHILD;
     }
@@ -985,69 +1011,6 @@ public abstract class Task<T extends @Nullable Object> {
         @Override
         public T execute(TaskExecutionContext context) throws Exception {
             return context.run(source);
-        }
-    }
-
-    /// Provides an enclosing stage for the wrapped task.
-    private static final class StageTask<T extends @Nullable Object> extends Decorator<T> {
-        /// The stage declared by the wrapper.
-        private final TaskStage stage;
-
-        /// Creates a stage wrapper for the enclosing task.
-        private StageTask(Task<T> source, TaskStage stage) {
-            super(source, TaskSignificance.MODERATE);
-            this.stage = Objects.requireNonNull(stage);
-        }
-
-        /// Returns the stage enclosing the wrapped task.
-        @Override
-        public TaskStage getStage() {
-            return stage;
-        }
-    }
-
-    /// Waits for an external condition after the wrapped task has completed.
-    private static final class FakeProgressTask<T extends @Nullable Object> extends Task<T> {
-        /// Upper bound approached by the progress estimate before the condition is satisfied.
-        private static final double MAX_VALUE = 0.98D;
-
-        /// The child whose executor and result this wrapper shares.
-        private final Task<? extends T> source;
-
-        /// Condition indicating that the wrapper may complete.
-        private final BooleanSupplier done;
-
-        /// Time scale used to compute the progress estimate.
-        private final double k;
-
-        /// Creates a wrapper that reports estimated progress until the supplied condition is true.
-        private FakeProgressTask(Task<? extends T> source, BooleanSupplier done, double k) {
-            this.source = source;
-            this.done = done;
-            this.k = k;
-        }
-
-        /// {@inheritDoc}
-        @Override
-        public T execute(TaskExecutionContext context) throws Exception {
-            T value = context.run(source);
-            TaskProgress progress = context.progress();
-            if (!done.getAsBoolean()) {
-                progress.update(0.0D);
-
-                final long start = System.nanoTime();
-                while (!done.getAsBoolean()) {
-                    if (context.isCancelled()) throw new CancellationException();
-                    double elapsedSeconds = (System.nanoTime() - start) / 1_000_000_000.0;
-                    double scaledTime = elapsedSeconds * MAX_VALUE;
-                    progress.update(MAX_VALUE * scaledTime / (k + scaledTime));
-
-                    Thread.sleep(1000);
-                }
-            }
-
-            progress.update(1.0D);
-            return value;
         }
     }
 }
