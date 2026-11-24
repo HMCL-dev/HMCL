@@ -101,20 +101,21 @@ public final class TaskManager {
 
     /// Submits an unstarted task, returning the same future while it remains registered.
     /// All task listeners must be installed before submission. Callers must not subsequently
-    /// invoke [Task#start()] or [Task#test()] directly.
+    /// start the task outside this manager.
     ///
-    /// @param task the task to submit, which must not have completed
+    /// @param task the task to submit, which must still be unstarted when its turn arrives
     /// @param parent an executing parent whose slot this task shares, or `null` to queue
     ///               an independent execution; a parent must still belong to the active group
     /// @return a future completed after the task's completion listeners and their preceding JavaFX
-    ///         callbacks have run. Its value indicates execution success. If the task
-    ///         rejects the start request, the future completes exceptionally with that failure.
+    ///         callbacks have run. Its value indicates execution success. If the task has already
+    ///         been started when its turn arrives, the future completes exceptionally with [IllegalStateException].
+    ///         Other startup failures also complete the future exceptionally.
     /// @throws IllegalArgumentException if `parent` is not executing in the active group
     public CompletableFuture<Boolean> submit(Task<?> task, @Nullable Task<?> parent) {
         return submit(task, parent, null);
     }
 
-    /// Submits the task and invokes `onStartRejected` on the JavaFX thread if starting it throws.
+    /// Submits the task and invokes `onStartRejected` on the JavaFX thread if the start is rejected.
     /// Changes made by callers to the returned future do not trigger the callback.
     public CompletableFuture<Boolean> submit(Task<?> task, @Nullable Task<?> parent, @Nullable Runnable onStartRejected) {
         FXUtils.checkFxUserThread();
@@ -157,7 +158,8 @@ public final class TaskManager {
         try {
             execution.task.addTaskListener(execution);
             execution.listening = true;
-            execution.task.start();
+            if (!execution.task.tryStart())
+                throw new IllegalStateException("Task has already been submitted");
         } catch (RuntimeException | Error failure) {
             release(execution);
             execution.completion.completeExceptionally(failure);

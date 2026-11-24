@@ -257,6 +257,31 @@ final class TaskManagerTest {
         assertEquals(2, bodies.get());
     }
 
+    /// Rejects an externally running root without making the queue wait for that root to finish.
+    @Test
+    void rejectsExternallyRunningRootWithoutBlockingNextTask() throws Exception {
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        Task<?> external = Task.runAsync(() -> {
+            entered.countDown();
+            await(release);
+        });
+        CompletableFuture<Boolean> externalResult = CompletableFuture.supplyAsync(external::test);
+        try {
+            await(entered);
+            TaskManager manager = TaskManager.getInstance();
+            CompletableFuture<Boolean> rejected = onFxThread(() -> manager.submit(external, null));
+            assertInstanceOf(IllegalStateException.class,
+                    assertThrows(ExecutionException.class, () -> rejected.get(10, TimeUnit.SECONDS)).getCause());
+            CompletableFuture<Boolean> next = onFxThread(() -> manager.submit(Task.completed(0), null));
+            assertTrue(next.get(10, TimeUnit.SECONDS));
+            assertFalse(externalResult.isDone());
+        } finally {
+            release.countDown();
+        }
+        assertTrue(externalResult.get(10, TimeUnit.SECONDS));
+    }
+
     /// Attaches listeners before submitting an independent task on the JavaFX thread.
     private static Submission submit(Task<?> task, @Nullable TaskListener listener) throws Exception {
         return onFxThread(() -> {

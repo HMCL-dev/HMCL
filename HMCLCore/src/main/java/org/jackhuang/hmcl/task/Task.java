@@ -193,10 +193,19 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Starts a new root asynchronously. Returns this task immediately if it was already submitted.
     public final Task<T> start() {
-        @Nullable TaskExecution execution = tryRootSubmission();
-        if (execution != null)
-            execution.start(this);
+        tryStart();
         return this;
+    }
+
+    /// Starts this task asynchronously as a root if it has not yet been submitted.
+    ///
+    /// @return true if this call submitted the task, false if it was already submitted as a root or child
+    public final boolean tryStart() {
+        @Nullable TaskExecution execution = tryRootSubmission();
+        if (execution == null)
+            return false;
+        execution.start(this);
+        return true;
     }
 
     /// Starts this task if necessary and returns whether it succeeded. A thread interrupted while waiting for
