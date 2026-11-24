@@ -8,8 +8,11 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
@@ -17,8 +20,9 @@ import java.util.concurrent.Executor;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Executes children within the current task's cancellation and listener scope.
-/// Stage, hint and counter decorators share their source's executor. A child without an
-/// executor preference inherits the executor running the current task's body.
+/// Stage, hint and counter decorators share their source's executor while running that source.
+/// A decorator consuming a completed source, like a child without an executor preference,
+/// inherits the executor running the current task's body.
 /// Children whose [Task#getStage()] returns `null` inherit the current task's stage.
 /// A task must use its context before its body returns and on the thread executing its body,
 /// except that an action dispatched by [#call(Executor, Callable)] may query [#isCancelled()].
@@ -44,12 +48,14 @@ public interface TaskExecutionContext {
     /// Has no effect outside a stage.
     void completeStageItem();
 
-    /// Runs a child to completion and returns its published result.
+    /// Runs a new child to completion or reads the outcome of a completed task.
+    /// Reusing an outcome preserves the original result or failure and emits no lifecycle events.
+    /// Cancellation of the calling context takes precedence over a completed outcome.
     /// A child that has not yet been admitted remains available for later submission
     /// if the caller observes cancellation or interruption before admission.
     ///
     /// @throws Exception if the child fails or execution is cancelled or interrupted
-    /// @throws IllegalStateException if the child was already submitted
+    /// @throws IllegalStateException if the child is already submitted or reserved as a root and has not completed
     <T extends @Nullable Object> T run(Task<T> task) throws Exception;
 
     /// Runs one child to completion. A reported failure, including an error or independent
@@ -67,10 +73,12 @@ public interface TaskExecutionContext {
         return childExecutionSucceeded(task, null);
     }
 
-    /// Schedules the children on their respective executors and waits for all admitted children.
+    /// Schedules new children on their respective executors, reuses completed outcomes as in
+    /// [#run(Task)], and waits for all admitted children.
     /// Siblings on executors with available workers may run concurrently. A failure in
     /// one child does not cancel the others. An empty collection schedules no work.
-    /// Submitting an instance twice is a failure of the batch. Other children are still awaited.
+    /// Listing the same task instance twice in one batch is a failure, even if it has completed.
+    /// Other children are still awaited.
     /// Tree cancellation or interruption of the calling thread stops admission. Children
     /// not yet admitted remain available for later submission. The caller's interrupt status is preserved.
     /// The batch reports its first observed failure, giving errors precedence.
@@ -96,14 +104,23 @@ public interface TaskExecutionContext {
         if (batch.size() <= maxConcurrency)
             return runAll(batch);
 
+        Set<Task<?>> seen = Collections.newSetFromMap(new IdentityHashMap<>());
         List<T> results = new ArrayList<>(batch.size());
         @Nullable Throwable failure = null;
         for (int start = 0; start < batch.size();) {
             if (isCancelled())
                 break;
             int end = start + Math.min(maxConcurrency, batch.size() - start);
+            List<Task<? extends T>> children = new ArrayList<>(end - start);
+            for (Task<? extends T> child : batch.subList(start, end)) {
+                if (seen.add(child))
+                    children.add(child);
+                else
+                    failure = TaskExecution.batchFailure(failure, new IllegalStateException("Duplicate task in batch"));
+            }
             try {
-                results.addAll(runAll(batch.subList(start, end)));
+                if (!children.isEmpty())
+                    results.addAll(runAll(children));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 failure = TaskExecution.batchFailure(failure, e);

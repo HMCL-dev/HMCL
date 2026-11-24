@@ -217,7 +217,8 @@ final class TaskExecution {
             }
             if (task instanceof Task.Decorator<T> decorator) {
                 checkCancellation();
-                decorator.source.markReadyAsChild();
+                if (!decorator.source.tryMarkReadyAsChild())
+                    return new Context<>(task, inheritedExecutor, scope, null);
                 Context<T> source = prepare(decorator.source, inheritedExecutor, scope);
                 return new Context<>(task, source.executor, scope, source);
             }
@@ -390,7 +391,8 @@ final class TaskExecution {
                 return task.resultNow();
             }
             checkCancellation();
-            task.markReadyAsChild();
+            if (!task.tryMarkReadyAsChild())
+                return task.completedOutcome();
             return runReadyTask(prepare(task, executor, stageScope), true);
         }
 
@@ -409,7 +411,9 @@ final class TaskExecution {
                 throw batchCancellation();
             @Unmodifiable List<? extends Task<? extends T>> batch = List.copyOf(tasks);
             @Nullable BatchWindow window = batch.size() > maxConcurrency ? new BatchWindow(maxConcurrency) : null;
-            List<Work<? extends T>> children = new ArrayList<>(batch.size());
+            // Every encountered instance gets one entry. Only newly scheduled children have work to await.
+            Map<Task<? extends T>, @Nullable Work<? extends T>> submissions = new IdentityHashMap<>(batch.size());
+            List<Task<? extends T>> admitted = new ArrayList<>(batch.size());
             @Nullable Throwable failure = null;
             for (Task<? extends T> child : batch) {
                 try {
@@ -419,23 +423,28 @@ final class TaskExecution {
                         failure = batchFailure(failure, batchCancellation());
                         break;
                     }
-                    child.markReadyAsChild();
-                    children.add(submitChild(prepare(child, executor, stageScope), window));
+                    if (submissions.containsKey(child))
+                        throw new IllegalStateException("Duplicate task in batch");
+                    submissions.put(child, null);
+                    if (child.tryMarkReadyAsChild())
+                        submissions.put(child, submitChild(prepare(child, executor, stageScope), window));
+                    admitted.add(child);
                 } catch (Throwable e) {
                     failure = batchFailure(failure, e);
                 }
             }
 
-            List<T> results = new ArrayList<>(children.size());
+            List<T> results = new ArrayList<>(admitted.size());
             // Defer interruption while servicing callbacks needed by admitted children.
             boolean interrupted = Thread.interrupted();
             if (interrupted && failure == null)
                 failure = new InterruptedException();
             try {
-                for (Work<? extends T> child : children) {
+                for (Task<? extends T> child : admitted) {
                     @Nullable Throwable childFailure = null;
                     try {
-                        results.add(await(child, false));
+                        @Nullable Work<? extends T> work = submissions.get(child);
+                        results.add(work == null ? child.completedOutcome() : await(work, false));
                     } catch (Throwable e) {
                         childFailure = e;
                     }

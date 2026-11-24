@@ -29,12 +29,14 @@ import java.util.function.*;
 /// A single-use unit of work with a result, lifecycle notifications, and optional progress.
 /// Submit the root using [#start()], [#run()], or [#test()]. Each task can be submitted only
 /// once, either as a root or as a child. Create a new instance to repeat an operation.
+/// A completed task can supply its published outcome to any subsequent child execution.
 /// Registering a listener or requesting cancellation before submission reserves the task as a root.
 /// Its listeners and cancellation request apply to the whole execution tree.
 ///
 /// An omitted or `null` executor leaves a task body on its parent's executor, or on the
 /// task scheduler for a root. Stage, hint and counter decorators are dispatched together
-/// with their source on its effective executor. The `then` methods create unsubmitted
+/// with their source on its effective executor. A new decorator around a completed source
+/// inherits its parent's executor. The `then` methods create unsubmitted
 /// continuations. The single-argument `then*Async` methods run their callbacks on the
 /// default task scheduler. The corresponding methods without the `Async` suffix and
 /// overloads passed a `null` executor use the continuation's thread. A callback targeting
@@ -597,8 +599,8 @@ public abstract class Task<T extends @Nullable Object> {
         return null;
     }
 
-    /// Returns a task that declares `stage` and shares this task's executor.
-    /// If this task declares its own stage, that stage is nested inside `stage`.
+    /// Returns a wrapper that declares `stage` around this task. Stages opened by
+    /// this task during execution are nested inside `stage`.
     public Task<T> withStage(TaskStage stage) {
         return new StageTask<>(this, stage);
     }
@@ -621,7 +623,7 @@ public abstract class Task<T extends @Nullable Object> {
         return withStageHints(List.of(hints));
     }
 
-    /// Returns a wrapper that declares the supplied rows in order and uses this task's executor.
+    /// Returns a wrapper that declares the supplied rows in order.
     /// The wrapper takes an immutable snapshot of the hints.
     public Task<T> withStageHints(List<TaskStage.Hint> hints) {
         @Unmodifiable List<TaskStage.Hint> rows = List.copyOf(hints);
@@ -634,8 +636,8 @@ public abstract class Task<T extends @Nullable Object> {
         };
     }
 
-    /// Returns a wrapper that reports one completed item in its inherited stage on this task's
-    /// executor after this task succeeds.
+    /// Returns a wrapper that reports one completed item in its inherited stage
+    /// after obtaining this task's successful result.
     public Task<T> withCounter() {
         return new Decorator<>(this, TaskSignificance.MINOR) {
             /// Reports the item after the source publishes its result.
@@ -841,13 +843,26 @@ public abstract class Task<T extends @Nullable Object> {
         return execution;
     }
 
-    /// Marks an unreserved task as ready for execution as a child.
-    final void markReadyAsChild() {
-        if (!EXECUTION_BINDING.compareAndSet(this, null, ExecutionBinding.CHILD)) {
-            @Nullable TaskName name = getName();
-            throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name.text() : toString()));
+    /// Reserves a new child, or returns false if its published outcome can be reused.
+    ///
+    /// @throws IllegalStateException if the task is reserved or already executing
+    final boolean tryMarkReadyAsChild() {
+        if (EXECUTION_BINDING.compareAndSet(this, null, ExecutionBinding.CHILD)) {
+            state = State.READY;
+            return true;
         }
-        state = State.READY;
+        State current = state;
+        if (current == State.SUCCEEDED || current == State.FAILED || current == State.CANCELLED)
+            return false;
+        @Nullable TaskName name = getName();
+        throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name.text() : toString()));
+    }
+
+    /// Returns the published result of a completed task or rethrows its recorded failure.
+    final T completedOutcome() throws Exception {
+        if (state == State.SUCCEEDED)
+            return successfulResult();
+        throw rethrow(exceptionNow());
     }
 
     /// Marks the task as running before start listeners are notified.
@@ -937,7 +952,7 @@ public abstract class Task<T extends @Nullable Object> {
         }
     }
 
-    /// A stage decorator dispatched together with its source on the source's effective executor.
+    /// A stage decorator that shares its source's executor when both run together.
     abstract static class Decorator<T extends @Nullable Object> extends Task<T> {
         /// The child whose executor and result this decorator shares.
         final Task<T> source;
