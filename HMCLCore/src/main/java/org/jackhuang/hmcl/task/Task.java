@@ -310,7 +310,14 @@ public abstract class Task<T extends @Nullable Object> {
             /// {@inheritDoc}
             @Override
             public U execute(TaskExecutionContext context) throws Exception {
-                return Task.this.mapResult(context, executor, fn);
+                T value = context.run(Task.this);
+                checkCancellation(context);
+                if (executor == null)
+                    return fn.apply(value);
+                return context.call(executor, () -> {
+                    checkCancellation(context);
+                    return fn.apply(value);
+                });
             }
         }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
@@ -414,7 +421,14 @@ public abstract class Task<T extends @Nullable Object> {
             /// {@inheritDoc}
             @Override
             public U execute(TaskExecutionContext context) throws Exception {
-                Task<U> next = Task.this.mapResult(context, executor, fn);
+                T value = context.run(Task.this);
+                checkCancellation(context);
+                if (executor == null)
+                    return context.run(fn.apply(value));
+                Task<U> next = context.call(executor, () -> {
+                    checkCancellation(context);
+                    return fn.apply(value);
+                });
                 return context.run(next);
             }
         }.setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
@@ -440,7 +454,17 @@ public abstract class Task<T extends @Nullable Object> {
             /// {@inheritDoc}
             @Override
             public @Nullable U execute(TaskExecutionContext context) throws Exception {
-                @Nullable Task<U> next = Task.this.mapResult(context, executor, fn);
+                T value = context.run(Task.this);
+                checkCancellation(context);
+                @Nullable Task<U> next;
+                if (executor == null) {
+                    next = fn.apply(value);
+                } else {
+                    next = context.call(executor, () -> {
+                        checkCancellation(context);
+                        return fn.apply(value);
+                    });
+                }
                 return next == null ? null : context.run(next);
             }
         }.setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
@@ -764,7 +788,14 @@ public abstract class Task<T extends @Nullable Object> {
             /// {@inheritDoc}
             @Override
             public T execute(TaskExecutionContext context) throws Exception {
-                return context.run(callIfActive(context, executor, fn::get));
+                checkCancellation(context);
+                if (executor == null)
+                    return context.run(fn.get());
+                Task<T> child = context.call(executor, () -> {
+                    checkCancellation(context);
+                    return fn.get();
+                });
+                return context.run(child);
             }
         }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
@@ -937,25 +968,6 @@ public abstract class Task<T extends @Nullable Object> {
         binding.setWork(null);
         if (!binding.isRoot())
             executionBinding = Binding.FINISHED_CHILD;
-    }
-
-    /// Obtains this task's successful result and applies the continuation on its requested executor.
-    private <U extends @Nullable Object> U mapResult(TaskExecutionContext context, @Nullable Executor executor,
-                                                     ExceptionalFunction<T, U, ?> fn) throws Exception {
-        T value = context.run(this);
-        return callIfActive(context, executor, () -> fn.apply(value));
-    }
-
-    /// Checks cancellation on the submitting thread and again before a dispatched callback starts.
-    private static <V extends @Nullable Object> V callIfActive(TaskExecutionContext context, @Nullable Executor executor,
-                                                              Callable<V> callback) throws Exception {
-        checkCancellation(context);
-        if (executor == null)
-            return callback.call();
-        return context.call(executor, () -> {
-            checkCancellation(context);
-            return callback.call();
-        });
     }
 
     /// Stops a callback when its task tree is cancelled or its thread is interrupted.
