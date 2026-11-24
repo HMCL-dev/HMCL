@@ -21,7 +21,7 @@ public abstract class AbstractWizardDisplayer implements WizardDisplayer {
     /// Displays task progress and submits the wizard's execution to the serial business-task queue.
     @Override
     public void handleTask(SettingsMap settings, Task<?> task) {
-        Task<?> rootTask = task.withRunAsync(Schedulers.javafx(), this::navigateToSuccess);
+        Task<?> rootTask = task.thenRunAsync(Schedulers.javafx(), this::navigateToSuccess);
         TaskListPane pane = new TaskListPane();
         pane.setTask(rootTask);
         navigateTo(pane, Navigation.NavigationDirection.FINISH);

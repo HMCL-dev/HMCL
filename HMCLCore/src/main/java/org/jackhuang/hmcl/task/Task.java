@@ -461,49 +461,6 @@ public abstract class Task<T extends @Nullable Object> {
         }.setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
     }
 
-    /// Returns a task that runs `other` after success or ordinary failure, yielding its result.
-    /// Cancellation and errors propagate.
-    ///
-    /// @throws NullPointerException if `other` is null
-    public final <U extends @Nullable Object> Task<U> withComposeAsync(Task<U> other) {
-        Objects.requireNonNull(other);
-        return withComposeAsync(() -> other);
-    }
-
-    /// Returns a task that calls `fn` on the continuation's thread after success or ordinary failure
-    /// and runs the supplied task.
-    /// Cancellation and errors propagate.
-    public final <U extends @Nullable Object> Task<U> withComposeAsync(ExceptionalSupplier<Task<U>, ?> fn) {
-        return new Task<U>() {
-            /// {@inheritDoc}
-            @Override
-            public U execute(TaskExecutionContext context) throws Exception {
-                try {
-                    context.run(Task.this);
-                } catch (CancellationException e) {
-                    throw e;
-                } catch (Exception ignored) {
-                    // This continuation also runs after an ordinary failure.
-                }
-                context.checkCancellation();
-                return context.run(fn.get());
-            }
-        }.setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
-    }
-
-    /// Returns a task that runs `action` on the continuation's executor after success or ordinary failure.
-    /// Cancellation and errors propagate.
-    public <E extends Exception> Task<@Nullable Void> withRunAsync(ExceptionalRunnable<E> action) {
-        return withRunAsync(null, action);
-    }
-
-    /// Returns a task that runs `action` on `executor` after success or ordinary failure.
-    /// Cancellation and errors propagate.
-    public <E extends Exception> Task<@Nullable Void> withRunAsync(@Nullable Executor executor, ExceptionalRunnable<E> action) {
-        TaskName name = getCaller();
-        return withComposeAsync(() -> Task.<@Nullable Void>callableTask(executor, action.toCallable()).setName(name));
-    }
-
     /// Reports this task's result or failure to `action` on the continuation's thread.
     /// See [#whenCompleteAsync(Executor, ExceptionalBiConsumer)] for the returned task's outcome.
     public final Task<T> whenComplete(ExceptionalBiConsumer<? super @Nullable T, ? super @Nullable Throwable, ?> action) {
@@ -723,12 +680,7 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Creates a task that returns the value of `callable`, with an optional executor preference.
     public static <V extends @Nullable Object> Task<V> supplyAsync(@Nullable Executor executor, Callable<V> callable) {
-        return callableTask(executor, callable).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
-    }
-
-    /// Adapts a callable for execution as a task on its requested executor.
-    private static <V extends @Nullable Object> Task<V> callableTask(@Nullable Executor executor, Callable<V> callable) {
-        return new Task<>() {
+        return new Task<V>() {
             /// {@inheritDoc}
             @Override
             protected @Nullable Executor getExecutor() {
@@ -740,7 +692,7 @@ public abstract class Task<T extends @Nullable Object> {
             public V execute(TaskExecutionContext context) throws Exception {
                 return callable.call();
             }
-        };
+        }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Creates a task that calls `fn` on its own thread and returns the supplied child's result.

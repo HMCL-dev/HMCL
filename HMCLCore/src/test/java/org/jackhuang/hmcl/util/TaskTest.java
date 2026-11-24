@@ -267,26 +267,6 @@ public class TaskTest {
         }
     }
 
-    /// Implicit continuations run after ordinary exceptions but propagate cancellation and errors.
-    @Test
-    public void testWithCompose() {
-        AtomicBoolean bool = new AtomicBoolean();
-        boolean success = Task.supplyAsync(() -> {
-            throw new IllegalStateException();
-        }).withRunAsync(() -> {
-            bool.set(true);
-        }).test();
-
-        assertTrue(success, "Task should success because withRunAsync will ignore previous exception");
-        assertTrue(bool.get(), "withRunAsync should be executed");
-        for (Throwable source : List.of(new CancellationException(), new AssertionError())) {
-            Task<?> run = Task.failed(source).withRunAsync(() -> fail("Unexpected continuation"));
-            Task<?> compose = Task.failed(source).withComposeAsync(() -> fail("Unexpected continuation"));
-            assertSame(source, assertThrows(source.getClass(), run::run));
-            assertSame(source, assertThrows(source.getClass(), compose::run));
-        }
-    }
-
     @Test
     @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
     public void testThenAccept() {

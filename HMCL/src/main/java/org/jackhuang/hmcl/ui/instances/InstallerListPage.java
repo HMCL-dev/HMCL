@@ -110,7 +110,7 @@ public class InstallerListPage extends ListPaneBase<InstallerItem> {
                             publishedInstance -> repository.getDependency().removeComponentAsync(
                                     publishedInstance,
                                     component.getComponentType()))
-                    .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
+                    .whenCompleteAsync(Schedulers.javafx(), (@Nullable Void ignored, @Nullable Throwable exception) -> reloadCurrentInstance())
                     .start());
 
             getItems().add(component);
@@ -130,7 +130,7 @@ public class InstallerListPage extends ListPaneBase<InstallerItem> {
                             publishedInstance -> repository.getDependency().removeComponentAsync(
                                     publishedInstance,
                                     mark.componentType()))
-                    .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
+                    .whenCompleteAsync(Schedulers.javafx(), (@Nullable Void ignored, @Nullable Throwable exception) -> reloadCurrentInstance())
                     .start());
 
             getItems().add(installerItem);

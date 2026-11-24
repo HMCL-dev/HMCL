@@ -344,6 +344,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
         }, Schedulers.javafx());
     }
 
+    /// Prompts for mod files and reports which ones were added.
     public void add() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.add.title"));
@@ -368,7 +369,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
                     // Actually addMod will not throw exceptions because FileChooser has already filtered files.
                 }
             }
-        }).withRunAsync(Schedulers.javafx(), () -> {
+        }).thenRunAsync(Schedulers.javafx(), () -> {
             List<String> prompt = new ArrayList<>(1);
             if (!succeeded.isEmpty())
                 prompt.add(i18n("mods.add.success", String.join(", ", succeeded)));

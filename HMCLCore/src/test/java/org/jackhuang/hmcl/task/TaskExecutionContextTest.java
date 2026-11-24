@@ -143,8 +143,7 @@ final class TaskExecutionContextTest {
     @Test
     void preservesComposedChildResult() throws Exception {
         Task<String> supplied = Task.composeAsync(() -> Task.completed("child"));
-        Task<String> recovered = Task.failed(new IOException("Source failed")).withComposeAsync(supplied);
-        assertEquals("child", recovered.run());
+        assertEquals("child", supplied.run());
 
         Task<@Nullable String> child = Task.completed(null);
         Task<@Nullable String> composed = Task.completed(1).thenComposeAsync(child);
@@ -173,9 +172,7 @@ final class TaskExecutionContextTest {
         Task<Integer> source = Task.completed(1);
         @Nullable Task<String> missing = null;
         assertThrows(NullPointerException.class, () -> source.thenComposeAsync(missing));
-        assertThrows(NullPointerException.class, () -> source.withComposeAsync(missing));
         assertThrows(NullPointerException.class, source.thenComposeAsync(value -> missing)::run);
-        assertThrows(NullPointerException.class, Task.completed(1).withComposeAsync(() -> missing)::run);
         assertThrows(NullPointerException.class, Task.composeAsync(() -> missing)::run);
     }
 
@@ -800,18 +797,6 @@ final class TaskExecutionContextTest {
                     assertSame(caller, Thread.currentThread());
                 });
         assertSame(caller, task(Runnable::run, context -> context.run(continuation)).run());
-    }
-
-    /// The follow-up action remains visible while its continuation wrapper stays hidden.
-    @Test
-    void showsWithRunActionAsAChild() {
-        Task<?> source = Task.supplyAsync(() -> 1);
-        Task<?> continuation = source.withRunAsync(() -> {});
-        StageEvents events = new StageEvents();
-        continuation.addTaskListener(events);
-        assertTrue(continuation.test());
-        assertEquals(List.of(TaskSignificance.MODERATE, TaskSignificance.MAJOR, TaskSignificance.MODERATE),
-                events.completions.stream().map(event -> event.task().getSignificance()).toList());
     }
 
     /// A continuation's body inherits its parent's executor and dispatches the callback on the selected executor.

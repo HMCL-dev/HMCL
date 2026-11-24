@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.ui.construct.TaskDialogPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -172,6 +173,7 @@ public final class Instances {
         FXUtils.openFolder(gameInstance.getRunDirectory());
     }
 
+    /// Installs an instance from a local game manifest. Asset and library downloads are optional.
     public static void installFromJson(HMCLGameRepository repository, Path file) {
         GameInstanceManifest manifest;
         try {
@@ -204,18 +206,18 @@ public final class Instances {
                                 activeDraft.set(draft);
                                 return draft;
                             })
-                            .thenComposeAsync(draft -> Task.allOf(
-                                    gameDownloadTask,
-                                    Task.allOf(
-                                            new GameAssetDownloadTask(
-                                                    dependencyManager,
-                                                    newManifest,
-                                                    GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY,
-                                                    true),
-                                            new GameLibrariesTask(dependencyManager, newManifest, true))
-                                            .withRunAsync(() -> {
-                                                // ignore failure
-                                            })))
+                            .thenComposeAsync(draft -> {
+                                Task<@Nullable Void> optionalDownloads = Task.allOf(
+                                        new GameAssetDownloadTask(dependencyManager, newManifest,
+                                                GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
+                                        new GameLibrariesTask(dependencyManager, newManifest, true)
+                                ).handle((@Nullable var ignored, @Nullable var failure) -> {
+                                    if (failure != null && (failure instanceof CancellationException || !(failure instanceof Exception)))
+                                        Lang.rethrow(failure);
+                                    return null;
+                                });
+                                return Task.allOf(gameDownloadTask, optionalDownloads);
+                            })
                             .thenAcceptAsync(ignored -> {
                                 GameRepositoryDraft draft = activeDraft.get();
                                 if (draft == null) {

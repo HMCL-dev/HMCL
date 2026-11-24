@@ -298,6 +298,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
         }).start();
     }
 
+    /// Imports the resource packs, reports individual failures, and refreshes the list.
     public void addFiles(List<Path> files) {
         if (resourcePackManager == null) return;
 
@@ -311,7 +312,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
                     failures.add(file);
                 }
             }
-        }).withRunAsync(Schedulers.javafx(), () -> {
+        }).thenRunAsync(Schedulers.javafx(), () -> {
             if (!failures.isEmpty()) {
                 StringBuilder failure = new StringBuilder(i18n("resourcepack.add.failed"));
                 for (Path file: failures) {
