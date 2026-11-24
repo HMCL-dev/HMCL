@@ -9,9 +9,10 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -45,8 +46,19 @@ final class TaskExecution {
     /// Terminal snapshot that blocks further listener registration.
     private static final TaskListener @Unmodifiable [] FINISHED = {};
 
+    /// Atomically replaces [#taskListeners] when a registration changes.
+    private static final VarHandle TASK_LISTENERS;
+
+    static {
+        try {
+            TASK_LISTENERS = MethodHandles.lookup().findVarHandle(TaskExecution.class, "taskListeners", TaskListener[].class);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
     /// Current listeners in registration order. Each notification reads one snapshot.
-    private final AtomicReference<TaskListener @Unmodifiable []> taskListeners = new AtomicReference<>(NO_LISTENERS);
+    private volatile TaskListener @Unmodifiable [] taskListeners = NO_LISTENERS;
 
     /// Whether cancellation has been requested.
     private volatile boolean cancellationRequested;
@@ -150,35 +162,40 @@ final class TaskExecution {
 
     /// Registers a listener for subsequent notifications. Register before starting to observe the entire execution.
     void addTaskListener(TaskListener taskListener) {
-        taskListeners.updateAndGet(current -> {
+        while (true) {
+            TaskListener @Unmodifiable [] current = taskListeners;
             if (current == FINISHED)
-                return current;
+                return;
             TaskListener[] updated = Arrays.copyOf(current, current.length + 1);
             updated[current.length] = taskListener;
-            return updated;
-        });
+            if (TASK_LISTENERS.compareAndSet(this, current, updated))
+                return;
+        }
     }
 
     /// Removes the first matching registration from subsequent notifications.
     void removeTaskListener(TaskListener taskListener) {
-        taskListeners.updateAndGet(current -> {
+        while (true) {
+            TaskListener @Unmodifiable [] current = taskListeners;
             int index = 0;
             while (index < current.length && current[index] != taskListener)
                 index++;
             if (index == current.length)
-                return current;
-            if (current.length == 1)
-                return NO_LISTENERS;
-            TaskListener[] updated = new TaskListener[current.length - 1];
-            System.arraycopy(current, 0, updated, 0, index);
-            System.arraycopy(current, index + 1, updated, index, updated.length - index);
-            return updated;
-        });
+                return;
+            TaskListener[] updated = NO_LISTENERS;
+            if (current.length > 1) {
+                updated = new TaskListener[current.length - 1];
+                System.arraycopy(current, 0, updated, 0, index);
+                System.arraycopy(current, index + 1, updated, index, updated.length - index);
+            }
+            if (TASK_LISTENERS.compareAndSet(this, current, updated))
+                return;
+        }
     }
 
     /// Notifies a snapshot in registration order and reports each listener's failure independently.
     private void notifyListeners(Consumer<TaskListener> notification) {
-        for (TaskListener listener : taskListeners.get()) {
+        for (TaskListener listener : taskListeners) {
             try {
                 notification.accept(listener);
             } catch (Throwable e) {
@@ -267,7 +284,7 @@ final class TaskExecution {
         try {
             notifyListeners(listener -> listener.onExecutionFinished(root, success));
         } finally {
-            taskListeners.set(FINISHED);
+            taskListeners = FINISHED;
             synchronousCaller = null;
         }
     }
