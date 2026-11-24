@@ -584,7 +584,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
             wrapper.getChildren().setAll(this.graphic);
             wrapper.getStyleClass().add("card-no-padding");
 
-            FXUtils.onClicked(wrapper, () -> {
+            graphic.setOnAction(event -> {
                 RemoteAddon item = getItem();
                 if (item != null) {
                     Controllers.navigate(new DownloadPage(page, item, page.getInstanceOptional(), page.callback));

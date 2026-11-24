@@ -395,11 +395,11 @@ public class JFXDatePickerContent extends VBox {
     protected HBox createActions() {
         JFXButton cancelButton = new JFXButton(I18n.i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");
-        FXUtils.onClicked(cancelButton, () -> fireEvent(new DialogCloseEvent()));
+        cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
         JFXButton acceptButton = new JFXButton(I18n.i18n("button.ok"));
         acceptButton.getStyleClass().add("dialog-accept");
-        FXUtils.onClicked(acceptButton, () -> {
+        acceptButton.setOnAction(e -> {
             datePicker.setValue(valueProperty.get());
             fireEvent(new DialogCloseEvent());
         });

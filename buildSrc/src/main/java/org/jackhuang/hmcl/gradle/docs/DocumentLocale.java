@@ -49,6 +49,7 @@ public enum DocumentLocale {
     },
     JAPANESE("ja"),
     SPANISH("es"),
+    GERMAN("de"),
     RUSSIAN("ru"),
     UKRAINIAN("uk"),
     ;

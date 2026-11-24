@@ -869,7 +869,7 @@ public final class FXUtils {
 
     @Contract("null -> false")
     public static boolean isValidImage(@Nullable Image image) {
-        return image != null && !image.isError() && image.getWidth() > 0 && image.getHeight() > 0 && Math.abs(image.getWidth() - image.getHeight()) < 1;
+        return image != null && !image.isError() && image.getWidth() > 0 && image.getHeight() > 0;
     }
 
     @Contract("null -> false")

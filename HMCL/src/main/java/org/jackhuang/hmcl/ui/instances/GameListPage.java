@@ -89,7 +89,10 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         setSidebarBottom(new AdvancedListBox()
                 .addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.SETTINGS, this::modifyGlobalGameSettings));
 
-        setContent(new GameList());
+        GameList gameList = new GameList();
+        setContent(gameList);
+
+        addEventHandler(Navigator.NavigationEvent.NAVIGATED, e -> gameList.scrollToSelected());
 
         FXUtils.applyDragListener(this, file -> ModpackHelper.isFileModpackByExtension(file) || "json".equalsIgnoreCase(FileUtils.getNameWithoutExtension(file)), files -> {
             Path file = files.get(0);
@@ -215,6 +218,17 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             }
 
             setLoading(false);
+            scrollToSelected();
+        }
+
+        /// Scrolls the list view to the currently selected instance.
+        public void scrollToSelected() {
+            for (int i = 0; i < filteredList.size(); i++) {
+                if (filteredList.get(i).selectedProperty().get()) {
+                    getListView().scrollTo(i);
+                    break;
+                }
+            }
         }
 
         private Predicate<GameListItem> createPredicate(String searchText) {

@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.instances.GameInstanceIconDialog;
 import org.jackhuang.hmcl.ui.instances.GameInstancePage;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -561,9 +562,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 ));
 
                 bindInheritableRadioChoiceList(quickSublist, quickPlayItem, GameSettings::quickPlayProperty);
-                bindInheritableStringValue(multiplayerTextField.textProperty(), GameSettings::quickPlayMultiplayerProperty, multiplayerInheritanceButton);
-                bindInheritableStringValue(singleplayerTextField.textProperty(), GameSettings::quickPlaySingleplayerProperty, singleplayerInheritanceButton);
-                bindInheritableStringValue(realmsTextField.textProperty(), GameSettings::quickPlayRealmsProperty, realmsInheritanceButton);
+                bindInheritableText(multiplayerTextField.textProperty(), GameSettings::quickPlayMultiplayerProperty,
+                        Function.identity(), multiplayerInheritanceButton);
+                bindInheritableText(singleplayerTextField.textProperty(), GameSettings::quickPlaySingleplayerProperty,
+                        Function.identity(), singleplayerInheritanceButton);
+                bindInheritableText(realmsTextField.textProperty(), GameSettings::quickPlayRealmsProperty,
+                        Function.identity(), realmsInheritanceButton);
                 quickSublist.getContent().setAll(quickPlayItem);
             }
             gameSettings.getContent().add(quickSublist);
@@ -590,7 +594,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));
                     txtGameArgs.setPrefWidth(400);
                     gameArgsPane.setRight(txtGameArgs);
-                    bindIndependentTextField(gameArgsPane, txtGameArgs, GameSettings::gameArgumentsProperty);
+                    bindInheritableStringProperty(gameArgsPane, txtGameArgs.textProperty(), GameSettings::gameArgumentsProperty);
                 }
 
                 var environmentVariablesPane = new LinePane();
@@ -600,7 +604,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     var txtEnvironmentVariables = new JFXTextField();
                     txtEnvironmentVariables.setPrefWidth(400);
                     environmentVariablesPane.setRight(txtEnvironmentVariables);
-                    bindIndependentTextField(environmentVariablesPane, txtEnvironmentVariables, GameSettings::environmentVariablesProperty);
+                    bindInheritableStringProperty(environmentVariablesPane, txtEnvironmentVariables.textProperty(), GameSettings::environmentVariablesProperty);
                 }
 
                 var processPriorityPane = createInheritableButton(
@@ -654,7 +658,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 // txtJVMArgs.setPromptText(i18n("settings.advanced.jvm_args.prompt"));
                 txtJVMArgs.setPrefWidth(400);
                 jvmArgsPane.setRight(txtJVMArgs);
-                bindIndependentTextField(jvmArgsPane, txtJVMArgs, GameSettings::jvmOptionsProperty);
+                bindInheritableStringProperty(jvmArgsPane, txtJVMArgs.textProperty(), GameSettings::jvmOptionsProperty);
             }
 
             var deprecatedJvmMemorySettings = new ComponentSublist(() -> {
@@ -672,7 +676,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     rightBox.setAlignment(Pos.CENTER_RIGHT);
 
                     minMemoryPane.setRight(rightBox);
-                    bindIndependentIntegerTextField(minMemoryPane, txtMinMemory, GameSettings::minMemoryProperty);
+                    bindInheritableText(txtMinMemory.textProperty(), GameSettings::minMemoryProperty,
+                            Lang::toIntOrNull, addInheritanceButton(minMemoryPane));
                 }
 
                 var metaspacePane = new LinePane();
@@ -689,7 +694,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     rightBox.setAlignment(Pos.CENTER_RIGHT);
 
                     metaspacePane.setRight(rightBox);
-                    bindIndependentTextField(metaspacePane, txtMetaspace, GameSettings::permSizeProperty);
+                    bindInheritableStringProperty(metaspacePane, txtMetaspace.textProperty(), GameSettings::permSizeProperty);
                 }
 
                 return List.of(minMemoryPane, metaspacePane);
@@ -714,7 +719,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 txtPreLaunchCommand.setPromptText(i18n("settings.advanced.precall_command.prompt"));
                 txtPreLaunchCommand.setPrefWidth(400);
                 preLaunchCommandPane.setRight(txtPreLaunchCommand);
-                bindInheritableTextField(preLaunchCommandPane, txtPreLaunchCommand, GameSettings::preLaunchCommandProperty);
+                bindInheritableStringProperty(preLaunchCommandPane, txtPreLaunchCommand.textProperty(), GameSettings::preLaunchCommandProperty);
             }
 
             var wrapperPane = new LinePane();
@@ -725,7 +730,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 txtWrapper.setPromptText(i18n("settings.advanced.wrapper_launcher.prompt"));
                 txtWrapper.setPrefWidth(400);
                 wrapperPane.setRight(txtWrapper);
-                bindInheritableTextField(wrapperPane, txtWrapper, GameSettings::commandWrapperProperty);
+                bindInheritableStringProperty(wrapperPane, txtWrapper.textProperty(), GameSettings::commandWrapperProperty);
             }
 
             var postExitCommandPane = new LinePane();
@@ -736,7 +741,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 txtPostExitCommand.setPromptText(i18n("settings.advanced.post_exit_command.prompt"));
                 txtPostExitCommand.setPrefWidth(400);
                 postExitCommandPane.setRight(txtPostExitCommand);
-                bindInheritableTextField(postExitCommandPane, txtPostExitCommand, GameSettings::postExitCommandProperty);
+                bindInheritableStringProperty(postExitCommandPane, txtPostExitCommand.textProperty(), GameSettings::postExitCommandProperty);
             }
         }
 
@@ -1081,42 +1086,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         refresh.invalidated(setting);
     }
 
-    /// Binds a text field to a setting property with independent override state.
-    private void bindIndependentTextField(
-            LineComponent line,
-            JFXTextField textField,
-            Function<GameSettings, SettingProperty<String>> propertyGetter) {
-        IndependentSettingBinder.bindTextField(
-                isPresetSetting,
-                currentSetting,
-                line,
-                textField,
-                propertyGetter,
-                this::createInheritanceButton,
-                GameSettingsPage::updateInheritanceButton,
-                holder,
-                this::getEffectiveParentGameSettings,
-                activeParentSetting);
-    }
-
-    /// Binds an integer text field to a setting property with independent override state.
-    private void bindIndependentIntegerTextField(
-            LineComponent line,
-            JFXTextField textField,
-            Function<GameSettings, ? extends SettingProperty<Integer>> propertyGetter) {
-        IndependentSettingBinder.bindIntegerTextField(
-                isPresetSetting,
-                currentSetting,
-                line,
-                textField,
-                propertyGetter,
-                this::createInheritanceButton,
-                GameSettingsPage::updateInheritanceButton,
-                holder,
-                this::getEffectiveParentGameSettings,
-                activeParentSetting);
-    }
-
     /// Binds the windowed resolution selector to the width and height settings.
     private void bindWindowSizeComboBox(JFXComboBox<String> comboBox, @Nullable JFXButton inheritButton) {
         ObjectProperty<@Nullable InheritableProperty<Double>> activeWidthProperty = new SimpleObjectProperty<>();
@@ -1453,238 +1422,32 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
     }
 
-    /// Binds a text field to an inheritable string setting.
-    private void bindInheritableTextField(
-            LineComponent line,
-            JFXTextField textField,
-            Function<GameSettings, InheritableProperty<String>> propertyGetter) {
-        bindInheritableStringProperty(line, textField.textProperty(), propertyGetter);
+    /// Adds the instance override button to a setting row, or returns null on a preset page.
+    private @Nullable JFXButton addInheritanceButton(LineComponent line) {
+        if (isPresetSetting) {
+            return null;
+        }
+        JFXButton button = createInheritanceButton();
+        line.setTitleTrailing(button);
+        return button;
     }
 
-    /// Binds a string property to an inheritable string setting.
+    /// Displays the effective string in a setting row and enables an instance override on edit.
     private void bindInheritableStringProperty(
             LineComponent line,
-            Property<String> textProperty,
+            Property<@Nullable String> textProperty,
             Function<GameSettings, InheritableProperty<String>> propertyGetter) {
-        ObjectProperty<@Nullable InheritableProperty<String>> activeProperty = new SimpleObjectProperty<>();
-        ObjectProperty<@Nullable InheritableProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
-        final Holder<Boolean> updating = new Holder<>(false);
-        final Holder<InvalidationListener> refreshHolder = new Holder<>();
-        @Nullable JFXButton inheritButton = null;
-        if (!isPresetSetting) {
-            inheritButton = createInheritanceButton();
-            line.setTitleTrailing(inheritButton);
-        }
-        @Nullable JFXButton finalInheritButton = inheritButton;
-
-        InvalidationListener refresh = observable -> {
-            GameSettings setting = currentSetting.get();
-            updateParentInheritablePropertyListener(
-                    setting,
-                    activeParentProperty,
-                    propertyGetter,
-                    refreshHolder.value);
-            InheritableProperty<String> property = activeProperty.get();
-            if (setting == null || property == null || updating.value) {
-                return;
-            }
-
-            updating.value = true;
-            try {
-                textProperty.setValue(getEffectiveValue(setting, propertyGetter));
-                if (finalInheritButton != null) {
-                    updateInheritanceButton(finalInheritButton, !isPropertyOverridden(setting, property));
-                }
-            } finally {
-                updating.value = false;
-            }
-        };
-        InvalidationListener weakRefresh = holder.weak(refresh);
-        refreshHolder.value = weakRefresh;
-        activeParentSetting.addListener(weakRefresh);
-
-        textProperty.addListener((observable, oldValue, newValue) -> {
-            GameSettings setting = currentSetting.get();
-            InheritableProperty<String> property = activeProperty.get();
-            if (setting == null || property == null || updating.value) {
-                return;
-            }
-
-            updating.value = true;
-            try {
-                setPropertyOverridden(setting, property, true);
-                property.setValue(newValue != null ? newValue : "");
-                if (finalInheritButton != null) {
-                    updateInheritanceButton(finalInheritButton, false);
-                }
-            } finally {
-                updating.value = false;
-            }
-        });
-
-        if (finalInheritButton != null) {
-            finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                GameSettings setting = currentSetting.get();
-                InheritableProperty<String> property = activeProperty.get();
-                if (setting == null || property == null || updating.value) {
-                    return;
-                }
-
-                updating.value = true;
-                try {
-                    if (!isPropertyOverridden(setting, property)) {
-                        property.setValue(getEffectiveValue(setting, propertyGetter));
-                        setPropertyOverridden(setting, property, true);
-                    } else {
-                        setPropertyOverridden(setting, property, false);
-                    }
-                } finally {
-                    updating.value = false;
-                }
-                refresh.invalidated(property);
-                event.consume();
-            });
-        }
-
-        currentSetting.addListener((observable, oldValue, newValue) -> {
-            if (oldValue != null) {
-                oldValue.removeListener(weakRefresh);
-            }
-
-            InheritableProperty<String> oldProperty = activeProperty.get();
-            if (oldProperty != null) {
-                oldProperty.removeListener(weakRefresh);
-            }
-
-            InheritableProperty<String> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
-            activeProperty.set(newProperty);
-            if (newValue != null) {
-                newValue.addListener(weakRefresh);
-            }
-            if (newProperty != null) {
-                newProperty.addListener(weakRefresh);
-            }
-            refresh.invalidated(newValue);
-        });
-
-        S setting = currentSetting.get();
-        if (setting != null) {
-            InheritableProperty<String> property = propertyGetter.apply(setting);
-            activeProperty.set(property);
-            setting.addListener(weakRefresh);
-            property.addListener(weakRefresh);
-            refresh.invalidated(setting);
-        }
+        bindInheritableText(textProperty, propertyGetter, Function.identity(), addInheritanceButton(line));
     }
 
-    /// Binds a string value to an inheritable setting with an optional inheritance button.
-    private void bindInheritableStringValue(
-            Property<String> textProperty,
-            Function<GameSettings, InheritableProperty<String>> propertyGetter,
+    /// Binds an editor to the current setting and its resolved parent preset.
+    private <T extends @UnknownNullability Object> void bindInheritableText(
+            Property<@Nullable String> textProperty,
+            Function<GameSettings, InheritableProperty<T>> propertyGetter,
+            Function<String, T> parse,
             @Nullable JFXButton inheritButton) {
-        ObjectProperty<@Nullable InheritableProperty<String>> activeProperty = new SimpleObjectProperty<>();
-        ObjectProperty<@Nullable InheritableProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
-        final Holder<Boolean> updating = new Holder<>(false);
-        final Holder<InvalidationListener> refreshHolder = new Holder<>();
-
-        InvalidationListener refresh = observable -> {
-            GameSettings setting = currentSetting.get();
-            updateParentInheritablePropertyListener(
-                    setting,
-                    activeParentProperty,
-                    propertyGetter,
-                    refreshHolder.value);
-            InheritableProperty<String> property = activeProperty.get();
-            if (setting == null || property == null || updating.value) {
-                return;
-            }
-
-            updating.value = true;
-            try {
-                textProperty.setValue(getEffectiveValue(setting, propertyGetter));
-                if (inheritButton != null) {
-                    updateInheritanceButton(inheritButton, !isPropertyOverridden(setting, property));
-                }
-            } finally {
-                updating.value = false;
-            }
-        };
-        InvalidationListener weakRefresh = holder.weak(refresh);
-        refreshHolder.value = weakRefresh;
-        activeParentSetting.addListener(weakRefresh);
-
-        textProperty.addListener((observable, oldValue, newValue) -> {
-            GameSettings setting = currentSetting.get();
-            InheritableProperty<String> property = activeProperty.get();
-            if (setting == null || property == null || updating.value) {
-                return;
-            }
-
-            updating.value = true;
-            try {
-                setPropertyOverridden(setting, property, true);
-                property.setValue(newValue != null ? newValue : "");
-                if (inheritButton != null) {
-                    updateInheritanceButton(inheritButton, false);
-                }
-            } finally {
-                updating.value = false;
-            }
-        });
-
-        if (inheritButton != null) {
-            inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                GameSettings setting = currentSetting.get();
-                InheritableProperty<String> property = activeProperty.get();
-                if (setting == null || property == null || updating.value) {
-                    return;
-                }
-
-                updating.value = true;
-                try {
-                    if (!isPropertyOverridden(setting, property)) {
-                        property.setValue(getEffectiveValue(setting, propertyGetter));
-                        setPropertyOverridden(setting, property, true);
-                    } else {
-                        setPropertyOverridden(setting, property, false);
-                    }
-                } finally {
-                    updating.value = false;
-                }
-                refresh.invalidated(property);
-                event.consume();
-            });
-        }
-
-        currentSetting.addListener((observable, oldValue, newValue) -> {
-            if (oldValue != null) {
-                oldValue.removeListener(weakRefresh);
-            }
-
-            InheritableProperty<String> oldProperty = activeProperty.get();
-            if (oldProperty != null) {
-                oldProperty.removeListener(weakRefresh);
-            }
-
-            InheritableProperty<String> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
-            activeProperty.set(newProperty);
-            if (newValue != null) {
-                newValue.addListener(weakRefresh);
-            }
-            if (newProperty != null) {
-                newProperty.addListener(weakRefresh);
-            }
-            refresh.invalidated(newValue);
-        });
-
-        S setting = currentSetting.get();
-        if (setting != null) {
-            InheritableProperty<String> property = propertyGetter.apply(setting);
-            activeProperty.set(property);
-            setting.addListener(weakRefresh);
-            property.addListener(weakRefresh);
-            refresh.invalidated(setting);
-        }
+        IndependentSettingBinder.bindText(currentSetting, textProperty, propertyGetter, parse, inheritButton,
+                GameSettingsPage::updateInheritanceButton, holder, this::getEffectiveParentGameSettings, activeParentSetting);
     }
 
     /// Binds the instance isolation switch to the current instance setting.
@@ -1749,10 +1512,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
     }
 
-    /// Binds the running directory editor to the source selected by version isolation.
+    /// Displays the effective running directory and enables version isolation when a new
+    /// path is entered for an instance. Modpacks always display their fixed directory.
     private void bindRunningDirectoryProperty(
             LineComponent line,
-            Property<String> textProperty,
+            Property<@Nullable String> textProperty,
             Node editor) {
         if (isPresetSetting) {
             bindInheritableStringProperty(line, textProperty, GameSettings::runningDirectoryProperty);
@@ -1766,7 +1530,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         line.setTitleTrailing(inheritButton);
 
         InvalidationListener refresh = observable -> {
-            GameSettings setting = currentSetting.get();
+            @Nullable GameSettings setting = currentSetting.get();
             updateParentInheritablePropertyListener(setting, activeParentProperty, GameSettings::runningDirectoryProperty, refreshHolder.value);
             if (!(setting instanceof GameSettings.Instance instance) || updating.value) {
                 return;
@@ -1781,14 +1545,14 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 if (currentInstanceModpack) {
                     runningDirectory = getCurrentInstanceVersionRoot();
                 } else if (useInstanceRunningDirectory) {
-                    String value = instance.runningDirectoryProperty().getValue();
+                    @Nullable String value = instance.runningDirectoryProperty().getValue();
                     runningDirectory = value != null ? value : instance.runningDirectoryProperty().defaultValue();
                 } else {
                     runningDirectory = getParentValue(instance, GameSettings::runningDirectoryProperty);
                 }
 
                 textProperty.setValue(runningDirectory);
-                editor.setDisable(currentInstanceModpack || !useInstanceRunningDirectory);
+                editor.setDisable(currentInstanceModpack);
                 updateInheritanceButton(inheritButton, !useInstanceRunningDirectory);
                 inheritButton.setDisable(currentInstanceModpack);
             } finally {
@@ -1800,7 +1564,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         activeParentSetting.addListener(weakRefresh);
 
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            GameSettings setting = currentSetting.get();
+            @Nullable GameSettings setting = currentSetting.get();
             if (!(setting instanceof GameSettings.Instance instance) || updating.value || isCurrentInstanceModpack()) {
                 return;
             }
@@ -1824,18 +1588,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         });
 
         textProperty.addListener((observable, oldValue, newValue) -> {
-            GameSettings setting = currentSetting.get();
-            if (!(setting instanceof GameSettings.Instance instance)
-                    || updating.value
-                    || isCurrentInstanceModpack()
-                    || !instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
+            @Nullable GameSettings setting = currentSetting.get();
+            if (!(setting instanceof GameSettings.Instance instance) || updating.value || isCurrentInstanceModpack()) {
                 return;
             }
 
             updating.value = true;
             try {
-                instance.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
                 instance.runningDirectoryProperty().setValue(newValue != null ? newValue : "");
+                instance.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+                updateInheritanceButton(inheritButton, false);
             } finally {
                 updating.value = false;
             }
@@ -1854,7 +1616,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             refresh.invalidated(newValue);
         });
 
-        S setting = currentSetting.get();
+        @Nullable S setting = currentSetting.get();
         if (setting instanceof GameSettings.Instance instance) {
             instance.addListener(weakRefresh);
             refresh.invalidated(setting);
