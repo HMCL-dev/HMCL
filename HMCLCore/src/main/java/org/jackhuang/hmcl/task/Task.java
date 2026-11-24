@@ -19,10 +19,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -68,12 +65,6 @@ public abstract class Task<T extends @Nullable Object> {
             throw new ExceptionInInitializerError(e);
         }
     }
-
-    /// Prefix identifying framework frames excluded from generated task names.
-    private static final String PACKAGE_PREFIX = Task.class.getPackageName() + ".";
-
-    /// Captures the call site when a task factory assigns a name.
-    private static final StackWalker WALKER = StackWalker.getInstance();
 
     /// Optional name used for logging and display.
     private @Nullable TaskName name;
@@ -882,12 +873,21 @@ public abstract class Task<T extends @Nullable Object> {
         throw (E) failure;
     }
 
+    /// Prefix identifying framework frames excluded from generated task names.
+    private static final String PACKAGE_PREFIX = Task.class.getPackageName() + ".";
+
     /// Captures the first caller outside the task package for use as a task name.
     private static TaskName getCaller() {
-        return WALKER.walk(frames -> frames.filter(frame -> !frame.getClassName().startsWith(PACKAGE_PREFIX))
-                .findFirst()
-                .<TaskName>map(frame -> new TaskName.CallSite(frame.toStackTraceElement()))
-                .orElseGet(() -> new TaskName.Simple("Unknown")));
+        return StackWalker.getInstance().walk(stream -> {
+            Iterator<StackWalker.StackFrame> it = stream.iterator();
+            while (it.hasNext()) {
+                StackWalker.StackFrame frame = it.next();
+                if (!frame.getClassName().startsWith(PACKAGE_PREFIX)) {
+                    return new TaskName.CallSite(frame.toStackTraceElement());
+                }
+            }
+            return new TaskName.Simple("Unknown");
+        });
     }
 
     /// Execution state published by the task executor.
