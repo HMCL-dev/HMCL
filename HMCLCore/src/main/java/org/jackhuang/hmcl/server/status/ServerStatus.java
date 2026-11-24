@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public record ServerStatus(
@@ -21,7 +22,7 @@ public record ServerStatus(
         @NotNull PlayerList playerList,
         @NotNull JsonElement description,
         @Nullable String favicon,
-        @Nullable ServerModList modList
+        @Nullable ServerStatus.ServerModType modType
 ) {
     public record ProtocolVersion(
             @NotNull VersionType versionType,
@@ -66,12 +67,12 @@ public record ServerStatus(
         }
     }
 
-    public record ServerModList(
-            @Nullable String type,
-            @NotNull List<Mod> modList
+    public record ServerModType(
+            @Nullable String displayType,
+            @Nullable Set<Mod> modList
     ) {
         public record Mod(
-                @NotNull String modId,
+                @NotNull String name,
                 @NotNull String version
         ) {
 

@@ -10,19 +10,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @see <a href="https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping">Java Edition protocol/Server List Ping</a>
-/// @see <a href="https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Minecraft_Forge_Handshake">JMinecraft Forge Handshake</a>
+/// @see <a href="https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Minecraft_Forge_Handshake#Changes_to_Server_List_Ping">JMinecraft Forge Handshake</a>
+/// @see <a href="https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Minecraft_Forge_Handshake#Changes_to_Server_List_Ping_2">JMinecraft Forge Handshake</a>
 // Supported Version 1.7+
 public final class ModernServerStatusPinger implements ServerStatusPinger {
     static final ModernServerStatusPinger INSTANCE = new ModernServerStatusPinger();
     private static final int PROTOCOL_NUMBER = 777; // 26.3 protocol number
+    private static final String FORGE = "Forge";
+    private static final String NEO_FORGED = "NeoForged";
 
     private ModernServerStatusPinger() {
 
@@ -82,7 +82,7 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
                 parsePlayerList(statusJsonObject.get("players")),
                 Objects.requireNonNullElse(statusJsonObject.get("description"), JsonNull.INSTANCE),
                 parseSererFavicon(statusJsonObject.get("favicon")),
-                parseServerModList(statusJsonObject.get("modinfo"))
+                parseServerModType(statusJsonObject)
         );
     }
 
@@ -98,31 +98,60 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
         }
     }
 
-    private ServerStatus.@Nullable ServerModList parseServerModList(JsonElement modinfoElement) {
-        if (modinfoElement == null || !modinfoElement.isJsonObject()) {
-            return null;
-        }
-
-        JsonObject asJsonObject = modinfoElement.getAsJsonObject();
-        List<ServerStatus.ServerModList.Mod> modList = new ArrayList<>();
-        if (asJsonObject.get("modList") instanceof JsonArray jArray) {
-            for (JsonElement element : jArray) {
-                if (element instanceof JsonObject jsonObject
-                        && jsonObject.get("modid") instanceof JsonPrimitive modidPrimitive
-                        && jsonObject.get("version") instanceof JsonPrimitive versionPrimitive
-                ) {
-                    modList.add(new ServerStatus.ServerModList.Mod(
-                            modidPrimitive.getAsString(),
-                            versionPrimitive.getAsString()
-                    ));
+    private ServerStatus.@Nullable ServerModType parseServerModType(@NotNull JsonObject statusJsonObject) {
+        System.out.println(statusJsonObject);
+        if (statusJsonObject.get("modinfo") instanceof JsonObject modinfoObject) {
+            Set<ServerStatus.ServerModType.Mod> modList = new LinkedHashSet<>();
+            if (modinfoObject.get("modList") instanceof JsonArray jArray) {
+                for (JsonElement element : jArray) {
+                    if (element instanceof JsonObject jsonObject
+                            && jsonObject.get("modid") instanceof JsonPrimitive modidPrimitive
+                            && jsonObject.get("version") instanceof JsonPrimitive versionPrimitive
+                    ) {
+                        modList.add(new ServerStatus.ServerModType.Mod(
+                                modidPrimitive.getAsString(),
+                                versionPrimitive.getAsString()
+                        ));
+                    }
                 }
             }
+            String type = null;
+            if (modinfoObject.get("type") instanceof JsonPrimitive primitive) {
+                type = primitive.getAsString();
+            }
+
+            return new ServerStatus.ServerModType(type, modList);
         }
-        String type = null;
-        if (asJsonObject.get("type") instanceof JsonPrimitive primitive) {
-            type = primitive.getAsString();
+
+        boolean containsIsModdedElement = false;
+        if (statusJsonObject.get("isModded") instanceof JsonPrimitive isModdedPrimitive) {
+            containsIsModdedElement = isModdedPrimitive.getAsBoolean();
         }
-        return new ServerStatus.ServerModList(type, modList);
+
+        if (statusJsonObject.get("forgeData") instanceof JsonObject forgeDataObject) {
+            Set<ServerStatus.ServerModType.Mod> modList = new LinkedHashSet<>();
+            if (forgeDataObject.get("mods") instanceof JsonArray jArray) {
+                for (JsonElement element : jArray) {
+                    if (element instanceof JsonObject jsonObject
+                            && jsonObject.get("modId") instanceof JsonPrimitive modIdPrimitive
+                            && jsonObject.get("modmarker") instanceof JsonPrimitive modmarkerPrimitive
+                    ) {
+                        modList.add(new ServerStatus.ServerModType.Mod(
+                                modIdPrimitive.getAsString(),
+                                modmarkerPrimitive.getAsString()
+                        ));
+                    }
+                }
+            }
+
+            if (forgeDataObject.get("d") instanceof JsonPrimitive dPrimitive) {
+                modList.addAll(decodeForgeDataD(dPrimitive.getAsString()));
+            }
+
+            return new ServerStatus.ServerModType(containsIsModdedElement ? NEO_FORGED : FORGE, modList);
+        }
+
+        return null;
     }
 
     private @NotNull ServerStatus.ProtocolVersion parseProtocolVersion(@Nullable JsonElement protocolVersionElement) {
@@ -292,5 +321,9 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
             value = (value << 8) | (b & 0xFF);
         }
         return value;
+    }
+
+    private @NotNull Set<ServerStatus.ServerModType.Mod> decodeForgeDataD(@NotNull String dInput) {
+        return Set.of();
     }
 }

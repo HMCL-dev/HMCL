@@ -1395,25 +1395,34 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
         }
 
         private void addServerTypeInfo(@NotNull ServerStatus status, @NotNull VBox content) {
-            ServerStatus.ServerModList modList = status.modList();
-            String modsTooltip = null;
+            ServerStatus.ServerModType modType = status.modType();
+
+            if (modType == null) {
+                content.getChildren().add(createDescriptionRow(i18n("server.type"), i18n("server.type.vanilla"), null, new Insets(0, 4, 0, 4)));
+                return;
+            }
+
+            if (modType.modList() == null || modType.modList().isEmpty()) {
+                content.getChildren().add(createDescriptionRow(i18n("server.type"), modType.displayType() == null ? i18n("server.type.unknown") : modType.displayType(), null, new Insets(0, 4, 0, 4)));
+
+                return;
+            }
+
             int showCount = 15;
 
-            if (modList != null && !modList.modList().isEmpty()) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(String.join("\n", modList.modList().stream()
-                        .limit(showCount)
-                        .map(it -> it.modId() + " - " + it.version())
-                        .toList())
-                );
-                if (showCount < modList.modList().size()) {
-                    sb.append("\n");
-                    sb.append(i18n("server.and_more_mods", String.format("%,d", modList.modList().size() - showCount)));
-                }
 
-                modsTooltip = sb.toString();
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.join("\n", modType.modList().stream()
+                    .limit(showCount)
+                    .map(it -> it.name() + " - " + it.version())
+                    .toList())
+            );
+            if (showCount < modType.modList().size()) {
+                sb.append("\n");
+                sb.append(i18n("server.and_more_mods", String.format("%,d", modType.modList().size() - showCount)));
             }
-            content.getChildren().add(createDescriptionRow(i18n("server.type"), modList != null ? i18n("server.type.mod", modList.type() == null ? i18n("server.type.unknown") : modList.type(), modList.modList().size()) : i18n("server.type.vanilla"), modsTooltip, new Insets(0, 4, 0, 4)));
+
+            content.getChildren().add(createDescriptionRow(i18n("server.type"), i18n("server.type.mod.counted", modType.displayType() == null ? i18n("server.type.unknown") : modType.displayType(), modType.modList().size()), sb.toString(), new Insets(0, 4, 0, 4)));
         }
 
         private void onClose() {
