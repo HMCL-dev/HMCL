@@ -355,7 +355,7 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
     private @NotNull Set<ServerStatus.ServerModType.Mod> decodeForgeDataD(@NotNull String dInput) {
         Set<ServerStatus.ServerModType.Mod> mods = new LinkedHashSet<>();
         if (dInput.length() < 2) return mods;
-        try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(decodeOptimizedFromForge(dInput)))){
+        try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(decodeOptimizedFromForge(dInput)))) {
 
             in.readBoolean();                      // truncated
             int modCount = in.readUnsignedShort(); // modCount
