@@ -104,7 +104,7 @@ public interface TaskExecutionContext {
         Set<Task<?>> seen = Collections.newSetFromMap(new IdentityHashMap<>());
         List<T> results = new ArrayList<>(batch.size());
         @Nullable Throwable failure = null;
-        for (int start = 0; start < batch.size();) {
+        for (int start = 0; start < batch.size(); ) {
             if (isCancelled())
                 break;
             int end = start + Math.min(maxConcurrency, batch.size() - start);
@@ -132,6 +132,23 @@ public interface TaskExecutionContext {
         if (isCancelled())
             throw TaskExecution.batchCancellation();
         return results;
+    }
+
+    /// Runs independent children concurrently where their executors allow, reusing completed
+    /// outcomes as in [#run(Task)]. A duplicate task instance or a child failure fails the
+    /// batch. Other children can still run. The first observed failure is reported, with errors
+    /// taking precedence.
+    ///
+    /// Cancellation or interruption stops admission. The batch waits for all admitted children
+    /// and preserves the caller's interrupt status. Unsubmitted children remain available for reuse.
+    ///
+    /// @return a mutable list of successful results in the input's iteration order
+    /// @throws InterruptedException if the calling thread is interrupted during admission or while waiting
+    /// @throws Exception if a child fails or the task tree is cancelled
+    @SuppressWarnings("unchecked")
+    default <T extends @Nullable Object> List<T> runAll(Task<? extends T>... tasks) throws Exception {
+        //noinspection NullableProblems
+        return runAll(List.of(tasks));
     }
 
     /// Runs the children as a batch and waits for all of them, even if one fails.
