@@ -63,7 +63,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
-public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPackInfoObject> implements WorldManagePage.WorldRefreshable {
+public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPackInfoObject> implements WorldManagePage.WorldRefreshable, SearchablePage {
     /// Switches between toolbar modes.
     private final TransitionPane toolbarPane = new TransitionPane();
     /// Actions available while browsing.
@@ -157,29 +157,20 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
                     searchPause.playFromStart();
                 }
             });
-            JFXButton closeSearchBar = createToolbarButton(null, SVG.CLOSE,
-                    () -> {
-                        changeToolbar(normalToolbar);
-
-                        searchField.clear();
-                        searchPause.stop();
-
-                        isSearching.set(false);
-                        filteredItems.setPredicate(null);
-                    });
-            FXUtils.onEscPressed(searchField, closeSearchBar::fire);
+            JFXButton closeSearchBar = createToolbarButton(null, SVG.CLOSE, this::closeSearch);
+            FXUtils.onEscPressed(searchField, this::closeSearch);
             searchBar.getChildren().addAll(searchField, closeSearchBar);
 
             addEventFilter(KeyEvent.KEY_PRESSED, e -> {
                 if (e.isShortcutDown() && e.getCode() == KeyCode.F) {
-                    changeToolbar(searchBar);
+                    openSearch();
                     e.consume();
                 } else if (e.getCode() == KeyCode.ESCAPE) {
                     if (listView.getSelectionModel().getSelectedItem() != null) {
                         listView.getSelectionModel().clearSelection();
                         e.consume();
-                    } else if (isSearching.get()) {
-                        closeSearchBar.fire();
+                    } else if (isSearchBarVisible()) {
+                        closeSearch();
                         e.consume();
                     }
                 }
@@ -313,6 +304,27 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
                 return predicate.test(item.getTitle()) || predicate.test(item.getSubtitle());
             });
         }
+    }
+
+    @Override
+    public void openSearch() {
+        changeToolbar(searchBar);
+    }
+
+    @Override
+    public boolean isSearchBarVisible() {
+        return toolbarPane.getCurrentNode() == searchBar;
+    }
+
+    @Override
+    public void closeSearch() {
+        changeToolbar(normalToolbar);
+
+        searchField.clear();
+        searchPause.stop();
+
+        isSearching.set(false);
+        filteredItems.setPredicate(null);
     }
 
     /// Shows the requested toolbar and focuses the search input when appropriate.

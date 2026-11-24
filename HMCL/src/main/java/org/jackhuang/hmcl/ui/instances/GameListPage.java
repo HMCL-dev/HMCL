@@ -101,7 +101,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             if (e.isShortcutDown() && e.getCode() == KeyCode.F) {
                 gameList.openSearch();
                 e.consume();
-            } else if (e.getCode() == KeyCode.ESCAPE && gameList.isSearching()) {
+            } else if (e.getCode() == KeyCode.ESCAPE && gameList.isSearchBarVisible()) {
                 gameList.closeSearch();
                 e.consume();
             }
@@ -127,7 +127,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         return state.getReadOnlyProperty();
     }
 
-    private static class GameList extends ListPaneBase<GameListItem> {
+    private static class GameList extends ListPaneBase<GameListItem> implements SearchablePage {
         /// Switches between toolbar modes.
         private final TransitionPane toolbarPane = new TransitionPane();
         /// Actions available while browsing.
@@ -289,6 +289,11 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         /// Returns whether the search mechanism is currently active.
         public boolean isSearching() {
             return isSearching.get();
+        }
+
+        @Override
+        public boolean isSearchBarVisible() {
+            return toolbarPane.getCurrentNode() == searchBar;
         }
 
         /// Closes the search bar and resets the filter.

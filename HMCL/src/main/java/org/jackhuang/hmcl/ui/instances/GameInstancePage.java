@@ -9,6 +9,8 @@ import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.event.Event;
 import javafx.event.EventType;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -110,6 +112,26 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
             if (current != null) {
                 // Re-resolve so subscribed tabs reload from the current snapshot.
                 this.instance.set(current.refreshed());
+            }
+        });
+
+        addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            TabItem<?> selected = tabController.getSelectedTab();
+            if (selected != null && selected.isInitialized() && selected.getNode() instanceof SearchablePage page) {
+                if (e.isShortcutDown() && e.getCode() == KeyCode.F) {
+                    page.openSearch();
+                    e.consume();
+                }
+            }
+        });
+
+        addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+            TabItem<?> selected = tabController.getSelectedTab();
+            if (selected != null && selected.isInitialized() && selected.getNode() instanceof SearchablePage page) {
+                if (e.getCode() == KeyCode.ESCAPE && page.isSearchBarVisible()) {
+                    page.closeSearch();
+                    e.consume();
+                }
             }
         });
 
