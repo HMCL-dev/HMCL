@@ -99,7 +99,6 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
     }
 
     private ServerStatus.@Nullable ServerModType parseServerModType(@NotNull JsonObject statusJsonObject) {
-        System.out.println(statusJsonObject);
         if (statusJsonObject.get("modinfo") instanceof JsonObject modinfoObject) {
             Set<ServerStatus.ServerModType.Mod> modList = new LinkedHashSet<>();
             if (modinfoObject.get("modList") instanceof JsonArray jArray) {
@@ -323,7 +322,63 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
         return value;
     }
 
+    private static int read15(String s, int[] pos) {
+        return pos[0] >= s.length() ? 0 : s.charAt(pos[0]++) & 0x7FFF;
+    }
+
+    private static byte[] decodeOptimizedFromForge(String s) {
+        int[] pos = {0};
+        int length = read15(s, pos) | (read15(s, pos) << 15);
+        byte[] out = new byte[length];
+        int outIndex = 0, bitBuffer = 0, bitCount = 0;
+
+        while (outIndex < length) {
+            if (pos[0] >= s.length()) break;
+            bitBuffer |= read15(s, pos) << bitCount;
+            bitCount += 15;
+            while (bitCount >= 8 && outIndex < length) {
+                out[outIndex++] = (byte) (bitBuffer & 0xFF);
+                bitBuffer >>>= 8;
+                bitCount -= 8;
+            }
+        }
+        return out;
+    }
+
+    private String readUtf(@NotNull DataInputStream in) throws IOException {
+        int len = readVarInt(in);
+        byte[] bytes = new byte[len];
+        in.readFully(bytes);
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
     private @NotNull Set<ServerStatus.ServerModType.Mod> decodeForgeDataD(@NotNull String dInput) {
-        return Set.of();
+        Set<ServerStatus.ServerModType.Mod> mods = new LinkedHashSet<>();
+        if (dInput.length() < 2) return mods;
+        try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(decodeOptimizedFromForge(dInput)))){
+
+            in.readBoolean();                      // truncated
+            int modCount = in.readUnsignedShort(); // modCount
+
+            for (int i = 0; i < modCount; i++) {
+                int flags = readVarInt(in);
+                int channelCount = flags >>> 1;
+                boolean isServerOnly = (flags & 1) != 0;
+
+                String modid = readUtf(in);
+                String marker = isServerOnly ? "" : readUtf(in);
+
+                for (int j = 0; j < channelCount; j++) {
+                    readUtf(in);              // channel name
+                    readUtf(in);              // channel version
+                    in.readBoolean();         // required
+                }
+
+                mods.add(new ServerStatus.ServerModType.Mod(modid, marker));
+            }
+        } catch (IOException e) {
+            LOG.error("Error while decoding forge data d.", e);
+        }
+        return mods;
     }
 }
