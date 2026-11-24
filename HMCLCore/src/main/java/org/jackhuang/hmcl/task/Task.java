@@ -312,8 +312,6 @@ public abstract class Task<T extends @Nullable Object> {
             public U execute(TaskExecutionContext context) throws Exception {
                 T value = context.run(Task.this);
                 checkCancellation(context);
-                if (executor == null)
-                    return fn.apply(value);
                 return context.call(executor, () -> {
                     checkCancellation(context);
                     return fn.apply(value);
@@ -423,8 +421,6 @@ public abstract class Task<T extends @Nullable Object> {
             public U execute(TaskExecutionContext context) throws Exception {
                 T value = context.run(Task.this);
                 checkCancellation(context);
-                if (executor == null)
-                    return context.run(fn.apply(value));
                 Task<U> next = context.call(executor, () -> {
                     checkCancellation(context);
                     return fn.apply(value);
@@ -456,15 +452,10 @@ public abstract class Task<T extends @Nullable Object> {
             public @Nullable U execute(TaskExecutionContext context) throws Exception {
                 T value = context.run(Task.this);
                 checkCancellation(context);
-                @Nullable Task<U> next;
-                if (executor == null) {
-                    next = fn.apply(value);
-                } else {
-                    next = context.call(executor, () -> {
-                        checkCancellation(context);
-                        return fn.apply(value);
-                    });
-                }
+                @Nullable Task<U> next = context.call(executor, () -> {
+                    checkCancellation(context);
+                    return fn.apply(value);
+                });
                 return next == null ? null : context.run(next);
             }
         }.setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
@@ -789,8 +780,6 @@ public abstract class Task<T extends @Nullable Object> {
             @Override
             public T execute(TaskExecutionContext context) throws Exception {
                 checkCancellation(context);
-                if (executor == null)
-                    return context.run(fn.get());
                 Task<T> child = context.call(executor, () -> {
                     checkCancellation(context);
                     return fn.get();
