@@ -274,18 +274,18 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Returns a task that applies `fn` to the successful result on the continuation's thread.
-    public <U extends @Nullable Object, E extends Exception> Task<U> thenApply(ExceptionalFunction<T, U, E> fn) {
+    public <U extends @Nullable Object> Task<U> thenApply(ExceptionalFunction<T, U, ?> fn) {
         return thenApplyAsync(null, fn);
     }
 
     /// Returns a task that applies `fn` to the successful result on the default task scheduler.
-    public <U extends @Nullable Object, E extends Exception> Task<U> thenApplyAsync(ExceptionalFunction<T, U, E> fn) {
+    public <U extends @Nullable Object> Task<U> thenApplyAsync(ExceptionalFunction<T, U, ?> fn) {
         return thenApplyAsync(Schedulers.tasks(), fn);
     }
 
     /// Returns a task that applies `fn` to the successful result on `executor`,
     /// or on the continuation's thread if `executor` is null.
-    public <U extends @Nullable Object, E extends Exception> Task<U> thenApplyAsync(@Nullable Executor executor, ExceptionalFunction<T, U, E> fn) {
+    public <U extends @Nullable Object> Task<U> thenApplyAsync(@Nullable Executor executor, ExceptionalFunction<T, U, ?> fn) {
         return new Task<U>() {
             /// {@inheritDoc}
             @Override
@@ -301,18 +301,18 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Returns a task that passes the successful result to `action` on the continuation's thread.
-    public <E extends Exception> Task<@Nullable Void> thenAccept(ExceptionalConsumer<T, E> action) {
+    public Task<@Nullable Void> thenAccept(ExceptionalConsumer<T, ?> action) {
         return thenAcceptAsync(null, action);
     }
 
     /// Returns a task that passes the successful result to `action` on the default task scheduler.
-    public <E extends Exception> Task<@Nullable Void> thenAcceptAsync(ExceptionalConsumer<T, E> action) {
+    public Task<@Nullable Void> thenAcceptAsync(ExceptionalConsumer<T, ?> action) {
         return thenAcceptAsync(Schedulers.tasks(), action);
     }
 
     /// Returns a task that passes the successful result to `action` on `executor`,
     /// or on the continuation's thread if `executor` is null.
-    public <E extends Exception> Task<@Nullable Void> thenAcceptAsync(@Nullable Executor executor, ExceptionalConsumer<T, E> action) {
+    public Task<@Nullable Void> thenAcceptAsync(@Nullable Executor executor, ExceptionalConsumer<T, ?> action) {
         return thenApplyAsync(executor, result -> {
             action.accept(result);
             return null;
@@ -320,18 +320,18 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Returns a task that runs `action` on the continuation's thread after this task succeeds.
-    public <E extends Exception> Task<@Nullable Void> thenRun(ExceptionalRunnable<E> action) {
+    public Task<@Nullable Void> thenRun(ExceptionalRunnable<?> action) {
         return thenRunAsync(null, action);
     }
 
     /// Returns a task that runs `action` on the default task scheduler after this task succeeds.
-    public <E extends Exception> Task<@Nullable Void> thenRunAsync(ExceptionalRunnable<E> action) {
+    public Task<@Nullable Void> thenRunAsync(ExceptionalRunnable<?> action) {
         return thenRunAsync(Schedulers.tasks(), action);
     }
 
     /// Returns a task that runs `action` after this task succeeds, on `executor`
     /// or on the continuation's thread if `executor` is null.
-    public <E extends Exception> Task<@Nullable Void> thenRunAsync(@Nullable Executor executor, ExceptionalRunnable<E> action) {
+    public Task<@Nullable Void> thenRunAsync(@Nullable Executor executor, ExceptionalRunnable<?> action) {
         return thenAcceptAsync(executor, ignored -> action.run());
     }
 
@@ -381,20 +381,20 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Returns a task that maps the successful result to a child on the continuation's thread and runs that child.
     /// Use [#thenComposeOptional(ExceptionalFunction)] if `fn` can return a null child.
-    public <U extends @Nullable Object, E extends Exception> Task<U> thenCompose(ExceptionalFunction<T, Task<U>, E> fn) {
+    public <U extends @Nullable Object> Task<U> thenCompose(ExceptionalFunction<T, Task<U>, ?> fn) {
         return thenComposeAsync(null, fn);
     }
 
     /// Returns a task that maps the successful result to a child on the default task scheduler,
     /// then runs that child with its own or the continuation's executor.
-    public <U extends @Nullable Object, E extends Exception> Task<U> thenComposeAsync(ExceptionalFunction<T, Task<U>, E> fn) {
+    public <U extends @Nullable Object> Task<U> thenComposeAsync(ExceptionalFunction<T, Task<U>, ?> fn) {
         return thenComposeAsync(Schedulers.tasks(), fn);
     }
 
     /// Returns a task that maps the successful result to a child on `executor`,
     /// or on the continuation's thread if `executor` is null, then runs that child.
     /// The child inherits the continuation's executor unless it requests its own.
-    public <U extends @Nullable Object, E extends Exception> Task<U> thenComposeAsync(@Nullable Executor executor, ExceptionalFunction<T, Task<U>, E> fn) {
+    public <U extends @Nullable Object> Task<U> thenComposeAsync(@Nullable Executor executor, ExceptionalFunction<T, Task<U>, ?> fn) {
         return new Task<U>() {
             /// {@inheritDoc}
             @Override
