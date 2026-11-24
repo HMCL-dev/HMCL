@@ -117,7 +117,8 @@ public final class NativePatcher {
             return manifest;
 
         if (arch == Architecture.ARM64 && (os == OperatingSystem.MACOS || os == OperatingSystem.WINDOWS)
-                && gameVersion.compareTo("1.19") >= 0)
+                && gameVersion.compareTo("1.19") >= 0
+                && !hasLegacyLwjglNatives(manifest))
             return manifest;
 
         Map<String, Library> replacements = getNatives(javaVersion.getPlatform());
@@ -133,12 +134,24 @@ public final class NativePatcher {
                 continue;
 
             if (library.isNative()) {
-                Library replacement = replacements.getOrDefault(library.name() + ":natives", NONEXISTENT_LIBRARY);
+                String nativeKey = library.name() + ":natives";
+                String matchedKey = nativeKey;
+                Library replacement = replacements.getOrDefault(nativeKey, NONEXISTENT_LIBRARY);
+                if (replacement == NONEXISTENT_LIBRARY) {
+                    // Some legacy manifests use a classifier-specific replacement key.
+                    String classifier = library.classifier();
+                    if (classifier != null) {
+                        String classifierKey = library.name() + ":" + classifier;
+                        replacement = replacements.getOrDefault(classifierKey, NONEXISTENT_LIBRARY);
+                        matchedKey = classifierKey;
+                    }
+                }
+
                 if (replacement == NONEXISTENT_LIBRARY) {
                     LOG.warning("No alternative native library " + library.name() + ":natives provided for platform " + javaVersion.getPlatform());
                     newLibraries.add(library);
                 } else if (replacement != null) {
-                    LOG.info("Replace " + library.name() + ":natives with " + replacement.name());
+                    LOG.info("Replace " + matchedKey + " with " + replacement.name());
                     newLibraries.add(replacement);
                 }
             } else {
@@ -263,6 +276,29 @@ public final class NativePatcher {
         }
 
         return SupportStatus.UNTESTED;
+    }
+
+    private static boolean hasLegacyLwjglNatives(GameInstanceManifest manifest) {
+        boolean hasx86 = false;
+        boolean hasArm64 = false;
+        for (Library lib : manifest.getLibraries()) {
+            if (!lib.appliesToCurrentEnvironment())
+                continue;
+            if (!"org.lwjgl".equals(lib.groupId()))
+                continue;
+
+            String classifier = lib.classifier();
+            if (classifier == null || !classifier.startsWith("natives"))
+                continue;
+
+            String c = classifier.toLowerCase(Locale.ROOT);
+            if (c.contains("arm64") || c.contains("aarch64")) {
+                hasArm64 = true;
+            } else {
+                hasx86 = true;
+            }
+        }
+        return hasx86 && !hasArm64;
     }
 
     public enum SupportStatus {
