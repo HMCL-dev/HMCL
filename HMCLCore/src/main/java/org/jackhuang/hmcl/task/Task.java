@@ -177,14 +177,10 @@ public abstract class Task<T extends @Nullable Object> {
         return completedOutcome();
     }
 
-    /// Starts a new root asynchronously. Returns this task immediately if it was already submitted.
-    public final Task<T> start() {
-        tryStart();
-        return this;
-    }
-
-    /// Starts a new root asynchronously. Returns true only for the caller that submitted it.
-    public final boolean tryStart() {
+    /// Starts this task asynchronously as a root if it has not been submitted.
+    ///
+    /// @return `true` if this call submitted the task, or `false` if it was already submitted
+    public final boolean start() {
         @Nullable TaskExecution execution = tryRootSubmission();
         if (execution == null)
             return false;

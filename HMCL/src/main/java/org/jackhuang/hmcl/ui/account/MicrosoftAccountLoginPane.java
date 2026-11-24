@@ -155,8 +155,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             rootContainer.getChildren().add(new JFXSpinner());
 
             browserTask = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE))
-                    .whenCompleteAsync(Schedulers.javafx(), this::onLoginCompleted)
-                    .start();
+                    .whenCompleteAsync(Schedulers.javafx(), this::onLoginCompleted);
+            browserTask.start();
         } else if (currentStep instanceof Step.StartDeviceCodeLogin) {
             loginButtonSpinner.setLoading(true);
             cancelAllTasks();
@@ -164,8 +164,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             rootContainer.getChildren().add(new JFXSpinner());
 
             deviceTask = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE))
-                    .whenCompleteAsync(Schedulers.javafx(), this::onLoginCompleted)
-                    .start();
+                    .whenCompleteAsync(Schedulers.javafx(), this::onLoginCompleted);
+            deviceTask.start();
         } else if (currentStep instanceof Step.WaitForOpenBrowser wait) {
             btnLogin.setOnAction(e -> {
                 FXUtils.openLink(wait.url());

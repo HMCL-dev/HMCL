@@ -236,7 +236,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         }
                         body.setDisable(false);
                         spinner.hideSpinner();
-                    }).start();
+                    });
+            loginTask.start();
         };
 
         if (factory instanceof OfflineAccountFactory && username != null && (!USERNAME_CHECKER_PATTERN.matcher(username).matches() || username.length() > 16)) {

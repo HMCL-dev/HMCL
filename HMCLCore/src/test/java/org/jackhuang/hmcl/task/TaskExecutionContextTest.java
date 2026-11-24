@@ -435,7 +435,8 @@ final class TaskExecutionContextTest {
                 }
             }));
         }
-        Task<?> batch = Task.allOf(children, limit).start();
+        Task<?> batch = Task.allOf(children, limit);
+        batch.start();
         try {
             assertTrue(entered.await(10, TimeUnit.SECONDS));
             releaseSecond.countDown();
@@ -744,7 +745,7 @@ final class TaskExecutionContextTest {
         AtomicInteger calls = new AtomicInteger();
         Task<Integer> root = Task.supplyAsync(calls::incrementAndGet);
         assertEquals(1, root.run());
-        assertSame(root, root.start());
+        assertFalse(root.start());
         assertTrue(root.test());
         assertEquals(1, root.run());
         assertEquals(1, calls.get());
@@ -752,7 +753,7 @@ final class TaskExecutionContextTest {
         for (Throwable failure : List.of(new IOException(), new AssertionError(), new CancellationException())) {
             Task<?> failed = Task.failed(failure);
             assertSame(failure, assertThrows(failure.getClass(), failed::run));
-            assertSame(failed, failed.start());
+            assertFalse(failed.start());
             assertFalse(failed.test());
             assertSame(failure, assertThrows(failure.getClass(), failed::run));
             assertSame(failure, failed.exceptionNowOrNull());
@@ -824,7 +825,7 @@ final class TaskExecutionContextTest {
         assertFalse(child.isCancellationRequested());
         child.removeTaskListener(listener);
         assertEquals(42, Task.composeAsync(() -> child).run());
-        assertSame(child, child.start());
+        assertFalse(child.start());
         assertTrue(child.test());
         assertEquals(42, child.run());
         assertThrows(IllegalStateException.class, child::cancel);
@@ -883,11 +884,11 @@ final class TaskExecutionContextTest {
                 release.orTimeout(10, TimeUnit.SECONDS).join();
             }
         });
-        CompletableFuture<Boolean> first = CompletableFuture.supplyAsync(root::tryStart);
+        CompletableFuture<Boolean> first = CompletableFuture.supplyAsync(root::start);
         try {
             assertTrue(entered.await(10, TimeUnit.SECONDS));
             assertEquals(Task.State.READY, root.getState());
-            assertFalse(root.tryStart());
+            assertFalse(root.start());
         } finally {
             release.complete(null);
         }
@@ -929,7 +930,8 @@ final class TaskExecutionContextTest {
             assertTrue(release.await(10, TimeUnit.SECONDS));
             return 42;
         });
-        Task<Integer> winner = source.withCounter().start();
+        Task<Integer> winner = source.withCounter();
+        winner.start();
         try {
             assertTrue(running.await(10, TimeUnit.SECONDS));
             Task<Integer> contender = source.withStage(new TaskStage("download"));

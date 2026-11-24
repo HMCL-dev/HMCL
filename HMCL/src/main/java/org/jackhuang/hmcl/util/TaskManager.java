@@ -155,7 +155,7 @@ public final class TaskManager {
         try {
             execution.task.addTaskListener(execution);
             execution.listening = true;
-            if (!execution.task.tryStart())
+            if (!execution.task.start())
                 throw new IllegalStateException("Task has already been submitted");
         } catch (RuntimeException | Error failure) {
             release(execution);
