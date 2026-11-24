@@ -678,30 +678,7 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// @param k positive finite scale controlling the rate at which the estimate approaches its upper bound
     public Task<T> withFakeProgress(TaskName name, BooleanSupplier done, double k) {
-        return new Task<T>() {
-            /// Upper bound approached by the progress estimate before the condition is satisfied.
-            private static final double MAX_ESTIMATED_PROGRESS = 0.98D;
-
-            /// {@inheritDoc}
-            @Override
-            public T execute(TaskExecutionContext context) throws Exception {
-                T value = context.run(Task.this);
-                TaskProgress progress = context.progress();
-                if (!done.getAsBoolean()) {
-                    progress.update(0.0D);
-                    long start = System.nanoTime();
-                    while (!done.getAsBoolean()) {
-                        context.checkCancellation();
-                        double elapsedSeconds = (System.nanoTime() - start) / 1_000_000_000.0;
-                        double scaledTime = elapsedSeconds * MAX_ESTIMATED_PROGRESS;
-                        progress.update(MAX_ESTIMATED_PROGRESS * scaledTime / (k + scaledTime));
-                        Thread.sleep(1000);
-                    }
-                }
-                progress.update(1.0D);
-                return value;
-            }
-        }.setName(name);
+        return new FakeProgressTask<>(this, done, k).setName(name);
     }
 
     /// Creates a task that returns `value` when run.

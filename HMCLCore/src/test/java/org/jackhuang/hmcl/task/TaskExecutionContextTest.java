@@ -28,9 +28,11 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -1440,6 +1442,57 @@ final class TaskExecutionContextTest {
         assertEquals(List.of(new Report(root, 0.125),
                 new Report(child, 0.25), new Report(child, 0.5), new Report(child, 0.5),
                 new Report(child, 0.0), new Report(child, 1.0), new Report(root, 1.0)), reports);
+    }
+
+    /// A fake progress wait lets queued work on the same single-worker pool satisfy its condition.
+    @Test
+    void keepsForkJoinPoolAvailableWhileWaitingForFakeProgress() throws Exception {
+        ForkJoinPool pool = new ForkJoinPool(1);
+        CountDownLatch waiting = new CountDownLatch(1);
+        AtomicBoolean done = new AtomicBoolean();
+        Task<Integer> wrapper = Task.completed(42).withFakeProgress(new TaskName.Simple("Waiting"), () -> {
+            waiting.countDown();
+            return done.get();
+        }, 1.0);
+        Task<Integer> root = task(pool, context -> {
+            int value = context.run(wrapper);
+            assertTrue(done.get());
+            return value;
+        });
+        FutureTask<Integer> result = new FutureTask<>(root::run);
+        try {
+            Schedulers.io().execute(result);
+            assertTrue(waiting.await(10, TimeUnit.SECONDS));
+            pool.execute(() -> done.set(true));
+            assertEquals(42, result.get(10, TimeUnit.SECONDS));
+        } finally {
+            done.set(true);
+            pool.shutdownNow();
+        }
+    }
+
+    /// A pool that rejects compensation can still wait for an external completion signal.
+    @Test
+    void waitsForFakeProgressWhenForkJoinPoolRejectsCompensation() throws Exception {
+        CountDownLatch saturated = new CountDownLatch(1);
+        ForkJoinPool pool = new ForkJoinPool(1, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null,
+                false, 1, 1, 1, ignored -> {
+                    saturated.countDown();
+                    return false;
+                }, 60, TimeUnit.SECONDS);
+        AtomicBoolean done = new AtomicBoolean();
+        Task<Integer> wrapper = Task.completed(42).withFakeProgress(new TaskName.Simple("Waiting"), done::get, 1.0);
+        Task<Integer> root = task(pool, context -> context.run(wrapper));
+        FutureTask<Integer> result = new FutureTask<>(root::run);
+        try {
+            Schedulers.io().execute(result);
+            assertTrue(saturated.await(10, TimeUnit.SECONDS));
+            done.set(true);
+            assertEquals(42, result.get(10, TimeUnit.SECONDS));
+        } finally {
+            done.set(true);
+            pool.shutdownNow();
+        }
     }
 
     /// Progress validation also applies when no listener observes the task.
