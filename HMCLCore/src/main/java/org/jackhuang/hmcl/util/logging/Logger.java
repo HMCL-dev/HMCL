@@ -360,16 +360,9 @@ public final class Logger {
     }
 
     /// The stack walker used to find the caller of a logging method.
-    ///
-    /// Compared to `StackWalker.getInstance()`, this walker has a smaller estimated depth, so it incurs lower overhead.
-    ///
-    /// If the call stack depth in the implementation of `Logger` ever exceeds 3 frames, the configuration of this walker needs to be changed.
     private static final StackWalker WALKER = StackWalker.getInstance(Set.of(), 3);
 
     /// Returns the first stack frame that does not belong to the logging utility classes.
-    ///
-    /// The returned value is formatted as `className.methodName`. Frames whose class name starts
-    /// with [#PACKAGE_PREFIX] are skipped, because they are internal to the logging implementation.
     ///
     /// @return the formatted caller location, or `null` if no non-logging frame is found
     ///         within the examined stack frames
