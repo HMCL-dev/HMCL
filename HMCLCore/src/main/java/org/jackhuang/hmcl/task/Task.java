@@ -353,17 +353,17 @@ public abstract class Task<T extends @Nullable Object> {
         return thenCompose(() -> other);
     }
 
+    /// Returns a task that calls `fn` on the continuation's thread after success, then runs the supplied task.
+    public final <U extends @Nullable Object> Task<U> thenCompose(ExceptionalSupplier<Task<U>, ?> fn) {
+        return thenComposeAsync(null, fn);
+    }
+
     /// Equivalent to [#thenComposeAsync(ExceptionalSupplier)] with a supplier that returns `other`.
     ///
     /// @throws NullPointerException if `other` is null
     public final <U extends @Nullable Object> Task<U> thenComposeAsync(Task<U> other) {
         Objects.requireNonNull(other);
         return thenComposeAsync(() -> other);
-    }
-
-    /// Returns a task that calls `fn` on the continuation's thread after success, then runs the supplied task.
-    public final <U extends @Nullable Object> Task<U> thenCompose(ExceptionalSupplier<Task<U>, ?> fn) {
-        return thenComposeAsync(null, fn);
     }
 
     /// Returns a task that calls `fn` on the default task scheduler after success,
