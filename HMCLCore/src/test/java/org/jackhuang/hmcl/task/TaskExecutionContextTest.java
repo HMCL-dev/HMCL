@@ -24,6 +24,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -1048,19 +1049,46 @@ final class TaskExecutionContextTest {
         assertNull(root.exceptionNowOrNull());
     }
 
-    /// All root submission methods reject a task that has already run.
+    /// All root entry points observe the published outcome after the task has finished.
     @Test
-    void rejectsAnotherRootExecutionAfterRun() throws Exception {
+    void reusesPublishedRootOutcomes() throws Exception {
         AtomicInteger calls = new AtomicInteger();
         Task<Integer> root = Task.supplyAsync(calls::incrementAndGet);
         assertEquals(1, root.run());
-        assertThrows(IllegalStateException.class, root::run);
-        assertThrows(IllegalStateException.class, root::test);
-        assertThrows(IllegalStateException.class, root::start);
+        assertSame(root, root.start());
+        assertTrue(root.test());
+        assertEquals(1, root.run());
         assertEquals(1, calls.get());
-        assertEquals(Task.State.SUCCEEDED, root.getState());
-        assertEquals(1, root.resultNow());
-        assertNull(root.exceptionNowOrNull());
+
+        for (Throwable failure : List.of(new IOException(), new AssertionError())) {
+            Task<?> failed = Task.failed(failure);
+            assertSame(failure, assertThrows(failure.getClass(), failed::run));
+            assertSame(failed, failed.start());
+            assertFalse(failed.test());
+            assertSame(failure, assertThrows(failure.getClass(), failed::run));
+        }
+    }
+
+    /// Two simultaneous first callers receive the result of a single body invocation.
+    @Test
+    void sharesConcurrentFirstRun() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        Task<Integer> root = Task.supplyAsync(calls::incrementAndGet);
+        CyclicBarrier ready = new CyclicBarrier(2);
+        Callable<Integer> run = () -> {
+            ready.await(10, TimeUnit.SECONDS);
+            return root.run();
+        };
+        ExecutorService callers = Executors.newFixedThreadPool(2);
+        try {
+            var first = callers.submit(run);
+            var second = callers.submit(run);
+            assertEquals(1, first.get(10, TimeUnit.SECONDS));
+            assertEquals(1, second.get(10, TimeUnit.SECONDS));
+            assertEquals(1, calls.get());
+        } finally {
+            callers.shutdownNow();
+        }
     }
 
     /// Root configuration reserves the task for direct submission, including after a rejected child submission.
@@ -1106,8 +1134,51 @@ final class TaskExecutionContextTest {
         assertFalse(child.isCancellationRequested());
         child.removeTaskListener(listener);
         assertEquals(42, Task.composeAsync(() -> child).run());
+        assertSame(child, child.start());
+        assertTrue(child.test());
+        assertEquals(42, child.run());
         assertThrows(IllegalStateException.class, child::cancel);
         assertThrows(IllegalStateException.class, () -> child.addTaskListener(listener));
+    }
+
+    /// An external caller can wait for a running child without taking ownership of its execution.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void waitsForRunningChild(boolean interrupted) throws Exception {
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        Task<Integer> child = task(context -> {
+            entered.countDown();
+            assertTrue(release.await(10, TimeUnit.SECONDS));
+            return 42;
+        });
+        Task<Integer> parent = task(context -> context.run(child)).start();
+        FutureTask<Integer> read = new FutureTask<>(() -> {
+            if (!interrupted)
+                return child.run();
+            Thread.currentThread().interrupt();
+            assertThrows(InterruptedException.class, child::run);
+            assertTrue(Thread.currentThread().isInterrupted());
+            return child.resultNow();
+        });
+        Thread waiter = new Thread(read);
+        try {
+            assertTrue(entered.await(10, TimeUnit.SECONDS));
+            assertSame(child, child.start());
+            waiter.start();
+            assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+                while (waiter.getState() != Thread.State.WAITING && waiter.getState() != Thread.State.TIMED_WAITING) {
+                    assertFalse(read.isDone());
+                    Thread.sleep(1);
+                }
+            });
+        } finally {
+            release.countDown();
+        }
+        assertEquals(42, read.get(10, TimeUnit.SECONDS));
+        assertEquals(42, parent.run());
+        assertFalse(parent.isCancellationRequested());
+        assertThrows(IllegalStateException.class, child::cancel);
     }
 
     /// Interrupting a synchronous test's waiting thread preserves its interrupt status and the root's outcome.
@@ -1147,7 +1218,7 @@ final class TaskExecutionContextTest {
         assertNull(root.exceptionNowOrNull());
     }
 
-    /// Competing submissions are rejected while the winning caller announces the root.
+    /// A ready root accepts other callers while the winning caller announces its execution.
     @Test
     void marksRootReadyBeforeNotifyingStartListeners() throws Exception {
         AtomicInteger bodies = new AtomicInteger();
@@ -1177,16 +1248,18 @@ final class TaskExecutionContextTest {
         };
         root.addTaskListener(events);
         assertEquals(Task.State.NEW, root.getState());
-        ExecutorService caller = Executors.newSingleThreadExecutor();
+        ExecutorService caller = Executors.newFixedThreadPool(3);
         try {
             var start = caller.submit(root::start);
+            FutureTask<Integer> run = new FutureTask<>(root::run);
+            FutureTask<Boolean> test = new FutureTask<>(root::test);
             try {
                 assertTrue(entered.await(10, TimeUnit.SECONDS));
                 assertEquals(Task.State.READY, root.getState());
                 assertThrows(IllegalStateException.class, root::resultNow);
-                assertThrows(IllegalStateException.class, root::start);
-                assertThrows(IllegalStateException.class, root::test);
-                assertThrows(IllegalStateException.class, root::run);
+                assertSame(root, root.start());
+                caller.execute(run);
+                caller.execute(test);
                 task(Runnable::run, context -> {
                     assertThrows(IllegalStateException.class, () -> context.run(root));
                     assertThrows(IllegalStateException.class, () -> context.runAll(List.of(root)));
@@ -1198,11 +1271,13 @@ final class TaskExecutionContextTest {
                 release.complete(null);
             }
             assertSame(root, start.get(10, TimeUnit.SECONDS));
+            assertEquals(1, run.get(10, TimeUnit.SECONDS));
+            assertTrue(test.get(10, TimeUnit.SECONDS));
             assertTrue(stopped.get(10, TimeUnit.SECONDS));
         } finally {
             caller.shutdownNow();
         }
-        assertThrows(IllegalStateException.class, root::test);
+        assertTrue(root.test());
         assertEquals(List.of(root), starts);
         assertEquals(List.of(root), stops);
         assertEquals(1, events.started.size());
@@ -1484,9 +1559,9 @@ final class TaskExecutionContextTest {
         root.cancel();
         assertFalse(root.test());
         CancellationException failure = assertInstanceOf(CancellationException.class, root.exceptionNow());
-        assertThrows(IllegalStateException.class, root::test);
-        assertThrows(IllegalStateException.class, root::start);
-        assertThrows(IllegalStateException.class, root::run);
+        assertFalse(root.test());
+        assertSame(root, root.start());
+        assertSame(failure, assertThrows(CancellationException.class, root::run));
         assertSame(failure, root.exceptionNow());
         assertEquals(Task.State.CANCELLED, root.getState());
         assertEquals(1, events.started.size());

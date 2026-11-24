@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.task.TaskExecution.Binding;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.Result;
@@ -26,9 +27,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.*;
 
-/// A single-use unit of work with a result, lifecycle notifications, and optional progress.
-/// Submit the root using [#start()], [#run()], or [#test()]. Each task can be submitted only
-/// once, either as a root or as a child. Create a new instance to repeat an operation.
+/// A unit of work with a shared result, lifecycle notifications, and optional progress.
+/// [#start()], [#run()], and [#test()] start a new task or observe its existing execution,
+/// including when another task submitted it as a child. Each body runs at most once.
+/// Create a new instance to repeat an operation.
 /// A completed task can supply its published outcome to any subsequent child execution.
 /// Registering a listener or requesting cancellation before submission reserves the task as a root.
 /// Its listeners and cancellation request apply to the whole execution tree.
@@ -65,7 +67,7 @@ public abstract class Task<T extends @Nullable Object> {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             STATE_HANDLE = lookup.findVarHandle(Task.class, "state", State.class);
-            EXECUTION_BINDING = lookup.findVarHandle(Task.class, "executionBinding", ExecutionBinding.class);
+            EXECUTION_BINDING = lookup.findVarHandle(Task.class, "executionBinding", Binding.class);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -83,11 +85,11 @@ public abstract class Task<T extends @Nullable Object> {
     /// Controls execution logging and visibility in the task list.
     private TaskSignificance significance = TaskSignificance.MAJOR;
 
-    /// Null until root reservation or first submission, then permanently bound.
+    /// Identifies the owning execution until a completed child releases it.
     ///
     /// @see #EXECUTION_BINDING
     @SuppressWarnings("unused")
-    private volatile @Nullable ExecutionBinding executionBinding;
+    private volatile @Nullable Binding executionBinding;
 
     /// Most recent execution state, initially [State#NEW].
     private volatile State state = State.NEW;
@@ -164,38 +166,48 @@ public abstract class Task<T extends @Nullable Object> {
     /// @throws Exception if execution cannot complete
     public abstract T execute(TaskExecutionContext context) throws Exception;
 
-    /// Runs this task and waits for its result. If interrupted while waiting on another worker,
+    /// Starts this task if necessary and returns the shared result or rethrows its failure.
+    /// If interrupted while waiting on another worker,
     /// the caller waits for the submitted work to finish before the interruption is reported.
     /// A caller running directly on a custom executor must leave a worker available if the task
     /// requires that executor. Use [TaskExecutionContext#run(Task)] from another task.
     ///
     /// @throws Exception if execution fails, is cancelled, or the wait is interrupted
-    /// @throws IllegalStateException if this task was already submitted
+    /// @throws IllegalStateException if the caller would wait on itself or an active ancestor
     public final T run() throws Exception {
-        return markReadyAsRoot().run(this);
+        @Nullable TaskExecution execution = tryRootSubmission();
+        if (execution != null)
+            return execution.run(this);
+        if (awaitSubmitted())
+            throw new InterruptedException();
+        return completedOutcome();
     }
 
-    /// Starts this root asynchronously and returns it.
-    ///
-    /// @throws IllegalStateException if this task was already submitted
+    /// Starts a new root asynchronously. Returns this task immediately if it was already submitted.
     public final Task<T> start() {
-        markReadyAsRoot().start(this);
+        @Nullable TaskExecution execution = tryRootSubmission();
+        if (execution != null)
+            execution.start(this);
         return this;
     }
 
-    /// Runs this root and returns whether it succeeded. A thread interrupted while waiting for
+    /// Starts this task if necessary and returns whether it succeeded. A thread interrupted while waiting for
     /// another worker's result waits for completion and retains its interrupt status.
     ///
-    /// @throws IllegalStateException if this task was already submitted
+    /// @throws IllegalStateException if the caller would wait on itself or an active ancestor
     public final boolean test() {
-        return markReadyAsRoot().test(this);
+        @Nullable TaskExecution execution = tryRootSubmission();
+        if (execution != null)
+            return execution.test(this);
+        awaitSubmitted();
+        return state == State.SUCCEEDED;
     }
 
     /// Requests cooperative cancellation of this root and its children, including before submission.
     ///
     /// @throws IllegalStateException if this task was submitted as a child
     public final void cancel() {
-        rootExecution().cancel();
+        reserveRootIfUnbound().requireRootExecution().cancel();
     }
 
     /// Returns true as soon as [#cancel()] requests cancellation on this root, even before submission.
@@ -204,7 +216,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// @throws IllegalStateException if this task was submitted as a child
     /// @see #isCancelled()
     public final boolean isCancellationRequested() {
-        @Nullable ExecutionBinding binding = executionBinding;
+        @Nullable Binding binding = executionBinding;
         return binding != null && binding.requireRootExecution().isCancellationRequested();
     }
 
@@ -214,7 +226,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// @throws IllegalStateException if this task was submitted as a child
     public final Task<T> addTaskListener(TaskListener listener) {
         Objects.requireNonNull(listener);
-        rootExecution().addTaskListener(listener);
+        reserveRootIfUnbound().requireRootExecution().addTaskListener(listener);
         return this;
     }
 
@@ -222,7 +234,7 @@ public abstract class Task<T extends @Nullable Object> {
     ///
     /// @throws IllegalStateException if this task was submitted as a child
     public final void removeTaskListener(TaskListener listener) {
-        @Nullable ExecutionBinding binding = executionBinding;
+        @Nullable Binding binding = executionBinding;
         if (binding != null)
             binding.requireRootExecution().removeTaskListener(listener);
     }
@@ -820,39 +832,51 @@ public abstract class Task<T extends @Nullable Object> {
         }.setSignificance(TaskSignificance.MINOR);
     }
 
-    /// Reserves the root's execution for configuration or submission.
-    private TaskExecution rootExecution() {
-        @Nullable ExecutionBinding binding = executionBinding;
-        if (binding == null) {
-            TaskExecution execution = new TaskExecution();
-            binding = (@Nullable ExecutionBinding) EXECUTION_BINDING.compareAndExchange(
-                    this, null, new ExecutionBinding(execution));
-            if (binding == null)
-                return execution;
-        }
-        return binding.requireRootExecution();
+    /// Reserves an unbound task as a root or returns the existing binding.
+    private Binding reserveRootIfUnbound() {
+        @Nullable Binding current = executionBinding;
+        if (current != null)
+            return current;
+        Binding root = Binding.root();
+        current = (@Nullable Binding) EXECUTION_BINDING.compareAndExchange(this, null, root);
+        return current == null ? root : current;
     }
 
-    /// Marks a new root as ready and returns its execution.
-    private TaskExecution markReadyAsRoot() {
-        TaskExecution execution = rootExecution();
-        if (!STATE_HANDLE.compareAndSet(this, State.NEW, State.READY)) {
-            @Nullable TaskName name = getName();
-            throw new IllegalStateException("Task has already been submitted: " + (name != null ? name.text() : toString()));
-        }
-        return execution;
+    /// Returns the execution to its first submitter, or null if another caller owns submission.
+    private @Nullable TaskExecution tryRootSubmission() {
+        if (state != State.NEW)
+            return null;
+        Binding binding = reserveRootIfUnbound();
+        return binding.isRoot() && STATE_HANDLE.compareAndSet(this, State.NEW, State.READY)
+                ? binding.owner() : null;
+    }
+
+    /// Observes an existing submission and reports any interruption received while waiting.
+    private boolean awaitSubmitted() {
+        Binding binding = binding();
+        return !isDone() && binding.owner().awaitShared(this, binding);
+    }
+
+    /// Returns the execution binding of a reserved or submitted task.
+    final Binding binding() {
+        return Objects.requireNonNull(executionBinding);
+    }
+
+    /// Returns whether the execution has published its outcome.
+    final boolean isDone() {
+        State current = state;
+        return current == State.SUCCEEDED || current == State.FAILED || current == State.CANCELLED;
     }
 
     /// Reserves a new child, or returns false if its published outcome can be reused.
     ///
     /// @throws IllegalStateException if the task is reserved or already executing
-    final boolean tryMarkReadyAsChild() {
-        if (EXECUTION_BINDING.compareAndSet(this, null, ExecutionBinding.CHILD)) {
+    final boolean tryMarkReadyAsChild(Binding parent) {
+        if (executionBinding == null && EXECUTION_BINDING.compareAndSet(this, null, parent.child())) {
             state = State.READY;
             return true;
         }
-        State current = state;
-        if (current == State.SUCCEEDED || current == State.FAILED || current == State.CANCELLED)
+        if (isDone())
             return false;
         @Nullable TaskName name = getName();
         throw new IllegalStateException("Task is reserved as a root or has already been submitted: " + (name != null ? name.text() : toString()));
@@ -880,13 +904,22 @@ public abstract class Task<T extends @Nullable Object> {
     /// Publishes the value returned by the body and marks the task successful.
     final void publishResult(T value) {
         outcome = value;
-        state = State.SUCCEEDED;
+        finish(State.SUCCEEDED);
     }
 
     /// Publishes the exception and marks the task as failed or cancelled.
     final void publishException(Throwable failure) {
         outcome = failure;
-        state = failure instanceof CancellationException ? State.CANCELLED : State.FAILED;
+        finish(failure instanceof CancellationException ? State.CANCELLED : State.FAILED);
+    }
+
+    /// Publishes the terminal state, wakes observers, and releases a child's execution tree.
+    private void finish(State terminalState) {
+        Binding binding = binding();
+        state = terminalState;
+        binding.finished();
+        if (!binding.isRoot())
+            executionBinding = Binding.FINISHED_CHILD;
     }
 
     /// Checks cancellation on the submitting thread and again before a dispatched callback starts.
@@ -935,21 +968,6 @@ public abstract class Task<T extends @Nullable Object> {
         FAILED,
         /// The executor has recorded a [CancellationException].
         CANCELLED
-    }
-
-    /// Binds a task as a root or a child.
-    ///
-    /// @param rootExecution the execution controlled by the root, or `null` for a child
-    private record ExecutionBinding(@Nullable TaskExecution rootExecution) {
-        /// Binding shared by all submitted children.
-        private static final ExecutionBinding CHILD = new ExecutionBinding(null);
-
-        /// Returns the root's execution or throws if this task was submitted as a child.
-        private TaskExecution requireRootExecution() {
-            if (rootExecution == null)
-                throw new IllegalStateException("Task has been submitted as a child");
-            return rootExecution;
-        }
     }
 
     /// A stage decorator that shares its source's executor when both run together.
