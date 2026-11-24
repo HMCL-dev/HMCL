@@ -341,7 +341,7 @@ final class TaskExecution {
 
     /// Records the failure before delivering terminal notifications.
     private void fail(Task<?> task, TaskStage.@Nullable Scope scope, Throwable cause) {
-        task.publishException(cause);
+        task.finish(null, cause);
         notifyTaskFinished(task, scope, cause);
     }
 
@@ -401,7 +401,7 @@ final class TaskExecution {
         /// Runs on the current worker when possible, otherwise submits and waits.
         private R runReady(boolean propagateWaitInterruption) throws Exception {
             if (executor != currentExecutor())
-                return await(submit(null), propagateWaitInterruption);
+                return submit(null).await(propagateWaitInterruption);
             @Nullable Work<?> current = CURRENT_WORK.get();
             if (current != null && current.owner() == TaskExecution.this)
                 return execute();
@@ -409,7 +409,7 @@ final class TaskExecution {
             Work<R> inline = new Work<>(executor, this::execute);
             task.binding().setWork(inline);
             inline.run();
-            return await(inline, propagateWaitInterruption);
+            return inline.completedOutcome();
         }
 
         /// Submits the prepared task and publishes any rejection to its waiters.
@@ -436,7 +436,7 @@ final class TaskExecution {
             binding.enter();
             try {
                 R result = invokeBody();
-                task.publishResult(result);
+                task.finish(result, null);
                 notifyTaskFinished(task, stageScope, null);
                 if (task.getSignificance().shouldLog()) {
                     try {
@@ -584,7 +584,7 @@ final class TaskExecution {
                     @Nullable Throwable childFailure = null;
                     try {
                         @Nullable Work<? extends T> work = submissions.get(child);
-                        results.add(work == null ? child.completedOutcome() : await(work, false));
+                        results.add(work == null ? child.completedOutcome() : work.await(false));
                     } catch (Throwable e) {
                         childFailure = e;
                     }
@@ -621,7 +621,7 @@ final class TaskExecution {
                 }
             });
             work.submit();
-            return await(work, true);
+            return work.await(true);
         }
     }
 
@@ -726,44 +726,6 @@ final class TaskExecution {
         }
     }
 
-    /// Waits for completion while allowing a constrained worker to run other work for its executor.
-    /// Restores any interruption after the work stops. A caller reporting the root's outcome
-    /// observes that outcome even if the waiting thread was interrupted.
-    private <T extends @Nullable Object> T await(Work<T> work, boolean propagateWaitInterruption) throws Exception {
-        @Nullable Executor current = currentExecutor();
-        boolean interrupted = false;
-        while (!work.isDone()) {
-            @Nullable Work<?> next = null;
-            lock.lock();
-            try {
-                if (work.isDone())
-                    break;
-                next = work.availableFor(current, true);
-                if (next == null) {
-                    if (work.changed == null)
-                        work.changed = lock.newCondition();
-                    work.changed.await();
-                }
-            } catch (InterruptedException e) {
-                interrupted = true;
-            } finally {
-                lock.unlock();
-            }
-            if (next != null)
-                next.run();
-        }
-        try {
-            if (interrupted && propagateWaitInterruption)
-                throw new InterruptedException();
-            return work.get();
-        } catch (ExecutionException e) {
-            throw Task.rethrow(Objects.requireNonNull(e.getCause()));
-        } finally {
-            if (interrupted)
-                Thread.currentThread().interrupt();
-        }
-    }
-
     /// A submission that can be claimed once, either by its executor or by a waiting worker of that executor.
     @NotNullByDefault
     private final class Work<T extends @Nullable Object> extends FutureTask<T> {
@@ -785,11 +747,18 @@ final class TaskExecution {
         /// Accepted, unclaimed descendants on constrained executors, guarded by the enclosing lock.
         private @Nullable Map<Executor, Set<Work<?>>> pending;
 
-        /// Whether this work has been made available to waiting workers.
-        private boolean queued;
+        /// Registration state of a helpable submission, guarded by the execution lock.
+        private DispatchState dispatchState = DispatchState.UNREGISTERED;
 
-        /// Whether a worker has claimed a submission eligible for helping, guarded by the enclosing lock.
-        private boolean started;
+        /// A worker can start a submission before its submitter registers it for helping.
+        private enum DispatchState {
+            /// The submitter has not added this work to the helping index.
+            UNREGISTERED,
+            /// A waiting worker may take the work from its executor.
+            QUEUED,
+            /// Either its executor or a waiting worker has claimed the work.
+            STARTED
+        }
 
         /// Creates a submission for the given executor.
         Work(Executor executor, Callable<T> action) {
@@ -816,7 +785,7 @@ final class TaskExecution {
         private @Nullable Work<?> availableFor(@Nullable Executor worker, boolean includeSelf) {
             if (worker == null)
                 return null;
-            if (includeSelf && queued && executor == worker)
+            if (includeSelf && dispatchState == DispatchState.QUEUED && executor == worker)
                 return this;
             @Nullable Set<Work<?>> available = pending == null ? null : pending.get(worker);
             return available != null ? available.iterator().next() : null;
@@ -832,9 +801,9 @@ final class TaskExecution {
                 // Only the submitter admits branches. Completion may race with registration.
                 if (window != null && !isDone())
                     window.active.add(this);
-                if (!canBeHelped || started)
+                if (!canBeHelped || dispatchState == DispatchState.STARTED)
                     return;
-                queued = true;
+                dispatchState = DispatchState.QUEUED;
                 // Index only this work's ancestors. A waiting worker can then claim a
                 // descendant without scanning or recursively entering unrelated siblings.
                 for (@Nullable Work<?> node = parent; node != null; node = node.parent) {
@@ -856,16 +825,61 @@ final class TaskExecution {
             setException(failure);
         }
 
+        /// Reads the completed submission and propagates its original failure to the caller.
+        private T completedOutcome() throws Exception {
+            try {
+                return get();
+            } catch (ExecutionException e) {
+                throw Task.rethrow(Objects.requireNonNull(e.getCause()));
+            }
+        }
+
+        /// Waits for completion while allowing a constrained worker to run other work for its executor.
+        /// Restores any interruption after the work stops. A caller reporting the root's outcome
+        /// observes that outcome even if the waiting thread was interrupted.
+        T await(boolean propagateWaitInterruption) throws Exception {
+            @Nullable Executor current = currentExecutor();
+            boolean interrupted = false;
+            while (!isDone()) {
+                @Nullable Work<?> next = null;
+                lock.lock();
+                try {
+                    if (isDone())
+                        break;
+                    next = availableFor(current, true);
+                    if (next == null) {
+                        if (changed == null)
+                            changed = lock.newCondition();
+                        changed.await();
+                    }
+                } catch (InterruptedException e) {
+                    interrupted = true;
+                } finally {
+                    lock.unlock();
+                }
+                if (next != null)
+                    next.run();
+            }
+            try {
+                if (interrupted && propagateWaitInterruption)
+                    throw new InterruptedException();
+                return completedOutcome();
+            } finally {
+                if (interrupted)
+                    Thread.currentThread().interrupt();
+            }
+        }
+
         /// Claims work eligible for helping and removes it from its ancestors' indexes.
         private boolean tryStart() {
             lock.lock();
             try {
-                if (started)
+                DispatchState previous = dispatchState;
+                if (previous == DispatchState.STARTED)
                     return false;
-                started = true;
-                if (!queued)
+                dispatchState = DispatchState.STARTED;
+                if (previous == DispatchState.UNREGISTERED)
                     return true;
-                queued = false;
                 for (@Nullable Work<?> node = parent; node != null; node = node.parent) {
                     Map<Executor, Set<Work<?>>> index = Objects.requireNonNull(node.pending);
                     Set<Work<?>> available = index.get(executor);

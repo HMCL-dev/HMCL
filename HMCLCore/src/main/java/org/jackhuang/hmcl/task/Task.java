@@ -283,15 +283,14 @@ public abstract class Task<T extends @Nullable Object> {
     /// @throws IllegalStateException unless the task is in [State#FAILED] or [State#CANCELLED]
     public final Throwable exceptionNow() {
         State currentState = state;
-        if (currentState != State.FAILED && currentState != State.CANCELLED)
+        if (!currentState.hasFailure())
             throw new IllegalStateException("Task has not failed: " + currentState);
         return (Throwable) Objects.requireNonNull(outcome);
     }
 
     /// Returns the recorded exception in [State#FAILED] or [State#CANCELLED], or `null` in any other state.
     public final @Nullable Throwable exceptionNowOrNull() {
-        State currentState = state;
-        return currentState == State.FAILED || currentState == State.CANCELLED ? (Throwable) outcome : null;
+        return state.hasFailure() ? (Throwable) outcome : null;
     }
 
     /// Returns a task that applies `fn` to the successful result on the continuation's thread.
@@ -311,8 +310,7 @@ public abstract class Task<T extends @Nullable Object> {
             /// {@inheritDoc}
             @Override
             public U execute(TaskExecutionContext context) throws Exception {
-                T value = context.run(Task.this);
-                return callIfActive(context, executor, () -> fn.apply(value));
+                return Task.this.mapResult(context, executor, fn);
             }
         }.setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
@@ -416,8 +414,7 @@ public abstract class Task<T extends @Nullable Object> {
             /// {@inheritDoc}
             @Override
             public U execute(TaskExecutionContext context) throws Exception {
-                T value = context.run(Task.this);
-                Task<U> next = callIfActive(context, executor, () -> fn.apply(value));
+                Task<U> next = Task.this.mapResult(context, executor, fn);
                 return context.run(next);
             }
         }.setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
@@ -443,8 +440,7 @@ public abstract class Task<T extends @Nullable Object> {
             /// {@inheritDoc}
             @Override
             public @Nullable U execute(TaskExecutionContext context) throws Exception {
-                T value = context.run(Task.this);
-                @Nullable Task<U> next = callIfActive(context, executor, () -> fn.apply(value));
+                @Nullable Task<U> next = Task.this.mapResult(context, executor, fn);
                 return next == null ? null : context.run(next);
             }
         }.setName(fn.toString()).setSignificance(TaskSignificance.MODERATE);
@@ -892,7 +888,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// Returns whether the execution has published its outcome.
     final boolean isDone() {
         State current = state;
-        return current == State.SUCCEEDED || current == State.FAILED || current == State.CANCELLED;
+        return current == State.SUCCEEDED || current.hasFailure();
     }
 
     /// Reserves a new child, or returns false if its published outcome can be reused.
@@ -927,25 +923,27 @@ public abstract class Task<T extends @Nullable Object> {
         return (T) outcome;
     }
 
-    /// Publishes the value returned by the body and marks the task successful.
-    final void publishResult(T value) {
-        outcome = value;
-        finish(State.SUCCEEDED);
-    }
-
-    /// Publishes the exception and marks the task as failed or cancelled.
-    final void publishException(Throwable failure) {
-        outcome = failure;
-        finish(failure instanceof CancellationException ? State.CANCELLED : State.FAILED);
-    }
-
-    /// Publishes the terminal state, wakes observers, and releases a child's execution tree.
-    private void finish(State terminalState) {
+    /// Publishes the outcome before the terminal state and wakes waiting observers.
+    /// A null failure denotes success, including when the result is null.
+    final void finish(@Nullable T result, @Nullable Throwable failure) {
         Binding binding = binding();
-        state = terminalState;
+        if (failure == null) {
+            outcome = result;
+            state = State.SUCCEEDED;
+        } else {
+            outcome = failure;
+            state = failure instanceof CancellationException ? State.CANCELLED : State.FAILED;
+        }
         binding.setWork(null);
         if (!binding.isRoot())
             executionBinding = Binding.FINISHED_CHILD;
+    }
+
+    /// Obtains this task's successful result and applies the continuation on its requested executor.
+    private <U extends @Nullable Object> U mapResult(TaskExecutionContext context, @Nullable Executor executor,
+                                                     ExceptionalFunction<T, U, ?> fn) throws Exception {
+        T value = context.run(this);
+        return callIfActive(context, executor, () -> fn.apply(value));
     }
 
     /// Checks cancellation on the submitting thread and again before a dispatched callback starts.
@@ -993,7 +991,12 @@ public abstract class Task<T extends @Nullable Object> {
         /// The executor has recorded a failure other than cancellation.
         FAILED,
         /// The executor has recorded a [CancellationException].
-        CANCELLED
+        CANCELLED;
+
+        /// Returns whether a failure has been published for this state.
+        private boolean hasFailure() {
+            return this == FAILED || this == CANCELLED;
+        }
     }
 
     /// A stage decorator that shares its source's executor when both run together.
