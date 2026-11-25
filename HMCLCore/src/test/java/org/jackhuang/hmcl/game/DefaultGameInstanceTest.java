@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -75,6 +76,25 @@ public final class DefaultGameInstanceTest {
 
         assertFalse(Files.exists(transformerFile));
         assertEquals(repaired, LaunchManifestNormalizer.repairForLaunch(repaired));
+    }
+
+    /// Loader libraries precede vanilla libraries while preserving their declared order.
+    @Test
+    public void testPatchLibraryOrder(@TempDir Path tempDirectory) {
+        Library vanilla = new Library("oshi-project", "oshi-core", "1.1");
+        Library ffm = new Library("com.github.oshi", "oshi-core-ffm", "7.3.2");
+        Library common = new Library("com.github.oshi", "oshi-common", "7.3.2");
+        GameInstancePatch game = new GameInstancePatch("game", "1.12.2", GameInstancePatch.PRIORITY_MC,
+                null, null, List.of(vanilla));
+        GameInstancePatch loader = new GameInstancePatch("cleanroom", "0.6.13-alpha", GameInstancePatch.PRIORITY_LOADER,
+                null, null, List.of(ffm, common));
+        GameInstanceManifest manifest = new GameInstanceManifest(new GameInstanceID("instance"));
+        @Unmodifiable List<Library> expected = List.of(ffm, common, vanilla);
+
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceManifest resolved = repository.getSnapshot().resolve(manifest.withPatches(List.of(loader, game)));
+        assertEquals(expected, resolved.getLibraries());
+        assertEquals(expected, manifest.withPatches(List.of(game, loader)).reconstructByPatches().getLibraries());
     }
 
     /// Repairs a missing patch-installed OptiFine library using the patch's self version.
