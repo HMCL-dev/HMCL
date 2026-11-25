@@ -55,6 +55,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     /// Creates a task that updates components and synchronizes the client JAR with the resulting manifest.
     @Override
     public Object finish(SettingsMap settings) {
+        settings.put(WAIT_FOR_CANCELLATION, true);
         settings.put("title", i18n("install.change_version.process"));
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (settings1, exception, next) -> alertFailureMessage(exception, next));

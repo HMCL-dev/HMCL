@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 
 /// Installs or updates a local MCBBS modpack using the mode selected at construction.
 public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
@@ -120,7 +119,7 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
     ///                               is no longer the exact published instance
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        Modpack.installWithGameBuilder(context, dependencyManager, instanceId, updateTarget, false, builder -> install(context, builder));
+        Modpack.installWithGameBuilder(context, dependencyManager, instanceId, updateTarget, true, builder -> install(context, builder));
         return null;
     }
 
@@ -138,30 +137,13 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
         var configuration = context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, McbbsModpackProvider.INSTANCE,
                 modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId))
                 .withStage(InstallStages.MODPACK));
+        // Existing packs without this patch manage their libraries separately.
+        @Nullable GameInstancePatch patch = updateTarget == null ? new GameInstancePatch(PATCH_NAME)
+                : updateTarget.getManifest().getPatches().stream().filter(p -> PATCH_NAME.equals(p.id())).findFirst().orElse(null);
+        if (patch != null)
+            builder.addPatch(patch.withLibraries(manifest.getLibraries()));
         DefaultGameInstance instance = builder.build(context);
-        GameInstanceManifest instanceManifest = instance.getManifest();
-        Task<?> completion = new McbbsModpackCompletionTask(dependencyManager, instance, configuration);
-        if (this.updateTarget == null) {
-            // Keep the builder's published manifest current until file completion can no longer fail.
-            context.run(completion);
-            GameInstancePatch patch = new GameInstancePatch(PATCH_NAME).withLibraries(manifest.getLibraries());
-            try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
-                if (draft.getBaseSnapshot().getInstance(instanceId).getManifest() != instanceManifest)
-                    throw new IllegalStateException("Game instance has changed: " + instanceId);
-                draft.put(instanceManifest.addPatch(patch));
-                draft.commit();
-            }
-            return;
-        }
-
-        Optional<GameInstancePatch> mcbbsPatch = instanceManifest.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.id())).findFirst();
-        if (mcbbsPatch.isPresent()) {
-            GameInstancePatch patch = mcbbsPatch.get().withLibraries(manifest.getLibraries());
-            context.runAll(List.of(repository.saveAsync(instanceManifest.addPatch(patch)), completion));
-        } else {
-            // Other launchers may manage the libraries outside the MCBBS patch.
-            context.run(completion);
-        }
+        context.run(new McbbsModpackCompletionTask(dependencyManager, instance, configuration));
     }
 
     private static final String PATCH_NAME = "mcbbs";

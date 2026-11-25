@@ -6,6 +6,7 @@ import javafx.scene.control.Label;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.TaskListPane;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskManager;
 
@@ -26,7 +27,7 @@ public abstract class AbstractWizardDisplayer implements WizardDisplayer {
         pane.setTask(rootTask);
         navigateTo(pane, Navigation.NavigationDirection.FINISH);
         cancelQueue.add(rootTask);
-        TaskManager.getInstance().submit(rootTask, null);
+        TaskManager.getInstance().submit(rootTask, null).exceptionally(Lang::handleUncaughtException);
     }
 
     @Override

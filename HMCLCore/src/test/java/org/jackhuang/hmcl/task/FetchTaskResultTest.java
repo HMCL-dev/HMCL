@@ -124,4 +124,26 @@ class FetchTaskResultTest {
         assertEquals(1, attempts.get());
         assertEquals("previous", Files.readString(destination));
     }
+
+    /// A download hook can cancel independently of the task tree on either transport.
+    @Test
+    void callbackCancellationStopsRetries(@TempDir Path directory) {
+        var cancelled = new CancellationException("Installation took over");
+        CacheRepository cache = new CacheRepository();
+        cache.changeDirectory(directory);
+        for (String url : List.of("http://127.0.0.1/example", directory.resolve("source").toUri().toString())) {
+            var candidate = new DownloadCandidate(WebURL.parse(url), null, 1, null, null);
+            AtomicInteger attempts = new AtomicInteger();
+            var task = new FileDownloadTask(DownloadCandidates.of(candidate), directory.resolve("destination")) {
+                /// Rejects the attempt before any connection is opened.
+                @Override
+                protected void beforeDownload(WebURL url) {
+                    attempts.incrementAndGet();
+                    throw cancelled;
+                }
+            };
+            assertSame(cancelled, assertThrows(CancellationException.class, () -> runWithCache(task, cache)));
+            assertEquals(1, attempts.get());
+        }
+    }
 }

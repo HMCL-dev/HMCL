@@ -4,8 +4,11 @@ package org.jackhuang.hmcl.util;
 
 import javafx.application.Platform;
 import javafx.scene.control.ButtonBase;
+import javafx.scene.control.ListView;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.TaskSignificance;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.TaskDialogPane;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +85,7 @@ final class TaskManagerTest {
         AtomicInteger bodies = new AtomicInteger();
         AtomicInteger cleanups = new AtomicInteger();
         Submission first = submit(Task.runAsync(() -> await(release)), null);
-        Submission second = submit(Task.runAsync(bodies::incrementAndGet), new TaskListener() {
+        Submission second = submit(Task.runAsync(bodies::incrementAndGet).setSignificance(TaskSignificance.MAJOR), new TaskListener() {
             /// Records cleanup even when the task was cancelled before starting.
             @Override
             public void onExecutionFinished(Task<?> task, boolean success) {
@@ -108,6 +111,7 @@ final class TaskManagerTest {
         assertFalse(second.completion().get(10, TimeUnit.SECONDS));
         assertEquals(0, bodies.get());
         assertEquals(1, cleanups.get());
+        assertTrue(onFxThread(() -> assertInstanceOf(ListView.class, second.pane().lookup(".list-view")).getItems().isEmpty()));
     }
 
     /// Keeps a cancelled running task's slot until its body actually returns.
@@ -211,18 +215,33 @@ final class TaskManagerTest {
             await(release);
         });
         external.start();
+        AtomicInteger closes = new AtomicInteger();
+        CountDownLatch finished = new CountDownLatch(1);
         try {
             await(entered);
             TaskManager manager = TaskManager.getInstance();
-            CompletableFuture<Boolean> rejected = onFxThread(() -> manager.submit(external, null));
+            CompletableFuture<Boolean> rejected = onFxThread(() -> {
+                TaskDialogPane pane = new TaskDialogPane(null);
+                pane.setTask(external);
+                pane.addEventHandler(DialogCloseEvent.CLOSE, event -> closes.incrementAndGet());
+                return pane.startTask();
+            });
             assertInstanceOf(IllegalStateException.class,
                     assertThrows(ExecutionException.class, () -> rejected.get(10, TimeUnit.SECONDS)).getCause());
             CompletableFuture<Boolean> next = onFxThread(() -> manager.submit(Task.completed(0), null));
             assertTrue(next.get(10, TimeUnit.SECONDS));
+            external.addTaskListener(new TaskListener() {
+                /// Waits for the externally owned task's last notification to reach the dialog.
+                @Override
+                public void onExecutionFinished(Task<?> task, boolean success) {
+                    finished.countDown();
+                }
+            });
         } finally {
             release.countDown();
         }
-        assertTrue(external.test());
+        await(finished);
+        assertEquals(1, onFxThread(closes::get).intValue());
     }
 
     /// Attaches listeners before submitting an independent task on the JavaFX thread.

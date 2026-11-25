@@ -34,8 +34,8 @@ public class DefaultGameBuilder extends GameBuilder {
     /// Exclusive repository draft used to publish the build.
     private final DefaultGameRepositoryDraft draft;
 
-    /// Empty manifest reserved in the draft for the target instance.
-    private final GameInstanceManifest initialManifest;
+    /// Manifest to which the selected game components will be added.
+    private GameInstanceManifest initialManifest;
 
     /// Whether installation has started and configuration is frozen.
     private boolean buildStarted;
@@ -66,6 +66,12 @@ public class DefaultGameBuilder extends GameBuilder {
         return dependencyManager;
     }
 
+    /// Includes a modpack patch in the manifest published by this build.
+    public void addPatch(GameInstancePatch patch) {
+        checkOpen();
+        initialManifest = initialManifest.addPatch(patch);
+    }
+
     /// {@inheritDoc}
     @Override
     @Contract("-> this")
@@ -78,6 +84,16 @@ public class DefaultGameBuilder extends GameBuilder {
     /// {@inheritDoc}
     @Override
     public DefaultGameInstance build(TaskExecutionContext context) throws Exception {
+        return build(context, context::checkCancellation);
+    }
+
+    /// Publishes the instance as the task's result, accepting cancellation until publication begins.
+    public DefaultGameInstance buildAsTaskResult(TaskExecutionContext context) throws Exception {
+        return build(context, context::commit);
+    }
+
+    /// Prepares the manifest and client JAR, then checks cancellation before publishing both.
+    private DefaultGameInstance build(TaskExecutionContext context, Runnable beforePublication) throws Exception {
         checkOpen();
         buildStarted = true;
         try (draft) {
@@ -129,20 +145,18 @@ public class DefaultGameBuilder extends GameBuilder {
                 }
             }
 
-            return context.run(libraryTask.thenComposeAsync(manifest -> {
-                GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
-                return new GameDownloadTask(dependencyManager, resolved)
-                        .withStage(InstallStages.component(GameComponentType.GAME, gameVersion))
-                        .thenApplyAsync(minecraftJar -> {
-                            draft.put(resolved.withPatches(manifest.patches()));
-                            draft.putPrimaryJar(instanceId, minecraftJar);
-                            DefaultGameInstance instance = draft.commit().getInstance(instanceId);
-                            if (updateTarget == null)
-                                committedManifest = instance.getManifest();
-                            onInstanceCommitted(instance);
-                            return instance;
-                        });
-            }).withStageHints(hints));
+            GameInstanceManifest manifest = context.run(libraryTask.withStageHints(hints));
+            GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
+            Path minecraftJar = context.run(new GameDownloadTask(dependencyManager, resolved)
+                    .withStage(InstallStages.component(GameComponentType.GAME, gameVersion)));
+            draft.put(resolved.withPatches(manifest.patches()));
+            draft.putPrimaryJar(instanceId, minecraftJar);
+            beforePublication.run();
+            DefaultGameInstance instance = draft.commit().getInstance(instanceId);
+            if (updateTarget == null)
+                committedManifest = instance.getManifest();
+            onInstanceCommitted(instance);
+            return instance;
         }
     }
 

@@ -60,13 +60,12 @@ final class ManuallyCreatedModpackInstallTask extends Task<@Nullable Void> {
                         return true;
                     })
                     .unzip();
-            context.checkCancellation();
             return context.call(Schedulers.javafx(), () -> {
-                context.checkCancellation();
                 GameDirectory gameDirectory = new GameDirectory(
                         GameDirectoryManager.newGameDirectoryId(),
                         LocalizedText.plain(gameDirectoryName),
                         PortablePath.fromPath(destination));
+                context.commit();
                 GameDirectoryManager.addLocalGameDirectory(gameDirectory);
                 // An interrupted caller may still observe failure after registration succeeds.
                 registered.set(true);

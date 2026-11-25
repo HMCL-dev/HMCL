@@ -423,7 +423,7 @@ public final class LauncherHelper {
             }
         });
 
-        launchingStepsPane.startTask();
+        launchingStepsPane.startTask().exceptionally(Lang::handleUncaughtException);
     }
 
     /// Consumes the abnormal-launch marker when checking game files and the optional Windows Mesa loader.

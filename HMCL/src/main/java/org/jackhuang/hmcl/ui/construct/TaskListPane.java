@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -233,7 +234,7 @@ public final class TaskListPane extends StackPane {
             public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
                 @Nullable TaskRowUpdate pending = running.remove(task);
                 if (pending == null) {
-                    if (failure == null || !shouldShowTaskRow(task, scope))
+                    if (failure == null || Lang.isNormalCancellation(failure) || !shouldShowTaskRow(task, scope))
                         return;
                     pending = new TaskRowUpdate(task, scope);
                 }

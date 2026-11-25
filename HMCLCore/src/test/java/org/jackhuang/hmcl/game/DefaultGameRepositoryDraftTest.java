@@ -19,6 +19,8 @@ import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthManifest;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
@@ -115,19 +117,33 @@ public final class DefaultGameRepositoryDraftTest {
 
     /// Failed server file downloads leave component updates available for a later attempt.
     @Test
-    void serverModpackFileFailurePrecedesComponentUpdate(@TempDir Path directory) throws IOException {
+    void serverModpackFileFailurePrecedesComponentUpdate(@TempDir Path directory) throws Exception {
         TestRepository repository = new TestRepository(directory);
         GameInstanceID id = new GameInstanceID("server");
         repository.save(new GameInstanceManifest(id));
         DefaultGameInstance instance = repository.getInstance(id);
-        var installed = publishServerUpdate(directory, List.of(),
-                List.of(new ModpackConfiguration.FileInformation("missing.txt", "0".repeat(40))));
-        var task = new ServerModpackCompletionTask(createDependencyManager(repository), instance);
+        Path existing = Files.writeString(instance.getInstanceRoot().resolve("settings.txt"), "old");
+        String oldHash = DigestUtils.digestToString("SHA-1", existing);
+        String newHash = DigestUtils.digestToString("SHA-1", "updated".getBytes(StandardCharsets.UTF_8));
+        var installed = publishServerUpdate(directory, List.of(new ModpackConfiguration.FileInformation("settings.txt", oldHash)),
+                List.of(new ModpackConfiguration.FileInformation("added.txt", newHash),
+                        new ModpackConfiguration.FileInformation("settings.txt", newHash)));
+        Path overrides = Files.createDirectories(directory.resolve("published/overrides"));
+        Files.writeString(overrides.resolve("added.txt"), "updated");
+        var manager = createOfflineGameInstaller(repository, id, "1.21");
+        var task = new ServerModpackCompletionTask(manager, instance);
         JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), installed);
         assertThrows(DownloadException.class, task::run);
         var saved = readServerManifest(instance);
         assertEquals("1.20", saved.getAddons().get(0).getVersion());
-        assertEquals("missing.txt", saved.getFiles().get(0).getPath());
+        assertEquals(newHash, saved.getFiles().get(0).getHash());
+        assertEquals(oldHash, saved.getFiles().get(1).getHash());
+        assertEquals("old", Files.readString(existing));
+
+        Files.writeString(overrides.resolve("settings.txt"), "updated");
+        new ServerModpackCompletionTask(manager, instance).run();
+        assertEquals("updated", Files.readString(existing));
+        assertEquals(newHash, readServerManifest(repository.getInstance(id)).getFiles().get(1).getHash());
     }
 
     /// A queued update cannot delete files or rewrite the configuration of a replacement instance.
@@ -473,6 +489,51 @@ public final class DefaultGameRepositoryDraftTest {
         assertTrue(Files.notExists(serverOnly));
         assertEquals("2", Objects.requireNonNull(JsonUtils.fromJsonFile(index, ModrinthManifest.class)).getVersionId());
         assertEquals("2", Objects.requireNonNull(JsonUtils.fromJsonFile(configuration, ModpackConfiguration.class)).getVersion());
+    }
+
+    /// An incomplete MCBBS install keeps its patch and remote metadata unless cancellation wins.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void incompleteMcbbsInstallKeepsPublishedPatch(boolean cancel, @TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("mcbbs");
+        String fileApi = directory.toUri().toASCIIString();
+        String metadata = """
+                {"name":"local","version":"1","addons":[{"id":"game","version":"1.21"}],"fileApi":"%s"}
+                """.formatted(fileApi);
+        var manifest = JsonUtils.fromNonNullJson(metadata, McbbsModpackManifest.class);
+        Files.writeString(directory.resolve("manifest.json"), """
+                {"name":"remote","version":"2","files":[
+                  {"type":"curse","projectID":1,"fileID":2,"fileName":"missing.jar","url":"%s"}
+                ]}
+                """.formatted(directory.resolve("missing.jar").toUri().toASCIIString()));
+        Path archive = directory.resolve("pack.zip");
+        try (Zipper zip = new Zipper(archive)) {
+            zip.putTextFile("local", "overrides/local.txt");
+        }
+        Task<?> install = manifest.toModpack().getInstallTask(createOfflineGameInstaller(repository, id, "1.21"),
+                archive, id, "", null);
+        if (cancel) {
+            install.addTaskListener(new TaskListener() {
+                /// Cancels after the download failure has been published to the installer.
+                @Override
+                public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+                    if (task instanceof McbbsModpackCompletionTask && failure instanceof ModpackCompletionException)
+                        install.cancel();
+                }
+            });
+            assertThrows(CancellationException.class, install::run);
+            assertFalse(repository.hasInstance(id));
+        } else {
+            assertThrows(ModpackCompletionException.class, install::run);
+            DefaultGameInstance instance = repository.getInstance(id);
+            assertTrue(instance.getManifest().getPatches().stream().anyMatch(patch -> "mcbbs".equals(patch.id())));
+            var config = Objects.requireNonNull(JsonUtils.fromJsonFile(instance.getModpackConfigurationFile(),
+                    ModpackConfiguration.typeOf(McbbsModpackManifest.class)));
+            assertEquals("remote", config.getName());
+            assertEquals("2", config.getVersion());
+            assertTrue(config.getOverrides().isEmpty());
+        }
     }
 
     /// Cancellation from the final child's completion rolls back the newly built instance.
@@ -1197,6 +1258,37 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals(original, repository.getInstance(id).getManifest());
         manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).run();
         assertEquals(replacement, repository.getInstanceManifest(id));
+    }
+
+    /// Cancellation observed by a snapshot listener preserves a published installation or update.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void cancellationDuringPublicationPreservesTaskResult(boolean update, @TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Task<?> operation;
+        if (update) {
+            repository.save(new GameInstanceManifest(id));
+            operation = createDependencyManager(repository).updateInstanceAsync(id, instance ->
+                    Task.completed(instance.getManifest().withMainClass(GameComponentAnalyzer.VANILLA_MAIN)));
+        } else {
+            DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, "1.21.2");
+            operation = new Task<DefaultGameInstance>() {
+                /// Builds the instance as the final result of this installation.
+                @Override
+                public DefaultGameInstance execute(TaskExecutionContext context) throws Exception {
+                    try (DefaultGameBuilder builder = manager.newGameBuilder(id)) {
+                        builder.component(GameComponentType.GAME, "1.21.2");
+                        return builder.buildAsTaskResult(context);
+                    }
+                }
+            };
+        }
+        repository.snapshotProperty().addListener((observable, previous, current) -> operation.cancel());
+
+        operation.run();
+        assertTrue(operation.isCancellationRequested());
+        assertEquals(GameComponentAnalyzer.VANILLA_MAIN, repository.getInstance(id).getResolvedManifest().mainClass());
     }
 
     /// Releases the draft when the updater's task raises an error during execution.

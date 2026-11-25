@@ -675,7 +675,7 @@ public final class Controllers {
         pane.setTitle(title);
         pane.setTask(task);
         dialog(pane);
-        pane.startTask(parent);
+        pane.startTask(parent).exceptionally(Lang::handleUncaughtException);
         return pane;
     }
 

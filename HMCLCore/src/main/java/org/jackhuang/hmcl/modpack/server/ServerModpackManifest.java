@@ -68,6 +68,11 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
         return files;
     }
 
+    /// Returns this manifest with the given file baselines for the next synchronization.
+    ServerModpackManifest withFiles(List<ModpackConfiguration.FileInformation> files) {
+        return new ServerModpackManifest(name, author, version, description, fileApi, files, addons);
+    }
+
     public List<Addon> getAddons() {
         return addons;
     }

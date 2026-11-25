@@ -491,6 +491,7 @@ final class TaskExecution {
                 if (preparedSource != null) {
                     preparedSource.execute();
                     resultExecutor = preparedSource.resultExecutor;
+                    committed = preparedSource.committed;
                 }
                 result = decorator.source.completedOutcome();
                 decorator.onSourceSuccess(this);

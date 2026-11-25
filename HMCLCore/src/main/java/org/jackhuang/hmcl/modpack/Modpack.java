@@ -133,7 +133,13 @@ public abstract class Modpack {
                 : dependencyManager.newGameBuilder(updateTarget);
         try {
             context.checkCancellation();
-            install.accept(builder);
+            try {
+                install.accept(builder);
+            } catch (ModpackCompletionException incomplete) {
+                if (keepIncompleteInstance)
+                    context.commit();
+                throw incomplete;
+            }
             context.commit();
         } catch (Exception | Error failure) {
             try {

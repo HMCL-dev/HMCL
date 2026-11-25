@@ -177,6 +177,7 @@ public class TaskDialogPane extends BorderPane implements DialogAware {
         this.autoClose = autoClose;
         submission = null;
         queued.set(false);
+        lblProgress.setText("");
         pendingAction.set(null);
         running = false;
         runningInBackground.set(false);
@@ -225,11 +226,15 @@ public class TaskDialogPane extends BorderPane implements DialogAware {
         if (pendingAction.get() == null)
             TaskManager.getInstance().unregister(this);
         updateButtons();
-        if (autoClose) {
-            fireEvent(new DialogCloseEvent());
-            if (Controllers.AUTO_TRIM_HEAP)
-                Platform.runLater(Controllers::trimHeap);
-        }
+        if (autoClose)
+            closeDialog();
+    }
+
+    /// Closes the progress dialog and schedules its usual heap trim.
+    private void closeDialog() {
+        fireEvent(new DialogCloseEvent());
+        if (Controllers.AUTO_TRIM_HEAP)
+            Platform.runLater(Controllers::trimHeap);
     }
 
     /// Submits this dialog's task to the serial task queue, once per attached task.
@@ -261,15 +266,19 @@ public class TaskDialogPane extends BorderPane implements DialogAware {
         lblProgress.setText(i18n("task.queued"));
         TaskManager.getInstance().register(this);
         updateButtons();
+        Runnable reject = () -> {
+            if (listener == attachment) {
+                boolean close = autoClose && (running || queued.get());
+                setTask(null);
+                if (close)
+                    closeDialog();
+            }
+        };
         CompletableFuture<Boolean> submitted;
         try {
-            submitted = TaskManager.getInstance().submit(submittedTask, parentTask, () -> {
-                if (listener == attachment)
-                    finish(false);
-            });
+            submitted = TaskManager.getInstance().submit(submittedTask, parentTask, reject);
         } catch (IllegalArgumentException failure) {
-            if (listener == attachment)
-                finish(false);
+            reject.run();
             throw failure;
         }
         if (listener == attachment)

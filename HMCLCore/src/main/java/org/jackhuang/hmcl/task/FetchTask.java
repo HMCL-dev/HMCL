@@ -21,6 +21,7 @@ import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
@@ -466,7 +467,7 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
                         if (connection != null && !responseBodyConsumed)
                             closeHttpConnection(connection);
                     }
-                } catch (InterruptedException e) {
+                } catch (InterruptedException | CancellationException e) {
                     throw e;
                 } catch (FileNotFoundException ex) {
                     LOG.warning("Failed to download " + url + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
@@ -527,7 +528,7 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
                             ContentEncoding.fromConnection(conn));
                     return context.finish();
                 }
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | CancellationException e) {
                 throw e;
             } catch (FileNotFoundException ex) {
                 LOG.warning("Failed to download " + url + ", not found", ex);

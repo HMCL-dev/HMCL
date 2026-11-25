@@ -45,7 +45,7 @@ public class HMCLDependencyManager extends DefaultDependencyManager {
             public HMCLGameInstance execute(TaskExecutionContext context) throws Exception {
                 try (HMCLGameBuilder builder = newGameBuilder(instanceId)) {
                     configure.accept(builder);
-                    return (HMCLGameInstance) builder.build(context);
+                    return (HMCLGameInstance) builder.buildAsTaskResult(context);
                 }
             }
         }.setName("Install instance " + instanceId).setSignificance(TaskSignificance.MODERATE);

@@ -359,6 +359,34 @@ final class TaskExecutionContextTest {
         assertTrue(task.isCancellationRequested());
     }
 
+    /// Decorators preserve a committed source; an enclosing task keeps its own cancellation boundary.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void decoratorsPreserveSourceCommit(boolean runAsChild) throws Exception {
+        Task<Integer> source = task(context -> {
+            context.commit();
+            return 42;
+        });
+        TaskStage stage = new TaskStage("test");
+        Task<Integer> decorated = source.withCounter().withStage(stage).withStageHints(stage);
+        Task<Integer> root = runAsChild ? task(context -> context.run(decorated)) : decorated;
+        root.addTaskListener(new TaskListener() {
+            /// Requests cancellation after the source publishes its value.
+            @Override
+            public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+                if (task == source)
+                    root.cancel();
+            }
+        });
+
+        if (runAsChild)
+            assertThrows(CancellationException.class, root::run);
+        else
+            assertEquals(42, root.run());
+        assertEquals(42, decorated.resultNow());
+        assertTrue(root.isCancellationRequested());
+    }
+
     /// Cancellation retains the interruption, including any cleanup failures attached to it.
     @Test
     void interruptedTaskPreservesCause() {

@@ -160,22 +160,22 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
                     GameInstance instance = draft.getBaseSnapshot().getInstance(instanceId);
                     Task<GameInstanceManifest> update = Objects.requireNonNull(updater.apply(instance), "Instance updater returned null");
-                    return context.run(update.thenComposeOptionalAsync(manifest -> {
-                        if (!instanceId.equals(manifest.id())) {
-                            throw new IllegalArgumentException(
-                                    "Instance updater changed id from " + instanceId + " to " + manifest.id());
-                        }
-                        GameInstanceManifest previous = instance.getResolvedManifest();
-                        GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
-                        draft.put(manifest);
-                        if (instanceId.equals(resolved.jar())
-                                && (!instanceId.equals(previous.jar())
-                                || !isSameClientDownload(previous.getDownloadInfo(), resolved.getDownloadInfo()))) {
-                            return new GameDownloadTask(DefaultDependencyManager.this, resolved).thenAcceptAsync(
-                                    jar -> draft.putPrimaryJar(instanceId, jar));
-                        }
-                        return null;
-                    }).thenRunAsync(draft::commit));
+                    GameInstanceManifest manifest = context.run(update);
+                    if (!instanceId.equals(manifest.id())) {
+                        throw new IllegalArgumentException(
+                                "Instance updater changed id from " + instanceId + " to " + manifest.id());
+                    }
+                    GameInstanceManifest previous = instance.getResolvedManifest();
+                    GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
+                    draft.put(manifest);
+                    if (instanceId.equals(resolved.jar())
+                            && (!instanceId.equals(previous.jar())
+                            || !isSameClientDownload(previous.getDownloadInfo(), resolved.getDownloadInfo()))) {
+                        draft.putPrimaryJar(instanceId, context.run(new GameDownloadTask(DefaultDependencyManager.this, resolved)));
+                    }
+                    context.commit();
+                    draft.commit();
+                    return null;
                 }
             }
         }.setName("Update instance " + instanceId).setSignificance(TaskSignificance.MODERATE);

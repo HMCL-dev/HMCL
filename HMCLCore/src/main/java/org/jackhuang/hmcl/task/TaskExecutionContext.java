@@ -22,7 +22,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Runs children in the current task's execution tree. Children inherit the current stage
 /// unless they declare one. Use this context on the task body's thread during its invocation.
-/// Actions dispatched by [#call(Executor, Callable)] can also check cancellation.
+/// Actions dispatched by [#call(Executor, Callable)] can also check cancellation or call [#commit()].
 ///
 /// A waiting worker can run descendant work scheduled on the same executor instance.
 /// On constrained executors, avoid wait cycles between independent branches and release

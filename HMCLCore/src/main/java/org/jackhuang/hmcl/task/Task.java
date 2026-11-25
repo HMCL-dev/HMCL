@@ -579,13 +579,13 @@ public abstract class Task<T extends @Nullable Object> {
 
     /// Creates a task that returns `value` when run.
     public static <V extends @Nullable Object> Task<V> completed(V value) {
-        return new Task<>() {
+        return new Task<V>() {
             /// {@inheritDoc}
             @Override
             public V execute(TaskExecutionContext context) {
                 return value;
             }
-        };
+        }.setSignificance(TaskSignificance.MINOR);
     }
 
     /// Creates a task that throws `failure` when its body runs.
@@ -593,13 +593,13 @@ public abstract class Task<T extends @Nullable Object> {
     /// @throws NullPointerException if `failure` is null
     public static <V extends @Nullable Object> Task<V> failed(Throwable failure) {
         Objects.requireNonNull(failure);
-        return new Task<>() {
+        return new Task<V>() {
             /// {@inheritDoc}
             @Override
             public V execute(TaskExecutionContext context) {
                 throw rethrow(failure);
             }
-        };
+        }.setSignificance(TaskSignificance.MINOR);
     }
 
     /// Creates a task with no executor preference that runs `closure` and returns `null`.
@@ -673,7 +673,7 @@ public abstract class Task<T extends @Nullable Object> {
     /// does not cancel the future or interrupt a running wait. Future cancellation propagates
     /// as a [CancellationException].
     public static <T extends @Nullable Object> Task<T> fromCompletableFuture(CompletableFuture<T> future) {
-        return new Task<>() {
+        return new Task<T>() {
             /// {@inheritDoc}
             @Override
             public T execute(TaskExecutionContext context) throws Exception {
@@ -683,7 +683,7 @@ public abstract class Task<T extends @Nullable Object> {
                     throw rethrow(Objects.requireNonNullElse(Lang.resolveException(e), e));
                 }
             }
-        };
+        }.setSignificance(TaskSignificance.MINOR);
     }
 
     /// Returns a task that runs all supplied children and collects successful results in array order.

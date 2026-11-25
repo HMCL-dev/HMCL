@@ -140,7 +140,7 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
     /// Synchronizes overrides and records the file list with the currently installed component versions.
     private void syncFiles(TaskExecutionContext context, ModpackConfiguration<ServerModpackManifest> installed,
                            ServerModpackManifest remoteManifest) throws Exception {
-        List<Task<?>> dependencies = new ArrayList<>();
+        Map<String, Task<?>> downloads = new LinkedHashMap<>();
         Path rootPath = instance.getInstanceRoot().toAbsolutePath().normalize();
         Map<String, ModpackConfiguration.FileInformation> files = installed.getManifest().getFiles().stream()
                 .collect(Collectors.toMap(ModpackConfiguration.FileInformation::getPath,
@@ -184,7 +184,7 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
             }
 
             if (download) {
-                dependencies.add(new FileDownloadTask(
+                downloads.put(file.getPath(), new FileDownloadTask(
                         remoteManifest.getFileApi() + "/overrides/" + file.getPath(),
                         actualPath,
                         new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
@@ -199,19 +199,44 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
                 Files.deleteIfExists(actualPath);
         }
 
-        context.addStageItems(dependencies.size());
+        context.addStageItems(downloads.size());
 
         try {
-            context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
+            context.runAll(downloads.values(), FetchTask.getDownloadExecutorConcurrency());
         } catch (Exception | Error failure) {
             try {
-                writeConfiguration(installed, remoteManifest);
+                List<ModpackConfiguration.FileInformation> synced = new ArrayList<>();
+                for (var file : remoteManifest.getFiles()) {
+                    @Nullable Task<?> download = downloads.get(file.getPath());
+                    if (download == null || wasDownloaded(download, rootPath.resolve(file.getPath()), file.getHash(), failure)) {
+                        synced.add(file);
+                    } else {
+                        @Nullable var old = files.get(file.getPath());
+                        if (old != null)
+                            synced.add(old);
+                    }
+                }
+                writeConfiguration(installed, remoteManifest.withFiles(synced));
             } catch (Exception | Error cleanupFailure) {
                 failure.addSuppressed(cleanupFailure);
             }
             throw failure;
         }
         writeConfiguration(installed, remoteManifest);
+    }
+
+    /// A download may have replaced its destination before reporting cancellation or a later failure.
+    private static boolean wasDownloaded(Task<?> download, Path path, String hash, Throwable failure) {
+        if (download.getState() == Task.State.SUCCEEDED)
+            return true;
+        if (download.getState() == Task.State.NEW)
+            return false;
+        try {
+            return Files.isRegularFile(path) && hash.equalsIgnoreCase(DigestUtils.digestToString("SHA-1", path));
+        } catch (IOException e) {
+            failure.addSuppressed(e);
+            return false;
+        }
     }
 
     /// Records the remote file list alongside the component versions known to the installation.

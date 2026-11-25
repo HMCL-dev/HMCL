@@ -80,7 +80,6 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         if (name == null) return null;
         if (isManuallyCreated) {
             if (selected == null) return null;
-            settings.put(WAIT_FOR_CANCELLATION, true);
             return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name);
         }
 
@@ -110,6 +109,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     /// Creates the selected operation and installs its localized result messages.
     @Override
     public @Nullable Object finish(SettingsMap settings) {
+        settings.put(WAIT_FOR_CANCELLATION, true);
         settings.put("title", i18n("install.modpack.installation", settings.get(LocalModpackPage.MODPACK_NAME)));
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (ignored, exception, next) -> {
@@ -123,7 +123,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
                 if (exception.getCause() instanceof FileNotFoundException) {
                     Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
                 } else {
-                    Controllers.dialog(i18n("install.success"), i18n("install.success"), MessageType.SUCCESS, next);
+                    Controllers.dialog(i18n("modpack.type.curse.error"), i18n("message.warning"), MessageType.WARNING, next);
                 }
             } else {
                 UpdateInstallerWizardProvider.alertFailureMessage(exception, next);

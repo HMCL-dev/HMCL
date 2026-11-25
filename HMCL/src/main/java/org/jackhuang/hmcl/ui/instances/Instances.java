@@ -114,7 +114,7 @@ public final class Instances {
                 });
         pane.setTask(task);
         Controllers.dialog(pane);
-        pane.startTask();
+        pane.startTask().exceptionally(Lang::handleUncaughtException);
     }
 
     public static void deleteInstance(HMCLGameInstance gameInstance) {

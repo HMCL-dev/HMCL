@@ -30,7 +30,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -98,18 +97,17 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
             }
         }
         @Nullable McbbsModpackManifest manifest = installed.getManifest();
-        if (manifest != null) {
-            if (StringUtils.isNotBlank(manifest.getFileApi()))
-                manifest = updateManifest(context, installed, manifest);
-            completeCurseFiles(context, installed, manifest);
-        }
+        if (manifest == null)
+            return null;
+        if (StringUtils.isNotBlank(manifest.getFileApi()))
+            installed = updateManifest(context, installed, manifest);
+        completeCurseFiles(context, installed);
         return null;
     }
 
     /// Fetches the remote manifest, applies its file changes and records the updated manifest.
-    private McbbsModpackManifest updateManifest(TaskExecutionContext context,
-                                                ModpackConfiguration<McbbsModpackManifest> configuration,
-                                                McbbsModpackManifest manifest) throws Exception {
+    private ModpackConfiguration<McbbsModpackManifest> updateManifest(TaskExecutionContext context,
+            ModpackConfiguration<McbbsModpackManifest> configuration, McbbsModpackManifest manifest) throws Exception {
         String remoteManifestJson = context.run(new GetTask(WebURL.parse(manifest.getFileApi() + "/manifest.json")));
         McbbsModpackManifest remoteManifest;
         try {
@@ -178,21 +176,20 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
 
         McbbsModpackManifest updated = remoteManifest.setFiles(newFiles);
         context.runAll(tasks, FetchTask.getDownloadExecutorConcurrency());
-        JsonUtils.writeToJsonFile(configurationFile,
-                new ModpackConfiguration<>(updated, configuration.getType(), updated.getName(), updated.getVersion(),
-                        updated.getFiles().stream()
-                                .flatMap(file -> file instanceof McbbsModpackManifest.AddonFile
-                                        ? Stream.of((McbbsModpackManifest.AddonFile) file)
-                                        : Stream.empty())
-                                .map(file -> new ModpackConfiguration.FileInformation(file.getPath(), file.getHash()))
-                                .collect(Collectors.toList())));
-        return updated;
+        List<ModpackConfiguration.FileInformation> overrides = new ArrayList<>();
+        for (var file : updated.getFiles()) {
+            if (file instanceof McbbsModpackManifest.AddonFile addon)
+                overrides.add(new ModpackConfiguration.FileInformation(addon.getPath(), addon.getHash()));
+        }
+        var updatedConfiguration = new ModpackConfiguration<>(updated, configuration.getType(), updated.getName(), updated.getVersion(), overrides);
+        JsonUtils.writeToJsonFile(configurationFile, updatedConfiguration);
+        return updatedConfiguration;
     }
 
     /// Resolves names for CurseForge entries and downloads missing files concurrently.
     private void completeCurseFiles(TaskExecutionContext context,
-                                    ModpackConfiguration<McbbsModpackManifest> configuration,
-                                    McbbsModpackManifest manifest) throws Exception {
+                                    ModpackConfiguration<McbbsModpackManifest> configuration) throws Exception {
+        McbbsModpackManifest manifest = configuration.getManifest();
         AtomicBoolean allNameKnown = new AtomicBoolean(true);
         TaskProgress progress = context.progress();
         AtomicInteger finished = new AtomicInteger();
