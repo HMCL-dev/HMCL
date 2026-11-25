@@ -108,38 +108,31 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
             throw new IOException(e);
         }
 
-        boolean updateComponents = !toMap(installed.getManifest().getAddons()).equals(toMap(remoteManifest.getAddons()));
-        DefaultGameInstance target = instance;
-        if (updateComponents) {
+        if (!toMap(installed.getManifest().getAddons()).equals(toMap(remoteManifest.getAddons()))) {
             try (DefaultGameBuilder builder = dependencyManager.newGameBuilder(instance)) {
                 for (ServerModpackManifest.Addon addon : remoteManifest.getAddons()) {
                     @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
                     if (componentType != null)
                         builder.component(componentType, addon.getVersion());
                 }
-                ServerModpackManifest pending = new ServerModpackManifest(remoteManifest.getName(), remoteManifest.getAuthor(),
-                        remoteManifest.getVersion(), remoteManifest.getDescription(), remoteManifest.getFileApi(),
-                        remoteManifest.getFiles(), installed.getManifest().getAddons());
-                syncFiles(context, installed, pending);
-                target = builder.build(context);
+                syncFiles(context, installed, remoteManifest, false);
+                builder.setModpackConfiguration(configurationFor(installed, remoteManifest));
+                builder.buildAsTaskResult(context);
             }
-        }
-
-        // A successful build releases its draft and publishes a new instance.
-        try (DefaultGameRepositoryDraft draft = dependencyManager.getGameRepository().openDraft()) {
-            if (draft.getBaseSnapshot().findInstance(target.getId()) != target)
-                throw new IllegalStateException("Game instance has changed: " + target.getId());
-            if (updateComponents)
-                writeConfiguration(installed, remoteManifest);
-            else
-                syncFiles(context, installed, remoteManifest);
+        } else {
+            try (DefaultGameRepositoryDraft draft = dependencyManager.getGameRepository().openDraft()) {
+                if (draft.getBaseSnapshot().findInstance(instance.getId()) != instance)
+                    throw new IllegalStateException("Game instance has changed: " + instance.getId());
+                syncFiles(context, installed, remoteManifest, true);
+            }
         }
         return null;
     }
 
-    /// Synchronizes overrides and records the file list with the currently installed component versions.
+    /// Synchronizes overrides and records their hashes, committing the task if this is its final publication.
     private void syncFiles(TaskExecutionContext context, ModpackConfiguration<ServerModpackManifest> installed,
-                           ServerModpackManifest remoteManifest) throws Exception {
+                           ServerModpackManifest remoteManifest, boolean finalPublication) throws Exception {
+        Files.createDirectories(configurationFile.getParent());
         Map<String, Task<?>> downloads = new LinkedHashMap<>();
         Path rootPath = instance.getInstanceRoot().toAbsolutePath().normalize();
         Map<String, ModpackConfiguration.FileInformation> files = installed.getManifest().getFiles().stream()
@@ -203,6 +196,8 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
 
         try {
             context.runAll(downloads.values(), FetchTask.getDownloadExecutorConcurrency());
+            if (finalPublication)
+                context.commit();
         } catch (Exception | Error failure) {
             try {
                 List<ModpackConfiguration.FileInformation> synced = new ArrayList<>();
@@ -216,13 +211,14 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
                             synced.add(old);
                     }
                 }
-                writeConfiguration(installed, remoteManifest.withFiles(synced));
+                configurationFor(installed, installed.getManifest().withFiles(synced)).writeTo(configurationFile);
             } catch (Exception | Error cleanupFailure) {
                 failure.addSuppressed(cleanupFailure);
             }
             throw failure;
         }
-        writeConfiguration(installed, remoteManifest);
+        ServerModpackManifest baseline = finalPublication ? remoteManifest : installed.getManifest().withFiles(remoteManifest.getFiles());
+        configurationFor(installed, baseline).writeTo(configurationFile);
     }
 
     /// A download may have replaced its destination before reporting cancellation or a later failure.
@@ -239,10 +235,9 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
         }
     }
 
-    /// Records the remote file list alongside the component versions known to the installation.
-    private void writeConfiguration(ModpackConfiguration<ServerModpackManifest> installed, ServerModpackManifest remote) throws IOException {
-        Files.createDirectories(configurationFile.getParent());
-        JsonUtils.writeToJsonFile(configurationFile, new ModpackConfiguration<>(remote, installed.getType(),
-                installed.getName(), installed.getVersion(), remote.getFiles()));
+    /// Pairs the synchronized file list with the component versions that supplied it.
+    private static ModpackConfiguration<ServerModpackManifest> configurationFor(
+            ModpackConfiguration<ServerModpackManifest> installed, ServerModpackManifest remote) {
+        return new ModpackConfiguration<>(remote, installed.getType(), installed.getName(), installed.getVersion(), remote.getFiles());
     }
 }

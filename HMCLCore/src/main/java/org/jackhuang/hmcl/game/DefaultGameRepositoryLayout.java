@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.game;
 
 import org.jetbrains.annotations.NotNullByDefault;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -55,8 +56,14 @@ public class DefaultGameRepositoryLayout implements GameRepositoryLayout {
         return getInstanceRoot(instanceId).resolve(instanceId.id() + ".jar");
     }
 
+    /// Uses modpack.json unless that name belongs to the instance manifest or only a legacy modpack.cfg exists.
     public Path getModpackConfigurationFile(GameInstanceID instanceId) {
-        return getInstanceRoot(instanceId).resolve("modpack.cfg");
+        Path root = getInstanceRoot(instanceId);
+        Path configuration = root.resolve("modpack.json");
+        Path legacy = root.resolve("modpack.cfg");
+        if ("modpack".equalsIgnoreCase(instanceId.id()) || (Files.notExists(configuration) && Files.exists(legacy)))
+            return legacy;
+        return configuration;
     }
 
     /// {@inheritDoc}

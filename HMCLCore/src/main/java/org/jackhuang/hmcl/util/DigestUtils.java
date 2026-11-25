@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -84,6 +86,13 @@ public final class DigestUtils {
         return HexFormat.of().formatHex(digest(algorithm, path));
     }
 
+    /// Hashes a file, checking for cancellation between reads.
+    public static String digestToString(String algorithm, Path path, Runnable checkCancellation) throws IOException {
+        try (InputStream input = Files.newInputStream(path)) {
+            return HexFormat.of().formatHex(updateDigest(getDigest(algorithm), input, checkCancellation).digest());
+        }
+    }
+
     public static String digestToString(String algorithm, InputStream data) throws IOException {
         return HexFormat.of().formatHex(digest(algorithm, data));
     }
@@ -91,15 +100,20 @@ public final class DigestUtils {
     private static final ThreadLocal<byte[]> threadLocalBuffer = ThreadLocal.withInitial(() -> new byte[STREAM_BUFFER_LENGTH]);
 
     public static MessageDigest updateDigest(MessageDigest digest, InputStream data) throws IOException {
+        return updateDigest(digest, data, null);
+    }
+
+    /// Updates the digest until end of stream or until the supplied cancellation check throws.
+    private static MessageDigest updateDigest(MessageDigest digest, InputStream data, @Nullable Runnable checkCancellation) throws IOException {
         byte[] buffer = threadLocalBuffer.get();
-        int read = data.read(buffer, 0, STREAM_BUFFER_LENGTH);
-
-        while (read > -1) {
+        while (true) {
+            if (checkCancellation != null)
+                checkCancellation.run();
+            int read = data.read(buffer);
+            if (read == -1)
+                return digest;
             digest.update(buffer, 0, read);
-            read = data.read(buffer, 0, STREAM_BUFFER_LENGTH);
         }
-
-        return digest;
     }
 
 }

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.io;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,25 @@ public final class CompressingUtilsTest {
     /// Directory containing generated archives.
     @TempDir
     Path temporaryDirectory;
+
+    /// A full destination volume leaves the existing override intact and no partial file behind.
+    @Test
+    void failedOverrideReplacementKeepsPreviousFile() throws IOException {
+        Path archive = temporaryDirectory.resolve("pack.zip");
+        try (Zipper zip = new Zipper(archive)) {
+            zip.putTextFile("x".repeat(128 * 1024), "overrides/settings.txt");
+        }
+        try (var fs = Jimfs.newFileSystem(Configuration.unix().toBuilder().setMaxSize(32768).build())) {
+            Path root = Files.createDirectory(fs.getPath("/instance"));
+            Path existing = Files.writeString(root.resolve("settings.txt"), "previous");
+            Unzipper unzipper = new Unzipper(archive, root).setSubDirectory("/overrides").setReplaceExistentFile(true);
+            assertThrows(IOException.class, unzipper::unzip);
+            assertEquals("previous", Files.readString(existing));
+            try (var files = Files.list(root)) {
+                assertEquals(List.of(existing), files.toList());
+            }
+        }
+    }
 
     /// Supplies the original UTF-8 and GBK regression archives.
     public static Stream<Arguments> arguments() {

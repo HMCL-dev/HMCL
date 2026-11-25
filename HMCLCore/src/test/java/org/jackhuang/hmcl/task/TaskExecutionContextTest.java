@@ -397,6 +397,23 @@ final class TaskExecutionContextTest {
         assertSame(interrupted, cancellation.getCause());
     }
 
+    /// A cancelled task must not leave its worker interrupted for the next local submission.
+    @Test
+    void forkJoinWorkerDoesNotPassInterruptionToNextTask() throws Exception {
+        ForkJoinPool pool = new ForkJoinPool(1);
+        try {
+            CompletableFuture<Boolean> nextInterrupted = new CompletableFuture<>();
+            Task<?> task = Task.runAsync(pool, () -> {
+                pool.execute(() -> nextInterrupted.complete(Thread.currentThread().isInterrupted()));
+                Thread.currentThread().interrupt();
+            });
+            assertThrows(CancellationException.class, task::run);
+            assertFalse(nextInterrupted.get(10, TimeUnit.SECONDS));
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
     /// Querying cancellation observes the worker's interrupt status and leaves it set.
     @Test
     void observesInterruptionWithoutClearingIt() throws Exception {

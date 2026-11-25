@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskStage;
@@ -70,6 +71,12 @@ public class DefaultGameBuilder extends GameBuilder {
     public void addPatch(GameInstancePatch patch) {
         checkOpen();
         initialManifest = initialManifest.addPatch(patch);
+    }
+
+    /// Publishes the modpack configuration together with the built instance.
+    public void setModpackConfiguration(ModpackConfiguration<?> configuration) {
+        checkOpen();
+        draft.putModpackConfiguration(instanceId, configuration);
     }
 
     /// {@inheritDoc}

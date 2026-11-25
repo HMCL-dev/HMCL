@@ -65,10 +65,6 @@ public final class Unzipper {
         Path destDir = this.dest.toAbsolutePath().normalize();
         Files.createDirectories(destDir);
 
-        CopyOption[] copyOptions = replaceExistentFile
-                ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING}
-                : new CopyOption[]{};
-
         long entryCount = 0L;
         try (ZipArchiveReader reader = CompressingUtils.openZipFile(zipFile)) {
             String pathPrefix = StringUtils.addSuffix(subDirectory, "/");
@@ -97,12 +93,9 @@ public final class Unzipper {
                     Files.createDirectories(destFile.getParent());
                     if (entry.isUnixSymlink()) {
                         String linkTarget = reader.getUnixSymlink(entry);
-                        if (replaceExistentFile)
-                            Files.deleteIfExists(destFile);
-
                         Path targetPath;
                         try {
-                            targetPath = Path.of(linkTarget);
+                            targetPath = destFile.getFileSystem().getPath(linkTarget);
                         } catch (InvalidPathException e) {
                             throw new IOException("Zip entry has an invalid symlink target: " + entry.getName(), e);
                         }
@@ -111,21 +104,21 @@ public final class Unzipper {
                             throw new IOException("Zip entry is trying to create a symlink outside of the destination directory: " + entry.getName());
                         }
 
-                        try {
-                            Files.createSymbolicLink(destFile, targetPath);
-                        } catch (FileAlreadyExistsException ignored) {
+                        if (replaceExistentFile) {
+                            FileUtils.replaceFile(destFile, temporary -> {
+                                Files.delete(temporary);
+                                Files.createSymbolicLink(temporary, targetPath);
+                            });
+                        } else {
+                            try {
+                                Files.createSymbolicLink(destFile, targetPath);
+                            } catch (FileAlreadyExistsException ignored) {
+                            }
                         }
+                    } else if (replaceExistentFile) {
+                        FileUtils.replaceFile(destFile, temporary -> extractFile(reader, entry, temporary, true));
                     } else {
-                        try (InputStream input = reader.getInputStream(entry)) {
-                            Files.copy(input, destFile, copyOptions);
-                        } catch (FileAlreadyExistsException e) {
-                            if (replaceExistentFile)
-                                throw e;
-                        }
-
-                        if ((entry.getUnixMode() & 0777) != 0 && SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS) {
-                            Files.setPosixFilePermissions(destFile, FileUtils.parsePosixFilePermission(entry.getUnixMode()));
-                        }
+                        extractFile(reader, entry, destFile, false);
                     }
                 }
             }
@@ -134,6 +127,24 @@ public final class Unzipper {
                 throw new NoSuchFileException("Subdirectory " + subDirectory + " does not exist in the zip file.");
             }
         }
+    }
+
+    /// Copies one entry and applies its archived permissions before publishing the replacement.
+    private static void extractFile(ZipArchiveReader reader, ZipArchiveEntry entry, Path file, boolean replace) throws IOException {
+        try (InputStream input = reader.getInputStream(entry)) {
+            if (replace) {
+                try (var output = Files.newOutputStream(file)) {
+                    input.transferTo(output);
+                }
+            } else {
+                try {
+                    Files.copy(input, file);
+                } catch (FileAlreadyExistsException ignored) {
+                }
+            }
+        }
+        if ((entry.getUnixMode() & 0777) != 0 && SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS)
+            Files.setPosixFilePermissions(file, FileUtils.parsePosixFilePermission(entry.getUnixMode()));
     }
 
     @FunctionalInterface

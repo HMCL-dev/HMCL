@@ -230,14 +230,14 @@ public final class TaskListPane extends StackPane {
                     pending.report(fraction);
             }
 
-            /// Removes successful tasks and retains visible failures, including failures before the body starts.
+            /// Removes successful or quietly cancelled tasks and retains failures that need reporting.
             @Override
             public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
                 @Nullable TaskRowUpdate pending = running.remove(task);
+                if (failure instanceof CancellationException cancellation && !shouldReportCancellation(cancellation))
+                    failure = null;
                 if (pending == null) {
                     if (failure == null || !shouldShowTaskRow(task, scope))
-                        return;
-                    if (failure instanceof CancellationException cancellation && !shouldReportCancellation(cancellation))
                         return;
                     pending = new TaskRowUpdate(task, scope);
                 }

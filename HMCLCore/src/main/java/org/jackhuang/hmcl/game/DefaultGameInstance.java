@@ -253,7 +253,7 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// {@inheritDoc}
     @Override
     public Path getModpackConfigurationFile() {
-        return getInstanceRoot().resolve("modpack.json");
+        return layout.getModpackConfigurationFile(id);
     }
 
     /// {@inheritDoc}

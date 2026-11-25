@@ -8,7 +8,7 @@ import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.ModpackExportTask;
-import org.jackhuang.hmcl.task.TaskProgress;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -38,7 +38,7 @@ public class ServerModpackExportTask extends ModpackExportTask {
 
     /// {@inheritDoc}
     @Override
-    protected void writeArchive(Zipper zip, Predicate<String> include, TaskProgress progress) throws IOException {
+    protected void writeArchive(Zipper zip, Predicate<String> include, TaskExecutionContext context) throws IOException {
         Path runDirectory = instance.getRunDirectory();
         List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
         zip.putDirectoryProgressed(runDirectory, "overrides", path -> {
@@ -46,13 +46,13 @@ public class ServerModpackExportTask extends ModpackExportTask {
                 Path file = runDirectory.resolve(path);
                 if (Files.isRegularFile(file)) {
                     String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                    files.add(new ModpackConfiguration.FileInformation(relativePath, DigestUtils.digestToString("SHA-1", file)));
+                    files.add(new ModpackConfiguration.FileInformation(relativePath, DigestUtils.digestToString("SHA-1", file, context::checkCancellation)));
                 }
                 return true;
             } else {
                 return false;
             }
-        }, progress::update);
+        }, context.progress()::update);
 
         GameVersionNumber version = instance.getVersion();
         if (version == GameVersionNumber.unknown()) {

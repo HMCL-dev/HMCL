@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.util.gson;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -593,6 +596,18 @@ public final class JsonUtils {
         try (var writer = Files.newBufferedWriter(file)) {
             GSON.toJson(value, writer);
         }
+    }
+
+    /// Replaces the JSON file after serialization succeeds, retaining an existing regular file's POSIX permissions.
+    public static void writeToJsonFileSafely(Path file, @Nullable Object value) throws IOException {
+        FileUtils.replaceFile(file, temporary -> {
+            try (var writer = Files.newBufferedWriter(temporary)) {
+                if (Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)
+                        && Files.getFileStore(file).supportsFileAttributeView(PosixFileAttributeView.class))
+                    Files.setPosixFilePermissions(temporary, Files.getPosixFilePermissions(file));
+                GSON.toJson(value, writer);
+            }
+        });
     }
 
     /// Performs a deep clone of `value` by round-tripping it through JSON serialization using

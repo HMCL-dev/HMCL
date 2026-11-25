@@ -132,9 +132,8 @@ public class ServerModpackLocalInstallTask extends Task<@Nullable Void> {
             @Unmodifiable List<String> subDirectories = List.of("/overrides");
             context.run(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config)
                     .withStage(InstallStages.MODPACK));
-            context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, ServerModpackProvider.INSTANCE,
-                    modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId))
-                    .withStage(InstallStages.MODPACK));
+            builder.setModpackConfiguration(context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest,
+                    ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion()).withStage(InstallStages.MODPACK)));
             builder.build(context);
         });
         return null;

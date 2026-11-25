@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
@@ -59,54 +60,77 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
     /// Downloads the selected updates and waits for each addon's cleanup to finish.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        List<Task<?>> updates = new ArrayList<>(addons.size());
-        for (SelectedUpdate selected : addons) {
-            context.checkCancellation();
-            LocalAddonFile<?> local = selected.update().localAddonFile();
-            RemoteAddon.Version remote = selected.update().targetVersion();
-            String fileName = remote.file().filename();
-            String newFileName = selected.disabled()
-                    ? StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION) : fileName;
-            Path targetFile = addonDirectory.resolve(newFileName);
-
-            updates.add(Task
-                    .supplyAsync(Schedulers.io(), () -> Files.createTempFile("hmcl-addon-update-", ".tmp"))
-                    .thenComposeAsync(tempFile ->
-                            new FileDownloadTask(downloadProvider.getDownloadCandidates(remote.file().url()), tempFile)
-                                    .setName(remote.name())
-                                    .thenRunAsync(Schedulers.javafx(), () -> local.setOld(true))
-                                    .thenRunAsync(Schedulers.io(), () -> Files.move(tempFile, targetFile))
-                                    .whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
-                                        try {
-                                            Files.deleteIfExists(tempFile);
-                                        } catch (Exception e) {
-                                            LOG.warning("Failed to delete temp file " + tempFile, e);
-                                        }
-                                        if (exception != null) {
-                                            // restore state if failed
-                                            local.setOld(false);
-                                            if (selected.disabled())
-                                                local.markDisabled();
-                                        } else {
-                                            local.onUpdated(newFileName);
-                                            if (!local.keepOldFiles()) {
-                                                try {
-                                                    local.delete();
-                                                } catch (IOException e) {
-                                                    LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
-                                                }
-                                            }
-                                        }
-                                    })
-                    ).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
-                        if (exception != null && !(exception instanceof CancellationException)) {
-                            LOG.warning("Failed to update addon", exception);
-                            failedAddons.add(local);
-                        }
-                    }).withCounter());
-        }
+        @Unmodifiable List<Task<@Nullable Void>> updates = addons.stream().map(this::update).toList();
         context.addStageItems(updates.size());
-        context.runAll(updates, FetchTask.getDownloadExecutorConcurrency());
+        try {
+            context.runAll(updates, FetchTask.getDownloadExecutorConcurrency());
+        } finally {
+            for (int i = 0; i < updates.size(); i++) {
+                @Nullable Throwable failure = updates.get(i).exceptionNowOrNull();
+                if (failure != null && !(failure instanceof CancellationException)) {
+                    LOG.warning("Failed to update addon", failure);
+                    failedAddons.add(addons.get(i).update().localAddonFile());
+                }
+            }
+        }
         return null;
+    }
+
+    /// Stages one download beside its destination and accepts cancellation until replacement begins.
+    private Task<@Nullable Void> update(SelectedUpdate selected) {
+        return new Task<@Nullable Void>() {
+            /// Downloads the new file before renaming the installed add-on.
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                RemoteAddon.Version remote = selected.update().targetVersion();
+                Path temporary = Files.createTempFile(addonDirectory, ".hmcl-addon-update-", ".tmp");
+                try {
+                    context.run(new FileDownloadTask(downloadProvider.getDownloadCandidates(remote.file().url()), temporary)
+                            .setName(remote.name()));
+                    context.call(Schedulers.javafx(), () -> {
+                        context.commit();
+                        replace(selected, temporary);
+                        return null;
+                    });
+                } catch (Exception | Error failure) {
+                    try {
+                        Files.deleteIfExists(temporary);
+                    } catch (IOException cleanup) {
+                        failure.addSuppressed(cleanup);
+                    }
+                    throw failure;
+                }
+                return null;
+            }
+        }.setSignificance(TaskSignificance.MINOR).withCounter();
+    }
+
+    /// Replaces the add-on on the JavaFX thread, restoring its previous state if the rename fails.
+    private void replace(SelectedUpdate selected, Path temporary) throws IOException {
+        LocalAddonFile<?> local = selected.update().localAddonFile();
+        String fileName = selected.update().targetVersion().file().filename();
+        String newFileName = selected.disabled() ? StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION) : fileName;
+        Path target = addonDirectory.resolve(newFileName);
+        local.setOld(true);
+        try {
+            Files.move(temporary, target);
+        } catch (IOException | RuntimeException | Error failure) {
+            try {
+                local.setOld(false);
+                if (selected.disabled())
+                    local.markDisabled();
+            } catch (IOException | RuntimeException | Error cleanup) {
+                failure.addSuppressed(cleanup);
+            }
+            throw failure;
+        }
+        local.onUpdated(newFileName);
+        if (!local.keepOldFiles()) {
+            try {
+                local.delete();
+            } catch (IOException e) {
+                LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
+            }
+        }
     }
 }

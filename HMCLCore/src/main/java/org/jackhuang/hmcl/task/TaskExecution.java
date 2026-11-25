@@ -987,10 +987,14 @@ final class TaskExecution {
             try {
                 super.run();
             } finally {
-                if (previous == null)
+                if (previous == null) {
                     CURRENT_WORK.remove();
-                else
+                    // A pool worker may run another local submission before it checks for interruption again.
+                    if (ForkJoinTask.getPool() == executor)
+                        Thread.interrupted();
+                } else {
                     CURRENT_WORK.set(previous);
+                }
             }
         }
 

@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.modpack;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
-import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -44,12 +43,13 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
 
     /// Writes the format-specific entries. The predicate selects files and directories by their
     /// slash-separated paths relative to the instance's run directory.
-    protected abstract void writeArchive(Zipper zip, Predicate<String> include, TaskProgress progress) throws IOException;
+    protected abstract void writeArchive(Zipper zip, Predicate<String> include, TaskExecutionContext context) throws IOException;
 
     /// Writes and closes a temporary archive before replacing the destination. A failure while
     /// writing or cancellation observed before replacement leaves an existing destination intact.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        context.checkCancellation();
         Path runDirectory = instance.getRunDirectory().toRealPath();
         @Nullable Path parent = destination.toAbsolutePath().getParent();
         if (parent == null || Files.isDirectory(destination))
@@ -68,9 +68,11 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
                 ? Files.createFile(output.resolveSibling(".hmcl-export-" + UUID.randomUUID() + ".tmp"))
                 : Files.createTempFile(output.getParent(), ".hmcl-export-", ".tmp");
         try {
-            try (Zipper zip = new Zipper(temporary)) {
-                writeArchive(zip, path -> !output.equals(runDirectory.resolve(path))
-                        && Modpack.acceptFile(path, exclusions, info.getWhitelist()), context.progress());
+            try (Zipper zip = new Zipper(temporary, false, context::checkCancellation)) {
+                writeArchive(zip, path -> {
+                    context.checkCancellation();
+                    return !output.equals(runDirectory.resolve(path)) && Modpack.acceptFile(path, exclusions, info.getWhitelist());
+                }, context);
             }
             if (!Files.notExists(output) && Files.getFileStore(temporary).supportsFileAttributeView(PosixFileAttributeView.class))
                 Files.setPosixFilePermissions(temporary, Files.getPosixFilePermissions(output));

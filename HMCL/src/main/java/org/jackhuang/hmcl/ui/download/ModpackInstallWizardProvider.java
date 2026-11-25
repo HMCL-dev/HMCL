@@ -120,11 +120,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             } else if (exception instanceof ModpackHelper.InvalidModpackConfigurationException) {
                 Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageType.ERROR, next);
             } else if (exception instanceof ModpackCompletionException) {
-                if (exception.getCause() instanceof FileNotFoundException) {
-                    Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
-                } else {
-                    Controllers.dialog(i18n("modpack.type.curse.error"), i18n("message.warning"), MessageType.WARNING, next);
-                }
+                String message = exception.getCause() instanceof FileNotFoundException
+                        ? "modpack.type.curse.not_found" : "modpack.type.curse.error";
+                Controllers.dialog(i18n(message), i18n("message.warning"), MessageType.WARNING, next);
             } else {
                 UpdateInstallerWizardProvider.alertFailureMessage(exception, next);
             }

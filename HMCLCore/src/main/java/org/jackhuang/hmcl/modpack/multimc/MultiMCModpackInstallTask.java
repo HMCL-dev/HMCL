@@ -141,27 +141,21 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         this.config = config;
     }
 
-    /// Prepares the extraction tasks and returns the task that assembles the pack's patches.
-    private MMCInstancePatchesAssembleTask prepareInstallation(List<Task<?>> preparation) throws Exception {
-        // Stage #0: General Setup
-        {
-            Path run = repository.getLayout().getInstanceRoot(instanceId);
-
-            String mcDirectory;
-            try (FileSystem fs = openModpack()) {
-                mcDirectory = getRootPath(fs).resolve(".minecraft").toAbsolutePath().normalize().toString();
-            }
-
-            // TODO: Optimize unbearably slow ModpackInstallTask
-            @Unmodifiable List<String> directories = List.of(mcDirectory);
-            Task<?> overrides = new ModpackInstallTask<>(zipFile, run, directories, any -> true, config);
-            Task<?> configuration = new MinecraftInstanceTask<>(zipFile, directories, manifest, MultiMCModpackProvider.INSTANCE,
-                    manifest.getName(), null, repository.getLayout().getModpackConfigurationFile(instanceId));
-            preparation.add(overrides.thenCompose(configuration).withStage(InstallStages.MODPACK));
+    /// Extracts the pack files and returns their configuration for the repository commit.
+    private Task<ModpackConfiguration<MultiMCInstanceConfiguration>> prepareOverrides() throws IOException {
+        Path run = repository.getLayout().getInstanceRoot(instanceId);
+        String mcDirectory;
+        try (FileSystem fs = openModpack()) {
+            mcDirectory = getRootPath(fs).resolve(".minecraft").toAbsolutePath().normalize().toString();
         }
+        @Unmodifiable List<String> directories = List.of(mcDirectory);
+        return new ModpackInstallTask<>(zipFile, run, directories, any -> true, config)
+                .thenCompose(new MinecraftInstanceTask<>(zipFile, directories, manifest, MultiMCModpackProvider.INSTANCE,
+                        manifest.getName(), null)).withStage(InstallStages.MODPACK);
+    }
 
-        // Stage #1: Load all related Json-Patch from meta maven or local mod pack.
-
+    /// Resolves the instance patches from the archive and MultiMC's metadata service.
+    private MMCInstancePatchesAssembleTask preparePatches() throws Exception {
         try (FileSystem fs = openModpack()) {
             Path root = getRootPath(fs);
 
@@ -258,7 +252,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
             context.checkCancellation();
             draft.put(new GameInstanceManifest(instanceId));
-            MultiMCInstancePatch.ResolvedInstance artifact = prepareInstance(context);
+            MultiMCInstancePatch.ResolvedInstance artifact = prepareInstance(context, draft);
             Path clientJar = downloadGame(context, artifact);
             context.checkCancellation();
             List<String> jarMods = artifact.getJarModFileNames();
@@ -286,11 +280,11 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     }
 
     /// Resolves the pack's patches and installs its files under the reserved instance root.
-    private MultiMCInstancePatch.ResolvedInstance prepareInstance(TaskExecutionContext context) throws Exception {
-        List<Task<?>> preparation = new ArrayList<>();
-        MMCInstancePatchesAssembleTask patches = prepareInstallation(preparation);
-        preparation.add(patches);
-        context.runAll(preparation);
+    private MultiMCInstancePatch.ResolvedInstance prepareInstance(TaskExecutionContext context, DefaultGameRepositoryDraft draft) throws Exception {
+        var overrides = prepareOverrides();
+        MMCInstancePatchesAssembleTask patches = preparePatches();
+        context.runAll(overrides, patches);
+        draft.putModpackConfiguration(instanceId, overrides.resultNow());
         MultiMCInstancePatch.ResolvedInstance artifact = MultiMCInstancePatch.resolveArtifact(patches.resultNow(), instanceId);
 
         // Stage #4: Copy embedded files.

@@ -50,6 +50,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.ui.DialogUtils.shouldReportCancellation;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -236,7 +237,7 @@ public final class Instances {
                             .whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
                                 if (exception == null) {
                                     repository.setSelectedInstance(repository.getInstance(instanceId));
-                                } else if (!(exception instanceof CancellationException)) {
+                                } else if (!(exception instanceof CancellationException cancellation) || shouldReportCancellation(cancellation)) {
                                     Controllers.dialog(
                                             I18n.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
                                 }

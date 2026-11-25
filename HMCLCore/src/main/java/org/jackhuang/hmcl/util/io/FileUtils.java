@@ -509,6 +509,27 @@ public final class FileUtils {
         return file.toAbsolutePath().resolveSibling("." + file.getFileName().toString() + ".tmp");
     }
 
+    /// Writes a sibling file and replaces the destination only after the writer succeeds.
+    /// The replacement uses an atomic move when supported by the file system.
+    public static void replaceFile(Path target, ExceptionalConsumer<? super Path, IOException> writer) throws IOException {
+        Path temporary = Files.createFile(target.resolveSibling(".hmcl-" + UUID.randomUUID() + ".tmp"));
+        try {
+            writer.accept(temporary);
+            try {
+                Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            } catch (AtomicMoveNotSupportedException ignored) {
+                Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (IOException | RuntimeException | Error failure) {
+            try {
+                Files.deleteIfExists(temporary);
+            } catch (IOException cleanupFailure) {
+                failure.addSuppressed(cleanupFailure);
+            }
+            throw failure;
+        }
+    }
+
     public static void saveSafely(Path file, String content) throws IOException {
         saveSafely(file, content, StandardCharsets.UTF_8);
     }

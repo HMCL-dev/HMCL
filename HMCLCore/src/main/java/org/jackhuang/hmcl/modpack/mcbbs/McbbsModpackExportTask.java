@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.modpack.ModpackExportTask;
 import org.jackhuang.hmcl.modpack.curse.CurseManifest;
 import org.jackhuang.hmcl.modpack.curse.CurseManifestMinecraft;
 import org.jackhuang.hmcl.modpack.curse.CurseManifestModLoader;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -48,8 +49,9 @@ public class McbbsModpackExportTask extends ModpackExportTask {
 
     /// {@inheritDoc}
     @Override
-    protected void writeArchive(Zipper zip, Predicate<String> include, TaskProgress progress) throws IOException {
+    protected void writeArchive(Zipper zip, Predicate<String> include, TaskExecutionContext context) throws IOException {
         Path runDirectory = instance.getRunDirectory();
+        TaskProgress progress = context.progress();
 
         List<Path> paths = new ArrayList<>();
         zip.putDirectoryProgressed(runDirectory, "overrides", path -> {
@@ -68,7 +70,7 @@ public class McbbsModpackExportTask extends ModpackExportTask {
         long current = 0;
         for (Path file : paths) {
             String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-            files.add(new McbbsModpackManifest.AddonFile(true, relativePath, DigestUtils.digestToString("SHA-1", file)));
+            files.add(new McbbsModpackManifest.AddonFile(true, relativePath, DigestUtils.digestToString("SHA-1", file, context::checkCancellation)));
             progress.update(0.5 + 0.5 * ++current / paths.size());
         }
 

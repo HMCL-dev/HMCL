@@ -143,7 +143,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
                             installerFile.toString(),
                             optiFineLibraryPath.toString()
                     };
-                    int exitCode = SystemUtils.callExternalProcess(command);
+                    int exitCode = SystemUtils.callExternalProcess(new ProcessBuilder(command), context::checkCancellation);
                     if (exitCode != 0)
                         throw new IOException("OptiFine patcher failed, command: " + new CommandBuilder().addAll(Arrays.asList(command)));
                 } else {

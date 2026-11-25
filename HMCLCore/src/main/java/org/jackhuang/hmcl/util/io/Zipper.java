@@ -32,14 +32,22 @@ public final class Zipper implements Closeable {
     private final ZipOutputStream zos;
     private final byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
     private final @Nullable Set<String> entryNames;
+    /// Optional cancellation check while streaming entry contents.
+    private final @Nullable Runnable checkCancellation;
 
     public Zipper(Path zipFile) throws IOException {
         this(zipFile, false);
     }
 
     public Zipper(Path zipFile, boolean allowDuplicateEntry) throws IOException {
+        this(zipFile, allowDuplicateEntry, null);
+    }
+
+    /// Creates an archive and checks for cancellation between chunks of streamed entries.
+    public Zipper(Path zipFile, boolean allowDuplicateEntry, @Nullable Runnable checkCancellation) throws IOException {
         this.zos = new ZipOutputStream(Files.newOutputStream(zipFile), StandardCharsets.UTF_8);
         this.entryNames = allowDuplicateEntry ? new HashSet<>() : null;
+        this.checkCancellation = checkCancellation;
     }
 
     private static String normalize(String path) {
@@ -192,7 +200,7 @@ public final class Zipper implements Closeable {
         } else {
             try (InputStream input = Files.newInputStream(file)) {
                 zos.putNextEntry(entry);
-                IOUtils.copyTo(input, zos, buffer);
+                copyEntry(input);
                 zos.closeEntry();
             }
         }
@@ -200,8 +208,17 @@ public final class Zipper implements Closeable {
 
     public void putStream(InputStream in, String path) throws IOException {
         zos.putNextEntry(newEntry(normalize(path)));
-        IOUtils.copyTo(in, zos, buffer);
+        copyEntry(in);
         zos.closeEntry();
+    }
+
+    /// Copies the current entry without waiting for the whole file to notice cancellation.
+    private void copyEntry(InputStream input) throws IOException {
+        for (int length; (length = input.read(buffer)) != -1; ) {
+            if (checkCancellation != null)
+                checkCancellation.run();
+            zos.write(buffer, 0, length);
+        }
     }
 
     public OutputStream putStream(String path) throws IOException {

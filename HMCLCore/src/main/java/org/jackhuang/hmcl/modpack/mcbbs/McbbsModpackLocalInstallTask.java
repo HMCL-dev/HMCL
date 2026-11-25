@@ -135,8 +135,8 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
         @Unmodifiable List<String> subDirectories = List.of("/overrides");
         context.run(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config).withStage(InstallStages.MODPACK));
         var configuration = context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, McbbsModpackProvider.INSTANCE,
-                modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId))
-                .withStage(InstallStages.MODPACK));
+                modpack.getName(), modpack.getVersion()).withStage(InstallStages.MODPACK));
+        builder.setModpackConfiguration(configuration);
         // Existing packs without this patch manage their libraries separately.
         @Nullable GameInstancePatch patch = updateTarget == null ? new GameInstancePatch(PATCH_NAME)
                 : updateTarget.getManifest().getPatches().stream().filter(p -> PATCH_NAME.equals(p.id())).findFirst().orElse(null);

@@ -3,11 +3,14 @@
 package org.jackhuang.hmcl.util;
 
 import javafx.application.Platform;
+import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.ListView;
+import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskSignificance;
+import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.TaskDialogPane;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -84,6 +87,7 @@ final class TaskManagerTest {
         CountDownLatch release = new CountDownLatch(1);
         AtomicInteger bodies = new AtomicInteger();
         AtomicInteger cleanups = new AtomicInteger();
+        AtomicInteger cancellations = new AtomicInteger();
         Submission first = submit(Task.runAsync(() -> await(release)), null);
         Submission second = submit(Task.runAsync(bodies::incrementAndGet).setSignificance(TaskSignificance.MAJOR), new TaskListener() {
             /// Records cleanup even when the task was cancelled before starting.
@@ -95,12 +99,24 @@ final class TaskManagerTest {
         });
         try {
             onFxThread(() -> {
+                StackPane container = new StackPane();
+                new Scene(container);
+                DialogUtils.show(container, second.pane());
+                second.pane().runInBackground();
+                assertFalse(DialogUtils.isShowing(second.pane()));
+                DialogUtils.show(container, second.pane());
                 assertTrue(second.pane().queuedProperty().get());
                 @Nullable ButtonBase cancel = (ButtonBase) second.pane().lookup(".dialog-cancel");
                 assertNotNull(cancel);
+                second.pane().setCancel(TaskCancellationAction.NO_CANCEL);
+                assertTrue(cancel.isDisabled());
+                cancel.fire();
+                second.pane().setCancel(ignored -> cancellations.incrementAndGet());
                 assertFalse(cancel.isDisabled());
                 cancel.fire();
                 assertTrue(cancel.isDisabled());
+                cancel.fire();
+                assertEquals(1, cancellations.get());
                 assertTrue(TaskManager.getInstance().getTasks().contains(second.pane()));
                 return true;
             });

@@ -166,20 +166,20 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals("replacement config", Files.readString(config));
     }
 
-    /// A restart during component installation must still see the previously installed version.
+    /// The updated configuration is visible when the snapshot is published, even if a listener cancels the task.
     @Test
     void serverUpdatePublishesComponentsAfterBuild(@TempDir Path directory) throws Exception {
         GameInstanceID id = new GameInstanceID("server");
         var repository = new TestRepository(directory) {
-            /// Component version visible on disk just before the updated instance is published.
-            private @Nullable String versionBeforeCommit;
+            /// Component version visible on disk as the updated snapshot is published.
+            private @Nullable String versionAtPublication;
 
             /// Reads the installed configuration inside the build, before publishing its result.
             @Override
             void publishDraftSnapshot(DefaultGameRepositoryDraft draft, DefaultGameRepositorySnapshot newSnapshot) {
                 @Nullable DefaultGameInstance previous = draft.getBaseSnapshot().findInstance(id);
                 if (previous != null)
-                    versionBeforeCommit = assertDoesNotThrow(() -> readServerManifest(previous)).getAddons().get(0).getVersion();
+                    versionAtPublication = assertDoesNotThrow(() -> readServerManifest(previous)).getAddons().get(0).getVersion();
                 super.publishDraftSnapshot(draft, newSnapshot);
             }
         };
@@ -189,14 +189,47 @@ public final class DefaultGameRepositoryDraftTest {
         JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), installed);
 
         var update = new ServerModpackCompletionTask(createOfflineGameInstaller(repository, id, "1.21"), instance);
+        repository.snapshotProperty().addListener((observable, previous, current) -> update.cancel());
         update.run();
-        assertEquals("1.20", repository.versionBeforeCommit);
+        assertTrue(update.isCancellationRequested());
+        assertEquals("1.21", repository.versionAtPublication);
         assertEquals("1.21", readServerManifest(repository.getInstance(id)).getAddons().get(0).getVersion());
     }
 
-    /// A replacement made as the build releases its draft keeps its own configuration.
+    /// A file-only update has committed its result when the draft protecting its configuration is released.
     @Test
-    void serverUpdateCannotPublishToReplacementAfterBuild(@TempDir Path directory) throws IOException {
+    void serverFileUpdateCommitsBeforeReleasingDraft(@TempDir Path directory) throws Exception {
+        var repository = new TestRepository(directory) {
+            /// The update waiting to release its draft.
+            private @Nullable Task<?> update;
+
+            /// Cancels after the update has published the new file list.
+            @Override
+            void releaseDraft(DefaultGameRepositoryDraft draft) {
+                super.releaseDraft(draft);
+                if (update != null)
+                    update.cancel();
+            }
+        };
+        GameInstanceID id = new GameInstanceID("server");
+        repository.save(new GameInstanceManifest(id));
+        var instance = repository.getInstance(id);
+        var installed = publishServerUpdate(directory, List.of(), List.of());
+        var previous = installed.getManifest();
+        var remote = new ServerModpackManifest("pack", "", "2", "", previous.getFileApi(), List.of(), previous.getAddons());
+        JsonUtils.writeToJsonFile(directory.resolve("published/server-manifest.json"), remote);
+        JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), installed);
+        var update = new ServerModpackCompletionTask(createDependencyManager(repository), instance);
+        repository.update = update;
+
+        update.run();
+        assertTrue(update.isCancellationRequested());
+        assertEquals("2", readServerManifest(instance).getVersion());
+    }
+
+    /// A completed update cannot overwrite a replacement made as the build releases its draft.
+    @Test
+    void serverUpdateCannotPublishToReplacementAfterBuild(@TempDir Path directory) throws Exception {
         GameInstanceID id = new GameInstanceID("server");
         var repository = new TestRepository(directory) {
             /// Enables replacement for the build's commit after the initial installation is ready.
@@ -222,7 +255,7 @@ public final class DefaultGameRepositoryDraftTest {
 
         var update = new ServerModpackCompletionTask(createOfflineGameInstaller(repository, id, "1.21"), instance);
         repository.replaceOnCommit = true;
-        assertThrows(IllegalStateException.class, update::run);
+        update.run();
         assertEquals("replacement.Main", repository.getInstanceManifest(id).mainClass());
         assertEquals("replacement config", Files.readString(repository.getInstance(id).getModpackConfigurationFile()));
     }
@@ -426,9 +459,9 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals("replacement", Files.readString(marker));
     }
 
-    /// A Modrinth retry replaces changed files and drops obsolete ones after build or download failures.
+    /// Once the build succeeds, launch completes the new selection without deleting previously unmanaged files.
     @Test
-    void modrinthUpdateRetainsBaselineUntilFilesAreInstalled(@TempDir Path directory) throws Exception {
+    void modrinthUpdatePublishesSelectionBeforeFileCompletion(@TempDir Path directory) throws Exception {
         FailingRepository repository = new FailingRepository(directory);
         GameInstanceID id = new GameInstanceID("modrinth");
         repository.save(new GameInstanceManifest(id));
@@ -437,6 +470,8 @@ public final class DefaultGameRepositoryDraftTest {
         Path retained = Files.writeString(mods.resolve("changed.jar"), "old");
         Path removed = Files.writeString(mods.resolve("removed.jar"), "old");
         Path serverOnly = Files.writeString(mods.resolve("server.jar"), "old");
+        Path unmanaged = Files.writeString(mods.resolve("never-client.jar"), "manual");
+        Path unselected = Files.writeString(mods.resolve("previously-excluded.jar"), "manual");
         Path payload = Files.writeString(directory.resolve("published.jar"), "new");
         Path addedSource = Files.writeString(directory.resolve("added.jar"), "wrong");
         List<String> urls = List.of(payload.toUri().toString());
@@ -444,18 +479,23 @@ public final class DefaultGameRepositoryDraftTest {
         Map<String, String> newHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", "new".getBytes(StandardCharsets.UTF_8)));
         Map<String, String> addedHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", "added".getBytes(StandardCharsets.UTF_8)));
         Map<String, String> dependencies = Map.of("minecraft", "1.21");
+        var oldOptional = new ModrinthManifest.File("mods/previously-excluded.jar", oldHashes, Map.of("client", "optional"), urls, 3);
+        var newOptional = new ModrinthManifest.File("mods/optional.jar", newHashes, Map.of("client", "optional"), urls, 3);
+        var neverClient = new ModrinthManifest.File("mods/never-client.jar", oldHashes, Map.of("client", "unsupported"), urls, 3);
         var previous = new ModrinthManifest("minecraft", 1, "1", "pack", null, List.of(
                 new ModrinthManifest.File("mods/changed.jar", oldHashes, null, urls, 3),
                 new ModrinthManifest.File("mods/removed.jar", oldHashes, null, urls, 3),
-                new ModrinthManifest.File("mods/server.jar", oldHashes, null, urls, 3)), dependencies);
+                new ModrinthManifest.File("mods/server.jar", oldHashes, null, urls, 3), neverClient, oldOptional), dependencies);
         var next = new ModrinthManifest("minecraft", 1, "2", "pack", null, List.of(
                 new ModrinthManifest.File("mods/changed.jar", newHashes, null, urls, 3),
                 new ModrinthManifest.File("mods/added.jar", addedHashes, null, List.of(addedSource.toUri().toString()), 5),
-                new ModrinthManifest.File("mods/server.jar", oldHashes, Map.of("client", "unsupported"), urls, 3)), dependencies);
+                new ModrinthManifest.File("mods/server.jar", oldHashes, Map.of("client", "unsupported"), urls, 3), neverClient, newOptional), dependencies);
         Path configuration = repository.getLayout().getModpackConfigurationFile(id);
         Path index = original.getInstanceRoot().resolve("modrinth.index.json");
         JsonUtils.writeToJsonFile(configuration, new ModpackConfiguration<>(previous, "Modrinth", "pack", "1", List.of()));
         JsonUtils.writeToJsonFile(index, previous);
+        Path selection = original.getInstanceRoot().resolve("excluded.json");
+        JsonUtils.writeToJsonFile(selection, Set.of(oldOptional.key()));
         String oldConfig = Files.readString(configuration);
         String oldIndex = Files.readString(index);
         Path archive = directory.resolve("update.mrpack");
@@ -470,25 +510,54 @@ public final class DefaultGameRepositoryDraftTest {
 
         repository.failDraftPublish = true;
         assertThrows(IllegalStateException.class, () -> ModrinthModpackProvider.INSTANCE
-                .createUpdateTask(manager, original, archive, pack, null).run());
+                .createUpdateTask(manager, original, archive, pack, Set.of(newOptional.key())).run());
         assertEquals(oldConfig, Files.readString(configuration));
+        assertEquals(oldIndex, Files.readString(index));
         assertEquals("old", Files.readString(retained));
         assertTrue(Files.exists(removed));
 
         assertThrows(ModpackCompletionException.class, () -> ModrinthModpackProvider.INSTANCE
-                .createUpdateTask(manager, repository.getInstance(id), archive, pack, null).run());
-        assertEquals(oldConfig, Files.readString(configuration));
-        assertEquals(oldIndex, Files.readString(index));
+                .createUpdateTask(manager, repository.getInstance(id), archive, pack, Set.of(newOptional.key())).run());
+        assertEquals("2", Objects.requireNonNull(JsonUtils.fromJsonFile(index, ModrinthManifest.class)).getVersionId());
+        assertEquals("2", Objects.requireNonNull(JsonUtils.fromJsonFile(configuration, ModpackConfiguration.class)).getVersion());
+        assertEquals(List.of(newOptional.key()), JsonUtils.fromJsonFile(selection, JsonUtils.listTypeOf(String.class)));
         assertEquals("new", Files.readString(retained));
         Files.delete(payload);
         Files.writeString(addedSource, "added");
-        ModrinthModpackProvider.INSTANCE.createUpdateTask(manager, repository.getInstance(id), archive, pack, null).run();
+        ModrinthModpackProvider.INSTANCE.createCompletionTask(manager, repository.getInstance(id)).run();
         assertEquals("new", Files.readString(retained));
         assertEquals("added", Files.readString(mods.resolve("added.jar")));
         assertTrue(Files.notExists(removed));
         assertTrue(Files.notExists(serverOnly));
-        assertEquals("2", Objects.requireNonNull(JsonUtils.fromJsonFile(index, ModrinthManifest.class)).getVersionId());
-        assertEquals("2", Objects.requireNonNull(JsonUtils.fromJsonFile(configuration, ModpackConfiguration.class)).getVersion());
+        assertEquals("manual", Files.readString(unmanaged));
+        assertEquals("manual", Files.readString(unselected));
+        assertTrue(Files.notExists(mods.resolve("optional.jar")));
+    }
+
+    /// A failed component publication keeps the old pack configuration even after the overrides were extracted.
+    @Test
+    void failedMcbbsUpdateKeepsPreviousConfiguration(@TempDir Path directory) throws Exception {
+        FailingRepository repository = new FailingRepository(directory);
+        GameInstanceID id = new GameInstanceID("mcbbs");
+        repository.save(new GameInstanceManifest(id));
+        var instance = repository.getInstance(id);
+        var manifest = JsonUtils.fromNonNullJson("""
+                {"name":"pack","version":"2","addons":[{"id":"game","version":"1.21"}]}
+                """, McbbsModpackManifest.class);
+        Path config = instance.getModpackConfigurationFile();
+        new ModpackConfiguration<>(manifest, manifest.getProvider().getName(), "pack", "1", List.of()).writeTo(config);
+        String previous = Files.readString(config);
+        Path archive = directory.resolve("pack.zip");
+        try (Zipper zip = new Zipper(archive)) {
+            zip.putTextFile("updated", "overrides/local.txt");
+        }
+        var manager = createOfflineGameInstaller(repository, id, "1.21");
+        repository.failDraftPublish = true;
+        var update = manifest.getProvider().createUpdateTask(manager, instance, archive, manifest.toModpack(), null);
+        assertThrows(IllegalStateException.class, update::run);
+        assertSame(instance, repository.getInstance(id));
+        assertEquals("updated", Files.readString(instance.getInstanceRoot().resolve("local.txt")));
+        assertEquals(previous, Files.readString(config));
     }
 
     /// An incomplete MCBBS install keeps its patch and remote metadata unless cancellation wins.

@@ -59,6 +59,8 @@ import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 
+import static org.jackhuang.hmcl.ui.DialogUtils.shouldReportCancellation;
+
 public final class I18n {
 
     private I18n() {
@@ -261,7 +263,7 @@ public final class I18n {
             }
         } else if (exception instanceof ArtifactMalformedException) {
             return i18n("exception.artifact_malformed");
-        } else if (exception instanceof CancellationException) {
+        } else if (exception instanceof CancellationException cancellation && !shouldReportCancellation(cancellation)) {
             return i18n("message.cancelled");
         }
         return StringUtils.getStackTrace(exception);

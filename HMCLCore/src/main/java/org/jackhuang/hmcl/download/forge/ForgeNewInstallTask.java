@@ -139,7 +139,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
             command.addAll(args);
 
             LOG.info("Executing external processor " + processor.getJar().toString() + ", command line: " + new CommandBuilder().addAll(command).toString());
-            int exitCode = SystemUtils.callExternalProcess(command);
+            int exitCode = SystemUtils.callExternalProcess(new ProcessBuilder(command), context::checkCancellation);
             if (exitCode != 0)
                 throw new IOException("Game processor exited abnormally with code " + exitCode);
 

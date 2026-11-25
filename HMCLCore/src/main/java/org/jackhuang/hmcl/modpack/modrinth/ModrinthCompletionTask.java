@@ -25,7 +25,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -96,13 +95,7 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
                 Path manifestFile = root.resolve("modrinth.index.json");
                 if (Files.exists(manifestFile))
                     manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
-                Path excludedFile = root.resolve("excluded.json");
-                if (Files.exists(excludedFile)) {
-                    excludedFiles = Set.copyOf(Objects.requireNonNull(
-                            JsonUtils.fromJsonFile(excludedFile, JsonUtils.listTypeOf(String.class))));
-                } else {
-                    excludedFiles = null;
-                }
+                excludedFiles = ModrinthModpackProvider.readExcludedFiles(root);
             } catch (Exception e) {
                 LOG.warning("Unable to read Modrinth modpack manifest.json", e);
             }

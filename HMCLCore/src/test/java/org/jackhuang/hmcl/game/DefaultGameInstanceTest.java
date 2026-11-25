@@ -29,8 +29,8 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskListener;
-import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -45,6 +45,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
@@ -126,19 +127,23 @@ public final class DefaultGameInstanceTest {
         }
     }
 
-    /// Cancellation after the last archive entry is written preserves the original output
-    /// and removes the staging file before the task reports failure.
-    @Test
-    public void testModpackExportCancelledBeforeReplacement(@TempDir Path directory) throws IOException {
+    /// Cancellation stops writing entries, removes the staging file and preserves the original archive.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void testModpackExportCancelledBeforeReplacement(boolean writeAnotherEntry, @TempDir Path directory) throws IOException {
         TestRepository repository = new TestRepository(directory);
         GameInstanceID id = new GameInstanceID("instance");
         Path output = Files.writeString(directory.resolve("export.zip"), "previous archive");
         var task = new ModpackExportTask(repository.publish(id, new GameInstanceManifest(id)), new ModpackExportInfo(), output) {
             /// Writes one entry and requests cancellation before the archive is published.
             @Override
-            protected void writeArchive(Zipper zip, Predicate<String> include, TaskProgress progress) throws IOException {
+            protected void writeArchive(Zipper zip, Predicate<String> include, TaskExecutionContext context) throws IOException {
                 zip.putTextFile("content", "example.txt");
                 cancel();
+                if (writeAnotherEntry) {
+                    assertThrows(CancellationException.class, () -> include.test("next.txt"));
+                    assertThrows(CancellationException.class, () -> zip.putStream(new ByteArrayInputStream(new byte[1]), "next.txt"));
+                }
             }
         };
         assertFalse(task.test());
@@ -315,7 +320,16 @@ public final class DefaultGameInstanceTest {
                 instance.getAssetObject(assetId, assetName));
         assertEquals(Optional.empty(), instance.getAssetObject(assetId, "missing"));
         assertEquals(repository.getLayout().getAssetDirectory(), instance.getActualAssetDirectory(assetId));
-        assertEquals(instance.getInstanceRoot().resolve("modpack.json"), instance.getModpackConfigurationFile());
+        Path root = Files.createDirectories(instance.getInstanceRoot());
+        Path configuration = root.resolve("modpack.json");
+        assertEquals(configuration, instance.getModpackConfigurationFile());
+        Path legacy = Files.createFile(root.resolve("modpack.cfg"));
+        assertEquals(legacy, instance.getModpackConfigurationFile());
+        Files.createFile(configuration);
+        assertEquals(configuration, instance.getModpackConfigurationFile());
+        GameInstanceID namedModpack = new GameInstanceID("modpack");
+        assertEquals(repository.getLayout().getInstanceRoot(namedModpack).resolve("modpack.cfg"),
+                repository.getLayout().getModpackConfigurationFile(namedModpack));
     }
 
     /// The selected primary jar follows the resolved manifest's `jar` field.
