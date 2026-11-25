@@ -31,7 +31,11 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 
+import java.util.Objects;
+
 public class JFXButtonSkin extends ButtonSkin {
+    private static final double STATIC_FOCUS_OPACITY = 0.6;
+
     private final StackPane buttonContainer = new StackPane();
     private final JFXRippler buttonRippler = new JFXRippler(new StackPane()) {
         protected Node getMask() {
@@ -65,14 +69,16 @@ public class JFXButtonSkin extends ButtonSkin {
 
     public JFXButtonSkin(JFXButton button) {
         super(button);
-        boolean staticPressFeedback = !AnimationUtils.isAnimationEnabled()
-                && button.getStyleClass().contains("jfx-decorator-button");
+        boolean staticPressFeedback = !AnimationUtils.isAnimationEnabled();
+        ReadOnlyBooleanProperty focusVisibleProperty = Objects.requireNonNullElseGet(
+                FXUtils.focusVisibleProperty(button), button::focusedProperty);
         if (staticPressFeedback) {
             this.buttonRippler.setRipplerDisabled(true);
         }
         button.armedProperty().addListener((observable, wasArmed, armed) -> {
             if (staticPressFeedback) {
-                this.buttonRippler.setOverlayVisibleImmediately(armed);
+                double focusOpacity = focusVisibleProperty.get() ? STATIC_FOCUS_OPACITY : 0;
+                this.buttonRippler.setOverlayOpacityImmediately(armed ? 1 : focusOpacity);
             } else if (armed) {
                 this.releaseManualRippler = this.buttonRippler.createManualRipple();
             } else if (this.releaseManualRippler != null) {
@@ -99,12 +105,12 @@ public class JFXButtonSkin extends ButtonSkin {
             }
         });
 
-        ReadOnlyBooleanProperty focusVisibleProperty = FXUtils.focusVisibleProperty(button);
-        if (focusVisibleProperty == null) {
-            focusVisibleProperty = button.focusedProperty();
-        }
         focusVisibleProperty.addListener((o, oldVal, newVal) -> {
-            if (newVal) {
+            if (staticPressFeedback) {
+                if (!button.isArmed()) {
+                    this.buttonRippler.setOverlayOpacityImmediately(newVal ? STATIC_FOCUS_OPACITY : 0);
+                }
+            } else if (newVal) {
                 if (!this.getSkinnable().isPressed()) {
                     this.buttonRippler.showOverlay();
                 }
