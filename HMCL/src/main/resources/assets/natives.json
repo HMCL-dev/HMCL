@@ -1177,6 +1177,17 @@
         }
       }
     },
+    "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0:natives-linux": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3/lwjgl-freetype-3.4.3-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.4.3/lwjgl-freetype-3.4.3-natives-linux-arm64.jar",
+          "sha1": "6babd5ddf9b4850e91a952d494cfd22b895ce200",
+          "size": 1300898
+        }
+      }
+    },
     "org.lwjgl.lwjgl:lwjgl-platform:2.9.0:natives": {
       "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3",
       "downloads": {
@@ -3263,6 +3274,18 @@
       }
     },
     "org.lwjgl:lwjgl-sdl:3.4.3:natives-linux": null,
+    "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1.jar",
+          "sha1": "caa75a37e857efc9b0686e434d708d6420c5b6ea",
+          "size": 464342
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0:natives-linux": null,
     "net.java.dev.jna:jna:5.8.0": {
       "name": "net.java.dev.jna:jna:5.13.0",
       "downloads": {
@@ -5293,6 +5316,17 @@
           "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-sdl/3.4.3/lwjgl-sdl-3.4.3-natives-linux-riscv64.jar",
           "sha1": "30cd5ef9665905be2c0c7325dc848296d4788b49",
           "size": 1496337
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0:natives-linux": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3:natives-linux-riscv64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3/lwjgl-freetype-3.4.3-natives-linux-riscv64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.4.3/lwjgl-freetype-3.4.3-natives-linux-riscv64.jar",
+          "sha1": "809c6df123ae9ea36aa3117a368e7d300ed712eb",
+          "size": 1409111
         }
       }
     },
@@ -7622,6 +7656,17 @@
           "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-sdl/3.4.3/lwjgl-sdl-3.4.3-natives-freebsd.jar",
           "sha1": "aad4d48eb5b3b72d550589fa6d07bbc6113b442e",
           "size": 1242611
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0:natives-linux": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3/lwjgl-freetype-3.4.3-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.4.3/lwjgl-freetype-3.4.3-natives-freebsd.jar",
+          "sha1": "3938689ef674b5894b41af23de67aa53cf5c6a58",
+          "size": 1217752
         }
       }
     },
