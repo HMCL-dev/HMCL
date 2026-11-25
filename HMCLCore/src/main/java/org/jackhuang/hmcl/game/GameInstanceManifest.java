@@ -915,6 +915,8 @@ public record GameInstanceManifest(
             }
         }
 
+        /// Applies the patch to this builder, placing its library declarations before the
+        /// accumulated libraries and preserving the order within each list.
         public void merge(GameInstancePatch patch) {
             if (patch.minecraftArguments() != null)
                 this.minecraftArguments = patch.minecraftArguments();
@@ -929,7 +931,7 @@ public record GameInstanceManifest(
                 this.complianceLevel = patch.complianceLevel();
             if (patch.javaVersion() != null)
                 this.javaVersion = patch.javaVersion();
-            this.libraries = Lang.merge(this.libraries, patch.libraries());
+            this.libraries = Lang.merge(patch.libraries(), this.libraries);
             this.compatibilityRules = Lang.merge(this.compatibilityRules, patch.compatibilityRules());
             if (patch.downloads() != null)
                 this.downloads = patch.downloads();
