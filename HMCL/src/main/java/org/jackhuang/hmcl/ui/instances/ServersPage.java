@@ -906,6 +906,8 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
 
                 if (e != null) {
                     LOG.error("Failed to get server status", e);
+                    lastFailedStatusResultProperty.set(ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, e));
+                    stillFailedText(i18n("server.manage.status.error"));
                     return;
                 }
 
@@ -952,7 +954,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
 
     public static class ObservableServerStatus {
 
-        private static final Semaphore PING_SEMAPHORE = new Semaphore(5);
+        private static final Semaphore PING_SEMAPHORE = new Semaphore(20);
 
         private final String serverIp;
         private final ReadOnlyObjectWrapper<ServerStatusResult> resultProperty = new ReadOnlyObjectWrapper<>();
@@ -1410,11 +1412,10 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
 
             int showCount = 15;
 
-
             StringBuilder sb = new StringBuilder();
             sb.append(String.join("\n", modType.modList().stream()
                     .limit(showCount)
-                    .map(it -> it.name() + " - " + it.version())
+                    .map(it -> it.name() + " - " + it.marker())
                     .toList())
             );
             if (showCount < modType.modList().size()) {
@@ -1492,6 +1493,9 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
                 Task.supplyAsync(Schedulers.io(), () -> {
                     Server result;
                     result = dataStorage.withLock(() -> {
+                        if (Objects.equals(status.favicon(), getServer().getIcon())) {
+                            return null;
+                        }
                         if (status.originalServerAddress().getRawAddress().equals(getServer().getIp())) {
                             if (storageEntry.isValid()) {
                                 storageEntry.modify(s -> s.withIcon(status.favicon()));
@@ -1614,13 +1618,13 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
                 contentLine2AddressMaskPane.set(item.getServer().getIp());
 
                 List<String> tags = new ArrayList<>();
-                for (HMCLGameInstance checkInstance : item.holdInstances) {
+                new ArrayList<>(item.holdInstances).forEach(checkInstance -> {
                     if (checkInstance.equals(gameInstance)) {
                         tags.add(0, i18n("server.tag.hold.current"));
                     } else {
                         tags.add(checkInstance.getId().id());
                     }
-                }
+                });
                 contentLine1.addTags(tags);
 
                 item.observableServerStatus.refreshIfNoResultAsync(false);

@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-/// @see <a href="https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#1.4_to_1.5">Server_List_Ping#1.6</a>
-/// @see <a href="https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#Beta_1.8_to_1.3">Server_List_Ping#1.6</a>
+/// @see <a href="https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#1.4_to_1.5">Server_List_Ping 1.4 to 1.5</a>
+/// @see <a href="https://minecr aft.wiki/w/Java_Edition_protocol/Server_List_Ping#Beta_1.8_to_1.3">Server_List_Ping Beta 1.8 to 1.3</a>
 // Supported Version b1.8 to 1.5
 public final class LegacyOlderServerStatusPinger implements ServerStatusPinger {
     static final LegacyOlderServerStatusPinger INSTANCE = new LegacyOlderServerStatusPinger();
@@ -37,7 +37,7 @@ public final class LegacyOlderServerStatusPinger implements ServerStatusPinger {
                     resolvedServerAddress.getResolvedAddress(),
                     networkLatency,
                     new ServerStatus.ProtocolVersion(ServerStatus.ProtocolVersion.VersionType.LEGACY, version, protocolVersion),
-                    new ServerStatus.PlayerList(players, online),
+                    new ServerStatus.PlayerList(players, online, true, null),
                     new JsonPrimitive(motd),
                     null,
                     null
@@ -51,7 +51,7 @@ public final class LegacyOlderServerStatusPinger implements ServerStatusPinger {
                     resolvedServerAddress.getResolvedAddress(),
                     networkLatency,
                     new ServerStatus.ProtocolVersion(ServerStatus.ProtocolVersion.VersionType.LEGACY, null, -1),
-                    new ServerStatus.PlayerList(Integer.parseInt(strings[2]), Integer.parseInt(strings[1])),
+                    new ServerStatus.PlayerList(Integer.parseInt(strings[2]), Integer.parseInt(strings[1]), true, null),
                     new JsonPrimitive(strings[0]),
                     null,
                     null

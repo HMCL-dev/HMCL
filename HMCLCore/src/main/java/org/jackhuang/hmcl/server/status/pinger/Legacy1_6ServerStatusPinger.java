@@ -39,7 +39,7 @@ public final class Legacy1_6ServerStatusPinger implements ServerStatusPinger {
                     resolvedServerAddress.getResolvedAddress(),
                     networkLatency,
                     new ServerStatus.ProtocolVersion(ServerStatus.ProtocolVersion.VersionType.LEGACY, version, protocolVersion),
-                    new ServerStatus.PlayerList(players, online),
+                    new ServerStatus.PlayerList(players, online, true, null),
                     new JsonPrimitive(motd),
                     null,
                     null

@@ -9,6 +9,7 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import org.jackhuang.hmcl.util.Base64Utils;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -52,16 +53,21 @@ public final class ServerDnD {
     private ServerDnD() {
     }
 
+    private static boolean isSchemeHead(@Nullable String input) {
+        if (input == null) return false;
+        return input.startsWith(SCHEME + ":");
+    }
+
     public static Optional<Server> parseUrlFromDragboard(Dragboard dragboard) {
         String input = dragboard.getString();
         if (input == null) return Optional.empty();
         if (input.length() > 32768) return Optional.empty();
 
-        int index = input.indexOf(":");
-        if (index == -1) return Optional.empty();
-        if (!SCHEME.equals(input.substring(0, index))) return Optional.empty();
+        if (!isSchemeHead(input)) {
+            return Optional.empty();
+        }
         try {
-            JsonObject object = JsonParser.parseString(new String(Base64Utils.decode(input.substring(index + 1)), StandardCharsets.UTF_8)).getAsJsonObject();
+            JsonObject object = JsonParser.parseString(new String(Base64Utils.decode(input.substring(SCHEME.length() + 1)), StandardCharsets.UTF_8)).getAsJsonObject();
             String favicon = null;
             if (object.has("favicon")) {
                 favicon = object.get("favicon").getAsString();
@@ -75,10 +81,12 @@ public final class ServerDnD {
     }
 
     public static EventHandler<DragEvent> dragOverHandler() {
-        return event -> parseUrlFromDragboard(event.getDragboard()).ifPresent(server -> {
-            event.acceptTransferModes(TransferMode.COPY);
-            event.consume();
-        });
+        return event -> {
+            if (isSchemeHead(event.getDragboard().getString())) {
+                event.acceptTransferModes(TransferMode.COPY);
+                event.consume();
+            }
+        };
     }
 
     public static EventHandler<DragEvent> dragDroppedHandler(Consumer<Server> onServerTransfered) {

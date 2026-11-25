@@ -47,13 +47,6 @@ public record ServerStatus(
     ) {
         public static final PlayerList UNKNOWN = new PlayerList(-1, -1, false, null);
 
-        public PlayerList(
-                int max,
-                int online
-        ) {
-            this(max, online, true, null);
-        }
-
         public record Sample(
                 @NotNull String name,
                 @NotNull UUID id
@@ -73,7 +66,7 @@ public record ServerStatus(
     ) {
         public record Mod(
                 @NotNull String name,
-                @NotNull String version
+                @NotNull String marker
         ) {
 
         }

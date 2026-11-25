@@ -81,12 +81,12 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
                 parseProtocolVersion(statusJsonObject.get("version")),
                 parsePlayerList(statusJsonObject.get("players")),
                 Objects.requireNonNullElse(statusJsonObject.get("description"), JsonNull.INSTANCE),
-                parseSererFavicon(statusJsonObject.get("favicon")),
+                parseServerFavicon(statusJsonObject.get("favicon")),
                 parseServerModType(statusJsonObject)
         );
     }
 
-    private @Nullable String parseSererFavicon(JsonElement faviconElement) {
+    private @Nullable String parseServerFavicon(JsonElement faviconElement) {
         if (faviconElement == null || !faviconElement.isJsonPrimitive()) {
             return null;
         }
@@ -117,6 +117,9 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
             String type = null;
             if (modinfoObject.get("type") instanceof JsonPrimitive primitive) {
                 type = primitive.getAsString();
+                if (type.equalsIgnoreCase("fml")) {
+                    type = FORGE;
+                }
             }
 
             return new ServerStatus.ServerModType(type, modList);
@@ -183,54 +186,24 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
         }
     }
 
-    private @NotNull ServerStatus.PlayerList parsePlayerList(@Nullable JsonElement playerListElement) {
-        if (playerListElement == null || !playerListElement.isJsonObject()) {
-            return ServerStatus.PlayerList.UNKNOWN;
-        }
+    private static byte[] decodeOptimizedFromForge(String s) {
+        int[] pos = {0};
+        int length = read15(s, pos) | (read15(s, pos) << 15);
+        if (length > 32768) throw new IllegalArgumentException("decoded length too large: " + length);
+        byte[] out = new byte[length];
+        int outIndex = 0, bitBuffer = 0, bitCount = 0;
 
-        JsonObject asJsonObject = playerListElement.getAsJsonObject();
-        boolean numbered = false;
-        int playerMax = -1;
-        int playerOnline = -1;
-
-        if (asJsonObject.get("max") instanceof JsonPrimitive maxPrimitive && asJsonObject.get("online") instanceof JsonPrimitive onlinePrimitive) {
-            numbered = true;
-            try {
-                playerMax = maxPrimitive.getAsInt();
-            } catch (NumberFormatException e) {
-                numbered = false;
-                LOG.error("Invalid max number: " + maxPrimitive);
-            }
-            try {
-                playerOnline = onlinePrimitive.getAsInt();
-            } catch (NumberFormatException e) {
-                numbered = false;
-                LOG.error("Invalid online number: " + onlinePrimitive);
+        while (outIndex < length) {
+            if (pos[0] >= s.length()) break;
+            bitBuffer |= read15(s, pos) << bitCount;
+            bitCount += 15;
+            while (bitCount >= 8 && outIndex < length) {
+                out[outIndex++] = (byte) (bitBuffer & 0xFF);
+                bitBuffer >>>= 8;
+                bitCount -= 8;
             }
         }
-
-        if (asJsonObject.get("sample") instanceof JsonArray sampleJsonArray) {
-            List<ServerStatus.PlayerList.Sample> samples = new ArrayList<>();
-            for (JsonElement element : sampleJsonArray) {
-                if (element instanceof JsonObject elementAsJsonObject) {
-                    if (elementAsJsonObject.get("name") instanceof JsonPrimitive namePrimitive) {
-                        if (elementAsJsonObject.get("id") instanceof JsonPrimitive idPrimitive) {
-                            try {
-                                samples.add(new ServerStatus.PlayerList.Sample(
-                                        namePrimitive.getAsString(),
-                                        UUID.fromString(idPrimitive.getAsString())
-                                ));
-                            } catch (IllegalArgumentException e) {
-                                LOG.error("Invalid sample id: " + idPrimitive);
-                            }
-                        }
-                    }
-                }
-            }
-
-            return new ServerStatus.PlayerList(playerMax, playerOnline, numbered, samples);
-        }
-        return new ServerStatus.PlayerList(playerMax, playerOnline);
+        return out;
     }
 
     private <T> T readPacket(@NotNull DataInputStream in, int expectPacketID, String packetDescription, DataReader<T> reader) throws IOException {
@@ -273,7 +246,7 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
 
     private String readVarString(@NotNull DataInputStream in) throws IOException {
         int length = readVarInt(in);
-        if (length > 32767) throw new IOException("Packet string length too large: " + length);
+        if (length > 32768) throw new IOException("Packet string length too large: " + length);
         if (length < 0) throw new IOException("Packet string length is negative: " + length);
         byte[] bytes = new byte[length];
         in.readFully(bytes);
@@ -329,23 +302,54 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
         return pos[0] >= s.length() ? 0 : s.charAt(pos[0]++) & 0x7FFF;
     }
 
-    private static byte[] decodeOptimizedFromForge(String s) {
-        int[] pos = {0};
-        int length = read15(s, pos) | (read15(s, pos) << 15);
-        byte[] out = new byte[length];
-        int outIndex = 0, bitBuffer = 0, bitCount = 0;
+    private @NotNull ServerStatus.PlayerList parsePlayerList(@Nullable JsonElement playerListElement) {
+        if (playerListElement == null || !playerListElement.isJsonObject()) {
+            return ServerStatus.PlayerList.UNKNOWN;
+        }
 
-        while (outIndex < length) {
-            if (pos[0] >= s.length()) break;
-            bitBuffer |= read15(s, pos) << bitCount;
-            bitCount += 15;
-            while (bitCount >= 8 && outIndex < length) {
-                out[outIndex++] = (byte) (bitBuffer & 0xFF);
-                bitBuffer >>>= 8;
-                bitCount -= 8;
+        JsonObject asJsonObject = playerListElement.getAsJsonObject();
+        boolean numbered = false;
+        int playerMax = -1;
+        int playerOnline = -1;
+
+        if (asJsonObject.get("max") instanceof JsonPrimitive maxPrimitive && asJsonObject.get("online") instanceof JsonPrimitive onlinePrimitive) {
+            numbered = true;
+            try {
+                playerMax = maxPrimitive.getAsInt();
+            } catch (NumberFormatException e) {
+                numbered = false;
+                LOG.error("Invalid max number: " + maxPrimitive);
+            }
+            try {
+                playerOnline = onlinePrimitive.getAsInt();
+            } catch (NumberFormatException e) {
+                numbered = false;
+                LOG.error("Invalid online number: " + onlinePrimitive);
             }
         }
-        return out;
+
+        if (asJsonObject.get("sample") instanceof JsonArray sampleJsonArray) {
+            List<ServerStatus.PlayerList.Sample> samples = new ArrayList<>();
+            for (JsonElement element : sampleJsonArray) {
+                if (element instanceof JsonObject elementAsJsonObject) {
+                    if (elementAsJsonObject.get("name") instanceof JsonPrimitive namePrimitive) {
+                        if (elementAsJsonObject.get("id") instanceof JsonPrimitive idPrimitive) {
+                            try {
+                                samples.add(new ServerStatus.PlayerList.Sample(
+                                        namePrimitive.getAsString(),
+                                        UUID.fromString(idPrimitive.getAsString())
+                                ));
+                            } catch (IllegalArgumentException e) {
+                                LOG.error("Invalid sample id: " + idPrimitive);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return new ServerStatus.PlayerList(playerMax, playerOnline, numbered, samples);
+        }
+        return new ServerStatus.PlayerList(playerMax, playerOnline, numbered, null);
     }
 
     private @NotNull Set<ServerStatus.ServerModType.Mod> decodeForgeDataD(@NotNull String dInput) {
