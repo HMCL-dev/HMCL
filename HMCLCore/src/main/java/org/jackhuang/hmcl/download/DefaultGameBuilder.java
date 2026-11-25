@@ -195,8 +195,8 @@ public class DefaultGameBuilder extends GameBuilder {
 
     /// Aborts this builder's open draft, including after ownership has passed to its build task.
     ///
-    /// If [#buildAsync()] has returned a task, the caller must ensure its executor has stopped
-    /// before invoking this method. This operation does not cancel or wait for task execution.
+    /// If [#buildAsync()] has returned a task, the caller must ensure that the task and its
+    /// subtasks have finished or can no longer run. This operation does not cancel or wait for them.
     /// It has no effect if the draft has already committed or aborted, and does not undo a
     /// committed installation. Subsequent calls have no effect after cleanup has completed or
     /// failed. Shared download caches are retained.

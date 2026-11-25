@@ -7,8 +7,10 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.modpack.ModpackGameInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -19,17 +21,13 @@ import java.util.Collections;
 import java.util.List;
 
 /// Installs or updates a remote server modpack using the mode selected at construction.
-public class ServerModpackRemoteInstallTask extends Task<Void> {
+@NotNullByDefault
+public class ServerModpackRemoteInstallTask extends ModpackGameInstallTask {
 
-    private final GameInstanceID instanceId;
-
-    /// Existing instance selecting update mode, or `null` for a new installation.
-    private final @Nullable DefaultGameInstance updateTarget;
-
-    private final DefaultDependencyManager dependency;
-    private final DefaultGameRepository repository;
+    /// The remote synchronization task scheduled after the game has been installed.
     private final List<Task<?>> dependencies = new ArrayList<>(1);
-    private final List<Task<?>> dependents = new ArrayList<>(1);
+
+    /// The manifest supplying installation metadata and game components.
     private final ServerModpackManifest manifest;
 
     /// Creates a task that installs a new remote server modpack instance.
@@ -37,8 +35,6 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
     /// @param dependencyManager the dependency manager for the target repository
     /// @param manifest          the remote server modpack manifest
     /// @param instanceId        the id of the new instance
-    /// @throws IllegalStateException if the target cannot be reserved or another repository draft
-    ///                               is open
     public ServerModpackRemoteInstallTask(
             DefaultDependencyManager dependencyManager,
             ServerModpackManifest manifest,
@@ -53,8 +49,6 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
     /// @param instance          the existing instance to update
     /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
-    /// @throws IllegalStateException    if `instance` is not the exact currently published object
-    ///                                  or another repository draft is open
     public ServerModpackRemoteInstallTask(
             DefaultDependencyManager dependencyManager,
             ServerModpackManifest manifest,
@@ -68,18 +62,14 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
     /// @param manifest          the remote server modpack manifest
     /// @param instanceId        the target instance id
     /// @param updateTarget      the existing instance selecting update mode, or `null` for install
-    /// @throws IllegalArgumentException if an update target has no compatible configuration
-    /// @throws IllegalStateException    if the target cannot be reserved, an update target is not
-    ///                                  the exact published object, or another draft is open
+    /// @throws IllegalArgumentException if the update target belongs to another repository, has no
+    ///                                  modpack configuration, or records another provider type
     private ServerModpackRemoteInstallTask(
             DefaultDependencyManager dependencyManager,
             ServerModpackManifest manifest,
             GameInstanceID instanceId,
             @Nullable DefaultGameInstance updateTarget) {
-        this.instanceId = instanceId;
-        this.updateTarget = updateTarget;
-        this.dependency = dependencyManager;
-        this.repository = dependencyManager.getGameRepository();
+        super(dependencyManager, instanceId, updateTarget);
         this.manifest = manifest;
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
@@ -95,42 +85,33 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
             }
         } catch (JsonParseException | IOException ignore) {
         }
+    }
 
-        onDone().register(event -> {
-            if (this.updateTarget == null && event.isFailed())
-                repository.removeInstanceFromDisk(instanceId);
-        });
-
-        try (GameBuilder builder = this.updateTarget == null
-                ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(this.updateTarget)) {
-            builder.enableIsolation();
-            for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
-                @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
-                if (componentType != null)
-                    builder.component(componentType, addon.getVersion());
-            }
-            dependents.add(builder.buildAsync());
+    /// Configures components for manifest add-ons whose ids match recognized patch types.
+    @Override
+    protected void configureGameBuilder(GameBuilder builder) {
+        for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
+            @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
+            if (componentType != null)
+                builder.component(componentType, addon.getVersion());
         }
     }
 
-    @Override
-    public List<Task<?>> getDependents() {
-        return dependents;
-    }
-
+    /// {@inheritDoc}
     @Override
     public List<Task<?>> getDependencies() {
         return dependencies;
     }
 
+    /// Schedules synchronization with the remote server modpack manifest.
     @Override
     public void execute() throws Exception {
         dependencies.add(new ServerModpackCompletionTask(
-                dependency,
+                dependencyManager,
                 repository.getInstance(instanceId),
                 new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList())));
     }
 
+    /// The provider id written to the installed server modpack configuration.
     public static final String MODPACK_TYPE = "Server";
 }

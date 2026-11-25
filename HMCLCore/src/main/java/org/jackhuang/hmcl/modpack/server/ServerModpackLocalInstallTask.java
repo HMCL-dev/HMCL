@@ -9,9 +9,11 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.modpack.ModpackGameInstallTask;
 import org.jackhuang.hmcl.modpack.ModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -22,19 +24,14 @@ import java.util.Collections;
 import java.util.List;
 
 /// Installs or updates a local server modpack using the mode selected at construction.
-public class ServerModpackLocalInstallTask extends Task<Void> {
+@NotNullByDefault
+public class ServerModpackLocalInstallTask extends ModpackGameInstallTask {
 
-    private final Path zipFile;
-    private final Modpack modpack;
+    /// The manifest supplying installation metadata and game components.
     private final ServerModpackManifest manifest;
-    private final GameInstanceID instanceId;
 
-    /// Existing instance selecting update mode, or `null` for a new installation.
-    private final @Nullable DefaultGameInstance updateTarget;
-
-    private final DefaultGameRepository repository;
+    /// Tasks scheduled after the game and the archive contents have been installed.
     private final List<Task<?>> dependencies = new ArrayList<>();
-    private final List<Task<?>> dependents = new ArrayList<>(4);
 
     /// Creates a task that installs a new local server modpack instance.
     ///
@@ -43,8 +40,6 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     /// @param modpack           the parsed modpack metadata
     /// @param manifest          the server modpack manifest
     /// @param instanceId        the id of the new instance
-    /// @throws IllegalStateException if the target cannot be reserved or another repository draft
-    ///                               is open
     public ServerModpackLocalInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -63,8 +58,6 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     /// @param instance          the existing instance to update
     /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
-    /// @throws IllegalStateException    if `instance` is not the exact currently published object
-    ///                                  or another repository draft is open
     public ServerModpackLocalInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -82,9 +75,8 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     /// @param manifest          the server modpack manifest
     /// @param instanceId        the target instance id
     /// @param updateTarget      the existing instance selecting update mode, or `null` for install
-    /// @throws IllegalArgumentException if an update target has no compatible configuration
-    /// @throws IllegalStateException    if the target cannot be reserved, an update target is not
-    ///                                  the exact published object, or another draft is open
+    /// @throws IllegalArgumentException if the update target belongs to another repository, has no
+    ///                                  modpack configuration, or records another provider type
     private ServerModpackLocalInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -92,12 +84,8 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
             ServerModpackManifest manifest,
             GameInstanceID instanceId,
             @Nullable DefaultGameInstance updateTarget) {
-        this.zipFile = zipFile;
-        this.modpack = modpack;
+        super(dependencyManager, instanceId, updateTarget);
         this.manifest = manifest;
-        this.instanceId = instanceId;
-        this.updateTarget = updateTarget;
-        this.repository = dependencyManager.getGameRepository();
         Path run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
@@ -115,37 +103,27 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
 
-        onDone().register(event -> {
-            if (this.updateTarget == null && event.isFailed())
-                repository.removeInstanceFromDisk(instanceId);
-        });
+        installTasks.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
+        installTasks.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+    }
 
-        dependents.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
-
-        try (GameBuilder builder = this.updateTarget == null
-                ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(this.updateTarget)) {
-            builder.enableIsolation();
-            for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
-                @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
-                if (componentType != null)
-                    builder.component(componentType, addon.getVersion());
-            }
-            dependents.add(0, builder.buildAsync());
+    /// Configures components for manifest add-ons whose ids match recognized patch types.
+    @Override
+    protected void configureGameBuilder(GameBuilder builder) {
+        for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
+            @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
+            if (componentType != null)
+                builder.component(componentType, addon.getVersion());
         }
     }
 
-    @Override
-    public List<Task<?>> getDependents() {
-        return dependents;
-    }
-
+    /// {@inheritDoc}
     @Override
     public List<Task<?>> getDependencies() {
         return dependencies;
     }
 
+    /// Completes the installation after the game and the archive contents have been installed.
     @Override
     public void execute() throws Exception {
     }
