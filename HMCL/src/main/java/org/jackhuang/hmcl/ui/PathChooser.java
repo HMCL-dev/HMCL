@@ -71,28 +71,28 @@ public class PathChooser {
         return this;
     }
 
-    private Path getInitialDirectory() {
+    private Optional<Path> getInitialDirectory() {
         return FileUtils.tryGetPath(initialDirectory)
                 .map(PathChooser::toDirectory)
                 .or(() -> context.getDir().map(PathChooser::toDirectory))
-                .orElseGet(ChooserContext::getDefaultDir);
+                .or(() -> Optional.of(ChooserContext.getDefaultDir()).map(PathChooser::toDirectory));
     }
 
     /// This overrides the initial directory of context. Only take effects when given path exists.
     public void setInitialDirectory(@Nullable String path) {
-        initialDirectory = path;
+        initialDirectory = StringUtils.isBlank(path) ? null : path;
     }
 
     private DirectoryChooser getDirectoryChooser() {
         DirectoryChooser chooser = directoryChooser == null ? (directoryChooser = new DirectoryChooser()) : directoryChooser;
-        chooser.setInitialDirectory(getInitialDirectory().toFile());
+        chooser.setInitialDirectory(getInitialDirectory().map(Path::toFile).orElse(null));
         chooser.setTitle(StringUtils.isBlank(title) ? i18n("selector.choose_directory") : title);
         return chooser;
     }
 
     private FileChooser getFileChooser() {
         FileChooser chooser = fileChooser == null ? (fileChooser = new FileChooser()) : fileChooser;
-        chooser.setInitialDirectory(getInitialDirectory().toFile());
+        chooser.setInitialDirectory(getInitialDirectory().map(Path::toFile).orElse(null));
         chooser.setTitle(StringUtils.isBlank(title) ? i18n("selector.choose_file") : title);
         chooser.getExtensionFilters().setAll(extensionFilter);
         chooser.setInitialFileName(initialFileName);

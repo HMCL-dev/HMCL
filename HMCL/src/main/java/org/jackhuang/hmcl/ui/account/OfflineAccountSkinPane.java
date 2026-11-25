@@ -166,7 +166,7 @@ public class OfflineAccountSkinPane extends StackPane {
                 pauseTransition.stop();
                 loadSkin.run();
             }
-        }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.pathProperty(), capeSelector.pathProperty());
+        }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.textProperty(), capeSelector.textProperty());
 
         VBox right = new VBox();
         right.setPadding(new Insets(0, 0, 0, 10));

@@ -66,7 +66,7 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
                         txtWorldName.getText().isEmpty()
                                 || exportPath.getPath() == null
                                 || Files.exists(exportPath.getPath())
-                                || !Files.isDirectory(exportPath.getPath().getParent())
+                                || (exportPath.getPath().getParent() != null && !Files.isDirectory(exportPath.getPath().getParent()))
                                 || exportPath.getPath().startsWith(skinnable.getWorld().getFile()),
                 txtWorldName.textProperty().isEmpty(), exportPath.pathProperty()));
         btnExport.setOnAction(e -> skinnable.export());

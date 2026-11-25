@@ -99,14 +99,17 @@ public class FileSelector extends HBox {
         pathField.validate();
     }
 
+    /// Guarantee a non-blank and valid real path if not null.
     public ReadOnlyObjectProperty<@Nullable Path> pathProperty() {
         return path.getReadOnlyProperty();
     }
 
+    /// Guarantee a non-blank and valid real path if not null.
     public @Nullable Path getPath() {
         return path.get();
     }
 
+    /// Guarantee a non-blank and valid real path string if not null.
     public @Nullable String getPathString() {
         return getPath() == null ? null : getPath().toString();
     }
@@ -126,7 +129,7 @@ public class FileSelector extends HBox {
             return absolutePath;
 
         Path relativePath = Metadata.CURRENT_DIRECTORY.relativize(absolutePath);
-        return relativePath.toString().isEmpty() ? Path.of(".") : relativePath;
+        return relativePath.toString().isBlank() ? Path.of(".") : relativePath;
     }
 
     public BooleanProperty convertToRelativePathProperty() {
