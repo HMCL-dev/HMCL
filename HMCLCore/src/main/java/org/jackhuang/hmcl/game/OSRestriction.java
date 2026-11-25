@@ -6,7 +6,9 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -81,5 +83,21 @@ public final class OSRestriction {
             return !Lang.test(() -> !Pattern.compile(arch).matcher(SystemInfo.SYSTEM_ARCH.getCheckedName()).matches());
 
         return true;
+    }
+
+    /// Returns whether the other object is an OS restriction with the same declared
+    /// OS name, version pattern, and architecture pattern.
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        return obj instanceof OSRestriction other
+                && Objects.equals(name, other.name)
+                && Objects.equals(version, other.version)
+                && Objects.equals(arch, other.arch);
+    }
+
+    /// Returns a hash code derived from the declared OS name, version pattern, and architecture pattern.
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, version, arch);
     }
 }
