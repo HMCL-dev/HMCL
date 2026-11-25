@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
@@ -35,8 +37,10 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -83,6 +87,24 @@ public final class DefaultGameInstanceTest {
             assertTrue(zip.stream().anyMatch(entry -> entry.getName().equals("server-manifest.json")));
             assertNull(zip.getEntry("overrides/export.zip"));
             assertTrue(zip.stream().noneMatch(entry -> entry.getName().contains(".hmcl-export-")));
+        }
+    }
+
+    /// Re-exporting an archive preserves its existing POSIX permissions.
+    @Test
+    public void testModpackExportPreservesPermissions(@TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        writeVersionJar(repository.getLayout().getInstanceJarFile(id), "1.20.1");
+        DefaultGameInstance instance = repository.publish(id, new GameInstanceManifest(id));
+        Configuration posix = Configuration.unix().toBuilder().setAttributeViews("basic", "posix")
+                .setDefaultAttributeValue("posix:permissions", "rw-------").build();
+        try (FileSystem fileSystem = Jimfs.newFileSystem(posix)) {
+            Path archive = fileSystem.getPath("/export.zip");
+            serverExport(instance, archive).run();
+            Files.setPosixFilePermissions(archive, PosixFilePermissions.fromString("rw-r--r--"));
+            serverExport(instance, archive).run();
+            assertEquals("rw-r--r--", PosixFilePermissions.toString(Files.getPosixFilePermissions(archive)));
         }
     }
 

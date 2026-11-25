@@ -4,12 +4,13 @@ package org.jackhuang.hmcl.modpack.server;
 
 import com.google.gson.JsonParseException;
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
-import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.game.DefaultGameRepositoryDraft;
 import org.jackhuang.hmcl.game.GameComponentType;
-import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -107,9 +108,39 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
             throw new IOException(e);
         }
 
-        List<Task<?>> dependencies = new ArrayList<>();
         boolean updateComponents = !toMap(installed.getManifest().getAddons()).equals(toMap(remoteManifest.getAddons()));
+        DefaultGameInstance target = instance;
+        if (updateComponents) {
+            try (DefaultGameBuilder builder = dependencyManager.newGameBuilder(instance)) {
+                for (ServerModpackManifest.Addon addon : remoteManifest.getAddons()) {
+                    @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
+                    if (componentType != null)
+                        builder.component(componentType, addon.getVersion());
+                }
+                ServerModpackManifest pending = new ServerModpackManifest(remoteManifest.getName(), remoteManifest.getAuthor(),
+                        remoteManifest.getVersion(), remoteManifest.getDescription(), remoteManifest.getFileApi(),
+                        remoteManifest.getFiles(), installed.getManifest().getAddons());
+                syncFiles(context, installed, pending);
+                target = builder.build(context);
+            }
+        }
 
+        // A successful build releases its draft and publishes a new instance.
+        try (DefaultGameRepositoryDraft draft = dependencyManager.getGameRepository().openDraft()) {
+            if (draft.getBaseSnapshot().findInstance(target.getId()) != target)
+                throw new IllegalStateException("Game instance has changed: " + target.getId());
+            if (updateComponents)
+                writeConfiguration(installed, remoteManifest);
+            else
+                syncFiles(context, installed, remoteManifest);
+        }
+        return null;
+    }
+
+    /// Synchronizes overrides and records the file list with the currently installed component versions.
+    private void syncFiles(TaskExecutionContext context, ModpackConfiguration<ServerModpackManifest> installed,
+                           ServerModpackManifest remoteManifest) throws Exception {
+        List<Task<?>> dependencies = new ArrayList<>();
         Path rootPath = instance.getInstanceRoot().toAbsolutePath().normalize();
         Map<String, ModpackConfiguration.FileInformation> files = installed.getManifest().getFiles().stream()
                 .collect(Collectors.toMap(ModpackConfiguration.FileInformation::getPath,
@@ -172,31 +203,15 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
 
         try {
             context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
-            writeConfiguration(installed, remoteManifest);
-            if (updateComponents) {
-                Modpack.installWithGameBuilder(dependencyManager, instance.getId(), instance, false, builder -> {
-                    for (ServerModpackManifest.Addon addon : remoteManifest.getAddons()) {
-                        @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
-                        if (componentType != null)
-                            builder.component(componentType, addon.getVersion());
-                    }
-                    builder.build(context);
-                });
-            }
         } catch (Exception | Error failure) {
-            // Track the downloaded files while leaving an incomplete component update eligible for retry.
-            ServerModpackManifest partial = updateComponents
-                    ? new ServerModpackManifest(remoteManifest.getName(), remoteManifest.getAuthor(), remoteManifest.getVersion(),
-                            remoteManifest.getDescription(), remoteManifest.getFileApi(), remoteManifest.getFiles(), installed.getManifest().getAddons())
-                    : remoteManifest;
             try {
-                writeConfiguration(installed, partial);
+                writeConfiguration(installed, remoteManifest);
             } catch (Exception | Error cleanupFailure) {
                 failure.addSuppressed(cleanupFailure);
             }
             throw failure;
         }
-        return null;
+        writeConfiguration(installed, remoteManifest);
     }
 
     /// Records the remote file list alongside the component versions known to the installation.

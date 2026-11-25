@@ -56,6 +56,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -74,26 +75,116 @@ public final class DefaultGameRepositoryDraftTest {
         GameInstanceID id = new GameInstanceID("server");
         repository.save(new GameInstanceManifest(id));
         DefaultGameInstance instance = repository.getInstance(id);
+        var installed = publishServerUpdate(directory, List.of(),
+                List.of(new ModpackConfiguration.FileInformation("missing.txt", "0".repeat(40))));
+        var task = new ServerModpackCompletionTask(createDependencyManager(repository), instance);
+        JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), installed);
+        assertThrows(DownloadException.class, task::run);
+        var saved = readServerManifest(instance);
+        assertEquals("1.20", saved.getAddons().get(0).getVersion());
+        assertEquals("missing.txt", saved.getFiles().get(0).getPath());
+    }
+
+    /// A queued update cannot delete files or rewrite the configuration of a replacement instance.
+    @Test
+    void staleServerUpdateLeavesReplacementUntouched(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("server");
+        repository.save(new GameInstanceManifest(id));
+        var installed = publishServerUpdate(directory,
+                List.of(new ModpackConfiguration.FileInformation("settings.txt", "0".repeat(40))), List.of());
+        var update = new ServerModpackCompletionTask(createDependencyManager(repository), repository.getInstance(id), installed);
+
+        assertTrue(repository.removeInstanceFromDisk(id));
+        repository.save(new GameInstanceManifest(id).withMainClass("replacement.Main"));
+        DefaultGameInstance replacement = repository.getInstance(id);
+        Path settings = Files.writeString(replacement.getInstanceRoot().resolve("settings.txt"), "replacement settings");
+        Path config = Files.writeString(replacement.getModpackConfigurationFile(), "replacement config");
+        assertThrows(IllegalStateException.class, update::run);
+        assertEquals("replacement settings", Files.readString(settings));
+        assertEquals("replacement config", Files.readString(config));
+    }
+
+    /// A restart during component installation must still see the previously installed version.
+    @Test
+    void serverUpdatePublishesComponentsAfterBuild(@TempDir Path directory) throws Exception {
+        GameInstanceID id = new GameInstanceID("server");
+        var repository = new TestRepository(directory) {
+            /// Component version visible on disk just before the updated instance is published.
+            private @Nullable String versionBeforeCommit;
+
+            /// Reads the installed configuration inside the build, before publishing its result.
+            @Override
+            void publishDraftSnapshot(DefaultGameRepositoryDraft draft, DefaultGameRepositorySnapshot newSnapshot) {
+                @Nullable DefaultGameInstance previous = draft.getBaseSnapshot().findInstance(id);
+                if (previous != null)
+                    versionBeforeCommit = assertDoesNotThrow(() -> readServerManifest(previous)).getAddons().get(0).getVersion();
+                super.publishDraftSnapshot(draft, newSnapshot);
+            }
+        };
+        repository.save(new GameInstanceManifest(id));
+        DefaultGameInstance instance = repository.getInstance(id);
+        var installed = publishServerUpdate(directory, List.of(), List.of());
+        JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), installed);
+
+        var update = new ServerModpackCompletionTask(createOfflineGameInstaller(repository, id, "1.21"), instance);
+        update.run();
+        assertEquals("1.20", repository.versionBeforeCommit);
+        assertEquals("1.21", readServerManifest(repository.getInstance(id)).getAddons().get(0).getVersion());
+    }
+
+    /// A replacement made as the build releases its draft keeps its own configuration.
+    @Test
+    void serverUpdateCannotPublishToReplacementAfterBuild(@TempDir Path directory) throws IOException {
+        GameInstanceID id = new GameInstanceID("server");
+        var repository = new TestRepository(directory) {
+            /// Enables replacement for the build's commit after the initial installation is ready.
+            private boolean replaceOnCommit;
+
+            /// Installs a replacement as soon as the writer can acquire a new draft.
+            @Override
+            void releaseDraft(DefaultGameRepositoryDraft draft) {
+                super.releaseDraft(draft);
+                if (replaceOnCommit && draft.getState() == GameRepositoryDraft.State.COMMITTED) {
+                    replaceOnCommit = false;
+                    assertTrue(removeInstanceFromDisk(id));
+                    assertDoesNotThrow(() -> {
+                        save(new GameInstanceManifest(id).withMainClass("replacement.Main"));
+                        Files.writeString(getInstance(id).getModpackConfigurationFile(), "replacement config");
+                    });
+                }
+            }
+        };
+        repository.save(new GameInstanceManifest(id));
+        DefaultGameInstance instance = repository.getInstance(id);
+        JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), publishServerUpdate(directory, List.of(), List.of()));
+
+        var update = new ServerModpackCompletionTask(createOfflineGameInstaller(repository, id, "1.21"), instance);
+        repository.replaceOnCommit = true;
+        assertThrows(IllegalStateException.class, update::run);
+        assertEquals("replacement.Main", repository.getInstanceManifest(id).mainClass());
+        assertEquals("replacement config", Files.readString(repository.getInstance(id).getModpackConfigurationFile()));
+    }
+
+    /// Publishes a local 1.20 to 1.21 server update and returns its previously installed configuration.
+    private static ModpackConfiguration<ServerModpackManifest> publishServerUpdate(
+            Path directory, List<ModpackConfiguration.FileInformation> oldFiles,
+            List<ModpackConfiguration.FileInformation> newFiles) throws IOException {
         Path published = directory.resolve("published");
         String fileApi = published.toUri().toASCIIString();
-        ServerModpackManifest old = new ServerModpackManifest("pack", "", "1", "", fileApi, List.of(),
+        ServerModpackManifest old = new ServerModpackManifest("pack", "", "1", "", fileApi, oldFiles,
                 List.of(new ServerModpackManifest.Addon("game", "1.20")));
-        ServerModpackManifest remote = new ServerModpackManifest("pack", "", "2", "", fileApi,
-                List.of(new ModpackConfiguration.FileInformation("missing.txt", "0".repeat(40))),
+        ServerModpackManifest remote = new ServerModpackManifest("pack", "", "2", "", fileApi, newFiles,
                 List.of(new ServerModpackManifest.Addon("game", "1.21")));
         Files.createDirectory(published);
         JsonUtils.writeToJsonFile(published.resolve("server-manifest.json"), remote);
-        var task = new ServerModpackCompletionTask(createDependencyManager(repository), instance);
-        JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(),
-                new ModpackConfiguration<>(old, "Server", "pack", "1", List.of()));
-        // File downloads can proceed while another writer holds the draft.
-        try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
-            assertThrows(DownloadException.class, task::run);
-        }
-        var saved = Objects.requireNonNull(JsonUtils.fromJsonFile(instance.getModpackConfigurationFile(),
+        return new ModpackConfiguration<>(old, "Server", "pack", "1", oldFiles);
+    }
+
+    /// Reads the manifest a later launcher process would use for synchronization.
+    private static ServerModpackManifest readServerManifest(DefaultGameInstance instance) throws IOException {
+        return Objects.requireNonNull(JsonUtils.fromJsonFile(instance.getModpackConfigurationFile(),
                 ModpackConfiguration.typeOf(ServerModpackManifest.class))).getManifest();
-        assertEquals("1.20", saved.getAddons().get(0).getVersion());
-        assertEquals("missing.txt", saved.getFiles().get(0).getPath());
     }
 
     /// The displayed game stage carries the selected version for a build or a component install.

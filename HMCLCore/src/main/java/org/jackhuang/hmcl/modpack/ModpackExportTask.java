@@ -15,6 +15,7 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -67,6 +68,8 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
                 writeArchive(zip, path -> !output.equals(runDirectory.resolve(path))
                         && Modpack.acceptFile(path, exclusions, info.getWhitelist()), context.progress());
             }
+            if (!Files.notExists(output) && Files.getFileStore(temporary).supportsFileAttributeView(PosixFileAttributeView.class))
+                Files.setPosixFilePermissions(temporary, Files.getPosixFilePermissions(output));
             context.checkCancellation();
             try {
                 Files.move(temporary, output, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);

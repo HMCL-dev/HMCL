@@ -515,6 +515,11 @@ public abstract class DefaultGameRepository implements GameRepository {
         if (!activeDraft.compareAndSet(null, draft)) {
             throw new IllegalStateException("Another repository draft is already open");
         }
+        // A concurrent writer may have committed between snapshot capture and reservation.
+        if (draft.getBaseSnapshot() != getSnapshot()) {
+            releaseDraft(draft);
+            throw new IllegalStateException("Repository changed while opening a draft");
+        }
         return draft;
     }
 
