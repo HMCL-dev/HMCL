@@ -66,6 +66,37 @@ final class TaskExecutionContextTest {
         }
     }
 
+    /// An interrupted parent can still service a queued descendant on its own worker.
+    @Test
+    void interruptedWaitDrainsQueuedDescendant() throws Exception {
+        ExecutorService parent = Executors.newSingleThreadExecutor();
+        ExecutorService child = Executors.newSingleThreadExecutor();
+        try {
+            CompletableFuture<Boolean> queued = new CompletableFuture<>();
+            Executor interruptAfterSubmission = command -> {
+                child.execute(command);
+                queued.orTimeout(10, TimeUnit.SECONDS).join();
+                Thread.currentThread().interrupt();
+            };
+            Task<Integer> descendant = Task.supplyAsync(parent, () -> 42);
+            Task<?> branch = task(interruptAfterSubmission, context -> context.runAll(
+                    List.of(descendant, Task.supplyAsync(Runnable::run, () -> queued.complete(true)))));
+            task(parent, context -> {
+                try {
+                    assertThrows(InterruptedException.class, () -> context.run(branch));
+                    assertTrue(Thread.currentThread().isInterrupted());
+                    assertEquals(42, descendant.resultNow());
+                } finally {
+                    Thread.interrupted();
+                }
+                return null;
+            }).run();
+        } finally {
+            child.shutdownNow();
+            parent.shutdownNow();
+        }
+    }
+
     /// Children inherit their executor through batches. A separately submitted root uses the task scheduler.
     @Test
     void distinguishesInheritedAndRootExecutors() throws Exception {

@@ -52,14 +52,28 @@ public class ModpackUpdateTask extends Task<@Nullable Void> {
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         Path backupFolder = createBackupDirectory();
         FileUtils.copyDirectory(instance.getInstanceRoot(), backupFolder);
+        context.checkCancellation();
+        if (instance.getRepository().getSnapshot().findInstance(instance.getId()) != instance)
+            throw new IllegalStateException("Game instance has changed: " + instance.getId());
+        if (updateTask.getState() != State.NEW) {
+            context.run(updateTask);
+            return null;
+        }
         try {
             context.run(updateTask);
-        } catch (Exception failure) {
-            if (!instance.getRepository().removeInstanceFromDisk(instance.getId())) {
-                throw new IOException("Failed to remove instance before restoring backup: " + instance.getId(), failure);
+        } catch (Exception | Error failure) {
+            // The update may have been cancelled before the scheduler admitted it.
+            if (updateTask.getState() == State.NEW)
+                throw failure;
+            try {
+                if (!instance.getRepository().removeInstanceFromDisk(instance.getId()))
+                    throw new IOException("Failed to remove instance before restoring backup: " + instance.getId());
+                FileUtils.copyDirectory(backupFolder, instance.getInstanceRoot());
+                instance.getRepository().refresh();
+            } catch (Exception | Error rollbackFailure) {
+                if (rollbackFailure != failure)
+                    failure.addSuppressed(rollbackFailure);
             }
-            FileUtils.copyDirectory(backupFolder, instance.getInstanceRoot());
-            instance.getRepository().refresh();
             throw failure;
         }
         return null;

@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -98,7 +99,7 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
                                         }
                                     })
                     ).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
-                        if (exception != null) {
+                        if (exception != null && !(exception instanceof CancellationException)) {
                             LOG.warning("Failed to update addon", exception);
                             failedAddons.add(local);
                         }

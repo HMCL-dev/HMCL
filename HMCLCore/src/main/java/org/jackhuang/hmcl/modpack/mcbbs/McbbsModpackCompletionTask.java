@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.curse.CurseMetaMod;
@@ -260,15 +261,12 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
                 }
             }
 
-        if (!dependencies.isEmpty()) {
-            context.addStageItems(dependencies.size());
-        }
-
-        context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
+        @Nullable ModpackCompletionException incomplete = null;
         if (notFound.get())
-            throw new ModpackCompletionException(new FileNotFoundException());
-        if (!allNameKnown.get())
-            throw new ModpackCompletionException();
+            incomplete = new ModpackCompletionException(new FileNotFoundException());
+        else if (!allNameKnown.get())
+            incomplete = new ModpackCompletionException();
+        Modpack.completeDownloads(context, dependencies, incomplete);
     }
 
     private @Nullable Path getFilePath(McbbsModpackManifest.File file) {

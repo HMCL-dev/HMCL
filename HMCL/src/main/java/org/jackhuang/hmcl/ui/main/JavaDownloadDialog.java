@@ -57,7 +57,6 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -189,7 +188,7 @@ public final class JavaDownloadDialog extends StackPane {
                             exceptionToDisplay = exception;
                         }
 
-                        if (exceptionToDisplay != null) {
+                        if (exceptionToDisplay != null && !(exceptionToDisplay instanceof CancellationException)) {
                             LOG.warning("Failed to download java", exceptionToDisplay);
                             Controllers.dialog(I18n.localizeErrorMessage(exceptionToDisplay), i18n("install.failed"));
                         }
@@ -418,12 +417,9 @@ public final class JavaDownloadDialog extends StackPane {
                             String defaultName = distribution.getApiParameter() + "-" + javaVersion + "-" + packageType.name().toLowerCase(Locale.ROOT);
                             Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller ->
                                     new JavaInstallPage(controller::onFinish, info, version, updateInfo, defaultName, result)));
-                        } else {
+                        } else if (!(exception instanceof CancellationException)) {
                             LOG.warning("Failed to download java", exception);
-                            Throwable resolvedException = resolveException(exception);
-                            if (!(resolvedException instanceof CancellationException)) {
-                                Controllers.dialog(I18n.localizeErrorMessage(resolvedException), i18n("install.failed"));
-                            }
+                            Controllers.dialog(I18n.localizeErrorMessage(exception), i18n("install.failed"));
                         }
                     })), i18n("java.download"), TaskCancellationAction.NORMAL);
 

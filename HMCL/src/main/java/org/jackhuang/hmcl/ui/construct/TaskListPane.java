@@ -137,6 +137,8 @@ public final class TaskListPane extends StackPane {
                 private final InvocationDispatcher<Runnable> updates = InvocationDispatcher.runOn(action -> update(action), Runnable::run);
                 /// Displayed row, accessed only on the JavaFX thread.
                 private @Nullable ProgressListNode row;
+                /// Prevents a worker holding this row from replacing its final update.
+                private boolean finished;
 
                 /// Captures the display details before the task body runs or its rejection is reported.
                 TaskRowUpdate(Task<?> task, TaskStage.@Nullable Scope scope) {
@@ -155,12 +157,14 @@ public final class TaskListPane extends StackPane {
                 }
 
                 /// Shows the latest fraction on the row.
-                void report(double fraction) {
-                    updates.accept(() -> show().progress.set(fraction));
+                synchronized void report(double fraction) {
+                    if (!finished)
+                        updates.accept(() -> show().progress.set(fraction));
                 }
 
                 /// Replaces any pending progress with the final display change.
-                void finish(@Nullable Throwable failure) {
+                synchronized void finish(@Nullable Throwable failure) {
+                    finished = true;
                     updates.accept(() -> {
                         if (failure != null)
                             show().setThrowable(failure);

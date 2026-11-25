@@ -927,8 +927,13 @@ final class TaskExecution {
                 } finally {
                     lock.unlock();
                 }
-                if (next != null)
+                if (next != null) {
+                    if (Thread.interrupted())
+                        interrupted = true;
                     next.run();
+                    if (Thread.interrupted())
+                        interrupted = true;
+                }
             }
             if (interrupted) {
                 Thread.currentThread().interrupt();

@@ -171,7 +171,7 @@ public final class LauncherHelper {
                     context.launchManifest = LaunchManifestNormalizer.repairForLaunch(gameInstance.getResolvedManifest());
                     return checkGameState(context.launchManifest, javaVersionType, skipJavaCheck);
                 }).withStage(JAVA_STAGE)
-                .thenComposeOptionalAsync(java -> {
+                .thenComposeAsync(java -> Task.composeOptionalAsync(() -> {
                     context.javaRuntime = Objects.requireNonNull(java);
                     context.javaExecutable = java.getBinary();
                     if (java.getPlatform().os() == OperatingSystem.WINDOWS
@@ -205,7 +205,7 @@ public final class LauncherHelper {
                                 }
                             })
                     );
-                }).withStage(DEPENDENCIES_STAGE)
+                }).withStage(DEPENDENCIES_STAGE))
                 .thenComposeAsync(() -> new GameVerificationFixTask(gameInstance, gameInstance.getVersion(), context.launchManifest))
                 .thenComposeAsync(() -> {
                     if (setting.getInheritable(GameSettings::allowAutoAgentProperty)

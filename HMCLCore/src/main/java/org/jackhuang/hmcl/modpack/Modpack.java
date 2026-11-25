@@ -6,13 +6,16 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 
 /**
  *
@@ -141,6 +144,25 @@ public abstract class Modpack {
             throw failure;
         }
         builder.abort();
+    }
+
+    /// Downloads missing pack files. Cancellation or interruption takes precedence over incomplete files.
+    public static void completeDownloads(TaskExecutionContext context, List<? extends Task<?>> downloads,
+                                         @Nullable ModpackCompletionException incomplete) throws Exception {
+        if (!downloads.isEmpty())
+            context.addStageItems(downloads.size());
+        try {
+            context.runAll(downloads, FetchTask.getDownloadExecutorConcurrency());
+        } catch (InterruptedException | CancellationException cancelled) {
+            throw cancelled;
+        } catch (Exception failure) {
+            if (incomplete == null)
+                incomplete = new ModpackCompletionException();
+            incomplete.addSuppressed(failure);
+        }
+        context.checkCancellation();
+        if (incomplete != null)
+            throw incomplete;
     }
 
     public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {

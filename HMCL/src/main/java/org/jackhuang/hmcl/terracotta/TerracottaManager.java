@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -142,8 +143,9 @@ public final class TerracottaManager {
         return !FileUtils.getName(file).equalsIgnoreCase(TerracottaMetadata.PACKAGE_NAME);
     }
 
+    /// Starts a download and returns its preparation state, or `null` if preparation cannot begin.
     @FXThread
-    public static TerracottaState.Preparing download() {
+    public static TerracottaState.@Nullable Preparing download() {
         FXUtils.checkFxUserThread();
 
         TerracottaState state = STATE_V.get();
@@ -153,6 +155,8 @@ public final class TerracottaManager {
         }
 
         TerracottaState.Preparing preparing = new TerracottaState.Preparing(true);
+        if (!compareAndSet(state, preparing))
+            return null;
 
         Task.composeAsync(() -> getProvider().download(preparing))
                 .thenComposeOptionalAsync(pkg -> {
@@ -167,20 +171,21 @@ public final class TerracottaManager {
                         }
                     });
                 }).whenComplete((ignored, exception) -> {
-                    if (exception instanceof CancellationException) {
-                        // no-op
-                    } else if (exception instanceof DownloadException) {
+                    if (exception == null || exception instanceof CancellationException)
+                        return;
+                    if (exception instanceof DownloadException) {
                         compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.NETWORK));
                     } else {
                         compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
                     }
                 }).addTaskListener(preparing.downloadListener()).start();
 
-        return compareAndSet(state, preparing) ? preparing : null;
+        return preparing;
     }
 
+    /// Installs a local bundle and returns the preparation state if this starts a new preparation.
     @FXThread
-    public static TerracottaState.Preparing install(Path bundle) {
+    public static TerracottaState.@Nullable Preparing install(Path bundle) {
         FXUtils.checkFxUserThread();
         if (isInvalidBundle(bundle)) {
             return null;
@@ -192,6 +197,8 @@ public final class TerracottaManager {
             preparing = previousPreparing;
         } else if (state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable()) {
             preparing = new TerracottaState.Preparing(false);
+            if (!compareAndSet(state, preparing))
+                return null;
         } else {
             return null;
         }
@@ -204,10 +211,11 @@ public final class TerracottaManager {
                     }
                 })
                 .whenComplete((ignored, exception) -> {
-                    compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
+                    if (exception != null)
+                        compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
                 }).start();
 
-        return state != preparing && compareAndSet(state, preparing) ? preparing : null;
+        return state != preparing ? preparing : null;
     }
 
     @FXThread

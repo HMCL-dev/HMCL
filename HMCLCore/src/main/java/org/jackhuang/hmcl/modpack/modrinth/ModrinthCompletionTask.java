@@ -7,8 +7,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
-import org.jackhuang.hmcl.modpack.ModpackCompletionException;
-import org.jackhuang.hmcl.task.FetchTask;
+import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
@@ -27,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -147,19 +145,7 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
             dependencies.add(task.withCounter());
         }
 
-        if (!dependencies.isEmpty()) {
-            context.addStageItems(dependencies.size());
-        }
-
-        try {
-            context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
-        } catch (InterruptedException | CancellationException cancelled) {
-            throw cancelled;
-        } catch (Exception failure) {
-            ModpackCompletionException incomplete = new ModpackCompletionException();
-            incomplete.addSuppressed(failure);
-            throw incomplete;
-        }
+        Modpack.completeDownloads(context, dependencies, null);
         return null;
     }
 }

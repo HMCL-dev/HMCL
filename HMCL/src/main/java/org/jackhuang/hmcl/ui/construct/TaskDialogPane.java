@@ -44,6 +44,8 @@ public class TaskDialogPane extends BorderPane implements DialogAware {
 
     /// The task whose progress is displayed, or `null` if detached.
     private @Nullable Task<?> task;
+    /// The lifecycle listener for the current attachment.
+    private @Nullable TaskListener listener;
     /// Whether completion of the attached task closes the dialog.
     private boolean autoClose;
     /// The cancellation action, or `null` when cancellation is disabled.
@@ -167,6 +169,9 @@ public class TaskDialogPane extends BorderPane implements DialogAware {
         FXUtils.checkFxUserThread();
         if (this.task == task)
             return;
+        if (this.task != null && listener != null)
+            this.task.removeTaskListener(listener);
+        listener = null;
         TaskManager.getInstance().unregister(this);
         this.task = task;
         this.autoClose = autoClose;
@@ -179,12 +184,12 @@ public class TaskDialogPane extends BorderPane implements DialogAware {
 
         taskListPane.setTask(task);
         if (task != null) {
-            task.addTaskListener(new TaskListener() {
+            listener = new TaskListener() {
                 /// Registers this dialog when its current task starts.
                 @Override
                 public void onExecutionStarted(Task<?> task) {
                     runInFX(() -> {
-                        if (TaskDialogPane.this.task != task)
+                        if (listener != this)
                             return;
                         running = true;
                         queued.set(false);
@@ -198,11 +203,12 @@ public class TaskDialogPane extends BorderPane implements DialogAware {
                 @Override
                 public void onExecutionFinished(Task<?> task, boolean success) {
                     Platform.runLater(() -> {
-                        if (TaskDialogPane.this.task == task)
+                        if (listener == this)
                             finish(success);
                     });
                 }
-            });
+            };
+            task.addTaskListener(listener);
         }
     }
 
@@ -250,6 +256,7 @@ public class TaskDialogPane extends BorderPane implements DialogAware {
                 ? null
                 : Objects.requireNonNull(parent.task, "parent task");
         Task<?> submittedTask = task;
+        TaskListener attachment = Objects.requireNonNull(listener);
         queued.set(true);
         lblProgress.setText(i18n("task.queued"));
         TaskManager.getInstance().register(this);
@@ -257,14 +264,15 @@ public class TaskDialogPane extends BorderPane implements DialogAware {
         CompletableFuture<Boolean> submitted;
         try {
             submitted = TaskManager.getInstance().submit(submittedTask, parentTask, () -> {
-                if (task == submittedTask)
+                if (listener == attachment)
                     finish(false);
             });
         } catch (IllegalArgumentException failure) {
-            finish(false);
+            if (listener == attachment)
+                finish(false);
             throw failure;
         }
-        if (task == submittedTask)
+        if (listener == attachment)
             submission = submitted;
         return submitted;
     }

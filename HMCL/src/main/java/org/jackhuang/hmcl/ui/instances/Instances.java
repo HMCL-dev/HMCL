@@ -236,7 +236,7 @@ public final class Instances {
                             .whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
                                 if (exception == null) {
                                     repository.setSelectedInstance(repository.getInstance(instanceId));
-                                } else {
+                                } else if (!(exception instanceof CancellationException)) {
                                     Controllers.dialog(
                                             I18n.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
                                 }

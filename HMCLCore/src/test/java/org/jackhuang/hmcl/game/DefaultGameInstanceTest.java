@@ -12,19 +12,27 @@ import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
 import org.jackhuang.hmcl.modpack.Modpack;
+import org.jackhuang.hmcl.modpack.ModpackCompletionException;
+import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.ModpackExportTask;
 import org.jackhuang.hmcl.modpack.ModpackUpdateTask;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.task.DownloadException;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskProgress;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -34,6 +42,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -597,7 +607,36 @@ public final class DefaultGameInstanceTest {
         }
     }
 
-    /// A failed modpack update restores the original files before reporting the child failure.
+    /// Missing CurseForge files report incomplete installation unless the user cancels while the batch drains.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void testMissingMcbbsDownload(boolean cancel, @TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        repository.save(new GameInstanceManifest(id));
+        DefaultCacheRepository cache = new DefaultCacheRepository(directory.resolve("cache"));
+        DefaultDependencyManager manager = new DefaultDependencyManager(repository, new TestDownloadProvider(cache), cache);
+        var file = new McbbsModpackManifest.CurseFile(false, 1, 2, "missing.jar", directory.resolve("missing.jar").toUri().toASCIIString());
+        var manifest = new McbbsModpackManifest().setFiles(List.of(file));
+        Task<?> completion = new McbbsModpackCompletionTask(manager, repository.getInstance(id),
+                new ModpackConfiguration<>(manifest, "MCBBS", "pack", "1", List.of()));
+        if (cancel) {
+            completion.addTaskListener(new TaskListener() {
+                /// Cancels after the missing download has already published its failure.
+                @Override
+                public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+                    if (task instanceof FileDownloadTask && failure != null)
+                        completion.cancel();
+                }
+            });
+            assertThrows(CancellationException.class, completion::run);
+        } else {
+            var incomplete = assertThrows(ModpackCompletionException.class, completion::run);
+            assertInstanceOf(DownloadException.class, incomplete.getSuppressed()[0]);
+        }
+    }
+
+    /// An update that fails with an error restores the original files before reporting the error.
     @Test
     public void testModpackUpdateRollsBackFailedChild(@TempDir Path tempDirectory) throws IOException {
         TestRepository repository = new TestRepository(tempDirectory);
@@ -611,7 +650,7 @@ public final class DefaultGameInstanceTest {
         Files.writeString(marker, "original");
         repository.refresh();
 
-        IOException failure = new IOException("Update failed");
+        AssertionError failure = new AssertionError("Update failed");
         Path partial = root.resolve("partial.txt");
         ModpackUpdateTask update = new ModpackUpdateTask(repository.getInstance(id), Task.runAsync(() -> {
             Files.writeString(marker, "modified");
@@ -619,10 +658,46 @@ public final class DefaultGameInstanceTest {
             throw failure;
         }));
 
-        assertSame(failure, assertThrows(IOException.class, update::run));
+        assertSame(failure, assertThrows(AssertionError.class, update::run));
         assertEquals("original", Files.readString(marker));
         assertFalse(Files.exists(partial));
         assertEquals(root, repository.getInstance(id).getInstanceRoot());
+    }
+
+    /// Rollback reports its own failure as suppressed on the original update failure.
+    @Test
+    void testModpackUpdatePreservesFailureOnRollbackError(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        repository.save(new GameInstanceManifest(id));
+        IOException failure = new IOException("Update failed");
+        Task<?> update = new ModpackUpdateTask(repository.getInstance(id), Task.failed(failure));
+        try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
+            assertSame(failure, assertThrows(IOException.class, update::run));
+        }
+        assertInstanceOf(IllegalStateException.class, failure.getSuppressed()[0]);
+    }
+
+    /// Cancellation before applying an update leaves the registered instance and its files in place.
+    @Test
+    void testCancelledModpackUpdateSkipsRestore(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        repository.save(new GameInstanceManifest(id));
+        DefaultGameInstance instance = repository.getInstance(id);
+        Task<?> child = Task.completed(null);
+        var update = new ModpackUpdateTask(instance, child);
+        Task<?> cancelled = new Task<@Nullable Void>() {
+            /// Uses an already cancelled context for the backup and update.
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                cancel();
+                return update.execute(context);
+            }
+        };
+        assertThrows(CancellationException.class, cancelled::run);
+        assertEquals(Task.State.NEW, child.getState());
+        assertSame(instance, repository.getInstance(id));
     }
 
     /// A MultiMC task declared as a new installation rejects an existing id without deleting it.

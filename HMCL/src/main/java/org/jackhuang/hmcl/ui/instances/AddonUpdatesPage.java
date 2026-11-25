@@ -55,6 +55,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -165,6 +166,8 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         );
         Controllers.taskDialog(
                 task.whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
+                    if (exception instanceof CancellationException)
+                        return;
                     fireEvent(new PageCloseEvent());
                     if (!task.getFailedAddons().isEmpty()) {
                         Controllers.dialog(i18n("addon.check_update.failed_download") + "\n" +
@@ -205,7 +208,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         }).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
             if (exception == null) {
                 Controllers.dialog(path.toString(), i18n("message.success"));
-            } else {
+            } else if (!(exception instanceof CancellationException)) {
                 Controllers.dialog("", i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             }
         }), i18n("button.export"), TaskCancellationAction.NORMAL);

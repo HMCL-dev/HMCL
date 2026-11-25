@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -408,6 +409,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
                             }
                         })
                         .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
+                            if (exception instanceof CancellationException) return;
                             if (exception != null || result == null) {
                                 Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
                             } else if (result.commonUpdates().isEmpty()) {

@@ -10,8 +10,8 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
-import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -32,7 +32,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -191,25 +190,12 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
                 })
                 .toList());
 
-        if (!dependencies.isEmpty()) {
-            context.addStageItems(dependencies.size());
-        }
-
-        try {
-            context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
-        } catch (InterruptedException | CancellationException cancelled) {
-            throw cancelled;
-        } catch (Exception failure) {
-            if (notFound.get())
-                throw new ModpackCompletionException(new FileNotFoundException());
-            ModpackCompletionException incomplete = new ModpackCompletionException();
-            incomplete.addSuppressed(failure);
-            throw incomplete;
-        }
+        @Nullable ModpackCompletionException incomplete = null;
         if (notFound.get())
-            throw new ModpackCompletionException(new FileNotFoundException());
-        if (!allNameKnown.get())
-            throw new ModpackCompletionException();
+            incomplete = new ModpackCompletionException(new FileNotFoundException());
+        else if (!allNameKnown.get())
+            incomplete = new ModpackCompletionException();
+        Modpack.completeDownloads(context, dependencies, incomplete);
     }
 
     /// Returns the destination for a missing CurseForge file based on its project class.
