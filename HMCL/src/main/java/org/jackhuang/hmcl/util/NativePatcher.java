@@ -112,13 +112,6 @@ public final class NativePatcher {
         if (settings.getInheritable(GameSettings::notPatchNativesProperty))
             return manifest;
 
-        if (arch.isX86() && (os == OperatingSystem.WINDOWS || os == OperatingSystem.LINUX || os == OperatingSystem.MACOS))
-            return manifest;
-
-        if (arch == Architecture.ARM64 && (os == OperatingSystem.MACOS || os == OperatingSystem.WINDOWS)
-                && gameVersion.compareTo("1.19") >= 0)
-            return manifest;
-
         Map<String, Library> replacements = getNatives(javaVersion.getPlatform());
         if (replacements.isEmpty()) {
             LOG.warning("No alternative native library provided for platform " + javaVersion.getPlatform());
