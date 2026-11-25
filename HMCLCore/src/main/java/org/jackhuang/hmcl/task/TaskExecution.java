@@ -270,7 +270,8 @@ final class TaskExecution {
     /// Publishes a root failure even if its executor could not be reached.
     private <T extends @Nullable Object> T runRoot(Task<T> root, boolean propagateWaitInterruption) throws Exception {
         try {
-            return prepare(root, Schedulers.tasks(), null).runReady(propagateWaitInterruption);
+            prepare(root, Schedulers.tasks(), null).runReady(propagateWaitInterruption);
+            return root.completedOutcome();
         } catch (Throwable failure) {
             if (root.getState() == Task.State.READY)
                 finishTask(root, null, null, failure);
@@ -381,6 +382,9 @@ final class TaskExecution {
         /// Executor inherited by children that have no executor preference.
         private final Executor executor;
 
+        /// Executor inherited by callbacks that consume this task's outcome.
+        private Executor resultExecutor;
+
         /// Stage scope opened by the running task or inherited from its parent.
         private final TaskStage.@Nullable Scope stageScope;
 
@@ -391,29 +395,41 @@ final class TaskExecution {
         Context(Task<R> task, Executor executor, TaskStage.@Nullable Scope stageScope, @Nullable Context<R> preparedSource) {
             this.task = task;
             this.executor = executor;
+            this.resultExecutor = executor;
             this.stageScope = stageScope;
             this.preparedSource = preparedSource;
         }
 
         /// Runs on the current worker when possible, otherwise submits and waits.
-        private R runReady(boolean propagateWaitInterruption) throws Exception {
-            if (executor != currentExecutor())
-                return submit(null).await(propagateWaitInterruption);
+        private void runReady(boolean propagateWaitInterruption) throws Exception {
+            if (executor != currentExecutor()) {
+                submit(null).await(propagateWaitInterruption);
+                return;
+            }
             @Nullable Work<?> current = CURRENT_WORK.get();
             if (current != null && current.owner() == TaskExecution.this) {
                 task.binding().setWork(current);
-                return execute();
+                execute();
+            } else {
+                // A root entered from another tree or directly on JavaFX needs its own helping index.
+                Work<?> inline = newWork(null);
+                task.binding().setWork(inline);
+                inline.run();
+                inline.completedOutcome();
             }
-            // A root entered from another tree or directly on JavaFX needs its own helping index.
-            Work<R> inline = new Work<>(executor, this::execute);
-            task.binding().setWork(inline);
-            inline.run();
-            return inline.completedOutcome();
+        }
+
+        /// Creates a submission that publishes its outcome on the task.
+        private Work<@Nullable Void> newWork(@Nullable BatchWindow window) {
+            return new Work<>(executor, () -> {
+                execute();
+                return null;
+            }, window);
         }
 
         /// Submits the prepared task and publishes any rejection to its waiters.
-        private Work<R> submit(@Nullable BatchWindow window) {
-            Work<R> work = new Work<>(executor, this::execute, window);
+        private Work<?> submit(@Nullable BatchWindow window) {
+            Work<?> work = newWork(window);
             Binding binding = task.binding();
             binding.enter();
             try {
@@ -429,12 +445,21 @@ final class TaskExecution {
             return work;
         }
 
-        /// Publishes a successful result before delivering completion notifications.
-        private R execute() throws Exception {
+        /// Publishes the task's result or failure before delivering completion notifications.
+        private void execute() {
             Binding binding = task.binding();
             binding.enter();
             try {
-                R result = invokeBody();
+                R result;
+                try {
+                    result = invokeBody();
+                } catch (Throwable failure) {
+                    Throwable cause = Objects.requireNonNullElse(Lang.resolveException(failure), failure);
+                    if (cause instanceof InterruptedException)
+                        cause = new CancellationException(cause.getMessage()).initCause(cause);
+                    fail(cause);
+                    return;
+                }
                 finishTask(task, stageScope, result, null);
                 if (task.getSignificance().shouldLog()) {
                     try {
@@ -443,39 +468,34 @@ final class TaskExecution {
                         LOG.warning("Failed to log task completion", failure);
                     }
                 }
-                return result;
             } finally {
                 binding.leave();
             }
         }
 
-        /// Checks cancellation around user code and records a failure before propagating it.
+        /// Checks cancellation around the task body and its start notification.
         private R invokeBody() throws Exception {
-            try {
+            checkCancellation();
+            if (task.getSignificance().shouldLog()) {
+                LOG.trace("Executing task: " + task.displayName());
                 checkCancellation();
-                if (task.getSignificance().shouldLog()) {
-                    LOG.trace("Executing task: " + task.displayName());
-                    checkCancellation();
-                }
-                task.markRunning();
-                notifyListeners(listener -> listener.onTaskStarted(task, stageScope));
-                checkCancellation();
-                R result;
-                if (task instanceof Task.Decorator<R> decorator) {
-                    result = preparedSource != null ? preparedSource.execute() : decorator.source.completedOutcome();
-                    decorator.onSourceSuccess(this);
-                } else {
-                    result = task.execute(this);
-                }
-                checkCancellation();
-                return result;
-            } catch (Throwable failure) {
-                Throwable cause = Objects.requireNonNullElse(Lang.resolveException(failure), failure);
-                if (cause instanceof InterruptedException)
-                    cause = new CancellationException(cause.getMessage()).initCause(cause);
-                fail(cause);
-                throw Task.rethrow(cause);
             }
+            task.markRunning();
+            notifyListeners(listener -> listener.onTaskStarted(task, stageScope));
+            checkCancellation();
+            R result;
+            if (task instanceof Task.Decorator<R> decorator) {
+                if (preparedSource != null) {
+                    preparedSource.execute();
+                    resultExecutor = preparedSource.resultExecutor;
+                }
+                result = decorator.source.completedOutcome();
+                decorator.onSourceSuccess(this);
+            } else {
+                result = task.execute(this);
+            }
+            checkCancellation();
+            return result;
         }
 
         /// Closes any prepared sources whose bodies were skipped before reporting this task's failure.
@@ -522,10 +542,27 @@ final class TaskExecution {
         /// {@inheritDoc}
         @Override
         public <T extends @Nullable Object> T run(Task<T> child) throws Exception {
+            runChild(child);
+            return child.completedOutcome();
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public <T extends @Nullable Object> T delegateTo(Task<T> child) throws Exception {
+            // A failed dispatch or interrupted wait produces its failure on the calling worker.
+            resultExecutor = executor;
+            resultExecutor = runChild(child);
+            return child.completedOutcome();
+        }
+
+        /// Returns a new child's result executor, or this task's executor if the child already completed.
+        private Executor runChild(Task<?> child) throws Exception {
             checkCancellation();
             if (!child.tryMarkReadyAsChild(task.binding(), false))
-                return child.completedOutcome();
-            return prepare(child, executor, stageScope).runReady(true);
+                return executor;
+            Context<?> prepared = prepare(child, executor, stageScope);
+            prepared.runReady(true);
+            return prepared.resultExecutor;
         }
 
         /// {@inheritDoc}
@@ -545,7 +582,7 @@ final class TaskExecution {
             @Nullable BatchWindow window = batch.size() > maxConcurrency ? new BatchWindow(maxConcurrency) : null;
             Binding parent = task.binding();
             // Every encountered instance gets one entry. Only newly scheduled children have work to await.
-            Map<Task<? extends T>, @Nullable Work<? extends T>> submissions = new IdentityHashMap<>(batch.size());
+            Map<Task<? extends T>, @Nullable Work<?>> submissions = new IdentityHashMap<>(batch.size());
             List<Task<? extends T>> admitted = new ArrayList<>(batch.size());
             @Nullable Throwable failure = null;
             for (Task<? extends T> child : batch) {
@@ -572,7 +609,7 @@ final class TaskExecution {
 
         /// Drains admitted tasks in input order, including after a submission or a wait fails.
         private <T extends @Nullable Object> List<T> awaitBatch(
-                List<Task<? extends T>> admitted, Map<Task<? extends T>, @Nullable Work<? extends T>> submissions,
+                List<Task<? extends T>> admitted, Map<Task<? extends T>, @Nullable Work<?>> submissions,
                 @Nullable Throwable failure) throws Exception {
             List<T> results = new ArrayList<>(admitted.size());
             // Defer interruption while servicing callbacks needed by admitted children.
@@ -583,8 +620,10 @@ final class TaskExecution {
                 for (Task<? extends T> child : admitted) {
                     @Nullable Throwable childFailure = null;
                     try {
-                        @Nullable Work<? extends T> work = submissions.get(child);
-                        results.add(work == null ? child.completedOutcome() : work.await(false));
+                        @Nullable Work<?> work = submissions.get(child);
+                        if (work != null)
+                            work.await(false);
+                        results.add(child.completedOutcome());
                     } catch (Throwable e) {
                         childFailure = e;
                     }
@@ -611,8 +650,31 @@ final class TaskExecution {
         public <T extends @Nullable Object> T call(@Nullable Executor executor, Callable<T> action) throws Exception {
             if (executor == null || executor == currentExecutor())
                 return action.call();
+            return submitCallback(executor, action).await(true);
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public <T extends @Nullable Object> T delegateTo(@Nullable Executor requested, Callable<T> action) throws Exception {
+            Executor target = requested != null ? requested : resultExecutor;
+            resultExecutor = executor;
+            if (target != currentExecutor()) {
+                Work<T> work = submitCallback(target, action);
+                work.awaitCompletion(true);
+                resultExecutor = target;
+                return work.completedOutcome();
+            }
+            try {
+                return action.call();
+            } finally {
+                resultExecutor = target;
+            }
+        }
+
+        /// Dispatches a callback in this task's binding so its worker can help dependent work.
+        private <T extends @Nullable Object> Work<T> submitCallback(Executor target, Callable<T> action) {
             Binding binding = task.binding();
-            Work<T> work = new Work<>(executor, () -> {
+            Work<T> work = new Work<>(target, () -> {
                 binding.enter();
                 try {
                     return action.call();
@@ -621,7 +683,7 @@ final class TaskExecution {
                 }
             });
             work.submit();
-            return work.await(true);
+            return work;
         }
     }
 
@@ -837,10 +899,15 @@ final class TaskExecution {
             }
         }
 
+        /// Waits for the submission and propagates its result or failure.
+        private T await(boolean propagateWaitInterruption) throws Exception {
+            awaitCompletion(propagateWaitInterruption);
+            return completedOutcome();
+        }
+
         /// Waits for completion while allowing a constrained worker to run other work for its executor.
-        /// Restores any interruption after the work stops. A caller reporting the root's outcome
-        /// observes that outcome even if the waiting thread was interrupted.
-        T await(boolean propagateWaitInterruption) throws Exception {
+        /// Restores the interrupt status after the work stops and reports a wait interruption if requested.
+        void awaitCompletion(boolean propagateWaitInterruption) throws InterruptedException {
             @Nullable Executor current = currentExecutor();
             boolean interrupted = false;
             while (!isDone()) {
@@ -863,13 +930,10 @@ final class TaskExecution {
                 if (next != null)
                     next.run();
             }
-            try {
-                if (interrupted && propagateWaitInterruption)
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+                if (propagateWaitInterruption)
                     throw new InterruptedException();
-                return completedOutcome();
-            } finally {
-                if (interrupted)
-                    Thread.currentThread().interrupt();
             }
         }
 

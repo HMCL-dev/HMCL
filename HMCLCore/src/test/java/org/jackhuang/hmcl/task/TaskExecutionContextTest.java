@@ -123,38 +123,56 @@ final class TaskExecutionContextTest {
         assertEquals("child", supplied.run());
 
         Task<@Nullable String> child = Task.completed(null);
-        Task<@Nullable String> composed = Task.completed(1).thenComposeAsync(child);
+        Task<@Nullable String> composed = Task.completed(1).thenCompose(child);
         assertNull(composed.run());
         assertEquals(Task.State.SUCCEEDED, child.getState());
     }
 
-    /// A bound child without an executor inherits the continuation's worker and runs only after success.
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void runsBoundChildAfterSuccess(boolean async) throws Exception {
+    /// A bound child runs after success. A failing predecessor supplies the executor for recovery.
+    @Test
+    void runsBoundChildAfterSuccess() throws Exception {
         Task<Thread> child = Task.supplyAsync(Thread::currentThread);
         IOException failure = new IOException("Source failed");
-        Task<?> failed = Task.failed(failure);
-        Task<Thread> skipped = async ? failed.thenComposeAsync(child) : failed.thenCompose(child);
-        assertSame(failure, assertThrows(IOException.class, skipped::run));
-        assertEquals(Task.State.NEW, child.getState());
+        ExecutorService source = Executors.newSingleThreadExecutor();
+        try {
+            Thread worker = source.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            Task<?> failed = Task.runAsync(source, () -> { throw failure; });
+            Task<Thread> recovered = failed.thenCompose(child).handle((value, cause) -> {
+                assertSame(failure, cause);
+                return Thread.currentThread();
+            });
+            assertSame(worker, recovered.run());
+            assertEquals(Task.State.NEW, child.getState());
+        } finally {
+            source.shutdownNow();
+        }
 
-        Task<Integer> source = Task.completed(1);
-        Task<Thread> composed = async ? source.thenComposeAsync(child) : source.thenCompose(child);
+        Task<Thread> composed = Task.completed(1).thenCompose(child);
         assertSame(Thread.currentThread(), task(Runnable::run, context -> context.run(composed)).run());
         assertSame(child.resultNow(), composed.resultNow());
     }
 
-    /// A continuation added after its source finishes observes its result without running the source again.
+    /// A completed source is reused on the current executor even after its original executor shuts down.
     @Test
     void composesAfterSourceCompletion() throws Exception {
+        ExecutorService original = Executors.newSingleThreadExecutor();
         AtomicInteger calls = new AtomicInteger();
-        Task<Integer> source = Task.supplyAsync(calls::incrementAndGet);
-        assertEquals(1, source.run());
-        Task<Integer> continuation = source.thenApply(value -> value + 10);
+        Task<Integer> source = Task.supplyAsync(original, calls::incrementAndGet);
+        try {
+            assertEquals(1, source.run());
+        } finally {
+            original.shutdownNow();
+        }
+        Task<Integer> root = task(Runnable::run, context -> {
+            Thread worker = Thread.currentThread();
+            return context.run(source.thenApply(value -> {
+                assertSame(worker, Thread.currentThread());
+                return value + 10;
+            }));
+        });
         StageEvents events = new StageEvents();
-        continuation.addTaskListener(events);
-        assertEquals(11, continuation.run());
+        root.addTaskListener(events);
+        assertEquals(11, root.run());
         assertEquals(1, calls.get());
         assertFalse(events.running.containsKey(source));
         assertTrue(events.completions.stream().noneMatch(completion -> completion.task() == source));
@@ -165,7 +183,7 @@ final class TaskExecutionContextTest {
     void rejectsMissingComposedChild() {
         Task<Integer> source = Task.completed(1);
         @Nullable Task<String> missing = null;
-        assertThrows(NullPointerException.class, () -> source.thenComposeAsync(missing));
+        assertThrows(NullPointerException.class, () -> source.thenCompose(missing));
         assertThrows(NullPointerException.class, source.thenComposeAsync(value -> missing)::run);
         assertThrows(NullPointerException.class, Task.composeAsync(() -> missing)::run);
     }
@@ -577,34 +595,83 @@ final class TaskExecutionContextTest {
         }
     }
 
-    /// Inline and explicitly null callbacks inherit the parent executor. A default async callback
-    /// leaves that executor, and its composed child can return to it.
+    /// A continuation follows the executor of the leaf, mapping callback, or child that produced its input.
     @Test
-    void continuationsRespectParentAndCallbackExecutors() throws Exception {
-        ExecutorService parent = Executors.newSingleThreadExecutor();
+    void continuationsFollowResultExecutors() throws Exception {
+        ExecutorService leaves = Executors.newSingleThreadExecutor();
+        ExecutorService callbacks = Executors.newSingleThreadExecutor();
         try {
-            task(parent, context -> {
-                Thread parentWorker = Thread.currentThread();
-                Task<Thread> chain = Task.supplyAsync(Schedulers.io(), Thread::currentThread)
-                        .thenApply(sourceWorker -> {
-                            assertNotSame(parentWorker, sourceWorker);
-                            return Thread.currentThread();
-                        })
-                        .thenComposeAsync(inlineWorker -> {
-                            assertSame(parentWorker, inlineWorker);
-                            assertNotSame(parentWorker, Thread.currentThread());
-                            return Task.supplyAsync(Thread::currentThread);
-                        })
-                        .thenApplyAsync(null, childWorker -> {
-                            assertSame(parentWorker, childWorker);
-                            return Thread.currentThread();
-                        });
-                assertSame(parentWorker, context.run(chain));
-                return null;
-            }).run();
+            Thread leafWorker = leaves.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            Thread callbackWorker = callbacks.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            Task<Thread> chain = Task.supplyAsync(leaves, Thread::currentThread)
+                    .thenApply(sourceWorker -> {
+                        assertSame(sourceWorker, Thread.currentThread());
+                        return sourceWorker;
+                    })
+                    .thenApplyAsync(callbacks, sourceWorker -> {
+                        assertSame(leafWorker, sourceWorker);
+                        return Thread.currentThread();
+                    }).withCounter()
+                    .thenCompose(mappingWorker -> {
+                        assertSame(callbackWorker, mappingWorker);
+                        assertSame(mappingWorker, Thread.currentThread());
+                        return Task.supplyAsync(leaves, Thread::currentThread);
+                    })
+                    .thenApplyAsync(null, childWorker -> {
+                        assertSame(childWorker, Thread.currentThread());
+                        return childWorker;
+                    });
+            assertSame(leafWorker, chain.run());
         } finally {
-            parent.shutdownNow();
+            callbacks.shutdownNow();
+            leaves.shutdownNow();
         }
+    }
+
+    /// Direct body calls share the context. Delegation forwards the child's executor and an ordinary run keeps the parent's.
+    @Test
+    void customTasksChooseTheirResultExecutor() throws Exception {
+        ExecutorService caller = Executors.newSingleThreadExecutor();
+        ExecutorService source = Executors.newSingleThreadExecutor();
+        try {
+            Thread callerThread = caller.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            Thread sourceThread = source.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            Task<Thread> body = task(context -> context.runAfter(Task.supplyAsync(source, Thread::currentThread),
+                    null, worker -> {
+                        assertSame(worker, Thread.currentThread());
+                        return worker;
+                    }));
+            Task<Thread> child = task(caller, context -> {
+                assertSame(sourceThread, body.execute(context));
+                assertSame(callerThread, context.call(null, Thread::currentThread));
+                return context.delegateTo(null, Thread::currentThread);
+            });
+            Task<Thread> forwarded = task(caller, context -> context.delegateTo(child)).thenApply(worker -> {
+                assertSame(sourceThread, worker);
+                return Thread.currentThread();
+            });
+            Task<Thread> outer = task(caller, context -> {
+                assertSame(sourceThread, context.call(source, Thread::currentThread));
+                return context.run(forwarded);
+            });
+
+            assertSame(callerThread, outer.thenApply(worker -> {
+                assertSame(sourceThread, worker);
+                return Thread.currentThread();
+            }).run());
+        } finally {
+            source.shutdownNow();
+            caller.shutdownNow();
+        }
+    }
+
+    /// A failed source propagates its original exception before the callback executor receives any work.
+    @Test
+    void runAfterSkipsDispatchWhenSourceFails() {
+        IOException failure = new IOException("Source failed");
+        Executor callbacks = command -> fail("Unexpected callback submission");
+        Task<Integer> result = task(context -> context.runAfter(Task.<Integer>failed(failure), callbacks, value -> value));
+        assertSame(failure, assertThrows(IOException.class, result::run));
     }
 
     /// Suppliers use their selected executors and report only the declared tasks to listeners.
@@ -635,26 +702,46 @@ final class TaskExecutionContextTest {
         }
     }
 
-    /// A mapping callback, recovery handler, and completion observer honor an explicit executor.
-    @Test
-    void dispatchesSuccessAndFailureCallbacksToRequestedExecutor() throws Exception {
+    /// Recovery and completion callbacks can select an executor or follow the one that produced their input.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void dispatchesSuccessAndFailureCallbacks(boolean selectExecutor) throws Exception {
         ExecutorService callbacks = Executors.newSingleThreadExecutor();
+        ExecutorService handlers = Executors.newSingleThreadExecutor();
         try {
             Thread worker = callbacks.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            Thread handler = selectExecutor ? handlers.submit(Thread::currentThread).get(10, TimeUnit.SECONDS) : worker;
             IOException failure = new IOException("Mapping failed");
             Task<Integer> failed = Task.completed(1).thenApplyAsync(callbacks, value -> {
                 assertSame(worker, Thread.currentThread());
                 throw failure;
             });
-            Task<Integer> recovered = failed.handleAsync(callbacks, (value, cause) -> {
+            Task<Integer> recovered = failed.handleAsync(selectExecutor ? handlers : null, (value, cause) -> {
                 assertSame(failure, cause);
-                assertSame(worker, Thread.currentThread());
+                assertSame(handler, Thread.currentThread());
                 return 42;
-            }).whenCompleteAsync(callbacks, (value, cause) -> assertSame(worker, Thread.currentThread()));
+            }).whenCompleteAsync(selectExecutor ? callbacks : null, (value, cause) -> assertSame(worker, Thread.currentThread()));
             assertEquals(42, recovered.run());
         } finally {
+            handlers.shutdownNow();
             callbacks.shutdownNow();
         }
+    }
+
+    /// Recovery runs on the current executor after the executor for a leaf or callback rejects its work.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void recoversFromRejectedDispatchOnCurrentExecutor(boolean rejectCallback) throws Exception {
+        RejectedExecutionException rejection = new RejectedExecutionException("Unavailable");
+        Executor unavailable = command -> { throw rejection; };
+        Task<Integer> failed = rejectCallback
+                ? Task.completed(1).thenApplyAsync(unavailable, value -> value)
+                : Task.supplyAsync(unavailable, () -> 1);
+        Task<Thread> recovered = failed.handle((value, cause) -> {
+            assertSame(rejection, cause);
+            return Thread.currentThread();
+        });
+        assertSame(Thread.currentThread(), task(Runnable::run, context -> context.run(recovered)).run());
     }
 
     /// Decorated downloads can fill their pool while an independent job uses a spare parent worker.

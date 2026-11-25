@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -51,11 +52,45 @@ public interface TaskExecutionContext {
     void completeStageItem();
 
     /// Runs a new child or reuses its completed outcome without repeating lifecycle events.
+    /// Returns the value to the caller and preserves this task's choice of continuation executor.
     /// Checks cancellation first, leaving an unsubmitted child available for later use.
     ///
     /// @throws Exception if the child fails or execution is cancelled or interrupted
     /// @throws IllegalStateException if the child is already submitted or reserved as a root and has not completed
     <T extends @Nullable Object> T run(Task<T> task) throws Exception;
+
+    /// Runs the child and selects its outcome's executor for this task's continuations,
+    /// even if the child throws. Use `return context.delegateTo(child)` when the child
+    /// supplies this task's result. A cached outcome, failed dispatch, or interrupted
+    /// wait selects this task's body executor.
+    ///
+    /// @implSpec The default delegates to [#run(Task)] for contexts that do not track result executors.
+    default <T extends @Nullable Object> T delegateTo(Task<T> task) throws Exception {
+        return run(task);
+    }
+
+    /// Runs the callback on `executor` and selects it for this task's continuations.
+    /// A null executor follows the most recently delegated outcome, or the task body's
+    /// executor if none was delegated. A rejection or interrupted wait selects the body's executor.
+    ///
+    /// @implSpec The default uses [#call(Executor, Callable)] and runs a null-executor
+    /// callback on the calling thread.
+    default <T extends @Nullable Object> T delegateTo(@Nullable Executor executor, Callable<T> action) throws Exception {
+        return call(executor, action);
+    }
+
+    /// Runs `source` as a child, then applies `fn` to its successful result. A null `executor`
+    /// follows the source's result executor. The callback supplies this context's result executor.
+    /// Checks cancellation before dispatch and again before invoking `fn`.
+    default <S extends @Nullable Object, T extends @Nullable Object> T runAfter(
+            Task<S> source, @Nullable Executor executor, ExceptionalFunction<? super S, ? extends T, ?> fn) throws Exception {
+        S value = delegateTo(source);
+        checkCancellation();
+        return delegateTo(executor, () -> {
+            checkCancellation();
+            return fn.apply(value);
+        });
+    }
 
     /// Runs one child to completion. A reported failure, including an error or independent
     /// child cancellation, is logged.
