@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BinaryOperator;
 
 /// Launch-manifest library and argument adjustments used at resolve time and launch time.
 ///
@@ -280,34 +281,31 @@ public final class LaunchManifestNormalizer {
 
     /// Removes redundant library declarations while retaining rule-distinct variants.
     ///
-    /// When two libraries share the same `groupId:artifactId` and equal compatibility rules, the
-    /// newer version wins. When versions are equal and the coordinate objects compare equal, the
-    /// declaration with the longer serialized JSON is kept (more metadata is treated as richer).
-    /// Equal id and version with unequal coordinate payloads (for example distinct `text2speech`
-    /// library vs native entries) are both retained.
+    /// Among entries with the same group, artifact, classifier, extension, native status and
+    /// compatibility rules, the newer version wins. When versions and coordinates are equal, the
+    /// declaration with the longer serialized JSON is kept. Versions with equal precedence
+    /// but distinct coordinate strings are retained when compared with each other.
+    /// A plain classpath JAR at a former coordinate is dropped when the current platform
+    /// selects a known successor JAR of equal or greater version.
     private static GameInstanceManifest uniqueLibraries(GameInstanceManifest manifest) {
         List<Library> libraries = new ArrayList<>();
         SimpleMultimap<String, Integer, List<Integer>> indexes =
                 new SimpleMultimap<>(HashMap::new, ArrayList::new);
 
         for (Library library : manifest.getLibraries()) {
-            String id = library.groupId() + ":" + library.artifactId();
-
-            if (!indexes.containsKey(id)) {
-                indexes.put(id, libraries.size());
-                libraries.add(library);
-                continue;
-            }
+            String id = moduleId(library);
 
             boolean duplicate = false;
             for (int otherIndex : indexes.get(id)) {
                 Library other = libraries.get(otherIndex);
-                // Rules differ: keep both (platform-specific variants).
-                if (Objects.hashCode(library.rules()) != Objects.hashCode(other.rules())) {
+                if (!Objects.equals(library.rules(), other.rules())
+                        || !Objects.equals(library.classifier(), other.classifier())
+                        || !library.artifact().getExtension().equals(other.artifact().getExtension())
+                        || library.isNative() != other.isNative()) {
                     continue;
                 }
 
-                // Rules equal: drop the older version.
+                // Keep the winning version at the first occurrence of this variant.
                 int comparison = VersionNumber.compare(library.version(), other.version());
                 if (comparison > 0) {
                     libraries.set(otherIndex, library);
@@ -321,7 +319,7 @@ public final class LaunchManifestNormalizer {
                             libraries.set(otherIndex, library);
                         }
                     } else {
-                        // Same id/version but not equal (e.g. text2speech jar vs natives): keep both.
+                        // Distinct coordinate strings can have the same version precedence.
                         continue;
                     }
                 }
@@ -335,9 +333,46 @@ public final class LaunchManifestNormalizer {
             }
         }
 
+        Map<String, VersionNumber> successorVersions = new HashMap<>();
+        for (Library library : libraries) {
+            @Nullable String formerId = formerModuleId(moduleId(library), library.version());
+            if (formerId != null && indexes.containsKey(formerId) && isPlainClasspathJar(library)) {
+                successorVersions.merge(formerId, VersionNumber.asVersion(library.version()),
+                        BinaryOperator.maxBy(Comparator.naturalOrder()));
+            }
+        }
+        if (!successorVersions.isEmpty()) {
+            libraries.removeIf(library -> {
+                @Nullable VersionNumber successor = successorVersions.get(moduleId(library));
+                return successor != null && isPlainClasspathJar(library)
+                        && successor.compareTo(VersionNumber.asVersion(library.version())) >= 0;
+            });
+        }
         return libraries.size() == manifest.getLibraries().size()
                 ? manifest
                 : manifest.withLibraries(libraries);
     }
 
+    /// Returns the group and artifact name used to identify a module across versions.
+    private static String moduleId(Library library) {
+        return library.groupId() + ":" + library.artifactId();
+    }
+
+    /// Returns whether this declaration selects an unclassified JAR for the current platform's classpath.
+    private static boolean isPlainClasspathJar(Library library) {
+        return library.appliesToCurrentEnvironment() && !library.isNative()
+                && library.classifier() == null && "jar".equals(library.artifact().getExtension());
+    }
+
+    /// Returns the former module ID superseded by this JAR, or `null` if no mapping is known.
+    private static @Nullable String formerModuleId(String id, String version) {
+        return switch (id) {
+            case "net.java.dev.jna:jna-platform" -> "net.java.dev.jna:platform";
+            case "com.github.oshi:oshi-common" -> "oshi-project:oshi-core";
+            // From 6.12.0 onward, the shared hardware interfaces reside in oshi-common.
+            case "com.github.oshi:oshi-core", "com.github.oshi:oshi-core-java11", "com.github.oshi:oshi-core-java25" ->
+                    VersionNumber.compare(version, "6.12.0") < 0 ? "oshi-project:oshi-core" : null;
+            default -> null;
+        };
+    }
 }
