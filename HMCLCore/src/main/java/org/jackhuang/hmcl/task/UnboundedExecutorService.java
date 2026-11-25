@@ -12,13 +12,22 @@ import java.util.concurrent.*;
 
 /// Marks an executor service that can start new work even when all its current workers are blocked.
 @NotNullByDefault
-final class UnboundedExecutorService implements ExecutorService {
+public final class UnboundedExecutorService implements ExecutorService {
     /// The service responsible for execution and termination.
     private final ExecutorService delegate;
 
+    /// Whether the service uses virtual threads.
+    private final boolean virtual;
+
     /// Wraps a service whose worker concurrency is unbounded.
-    UnboundedExecutorService(ExecutorService delegate) {
+    UnboundedExecutorService(ExecutorService delegate, boolean virtual) {
         this.delegate = Objects.requireNonNull(delegate);
+        this.virtual = virtual;
+    }
+
+    /// Returns whether the service uses virtual threads.
+    public boolean isVirtual() {
+        return virtual;
     }
 
     /// {@inheritDoc}

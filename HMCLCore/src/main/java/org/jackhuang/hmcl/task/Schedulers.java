@@ -64,7 +64,7 @@ public final class Schedulers {
             return null;
         }
 
-        return new UnboundedExecutorService(NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR.apply(name));
+        return new UnboundedExecutorService(NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR.apply(name), true);
     }
 
     /// This thread pool is suitable for network and local I/O operations.
@@ -101,34 +101,29 @@ public final class Schedulers {
 
     /// Initializes shared executors on first use.
     private static final class Holder {
-        /// Workers used by tasks that perform blocking I/O.
-        private static final ExecutorService IO_EXECUTOR = newIoExecutor();
-
         /// Workers used by task bodies that synchronously coordinate child tasks.
-        private static final ExecutorService TASK_EXECUTOR = newTaskExecutor();
+        private static final ExecutorService TASK_EXECUTOR;
 
-        /// Supplies virtual threads or a platform pool with a CPU-based target parallelism.
-        private static ExecutorService newTaskExecutor() {
-            @Nullable ExecutorService virtualThreads = newVirtualThreadPerTaskExecutor("Task");
-            if (virtualThreads != null)
-                return virtualThreads;
+        /// Workers used by tasks that perform blocking I/O.
+        private static final ExecutorService IO_EXECUTOR;
 
-            int parallelism = MathUtils.clamp(Runtime.getRuntime().availableProcessors(), 4, 32);
-            var workerIds = new AtomicLong();
-            // Task submissions are not joined as ForkJoinTasks, so use local FIFO scheduling.
-            return new ForkJoinPool(parallelism, pool -> {
-                ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
-                worker.setName("Task-" + workerIds.incrementAndGet());
-                return worker;
-            }, null, true);
-        }
+        static {
+            @Nullable ExecutorService virtualThreads = newVirtualThreadPerTaskExecutor("HMCL Worker");
+            if (virtualThreads != null) {
+                TASK_EXECUTOR = virtualThreads;
+                IO_EXECUTOR = virtualThreads;
+            } else {
+                int parallelism = MathUtils.clamp(Runtime.getRuntime().availableProcessors(), 4, 32);
+                var workerIds = new AtomicLong();
+                // Task submissions are not joined as ForkJoinTasks, so use local FIFO scheduling.
+                TASK_EXECUTOR = new ForkJoinPool(parallelism, pool -> {
+                    ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
+                    worker.setName("HMCL Worker #" + workerIds.incrementAndGet());
+                    return worker;
+                }, null, true);
 
-        /// Creates an executor in which a waiting parent does not occupy a child's only worker.
-        private static ExecutorService newIoExecutor() {
-            @Nullable ExecutorService virtualThreads = newVirtualThreadPerTaskExecutor("IO");
-            if (virtualThreads != null)
-                return virtualThreads;
-            return new UnboundedExecutorService(Executors.newCachedThreadPool(Lang.counterThreadFactory("IO", true)));
+                IO_EXECUTOR = new UnboundedExecutorService(Executors.newCachedThreadPool(Lang.counterThreadFactory("IO", true)), false);
+            }
         }
     }
 

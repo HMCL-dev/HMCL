@@ -709,9 +709,9 @@ public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
     private static final @Nullable Semaphore SEMAPHORE;
 
     static {
-        @Nullable ExecutorService virtualThreads = Schedulers.newVirtualThreadPerTaskExecutor("Download");
-        if (virtualThreads != null) {
-            DOWNLOAD_EXECUTOR = virtualThreads;
+        //noinspection resource
+        if (Schedulers.io() instanceof UnboundedExecutorService executorService && executorService.isVirtual()) {
+            DOWNLOAD_EXECUTOR = executorService;
             SEMAPHORE = new Semaphore(DEFAULT_CONCURRENCY);
         } else {
             DOWNLOAD_EXECUTOR = threadPool("Download", true, downloadExecutorConcurrency, 10, TimeUnit.SECONDS);
