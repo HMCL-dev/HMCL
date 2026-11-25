@@ -62,6 +62,10 @@ public final class LaunchManifestNormalizer {
             repaired = repairDuplicateAsm(repaired, analyzer);
         }
 
+        if (analyzer.has(GameComponentType.CLEANROOM)) {
+            repaired = repairCleanroomLibraries(repaired, analyzer);
+        }
+
         // Vanilla and Fabric/Quilt need no loader-specific argument repair here.
         return removeLegacyLog4jPatch(repaired);
     }
@@ -220,6 +224,28 @@ public final class LaunchManifestNormalizer {
         return hasAsm
                 ? manifest.withLibraries(libraries.stream().filter(it -> !it.is("org.ow2.asm", "asm-all")).toList())
                 : manifest;
+    }
+
+    private static GameInstanceManifest repairCleanroomLibraries(GameInstanceManifest manifest, GameComponentAnalyzer analyzer) {
+        if (!analyzer.has(GameComponentType.CLEANROOM)) {
+            return manifest;
+        }
+
+        List<Library> libraries = manifest.getLibraries();
+
+        libraries = libraries.stream().filter(it -> {
+            var group = it.artifact().getGroup();
+            var name = it.artifact().getName();
+            var version = it.artifact().getVersion();
+
+            return !(
+                ("com.ibm.icu".equals(group) && "icu4j-core-mojang".equals(name) && "51.2".equals(version))
+                || ("org.lwjgl.lwjgl".equals(group) && "2.9.4-nightly-20150209".equals(version))
+                || ("net.java.dev.jna".equals(group) && "platform".equals(name) && "3.4.0".equals(version))
+            );
+        }).toList();
+
+        return manifest.withLibraries(libraries);
     }
 
     /// Returns whether a comma-separated list contains the exact requested value.

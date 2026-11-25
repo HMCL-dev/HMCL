@@ -3,8 +3,12 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.EnumSet;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -51,5 +55,23 @@ public class FileUtilsTest {
         assertEquals(isNotWindows, FileUtils.isNameValid(os, "f?oo"));
         assertEquals(isNotWindows, FileUtils.isNameValid(os, "f*oo"));
         assertEquals(isNotWindows, FileUtils.isNameValid(os, "f\\oo"));
+    }
+
+    @Test
+    public void testParsePosixFilePermission() {
+        assertEquals(EnumSet.noneOf(PosixFilePermission.class), FileUtils.parsePosixFilePermission(0));
+        assertEquals(EnumSet.noneOf(PosixFilePermission.class), FileUtils.parsePosixFilePermission(0100000));
+        assertEquals(
+                EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ),
+                FileUtils.parsePosixFilePermission(0100644)
+        );
+        assertEquals(
+                EnumSet.of(
+                        PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+                        PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
+                        PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
+                ),
+                FileUtils.parsePosixFilePermission(0100755)
+        );
     }
 }
