@@ -384,15 +384,15 @@ final class TaskExecution {
         /// Stage scope opened by the running task or inherited from its parent.
         private final TaskStage.@Nullable Scope stageScope;
 
-        /// Source reserved with a stage decorator, ready to run inline when its body dispatches it.
-        private final @Nullable Context<R> source;
+        /// Inline context for a decorator's newly admitted source. A completed source has no context.
+        private final @Nullable Context<R> preparedSource;
 
         /// Binds the task to its effective executor, stage and any source in the same submission.
-        Context(Task<R> task, Executor executor, TaskStage.@Nullable Scope stageScope, @Nullable Context<R> source) {
+        Context(Task<R> task, Executor executor, TaskStage.@Nullable Scope stageScope, @Nullable Context<R> preparedSource) {
             this.task = task;
             this.executor = executor;
             this.stageScope = stageScope;
-            this.source = source;
+            this.preparedSource = preparedSource;
         }
 
         /// Runs on the current worker when possible, otherwise submits and waits.
@@ -460,7 +460,13 @@ final class TaskExecution {
                 task.markRunning();
                 notifyListeners(listener -> listener.onTaskStarted(task, stageScope));
                 checkCancellation();
-                R result = task.execute(this);
+                R result;
+                if (task instanceof Task.Decorator<R> decorator) {
+                    result = preparedSource != null ? preparedSource.execute() : decorator.source.completedOutcome();
+                    decorator.onSourceSuccess(this);
+                } else {
+                    result = task.execute(this);
+                }
                 checkCancellation();
                 return result;
             } catch (Throwable failure) {
@@ -474,8 +480,8 @@ final class TaskExecution {
 
         /// Closes any prepared sources whose bodies were skipped before reporting this task's failure.
         private void fail(Throwable cause) {
-            if (source != null && source.task.getState() == Task.State.READY)
-                source.fail(cause);
+            if (preparedSource != null && preparedSource.task.getState() == Task.State.READY)
+                preparedSource.fail(cause);
             finishTask(task, stageScope, null, cause);
         }
 
@@ -516,10 +522,6 @@ final class TaskExecution {
         /// {@inheritDoc}
         @Override
         public <T extends @Nullable Object> T run(Task<T> child) throws Exception {
-            if (source != null && source.task == child) {
-                source.execute();
-                return child.resultNow();
-            }
             checkCancellation();
             if (!child.tryMarkReadyAsChild(task.binding(), false))
                 return child.completedOutcome();

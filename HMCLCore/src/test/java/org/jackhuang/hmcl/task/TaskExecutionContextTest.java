@@ -1224,6 +1224,28 @@ final class TaskExecutionContextTest {
         assertEquals(List.of(failure), events.failures);
     }
 
+    /// A decorator body can run and count its source in a caller-supplied context.
+    @Test
+    void executesDecoratorBodyInSuppliedContext() throws Exception {
+        Task<Integer> source = Task.completed(42);
+        Task<Integer> counted = source.withCounter();
+        Task<Integer> root = task(null, new TaskStage("download"),
+                context -> counted.execute(new DefaultBatchContext(context)));
+        AtomicInteger completedItems = new AtomicInteger();
+        root.addTaskListener(new TaskListener() {
+            /// Records the items reported in the caller's stage.
+            @Override
+            public void onStageProgress(TaskStage.Scope scope, int completedDelta, int totalDelta) {
+                completedItems.addAndGet(completedDelta);
+            }
+        });
+
+        assertEquals(42, root.run());
+        assertEquals(42, source.resultNow());
+        assertEquals(1, completedItems.get());
+        assertEquals(Task.State.NEW, counted.getState());
+    }
+
     /// Fresh decorators can stage and count a completed result after its executor has shut down.
     @Test
     void decoratesCompletedSourceAfterExecutorShutdown() throws Exception {

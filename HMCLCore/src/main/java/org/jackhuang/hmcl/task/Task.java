@@ -674,10 +674,8 @@ public abstract class Task<T extends @Nullable Object> {
         return new Decorator<>(this, TaskSignificance.MINOR) {
             /// Reports the item after the source publishes its result.
             @Override
-            public T execute(TaskExecutionContext context) throws Exception {
-                T value = super.execute(context);
+            void onSourceSuccess(TaskExecutionContext context) {
                 context.completeStageItem();
-                return value;
             }
         };
     }
@@ -997,8 +995,14 @@ public abstract class Task<T extends @Nullable Object> {
 
         /// Runs the source as a child in this decorator's stage.
         @Override
-        public T execute(TaskExecutionContext context) throws Exception {
-            return context.run(source);
+        public final T execute(TaskExecutionContext context) throws Exception {
+            T result = context.run(source);
+            onSourceSuccess(context);
+            return result;
+        }
+
+        /// Called after the source succeeds and before this decorator returns its result.
+        void onSourceSuccess(TaskExecutionContext context) {
         }
     }
 }
