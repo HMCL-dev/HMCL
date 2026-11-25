@@ -206,7 +206,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                             ? new GameDownloadTask(this, manifest).thenAcceptAsync(
                             cachedJar -> FileUtils.copyFile(cachedJar, instanceJar))
                             : null;
-                }).thenComposeAsync(checkPatchCompletionAsync(instance, manifest, integrityCheck)),
+                }).thenCompose(checkPatchCompletionAsync(instance, manifest, integrityCheck)),
                 new GameAssetDownloadTask(this, manifest, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)
                         .setSignificance(TaskSignificance.MODERATE),
                 new GameLibrariesTask(this, manifest, integrityCheck)

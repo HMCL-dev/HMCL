@@ -253,7 +253,7 @@ public final class Instances {
                     GameInstanceID newInstanceId = new GameInstanceID(newInstanceName);
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
                     Task.runAsync(() -> repository.duplicateInstance(instanceId, newInstanceId, copySaves))
-                            .thenComposeAsync(repository.refreshAsync())
+                            .thenCompose(repository.refreshAsync())
                             .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
                                     handler.resolve();

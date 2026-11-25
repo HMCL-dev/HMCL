@@ -194,9 +194,9 @@ public final class ModpackHelper {
         Task<?> task = modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
                 .whenCompleteAsync(Schedulers.io(), (ignored, failure) -> refreshInstalledInstance(repository, instanceId, failure));
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration manifest)
-            task = task.thenComposeAsync(createMultiMCPostInstallTask(repository, manifest, instanceId));
+            task = task.thenCompose(createMultiMCPostInstallTask(repository, manifest, instanceId));
         else if (modpack.getManifest() instanceof McbbsModpackManifest manifest)
-            task = task.thenComposeAsync(createMcbbsPostInstallTask(repository, manifest, instanceId));
+            task = task.thenCompose(createMcbbsPostInstallTask(repository, manifest, instanceId));
         return task.withStage(InstallStages.MODPACK).withStageHints(MODPACK_STAGE_HINTS);
     }
 
@@ -227,7 +227,7 @@ public final class ModpackHelper {
             if (!ServerModpackRemoteInstallTask.MODPACK_TYPE.equals(readInstalledModpackType(instance)))
                 throw new UnsupportedModpackException();
             return new ModpackUpdateTask(instance, new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instance));
-        }).thenComposeAsync(repository.refreshAsync())
+        }).thenCompose(repository.refreshAsync())
                 .withStage(InstallStages.MODPACK)
                 .withStageHints(MODPACK_STAGE_HINTS);
     }
@@ -249,8 +249,8 @@ public final class ModpackHelper {
                 throw new UnsupportedModpackException();
             Task<?> update = provider.createUpdateTask(repository.getDependency(), instance, zipFile, modpack, selection);
             if (modpack.getManifest() instanceof MultiMCInstanceConfiguration manifest)
-                update = update.thenComposeAsync(createMultiMCPostUpdateTask(repository, manifest, instanceId));
-            return update.thenComposeAsync(repository.refreshAsync());
+                update = update.thenCompose(createMultiMCPostUpdateTask(repository, manifest, instanceId));
+            return update.thenCompose(repository.refreshAsync());
         }).withStage(InstallStages.MODPACK).withStageHints(MODPACK_STAGE_HINTS);
     }
 
