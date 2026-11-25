@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -36,8 +35,10 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.jackhuang.hmcl.ui.DialogUtils.shouldReportCancellation;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Displays running tasks, retained failures, and the stages reported by a root task.
@@ -234,7 +235,9 @@ public final class TaskListPane extends StackPane {
             public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
                 @Nullable TaskRowUpdate pending = running.remove(task);
                 if (pending == null) {
-                    if (failure == null || Lang.isNormalCancellation(failure) || !shouldShowTaskRow(task, scope))
+                    if (failure == null || !shouldShowTaskRow(task, scope))
+                        return;
+                    if (failure instanceof CancellationException cancellation && !shouldReportCancellation(cancellation))
                         return;
                     pending = new TaskRowUpdate(task, scope);
                 }

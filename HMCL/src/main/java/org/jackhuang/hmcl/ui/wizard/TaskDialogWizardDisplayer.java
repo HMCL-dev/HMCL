@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
 
+import static org.jackhuang.hmcl.ui.DialogUtils.shouldReportCancellation;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -76,12 +77,15 @@ public abstract class TaskDialogWizardDisplayer extends AbstractWizardDisplayer 
             return;
         }
 
-        if (failure == null || Lang.isNormalCancellation(failure)) {
+        if (failure == null) {
             onEnd();
             return;
         }
-        if (failure instanceof CancellationException) {
-            Controllers.dialog(StringUtils.getStackTrace(failure), i18n("wizard.failed"), MessageType.ERROR, this::onEnd);
+        if (failure instanceof CancellationException cancellation) {
+            if (shouldReportCancellation(cancellation))
+                Controllers.dialog(StringUtils.getStackTrace(cancellation), i18n("wizard.failed"), MessageType.ERROR, this::onEnd);
+            else
+                onEnd();
             return;
         }
         @Nullable Throwable cause = failure instanceof OutOfMemoryError ? failure : failure.getCause();

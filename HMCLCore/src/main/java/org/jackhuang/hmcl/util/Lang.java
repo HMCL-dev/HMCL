@@ -363,12 +363,6 @@ public final class Lang {
             return e;
     }
 
-    /// Returns whether cancellation completed without a suppressed cleanup failure.
-    public static boolean isNormalCancellation(Throwable failure) {
-        return failure instanceof CancellationException && failure.getSuppressed().length == 0
-                && !(failure.getCause() instanceof InterruptedException cause && cause.getSuppressed().length > 0);
-    }
-
     public static <R> R handleUncaughtException(Throwable e) {
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
         return null;
