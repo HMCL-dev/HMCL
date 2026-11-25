@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.util.platform.windows.Gdi32;
 import org.jackhuang.hmcl.util.platform.windows.Shell32;
 import org.jackhuang.hmcl.util.platform.windows.User32;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
+import org.jackhuang.hmcl.util.platform.windows.WindowsShellLink;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -57,8 +58,11 @@ import java.lang.management.MemoryPoolMXBean;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -399,7 +403,7 @@ public final class Launcher extends Application {
             }
 
             setupJavaFXVMOptions();
-            setupWindowsAppUserModelID();
+            setupWindowsTaskbar();
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
@@ -433,25 +437,62 @@ public final class Launcher extends Application {
         });
     }
 
-    /// Sets the process-level AppUserModelID on Windows so the launcher groups correctly on the taskbar.
-    private static void setupWindowsAppUserModelID() {
+    /// Sets the Windows EXE's taskbar identity and checks its implicit shortcut before showing any windows.
+    private static void setupWindowsTaskbar() {
         if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS)
-            return;
-        if (!NativeUtils.USE_JNA || Shell32.INSTANCE == null)
             return;
         @Nullable Path thisJar = JarUtils.thisJarPath();
         if (thisJar == null || !Files.isRegularFile(thisJar) || !"exe".equalsIgnoreCase(FileUtils.getExtension(thisJar)))
             return;
 
         try {
-            int hr = Shell32.INSTANCE.SetCurrentProcessExplicitAppUserModelID(new WString(Metadata.WINDOWS_APP_USER_MODEL_ID));
-            if (hr < 0) {
-                LOG.warning("Failed to set AppUserModelID, HRESULT=0x" + Integer.toHexString(hr));
-            } else {
-                LOG.info("Set AppUserModelID: " + Metadata.WINDOWS_APP_USER_MODEL_ID);
+            @Nullable Shell32 shell = Shell32.INSTANCE;
+            if (shell != null) {
+                int hr = shell.SetCurrentProcessExplicitAppUserModelID(new WString(Metadata.WINDOWS_APP_USER_MODEL_ID));
+                if (hr < 0) {
+                    LOG.warning("Failed to set AppUserModelID, HRESULT=0x" + Integer.toHexString(hr));
+                } else {
+                    LOG.info("Set AppUserModelID: " + Metadata.WINDOWS_APP_USER_MODEL_ID);
+                }
             }
         } catch (Throwable e) {
             LOG.warning("Failed to set AppUserModelID", e);
+        }
+
+        try {
+            @Nullable Path appData = FileUtils.tryGetPath(System.getenv("APPDATA")).filter(Path::isAbsolute).orElse(null);
+            if (appData != null) {
+                // Explorer uses the Jump List hash of org.jackhuang.hmcl for this subdirectory.
+                Path shortcut = appData.resolve("Microsoft/Internet Explorer/Quick Launch/User Pinned/ImplicitAppShortcuts")
+                        .resolve("bfabbc38ba9609f7").resolve(Metadata.FULL_NAME + ".lnk");
+                removeStaleWindowsShortcut(shortcut);
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to check the implicit taskbar shortcut", e);
+        }
+    }
+
+    /// Removes the specified Windows shortcut if its recorded local target is missing on an accessible volume.
+    ///
+    /// @param shortcut the path to the Shell link file to check
+    /// @throws IOException if an I/O error prevents reading or deleting the shortcut
+    static void removeStaleWindowsShortcut(Path shortcut) throws IOException {
+        if (!Files.isRegularFile(shortcut))
+            return;
+
+        try {
+            @Nullable String storedPath = WindowsShellLink.readLocalTarget(shortcut);
+            if (storedPath == null)
+                return;
+            @Nullable Path target = FileUtils.tryGetPath(storedPath).filter(Path::isAbsolute).orElse(null);
+            if (target == null || !Files.notExists(target) || !Files.isDirectory(target.getRoot()))
+                return;
+
+            if (Files.deleteIfExists(shortcut)) {
+                LOG.info("Removed stale implicit taskbar shortcut to " + target);
+            }
+        } catch (NoSuchFileException ignored) {
+            // The shell creates the shortcut on demand.
         }
     }
 
