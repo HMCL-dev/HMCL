@@ -12,7 +12,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardSinglePage;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 

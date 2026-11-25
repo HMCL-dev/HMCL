@@ -843,7 +843,8 @@ public final class LauncherHelper {
                     System.gc();
                 }
             }
-            case KEEP -> {}
+            case KEEP -> {
+            }
         }
     }
 
