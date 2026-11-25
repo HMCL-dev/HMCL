@@ -257,6 +257,7 @@ public final class JavaManager {
             /// Publishes a successful deletion even if cancellation was requested during it.
             @Override
             public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                context.commit();
                 if (REPOSITORY.uninstallJava(java)) {
                     context.call(Schedulers.javafx(), () -> {
                         removeJava(java);

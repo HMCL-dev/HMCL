@@ -19,6 +19,8 @@ import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthManifest;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
@@ -30,7 +32,9 @@ import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
+import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +73,45 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// Tests exclusive repository drafts and their filesystem visibility boundary.
 @NotNullByDefault
 public final class DefaultGameRepositoryDraftTest {
+
+    /// A failed local server pack extraction keeps the previous override hashes for a successful retry.
+    @Test
+    void localServerUpdateRetriesPartiallyExtractedOverrides(@TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("server");
+        repository.save(new GameInstanceManifest(id));
+        DefaultGameInstance instance = repository.getInstance(id);
+        Path root = instance.getInstanceRoot();
+        Path existing = Files.writeString(root.resolve("settings.txt"), "original");
+        Path blocker = Files.createFile(root.resolve("config"));
+        Path configuration = repository.getLayout().getModpackConfigurationFile(id);
+        var oldFile = new ModpackConfiguration.FileInformation("settings.txt", DigestUtils.digestToString("SHA-1", existing));
+        JsonUtils.writeToJsonFile(configuration, new ModpackConfiguration<>(new ServerModpackManifest(), "Server", "pack", "1", List.of(oldFile)));
+        String oldConfiguration = Files.readString(configuration);
+
+        Path archive = directory.resolve("pack.zip");
+        try (Zipper zip = new Zipper(archive)) {
+            zip.putTextFile("first", "overrides/first.txt");
+            zip.putTextFile("added", "overrides/config/new.txt");
+            zip.putTextFile("updated", "overrides/settings.txt");
+        }
+        String gameVersion = "1.21";
+        var manifest = new ServerModpackManifest("pack", "", "2", "", "", List.of(),
+                List.of(new ServerModpackManifest.Addon("game", gameVersion)));
+        Modpack pack = manifest.toModpack();
+        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, gameVersion);
+
+        Task<?> update = manifest.getProvider().createUpdateTask(manager, instance, archive, pack, null);
+        assertThrows(IOException.class, update::run);
+        assertEquals("first", Files.readString(root.resolve("first.txt")));
+        assertEquals(oldConfiguration, Files.readString(configuration));
+
+        Files.delete(blocker);
+        manifest.getProvider().createUpdateTask(manager, instance, archive, pack, null).run();
+        assertEquals("added", Files.readString(root.resolve("config/new.txt")));
+        assertEquals("updated", Files.readString(existing));
+        assertEquals("2", Objects.requireNonNull(JsonUtils.fromJsonFile(configuration, ModpackConfiguration.class)).getVersion());
+    }
 
     /// Failed server file downloads leave component updates available for a later attempt.
     @Test
@@ -365,6 +408,71 @@ public final class DefaultGameRepositoryDraftTest {
         assertSame(failure, assertThrows(IOException.class, install::run));
         assertEquals("replacement.Main", repository.getInstanceManifest(id).mainClass());
         assertEquals("replacement", Files.readString(marker));
+    }
+
+    /// A Modrinth retry replaces changed files and drops obsolete ones after build or download failures.
+    @Test
+    void modrinthUpdateRetainsBaselineUntilFilesAreInstalled(@TempDir Path directory) throws Exception {
+        FailingRepository repository = new FailingRepository(directory);
+        GameInstanceID id = new GameInstanceID("modrinth");
+        repository.save(new GameInstanceManifest(id));
+        DefaultGameInstance original = repository.getInstance(id);
+        Path mods = Files.createDirectories(original.getRunDirectory().resolve("mods"));
+        Path retained = Files.writeString(mods.resolve("changed.jar"), "old");
+        Path removed = Files.writeString(mods.resolve("removed.jar"), "old");
+        Path serverOnly = Files.writeString(mods.resolve("server.jar"), "old");
+        Path payload = Files.writeString(directory.resolve("published.jar"), "new");
+        Path addedSource = Files.writeString(directory.resolve("added.jar"), "wrong");
+        List<String> urls = List.of(payload.toUri().toString());
+        Map<String, String> oldHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", retained));
+        Map<String, String> newHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", "new".getBytes(StandardCharsets.UTF_8)));
+        Map<String, String> addedHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", "added".getBytes(StandardCharsets.UTF_8)));
+        Map<String, String> dependencies = Map.of("minecraft", "1.21");
+        var previous = new ModrinthManifest("minecraft", 1, "1", "pack", null, List.of(
+                new ModrinthManifest.File("mods/changed.jar", oldHashes, null, urls, 3),
+                new ModrinthManifest.File("mods/removed.jar", oldHashes, null, urls, 3),
+                new ModrinthManifest.File("mods/server.jar", oldHashes, null, urls, 3)), dependencies);
+        var next = new ModrinthManifest("minecraft", 1, "2", "pack", null, List.of(
+                new ModrinthManifest.File("mods/changed.jar", newHashes, null, urls, 3),
+                new ModrinthManifest.File("mods/added.jar", addedHashes, null, List.of(addedSource.toUri().toString()), 5),
+                new ModrinthManifest.File("mods/server.jar", oldHashes, Map.of("client", "unsupported"), urls, 3)), dependencies);
+        Path configuration = repository.getLayout().getModpackConfigurationFile(id);
+        Path index = original.getInstanceRoot().resolve("modrinth.index.json");
+        JsonUtils.writeToJsonFile(configuration, new ModpackConfiguration<>(previous, "Modrinth", "pack", "1", List.of()));
+        JsonUtils.writeToJsonFile(index, previous);
+        String oldConfig = Files.readString(configuration);
+        String oldIndex = Files.readString(index);
+        Path archive = directory.resolve("update.mrpack");
+        try (Zipper zip = new Zipper(archive)) {
+            zip.putTextFile(JsonUtils.GSON.toJson(next), "modrinth.index.json");
+        }
+        Modpack pack;
+        try (var zip = CompressingUtils.openZipFile(archive)) {
+            pack = ModrinthModpackProvider.INSTANCE.readManifest(zip, archive);
+        }
+        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, "1.21");
+
+        repository.failDraftPublish = true;
+        assertThrows(IllegalStateException.class, () -> ModrinthModpackProvider.INSTANCE
+                .createUpdateTask(manager, original, archive, pack, null).run());
+        assertEquals(oldConfig, Files.readString(configuration));
+        assertEquals("old", Files.readString(retained));
+        assertTrue(Files.exists(removed));
+
+        assertThrows(ModpackCompletionException.class, () -> ModrinthModpackProvider.INSTANCE
+                .createUpdateTask(manager, repository.getInstance(id), archive, pack, null).run());
+        assertEquals(oldConfig, Files.readString(configuration));
+        assertEquals(oldIndex, Files.readString(index));
+        assertEquals("new", Files.readString(retained));
+        Files.delete(payload);
+        Files.writeString(addedSource, "added");
+        ModrinthModpackProvider.INSTANCE.createUpdateTask(manager, repository.getInstance(id), archive, pack, null).run();
+        assertEquals("new", Files.readString(retained));
+        assertEquals("added", Files.readString(mods.resolve("added.jar")));
+        assertTrue(Files.notExists(removed));
+        assertTrue(Files.notExists(serverOnly));
+        assertEquals("2", Objects.requireNonNull(JsonUtils.fromJsonFile(index, ModrinthManifest.class)).getVersionId());
+        assertEquals("2", Objects.requireNonNull(JsonUtils.fromJsonFile(configuration, ModpackConfiguration.class)).getVersion());
     }
 
     /// Cancellation from the final child's completion rolls back the newly built instance.

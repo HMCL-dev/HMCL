@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.task.TaskStage;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -113,18 +114,8 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
         Path runDirectory = FileUtils.toAbsolute(instance.getRunDirectory());
         Path modsDirectory = runDirectory.resolve("mods");
 
-        if (excludedFiles != null) {
-            JsonUtils.writeToJsonFile(
-                    instance.getInstanceRoot().resolve("excluded.json"),
-                    List.copyOf(excludedFiles));
-        }
-
         for (ModrinthManifest.File file : manifest.getFiles()) {
-            if (file.env() != null && file.env().getOrDefault("client", "required").equals("unsupported"))
-                continue;
-            if (file.downloads().isEmpty())
-                continue;
-            if (excludedFiles != null && excludedFiles.contains(file.key()))
+            if (!file.isSelectedForClient(excludedFiles))
                 continue;
 
             Path filePath = runDirectory.resolve(file.path()).toAbsolutePath().normalize();
@@ -137,11 +128,13 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
                 continue;
 
             DownloadProvider downloadProvider = dependency.getDownloadProvider();
-            var task = new FileDownloadTask(
-                    downloadProvider.getDownloadCandidates(file.downloads()),
-                    filePath);
+            @Nullable String sha1 = file.hashes().get("sha1");
+            boolean canCacheByHash = DigestUtils.isSha1Digest(sha1);
+            var checksum = canCacheByHash ? new FileDownloadTask.IntegrityCheck("SHA-1", sha1)
+                    : new FileDownloadTask.IntegrityCheck("SHA-512", file.hashes().get("sha512"));
+            var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(file.downloads()), filePath, checksum);
             task.setCacheRepository(dependency.getCacheRepository());
-            task.setCaching(true);
+            task.setCaching(canCacheByHash);
             dependencies.add(task.withCounter());
         }
 

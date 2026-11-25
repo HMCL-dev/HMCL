@@ -129,12 +129,10 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
             @Nullable ModpackConfiguration<?> oldConfiguration =
                     updateTarget == null ? null : readUpdateConfiguration(configurationFile);
             @Unmodifiable List<String> subDirectories = List.of("/minecraft");
-            context.runAll(
-                    new ModpackInstallTask<>(zipFile, layout.getInstanceRoot(instanceId), subDirectories,
-                            path -> !"pack.json".equals(path), oldConfiguration),
-                    new MinecraftInstanceTask<>(zipFile, subDirectories, modpack, HMCLModpackProvider.INSTANCE,
-                            modpackName, modpackVersion, configurationFile)
-                            .withStage(InstallStages.MODPACK));
+            context.run(new ModpackInstallTask<>(zipFile, layout.getInstanceRoot(instanceId), subDirectories,
+                    path -> !"pack.json".equals(path), oldConfiguration));
+            context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, modpack, HMCLModpackProvider.INSTANCE,
+                    modpackName, modpackVersion, configurationFile).withStage(InstallStages.MODPACK));
             String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
             GameInstanceManifest originalManifest = JsonUtils.fromNonNullJson(json, GameInstanceManifest.class)
                     .withId(instanceId)

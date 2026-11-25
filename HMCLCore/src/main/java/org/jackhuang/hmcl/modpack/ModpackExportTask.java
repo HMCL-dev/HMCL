@@ -74,7 +74,7 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
             }
             if (!Files.notExists(output) && Files.getFileStore(temporary).supportsFileAttributeView(PosixFileAttributeView.class))
                 Files.setPosixFilePermissions(temporary, Files.getPosixFilePermissions(output));
-            context.checkCancellation();
+            context.commit();
             try {
                 Files.move(temporary, output, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             } catch (AtomicMoveNotSupportedException e) {

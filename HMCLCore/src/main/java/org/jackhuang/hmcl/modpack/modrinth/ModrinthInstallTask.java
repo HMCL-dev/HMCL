@@ -13,15 +13,20 @@ import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -150,12 +155,27 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
     ///                               declares an unsupported mod loader
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        Modpack.installWithGameBuilder(context, dependencyManager, instanceId, updateTarget, true, builder -> install(context, builder));
+        Modpack.installWithGameBuilder(context, dependencyManager, instanceId, updateTarget, true, builder -> {
+            Files.createDirectories(run);
+            Path staged = updateTarget == null
+                    ? Files.createFile(run.resolve(".hmcl-modrinth-" + UUID.randomUUID() + ".tmp"))
+                    : Files.createTempFile(run, ".hmcl-modrinth-", ".tmp");
+            try {
+                install(context, builder, staged);
+            } catch (Exception | Error failure) {
+                try {
+                    Files.deleteIfExists(staged);
+                } catch (IOException cleanupFailure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+                throw failure;
+            }
+        });
         return null;
     }
 
     /// Installs the Modrinth pack into the target reserved by the builder.
-    private void install(TaskExecutionContext context, DefaultGameBuilder builder) throws Exception {
+    private void install(TaskExecutionContext context, DefaultGameBuilder builder, Path staged) throws Exception {
         builder.enableIsolation();
         builder.component(GameComponentType.GAME, manifest.getGameVersion());
         for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
@@ -180,10 +200,12 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
                     throw new IllegalStateException("Unsupported mod loader " + modLoader.getKey());
             }
         }
-        List<Task<?>> preparation = new ArrayList<>(4);
-        List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
+        List<Task<?>> preparation = new ArrayList<>(3);
+        @Unmodifiable List<String> subDirectories = List.of("/client-overrides", "/overrides");
         preparation.add(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config).withStage(InstallStages.MODPACK));
-        preparation.add(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage(InstallStages.MODPACK));
+        var configuration = new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, ModrinthModpackProvider.INSTANCE,
+                manifest.getName(), manifest.getVersionId(), staged).withStage(InstallStages.MODPACK);
+        preparation.add(configuration);
 
         @Nullable String iconExtension = null;
         @Nullable Task<Path> iconTask = null;
@@ -200,27 +222,18 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
         }
 
         context.runAll(preparation);
+        // A new instance needs its index even if a missing download must be completed manually.
+        if (updateTarget == null)
+            publishManifests(staged);
         DefaultGameInstance instance = builder.build(context);
-        if (config != null) {
-            // For update, remove mods not listed in new manifest
-            for (ModrinthManifest.File oldManifestFile : config.getManifest().getFiles()) {
-                Path oldFile = run.resolve(oldManifestFile.path());
-                if (!Files.exists(oldFile)) continue;
-                if (manifest.getFiles().stream().noneMatch(oldManifestFile::equals)) {
-                    Files.deleteIfExists(oldFile);
-                }
-            }
-        }
-
-        Path root = repository.getLayout().getInstanceRoot(instanceId);
-        Files.createDirectories(root);
-        JsonUtils.writeToJsonFile(root.resolve("modrinth.index.json"), manifest);
+        if (config != null)
+            removeOutdatedFiles(instance.getRunDirectory(), config.getManifest(), configuration.resultNow());
 
         if (iconExtension != null
                 && iconTask != null
-                && Modpack.SUPPORTED_ICON_NAMES.stream().map(root::resolve).allMatch(Files::notExists)) {
+                && Modpack.SUPPORTED_ICON_NAMES.stream().map(run::resolve).allMatch(Files::notExists)) {
             try {
-                Files.copy(iconTask.resultNow(), root.resolve("icon." + iconExtension));
+                Files.copy(iconTask.resultNow(), run.resolve("icon." + iconExtension));
             } catch (Exception e) {
                 LOG.warning("Failed to copy modpack icon", e);
             }
@@ -228,5 +241,56 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
 
         // The game builder publishes the instance before file completion starts.
         context.run(new ModrinthCompletionTask(dependencyManager, instance, manifest, excludedFiles));
+        if (updateTarget != null) {
+            try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+                if (draft.getBaseSnapshot().findInstance(instanceId) != instance)
+                    throw new IllegalStateException("Game instance has changed: " + instanceId);
+                publishManifests(staged);
+            }
+        }
+    }
+
+    /// Removes obsolete files while preserving replacements already downloaded by an interrupted update.
+    private void removeOutdatedFiles(Path runDirectory, ModrinthManifest previous,
+                                     ModpackConfiguration<ModrinthManifest> current) throws IOException {
+        Set<String> overrides = new HashSet<>();
+        for (var override : current.getOverrides())
+            overrides.add(override.getPath());
+        Map<String, ModrinthManifest.File> newFiles = new HashMap<>();
+        for (var file : manifest.getFiles())
+            newFiles.put(file.path(), file);
+
+        for (var old : previous.getFiles()) {
+            if (overrides.contains(old.path()))
+                continue;
+            Path file = runDirectory.resolve(old.path());
+            @Nullable ModrinthManifest.File replacement = newFiles.get(old.path());
+            if (replacement != null && replacement.isSelectedForClient(excludedFiles)) {
+                if (old.equals(replacement))
+                    continue;
+                if (Files.isRegularFile(file) && Files.size(file) == replacement.fileSize()
+                        && DigestUtils.digestToString("SHA-512", file).equalsIgnoreCase(replacement.hashes().get("sha512")))
+                    continue;
+            }
+            Files.deleteIfExists(file);
+        }
+    }
+
+    /// Records the download index and optional selection, then publishes the baseline for future updates.
+    private void publishManifests(Path staged) throws IOException {
+        Path configuration = repository.getLayout().getModpackConfigurationFile(instanceId);
+        if (updateTarget != null && Files.getFileStore(staged).supportsFileAttributeView(PosixFileAttributeView.class))
+            Files.setPosixFilePermissions(staged, Files.getPosixFilePermissions(configuration));
+        Path selection = run.resolve("excluded.json");
+        if (excludedFiles == null)
+            Files.deleteIfExists(selection);
+        else
+            JsonUtils.writeToJsonFile(selection, excludedFiles);
+        JsonUtils.writeToJsonFile(run.resolve("modrinth.index.json"), manifest);
+        try {
+            Files.move(staged, configuration, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(staged, configuration, StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 }

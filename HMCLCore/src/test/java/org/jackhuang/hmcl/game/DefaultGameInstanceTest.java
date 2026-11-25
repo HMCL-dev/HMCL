@@ -756,6 +756,68 @@ public final class DefaultGameInstanceTest {
         }
     }
 
+    /// MultiMC publishes the patched JAR with its manifest only after all JAR mods can be applied.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void multiMCUpdatePublishesPatchedClient(boolean missingMod, @TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        repository.save(new GameInstanceManifest(id).withMainClass("original.Main"));
+        DefaultGameInstance original = repository.getInstance(id);
+        Path instanceJar = repository.getLayout().getInstanceJarFile(id);
+        writeVersionJar(instanceJar, "old");
+        String oldHash = DigestUtils.digestToString("SHA-1", instanceJar);
+
+        Path client = directory.resolve("client.jar");
+        writeVersionJar(client, "new");
+        String clientHash = DigestUtils.digestToString("SHA-1", client);
+        DefaultCacheRepository cache = new DefaultCacheRepository(directory.resolve("cache"));
+        Path cachedClient = cache.cacheFile(client, "SHA-1", clientHash);
+        DefaultDependencyManager manager = new DefaultDependencyManager(repository, new TestDownloadProvider(cache), cache);
+        Path index = Files.writeString(directory.resolve("index.json"), "{\"objects\":{}}");
+
+        Path archive = directory.resolve("pack.zip");
+        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(archive))) {
+            writeZipEntry(zip, "instance.cfg", "name=Test");
+            writeZipEntry(zip, "mmc-pack.json", """
+                    {"formatVersion":1,"components":[{"uid":"net.minecraft","version":"1.21"}]}
+                    """);
+            writeZipEntry(zip, "patches/net.minecraft.json", """
+                    {"uid":"net.minecraft","formatVersion":1,"version":"1.21",
+                     "mainJar":{"name":"test:client:1","downloads":{"artifact":{"url":"https://example.invalid/client.jar","sha1":"%s"}}},
+                     "assetIndex":{"id":"test","url":"%s"},"libraries":[{"name":"test:library:1"}],
+                     "jarMods":[{"name":"test:patch:1","filename":"patch.jar"}]}
+                    """.formatted(clientHash, index.toUri()));
+            if (!missingMod) {
+                Path patch = directory.resolve("patch.jar");
+                try (Zipper jar = new Zipper(patch)) {
+                    jar.putTextFile("patched", "patch.txt");
+                }
+                zip.putNextEntry(new ZipEntry("jarmods/patch.jar"));
+                Files.copy(patch, zip);
+                zip.closeEntry();
+            }
+        }
+        writeVersionJar(repository.getLayout().getLibraryFile(id, new Library("test", "library", "1")), "1");
+        Modpack pack;
+        try (var zip = CompressingUtils.openZipFile(archive)) {
+            pack = MultiMCModpackProvider.INSTANCE.readManifest(zip, archive);
+        }
+        JsonUtils.writeToJsonFile(repository.getLayout().getModpackConfigurationFile(id),
+                new ModpackConfiguration<>(pack.getManifest(), "MultiMC", "Test", "1", List.of()));
+        Task<?> update = MultiMCModpackProvider.INSTANCE.createUpdateTask(manager, original, archive, pack, null);
+        if (missingMod) {
+            assertThrows(IOException.class, update::run);
+            assertSame(original, repository.getInstance(id));
+            assertEquals(oldHash, DigestUtils.digestToString("SHA-1", instanceJar));
+        } else {
+            update.run();
+            assertEquals(clientHash, repository.getInstance(id).getManifest().getDownloadInfo().getSha1());
+            assertEquals("patched", CompressingUtils.readTextZipEntry(instanceJar, "patch.txt"));
+        }
+        assertEquals(clientHash, DigestUtils.digestToString("SHA-1", cachedClient));
+    }
+
     /// Non-conventional JSON/jar basenames are kept on disk and recorded on the instance.
     @Test
     public void testRefreshRecordsNonConventionalStoragePaths(@TempDir Path tempDirectory) throws IOException {

@@ -15,11 +15,11 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -133,13 +133,14 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
                 builder.component(componentType, addon.getVersion());
         }
         Path run = repository.getLayout().getInstanceRoot(instanceId);
-        Task<?> overrides = new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage(InstallStages.MODPACK);
-        var instanceTask = new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, McbbsModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId));
-
-        context.runAll(List.of(overrides, instanceTask.withStage(InstallStages.MODPACK)));
+        @Unmodifiable List<String> subDirectories = List.of("/overrides");
+        context.run(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config).withStage(InstallStages.MODPACK));
+        var configuration = context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, McbbsModpackProvider.INSTANCE,
+                modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId))
+                .withStage(InstallStages.MODPACK));
         DefaultGameInstance instance = builder.build(context);
         GameInstanceManifest instanceManifest = instance.getManifest();
-        Task<?> completion = new McbbsModpackCompletionTask(dependencyManager, instance, instanceTask.resultNow());
+        Task<?> completion = new McbbsModpackCompletionTask(dependencyManager, instance, configuration);
         if (this.updateTarget == null) {
             // Keep the builder's published manifest current until file completion can no longer fail.
             context.run(completion);

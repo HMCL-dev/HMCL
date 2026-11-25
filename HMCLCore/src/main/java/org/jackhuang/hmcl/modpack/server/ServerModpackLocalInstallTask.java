@@ -14,11 +14,11 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 
 /// Installs or updates a local server modpack using the mode selected at construction.
@@ -129,9 +129,12 @@ public class ServerModpackLocalInstallTask extends Task<@Nullable Void> {
                     builder.component(componentType, addon.getVersion());
             }
             Path run = repository.getLayout().getInstanceRoot(instanceId);
-            Task<?> overrides = new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config);
-            Task<?> instance = new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId));
-            context.runAll(List.of(overrides.withStage(InstallStages.MODPACK), instance.withStage(InstallStages.MODPACK)));
+            @Unmodifiable List<String> subDirectories = List.of("/overrides");
+            context.run(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config)
+                    .withStage(InstallStages.MODPACK));
+            context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, ServerModpackProvider.INSTANCE,
+                    modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId))
+                    .withStage(InstallStages.MODPACK));
             builder.build(context);
         });
         return null;

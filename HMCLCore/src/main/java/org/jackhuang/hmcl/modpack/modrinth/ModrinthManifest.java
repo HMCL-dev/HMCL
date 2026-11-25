@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /// Modrinth modpack index (`modrinth.index.json`).
 @NotNullByDefault
@@ -180,6 +181,12 @@ public class ModrinthManifest implements ModpackManifest, ModpackManifest.Suppor
         @Override
         public String key() {
             return "modrinth:" + Objects.requireNonNull(hashes.get("sha512"), "sha512") + ":" + path;
+        }
+
+        /// Returns whether this file should be installed for the selected client pack.
+        boolean isSelectedForClient(@Nullable Set<String> excludedFiles) {
+            return !downloads.isEmpty() && (env == null || !"unsupported".equals(env.get("client")))
+                    && (excludedFiles == null || !excludedFiles.contains(key()));
         }
 
         @Override

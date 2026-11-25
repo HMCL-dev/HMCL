@@ -19,6 +19,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -194,9 +195,9 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
                 builder.component(GameComponentType.NEO_FORGE, modLoader.id().substring("neoforge-".length()));
             }
         }
-        List<Task<?>> preparation = new ArrayList<>(4);
-        preparation.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(manifest.overrides()), any -> true, config).withStage(InstallStages.MODPACK));
-        preparation.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage(InstallStages.MODPACK));
+        List<Task<?>> preparation = new ArrayList<>(2);
+        @Unmodifiable List<String> directories = Collections.singletonList(manifest.overrides());
+        preparation.add(new ModpackInstallTask<>(zipFile, run, directories, any -> true, config).withStage(InstallStages.MODPACK));
 
         @Nullable String iconExtension = null;
         @Nullable Task<Path> iconTask = null;
@@ -212,6 +213,9 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
         }
 
         context.runAll(preparation);
+        context.run(new MinecraftInstanceTask<>(zipFile, directories, manifest, CurseModpackProvider.INSTANCE,
+                manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId))
+                .withStage(InstallStages.MODPACK));
         DefaultGameInstance instance = builder.build(context);
         if (config != null) {
             Set<String> newOverridesMods = getNewOverridesMods();
