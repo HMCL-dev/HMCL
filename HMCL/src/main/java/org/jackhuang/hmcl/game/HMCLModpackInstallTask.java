@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -47,9 +47,6 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
     /// Version captured for the instance configuration when the task was created.
     private final @Nullable String modpackVersion;
 
-    /// Previous configuration used to reconcile overrides, or `null` if none was loaded.
-    private final @Nullable ModpackConfiguration<Modpack> oldConfiguration;
-
     /// Creates a task that installs a new HMCL modpack instance.
     ///
     /// @param repository the target HMCL game repository
@@ -70,8 +67,7 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
     /// @param zipFile    the HMCL modpack archive
     /// @param modpack    the parsed modpack metadata
     /// @param instance   the existing instance to update
-    /// @throws IllegalArgumentException if `instance` belongs to another repository, its configuration
-    ///                                  file is missing, or the decoded configuration is null or names another provider
+    /// @throws IllegalArgumentException if `instance` belongs to another repository
     public HMCLModpackInstallTask(
             HMCLGameRepository repository,
             Path zipFile,
@@ -87,8 +83,7 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
     /// @param modpack      the parsed modpack metadata
     /// @param instanceId   the target instance id
     /// @param updateTarget the existing instance selecting update mode, or `null` for install
-    /// @throws IllegalArgumentException if an update target belongs to another repository, its configuration
-    ///                                  file is missing, or the decoded configuration is null or names another provider
+    /// @throws IllegalArgumentException if an update target belongs to another repository
     private HMCLModpackInstallTask(
             HMCLGameRepository repository,
             Path zipFile,
@@ -100,26 +95,26 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
         this.instanceId = instanceId;
         this.updateTarget = updateTarget;
         this.modpack = modpack;
-
-        @Nullable ModpackConfiguration<Modpack> config = null;
-        if (updateTarget != null) {
-            dependency.validateGameInstance(updateTarget);
-            Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-            if (Files.notExists(json))
-                throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
-            if (Files.exists(json)) {
-                try {
-                    config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(Modpack.class));
-                    if (config == null || !HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
-                        throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
-                } catch (JsonParseException | IOException ignore) {
-                    // An unreadable configuration supplies no previous override hashes.
-                }
-            }
-        }
-        this.oldConfiguration = config;
         this.modpackName = modpack.getName();
         this.modpackVersion = modpack.getVersion();
+        if (updateTarget != null)
+            dependency.validateGameInstance(updateTarget);
+    }
+
+    /// Reads the installed override hashes. A missing configuration or a different provider rejects the update.
+    private @Nullable ModpackConfiguration<?> readUpdateConfiguration(Path file) {
+        @Nullable ModpackConfiguration<?> config;
+        try {
+            config = JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
+        } catch (NoSuchFileException e) {
+            config = null;
+        } catch (JsonParseException | IOException ignored) {
+            // An unreadable configuration supplies no previous override hashes.
+            return null;
+        }
+        if (config == null || !HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
+            throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
+        return config;
     }
 
     /// Reserves the target before extracting the pack and installs its recognized components.
@@ -130,12 +125,15 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         Modpack.installWithGameBuilder(context, dependency, instanceId, updateTarget, false, builder -> {
             DefaultGameRepositoryLayout layout = dependency.getGameRepository().getLayout();
+            Path configurationFile = layout.getModpackConfigurationFile(instanceId);
+            @Nullable ModpackConfiguration<?> oldConfiguration =
+                    updateTarget == null ? null : readUpdateConfiguration(configurationFile);
             @Unmodifiable List<String> subDirectories = List.of("/minecraft");
             context.runAll(
                     new ModpackInstallTask<>(zipFile, layout.getInstanceRoot(instanceId), subDirectories,
                             path -> !"pack.json".equals(path), oldConfiguration),
                     new MinecraftInstanceTask<>(zipFile, subDirectories, modpack, HMCLModpackProvider.INSTANCE,
-                            modpackName, modpackVersion, layout.getModpackConfigurationFile(instanceId))
+                            modpackName, modpackVersion, configurationFile)
                             .withStage(InstallStages.MODPACK));
             String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
             GameInstanceManifest originalManifest = JsonUtils.fromNonNullJson(json, GameInstanceManifest.class)

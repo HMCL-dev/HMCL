@@ -16,6 +16,7 @@ import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameRepositoryDraft;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.modpack.UnsupportedModpackException;
 import org.jackhuang.hmcl.task.Task;
@@ -24,6 +25,7 @@ import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
+import org.jackhuang.hmcl.util.io.Zipper;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Disabled;
@@ -714,9 +716,9 @@ public final class GameDirectoriesTest {
         }
     }
 
-    /// A queued update reads its inputs at execution time and rejects invalid inputs before making a backup.
+    /// A queued update reads its inputs at execution time and rejects invalid configurations or archives.
     @Test
-    public void validatesModpackUpdateBeforeBackup(@TempDir Path tempDirectory) throws Exception {
+    public void validatesModpackUpdateInputsAtExecution(@TempDir Path tempDirectory) throws Exception {
         GameDirectory directory = new GameDirectory(GameDirectoryID.generate(), LocalizedText.plain("Dev"),
                 PortablePath.of(tempDirectory.toString()));
         GameDirectories localDirectories = new GameDirectories();
@@ -738,6 +740,36 @@ public final class GameDirectoriesTest {
 
             assertFalse(Files.exists(tempDirectory.resolve("backup")));
             assertTrue(Files.exists(instance.getModpackConfigurationFile()));
+            assertSame(instance, repository.getInstance(id));
+        }
+    }
+
+    /// An HMCL update rejects an incompatible configuration written after the task was created.
+    @Test
+    public void hmclUpdateChecksCurrentConfigurationBeforeExtraction(@TempDir Path tempDirectory) throws Exception {
+        GameDirectory directory = new GameDirectory(GameDirectoryID.generate(), LocalizedText.plain("Dev"),
+                PortablePath.of(tempDirectory.toString()));
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.getGameDirectories().add(directory);
+        try (GameDirectoryEnvironment ignored = new GameDirectoryEnvironment(localDirectories, new GameDirectories())) {
+            HMCLGameRepository repository = new HMCLGameRepository(directory);
+            GameInstanceID id = new GameInstanceID("instance");
+            repository.saveAsync(new GameInstanceManifest(id)).run();
+            HMCLGameInstance instance = repository.getInstance(id);
+            Path archive = tempDirectory.resolve("update.zip");
+            try (Zipper zip = new Zipper(archive)) {
+                zip.putTextFile("{\"name\":\"pack\",\"version\":\"1\"}", "modpack.json");
+                zip.putTextFile("{\"id\":\"game\"}", "minecraft/pack.json");
+                zip.putTextFile("updated", "minecraft/override.txt");
+            }
+            Task<?> update = new HMCLModpackInstallTask(repository, archive, ModpackHelper.readModpackManifest(archive), instance);
+            String configuration = """
+                    {"type":"MultiMC","manifest":{"name":"pack"},"overrides":[]}
+                    """;
+            Files.writeString(instance.getModpackConfigurationFile(), configuration);
+            assertThrows(IllegalArgumentException.class, update::run);
+            assertEquals(configuration, Files.readString(instance.getModpackConfigurationFile()));
+            assertTrue(Files.notExists(instance.getInstanceRoot().resolve("override.txt")));
             assertSame(instance, repository.getInstance(id));
         }
     }
