@@ -381,7 +381,7 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
 
         /// Returns the selected path.
         public @Nullable String getPath() {
-            return selector.getPathString();
+            return selector.getText();
         }
 
         /// Returns the selected path property.

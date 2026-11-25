@@ -115,7 +115,6 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                         gameDir.getChooser().setTitle(i18n("game_directory.instance_directory.choose"));
                         gameDir.setText(Optional.ofNullable(gameDirectory).map(GameDirectory::getPath).map(PortablePath::toPath).map(FileUtils::getAbsolutePath).orElse(".minecraft"));
                         gameDir.setPrefWidth(400);
-                        gameDir.setExistingValidationEnabled(false);
                         gameDirectorySelectPane.setRight(gameDir);
                     }
 
@@ -148,7 +147,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
             StackPane.setAlignment(saveButton, Pos.BOTTOM_RIGHT);
             saveButton.setPrefSize(100, 40);
             saveButton.setOnAction(e -> onSave());
-            Path initialLocation = gameDir.getPath();
+            @Nullable Path initialLocation = gameDir.getPath();
             boolean initialUseRelativePath = switchUseRelativePath.isSelected();
             saveButton.disableProperty().bind(Bindings.createBooleanBinding(
                     () -> !txtGameDirectoryName.validate() || gameDir.getPath() == null

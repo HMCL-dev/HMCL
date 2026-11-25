@@ -25,7 +25,8 @@ import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-/// A wrapper of [FileChooser] & [DirectoryChooser]. Automatically sets initial directory according to context.
+/// Opens JavaFX [FileChooser] and [DirectoryChooser] dialogs.
+/// For the initial directory, it tries the explicit path, the chooser context, and the selected game directory in order.
 @NotNullByDefault
 public class PathChooser {
     private final ObservableList<FileChooser.ExtensionFilter> extensionFilter = FXCollections.observableArrayList();
@@ -78,7 +79,7 @@ public class PathChooser {
                 .or(() -> Optional.of(ChooserContext.getDefaultDir()).map(PathChooser::toDirectory));
     }
 
-    /// This overrides the initial directory of context. Only take effects when given path exists.
+    /// Sets an explicit starting path.
     public void setInitialDirectory(@Nullable String path) {
         initialDirectory = StringUtils.isBlank(path) ? null : path;
     }
@@ -126,18 +127,18 @@ public class PathChooser {
         return null;
     }
 
-    /// The context for the automatic determination of initial directory.
+    /// Supplies a starting directory.
     public sealed interface ChooserContext {
-        /// Persistent default context
+        /// Remembers the last-used directory for general-purpose dialogs.
         ChooserContext DEFAULT = new PersistentContext("default");
-        /// Persistent context for file (except image) imports. e.g. mod, resource pack...
+        /// Remembers the last-used directory for imports such as mods and resource packs.
         ChooserContext IMPORT = new PersistentContext("import");
-        /// Persistent context for image imports. e.g. icon, skin...
+        /// Remembers the last-used directory for image imports such as icons and skins.
         ChooserContext IMPORT_IMAGE = new PersistentContext("import_image");
-        /// Persistent context for exports. e.g. world export, modpack export...
+        /// Remembers the last-used directory for exports such as worlds and modpacks.
         ChooserContext EXPORT = new PersistentContext("export");
 
-        /// Context for related game directories. e.g. game setting, download...
+        /// Uses the supplied game instance's run directory when an instance is available.
         static ChooserContext GAME(Supplier<@Nullable GameInstance> supplier) {
             return new SimpleContext(() -> Optional.ofNullable(supplier.get()).map(GameInstance::getRunDirectory));
         }
@@ -151,7 +152,7 @@ public class PathChooser {
             return GameDirectoryManager.getSelectedGameDirectory().getPath().toPath();
         }
 
-        /// The path most recently used will be saved persistently in user settings.
+        /// Stores the last-used directory in user settings under this context's name.
         record PersistentContext(String name) implements ChooserContext {
             @Override
             public Optional<Path> getDir() {

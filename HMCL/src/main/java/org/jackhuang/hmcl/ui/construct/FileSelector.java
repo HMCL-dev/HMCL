@@ -28,9 +28,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class FileSelector extends HBox {
     private final PathChooser chooser = new PathChooser();
     private final JFXTextField pathField = new JFXTextField();
+    private final StringProperty text = new SimpleStringProperty(this, "text");
     private final JFXButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
     private final ReadOnlyObjectWrapper<@Nullable Path> path = new ReadOnlyObjectWrapper<>(this, "validPath", null);
-    private final BooleanProperty existingValidationEnabled = new SimpleBooleanProperty(this, "existingValidationEnabled", true);
     private final BooleanProperty convertToRelativePath = new SimpleBooleanProperty(this, "convertToRelativePath", false);
 
     public FileSelector(SelectionMode selectionMode) {
@@ -40,7 +40,7 @@ public class FileSelector extends HBox {
         FXUtils.setValidateWhileTextChanged(pathField, true);
 
         selectButton.setOnAction(e -> {
-            chooser.setInitialDirectory(getText());
+            chooser.setInitialDirectory(pathField.getText());
             switch (selectionMode) {
                 case OPEN_FILE -> postOpen(chooser.showOpen());
                 case DIRECTORY -> postOpen(chooser.showOpenDirectory());
@@ -63,15 +63,16 @@ public class FileSelector extends HBox {
         setSpacing(3);
         getChildren().addAll(pathField, selectButton);
 
-        path.bind(Bindings.createObjectBinding(() -> FileUtils.tryGetPath(getText())
-                .filter(path -> !StringUtils.isBlank(getText()))
+        FXUtils.bindString(pathField, text);
+        path.bind(Bindings.createObjectBinding(() -> FileUtils.tryGetPath(pathField.getText())
+                .filter(path -> !StringUtils.isBlank(pathField.getText()))
                 .map(this::processPath)
-                .filter(path -> !existingValidationEnabled.get() || switch (selectionMode) {
-                    case DIRECTORY -> Files.isDirectory(path);
+                .filter(path -> switch (selectionMode) {
+                    case DIRECTORY -> Files.isDirectory(path) || Files.notExists(path);
                     case OPEN_FILE -> Files.isRegularFile(path);
                     case SAVE_FILE -> true;
                     case FILE_OR_DIRECTORY -> Files.exists(path);
-                }).orElse(null), textProperty(), existingValidationEnabled, convertToRelativePath));
+                }).orElse(null), pathField.textProperty(), convertToRelativePath));
         convertToRelativePath.addListener(o -> {
             if (getPath() != null)
                 setText(getPath().toString());
@@ -79,39 +80,30 @@ public class FileSelector extends HBox {
     }
 
     public @Nullable String getText() {
-        return pathField.getText();
+        return text.get();
     }
 
     public void setText(@Nullable String value) {
-        pathField.setText(value);
+        text.set(value);
     }
 
     public StringProperty textProperty() {
-        return pathField.textProperty();
+        return text;
     }
 
     public PathChooser getChooser() {
         return chooser;
     }
 
-    public void setExistingValidationEnabled(boolean enable) {
-        existingValidationEnabled.set(enable);
-        pathField.validate();
-    }
-
-    /// Guarantee a non-blank and valid real path if not null.
+    /// A read-only property that tracks [#getPath()] as the input changes.
     public ReadOnlyObjectProperty<@Nullable Path> pathProperty() {
         return path.getReadOnlyProperty();
     }
 
-    /// Guarantee a non-blank and valid real path if not null.
+    /// Returns the normalized path from the current input, or `null` if the input is blank
+    /// or fails validation for the selection mode.
     public @Nullable Path getPath() {
         return path.get();
-    }
-
-    /// Guarantee a non-blank and valid real path string if not null.
-    public @Nullable String getPathString() {
-        return getPath() == null ? null : getPath().toString();
     }
 
     public void fire() {
