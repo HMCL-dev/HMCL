@@ -371,7 +371,7 @@ public final class LaunchManifestNormalizer {
             case "com.github.oshi:oshi-common" -> "oshi-project:oshi-core";
             // From 6.12.0 onward, the shared hardware interfaces reside in oshi-common.
             case "com.github.oshi:oshi-core", "com.github.oshi:oshi-core-java11", "com.github.oshi:oshi-core-java25" ->
-                    VersionNumber.compare(version, "6.12.0") < 0 ? "oshi-project:oshi-core" : null;
+                VersionNumber.compare(version, "6.12.0") < 0 ? "oshi-project:oshi-core" : null;
             default -> null;
         };
     }
