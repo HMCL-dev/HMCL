@@ -94,7 +94,7 @@ public class ServerModpackRemoteInstallTask extends Task<@Nullable Void> {
     ///                               is no longer the exact published instance
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        Modpack.installWithGameBuilder(dependency, instanceId, updateTarget, false, builder -> {
+        Modpack.installWithGameBuilder(context, dependency, instanceId, updateTarget, false, builder -> {
             builder.enableIsolation();
             for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
                 @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());

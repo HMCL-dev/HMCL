@@ -39,6 +39,12 @@ public interface TaskExecutionContext {
             throw new CancellationException("Cancelled by user");
     }
 
+    /// Makes the final cancellation check for a task that commits external changes.
+    /// Once it returns, a later cancellation request alone cannot discard this body's successful result.
+    default void commit() {
+        checkCancellation();
+    }
+
     /// Returns the current task's progress reporter. Obtain it on the task's thread
     /// before sharing it with workers contributing to this task.
     TaskProgress progress();

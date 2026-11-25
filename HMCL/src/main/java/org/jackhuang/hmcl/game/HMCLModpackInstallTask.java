@@ -128,7 +128,7 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
     /// patch-structured manifest instead of attempting to mutate the legacy flattened manifest.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        Modpack.installWithGameBuilder(dependency, instanceId, updateTarget, false, builder -> {
+        Modpack.installWithGameBuilder(context, dependency, instanceId, updateTarget, false, builder -> {
             DefaultGameRepositoryLayout layout = dependency.getGameRepository().getLayout();
             @Unmodifiable List<String> subDirectories = List.of("/minecraft");
             context.runAll(

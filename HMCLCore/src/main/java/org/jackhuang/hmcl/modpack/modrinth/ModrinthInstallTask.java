@@ -150,7 +150,7 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
     ///                               declares an unsupported mod loader
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        Modpack.installWithGameBuilder(dependencyManager, instanceId, updateTarget, true, builder -> install(context, builder));
+        Modpack.installWithGameBuilder(context, dependencyManager, instanceId, updateTarget, true, builder -> install(context, builder));
         return null;
     }
 

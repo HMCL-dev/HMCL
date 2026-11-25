@@ -116,30 +116,34 @@ public abstract class Modpack {
             String iconUrl,
             @Nullable Set<String> excludedFiles);
 
-    /// Reserves the target before installation and releases any open draft when the action finishes.
-    /// Failure rolls back a newly published instance if its manifest is still current, except when
+    /// Reserves the target and checks cancellation before accepting the installation result.
+    /// Failure rolls back a new instance if its manifest is still current, except when
     /// `keepIncompleteInstance` allows manual recovery from a [ModpackCompletionException].
+    /// A failed update releases its draft and keeps files already written for a retry.
     /// Cleanup failures are suppressed on the installation failure.
     ///
     /// @param updateTarget the exact published instance to update, or `null` for a new installation
     /// @param install must finish preparatory writes before building and all instance writes before returning
     public static void installWithGameBuilder(
-            DefaultDependencyManager dependencyManager, GameInstanceID instanceId,
+            TaskExecutionContext context, DefaultDependencyManager dependencyManager, GameInstanceID instanceId,
             @Nullable DefaultGameInstance updateTarget, boolean keepIncompleteInstance,
             ExceptionalConsumer<? super DefaultGameBuilder, Exception> install) throws Exception {
         DefaultGameBuilder builder = updateTarget == null
                 ? dependencyManager.newGameBuilder(instanceId)
                 : dependencyManager.newGameBuilder(updateTarget);
         try {
+            context.checkCancellation();
             install.accept(builder);
+            context.commit();
         } catch (Exception | Error failure) {
             try {
-                if (keepIncompleteInstance && failure instanceof ModpackCompletionException)
+                if (updateTarget != null || (keepIncompleteInstance && failure instanceof ModpackCompletionException))
                     builder.abort();
                 else
                     builder.rollback();
             } catch (Exception | Error cleanupFailure) {
-                failure.addSuppressed(cleanupFailure);
+                if (cleanupFailure != failure)
+                    failure.addSuppressed(cleanupFailure);
             }
             throw failure;
         }

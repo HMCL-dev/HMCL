@@ -177,7 +177,7 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
     ///                               is no longer the exact published instance
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        Modpack.installWithGameBuilder(dependencyManager, instanceId, updateTarget, true, builder -> install(context, builder));
+        Modpack.installWithGameBuilder(context, dependencyManager, instanceId, updateTarget, true, builder -> install(context, builder));
         return null;
     }
 

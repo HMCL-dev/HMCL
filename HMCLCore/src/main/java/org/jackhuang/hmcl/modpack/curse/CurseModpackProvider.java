@@ -49,7 +49,7 @@ public final class CurseModpackProvider implements ModpackProvider {
         if (!(modpack.getManifest() instanceof CurseManifest curseManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(instance, new CurseInstallTask(dependencyManager, zipFile, modpack, curseManifest, instance, null, excludedFiles));
+        return new CurseInstallTask(dependencyManager, zipFile, modpack, curseManifest, instance, null, excludedFiles);
     }
 
     @Override

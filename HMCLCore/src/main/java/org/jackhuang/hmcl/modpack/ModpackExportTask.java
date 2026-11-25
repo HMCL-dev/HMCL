@@ -18,6 +18,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -62,7 +63,10 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
         exclusions.add("regex:(?:.*/)?\\.hmcl-export-[^/]+\\.tmp");
 
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
-        Path temporary = Files.createTempFile(output.getParent(), ".hmcl-export-", ".tmp");
+        // A first export uses ordinary file creation so the destination directory and umask determine its mode.
+        Path temporary = Files.notExists(output)
+                ? Files.createFile(output.resolveSibling(".hmcl-export-" + UUID.randomUUID() + ".tmp"))
+                : Files.createTempFile(output.getParent(), ".hmcl-export-", ".tmp");
         try {
             try (Zipper zip = new Zipper(temporary)) {
                 writeArchive(zip, path -> !output.equals(runDirectory.resolve(path))

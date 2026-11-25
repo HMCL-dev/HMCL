@@ -242,16 +242,19 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     @Override
     public MultiMCInstancePatch.ResolvedInstance execute(TaskExecutionContext context) throws Exception {
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
-            boolean targetExists = draft.getBaseSnapshot().hasInstance(instanceId);
-            if (updateTarget == null && targetExists)
+            @Nullable DefaultGameInstance current = draft.getBaseSnapshot().findInstance(instanceId);
+            if (updateTarget == null && current != null)
                 throw new IllegalStateException("Game instance already exists: " + instanceId);
-            if (updateTarget != null && !targetExists)
+            if (updateTarget != null && current == null)
                 throw new IllegalStateException("Game instance no longer exists: " + instanceId);
+            if (current != updateTarget)
+                throw new IllegalStateException("Game instance has changed: " + instanceId);
 
+            context.checkCancellation();
             draft.put(new GameInstanceManifest(instanceId));
             MultiMCInstancePatch.ResolvedInstance artifact = install(context);
-            context.checkCancellation();
             draft.put(artifact.getManifest());
+            context.commit();
             draft.commit();
             return artifact;
         }

@@ -16,7 +16,6 @@ import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.ModpackExportTask;
-import org.jackhuang.hmcl.modpack.ModpackUpdateTask;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
@@ -26,6 +25,7 @@ import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -50,6 +50,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +62,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -69,6 +71,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /// Tests snapshot-bound behavior of [DefaultGameInstance].
 @NotNullByDefault
@@ -100,7 +103,7 @@ public final class DefaultGameInstanceTest {
         }
     }
 
-    /// Re-exporting an archive preserves its existing POSIX permissions.
+    /// New archives use ordinary file permissions and re-exporting preserves a custom mode.
     @Test
     public void testModpackExportPreservesPermissions(@TempDir Path directory) throws Exception {
         TestRepository repository = new TestRepository(directory);
@@ -108,13 +111,19 @@ public final class DefaultGameInstanceTest {
         writeVersionJar(repository.getLayout().getInstanceJarFile(id), "1.20.1");
         DefaultGameInstance instance = repository.publish(id, new GameInstanceManifest(id));
         Configuration posix = Configuration.unix().toBuilder().setAttributeViews("basic", "posix")
-                .setDefaultAttributeValue("posix:permissions", "rw-------").build();
+                .setDefaultAttributeValue("posix:permissions", "rw-r--r--").build();
         try (FileSystem fileSystem = Jimfs.newFileSystem(posix)) {
-            Path archive = fileSystem.getPath("/export.zip");
+            Path exportDirectory = Files.getFileStore(directory).supportsFileAttributeView(PosixFileAttributeView.class)
+                    ? directory : fileSystem.getPath("/");
+            Path reference = Files.createFile(exportDirectory.resolve("reference.zip"));
+            Path archive = exportDirectory.resolve("new.zip");
             serverExport(instance, archive).run();
-            Files.setPosixFilePermissions(archive, PosixFilePermissions.fromString("rw-r--r--"));
-            serverExport(instance, archive).run();
-            assertEquals("rw-r--r--", PosixFilePermissions.toString(Files.getPosixFilePermissions(archive)));
+            assertEquals(Files.getPosixFilePermissions(reference), Files.getPosixFilePermissions(archive));
+
+            Path existing = Files.createFile(fileSystem.getPath("/existing.zip"));
+            Files.setPosixFilePermissions(existing, PosixFilePermissions.fromString("rw-r-----"));
+            serverExport(instance, existing).run();
+            assertEquals("rw-r-----", PosixFilePermissions.toString(Files.getPosixFilePermissions(existing)));
         }
     }
 
@@ -636,68 +645,45 @@ public final class DefaultGameInstanceTest {
         }
     }
 
-    /// An update that fails with an error restores the original files before reporting the error.
-    @Test
-    public void testModpackUpdateRollsBackFailedChild(@TempDir Path tempDirectory) throws IOException {
-        TestRepository repository = new TestRepository(tempDirectory);
+    /// Replacing an instance just before an update reserves its draft leaves the replacement untouched.
+    @ParameterizedTest
+    @ValueSource(strings = {"Server", "MultiMC"})
+    void staleModpackUpdatePreservesReplacement(String format, @TempDir Path directory) throws Exception {
         GameInstanceID id = new GameInstanceID("instance");
-        Path root = repository.getLayout().getInstanceRoot(id);
-        Files.createDirectories(root);
-        Files.writeString(root.resolve("instance.json"), """
-                {"id":"instance","mainClass":"game.Main","libraries":[]}
-                """);
-        Path marker = root.resolve("marker.txt");
-        Files.writeString(marker, "original");
-        repository.refresh();
+        var repository = new TestRepository(directory) {
+            /// Replaces the instance at the first reservation attempted by the queued update.
+            private boolean replaceOnNextDraft;
 
-        AssertionError failure = new AssertionError("Update failed");
-        Path partial = root.resolve("partial.txt");
-        ModpackUpdateTask update = new ModpackUpdateTask(repository.getInstance(id), Task.runAsync(() -> {
-            Files.writeString(marker, "modified");
-            Files.writeString(partial, "partial");
-            throw failure;
-        }));
-
-        assertSame(failure, assertThrows(AssertionError.class, update::run));
-        assertEquals("original", Files.readString(marker));
-        assertFalse(Files.exists(partial));
-        assertEquals(root, repository.getInstance(id).getInstanceRoot());
-    }
-
-    /// Rollback reports its own failure as suppressed on the original update failure.
-    @Test
-    void testModpackUpdatePreservesFailureOnRollbackError(@TempDir Path directory) throws IOException {
-        TestRepository repository = new TestRepository(directory);
-        GameInstanceID id = new GameInstanceID("instance");
-        repository.save(new GameInstanceManifest(id));
-        IOException failure = new IOException("Update failed");
-        Task<?> update = new ModpackUpdateTask(repository.getInstance(id), Task.failed(failure));
-        try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
-            assertSame(failure, assertThrows(IOException.class, update::run));
-        }
-        assertInstanceOf(IllegalStateException.class, failure.getSuppressed()[0]);
-    }
-
-    /// Cancellation before applying an update leaves the registered instance and its files in place.
-    @Test
-    void testCancelledModpackUpdateSkipsRestore(@TempDir Path directory) throws IOException {
-        TestRepository repository = new TestRepository(directory);
-        GameInstanceID id = new GameInstanceID("instance");
-        repository.save(new GameInstanceManifest(id));
-        DefaultGameInstance instance = repository.getInstance(id);
-        Task<?> child = Task.completed(null);
-        var update = new ModpackUpdateTask(instance, child);
-        Task<?> cancelled = new Task<@Nullable Void>() {
-            /// Uses an already cancelled context for the backup and update.
+            /// Publishes an independent replacement before granting the update's reservation.
             @Override
-            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-                cancel();
-                return update.execute(context);
+            public DefaultGameRepositoryDraft openDraft() {
+                if (replaceOnNextDraft) {
+                    replaceOnNextDraft = false;
+                    assertTrue(removeInstanceFromDisk(id));
+                    assertDoesNotThrow(() -> {
+                        save(new GameInstanceManifest(id).withMainClass("replacement.Main"));
+                        Files.writeString(getInstance(id).getInstanceRoot().resolve("marker.txt"), "replacement");
+                    });
+                }
+                return super.openDraft();
             }
         };
-        assertThrows(CancellationException.class, cancelled::run);
-        assertEquals(Task.State.NEW, child.getState());
-        assertSame(instance, repository.getInstance(id));
+        repository.save(new GameInstanceManifest(id));
+        DefaultGameInstance original = repository.getInstance(id);
+        Path marker = Files.writeString(original.getInstanceRoot().resolve("marker.txt"), "original");
+        Modpack pack = format.equals("MultiMC") ? createMultiMCModpack(createMultiMCConfiguration())
+                : new ServerModpackManifest("Test", "", "1", "", "", List.of(),
+                        List.of(new ServerModpackManifest.Addon("game", "1.21.1"))).toModpack();
+        JsonUtils.writeToJsonFile(repository.getLayout().getModpackConfigurationFile(id),
+                new ModpackConfiguration<>(pack.getManifest(), format, "Test", "1", List.of()));
+        DefaultCacheRepository cache = new DefaultCacheRepository(directory.resolve("cache"));
+        DefaultDependencyManager manager = new DefaultDependencyManager(repository, new TestDownloadProvider(cache), cache);
+        Task<?> update = pack.getManifest().getProvider().createUpdateTask(
+                manager, original, directory.resolve("modpack.zip"), pack, null);
+        repository.replaceOnNextDraft = true;
+        assertThrows(IllegalStateException.class, update::run);
+        assertEquals("replacement.Main", repository.getInstanceManifest(id).mainClass());
+        assertEquals("replacement", Files.readString(marker));
     }
 
     /// A MultiMC task declared as a new installation rejects an existing id without deleting it.
@@ -924,7 +910,7 @@ public final class DefaultGameInstanceTest {
 
     /// Minimal repository implementation for snapshot-bound instance tests.
     @NotNullByDefault
-    private static final class TestRepository extends DefaultGameRepository {
+    private static class TestRepository extends DefaultGameRepository {
 
         /// Creates a test repository rooted at the given directory.
         ///

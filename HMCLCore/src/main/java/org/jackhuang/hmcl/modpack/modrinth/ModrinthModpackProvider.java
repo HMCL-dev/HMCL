@@ -47,7 +47,7 @@ public final class ModrinthModpackProvider implements ModpackProvider {
         if (!(modpack.getManifest() instanceof ModrinthManifest modrinthManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(instance, new ModrinthInstallTask(dependencyManager, zipFile, modpack, modrinthManifest, instance, null, excludedFiles));
+        return new ModrinthInstallTask(dependencyManager, zipFile, modpack, modrinthManifest, instance, null, excludedFiles);
     }
 
     @Override

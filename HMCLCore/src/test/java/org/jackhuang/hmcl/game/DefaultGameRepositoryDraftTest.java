@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.ComponentRemoteVersionList;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.InstallStages;
@@ -27,6 +28,7 @@ import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -296,14 +298,53 @@ public final class DefaultGameRepositoryDraftTest {
         GameInstanceID id = new GameInstanceID("instance");
         DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, "1.21.2");
         Exception failure = completionFailure ? new ModpackCompletionException() : new IOException();
-        assertSame(failure, assertThrows(Exception.class, () ->
-                Modpack.installWithGameBuilder(manager, id, null, keepIncomplete, builder -> {
-                    buildTask(builder.component(GameComponentType.GAME, "1.21.2")).run();
-                    assertTrue(repository.hasInstance(id));
-                    throw failure;
-                })));
+        Task<?> install = installTask(manager, id, null, keepIncomplete, (builder, context) -> {
+            builder.component(GameComponentType.GAME, "1.21.2").build(context);
+            assertTrue(repository.hasInstance(id));
+            throw failure;
+        });
+        assertSame(failure, assertThrows(Exception.class, install::run));
         assertEquals(completionFailure && keepIncomplete, repository.hasInstance(id));
         assertEquals(completionFailure && keepIncomplete, Files.exists(repository.getLayout().getInstanceRoot(id)));
+    }
+
+    /// Failed updates release the instance for retry and retain all files already written.
+    @ParameterizedTest
+    @CsvSource({"false,false", "true,false", "true,true"})
+    void failedModpackUpdateKeepsProgressForRetry(boolean writeOverrides, boolean publishBuild,
+                                                  @TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        String version = "1.21.2";
+        repository.save(new GameInstanceManifest(id).withMainClass("original.Main"));
+        DefaultGameInstance original = repository.getInstance(id);
+        Path marker = Files.writeString(original.getInstanceRoot().resolve("settings.txt"), "original");
+        Path added = original.getInstanceRoot().resolve("added.txt");
+        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, version);
+        IOException failure = new IOException("Update failed");
+        Task<?> update = installTask(manager, id, original, false, (builder, context) -> {
+            assertTrue(Files.notExists(directory.resolve("backup")));
+            if (writeOverrides) {
+                Files.writeString(marker, "updated");
+                Files.writeString(added, "new");
+            }
+            if (publishBuild)
+                builder.component(GameComponentType.GAME, version).build(context);
+            throw failure;
+        });
+        assertSame(failure, assertThrows(IOException.class, update::run));
+        assertEquals(writeOverrides ? "updated" : "original", Files.readString(marker));
+        if (writeOverrides)
+            assertEquals("new", Files.readString(added));
+        else
+            assertTrue(Files.notExists(added));
+        assertTrue(Files.notExists(directory.resolve("backup")));
+        DefaultGameInstance current = repository.getInstance(id);
+        if (publishBuild)
+            assertEquals(version, current.getComponentVersion(GameComponentType.GAME));
+        else
+            assertSame(original, current);
+        manager.newGameBuilder(current).close();
     }
 
     /// Failure after another installation reuses the same id preserves the replacement and its files.
@@ -314,16 +355,52 @@ public final class DefaultGameRepositoryDraftTest {
         DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, "1.21.2");
         IOException failure = new IOException();
         Path marker = repository.getLayout().getInstanceRoot(id).resolve("replacement.txt");
-        assertSame(failure, assertThrows(IOException.class, () ->
-                Modpack.installWithGameBuilder(manager, id, null, false, builder -> {
-                    buildTask(builder.component(GameComponentType.GAME, "1.21.2")).run();
-                    assertTrue(repository.removeInstanceFromDisk(id));
-                    repository.save(new GameInstanceManifest(id).withMainClass("replacement.Main"));
-                    Files.writeString(marker, "replacement");
-                    throw failure;
-                })));
+        Task<?> install = installTask(manager, id, null, false, (builder, context) -> {
+            builder.component(GameComponentType.GAME, "1.21.2").build(context);
+            assertTrue(repository.removeInstanceFromDisk(id));
+            repository.save(new GameInstanceManifest(id).withMainClass("replacement.Main"));
+            Files.writeString(marker, "replacement");
+            throw failure;
+        });
+        assertSame(failure, assertThrows(IOException.class, install::run));
         assertEquals("replacement.Main", repository.getInstanceManifest(id).mainClass());
         assertEquals("replacement", Files.readString(marker));
+    }
+
+    /// Cancellation from the final child's completion rolls back the newly built instance.
+    @Test
+    void cancellationDuringFinalInstallNotificationRollsBack(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        String version = "1.21.2";
+        ServerModpackManifest manifest = new ServerModpackManifest("pack", "", "1", "", "", List.of(),
+                List.of(new ServerModpackManifest.Addon("game", version)));
+        Task<?> install = new ServerModpackRemoteInstallTask(createOfflineGameInstaller(repository, id, version), manifest, id);
+        install.addTaskListener(new TaskListener() {
+            /// Requests cancellation after the final child has published success.
+            @Override
+            public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+                if (task instanceof ServerModpackCompletionTask && failure == null)
+                    install.cancel();
+            }
+        });
+        assertThrows(CancellationException.class, install::run);
+        assertFalse(repository.hasInstance(id));
+        assertFalse(Files.exists(repository.getLayout().getInstanceRoot(id)));
+    }
+
+    /// Runs an installation or update with its task's cancellation boundary.
+    private static Task<@Nullable Void> installTask(
+            DefaultDependencyManager manager, GameInstanceID id, @Nullable DefaultGameInstance updateTarget,
+            boolean keepIncomplete, ExceptionalBiConsumer<DefaultGameBuilder, TaskExecutionContext, Exception> install) {
+        return new Task<>() {
+            /// Runs the installation in its owning task tree.
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                Modpack.installWithGameBuilder(context, manager, id, updateTarget, keepIncomplete, builder -> install.accept(builder, context));
+                return null;
+            }
+        };
     }
 
     /// Creating and cancelling a queued installation leaves the repository available to other writers.

@@ -336,6 +336,29 @@ final class TaskExecutionContextTest {
         assertEquals(42, child.run());
     }
 
+    /// Late cancellation preserves the value or exception returned by a committed task body.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void cancellationAfterCommitPreservesOutcome(boolean fail) throws Exception {
+        IOException failure = new IOException("Commit failed");
+        Task<Integer> task = new Task<>() {
+            /// Requests cancellation after accepting the commit.
+            @Override
+            public Integer execute(TaskExecutionContext context) throws Exception {
+                context.commit();
+                cancel();
+                if (fail)
+                    throw failure;
+                return 42;
+            }
+        };
+        if (fail)
+            assertSame(failure, assertThrows(IOException.class, task::run));
+        else
+            assertEquals(42, task.run());
+        assertTrue(task.isCancellationRequested());
+    }
+
     /// Cancellation retains the interruption, including any cleanup failures attached to it.
     @Test
     void interruptedTaskPreservesCause() {

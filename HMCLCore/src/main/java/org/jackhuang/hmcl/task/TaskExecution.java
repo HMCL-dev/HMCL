@@ -385,6 +385,9 @@ final class TaskExecution {
         /// Executor inherited by callbacks that consume this task's outcome.
         private Executor resultExecutor;
 
+        /// Whether the task body has already made its final cancellation check.
+        private boolean committed;
+
         /// Stage scope opened by the running task or inherited from its parent.
         private final TaskStage.@Nullable Scope stageScope;
 
@@ -494,7 +497,8 @@ final class TaskExecution {
             } else {
                 result = task.execute(this);
             }
-            checkCancellation();
+            if (!committed)
+                checkCancellation();
             return result;
         }
 
@@ -509,6 +513,13 @@ final class TaskExecution {
         @Override
         public boolean isCancelled() {
             return isCancelledOrInterrupted();
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public void commit() {
+            checkCancellation();
+            committed = true;
         }
 
         /// {@inheritDoc}

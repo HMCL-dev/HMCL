@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.java.JavaInstallTask;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.ModpackInstallTask;
-import org.jackhuang.hmcl.modpack.ModpackUpdateTask;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.modpack.curse.CurseInstallTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
@@ -212,8 +211,6 @@ public final class I18n {
             return i18n("modpack.completion");
         } else if (task instanceof ModpackInstallTask) {
             return i18n("modpack.installing");
-        } else if (task instanceof ModpackUpdateTask) {
-            return i18n("modpack.update");
         } else if (task instanceof CurseInstallTask) {
             return i18n("modpack.installing.given", i18n("modpack.type.curse"));
         } else if (task instanceof MultiMCModpackInstallTask) {

@@ -41,6 +41,7 @@ import java.util.Set;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Utilities for reading, installing, and applying modpack-specific game settings.
 @NotNullByDefault
@@ -208,7 +209,7 @@ public final class ModpackHelper {
         }
     }
 
-    /// Reads the installed modpack type before an update is allowed to create its backup.
+    /// Reads the installed pack type used to select an update provider.
     private static String readInstalledModpackType(HMCLGameInstance instance) throws InvalidModpackConfigurationException {
         try {
             @Nullable ModpackConfiguration<?> configuration = instance.readModpackConfiguration();
@@ -220,19 +221,20 @@ public final class ModpackHelper {
         throw new InvalidModpackConfigurationException(instance.getModpackConfigurationFile(), null);
     }
 
-    /// Checks the installed modpack type before backing up and updating a server modpack.
+    /// Checks the installed modpack type before updating a server modpack.
     public static Task<@Nullable Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId) {
         HMCLGameInstance instance = repository.getInstance(instanceId);
         return Task.composeAsync(Schedulers.io(), () -> {
             if (!ServerModpackRemoteInstallTask.MODPACK_TYPE.equals(readInstalledModpackType(instance)))
                 throw new UnsupportedModpackException();
-            return new ModpackUpdateTask(instance, new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instance));
+            return new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instance)
+                    .setName(i18n("modpack.update"));
         }).thenCompose(repository.refreshAsync())
                 .withStage(InstallStages.MODPACK)
                 .withStageHints(MODPACK_STAGE_HINTS);
     }
 
-    /// Checks the selected archive against the installed configuration at execution time, before backup.
+    /// Checks the selected archive against the installed configuration at execution time.
     /// The optional-file selection is captured when the task is created.
     public static Task<@Nullable Void> getUpdateTask(
             HMCLGameRepository repository,
@@ -247,7 +249,8 @@ public final class ModpackHelper {
             @Nullable ModpackProvider provider = getProviderByType(type);
             if (provider == null)
                 throw new UnsupportedModpackException();
-            Task<?> update = provider.createUpdateTask(repository.getDependency(), instance, zipFile, modpack, selection);
+            Task<?> update = provider.createUpdateTask(repository.getDependency(), instance, zipFile, modpack, selection)
+                    .setName(i18n("modpack.update"));
             if (modpack.getManifest() instanceof MultiMCInstanceConfiguration manifest)
                 update = update.thenCompose(createMultiMCPostUpdateTask(repository, manifest, instanceId));
             return update.thenCompose(repository.refreshAsync());
