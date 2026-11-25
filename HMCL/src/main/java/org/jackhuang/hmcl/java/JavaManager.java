@@ -15,6 +15,7 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -39,6 +40,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -241,34 +243,29 @@ public final class JavaManager {
                 });
     }
 
-    public static Task<Void> getUninstallJavaTask(JavaRuntime java) {
+    /// Uninstalls a managed runtime and removes it from the JavaFX runtime list after deletion.
+    public static Task<@Nullable Void> getUninstallJavaTask(JavaRuntime java) {
         assert java.isManaged();
 
-        Path platformRoot;
-        try {
-            platformRoot = REPOSITORY.getPlatformRoot(java.getPlatform()).toRealPath();
-        } catch (Throwable ignored) {
-            return Task.completed(null);
-        }
+        return new Task<@Nullable Void>() {
+            /// Runs filesystem operations on an I/O worker.
+            @Override
+            protected Executor getExecutor() {
+                return Schedulers.io();
+            }
 
-        if (!java.getBinary().startsWith(platformRoot))
-            return Task.completed(null);
-
-        Path relativized = platformRoot.relativize(java.getBinary());
-        if (relativized.getNameCount() > 1) {
-            FXUtils.runInFX(() -> {
-                try {
-                    removeJava(java);
-                } catch (InterruptedException e) {
-                    throw new AssertionError("Unreachable code", e);
+            /// Publishes a successful deletion even if cancellation was requested during it.
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                if (REPOSITORY.uninstallJava(java)) {
+                    context.call(Schedulers.javafx(), () -> {
+                        removeJava(java);
+                        return null;
+                    });
                 }
-            });
-
-            String name = relativized.getName(0).toString();
-            return REPOSITORY.getUninstallJavaTask(java.getPlatform(), name);
-        } else {
-            return Task.completed(null);
-        }
+                return null;
+            }
+        }.setSignificance(TaskSignificance.MODERATE);
     }
 
     @FXThread

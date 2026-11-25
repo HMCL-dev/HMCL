@@ -22,14 +22,24 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
 
     public static final String API_ROOT = System.getProperty("hmcl.discoapi.override", "https://api.foojay.io/disco/v3.0");
 
+    /// Supplies candidate URLs for the package query.
+    private final DownloadProvider downloadProvider;
+    /// Distribution whose packages are requested.
     private final DiscoJavaDistribution distribution;
-    private final String archiveType;
-    private final Task<String> fetchPackagesTask;
+    /// Platform for which packages must be available.
+    private final NativePlatform platform;
 
+    /// Creates a package query for the selected distribution and platform.
     public DiscoFetchJavaListTask(DownloadProvider downloadProvider, DiscoJavaDistribution distribution, NativePlatform platform) {
-        this.distribution = distribution;
-        this.archiveType = platform.os() == OperatingSystem.WINDOWS ? "zip" : "tar.gz";
+        this.downloadProvider = Objects.requireNonNull(downloadProvider);
+        this.distribution = Objects.requireNonNull(distribution);
+        this.platform = Objects.requireNonNull(platform);
+    }
 
+    /// Returns the latest matching distribution version per JDK major version and package type.
+    @Override
+    public EnumMap<JavaPackageType, TreeMap<Integer, DiscoJavaRemoteVersion>> execute(TaskExecutionContext context) throws Exception {
+        String archiveType = platform.os() == OperatingSystem.WINDOWS ? "zip" : "tar.gz";
         HashMap<String, String> params = new HashMap<>();
         params.put("distribution", distribution.getApiParameter());
         params.put("operating_system", platform.os().getCheckedName());
@@ -39,13 +49,8 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
         if (platform.os() == OperatingSystem.LINUX)
             params.put("lib_c_type", "glibc");
 
-        this.fetchPackagesTask = new GetTask(downloadProvider.getDownloadCandidates(NetworkUtils.withQuery(API_ROOT + "/packages", params)));
-    }
-
-    /// Returns the latest matching distribution version per JDK major version and package type.
-    @Override
-    public EnumMap<JavaPackageType, TreeMap<Integer, DiscoJavaRemoteVersion>> execute(TaskExecutionContext context) throws Exception {
-        String json = context.run(fetchPackagesTask);
+        String url = NetworkUtils.withQuery(API_ROOT + "/packages", params);
+        String json = context.run(new GetTask(downloadProvider.getDownloadCandidates(url)));
         List<DiscoJavaRemoteVersion> list = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoJavaRemoteVersion.class)).getResult();
         EnumMap<JavaPackageType, TreeMap<Integer, DiscoJavaRemoteVersion>> result = new EnumMap<>(JavaPackageType.class);
 

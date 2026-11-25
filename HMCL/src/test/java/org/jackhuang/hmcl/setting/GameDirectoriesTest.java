@@ -16,6 +16,9 @@ import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameRepositoryDraft;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.ModpackHelper;
+import org.jackhuang.hmcl.modpack.UnsupportedModpackException;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
@@ -708,6 +711,34 @@ public final class GameDirectoriesTest {
             assertEquals(instance.getInstanceRoot().resolve("icon.png"), instance.getIconFile());
             instance.deleteIconFile();
             assertNull(instance.getIconFile());
+        }
+    }
+
+    /// A queued update reads its inputs at execution time and rejects invalid inputs before making a backup.
+    @Test
+    public void validatesModpackUpdateBeforeBackup(@TempDir Path tempDirectory) throws Exception {
+        GameDirectory directory = new GameDirectory(GameDirectoryID.generate(), LocalizedText.plain("Dev"),
+                PortablePath.of(tempDirectory.toString()));
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.getGameDirectories().add(directory);
+        try (GameDirectoryEnvironment ignored = new GameDirectoryEnvironment(localDirectories, new GameDirectories())) {
+            HMCLGameRepository repository = new HMCLGameRepository(directory);
+            GameInstanceID id = new GameInstanceID("test");
+            repository.saveAsync(new GameInstanceManifest(id)).run();
+            HMCLGameInstance instance = repository.getInstance(id);
+            Path archive = Files.createFile(tempDirectory.resolve("update.zip"));
+
+            Task<?> missingConfig = ModpackHelper.getUpdateTask(repository, archive, id, null);
+            Task<?> invalidArchive = ModpackHelper.getUpdateTask(repository, archive, id, null);
+            assertThrows(ModpackHelper.InvalidModpackConfigurationException.class, missingConfig::run);
+            Files.writeString(instance.getModpackConfigurationFile(), """
+                    {"type":"HMCL","manifest":{}}
+                    """);
+            assertThrows(UnsupportedModpackException.class, invalidArchive::run);
+
+            assertFalse(Files.exists(tempDirectory.resolve("backup")));
+            assertTrue(Files.exists(instance.getModpackConfigurationFile()));
+            assertSame(instance, repository.getInstance(id));
         }
     }
 

@@ -52,11 +52,11 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
     /// The mod manager associated with [#instance].
     private final ModManager modManager;
 
-    /// The manifest supplied by the caller or loaded from disk, if available.
-    private @Nullable CurseManifest manifest;
+    /// The supplied manifest, or `null` to load the installed manifest during execution.
+    private final @Nullable CurseManifest manifest;
 
     /// Keys of optional files the user chose not to install; `null` means install all.
-    private @Nullable Set<String> excludedFiles;
+    private final @Nullable @Unmodifiable Set<String> excludedFiles;
 
     /// Creates a task that completes the installed CurseForge modpack.
     ///
@@ -85,23 +85,6 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
         this.manifest = manifest;
         this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
 
-        if (manifest == null)
-            try {
-                Path root = instance.getInstanceRoot();
-                Path manifestFile = root.resolve("manifest.json");
-                if (Files.exists(manifestFile))
-                    this.manifest = JsonUtils.fromJsonFile(manifestFile, CurseManifest.class);
-                Path excludedFile = root.resolve("excluded.json");
-                if (Files.exists(excludedFile)) {
-                    this.excludedFiles = Set.copyOf(Objects.requireNonNull(
-                            JsonUtils.fromJsonFile(excludedFile, JsonUtils.listTypeOf(String.class))));
-                } else {
-                    this.excludedFiles = null;
-                }
-            } catch (Exception e) {
-                LOG.warning("Unable to read CurseForge modpack manifest.json", e);
-            }
-
         setSignificance(TaskSignificance.MODERATE);
     }
 
@@ -115,9 +98,31 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         @Nullable CurseManifest manifest = this.manifest;
-        if (manifest == null)
-            return null;
+        @Nullable @Unmodifiable Set<String> excludedFiles = this.excludedFiles;
+        if (manifest == null) {
+            try {
+                Path root = instance.getInstanceRoot();
+                Path manifestFile = root.resolve("manifest.json");
+                if (Files.exists(manifestFile))
+                    manifest = JsonUtils.fromJsonFile(manifestFile, CurseManifest.class);
+                Path excludedFile = root.resolve("excluded.json");
+                if (Files.exists(excludedFile)) {
+                    excludedFiles = Set.copyOf(Objects.requireNonNull(
+                            JsonUtils.fromJsonFile(excludedFile, JsonUtils.listTypeOf(String.class))));
+                } else {
+                    excludedFiles = null;
+                }
+            } catch (Exception e) {
+                LOG.warning("Unable to read CurseForge modpack manifest.json", e);
+            }
+        }
+        if (manifest != null)
+            complete(context, manifest, excludedFiles);
+        return null;
+    }
 
+    /// Resolves the selected files and records the resulting manifest in the instance.
+    private void complete(TaskExecutionContext context, CurseManifest manifest, @Nullable @Unmodifiable Set<String> excludedFiles) throws Exception {
         AtomicBoolean notFound = new AtomicBoolean();
         AtomicBoolean allNameKnown = new AtomicBoolean(true);
         TaskProgress progress = context.progress();
@@ -205,7 +210,6 @@ public final class CurseCompletionTask extends Task<@Nullable Void> {
             throw new ModpackCompletionException(new FileNotFoundException());
         if (!allNameKnown.get())
             throw new ModpackCompletionException();
-        return null;
     }
 
     /// Returns the destination for a missing CurseForge file based on its project class.

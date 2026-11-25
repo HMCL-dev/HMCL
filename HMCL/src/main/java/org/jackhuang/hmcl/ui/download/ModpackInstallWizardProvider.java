@@ -17,10 +17,11 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Set;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -66,21 +67,24 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         hasSource = settings.containsKey(LocalModpackPage.MODPACK_FILE) || settings.containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
     }
 
-    private Task<?> finishModpackInstallingAsync(SettingsMap settings) {
-        Path selected = settings.get(LocalModpackPage.MODPACK_FILE);
-        ServerModpackManifest serverModpackManifest = settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
-        Modpack modpack = settings.get(LocalModpackPage.MODPACK_MANIFEST);
-        String name = settings.get(LocalModpackPage.MODPACK_NAME);
-        String iconUrl = settings.get(LocalModpackPage.MODPACK_ICON_URL);
+    /// Captures the wizard selections for installation or update.
+    private @Nullable Task<?> finishModpackInstallingAsync(SettingsMap settings) {
+        @Nullable Path selected = settings.get(LocalModpackPage.MODPACK_FILE);
+        @Nullable ServerModpackManifest serverModpackManifest = settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
+        @Nullable Modpack modpack = settings.get(LocalModpackPage.MODPACK_MANIFEST);
+        @Nullable String name = settings.get(LocalModpackPage.MODPACK_NAME);
+        @Nullable String iconUrl = settings.get(LocalModpackPage.MODPACK_ICON_URL);
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
-        var excludedFiles = settings.get(LocalModpackPage.MODPACK_EXCLUDED_FILES);
+        @Nullable Set<String> excludedFiles = settings.get(LocalModpackPage.MODPACK_EXCLUDED_FILES);
 
+        if (name == null) return null;
         if (isManuallyCreated) {
+            if (selected == null) return null;
             settings.put(WAIT_FOR_CANCELLATION, true);
             return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name);
         }
 
-        if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
+        if ((selected == null && serverModpackManifest == null) || modpack == null) return null;
 
         GameInstanceID instanceId = new GameInstanceID(name);
 
@@ -89,20 +93,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
                 return null;
             }
-            try {
-                if (serverModpackManifest != null) {
-                    return ModpackHelper.getUpdateTask(repository, serverModpackManifest, instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)));
-                } else {
-                    return ModpackHelper.getUpdateTask(repository, selected, instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)), excludedFiles);
-                }
-            } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
-                Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
-            } catch (MismatchedModpackTypeException e) {
-                Controllers.dialog(i18n("modpack.mismatched_type", e.getRequired(), e.getFound()), i18n("message.error"), MessageType.ERROR);
-            } catch (IOException e) {
-                Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageType.ERROR);
-            }
-            return null;
+            if (serverModpackManifest != null)
+                return ModpackHelper.getUpdateTask(repository, serverModpackManifest, instanceId);
+            return ModpackHelper.getUpdateTask(repository, selected, instanceId, excludedFiles);
         } else {
             if (serverModpackManifest != null) {
                 return ModpackHelper.getInstallTask(repository, serverModpackManifest, instanceId, modpack)
@@ -114,12 +107,19 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         }
     }
 
+    /// Creates the selected operation and installs its localized result messages.
     @Override
-    public Object finish(SettingsMap settings) {
+    public @Nullable Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.modpack.installation", settings.get(LocalModpackPage.MODPACK_NAME)));
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (ignored, exception, next) -> {
-            if (exception instanceof ModpackCompletionException) {
+            if (exception instanceof UnsupportedModpackException || exception instanceof ManuallyCreatedModpackException) {
+                Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR, next);
+            } else if (exception instanceof MismatchedModpackTypeException mismatch) {
+                Controllers.dialog(i18n("modpack.mismatched_type", mismatch.getRequired(), mismatch.getFound()), i18n("message.error"), MessageType.ERROR, next);
+            } else if (exception instanceof ModpackHelper.InvalidModpackConfigurationException) {
+                Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageType.ERROR, next);
+            } else if (exception instanceof ModpackCompletionException) {
                 if (exception.getCause() instanceof FileNotFoundException) {
                     Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
                 } else {

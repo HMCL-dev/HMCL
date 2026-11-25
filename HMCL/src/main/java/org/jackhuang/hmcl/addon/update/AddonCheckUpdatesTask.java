@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.Pair;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,39 +28,18 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
     /// The stage shared by add-on update checks and their progress dialogs.
     public static final TaskStage STAGE = new TaskStage("update.checking");
 
-    /// One update check per installed add-on.
-    private final List<Task<@Nullable Pair<AddonUpdate, @Nullable AddonUpdate>>> checks;
+    /// Provider used for remote version queries.
+    private final DownloadProvider downloadProvider;
+    /// Game version selected for the checks.
+    private final String gameVersion;
+    /// Add-ons selected when the task was created, in input order.
+    private final @Unmodifiable List<LocalAddonFile<?>> addons;
 
+    /// Captures the add-ons to check for the given game version.
     public AddonCheckUpdatesTask(DownloadProvider downloadProvider, String gameVersion, Collection<? extends LocalAddonFile<?>> addons) {
-        checks = addons.stream().map(addon ->
-                Task.supplyAsync(Schedulers.io(), () -> {
-                    AddonUpdate candidate = null;
-                    AddonUpdate candidateRelease = null;
-                    for (RemoteAddon.Source source : RemoteAddon.Source.values()) {
-                        AddonUpdate update = null;
-                        AddonUpdate updateRelease = null;
-                        try {
-                            var u = addon.checkUpdates(downloadProvider, gameVersion, source);
-                            if (u != null) {
-                                update = u.key();
-                                updateRelease = u.value();
-                            }
-                        } catch (IOException e) {
-                            LOG.warning(String.format("Cannot check update for addon %s.", addon.getFileName()), e);
-                        }
-                        if (update == null) continue;
-                        if (candidate == null || candidate.targetVersion().datePublished().isBefore(update.targetVersion().datePublished()))
-                            candidate = update;
-
-                        if (updateRelease == null) continue;
-                        if (candidateRelease == null || candidateRelease.targetVersion().datePublished().isBefore(updateRelease.targetVersion().datePublished()))
-                            candidateRelease = updateRelease;
-                    }
-
-                    if (candidate == null) return null; // If there's no candidate for all channels, then no candidate for release channel
-                    return Pair.pair(candidate, candidateRelease);
-                }).setName(addon.getFileName()).setSignificance(TaskSignificance.MAJOR).withCounter()
-        ).toList();
+        this.downloadProvider = downloadProvider;
+        this.gameVersion = gameVersion;
+        this.addons = List.copyOf(addons);
     }
 
     /// Returns the stage for addon update checks.
@@ -71,6 +51,12 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
     /// Collects available updates from all checks that completed successfully.
     @Override
     public AddonUpdates execute(TaskExecutionContext context) throws Exception {
+        List<Task<@Nullable Pair<AddonUpdate, @Nullable AddonUpdate>>> checks = new ArrayList<>(addons.size());
+        for (LocalAddonFile<?> addon : addons) {
+            context.checkCancellation();
+            checks.add(Task.supplyAsync(Schedulers.io(), () -> checkUpdates(addon))
+                    .setName(addon.getFileName()).setSignificance(TaskSignificance.MAJOR).withCounter());
+        }
         context.addStageItems(checks.size());
         try {
             context.runAll(checks, FetchTask.getDownloadExecutorConcurrency());
@@ -89,5 +75,28 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
                     if (pair.value() != null) releaseUpdates.add(pair.value());
                 });
         return new AddonUpdates(commonUpdates, releaseUpdates);
+    }
+
+    /// Finds the newest available update and the newest release across the add-on sources.
+    private @Nullable Pair<AddonUpdate, @Nullable AddonUpdate> checkUpdates(LocalAddonFile<?> addon) {
+        @Nullable AddonUpdate candidate = null;
+        @Nullable AddonUpdate candidateRelease = null;
+        for (RemoteAddon.Source source : RemoteAddon.Source.values()) {
+            @Nullable Pair<AddonUpdate, @Nullable AddonUpdate> versions;
+            try {
+                versions = addon.checkUpdates(downloadProvider, gameVersion, source);
+            } catch (IOException e) {
+                LOG.warning(String.format("Cannot check update for addon %s.", addon.getFileName()), e);
+                continue;
+            }
+            if (versions == null || versions.key() == null) continue;
+            AddonUpdate update = versions.key();
+            if (candidate == null || candidate.targetVersion().datePublished().isBefore(update.targetVersion().datePublished()))
+                candidate = update;
+            @Nullable AddonUpdate release = versions.value();
+            if (release != null && (candidateRelease == null || candidateRelease.targetVersion().datePublished().isBefore(release.targetVersion().datePublished())))
+                candidateRelease = release;
+        }
+        return candidate == null ? null : Pair.pair(candidate, candidateRelease);
     }
 }

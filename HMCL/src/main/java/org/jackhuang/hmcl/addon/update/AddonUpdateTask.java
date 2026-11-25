@@ -14,30 +14,58 @@ import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AddonUpdateTask extends Task<@Nullable Void> {
-    /// Independent per-add-on update tasks.
-    private final Collection<Task<?>> updates = new ArrayList<>();
+    /// Provider used to download the selected versions.
+    private final DownloadProvider downloadProvider;
+    /// Destination for updated add-ons.
+    private final Path addonDirectory;
+    /// Versions and enabled states captured when the user requested the update.
+    private final @Unmodifiable List<SelectedUpdate> addons;
+    /// Add-ons whose updates failed.
     private final List<LocalAddonFile<?>> failedAddons = new ArrayList<>();
 
+    /// An update retains the original disabled state when replacing or restoring its file.
+    private record SelectedUpdate(AddonUpdate update, boolean disabled) {}
+
+    /// Captures the updates selected for the given add-on directory.
     public AddonUpdateTask(DownloadProvider downloadProvider, Path addonDirectory, List<AddonUpdate> addons) {
-        for (AddonUpdate addon : addons) {
-            LocalAddonFile<?> local = addon.localAddonFile();
-            RemoteAddon.Version remote = addon.targetVersion();
-            boolean isDisabled = local.isDisabled();
+        this.downloadProvider = downloadProvider;
+        this.addonDirectory = addonDirectory;
+        this.addons = addons.stream().map(addon -> new SelectedUpdate(addon, addon.localAddonFile().isDisabled())).toList();
+    }
+
+    /// Returns the add-ons whose updates failed.
+    public List<LocalAddonFile<?>> getFailedAddons() {
+        return failedAddons;
+    }
+
+    /// Returns the stage for addon updates.
+    @Override
+    public TaskStage getStage() {
+        return new TaskStage("addon.check_update.confirm");
+    }
+
+    /// Downloads the selected updates and waits for each addon's cleanup to finish.
+    @Override
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        List<Task<?>> updates = new ArrayList<>(addons.size());
+        for (SelectedUpdate selected : addons) {
+            context.checkCancellation();
+            LocalAddonFile<?> local = selected.update().localAddonFile();
+            RemoteAddon.Version remote = selected.update().targetVersion();
             String fileName = remote.file().filename();
-            if (isDisabled)
-                fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
-            String newFileName = fileName;
+            String newFileName = selected.disabled()
+                    ? StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION) : fileName;
             Path targetFile = addonDirectory.resolve(newFileName);
 
             updates.add(Task
@@ -56,7 +84,7 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
                                         if (exception != null) {
                                             // restore state if failed
                                             local.setOld(false);
-                                            if (isDisabled)
+                                            if (selected.disabled())
                                                 local.markDisabled();
                                         } else {
                                             local.onUpdated(newFileName);
@@ -76,21 +104,6 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
                         }
                     }).withCounter());
         }
-    }
-
-    public List<LocalAddonFile<?>> getFailedAddons() {
-        return failedAddons;
-    }
-
-    /// Returns the stage for addon updates.
-    @Override
-    public TaskStage getStage() {
-        return new TaskStage("addon.check_update.confirm");
-    }
-
-    /// Downloads the selected updates and waits for each addon's cleanup to finish.
-    @Override
-    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         context.addStageItems(updates.size());
         context.runAll(updates, FetchTask.getDownloadExecutorConcurrency());
         return null;

@@ -18,6 +18,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,11 +44,11 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
     /// The mod manager associated with [#instance].
     private final ModManager modManager;
 
-    /// The manifest supplied by the caller or loaded from disk, if available.
-    private @Nullable ModrinthManifest manifest;
+    /// The supplied manifest, or `null` to load the installed manifest during execution.
+    private final @Nullable ModrinthManifest manifest;
 
     /// Keys of optional files the user chose not to install; `null` means install all.
-    private @Nullable Set<String> excludedFiles;
+    private final @Nullable @Unmodifiable Set<String> excludedFiles;
 
     /// Creates a task that completes the installed Modrinth modpack.
     ///
@@ -76,23 +77,6 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
         this.manifest = manifest;
         this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
 
-        if (manifest == null)
-            try {
-                Path root = instance.getInstanceRoot();
-                Path manifestFile = root.resolve("modrinth.index.json");
-                if (Files.exists(manifestFile))
-                    this.manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
-                Path excludedFile = root.resolve("excluded.json");
-                if (Files.exists(excludedFile)) {
-                    this.excludedFiles = Set.copyOf(Objects.requireNonNull(
-                            JsonUtils.fromJsonFile(excludedFile, JsonUtils.listTypeOf(String.class))));
-                } else {
-                    this.excludedFiles = null;
-                }
-            } catch (Exception e) {
-                LOG.warning("Unable to read Modrinth modpack manifest.json", e);
-            }
-
         setSignificance(TaskSignificance.MODERATE);
     }
 
@@ -105,6 +89,25 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
     /// Resolves missing files and waits for all requested downloads to finish.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        @Nullable ModrinthManifest manifest = this.manifest;
+        @Nullable @Unmodifiable Set<String> excludedFiles = this.excludedFiles;
+        if (manifest == null) {
+            try {
+                Path root = instance.getInstanceRoot();
+                Path manifestFile = root.resolve("modrinth.index.json");
+                if (Files.exists(manifestFile))
+                    manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
+                Path excludedFile = root.resolve("excluded.json");
+                if (Files.exists(excludedFile)) {
+                    excludedFiles = Set.copyOf(Objects.requireNonNull(
+                            JsonUtils.fromJsonFile(excludedFile, JsonUtils.listTypeOf(String.class))));
+                } else {
+                    excludedFiles = null;
+                }
+            } catch (Exception e) {
+                LOG.warning("Unable to read Modrinth modpack manifest.json", e);
+            }
+        }
         if (manifest == null)
             return null;
 

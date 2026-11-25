@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
+import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
@@ -139,6 +140,27 @@ public final class DefaultGameInstanceTest {
 
         assertFalse(Files.exists(transformerFile));
         assertEquals(repaired, LaunchManifestNormalizer.repairForLaunch(repaired));
+    }
+
+    /// Local installers check the client JAR available when installation starts.
+    @Test
+    public void testLocalInstallerChecksVersionAtExecution(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultCacheRepository cache = new DefaultCacheRepository(tempDirectory.resolve("cache"));
+        DefaultDependencyManager manager = new DefaultDependencyManager(repository, new TestDownloadProvider(cache), cache);
+        GameInstanceID id = new GameInstanceID("instance");
+        TestGameInstance instance = repository.publish(id, new GameInstanceManifest(id).withMainClass(GameComponentAnalyzer.VANILLA_MAIN));
+        Path installer = tempDirectory.resolve("installer.jar");
+        try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(installer))) {
+            writeZipEntry(output, "install_profile.json", """
+                    {"spec": 1, "minecraft": "1.20.1", "json": "version.json", "version": "forge-test"}
+                    """);
+        }
+
+        Task<?> install = manager.installComponentLocalAsync(instance, installer);
+        writeVersionJar(instance.getInstanceJarFile(), "1.21.1");
+        VersionMismatchException failure = assertThrows(VersionMismatchException.class, install::run);
+        assertEquals("1.21.1", failure.getActual());
     }
 
     /// Repairs a missing patch-installed OptiFine library using the patch's self version.

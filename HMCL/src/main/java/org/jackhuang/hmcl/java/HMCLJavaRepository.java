@@ -184,25 +184,41 @@ public final class HMCLJavaRepository implements JavaRepository {
         });
     }
 
-    @Override
-    public Task<Void> getUninstallJavaTask(NativePlatform platform, String name) {
-        return Task.runAsync(() -> {
-            Files.deleteIfExists(getManifestFile(platform, name));
-            FileUtils.deleteDirectory(getJavaDir(platform, name));
-        });
+    /// Deletes the installed files and their manifest.
+    private void uninstallJava(NativePlatform platform, String name) throws IOException {
+        FileUtils.deleteDirectory(getJavaDir(platform, name));
+        Files.deleteIfExists(getManifestFile(platform, name));
     }
 
-    @Override
-    public Task<Void> getUninstallJavaTask(JavaRuntime java) {
-        return Task.runAsync(() -> {
-            Path root = getPlatformRoot(java.getPlatform());
-            Path relativized = root.relativize(java.getBinary());
+    /// Removes the runtime if its executable belongs to an installation in this repository.
+    boolean uninstallJava(JavaRuntime java) throws IOException {
+        NativePlatform platform = java.getPlatform();
+        Path root;
+        try {
+            root = getPlatformRoot(platform).toRealPath();
+        } catch (IOException | SecurityException ignored) {
+            return false;
+        }
+        Path binary = java.getBinary().normalize();
+        if (!binary.startsWith(root))
+            return false;
+        Path relative = root.relativize(binary);
+        if (relative.getNameCount() < 2)
+            return false;
 
-            if (relativized.getNameCount() > 1) {
-                String name = relativized.getName(0).toString();
-                Files.deleteIfExists(getManifestFile(java.getPlatform(), name));
-                FileUtils.deleteDirectory(getJavaDir(java.getPlatform(), name));
-            }
-        });
+        uninstallJava(platform, relative.getName(0).toString());
+        return true;
+    }
+
+    /// Removes the named installation when the task runs.
+    @Override
+    public Task<@Nullable Void> getUninstallJavaTask(NativePlatform platform, String name) {
+        return Task.runAsync(() -> uninstallJava(platform, name));
+    }
+
+    /// Removes a runtime belonging to this repository when the task runs.
+    @Override
+    public Task<@Nullable Void> getUninstallJavaTask(JavaRuntime java) {
+        return Task.runAsync(() -> uninstallJava(java));
     }
 }

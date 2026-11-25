@@ -46,8 +46,8 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
     /// The fixed configuration-file path for [#instance].
     private final Path configurationFile;
 
-    /// The installed configuration supplied by the caller or loaded from disk.
-    private @Nullable ModpackConfiguration<ServerModpackManifest> manifest;
+    /// The supplied configuration, or `null` to load the installed configuration during execution.
+    private final @Nullable ModpackConfiguration<ServerModpackManifest> manifest;
 
     /// Creates a task that loads the installed configuration from disk.
     ///
@@ -70,18 +70,7 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
         this.dependencyManager = dependencyManager;
         this.instance = instance;
         this.configurationFile = instance.getModpackConfigurationFile();
-
-        if (manifest == null) {
-            try {
-                if (Files.exists(configurationFile)) {
-                    this.manifest = JsonUtils.fromJsonFile(configurationFile, ModpackConfiguration.typeOf(ServerModpackManifest.class));
-                }
-            } catch (Exception e) {
-                LOG.warning("Unable to read Server modpack manifest.json", e);
-            }
-        } else {
-            this.manifest = manifest;
-        }
+        this.manifest = manifest;
 
         setSignificance(TaskSignificance.MODERATE);
     }
@@ -100,6 +89,14 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         @Nullable ModpackConfiguration<ServerModpackManifest> installed = manifest;
+        if (installed == null) {
+            try {
+                if (Files.exists(configurationFile))
+                    installed = JsonUtils.fromJsonFile(configurationFile, ModpackConfiguration.typeOf(ServerModpackManifest.class));
+            } catch (Exception e) {
+                LOG.warning("Unable to read Server modpack manifest.json", e);
+            }
+        }
         if (installed == null || StringUtils.isBlank(installed.getManifest().getFileApi())) return null;
 
         String json = context.run(new GetTask(WebURL.parse(installed.getManifest().getFileApi() + "/server-manifest.json")));

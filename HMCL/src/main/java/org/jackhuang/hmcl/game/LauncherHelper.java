@@ -160,16 +160,17 @@ public final class LauncherHelper {
 
         HMCLGameRepository repository = repository();
         DefaultDependencyManager dependencyManager = repository.getDependency();
-        boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
         CountDownLatch launchingLatch = new CountDownLatch(1);
         CompletableFuture<Boolean> launchSucceeded = new CompletableFuture<>();
         List<String> javaAgents = new ArrayList<>(0);
         List<String> javaArguments = new ArrayList<>(0);
 
-        // Resolve already deduplicated libraries; apply loader-specific argument repairs for this launch.
-        context.launchManifest = LaunchManifestNormalizer.repairForLaunch(gameInstance.getResolvedManifest());
-
-        Task<?> task = checkGameState(gameInstance, setting, context.launchManifest)
+        JavaVersionType javaVersionType = setting.getInheritable(GameSettings::javaTypeProperty);
+        boolean skipJavaCheck = setting.getInheritable(GameSettings::notCheckJVMProperty);
+        Task<?> task = Task.composeAsync(() -> {
+                    context.launchManifest = LaunchManifestNormalizer.repairForLaunch(gameInstance.getResolvedManifest());
+                    return checkGameState(context.launchManifest, javaVersionType, skipJavaCheck);
+                }).withStage(JAVA_STAGE)
                 .thenComposeOptionalAsync(java -> {
                     context.javaRuntime = Objects.requireNonNull(java);
                     context.javaExecutable = java.getBinary();
@@ -187,7 +188,7 @@ public final class LauncherHelper {
                     if (setting.getInheritable(GameSettings::notCheckGameProperty))
                         return null;
                     return Task.allOf(
-                            dependencyManager.checkGameCompletionAsync(gameInstance, context.launchManifest, integrityCheck),
+                            Task.composeAsync(() -> checkGameFiles(dependencyManager, context.launchManifest, java, javaAgents)),
                             Task.composeOptionalAsync(() -> {
                                 try {
                                     @Nullable ModpackConfiguration<?> configuration =
@@ -200,31 +201,6 @@ public final class LauncherHelper {
                                             dependencyManager,
                                             gameInstance);
                                 } catch (IOException e) {
-                                    return null;
-                                }
-                            }),
-                            Task.composeOptionalAsync(() -> {
-                                if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS
-                                        || !(setting.getRenderer(gameInstance.getVersion()) instanceof Renderer.Driver renderer)
-                                        || renderer.mesaDriverName() == null)
-                                    return null;
-
-                                Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, SystemInfo.SYSTEM_VERSION);
-                                if (lib == null)
-                                    return null;
-                                Path file = gameInstance.getLayout().getLibraryFile(gameInstance.getId(), lib);
-                                if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
-                                    LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
-                                    return null;
-                                }
-
-                                String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.mesaDriverName();
-
-                                if (GameLibrariesTask.shouldDownloadLibrary(repository, context.launchManifest, lib, integrityCheck)) {
-                                    return new LibraryDownloadTask(dependencyManager, file, lib)
-                                            .thenRunAsync(() -> javaAgents.add(agent));
-                                } else {
-                                    javaAgents.add(agent);
                                     return null;
                                 }
                             })
@@ -450,10 +426,38 @@ public final class LauncherHelper {
         launchingStepsPane.startTask();
     }
 
+    /// Consumes the abnormal-launch marker when checking game files and the optional Windows Mesa loader.
+    private Task<?> checkGameFiles(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, JavaRuntime java, List<String> javaAgents) {
+        boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
+        Task<?> gameFiles = dependencyManager.checkGameCompletionAsync(gameInstance, manifest, integrityCheck);
+        if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS)
+            return gameFiles;
+
+        return Task.allOf(gameFiles, Task.composeOptionalAsync(() -> {
+            if (!(setting.getRenderer(gameInstance.getVersion()) instanceof Renderer.Driver renderer) || renderer.mesaDriverName() == null)
+                return null;
+            @Nullable Library library = NativePatcher.getWindowsMesaLoader(java, renderer, SystemInfo.SYSTEM_VERSION);
+            if (library == null)
+                return null;
+            Path file = gameInstance.getLayout().getLibraryFile(gameInstance.getId(), library);
+            if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
+                LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
+                return null;
+            }
+            String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.mesaDriverName();
+            if (GameLibrariesTask.shouldDownloadLibrary(dependencyManager.getGameRepository(), manifest, library, integrityCheck)) {
+                return new LibraryDownloadTask(dependencyManager, file, library)
+                        .thenRunAsync(() -> javaAgents.add(agent));
+            }
+            javaAgents.add(agent);
+            return null;
+        }));
+    }
+
     /// Checks launch requirements, allowing required Java downloads to share this launch's execution slot.
-    private Task<JavaRuntime> checkGameState(HMCLGameInstance gameInstance, GameSettings.Effective setting, GameInstanceManifest manifest) {
-        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, gameInstance.getVersion());
+    private Task<JavaRuntime> checkGameState(GameInstanceManifest manifest, JavaVersionType javaVersionType, boolean skipJavaCheck) {
         GameVersionNumber gameVersion = gameInstance.getVersion();
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, gameVersion);
 
         Task<JavaRuntime> getJavaTask = Task.supplyAsync(() -> {
             try {
@@ -462,12 +466,10 @@ public final class LauncherHelper {
                 throw new CancellationException();
             }
         });
-        Task<JavaRuntime> task;
-        JavaVersionType javaVersionType = setting.getInheritable(GameSettings::javaTypeProperty);
-        if (setting.getInheritable(GameSettings::notCheckJVMProperty)) {
-            task = getJavaTask.thenApplyAsync(java -> Lang.requireNonNullElse(java, JavaRuntime.getDefault()));
+        if (skipJavaCheck) {
+            return getJavaTask.thenApplyAsync(java -> Lang.requireNonNullElse(java, JavaRuntime.getDefault()));
         } else if (javaVersionType == JavaVersionType.AUTO || javaVersionType == JavaVersionType.VERSION) {
-            task = getJavaTask.thenComposeAsync(Schedulers.javafx(), java -> {
+            return getJavaTask.thenComposeAsync(Schedulers.javafx(), java -> {
                 if (java != null) {
                     return Task.completed(java);
                 }
@@ -539,7 +541,7 @@ public final class LauncherHelper {
                 return result;
             });
         } else {
-            task = getJavaTask.thenComposeAsync(java -> {
+            return getJavaTask.thenComposeAsync(java -> {
                 Set<JavaVersionConstraint> violatedMandatoryConstraints = EnumSet.noneOf(JavaVersionConstraint.class);
                 Set<JavaVersionConstraint> violatedSuggestedConstraints = EnumSet.noneOf(JavaVersionConstraint.class);
 
@@ -749,8 +751,6 @@ public final class LauncherHelper {
                 return result;
             });
         }
-
-        return task.withStage(JAVA_STAGE);
     }
 
     /// Prompts for and downloads Java as a required child of this launch operation.

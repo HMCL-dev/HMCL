@@ -83,7 +83,8 @@ public final class DefaultGameRepositoryDraftTest {
                 List.of(new ServerModpackManifest.Addon("game", "1.21")));
         Files.createDirectory(published);
         JsonUtils.writeToJsonFile(published.resolve("server-manifest.json"), remote);
-        var task = new ServerModpackCompletionTask(createDependencyManager(repository), instance,
+        var task = new ServerModpackCompletionTask(createDependencyManager(repository), instance);
+        JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(),
                 new ModpackConfiguration<>(old, "Server", "pack", "1", List.of()));
         // File downloads can proceed while another writer holds the draft.
         try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {

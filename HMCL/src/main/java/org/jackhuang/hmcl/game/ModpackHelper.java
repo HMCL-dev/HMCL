@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.InstallStages;
@@ -22,7 +21,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
@@ -139,14 +137,6 @@ public final class ModpackHelper {
         return dir.getSubDirs().containsKey("versions") && (dir.isRoot() || ".minecraft".equals(dir.getName()));
     }
 
-    public static ModpackConfiguration<?> readModpackConfiguration(Path file) throws IOException {
-        try {
-            return JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
-        } catch (JsonParseException e) {
-            throw new IOException("Malformed modpack configuration");
-        }
-    }
-
     /// Creates a server modpack installation task that refreshes the repository and enables instance isolation.
     public static Task<?> getInstallTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId, Modpack modpack) {
         return new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId)
@@ -210,59 +200,58 @@ public final class ModpackHelper {
         return task.withStage(InstallStages.MODPACK).withStageHints(MODPACK_STAGE_HINTS);
     }
 
-    /// Updates a server modpack with backup, repository refresh, and modpack stage hints.
-    public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
-        switch (configuration.getType()) {
-            case ServerModpackRemoteInstallTask.MODPACK_TYPE: {
-                HMCLGameInstance instance = repository.getInstance(instanceId);
-                return new ModpackUpdateTask(
-                        instance,
-                        new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instance))
-                        .thenComposeAsync(repository.refreshAsync())
-                        .withStage(InstallStages.MODPACK)
-                        .withStageHints(MODPACK_STAGE_HINTS);
-            }
-            default:
-                throw new UnsupportedModpackException();
+    /// Raised if the installed instance has no readable modpack configuration for an update.
+    public static final class InvalidModpackConfigurationException extends IOException {
+        /// Identifies the configuration that could not be read.
+        private InvalidModpackConfigurationException(Path file, @Nullable IOException cause) {
+            super("Missing or invalid modpack configuration: " + file, cause);
         }
     }
 
-    public static Task<?> getUpdateTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
-        return getUpdateTask(repository, zipFile, instanceId, configuration, null);
+    /// Reads the installed modpack type before an update is allowed to create its backup.
+    private static String readInstalledModpackType(HMCLGameInstance instance) throws InvalidModpackConfigurationException {
+        try {
+            @Nullable ModpackConfiguration<?> configuration = instance.readModpackConfiguration();
+            if (configuration != null)
+                return configuration.getType();
+        } catch (IOException e) {
+            throw new InvalidModpackConfigurationException(instance.getModpackConfigurationFile(), e);
+        }
+        throw new InvalidModpackConfigurationException(instance.getModpackConfigurationFile(), null);
     }
 
-    /// Creates an update task that respects optional-file selection.
-    ///
-    /// @param repository      the target repository
-    /// @param zipFile         the modpack archive
-    /// @param instanceId      the instance to update
-    /// @param configuration   the existing modpack configuration
-    /// @param excludedFiles keys of optional files the user chose not to install; `null` means install all.
-    ///                        When non-null, must not contain `null` elements.
-    /// @return the update task
-    public static Task<?> getUpdateTask(
+    /// Checks the installed modpack type before backing up and updating a server modpack.
+    public static Task<@Nullable Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId) {
+        HMCLGameInstance instance = repository.getInstance(instanceId);
+        return Task.composeAsync(Schedulers.io(), () -> {
+            if (!ServerModpackRemoteInstallTask.MODPACK_TYPE.equals(readInstalledModpackType(instance)))
+                throw new UnsupportedModpackException();
+            return new ModpackUpdateTask(instance, new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instance));
+        }).thenComposeAsync(repository.refreshAsync())
+                .withStage(InstallStages.MODPACK)
+                .withStageHints(MODPACK_STAGE_HINTS);
+    }
+
+    /// Checks the selected archive against the installed configuration at execution time, before backup.
+    /// The optional-file selection is captured when the task is created.
+    public static Task<@Nullable Void> getUpdateTask(
             HMCLGameRepository repository,
             Path zipFile,
             GameInstanceID instanceId,
-            ModpackConfiguration<?> configuration,
-            @Nullable Set<String> excludedFiles)
-            throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
-        Modpack modpack = ModpackHelper.readModpackManifest(zipFile);
-        @Nullable ModpackProvider provider = getProviderByType(configuration.getType());
-        if (provider == null) {
-            throw new UnsupportedModpackException();
-        }
-        if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack, excludedFiles)
-                    .thenComposeAsync(() -> createMultiMCPostUpdateTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
-                    .thenComposeAsync(repository.refreshAsync())
-                    .withStage(InstallStages.MODPACK)
-                    .withStageHints(MODPACK_STAGE_HINTS);
-        else
-            return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack, excludedFiles)
-                    .thenComposeAsync(repository.refreshAsync())
-                    .withStage(InstallStages.MODPACK)
-                    .withStageHints(MODPACK_STAGE_HINTS);
+            @Nullable Set<String> excludedFiles) {
+        HMCLGameInstance instance = repository.getInstance(instanceId);
+        @Nullable @Unmodifiable Set<String> selection = excludedFiles == null ? null : Set.copyOf(excludedFiles);
+        return Task.composeAsync(Schedulers.io(), () -> {
+            String type = readInstalledModpackType(instance);
+            Modpack modpack = readModpackManifest(zipFile);
+            @Nullable ModpackProvider provider = getProviderByType(type);
+            if (provider == null)
+                throw new UnsupportedModpackException();
+            Task<?> update = provider.createUpdateTask(repository.getDependency(), instance, zipFile, modpack, selection);
+            if (modpack.getManifest() instanceof MultiMCInstanceConfiguration manifest)
+                update = update.thenComposeAsync(createMultiMCPostUpdateTask(repository, manifest, instanceId));
+            return update.thenComposeAsync(repository.refreshAsync());
+        }).withStage(InstallStages.MODPACK).withStageHints(MODPACK_STAGE_HINTS);
     }
 
     public static void toGameSettings(MultiMCInstanceConfiguration c, GameSettings.Instance setting) {

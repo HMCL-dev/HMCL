@@ -12,6 +12,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.List;
+import java.util.Objects;
 
 /// Downloads the base game component and returns its manifest patch without publishing it.
 ///
@@ -27,11 +28,8 @@ public class GameInstallTask extends Task<GameInstancePatch> {
     /// Working instance manifest that will receive the game patch.
     private final GameInstanceManifest manifest;
 
-    /// Selected remote game version.
-    private final GameRemoteVersion remote;
-
-    /// Task that downloads the selected version's manifest JSON.
-    private final GameInstanceJsonDownloadTask downloadTask;
+    /// Version id used to look up the manifest and identify the game patch.
+    private final String gameVersion;
 
     /// Creates a base-game installation task.
     ///
@@ -39,20 +37,20 @@ public class GameInstallTask extends Task<GameInstancePatch> {
     /// @param manifest          the working instance manifest
     /// @param remoteVersion     the selected remote game version
     public GameInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, GameRemoteVersion remoteVersion) {
-        this.dependencyManager = dependencyManager;
+        this.dependencyManager = Objects.requireNonNull(dependencyManager);
         this.manifest = manifest;
-        this.remote = remoteVersion;
-        this.downloadTask = new GameInstanceJsonDownloadTask(remoteVersion.getGameVersion().toString(), dependencyManager);
+        this.gameVersion = remoteVersion.getGameVersion().toString();
     }
 
     /// Downloads the base manifest and attempts to install the client, assets and libraries in parallel.
     /// Returns the patch even if one of those file downloads fails.
     @Override
     public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
+        String json = context.run(new GameInstanceJsonDownloadTask(gameVersion, dependencyManager));
         GameInstancePatch patch = GameInstancePatch.fromManifest(
-                JsonUtils.fromNonNullJson(context.run(downloadTask), GameInstanceManifest.class),
+                JsonUtils.fromNonNullJson(json, GameInstanceManifest.class),
                 GameComponentType.GAME.getPatchId(),
-                remote.getGameVersion().toString(),
+                gameVersion,
                 GameInstancePatch.PRIORITY_MC).withJar(null);
 
         GameInstanceManifest newManifest = new GameInstanceManifest(this.manifest.id()).addPatch(patch).reconstructByPatches();

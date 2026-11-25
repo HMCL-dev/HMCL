@@ -407,34 +407,39 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             throw new IllegalArgumentException("Cannot install component into a non-modifiable manifest");
         }
 
-        String gameVersion = instance.getVersion().toString();
-
         return Task.composeAsync(() -> {
-                    try {
-                        return CleanroomInstallTask.install(this, baseManifest, gameVersion, installer);
-                    } catch (IOException ignore) {
-                    }
+            String gameVersion = instance.getVersion().toString();
+            return detectLocalInstaller(baseManifest, gameVersion, installer)
+                    .thenApplyAsync(patch -> patch == null
+                            ? baseManifest
+                            : baseManifest.withBaseGamePatch(gameVersion).addPatch(patch).reconstructByPatches());
+        });
+    }
 
-                    try {
-                        return NeoForgeInstallTask.install(this, baseManifest, gameVersion, installer);
-                    } catch (IOException ignore) {
-                    }
+    /// Selects the first installer that recognizes the local archive.
+    private Task<GameInstancePatch> detectLocalInstaller(GameInstanceManifest baseManifest, String gameVersion, Path installer)
+            throws VersionMismatchException, UnsupportedInstallationException, UnsupportedLibraryInstallerException {
+        try {
+            return CleanroomInstallTask.install(this, baseManifest, gameVersion, installer);
+        } catch (IOException ignore) {
+        }
 
-                    try {
-                        return ForgeInstallTask.install(this, baseManifest, gameVersion, installer);
-                    } catch (IOException ignore) {
-                    }
+        try {
+            return NeoForgeInstallTask.install(this, baseManifest, gameVersion, installer);
+        } catch (IOException ignore) {
+        }
 
-                    try {
-                        return OptiFineInstallTask.install(this, baseManifest, gameVersion, installer);
-                    } catch (IOException ignore) {
-                    }
+        try {
+            return ForgeInstallTask.install(this, baseManifest, gameVersion, installer);
+        } catch (IOException ignore) {
+        }
 
-                    throw new UnsupportedLibraryInstallerException();
-                })
-                .thenApplyAsync(patch -> patch == null
-                        ? baseManifest
-                        : baseManifest.withBaseGamePatch(gameVersion).addPatch(patch).reconstructByPatches());
+        try {
+            return OptiFineInstallTask.install(this, baseManifest, gameVersion, installer);
+        } catch (IOException ignore) {
+        }
+
+        throw new UnsupportedLibraryInstallerException();
     }
 
     /// Indicates that a local library installer is not recognized by any supported installer.
@@ -453,7 +458,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public Task<GameInstanceManifest> removeComponentAsync(GameInstance instance, GameComponentType componentType) {
         validateGameInstance(instance);
         GameInstanceManifest workingManifest = instance.getManifest();
-        validateGameInstance(instance);
         if (!instance.getId().equals(workingManifest.id())) {
             throw new IllegalArgumentException("workingManifest id does not match instance");
         }
@@ -462,7 +466,13 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             throw new IllegalArgumentException("Cannot remove component from a non-modifiable manifest");
         }
 
-        return Task.completed(workingManifest.removeComponent(componentType));
+        return new Task<>() {
+            /// {@inheritDoc}
+            @Override
+            public GameInstanceManifest execute(TaskExecutionContext context) {
+                return workingManifest.removeComponent(componentType);
+            }
+        };
     }
 
 }
