@@ -1,4 +1,28 @@
 {
+  "linux-x86_64": {
+    "org.lwjgl:lwjgl-freetype:3.4.3": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0.jar",
+          "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0.jar",
+          "sha1": "134bc57b83e78a7f954a0f078093e319739d42ea",
+          "size": 469281
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0:natives-linux",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0-natives-linux.jar",
+          "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0-natives-linux.jar",
+          "sha1": "f20ae220999240d484896d839694b02c2a655608",
+          "size": 1423204
+        }
+      }
+    }
+  },
   "linux-arm64": {
     "org.lwjgl:lwjgl:3.1.6": {
       "name": "org.lwjgl:lwjgl:3.3.2",
@@ -5348,6 +5372,28 @@
     "com.mojang:text2speech:1.13.9:natives-linux": null
   },
   "windows-x86_64": {
+    "org.lwjgl:lwjgl-freetype:3.4.3": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0.jar",
+          "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0.jar",
+          "sha1": "134bc57b83e78a7f954a0f078093e319739d42ea",
+          "size": 469281
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.3:natives-windows": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0:natives-windows",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0-natives-windows.jar",
+          "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0-natives-windows.jar",
+          "sha1": "f85d0f5acaa594f9e93d657f8feff85d6a427b6a",
+          "size": 1190826
+        }
+      }
+    },
     "mesa-loader": {
       "name": "org.glavo:mesa-loader-windows:26.2.6:x64",
       "downloads": {
@@ -5385,6 +5431,28 @@
     }
   },
   "windows-arm64": {
+    "org.lwjgl:lwjgl-freetype:3.4.3": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0.jar",
+          "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0.jar",
+          "sha1": "134bc57b83e78a7f954a0f078093e319739d42ea",
+          "size": 469281
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.3:natives-windows-arm64": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0:natives-windows-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0-natives-windows-arm64.jar",
+          "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0-natives-windows-arm64.jar",
+          "sha1": "5f475c76490bb368f235017985d8d9dc6b5b5121",
+          "size": 1043884
+        }
+      }
+    },
     "org.lwjgl.lwjgl:lwjgl-platform:2.9.0:natives": {
       "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3-rc1",
       "downloads": {
@@ -5773,7 +5841,53 @@
       }
     }
   },
+  "macos-x86_64": {
+    "org.lwjgl:lwjgl-freetype:3.4.3": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0.jar",
+          "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0.jar",
+          "sha1": "134bc57b83e78a7f954a0f078093e319739d42ea",
+          "size": 469281
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.3:natives-macos": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0:natives-macos",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0-natives-macos.jar",
+          "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0-natives-macos.jar",
+          "sha1": "6a46815640d9ce43533200986a330642a96e9590",
+          "size": 1225020
+        }
+      }
+    }
+  },
   "macos-arm64": {
+    "org.lwjgl:lwjgl-freetype:3.4.3": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0.jar",
+          "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0.jar",
+          "sha1": "134bc57b83e78a7f954a0f078093e319739d42ea",
+          "size": 469281
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.3:natives-macos-arm64": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.3-mojang-2.15.0:natives-macos-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0-natives-macos-arm64.jar",
+          "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-freetype/3.4.3-mojang-2.15.0/lwjgl-freetype-3.4.3-mojang-2.15.0-natives-macos-arm64.jar",
+          "sha1": "95ef1d3420179187f0b5e1ba947329b539e73412",
+          "size": 1125234
+        }
+      }
+    },
     "org.lwjgl.lwjgl:lwjgl-platform:2.9.1-nightly-20130708-debug3:natives": {
       "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3-rc1",
       "downloads": {
