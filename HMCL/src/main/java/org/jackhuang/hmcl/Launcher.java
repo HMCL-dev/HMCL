@@ -460,7 +460,7 @@ public final class Launcher extends Application {
         }
 
         try {
-            @Nullable Path appData = FileUtils.tryGetPath(System.getenv("APPDATA")).filter(Path::isAbsolute).orElse(null);
+            @Nullable Path appData = FileUtils.tryGetPath(System.getenv("APPDATA")).orElse(null);
             if (appData != null) {
                 // Explorer uses the Jump List hash of org.jackhuang.hmcl for this subdirectory.
                 Path shortcut = appData.resolve("Microsoft/Internet Explorer/Quick Launch/User Pinned/ImplicitAppShortcuts")
