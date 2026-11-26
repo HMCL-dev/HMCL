@@ -54,6 +54,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -141,6 +142,66 @@ public final class DefaultGameRepositoryDraftTest {
         new ServerModpackCompletionTask(manager, instance).run();
         assertEquals("updated", Files.readString(existing));
         assertEquals(newHash, readServerManifest(repository.getInstance(id)).getFiles().get(0).getHash());
+    }
+
+    /// A later release replaces files installed by a partial update while preserving user edits.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void serverUpdateAfterPartialDownload(boolean updateComponents, @TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("server");
+        repository.save(new GameInstanceManifest(id));
+        DefaultGameInstance instance = repository.getInstance(id);
+        Path root = instance.getInstanceRoot();
+        Path published = directory.resolve("published");
+        Path overrides = published.resolve("overrides");
+        var releaseA = publishServerRelease(published, "A", "1.20", List.of("managed.txt", "retry.txt", "edited.txt"));
+        for (var file : releaseA.getFiles()) {
+            Files.copy(overrides.resolve(file.getPath()), root.resolve(file.getPath()));
+        }
+        Files.writeString(root.resolve("edited.txt"), "user edit");
+        var localOverride = new ModpackConfiguration.FileInformation("archive-only.txt", "0".repeat(40));
+        var installedOverrides = new ArrayList<>(releaseA.getFiles());
+        installedOverrides.add(localOverride);
+        new ModpackConfiguration<>(releaseA, "Server", "pack", "A", installedOverrides).writeTo(instance.getModpackConfigurationFile());
+
+        String gameVersion = updateComponents ? "1.21" : "1.20";
+        @Unmodifiable List<String> paths = List.of("managed.txt", "retry.txt", "edited.txt", "added.txt");
+        publishServerRelease(published, "B", gameVersion, paths);
+        Files.delete(overrides.resolve("added.txt"));
+        Files.delete(overrides.resolve("retry.txt"));
+        var manager = createOfflineGameInstaller(repository, id, gameVersion);
+        assertThrows(DownloadException.class, new ServerModpackCompletionTask(manager, instance)::run);
+        assertEquals("B managed.txt", Files.readString(root.resolve("managed.txt")));
+        assertEquals("A retry.txt", Files.readString(root.resolve("retry.txt")));
+        assertFalse(Files.exists(root.resolve("added.txt")));
+        var partial = Objects.requireNonNull(JsonUtils.fromJsonFile(instance.getModpackConfigurationFile(),
+                ModpackConfiguration.typeOf(ServerModpackManifest.class)));
+        assertEquals("1.20", partial.getManifest().getAddons().get(0).getVersion());
+        assertTrue(partial.getOverrides().stream().anyMatch(file -> file.getPath().equals(localOverride.getPath())));
+
+        publishServerRelease(published, "C", gameVersion, paths);
+        new ServerModpackCompletionTask(manager, instance).run();
+        assertEquals("C managed.txt", Files.readString(root.resolve("managed.txt")));
+        assertEquals("C retry.txt", Files.readString(root.resolve("retry.txt")));
+        assertEquals("C added.txt", Files.readString(root.resolve("added.txt")));
+        assertEquals("user edit", Files.readString(root.resolve("edited.txt")));
+        assertEquals("C", readServerManifest(repository.getInstance(id)).getVersion());
+    }
+
+    /// Publishes a server manifest and override files with distinct content for each release and path.
+    private static ServerModpackManifest publishServerRelease(Path directory, String version, String gameVersion,
+                                                              List<String> paths) throws IOException {
+        Path overrides = Files.createDirectories(directory.resolve("overrides"));
+        List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
+        for (String path : paths) {
+            Path file = Files.writeString(overrides.resolve(path), version + " " + path);
+            files.add(new ModpackConfiguration.FileInformation(path, DigestUtils.digestToString("SHA-1", file)));
+        }
+        var manifest = new ServerModpackManifest("pack", "", version, "", directory.toUri().toASCIIString(),
+                files, List.of(new ServerModpackManifest.Addon("game", gameVersion)));
+        JsonUtils.writeToJsonFile(directory.resolve("server-manifest.json"), manifest);
+        return manifest;
     }
 
     /// A queued update cannot delete files or rewrite the configuration of a replacement instance.
