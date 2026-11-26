@@ -434,9 +434,9 @@ public abstract class Task<T extends @Nullable Object> {
     }
 
     /// Calls `action` with `(result, null)` or `(null, failure)`, including errors and cancellation.
-    /// Forwards the source outcome on success. If the observer fails, its exception propagates
-    /// on source success and is suppressed on a distinct source failure.
-    /// Cancelling the continuation before it starts skips the observer.
+    /// Forwards the source outcome even if cancellation is requested after the source commits or
+    /// while the observer runs. If the observer fails, its exception propagates on source success
+    /// and is suppressed on a distinct source failure. Cancelling before this task starts skips the observer.
     public Task<T> whenCompleteAsync(@Nullable Executor executor, ExceptionalBiConsumer<? super @Nullable T, ? super @Nullable Throwable, ?> action) {
         Objects.requireNonNull(action);
         return new Task<T>() {
@@ -445,6 +445,8 @@ public abstract class Task<T extends @Nullable Object> {
             public T execute(TaskExecutionContext context) throws Exception {
                 T value;
                 try {
+                    // The source decides whether cancellation affects the outcome being observed.
+                    context.commit();
                     value = context.delegateTo(Task.this);
                 } catch (Throwable failure) {
                     try {

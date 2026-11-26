@@ -333,7 +333,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 components.forEach(builder::component);
                 if (isolated)
                     builder.enableIsolation();
-            }).thenAcceptAsync(Schedulers.javafx(), repository::setSelectedInstance);
+            }).whenCompleteAsync(Schedulers.javafx(), (instance, failure) -> {
+                if (instance != null)
+                    repository.setSelectedInstance(instance);
+            });
         }
 
         @Override

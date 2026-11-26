@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -357,6 +358,34 @@ final class TaskExecutionContextTest {
         else
             assertEquals(42, task.run());
         assertTrue(task.isCancellationRequested());
+    }
+
+    /// Cancellation during publication or while the observer is queued preserves the observed result.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void whenCompleteForwardsCommittedResult(boolean cancelDuringPublication) throws Exception {
+        LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
+        Executor executor = queue::add;
+        Task<Integer> source = task(context -> {
+            context.commit();
+            return context.call(executor, () -> 42);
+        });
+        Task<Integer> observed = source.whenCompleteAsync(executor, (value, failure) -> {
+            assertEquals(42, value);
+            assertNull(failure);
+        });
+        assertTrue(observed.start());
+        @Nullable Runnable publish = queue.poll(10, TimeUnit.SECONDS);
+        assertNotNull(publish);
+        if (cancelDuringPublication)
+            observed.cancel();
+        publish.run();
+        @Nullable Runnable notify = queue.poll(10, TimeUnit.SECONDS);
+        assertNotNull(notify);
+        if (!cancelDuringPublication)
+            observed.cancel();
+        notify.run();
+        assertEquals(42, observed.run());
     }
 
     /// Decorators preserve a committed source; an enclosing task keeps its own cancellation boundary.
@@ -691,6 +720,45 @@ final class TaskExecutionContextTest {
             });
         } finally {
             parent.shutdownNow();
+        }
+    }
+
+    /// Nested synchronous child calls can span multiple worker stacks on the default scheduler.
+    @Test
+    void defaultSchedulerRunsDeeplyNestedChildren() throws Exception {
+        int length = 1024;
+        Task<Integer> chain = Task.completed(0);
+        for (int i = 0; i < length; i++) {
+            Task<Integer> child = chain;
+            chain = task(context -> context.run(child) + 1);
+        }
+        Task<Integer> root = chain;
+        assertTimeoutPreemptively(Duration.ofSeconds(10), () -> assertEquals(length, root.run()));
+    }
+
+    /// A long chain started as a root runs each mapping on its requested single-thread executor.
+    @Test
+    void startsLongChainWithSingleThreadCallbacks() throws Exception {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Thread worker = executor.submit(Thread::currentThread).get(10, TimeUnit.SECONDS);
+            int length = 4096;
+            Task<Integer> chain = Task.completed(0);
+            for (int i = 0; i < length; i++) {
+                chain = chain.thenApplyAsync(executor, value -> {
+                    assertSame(worker, Thread.currentThread());
+                    return value + 1;
+                }).setSignificance(TaskSignificance.MINOR);
+                if ((i & 1) == 0)
+                    chain = chain.withCounter();
+            }
+            Task<Integer> root = chain;
+            assertTimeoutPreemptively(Duration.ofSeconds(20), () -> {
+                assertTrue(root.start());
+                assertEquals(length, root.run());
+            });
+        } finally {
+            executor.shutdownNow();
         }
     }
 

@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.DefaultGameRepositoryDraft;
 import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -185,11 +186,9 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
             }
         }
 
-        // If old modpack have this entry, and new modpack deleted it. Delete this file.
         for (ModpackConfiguration.FileInformation file : installed.getManifest().getFiles()) {
-            Path actualPath = rootPath.resolve(file.getPath());
-            if (Files.exists(actualPath) && !remoteFiles.contains(file.getPath()))
-                Files.deleteIfExists(actualPath);
+            if (!remoteFiles.contains(file.getPath()))
+                Modpack.removeUnmodifiedOverride(rootPath, file.getPath(), file.getHash(), context);
         }
 
         context.addStageItems(downloads.size());

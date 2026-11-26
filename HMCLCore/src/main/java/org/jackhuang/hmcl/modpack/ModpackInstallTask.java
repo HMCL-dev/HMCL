@@ -28,7 +28,7 @@ public class ModpackInstallTask<T> extends Task<@Nullable Void> {
     /// @param subDirectories   the subdirectory of zip file to unpack
     /// @param callback         test whether the file (given full path) in zip file should be unpacked or not
     /// @param oldConfiguration old modpack information if upgrade
-    public ModpackInstallTask(Path modpackFile, Path dest, List<String> subDirectories, Predicate<String> callback, ModpackConfiguration<T> oldConfiguration) {
+    public ModpackInstallTask(Path modpackFile, Path dest, List<String> subDirectories, Predicate<String> callback, @Nullable ModpackConfiguration<T> oldConfiguration) {
         this.modpackFile = modpackFile;
         this.dest = dest;
         this.subDirectories = subDirectories;
@@ -40,7 +40,7 @@ public class ModpackInstallTask<T> extends Task<@Nullable Void> {
             overrides = oldConfiguration.getOverrides();
     }
 
-    /// Extracts selected overrides and removes files dropped by an update.
+    /// Extracts selected overrides and removes retired overrides that still match their installed hashes.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         Set<String> entries = new HashSet<>();
@@ -77,11 +77,9 @@ public class ModpackInstallTask<T> extends Task<@Nullable Void> {
                     }).unzip();
         }
 
-        // If old modpack have this entry, and new modpack deleted it. Delete this file.
         for (ModpackConfiguration.FileInformation file : overrides) {
-            Path original = dest.resolve(file.getPath());
-            if (Files.exists(original) && !entries.contains(file.getPath()))
-                Files.deleteIfExists(original);
+            if (!entries.contains(file.getPath()))
+                Modpack.removeUnmodifiedOverride(dest, file.getPath(), file.getHash(), context);
         }
         return null;
     }

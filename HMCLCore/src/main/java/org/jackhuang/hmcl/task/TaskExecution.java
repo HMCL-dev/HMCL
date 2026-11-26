@@ -28,6 +28,9 @@ final class TaskExecution {
     /// Tasks whose bodies or lifecycle callbacks are on the calling thread's stack.
     private static final ThreadLocal<@Nullable ArrayDeque<Binding>> ACTIVE_TASKS = new ThreadLocal<>();
 
+    /// Maximum number of nested task bodies on a worker before dispatching another submission.
+    private static final int MAX_INLINE_DEPTH = 32;
+
     /// Handler for unexpected runtime exceptions from a root task.
     private static volatile Thread.@Nullable UncaughtExceptionHandler uncaughtExceptionHandler;
 
@@ -306,6 +309,12 @@ final class TaskExecution {
         return active == null ? null : active.peek();
     }
 
+    /// Returns whether the next nested task needs a new submission.
+    private static boolean atInlineLimit() {
+        @Nullable ArrayDeque<Binding> active = ACTIVE_TASKS.get();
+        return active != null && active.size() >= MAX_INLINE_DEPTH;
+    }
+
     /// Returns the executor whose work the caller can execute inline.
     private static @Nullable Executor currentExecutor() {
         @Nullable Work<?> current = CURRENT_WORK.get();
@@ -405,7 +414,7 @@ final class TaskExecution {
 
         /// Runs on the current worker when possible, otherwise submits and waits.
         private void runReady(boolean propagateWaitInterruption) throws Exception {
-            if (executor != currentExecutor()) {
+            if (executor != currentExecutor() || atInlineLimit()) {
                 submit(null).await(propagateWaitInterruption);
                 return;
             }
@@ -846,7 +855,10 @@ final class TaskExecution {
         Work(Executor executor, Callable<T> action, @Nullable BatchWindow window) {
             super(action);
             this.executor = executor;
-            this.canBeHelped = !(executor instanceof UnboundedExecutorService);
+            // At the inline limit the task pool compensates the waiting worker. Leave this
+            // submission to the new worker so it cannot be taken back on the original stack.
+            this.canBeHelped = !(executor instanceof UnboundedExecutorService)
+                    && !(executor == Schedulers.tasks() && ForkJoinTask.getPool() == executor && atInlineLimit());
             this.window = window;
             this.changed = window == null ? null : window.changed;
             @Nullable Work<?> current = CURRENT_WORK.get();

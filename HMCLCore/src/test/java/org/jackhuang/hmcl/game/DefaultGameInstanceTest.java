@@ -155,8 +155,48 @@ public final class DefaultGameInstanceTest {
     }
 
     /// Creates a server export with a file API URL for the manifest.
-    private static Task<?> serverExport(DefaultGameInstance instance, Path output) {
+    private static ModpackExportTask serverExport(DefaultGameInstance instance, Path output) {
         return new ServerModpackExportTask(instance, new ModpackExportInfo().setFileApi("https://example.org/"), output);
+    }
+
+    /// Only a completed bundle replaces the destination, even when it is inside the exported directory.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void testBundledModpackExport(boolean cancelBundle, @TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        writeVersionJar(repository.getLayout().getInstanceJarFile(id), "1.20.1");
+        Path output = Files.writeString(directory.resolve("bundle.zip"), "previous bundle");
+        ModpackExportTask modpack = serverExport(repository.publish(id, new GameInstanceManifest(id)), output);
+        Task<?> task = new Task<@Nullable Void>() {
+            /// Packages the finished modpack before allowing the bundle to be published.
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws IOException {
+                modpack.export(context, (zip, archive) -> {
+                    try (ZipFile nested = new ZipFile(archive.toFile())) {
+                        assertTrue(nested.stream().anyMatch(entry -> entry.getName().equals("server-manifest.json")));
+                        assertNull(nested.getEntry("overrides/bundle.zip"));
+                        assertTrue(nested.stream().noneMatch(entry -> entry.getName().contains(".hmcl-export-")));
+                    }
+                    zip.putFile(archive, "modpack.zip");
+                    if (cancelBundle)
+                        cancel();
+                });
+                return null;
+            }
+        };
+        if (cancelBundle) {
+            assertThrows(CancellationException.class, task::run);
+            assertEquals("previous bundle", Files.readString(output));
+        } else {
+            task.run();
+            try (ZipFile bundle = new ZipFile(output.toFile())) {
+                assertTrue(bundle.stream().anyMatch(entry -> entry.getName().equals("modpack.zip")));
+            }
+        }
+        try (var paths = Files.list(directory)) {
+            assertTrue(paths.noneMatch(path -> path.getFileName().toString().startsWith(".hmcl-export-")));
+        }
     }
 
     /// Launch repair for ModLauncher adds support metadata without materializing bundled files.

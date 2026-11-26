@@ -5,10 +5,12 @@ package org.jackhuang.hmcl.modpack;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
@@ -49,6 +51,14 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
     /// writing or cancellation observed before replacement leaves an existing destination intact.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        export(context, null);
+        return null;
+    }
+
+    /// Writes the modpack and commits the supplied context immediately before replacing the destination.
+    /// If present, the bundler writes the final ZIP using the completed modpack at the supplied path.
+    public final void export(TaskExecutionContext context,
+                             @Nullable ExceptionalBiConsumer<Zipper, Path, IOException> bundle) throws IOException {
         context.checkCancellation();
         Path runDirectory = instance.getRunDirectory().toRealPath();
         @Nullable Path parent = destination.toAbsolutePath().getParent();
@@ -68,11 +78,23 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
                 ? Files.createFile(output.resolveSibling(".hmcl-export-" + UUID.randomUUID() + ".tmp"))
                 : Files.createTempFile(output.getParent(), ".hmcl-export-", ".tmp");
         try {
+            Predicate<String> include = path -> {
+                context.checkCancellation();
+                return !output.equals(runDirectory.resolve(path)) && Modpack.acceptFile(path, exclusions, info.getWhitelist());
+            };
             try (Zipper zip = new Zipper(temporary, false, context::checkCancellation)) {
-                writeArchive(zip, path -> {
-                    context.checkCancellation();
-                    return !output.equals(runDirectory.resolve(path)) && Modpack.acceptFile(path, exclusions, info.getWhitelist());
-                }, context);
+                if (bundle == null) {
+                    writeArchive(zip, include, context);
+                } else {
+                    Path modpack = Files.createTempFile(output.getParent(), ".hmcl-export-", ".tmp");
+                    try (Closeable cleanupModpack = () -> Files.delete(modpack)) {
+                        try (Zipper nested = new Zipper(modpack, false, context::checkCancellation)) {
+                            writeArchive(nested, include, context);
+                        }
+                        context.checkCancellation();
+                        bundle.accept(zip, modpack);
+                    }
+                }
             }
             if (!Files.notExists(output) && Files.getFileStore(temporary).supportsFileAttributeView(PosixFileAttributeView.class))
                 Files.setPosixFilePermissions(temporary, Files.getPosixFilePermissions(output));
@@ -90,6 +112,5 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
             }
             throw failure;
         }
-        return null;
     }
 }

@@ -9,9 +9,13 @@ import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -173,6 +177,22 @@ public abstract class Modpack {
         context.checkCancellation();
         if (incomplete != null)
             throw incomplete;
+    }
+
+    /// Removes a retired override only if the original file still has its installed SHA-1.
+    public static void removeUnmodifiedOverride(Path directory, String relativePath, @Nullable String installedHash,
+                                                TaskExecutionContext context) throws IOException {
+        context.checkCancellation();
+        Path root = directory.toAbsolutePath().normalize();
+        Path file = root.resolve(relativePath).normalize();
+        if (installedHash == null || !file.startsWith(root) || !Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS))
+            return;
+        // A directory in the original path may have been replaced with a link.
+        if (file.toRealPath().equals(root.toRealPath().resolve(root.relativize(file)))
+                && installedHash.equalsIgnoreCase(DigestUtils.digestToString("SHA-1", file, context::checkCancellation))) {
+            context.checkCancellation();
+            Files.deleteIfExists(file);
+        }
     }
 
     public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {

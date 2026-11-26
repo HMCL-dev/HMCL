@@ -25,6 +25,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Actions dispatched by [#call(Executor, Callable)] can also check cancellation or call [#commit()].
 ///
 /// A waiting worker can run descendant work scheduled on the same executor instance.
+/// Synchronous child calls confined to a single worker share its call stack.
 /// On constrained executors, avoid wait cycles between independent branches and release
 /// resources that children need before waiting for them.
 @NotNullByDefault

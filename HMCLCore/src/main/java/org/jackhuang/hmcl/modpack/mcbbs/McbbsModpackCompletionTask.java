@@ -164,14 +164,14 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
             newFiles.add(mergeFile(oldFile, file));
         }
 
-        // If old modpack have this entry, and new modpack deleted it. Delete this file.
-        // for-loop above removes still existing file in localFiles. Remaining elements
-        // are files removed by next modpack version.
-        // Notice that this loop will also remove Curse mods.
         for (McbbsModpackManifest.File file : localFiles.keySet()) {
-            @Nullable Path actualPath = getFilePath(file);
-            if (actualPath != null && Files.exists(actualPath))
-                Files.deleteIfExists(actualPath);
+            if (file instanceof McbbsModpackManifest.AddonFile override) {
+                Modpack.removeUnmodifiedOverride(instance.getRunDirectory(), override.getPath(), override.getHash(), context);
+            } else {
+                @Nullable Path actualPath = getFilePath(file);
+                if (actualPath != null)
+                    Files.deleteIfExists(actualPath);
+            }
         }
 
         McbbsModpackManifest updated = remoteManifest.setFiles(newFiles);

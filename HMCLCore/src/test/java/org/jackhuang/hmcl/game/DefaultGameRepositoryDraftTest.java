@@ -474,11 +474,11 @@ public final class DefaultGameRepositoryDraftTest {
         Path unselected = Files.writeString(mods.resolve("previously-excluded.jar"), "manual");
         Path payload = Files.writeString(directory.resolve("published.jar"), "new");
         Path addedSource = Files.writeString(directory.resolve("added.jar"), "wrong");
-        List<String> urls = List.of(payload.toUri().toString());
-        Map<String, String> oldHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", retained));
-        Map<String, String> newHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", "new".getBytes(StandardCharsets.UTF_8)));
-        Map<String, String> addedHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", "added".getBytes(StandardCharsets.UTF_8)));
-        Map<String, String> dependencies = Map.of("minecraft", "1.21");
+        @Unmodifiable List<String> urls = List.of(payload.toUri().toString());
+        @Unmodifiable Map<String, String> oldHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", retained));
+        @Unmodifiable Map<String, String> newHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", "new".getBytes(StandardCharsets.UTF_8)));
+        @Unmodifiable Map<String, String> addedHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", "added".getBytes(StandardCharsets.UTF_8)));
+        @Unmodifiable Map<String, String> dependencies = Map.of("minecraft", "1.21");
         var oldOptional = new ModrinthManifest.File("mods/previously-excluded.jar", oldHashes, Map.of("client", "optional"), urls, 3);
         var newOptional = new ModrinthManifest.File("mods/optional.jar", newHashes, Map.of("client", "optional"), urls, 3);
         var neverClient = new ModrinthManifest.File("mods/never-client.jar", oldHashes, Map.of("client", "unsupported"), urls, 3);
@@ -534,7 +534,7 @@ public final class DefaultGameRepositoryDraftTest {
         assertTrue(Files.notExists(mods.resolve("optional.jar")));
     }
 
-    /// A failed component publication keeps the old pack configuration even after the overrides were extracted.
+    /// A failed update keeps the previous override hashes, and retrying preserves user-edited retired overrides.
     @Test
     void failedMcbbsUpdateKeepsPreviousConfiguration(@TempDir Path directory) throws Exception {
         FailingRepository repository = new FailingRepository(directory);
@@ -545,7 +545,12 @@ public final class DefaultGameRepositoryDraftTest {
                 {"name":"pack","version":"2","addons":[{"id":"game","version":"1.21"}]}
                 """, McbbsModpackManifest.class);
         Path config = instance.getModpackConfigurationFile();
-        new ModpackConfiguration<>(manifest, manifest.getProvider().getName(), "pack", "1", List.of()).writeTo(config);
+        Path retired = Files.writeString(instance.getInstanceRoot().resolve("retired.txt"), "pack default");
+        Path edited = Files.writeString(instance.getInstanceRoot().resolve("edited.txt"), "user settings");
+        String installedHash = DigestUtils.digestToString("SHA-1", retired);
+        new ModpackConfiguration<>(manifest, manifest.getProvider().getName(), "pack", "1", List.of(
+                new ModpackConfiguration.FileInformation("retired.txt", installedHash),
+                new ModpackConfiguration.FileInformation("edited.txt", installedHash))).writeTo(config);
         String previous = Files.readString(config);
         Path archive = directory.resolve("pack.zip");
         try (Zipper zip = new Zipper(archive)) {
@@ -558,6 +563,10 @@ public final class DefaultGameRepositoryDraftTest {
         assertSame(instance, repository.getInstance(id));
         assertEquals("updated", Files.readString(instance.getInstanceRoot().resolve("local.txt")));
         assertEquals(previous, Files.readString(config));
+        repository.failDraftPublish = false;
+        manifest.getProvider().createUpdateTask(manager, instance, archive, manifest.toModpack(), null).run();
+        assertEquals("user settings", Files.readString(edited));
+        assertTrue(Files.notExists(retired));
     }
 
     /// An incomplete MCBBS install keeps its patch and remote metadata unless cancellation wins.
@@ -924,6 +933,68 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals(renamedId, repository.getInstance(childId).getManifest().inheritsFrom());
         assertFalse(Files.exists(repository.getLayout().getInstanceRoot(parentId)));
         assertTrue(Files.isRegularFile(repository.getLayout().getInstanceJson(renamedId)));
+    }
+
+    /// A modpack configuration stays readable when its filename becomes the new instance manifest.
+    @Test
+    public void testRenameToAndFromModpack(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        DefaultGameRepositoryLayout layout = repository.getLayout();
+        GameInstanceID originalId = new GameInstanceID("original");
+        GameInstanceID modpackId = new GameInstanceID("Modpack");
+        repository.save(new GameInstanceManifest(originalId));
+        Files.writeString(layout.getModpackConfigurationFile(originalId), "configuration");
+
+        assertTrue(repository.renameInstance(originalId, modpackId));
+        assertEquals("configuration", Files.readString(layout.getInstanceRoot(modpackId).resolve("modpack.cfg")));
+        assertEquals(modpackId, JsonUtils.fromNonNullJson(
+                Files.readString(layout.getInstanceJson(modpackId)), GameInstanceManifest.class).id());
+
+        assertTrue(repository.renameInstance(modpackId, originalId));
+        assertEquals("configuration", Files.readString(layout.getModpackConfigurationFile(originalId)));
+    }
+
+    /// A failed publication restores the original filenames so that the same rename can be retried.
+    @Test
+    public void testModpackRenameRollback(@TempDir Path tempDirectory) throws IOException {
+        FailingRepository repository = new FailingRepository(tempDirectory);
+        DefaultGameRepositoryLayout layout = repository.getLayout();
+        GameInstanceID originalId = new GameInstanceID("original");
+        GameInstanceID modpackId = new GameInstanceID("modpack");
+        repository.save(new GameInstanceManifest(originalId));
+        Path configuration = layout.getModpackConfigurationFile(originalId);
+        Files.writeString(configuration, "configuration");
+        repository.failDraftPublish = true;
+
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            draft.rename(originalId, modpackId);
+            assertThrows(IllegalStateException.class, draft::commit);
+        }
+        assertEquals("configuration", Files.readString(configuration));
+        assertTrue(Files.notExists(layout.getInstanceRoot(modpackId)));
+        assertTrue(repository.renameInstance(originalId, modpackId));
+    }
+
+    /// A pre-existing configuration at the migration target prevents the rename without overwriting either file.
+    @Test
+    public void testModpackRenamePreservesConflictingConfiguration(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        DefaultGameRepositoryLayout layout = repository.getLayout();
+        GameInstanceID originalId = new GameInstanceID("original");
+        GameInstanceID modpackId = new GameInstanceID("modpack");
+        repository.save(new GameInstanceManifest(originalId));
+        Path root = layout.getInstanceRoot(originalId);
+        Files.writeString(root.resolve("modpack.json"), "current");
+        Files.writeString(root.resolve("modpack.cfg"), "legacy");
+
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            draft.rename(originalId, modpackId);
+            assertThrows(FileAlreadyExistsException.class, draft::commit);
+        }
+        assertEquals("current", Files.readString(root.resolve("modpack.json")));
+        assertEquals("legacy", Files.readString(root.resolve("modpack.cfg")));
+        assertTrue(Files.isRegularFile(layout.getInstanceJson(originalId)));
+        assertTrue(Files.notExists(layout.getInstanceRoot(modpackId)));
     }
 
     /// Removes a registered instance through a one-shot draft.
