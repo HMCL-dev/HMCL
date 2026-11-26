@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.modpack.server;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -26,9 +25,6 @@ import java.util.List;
 /// Installs or updates a local server modpack using the mode selected at construction.
 @NotNullByDefault
 public class ServerModpackLocalInstallTask extends ModpackGameInstallTask {
-
-    /// The manifest supplying installation metadata and game components.
-    private final ServerModpackManifest manifest;
 
     /// Tasks scheduled after the game and the archive contents have been installed.
     private final List<Task<?>> dependencies = new ArrayList<>();
@@ -85,7 +81,6 @@ public class ServerModpackLocalInstallTask extends ModpackGameInstallTask {
             GameInstanceID instanceId,
             @Nullable DefaultGameInstance updateTarget) {
         super(dependencyManager, instanceId, updateTarget);
-        this.manifest = manifest;
         Path run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
@@ -105,15 +100,11 @@ public class ServerModpackLocalInstallTask extends ModpackGameInstallTask {
 
         installTasks.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
         installTasks.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
-    }
 
-    /// Configures components for manifest add-ons whose ids match recognized patch types.
-    @Override
-    protected void configureGameBuilder(GameBuilder builder) {
         for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
             @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
             if (componentType != null)
-                builder.component(componentType, addon.getVersion());
+                components.put(componentType, addon.getVersion());
         }
     }
 

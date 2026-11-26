@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.modpack.server;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackGameInstallTask;
@@ -85,15 +84,11 @@ public class ServerModpackRemoteInstallTask extends ModpackGameInstallTask {
             }
         } catch (JsonParseException | IOException ignore) {
         }
-    }
 
-    /// Configures components for manifest add-ons whose ids match recognized patch types.
-    @Override
-    protected void configureGameBuilder(GameBuilder builder) {
         for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
             @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
             if (componentType != null)
-                builder.component(componentType, addon.getVersion());
+                components.put(componentType, addon.getVersion());
         }
     }
 

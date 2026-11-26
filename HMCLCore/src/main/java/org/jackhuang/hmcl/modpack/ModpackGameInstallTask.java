@@ -4,10 +4,10 @@ package org.jackhuang.hmcl.modpack;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
-import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.DefaultGameRepositoryLayout;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.task.Task;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -16,7 +16,9 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -34,6 +36,8 @@ public abstract class ModpackGameInstallTask extends Task<Void> {
     protected final GameInstanceID instanceId;
     /// Published instance required for an update, or `null` to reserve a new instance.
     protected final @Nullable DefaultGameInstance updateTarget;
+    /// Component versions requested by the manifest, populated by the format-specific constructor.
+    protected final Map<GameComponentType, String> components = new EnumMap<>(GameComponentType.class);
     /// Tasks to run alongside the game build after reservation. Populate during construction.
     protected final List<Task<?>> installTasks = new ArrayList<>();
 
@@ -41,7 +45,28 @@ public abstract class ModpackGameInstallTask extends Task<Void> {
     private final DefaultGameRepositoryLayout layout;
 
     /// The prerequisite that reserves the target and runs all installation tasks.
-    private final @Unmodifiable List<Task<?>> prerequisites;
+    private final Task<Void> installGame = new Task<Void>() {
+        /// Reserves the directory before the executor starts any tasks that can write to it.
+        @Override
+        public void execute() {
+            try (DefaultGameBuilder builder = updateTarget == null
+                    ? dependencyManager.newGameBuilder(instanceId)
+                    : dependencyManager.newGameBuilder(updateTarget)) {
+                if (repository.getLayout() != layout)
+                    throw new IllegalStateException("Game directory has changed: " + layout.getBaseDirectory());
+                builder.enableIsolation();
+                components.forEach(builder::component);
+                installTasks.add(0, builder.buildAsync());
+                reservedBuilder = builder;
+            }
+        }
+
+        /// Returns the tasks to run together after reservation succeeds.
+        @Override
+        public @Unmodifiable List<Task<?>> getDependencies() {
+            return List.copyOf(installTasks);
+        }
+    }.setSignificance(TaskSignificance.MODERATE);
 
     /// Builder that reserved the target and transferred its draft to the installation.
     private @Nullable DefaultGameBuilder reservedBuilder;
@@ -62,7 +87,6 @@ public abstract class ModpackGameInstallTask extends Task<Void> {
         if (updateTarget != null)
             dependencyManager.validateGameInstance(updateTarget);
 
-        prerequisites = List.of(Task.composeAsync(this::prepareInstallation));
         // Cancellation can skip the build task after it takes ownership of the draft.
         // The enclosing installation still receives its completion event in that case.
         onDone().register(event -> {
@@ -71,28 +95,10 @@ public abstract class ModpackGameInstallTask extends Task<Void> {
         });
     }
 
-    /// Reserves the target before allowing the build and archive extraction to run concurrently.
-    private Task<List<@Nullable Object>> prepareInstallation() {
-        try (DefaultGameBuilder builder = updateTarget == null
-                ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(updateTarget)) {
-            if (repository.getLayout() != layout)
-                throw new IllegalStateException("Game directory has changed: " + layout.getBaseDirectory());
-            builder.enableIsolation();
-            configureGameBuilder(builder);
-            installTasks.addFirst(builder.buildAsync());
-            reservedBuilder = builder;
-            return Task.allOf(installTasks);
-        }
-    }
-
     /// Returns whether this installation acquired its target and prepared the tasks that may modify it.
     final boolean hasReservedInstance() {
         return reservedBuilder != null;
     }
-
-    /// Configures the game version and loaders on the isolated builder before its task is created.
-    protected abstract void configureGameBuilder(GameBuilder builder);
 
     /// Returns whether a failed new installation should be removed after its draft is released.
     protected boolean shouldRemoveFailedInstance(@Nullable Exception failure) {
@@ -115,6 +121,6 @@ public abstract class ModpackGameInstallTask extends Task<Void> {
     /// Returns the prerequisite that builds the game and installs files before format-specific completion.
     @Override
     public @Unmodifiable List<Task<?>> getDependents() {
-        return prerequisites;
+        return List.of(installGame);
     }
 }

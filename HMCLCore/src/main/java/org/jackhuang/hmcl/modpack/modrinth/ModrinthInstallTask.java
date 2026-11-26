@@ -6,7 +6,6 @@ import com.google.gson.JsonParseException;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
@@ -61,6 +60,7 @@ public class ModrinthInstallTask extends ModpackGameInstallTask {
     /// @param iconUrl           the optional icon URL, or `null`
     /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
     ///                          install all files. When non-null, must not contain `null` elements.
+    /// @throws IllegalStateException if the manifest declares an unsupported loader
     public ModrinthInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -84,6 +84,7 @@ public class ModrinthInstallTask extends ModpackGameInstallTask {
     ///                          install all files. When non-null, must not contain `null` elements.
     /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
+    /// @throws IllegalStateException if the manifest declares an unsupported loader
     public ModrinthInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -108,6 +109,7 @@ public class ModrinthInstallTask extends ModpackGameInstallTask {
     ///                          install all files. When non-null, must not contain `null` elements.
     /// @throws IllegalArgumentException if the update target belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
+    /// @throws IllegalStateException if the manifest declares an unsupported loader
     private ModrinthInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -152,31 +154,25 @@ public class ModrinthInstallTask extends ModpackGameInstallTask {
                 installTasks.add(downloadIconTask = new CacheFileTask(downloadProvider.getDownloadCandidates(iconUrl)));
             }
         }
-    }
 
-    /// Configures the game and loaders declared in the modpack manifest.
-    ///
-    /// @throws IllegalStateException if the manifest declares an unsupported loader
-    @Override
-    protected void configureGameBuilder(GameBuilder builder) {
-        builder.component(GameComponentType.GAME, manifest.getGameVersion());
+        components.put(GameComponentType.GAME, manifest.getGameVersion());
         for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
             switch (modLoader.getKey()) {
                 case "minecraft":
                     break;
                 case "forge":
-                    builder.component(GameComponentType.FORGE, modLoader.getValue());
+                    components.put(GameComponentType.FORGE, modLoader.getValue());
                     break;
                 case "neoforge":
                 // https://github.com/HMCL-dev/HMCL/pull/5170
                 case "neo-forge":
-                    builder.component(GameComponentType.NEO_FORGE, modLoader.getValue());
+                    components.put(GameComponentType.NEO_FORGE, modLoader.getValue());
                     break;
                 case "fabric-loader":
-                    builder.component(GameComponentType.FABRIC, modLoader.getValue());
+                    components.put(GameComponentType.FABRIC, modLoader.getValue());
                     break;
                 case "quilt-loader":
-                    builder.component(GameComponentType.QUILT, modLoader.getValue());
+                    components.put(GameComponentType.QUILT, modLoader.getValue());
                     break;
                 default:
                     throw new IllegalStateException("Unsupported mod loader " + modLoader.getKey());

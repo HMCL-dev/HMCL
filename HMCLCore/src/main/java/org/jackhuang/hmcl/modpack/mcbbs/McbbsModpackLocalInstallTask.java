@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.modpack.mcbbs;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -110,15 +109,11 @@ public final class McbbsModpackLocalInstallTask extends ModpackGameInstallTask {
         installTasks.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
         instanceTask = new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, McbbsModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId));
         installTasks.add(instanceTask.withStage("hmcl.modpack"));
-    }
 
-    /// Configures components for manifest add-ons whose ids match recognized patch types.
-    @Override
-    protected void configureGameBuilder(GameBuilder builder) {
         for (McbbsModpackManifest.Addon addon : manifest.getAddons()) {
             @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
             if (componentType != null)
-                builder.component(componentType, addon.getVersion());
+                components.put(componentType, addon.getVersion());
         }
     }
 

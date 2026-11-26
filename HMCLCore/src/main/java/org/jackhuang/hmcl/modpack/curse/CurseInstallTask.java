@@ -6,7 +6,6 @@ import com.google.gson.JsonParseException;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
@@ -158,19 +157,15 @@ public final class CurseInstallTask extends ModpackGameInstallTask {
                 installTasks.add(downloadIconTask = new CacheFileTask(downloadProvider.getDownloadCandidates(iconUrl)));
             }
         }
-    }
 
-    /// Configures Minecraft and the recognized mod loaders declared by the CurseForge manifest.
-    @Override
-    protected void configureGameBuilder(GameBuilder builder) {
-        builder.component(GameComponentType.GAME, manifest.minecraft().gameVersion());
+        components.put(GameComponentType.GAME, manifest.minecraft().gameVersion());
         for (CurseManifestModLoader modLoader : manifest.minecraft().modLoaders()) {
             if (modLoader.id().startsWith("forge-")) {
-                builder.component(GameComponentType.FORGE, modLoader.id().substring("forge-".length()));
+                components.put(GameComponentType.FORGE, modLoader.id().substring("forge-".length()));
             } else if (modLoader.id().startsWith("fabric-")) {
-                builder.component(GameComponentType.FABRIC, modLoader.id().substring("fabric-".length()));
+                components.put(GameComponentType.FABRIC, modLoader.id().substring("fabric-".length()));
             } else if (modLoader.id().startsWith("neoforge-")) {
-                builder.component(GameComponentType.NEO_FORGE, modLoader.id().substring("neoforge-".length()));
+                components.put(GameComponentType.NEO_FORGE, modLoader.id().substring("neoforge-".length()));
             }
         }
     }
