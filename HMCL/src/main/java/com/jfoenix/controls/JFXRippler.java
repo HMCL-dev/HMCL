@@ -84,6 +84,7 @@ public class JFXRippler extends StackPane {
             0.9975); //0.1, 0.54, 0.28, 0.95);
 
     private boolean forceOverlay = false;
+    private boolean staticOverlay;
 
     /// creates empty rippler node
     public JFXRippler() {
@@ -320,11 +321,24 @@ public class JFXRippler extends StackPane {
         }
     }
 
+    public void setOverlayOpacityImmediately(double opacity) {
+        staticOverlay = true;
+        if (opacity > 0) {
+            rippler.createOverlay();
+        }
+        if (rippler.overlayRect != null) {
+            rippler.overlayRect.inAnimation.stop();
+            rippler.overlayRect.outAnimation.stop();
+            rippler.overlayRect.setOpacity(opacity);
+        }
+    }
+
     /**
      * this method will be set to private in future versions of JFoenix,
      * user the method {@link #setOverlayVisible(boolean)}
      */
     public void showOverlay() {
+        staticOverlay = false;
         if (rippler.overlayRect != null) {
             rippler.overlayRect.outAnimation.stop();
         }
@@ -565,10 +579,17 @@ public class JFXRippler extends StackPane {
 
     private void resetOverLay() {
         if (rippler.overlayRect != null) {
-            rippler.overlayRect.inAnimation.stop();
             final RippleGenerator.OverLayRipple oldOverlay = rippler.overlayRect;
-            rippler.overlayRect.outAnimation.setOnFinished((finish) -> rippler.getChildren().remove(oldOverlay));
-            rippler.overlayRect.outAnimation.play();
+            if (staticOverlay) {
+                double opacity = oldOverlay.getOpacity();
+                rippler.getChildren().remove(oldOverlay);
+                rippler.overlayRect = null;
+                setOverlayOpacityImmediately(opacity);
+                return;
+            }
+            oldOverlay.inAnimation.stop();
+            oldOverlay.outAnimation.setOnFinished((finish) -> rippler.getChildren().remove(oldOverlay));
+            oldOverlay.outAnimation.play();
             rippler.overlayRect = null;
         }
     }
