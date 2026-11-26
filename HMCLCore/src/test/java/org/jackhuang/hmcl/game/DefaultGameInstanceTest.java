@@ -360,16 +360,7 @@ public final class DefaultGameInstanceTest {
                 instance.getAssetObject(assetId, assetName));
         assertEquals(Optional.empty(), instance.getAssetObject(assetId, "missing"));
         assertEquals(repository.getLayout().getAssetDirectory(), instance.getActualAssetDirectory(assetId));
-        Path root = Files.createDirectories(instance.getInstanceRoot());
-        Path configuration = root.resolve("modpack.json");
-        assertEquals(configuration, instance.getModpackConfigurationFile());
-        Path legacy = Files.createFile(root.resolve("modpack.cfg"));
-        assertEquals(legacy, instance.getModpackConfigurationFile());
-        Files.createFile(configuration);
-        assertEquals(configuration, instance.getModpackConfigurationFile());
-        GameInstanceID namedModpack = new GameInstanceID("modpack");
-        assertEquals(repository.getLayout().getInstanceRoot(namedModpack).resolve("modpack.cfg"),
-                repository.getLayout().getModpackConfigurationFile(namedModpack));
+        assertEquals(instance.getInstanceRoot().resolve("modpack.cfg"), instance.getModpackConfigurationFile());
     }
 
     /// The selected primary jar follows the resolved manifest's `jar` field.

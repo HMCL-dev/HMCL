@@ -387,6 +387,48 @@ public abstract class DefaultGameRepository implements GameRepository {
         return GameInstanceManifest.fromJson(object, false);
     }
 
+    static void moveInstanceFiles(Path baseDirectory, GameInstanceID from, GameInstanceID to) throws IOException {
+        Path instancesDir = baseDirectory.resolve("versions");
+        Path fromDir = instancesDir.resolve(from.id());
+        Path toDir = instancesDir.resolve(to.id());
+        Files.move(fromDir, toDir);
+
+        Path fromJson = toDir.resolve(from + ".json");
+        Path fromJar = toDir.resolve(from + ".jar");
+        Path toJson = toDir.resolve(to + ".json");
+        Path toJar = toDir.resolve(to + ".jar");
+
+        boolean hasJarFile = Files.exists(fromJar);
+
+        try {
+            Files.move(fromJson, toJson);
+            if (hasJarFile) {
+                Files.move(fromJar, toJar);
+            }
+        } catch (IOException e) {
+            try {
+                Files.move(toJson, fromJson);
+            } catch (Throwable e2) {
+                e.addSuppressed(e2);
+            }
+
+            if (hasJarFile) {
+                try {
+                    Files.move(toJar, fromJar);
+                } catch (Throwable e2) {
+                    e.addSuppressed(e2);
+                }
+            }
+
+            try {
+                Files.move(toDir, fromDir);
+            } catch (Exception e2) {
+                e.addSuppressed(e2);
+            }
+            throw e;
+        }
+    }
+
     @Override
     public DefaultGameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException {
         return getSnapshot().getRegistered(id);

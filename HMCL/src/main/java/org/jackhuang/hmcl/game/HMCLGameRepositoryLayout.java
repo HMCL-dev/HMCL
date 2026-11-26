@@ -24,12 +24,6 @@ public final class HMCLGameRepositoryLayout extends DefaultGameRepositoryLayout 
         super(baseDirectory);
     }
 
-    /// Returns HMCL's modpack.cfg in the instance root.
-    @Override
-    public Path getModpackConfigurationFile(GameInstanceID instanceId) {
-        return getInstanceRoot(instanceId).resolve("modpack.cfg");
-    }
-
     /// Returns the HMCL-managed metadata directory under the instance root.
     ///
     /// This directory stores instance-scoped files owned by HMCL.

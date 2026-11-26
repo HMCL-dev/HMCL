@@ -133,10 +133,11 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         };
     }
 
-    /// Applies instance options before starting the cancellable launch.
+    /// Applies instance options after checking for cancellation, when requested.
     @Override
-    protected ManagedProcess launch(Runnable checkCancellation, BooleanSupplier launchSucceeded) throws IOException, InterruptedException {
-        checkCancellation.run();
+    protected ManagedProcess launch(@Nullable Runnable checkCancellation, BooleanSupplier launchSucceeded) throws IOException, InterruptedException {
+        if (checkCancellation != null)
+            checkCancellation.run();
         generateOptionsTxt();
         return super.launch(checkCancellation, launchSucceeded);
     }

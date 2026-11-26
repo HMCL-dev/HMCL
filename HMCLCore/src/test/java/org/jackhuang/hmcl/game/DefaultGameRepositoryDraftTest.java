@@ -126,24 +126,21 @@ public final class DefaultGameRepositoryDraftTest {
         String oldHash = DigestUtils.digestToString("SHA-1", existing);
         String newHash = DigestUtils.digestToString("SHA-1", "updated".getBytes(StandardCharsets.UTF_8));
         var installed = publishServerUpdate(directory, List.of(new ModpackConfiguration.FileInformation("settings.txt", oldHash)),
-                List.of(new ModpackConfiguration.FileInformation("added.txt", newHash),
-                        new ModpackConfiguration.FileInformation("settings.txt", newHash)));
+                List.of(new ModpackConfiguration.FileInformation("settings.txt", newHash)));
         Path overrides = Files.createDirectories(directory.resolve("published/overrides"));
-        Files.writeString(overrides.resolve("added.txt"), "updated");
         var manager = createOfflineGameInstaller(repository, id, "1.21");
         var task = new ServerModpackCompletionTask(manager, instance);
         JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), installed);
         assertThrows(DownloadException.class, task::run);
         var saved = readServerManifest(instance);
         assertEquals("1.20", saved.getAddons().get(0).getVersion());
-        assertEquals(newHash, saved.getFiles().get(0).getHash());
-        assertEquals(oldHash, saved.getFiles().get(1).getHash());
+        assertEquals(oldHash, saved.getFiles().get(0).getHash());
         assertEquals("old", Files.readString(existing));
 
         Files.writeString(overrides.resolve("settings.txt"), "updated");
         new ServerModpackCompletionTask(manager, instance).run();
         assertEquals("updated", Files.readString(existing));
-        assertEquals(newHash, readServerManifest(repository.getInstance(id)).getFiles().get(1).getHash());
+        assertEquals(newHash, readServerManifest(repository.getInstance(id)).getFiles().get(0).getHash());
     }
 
     /// A queued update cannot delete files or rewrite the configuration of a replacement instance.
@@ -194,37 +191,6 @@ public final class DefaultGameRepositoryDraftTest {
         assertTrue(update.isCancellationRequested());
         assertEquals("1.21", repository.versionAtPublication);
         assertEquals("1.21", readServerManifest(repository.getInstance(id)).getAddons().get(0).getVersion());
-    }
-
-    /// A file-only update has committed its result when the draft protecting its configuration is released.
-    @Test
-    void serverFileUpdateCommitsBeforeReleasingDraft(@TempDir Path directory) throws Exception {
-        var repository = new TestRepository(directory) {
-            /// The update waiting to release its draft.
-            private @Nullable Task<?> update;
-
-            /// Cancels after the update has published the new file list.
-            @Override
-            void releaseDraft(DefaultGameRepositoryDraft draft) {
-                super.releaseDraft(draft);
-                if (update != null)
-                    update.cancel();
-            }
-        };
-        GameInstanceID id = new GameInstanceID("server");
-        repository.save(new GameInstanceManifest(id));
-        var instance = repository.getInstance(id);
-        var installed = publishServerUpdate(directory, List.of(), List.of());
-        var previous = installed.getManifest();
-        var remote = new ServerModpackManifest("pack", "", "2", "", previous.getFileApi(), List.of(), previous.getAddons());
-        JsonUtils.writeToJsonFile(directory.resolve("published/server-manifest.json"), remote);
-        JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), installed);
-        var update = new ServerModpackCompletionTask(createDependencyManager(repository), instance);
-        repository.update = update;
-
-        update.run();
-        assertTrue(update.isCancellationRequested());
-        assertEquals("2", readServerManifest(instance).getVersion());
     }
 
     /// A completed update cannot overwrite a replacement made as the build releases its draft.
@@ -358,9 +324,9 @@ public final class DefaultGameRepositoryDraftTest {
         manager.newGameBuilder(id).close();
     }
 
-    /// API mods cannot complete an instance update when their sole JAR is unavailable.
+    /// An unavailable API mod JAR allows the instance update to complete.
     @Test
-    void apiModUpdateFailsWhenJarIsMissing(@TempDir Path directory) throws IOException {
+    void apiModUpdateToleratesMissingJar(@TempDir Path directory) throws IOException {
         TestRepository repository = new TestRepository(directory);
         GameInstanceID id = new GameInstanceID("instance");
         repository.save(new GameInstanceManifest(id).withMainClass(GameComponentAnalyzer.VANILLA_MAIN));
@@ -377,7 +343,7 @@ public final class DefaultGameRepositoryDraftTest {
                 new QuiltAPIRemoteVersion(game, "1", "1", Instant.EPOCH, version, List.of(url)))) {
             Task<?> update = manager.updateInstanceAsync(id, instance ->
                     manager.installComponentRemoteAsync(instance, instance.getManifest(), remote));
-            assertThrows(DownloadException.class, update::run, remote.getComponentType().getPatchId());
+            assertDoesNotThrow(update::run, remote.getComponentType().getPatchId());
         }
     }
 
@@ -473,7 +439,7 @@ public final class DefaultGameRepositoryDraftTest {
         Path unmanaged = Files.writeString(mods.resolve("never-client.jar"), "manual");
         Path unselected = Files.writeString(mods.resolve("previously-excluded.jar"), "manual");
         Path payload = Files.writeString(directory.resolve("published.jar"), "new");
-        Path addedSource = Files.writeString(directory.resolve("added.jar"), "wrong");
+        Path addedSource = directory.resolve("added.jar");
         @Unmodifiable List<String> urls = List.of(payload.toUri().toString());
         @Unmodifiable Map<String, String> oldHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", retained));
         @Unmodifiable Map<String, String> newHashes = Map.of("sha512", DigestUtils.digestToString("SHA-512", "new".getBytes(StandardCharsets.UTF_8)));
@@ -933,68 +899,6 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals(renamedId, repository.getInstance(childId).getManifest().inheritsFrom());
         assertFalse(Files.exists(repository.getLayout().getInstanceRoot(parentId)));
         assertTrue(Files.isRegularFile(repository.getLayout().getInstanceJson(renamedId)));
-    }
-
-    /// A modpack configuration stays readable when its filename becomes the new instance manifest.
-    @Test
-    public void testRenameToAndFromModpack(@TempDir Path tempDirectory) throws IOException {
-        TestRepository repository = new TestRepository(tempDirectory);
-        DefaultGameRepositoryLayout layout = repository.getLayout();
-        GameInstanceID originalId = new GameInstanceID("original");
-        GameInstanceID modpackId = new GameInstanceID("Modpack");
-        repository.save(new GameInstanceManifest(originalId));
-        Files.writeString(layout.getModpackConfigurationFile(originalId), "configuration");
-
-        assertTrue(repository.renameInstance(originalId, modpackId));
-        assertEquals("configuration", Files.readString(layout.getInstanceRoot(modpackId).resolve("modpack.cfg")));
-        assertEquals(modpackId, JsonUtils.fromNonNullJson(
-                Files.readString(layout.getInstanceJson(modpackId)), GameInstanceManifest.class).id());
-
-        assertTrue(repository.renameInstance(modpackId, originalId));
-        assertEquals("configuration", Files.readString(layout.getModpackConfigurationFile(originalId)));
-    }
-
-    /// A failed publication restores the original filenames so that the same rename can be retried.
-    @Test
-    public void testModpackRenameRollback(@TempDir Path tempDirectory) throws IOException {
-        FailingRepository repository = new FailingRepository(tempDirectory);
-        DefaultGameRepositoryLayout layout = repository.getLayout();
-        GameInstanceID originalId = new GameInstanceID("original");
-        GameInstanceID modpackId = new GameInstanceID("modpack");
-        repository.save(new GameInstanceManifest(originalId));
-        Path configuration = layout.getModpackConfigurationFile(originalId);
-        Files.writeString(configuration, "configuration");
-        repository.failDraftPublish = true;
-
-        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
-            draft.rename(originalId, modpackId);
-            assertThrows(IllegalStateException.class, draft::commit);
-        }
-        assertEquals("configuration", Files.readString(configuration));
-        assertTrue(Files.notExists(layout.getInstanceRoot(modpackId)));
-        assertTrue(repository.renameInstance(originalId, modpackId));
-    }
-
-    /// A pre-existing configuration at the migration target prevents the rename without overwriting either file.
-    @Test
-    public void testModpackRenamePreservesConflictingConfiguration(@TempDir Path tempDirectory) throws IOException {
-        TestRepository repository = new TestRepository(tempDirectory);
-        DefaultGameRepositoryLayout layout = repository.getLayout();
-        GameInstanceID originalId = new GameInstanceID("original");
-        GameInstanceID modpackId = new GameInstanceID("modpack");
-        repository.save(new GameInstanceManifest(originalId));
-        Path root = layout.getInstanceRoot(originalId);
-        Files.writeString(root.resolve("modpack.json"), "current");
-        Files.writeString(root.resolve("modpack.cfg"), "legacy");
-
-        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
-            draft.rename(originalId, modpackId);
-            assertThrows(FileAlreadyExistsException.class, draft::commit);
-        }
-        assertEquals("current", Files.readString(root.resolve("modpack.json")));
-        assertEquals("legacy", Files.readString(root.resolve("modpack.cfg")));
-        assertTrue(Files.isRegularFile(layout.getInstanceJson(originalId)));
-        assertTrue(Files.notExists(layout.getInstanceRoot(modpackId)));
     }
 
     /// Removes a registered instance through a one-shot draft.

@@ -13,7 +13,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.task.TaskStage;
-import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -121,13 +120,9 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
                 continue;
 
             DownloadProvider downloadProvider = dependency.getDownloadProvider();
-            @Nullable String sha1 = file.hashes().get("sha1");
-            boolean canCacheByHash = DigestUtils.isSha1Digest(sha1);
-            var checksum = canCacheByHash ? new FileDownloadTask.IntegrityCheck("SHA-1", sha1)
-                    : new FileDownloadTask.IntegrityCheck("SHA-512", file.hashes().get("sha512"));
-            var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(file.downloads()), filePath, checksum);
+            var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(file.downloads()), filePath);
             task.setCacheRepository(dependency.getCacheRepository());
-            task.setCaching(canCacheByHash);
+            task.setCaching(true);
             dependencies.add(task.withCounter());
         }
 

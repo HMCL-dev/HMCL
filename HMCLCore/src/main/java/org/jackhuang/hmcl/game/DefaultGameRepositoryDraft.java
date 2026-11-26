@@ -239,7 +239,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         repository.checkActiveDraft(this);
         state = GameRepositoryDraft.State.COMMITTING;
 
-        List<FileMove> appliedRenames = new ArrayList<>();
+        List<RenameOperation> appliedRenames = new ArrayList<>();
         List<RemovedRoot> removedRoots = new ArrayList<>();
         List<AppliedFile> appliedFiles = new ArrayList<>();
         @Nullable Path rollbackDirectory = null;
@@ -321,10 +321,14 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             }
 
             // rollback renames
-            for (int i = appliedRenames.size() - 1; i >= 0; i--) {
-                FileMove move = appliedRenames.get(i);
+            List<RenameOperation> reversed = new ArrayList<>(appliedRenames);
+            Collections.reverse(reversed);
+            for (RenameOperation rename : reversed) {
                 try {
-                    Files.move(move.to(), move.from());
+                    DefaultGameRepository.moveInstanceFiles(
+                            baseSnapshot.getLayout().getBaseDirectory(),
+                            rename.to(),
+                            rename.from());
                 } catch (IOException e1) {
                     e.addSuppressed(e1);
                 }
@@ -498,10 +502,9 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// @param rename  the requested rename
     /// @param applied rollback records for completed renames
     /// @throws IOException if the source files cannot be renamed
-    private void applyRename(RenameOperation rename, List<FileMove> applied) throws IOException {
-        DefaultGameRepositoryLayout layout = baseSnapshot.getLayout();
-        Path sourceRoot = layout.getInstanceRoot(rename.from());
-        Path targetRoot = layout.getInstanceRoot(rename.to());
+    private void applyRename(RenameOperation rename, List<RenameOperation> applied) throws IOException {
+        Path sourceRoot = baseSnapshot.getLayout().getInstanceRoot(rename.from());
+        Path targetRoot = baseSnapshot.getLayout().getInstanceRoot(rename.to());
         if (!Files.isDirectory(sourceRoot)) {
             throw new IOException("Instance directory does not exist: " + sourceRoot);
         }
@@ -509,26 +512,11 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             throw new FileAlreadyExistsException(targetRoot.toString());
         }
 
-        Path configuration = targetRoot.resolve(sourceRoot.relativize(layout.getModpackConfigurationFile(rename.from())));
-        Path sourceManifest = targetRoot.resolve(sourceRoot.relativize(layout.getInstanceJson(rename.from())));
-        Path sourceJar = targetRoot.resolve(sourceRoot.relativize(layout.getInstanceJarFile(rename.from())));
-        Path targetManifest = layout.getInstanceJson(rename.to());
-        moveForRename(sourceRoot, targetRoot, applied);
-        // The default layout reserves the manifest name even on case-sensitive file systems.
-        if (configuration.getFileName().toString().equalsIgnoreCase(targetManifest.getFileName().toString())
-                && Files.exists(configuration)) {
-            moveForRename(configuration, layout.getModpackConfigurationFile(rename.to()), applied);
-        }
-        moveForRename(sourceManifest, targetManifest, applied);
-        if (Files.exists(sourceJar)) {
-            moveForRename(sourceJar, layout.getInstanceJarFile(rename.to()), applied);
-        }
-    }
-
-    /// Moves a path without replacing an existing target and records the move for rollback.
-    private static void moveForRename(Path from, Path to, List<FileMove> applied) throws IOException {
-        Files.move(from, to);
-        applied.add(new FileMove(from, to));
+        DefaultGameRepository.moveInstanceFiles(
+                baseSnapshot.getLayout().getBaseDirectory(),
+                rename.from(),
+                rename.to());
+        applied.add(rename);
     }
 
     /// Moves one removed instance root into the commit rollback directory.
@@ -714,10 +702,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// @param from the source instance id
     /// @param to   the target instance id
     private record RenameOperation(GameInstanceID from, GameInstanceID to) {
-    }
-
-    /// A completed filesystem move within an instance rename.
-    private record FileMove(Path from, Path to) {
     }
 
     /// Records an instance root moved aside for rollback during commit.

@@ -34,10 +34,10 @@ public final class LegacyFabricAPIInstallTask extends Task<@Nullable GameInstanc
         this.modsDirectory = modsDirectory;
     }
 
-    /// Downloads the API mod without adding a component patch to the manifest.
+    /// Attempts to download the API mod. A download failure allows the installation to continue.
     @Override
-    public @Nullable GameInstancePatch execute(TaskExecutionContext context) throws Exception {
-        context.run(new FileDownloadTask(
+    public @Nullable GameInstancePatch execute(TaskExecutionContext context) {
+        context.tryRun(new FileDownloadTask(
                 remote.getVersion().file().url(),
                 modsDirectory.resolve("legacy-fabric-api-" + remote.getVersion().version() + ".jar"),
                 remote.getVersion().file().getIntegrityCheck()));

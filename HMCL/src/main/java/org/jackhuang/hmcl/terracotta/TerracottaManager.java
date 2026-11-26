@@ -155,8 +155,6 @@ public final class TerracottaManager {
         }
 
         TerracottaState.Preparing preparing = new TerracottaState.Preparing(true);
-        if (!compareAndSet(state, preparing))
-            return null;
 
         Task.composeAsync(() -> getProvider().download(preparing))
                 .thenComposeOptionalAsync(pkg -> {
@@ -180,7 +178,7 @@ public final class TerracottaManager {
                     }
                 }).addTaskListener(preparing.downloadListener()).start();
 
-        return preparing;
+        return compareAndSet(state, preparing) ? preparing : null;
     }
 
     /// Installs a local bundle and returns the preparation state if this starts a new preparation.
@@ -197,8 +195,6 @@ public final class TerracottaManager {
             preparing = previousPreparing;
         } else if (state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable()) {
             preparing = new TerracottaState.Preparing(false);
-            if (!compareAndSet(state, preparing))
-                return null;
         } else {
             return null;
         }
@@ -215,7 +211,7 @@ public final class TerracottaManager {
                         compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
                 }).start();
 
-        return state != preparing ? preparing : null;
+        return state != preparing && compareAndSet(state, preparing) ? preparing : null;
     }
 
     @FXThread

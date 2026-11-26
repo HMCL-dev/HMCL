@@ -671,13 +671,14 @@ public class DefaultLauncher extends Launcher {
     /// {@inheritDoc}
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        return launch(() -> {}, () -> true);
+        return launch(null, () -> true);
     }
 
-    /// Cancelling during the pre-launch command or game startup stops the active child process.
+    /// A supplied cancellation check can stop the active pre-launch command or game process.
     /// After game exit, the monitor may wait on `launchSucceeded` before running the post-exit command.
-    protected ManagedProcess launch(Runnable checkCancellation, BooleanSupplier launchSucceeded) throws IOException, InterruptedException {
-        checkCancellation.run();
+    protected ManagedProcess launch(@Nullable Runnable checkCancellation, BooleanSupplier launchSucceeded) throws IOException, InterruptedException {
+        if (checkCancellation != null)
+            checkCancellation.run();
         final Command command = generateCommandLine();
         final Map<String, String> envVars = generateEnvVars();
 
@@ -715,7 +716,8 @@ public class DefaultLauncher extends Launcher {
         if (appdata != null)
             builder.environment().put("APPDATA", appdata.toString());
         builder.environment().putAll(envVars);
-        checkCancellation.run();
+        if (checkCancellation != null)
+            checkCancellation.run();
         ManagedProcess process;
         try {
             process = new ManagedProcess(builder.start(), builder.command());
@@ -724,10 +726,12 @@ public class DefaultLauncher extends Launcher {
         }
 
         try {
-            checkCancellation.run();
+            if (checkCancellation != null)
+                checkCancellation.run();
             if (listener != null)
                 startMonitors(process, envVars, listener, command.encoding, daemon, launchSucceeded);
-            checkCancellation.run();
+            if (checkCancellation != null)
+                checkCancellation.run();
             return process;
         } catch (RuntimeException | Error e) {
             process.stopAndWait();

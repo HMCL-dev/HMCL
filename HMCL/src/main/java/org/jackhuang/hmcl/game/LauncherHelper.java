@@ -171,7 +171,7 @@ public final class LauncherHelper {
                     context.launchManifest = LaunchManifestNormalizer.repairForLaunch(gameInstance.getResolvedManifest());
                     return checkGameState(context.launchManifest, javaVersionType, skipJavaCheck);
                 }).withStage(JAVA_STAGE)
-                .thenComposeAsync(java -> Task.composeOptionalAsync(() -> {
+                .thenComposeOptionalAsync(java -> {
                     context.javaRuntime = Objects.requireNonNull(java);
                     context.javaExecutable = java.getBinary();
                     if (java.getPlatform().os() == OperatingSystem.WINDOWS
@@ -187,8 +187,9 @@ public final class LauncherHelper {
                     context.launchManifest = NativePatcher.patchNative(gameInstance, context.launchManifest, java, setting, javaArguments);
                     if (setting.getInheritable(GameSettings::notCheckGameProperty))
                         return null;
+                    boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
                     return Task.allOf(
-                            Task.composeAsync(() -> checkGameFiles(dependencyManager, context.launchManifest, java, javaAgents)),
+                            dependencyManager.checkGameCompletionAsync(gameInstance, context.launchManifest, integrityCheck),
                             Task.composeOptionalAsync(() -> {
                                 try {
                                     @Nullable ModpackConfiguration<?> configuration =
@@ -203,9 +204,33 @@ public final class LauncherHelper {
                                 } catch (IOException e) {
                                     return null;
                                 }
+                            }),
+                            Task.composeOptionalAsync(() -> {
+                                if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS
+                                        || !(setting.getRenderer(gameInstance.getVersion()) instanceof Renderer.Driver renderer)
+                                        || renderer.mesaDriverName() == null)
+                                    return null;
+
+                                @Nullable Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, SystemInfo.SYSTEM_VERSION);
+                                if (lib == null)
+                                    return null;
+                                Path file = gameInstance.getLayout().getLibraryFile(gameInstance.getId(), lib);
+                                if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
+                                    LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
+                                    return null;
+                                }
+
+                                String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.mesaDriverName();
+                                if (GameLibrariesTask.shouldDownloadLibrary(repository, context.launchManifest, lib, integrityCheck)) {
+                                    return new LibraryDownloadTask(dependencyManager, file, lib)
+                                            .thenRunAsync(() -> javaAgents.add(agent));
+                                } else {
+                                    javaAgents.add(agent);
+                                    return null;
+                                }
                             })
-                    );
-                }).withStage(DEPENDENCIES_STAGE))
+                    ).withStage(DEPENDENCIES_STAGE);
+                })
                 .thenComposeAsync(() -> new GameVerificationFixTask(gameInstance, gameInstance.getVersion(), context.launchManifest))
                 .thenComposeAsync(() -> {
                     if (setting.getInheritable(GameSettings::allowAutoAgentProperty)
@@ -424,34 +449,6 @@ public final class LauncherHelper {
         });
 
         launchingStepsPane.startTask().exceptionally(Lang::handleUncaughtException);
-    }
-
-    /// Consumes the abnormal-launch marker when checking game files and the optional Windows Mesa loader.
-    private Task<?> checkGameFiles(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, JavaRuntime java, List<String> javaAgents) {
-        boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
-        Task<?> gameFiles = dependencyManager.checkGameCompletionAsync(gameInstance, manifest, integrityCheck);
-        if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS)
-            return gameFiles;
-
-        return Task.allOf(gameFiles, Task.composeOptionalAsync(() -> {
-            if (!(setting.getRenderer(gameInstance.getVersion()) instanceof Renderer.Driver renderer) || renderer.mesaDriverName() == null)
-                return null;
-            @Nullable Library library = NativePatcher.getWindowsMesaLoader(java, renderer, SystemInfo.SYSTEM_VERSION);
-            if (library == null)
-                return null;
-            Path file = gameInstance.getLayout().getLibraryFile(gameInstance.getId(), library);
-            if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
-                LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
-                return null;
-            }
-            String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.mesaDriverName();
-            if (GameLibrariesTask.shouldDownloadLibrary(dependencyManager.getGameRepository(), manifest, library, integrityCheck)) {
-                return new LibraryDownloadTask(dependencyManager, file, library)
-                        .thenRunAsync(() -> javaAgents.add(agent));
-            }
-            javaAgents.add(agent);
-            return null;
-        }));
     }
 
     /// Checks launch requirements, allowing required Java downloads to share this launch's execution slot.

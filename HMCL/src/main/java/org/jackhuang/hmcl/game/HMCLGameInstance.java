@@ -112,6 +112,14 @@ public class HMCLGameInstance extends DefaultGameInstance {
         return (HMCLGameRepositoryLayout) super.getLayout();
     }
 
+    /// Returns the HMCL modpack configuration file for this instance.
+    ///
+    /// @return the `modpack.cfg` path in the instance root
+    @Override
+    public Path getModpackConfigurationFile() {
+        return getLayout().getModpackConfigurationFile(getId());
+    }
+
     /// Returns whether this instance has an HMCL modpack configuration file.
     ///
     /// @return whether [#getModpackConfigurationFile()] exists

@@ -9,7 +9,6 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
-import org.jackhuang.hmcl.game.DefaultGameRepositoryDraft;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -109,6 +108,8 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
             throw new IOException(e);
         }
 
+        var configuration = new ModpackConfiguration<>(remoteManifest, installed.getType(), installed.getName(),
+                installed.getVersion(), remoteManifest.getFiles());
         if (!toMap(installed.getManifest().getAddons()).equals(toMap(remoteManifest.getAddons()))) {
             try (DefaultGameBuilder builder = dependencyManager.newGameBuilder(instance)) {
                 for (ServerModpackManifest.Addon addon : remoteManifest.getAddons()) {
@@ -116,25 +117,23 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
                     if (componentType != null)
                         builder.component(componentType, addon.getVersion());
                 }
-                syncFiles(context, installed, remoteManifest, false);
-                builder.setModpackConfiguration(configurationFor(installed, remoteManifest));
+                syncFiles(context, installed, remoteManifest);
+                builder.setModpackConfiguration(configuration);
                 builder.buildAsTaskResult(context);
             }
         } else {
-            try (DefaultGameRepositoryDraft draft = dependencyManager.getGameRepository().openDraft()) {
-                if (draft.getBaseSnapshot().findInstance(instance.getId()) != instance)
-                    throw new IllegalStateException("Game instance has changed: " + instance.getId());
-                syncFiles(context, installed, remoteManifest, true);
-            }
+            syncFiles(context, installed, remoteManifest);
+            context.commit();
+            configuration.writeTo(configurationFile);
         }
         return null;
     }
 
-    /// Synchronizes overrides and records their hashes, committing the task if this is its final publication.
+    /// Synchronizes overrides before publishing the new configuration.
     private void syncFiles(TaskExecutionContext context, ModpackConfiguration<ServerModpackManifest> installed,
-                           ServerModpackManifest remoteManifest, boolean finalPublication) throws Exception {
+                           ServerModpackManifest remoteManifest) throws Exception {
         Files.createDirectories(configurationFile.getParent());
-        Map<String, Task<?>> downloads = new LinkedHashMap<>();
+        List<Task<?>> downloads = new ArrayList<>();
         Path rootPath = instance.getInstanceRoot().toAbsolutePath().normalize();
         Map<String, ModpackConfiguration.FileInformation> files = installed.getManifest().getFiles().stream()
                 .collect(Collectors.toMap(ModpackConfiguration.FileInformation::getPath,
@@ -178,7 +177,7 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
             }
 
             if (download) {
-                downloads.put(file.getPath(), new FileDownloadTask(
+                downloads.add(new FileDownloadTask(
                         remoteManifest.getFileApi() + "/overrides/" + file.getPath(),
                         actualPath,
                         new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
@@ -192,51 +191,6 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
         }
 
         context.addStageItems(downloads.size());
-
-        try {
-            context.runAll(downloads.values(), FetchTask.getDownloadExecutorConcurrency());
-            if (finalPublication)
-                context.commit();
-        } catch (Exception | Error failure) {
-            try {
-                List<ModpackConfiguration.FileInformation> synced = new ArrayList<>();
-                for (var file : remoteManifest.getFiles()) {
-                    @Nullable Task<?> download = downloads.get(file.getPath());
-                    if (download == null || wasDownloaded(download, rootPath.resolve(file.getPath()), file.getHash(), failure)) {
-                        synced.add(file);
-                    } else {
-                        @Nullable var old = files.get(file.getPath());
-                        if (old != null)
-                            synced.add(old);
-                    }
-                }
-                configurationFor(installed, installed.getManifest().withFiles(synced)).writeTo(configurationFile);
-            } catch (Exception | Error cleanupFailure) {
-                failure.addSuppressed(cleanupFailure);
-            }
-            throw failure;
-        }
-        ServerModpackManifest baseline = finalPublication ? remoteManifest : installed.getManifest().withFiles(remoteManifest.getFiles());
-        configurationFor(installed, baseline).writeTo(configurationFile);
-    }
-
-    /// A download may have replaced its destination before reporting cancellation or a later failure.
-    private static boolean wasDownloaded(Task<?> download, Path path, String hash, Throwable failure) {
-        if (download.getState() == Task.State.SUCCEEDED)
-            return true;
-        if (download.getState() == Task.State.NEW)
-            return false;
-        try {
-            return Files.isRegularFile(path) && hash.equalsIgnoreCase(DigestUtils.digestToString("SHA-1", path));
-        } catch (IOException e) {
-            failure.addSuppressed(e);
-            return false;
-        }
-    }
-
-    /// Pairs the synchronized file list with the component versions that supplied it.
-    private static ModpackConfiguration<ServerModpackManifest> configurationFor(
-            ModpackConfiguration<ServerModpackManifest> installed, ServerModpackManifest remote) {
-        return new ModpackConfiguration<>(remote, installed.getType(), installed.getName(), installed.getVersion(), remote.getFiles());
+        context.runAll(downloads, FetchTask.getDownloadExecutorConcurrency());
     }
 }

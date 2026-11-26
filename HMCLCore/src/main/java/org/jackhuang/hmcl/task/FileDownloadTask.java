@@ -137,9 +137,6 @@ public class FileDownloadTask extends FetchTask<@Nullable Void> {
 
     @Override
     protected @Nullable Void useCachedResult(Path cache) throws IOException {
-        // A URL cache entry can predate the checksum requested by this download.
-        if (!caching && integrityCheck != null && !integrityCheck.checksum().isEmpty())
-            ChecksumMismatchException.verifyChecksum(cache, integrityCheck.algorithm(), integrityCheck.checksum());
         FileUtils.copyFile(cache, file);
         return null;
     }

@@ -184,10 +184,10 @@ public final class HMCLJavaRepository implements JavaRepository {
         });
     }
 
-    /// Deletes the installed files and their manifest.
+    /// Removes the installation manifest before deleting the runtime files.
     private void uninstallJava(NativePlatform platform, String name) throws IOException {
-        FileUtils.deleteDirectory(getJavaDir(platform, name));
         Files.deleteIfExists(getManifestFile(platform, name));
+        FileUtils.deleteDirectory(getJavaDir(platform, name));
     }
 
     /// Removes the runtime if its executable belongs to an installation in this repository.
