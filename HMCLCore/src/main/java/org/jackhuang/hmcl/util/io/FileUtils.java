@@ -511,7 +511,7 @@ public final class FileUtils {
 
     /// Writes a sibling file and replaces the destination only after the writer succeeds.
     /// The replacement uses an atomic move when supported by the file system.
-    public static void replaceFile(Path target, ExceptionalConsumer<? super Path, IOException> writer) throws IOException {
+    public static <E extends Exception> void replaceFile(Path target, ExceptionalConsumer<? super Path, E> writer) throws IOException, E {
         Path temporary = Files.createFile(target.resolveSibling(".hmcl-" + UUID.randomUUID() + ".tmp"));
         try {
             writer.accept(temporary);
@@ -520,7 +520,7 @@ public final class FileUtils {
             } catch (AtomicMoveNotSupportedException ignored) {
                 Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
             }
-        } catch (IOException | RuntimeException | Error failure) {
+        } catch (Exception | Error failure) {
             try {
                 Files.deleteIfExists(temporary);
             } catch (IOException cleanupFailure) {
