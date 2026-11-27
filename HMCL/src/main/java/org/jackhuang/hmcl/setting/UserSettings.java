@@ -96,11 +96,36 @@ public final class UserSettings extends ObservableSetting implements JsonSchemaS
         this.backupOnNextSave = backupOnNextSave;
     }
 
+    /// The old default value for [#logRetentionProperty()]. Due to old config writing every value unconditionally,
+    /// this default value will also be copied when migrating, essentially disabling log cleanup.
+    ///
+    /// @see LegacyConfigMigrator
+    /// @see org.jackhuang.hmcl.util.logging.Logger#setLogRetention(int)
+    public static final int LOG_RETENTION_LEGACY_DEFAULT = 0;
+    public static final int LOG_RETENTION_DEFAULT = 20;
+
     /// The number of launcher log files to retain.
     @SerializedName("logRetention")
-    private final IntegerProperty logRetention = new SimpleIntegerProperty(20);
+    private final IntegerProperty logRetention = new SimpleIntegerProperty(LOG_RETENTION_DEFAULT) {
+        @Override
+        public void set(int i) {
+            super.set(i == LOG_RETENTION_LEGACY_DEFAULT ? LOG_RETENTION_DEFAULT : i);
+        }
+
+        @Override
+        public int get() {
+            var value = super.get();
+            return value == LOG_RETENTION_LEGACY_DEFAULT ? LOG_RETENTION_DEFAULT : value;
+        }
+    };
 
     /// Returns the log retention property.
+    ///
+    /// This property will redirect {@value #LOG_RETENTION_LEGACY_DEFAULT} to {@value #LOG_RETENTION_DEFAULT},
+    /// to work around an issue during config migration
+    ///
+    /// @see #LOG_RETENTION_LEGACY_DEFAULT
+    /// @see #LOG_RETENTION_DEFAULT
     public IntegerProperty logRetentionProperty() {
         return logRetention;
     }
