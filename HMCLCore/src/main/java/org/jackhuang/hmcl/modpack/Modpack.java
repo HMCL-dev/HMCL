@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
+import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,31 +139,40 @@ public abstract class Modpack {
         try (DefaultGameBuilder builder = updateTarget == null
                 ? dependencyManager.newGameBuilder(instanceId)
                 : dependencyManager.newGameBuilder(updateTarget)) {
-            context.checkCancellation();
-            @Nullable Path backup = updateTarget == null ? null : createUpdateBackup(updateTarget);
-            context.checkCancellation();
+            installWithGameBuilder(context, builder, keepIncompleteInstance, () -> install.accept(builder));
+        }
+    }
+
+    /// Installs into a caller-owned draft after validation, backing up an update before the first write.
+    /// The caller closes the builder after this method returns or throws.
+    public static void installWithGameBuilder(
+            TaskExecutionContext context, DefaultGameBuilder builder, boolean keepIncompleteInstance,
+            ExceptionalRunnable<Exception> install) throws Exception {
+        context.checkCancellation();
+        @Nullable DefaultGameInstance updateTarget = builder.getUpdateTarget();
+        @Nullable Path backup = updateTarget == null ? null : createUpdateBackup(updateTarget);
+        context.checkCancellation();
+        try {
             try {
-                try {
-                    install.accept(builder);
-                } catch (ModpackCompletionException incomplete) {
-                    if (keepIncompleteInstance)
-                        context.commit();
-                    throw incomplete;
-                }
-                context.commit();
-            } catch (Exception | Error failure) {
-                try {
-                    if (backup != null && updateTarget != null) {
-                        builder.abort();
-                        restoreUpdateBackup(updateTarget, backup, builder.getCommittedManifest());
-                    } else if (!(keepIncompleteInstance && failure instanceof ModpackCompletionException)) {
-                        builder.rollback();
-                    }
-                } catch (Exception | Error cleanup) {
-                    failure.addSuppressed(cleanup);
-                }
-                throw failure;
+                install.run();
+            } catch (ModpackCompletionException incomplete) {
+                if (keepIncompleteInstance)
+                    context.commit();
+                throw incomplete;
             }
+            context.commit();
+        } catch (Exception | Error failure) {
+            try {
+                if (backup != null && updateTarget != null) {
+                    builder.abort();
+                    restoreUpdateBackup(updateTarget, backup, builder.getCommittedManifest());
+                } else if (!(keepIncompleteInstance && failure instanceof ModpackCompletionException)) {
+                    builder.rollback();
+                }
+            } catch (Exception | Error cleanup) {
+                failure.addSuppressed(cleanup);
+            }
+            throw failure;
         }
     }
 

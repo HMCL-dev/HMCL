@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -125,43 +126,52 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
     /// patch-structured manifest instead of attempting to mutate the legacy flattened manifest.
     @Override
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        Modpack.installWithGameBuilder(context, dependency, instanceId, updateTarget, false, builder -> {
-            DefaultGameRepositoryLayout layout = dependency.getGameRepository().getLayout();
-            @Unmodifiable List<String> subDirectories = List.of("/minecraft");
-            context.runAll(
-                    new ModpackInstallTask<>(zipFile, layout.getInstanceRoot(instanceId), subDirectories,
-                            path -> !"pack.json".equals(path), readConfiguration()),
-                    new MinecraftInstanceTask<>(zipFile, subDirectories, modpack, HMCLModpackProvider.INSTANCE,
-                            modpackName, modpackVersion, layout.getModpackConfigurationFile(instanceId))
-                            .withStage(InstallStages.MODPACK));
-            String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
-            GameInstanceManifest originalManifest = JsonUtils.fromNonNullJson(json, GameInstanceManifest.class)
-                    .withId(instanceId)
-                    .withJar(null);
-            GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(originalManifest, null);
-            builder.enableIsolation();
-
-            String gameVersion = modpack.getGameVersion();
-            builder.component(GameComponentType.GAME, gameVersion);
-            for (GameComponentAnalyzer.Mark mark : analyzer) {
-                if (mark.componentType() == GameComponentType.GAME) {
-                    continue;
-                }
-
-                @Nullable String componentVersion = mark.version();
-                if (componentVersion != null) {
-                    if (mark.componentType() == GameComponentType.OPTIFINE) {
-                        Matcher matcher = GameComponentAnalyzer.OPTIFINE_VERSION_PATTERN.matcher(componentVersion);
-                        if (matcher.matches()) {
-                            componentVersion = matcher.group("optifine");
-                        }
-                    }
-                    builder.component(mark.componentType(), componentVersion);
-                }
-            }
-            builder.build(context);
-        });
+        try (DefaultGameBuilder builder = updateTarget == null
+                ? dependency.newGameBuilder(instanceId)
+                : dependency.newGameBuilder(updateTarget)) {
+            context.checkCancellation();
+            @Nullable ModpackConfiguration<?> config = readConfiguration();
+            Modpack.installWithGameBuilder(context, builder, false, () -> install(context, builder, config));
+        }
         return null;
+    }
+
+    /// Extracts the overrides and builds the components declared by the pack.
+    private void install(TaskExecutionContext context, DefaultGameBuilder builder, @Nullable ModpackConfiguration<?> config) throws Exception {
+        DefaultGameRepositoryLayout layout = dependency.getGameRepository().getLayout();
+        @Unmodifiable List<String> subDirectories = List.of("/minecraft");
+        context.runAll(
+                new ModpackInstallTask<>(zipFile, layout.getInstanceRoot(instanceId), subDirectories,
+                        path -> !"pack.json".equals(path), config),
+                new MinecraftInstanceTask<>(zipFile, subDirectories, modpack, HMCLModpackProvider.INSTANCE,
+                        modpackName, modpackVersion, layout.getModpackConfigurationFile(instanceId))
+                        .withStage(InstallStages.MODPACK));
+        String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
+        GameInstanceManifest originalManifest = JsonUtils.fromNonNullJson(json, GameInstanceManifest.class)
+                .withId(instanceId)
+                .withJar(null);
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(originalManifest, null);
+        builder.enableIsolation();
+
+        String gameVersion = modpack.getGameVersion();
+        builder.component(GameComponentType.GAME, gameVersion);
+        for (GameComponentAnalyzer.Mark mark : analyzer) {
+            if (mark.componentType() == GameComponentType.GAME) {
+                continue;
+            }
+
+            @Nullable String componentVersion = mark.version();
+            if (componentVersion != null) {
+                if (mark.componentType() == GameComponentType.OPTIFINE) {
+                    Matcher matcher = GameComponentAnalyzer.OPTIFINE_VERSION_PATTERN.matcher(componentVersion);
+                    if (matcher.matches()) {
+                        componentVersion = matcher.group("optifine");
+                    }
+                }
+                builder.component(mark.componentType(), componentVersion);
+            }
+        }
+        builder.build(context);
     }
 
 }

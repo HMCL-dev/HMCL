@@ -768,6 +768,7 @@ public final class GameDirectoriesTest {
                     """;
             Files.writeString(instance.getModpackConfigurationFile(), configuration);
             assertThrows(IllegalArgumentException.class, update::run);
+            assertTrue(Files.notExists(repository.getLayout().getBaseDirectory().resolve("backup")));
             assertEquals(configuration, Files.readString(instance.getModpackConfigurationFile()));
             assertTrue(Files.notExists(instance.getInstanceRoot().resolve("override.txt")));
             assertSame(instance, repository.getInstance(id));

@@ -466,13 +466,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             throw new IllegalArgumentException("Cannot remove component from a non-modifiable manifest");
         }
 
-        return new Task<>() {
-            /// {@inheritDoc}
-            @Override
-            public GameInstanceManifest execute(TaskExecutionContext context) {
-                return workingManifest.removeComponent(componentType);
-            }
-        };
+        return Task.completed(workingManifest.removeComponent(componentType));
     }
 
 }

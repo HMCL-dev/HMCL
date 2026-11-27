@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.download.java.disco;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.java.JavaPackageType;
 import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -14,6 +15,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.*;
+import java.util.concurrent.Executor;
 
 /**
  * @author Glavo
@@ -34,6 +36,12 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
         this.downloadProvider = Objects.requireNonNull(downloadProvider);
         this.distribution = Objects.requireNonNull(distribution);
         this.platform = Objects.requireNonNull(platform);
+    }
+
+    /// Runs the package query and catalog processing on the I/O scheduler.
+    @Override
+    protected Executor getExecutor() {
+        return Schedulers.io();
     }
 
     /// Returns the latest matching distribution version per JDK major version and package type.

@@ -66,6 +66,11 @@ public class DefaultGameBuilder extends GameBuilder {
         return dependencyManager;
     }
 
+    /// Returns the instance reserved for an update, or null for a new installation.
+    public @Nullable DefaultGameInstance getUpdateTarget() {
+        return updateTarget;
+    }
+
     /// Returns the manifest published by this build, or null before publication.
     public @Nullable GameInstanceManifest getCommittedManifest() {
         return committedManifest;
