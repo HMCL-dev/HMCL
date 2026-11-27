@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
@@ -409,6 +410,17 @@ public final class HTMLRenderer {
                 popNode();
             }
         }
+    }
+
+    /// Appends a modpack description, preserving line breaks when it contains no HTML elements.
+    HTMLRenderer appendDescription(String content) {
+        var document = Jsoup.parseBodyFragment(content);
+        var body = document.body();
+        if (body.childrenSize() > 0)
+            return appendNode(document);
+
+        appendText(body.wholeText().replace("\r\n", "\n").replace('\r', '\n'));
+        return this;
     }
 
     public HTMLRenderer appendNode(Node node) {

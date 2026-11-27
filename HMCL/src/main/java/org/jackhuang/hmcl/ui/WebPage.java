@@ -13,8 +13,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -31,9 +29,8 @@ public final class WebPage extends SpinnerPane implements DecoratorPage {
         this.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
 
         Task.supplyAsync(() -> {
-            Document document = Jsoup.parseBodyFragment(content);
             HTMLRenderer renderer = new HTMLRenderer(Controllers::openUriOrCopy);
-            renderer.appendNode(document);
+            renderer.appendDescription(content);
             renderer.mergeLineBreaks();
             return renderer.render();
         }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
