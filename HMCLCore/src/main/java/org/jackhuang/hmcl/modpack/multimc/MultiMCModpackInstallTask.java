@@ -61,9 +61,6 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     private final DefaultGameRepository repository;
     private final DefaultDependencyManager dependencyManager;
 
-    /// Previous modpack configuration when updating, or `null` for a new installation.
-    private final @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config;
-
     /// Creates a MultiMC modpack installation task.
     ///
     /// @param dependencyManager the dependency manager for the target repository
@@ -128,17 +125,16 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a MultiMC modpack. Cannot update this instance.");
 
-        @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
         try {
             if (this.updateTarget != null && Files.exists(json)) {
-                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
+                @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config =
+                        JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
 
                 if (config == null || !MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Instance " + instanceId + " is not a MultiMC modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
-        this.config = config;
     }
 
     /// Extracts the pack files and returns their configuration for the repository commit.
@@ -149,7 +145,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             mcDirectory = getRootPath(fs).resolve(".minecraft").toAbsolutePath().normalize().toString();
         }
         @Unmodifiable List<String> directories = List.of(mcDirectory);
-        return new ModpackInstallTask<>(zipFile, run, directories, any -> true, config)
+        return new ModpackInstallTask(zipFile, run, directories, any -> true,
+                updateTarget == null ? null : updateTarget.getModpackConfigurationFile())
                 .thenCompose(new MinecraftInstanceTask<>(zipFile, directories, manifest, MultiMCModpackProvider.INSTANCE,
                         manifest.getName(), null)).withStage(InstallStages.MODPACK);
     }

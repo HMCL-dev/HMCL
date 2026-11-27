@@ -101,20 +101,18 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
             dependency.validateGameInstance(updateTarget);
     }
 
-    /// Reads the installed override hashes. A missing configuration or a different provider rejects the update.
-    private @Nullable ModpackConfiguration<?> readUpdateConfiguration(Path file) {
+    /// Rejects an update if the installed configuration is missing or records a different provider.
+    private void validateUpdateConfiguration(Path file) {
         @Nullable ModpackConfiguration<?> config;
         try {
             config = JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
         } catch (NoSuchFileException e) {
             config = null;
         } catch (JsonParseException | IOException ignored) {
-            // An unreadable configuration supplies no previous override hashes.
-            return null;
+            return;
         }
         if (config == null || !HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
-        return config;
     }
 
     /// Reserves the target before extracting the pack and installs its recognized components.
@@ -125,12 +123,12 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         Modpack.installWithGameBuilder(context, dependency, instanceId, updateTarget, false, builder -> {
             DefaultGameRepositoryLayout layout = dependency.getGameRepository().getLayout();
-            Path configurationFile = layout.getModpackConfigurationFile(instanceId);
-            @Nullable ModpackConfiguration<?> oldConfiguration =
-                    updateTarget == null ? null : readUpdateConfiguration(configurationFile);
+            @Nullable Path configurationFile = updateTarget == null ? null : updateTarget.getModpackConfigurationFile();
+            if (configurationFile != null)
+                validateUpdateConfiguration(configurationFile);
             @Unmodifiable List<String> subDirectories = List.of("/minecraft");
-            context.run(new ModpackInstallTask<>(zipFile, layout.getInstanceRoot(instanceId), subDirectories,
-                    path -> !"pack.json".equals(path), oldConfiguration));
+            context.run(new ModpackInstallTask(zipFile, layout.getInstanceRoot(instanceId), subDirectories,
+                    path -> !"pack.json".equals(path), configurationFile));
             builder.setModpackConfiguration(context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, modpack,
                     HMCLModpackProvider.INSTANCE, modpackName, modpackVersion).withStage(InstallStages.MODPACK)));
             String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");

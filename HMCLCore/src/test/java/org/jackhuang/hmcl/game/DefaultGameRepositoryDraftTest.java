@@ -62,6 +62,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -77,7 +78,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @NotNullByDefault
 public final class DefaultGameRepositoryDraftTest {
 
-    /// A failed local server pack extraction keeps the previous override hashes for a successful retry.
+    /// A newer local release can replace partially installed overrides while preserving the user's files.
     @Test
     void localServerUpdateRetriesPartiallyExtractedOverrides(@TempDir Path directory) throws Exception {
         TestRepository repository = new TestRepository(directory);
@@ -85,35 +86,57 @@ public final class DefaultGameRepositoryDraftTest {
         repository.save(new GameInstanceManifest(id));
         DefaultGameInstance instance = repository.getInstance(id);
         Path root = instance.getInstanceRoot();
-        Path existing = Files.writeString(root.resolve("settings.txt"), "original");
-        Path blocker = Files.createFile(root.resolve("config"));
+        Path settings = Files.writeString(root.resolve("settings.txt"), "original");
+        Path blocker = Files.createFile(root.resolve("blocked"));
         Path configuration = repository.getLayout().getModpackConfigurationFile(id);
-        var oldFile = new ModpackConfiguration.FileInformation("settings.txt", DigestUtils.digestToString("SHA-1", existing));
-        JsonUtils.writeToJsonFile(configuration, new ModpackConfiguration<>(new ServerModpackManifest(), "Server", "pack", "1", List.of(oldFile)));
-        String oldConfiguration = Files.readString(configuration);
+        var oldFile = new ModpackConfiguration.FileInformation("settings.txt", DigestUtils.digestToString("SHA-1", settings));
+        var previous = new ServerModpackManifest("pack", "", "1", "", "", List.of(),
+                List.of(new ServerModpackManifest.Addon("game", "1.21")));
+        new ModpackConfiguration<>(previous, "Server", "pack", "1", List.of(oldFile)).writeTo(configuration);
 
-        Path archive = directory.resolve("pack.zip");
-        try (Zipper zip = new Zipper(archive)) {
-            zip.putTextFile("first", "overrides/first.txt");
-            zip.putTextFile("added", "overrides/config/new.txt");
-            zip.putTextFile("updated", "overrides/settings.txt");
-        }
-        String gameVersion = "1.21";
-        var manifest = new ServerModpackManifest("pack", "", "2", "", "", List.of(),
-                List.of(new ServerModpackManifest.Addon("game", gameVersion)));
-        Modpack pack = manifest.toModpack();
-        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, gameVersion);
-
-        Task<?> update = manifest.getProvider().createUpdateTask(manager, instance, archive, pack, null);
+        Path second = directory.resolve("second.zip");
+        var release = writeLocalServerRelease(second, "2");
+        var manager = createOfflineGameInstaller(repository, id, "1.21");
+        Task<?> update = release.getProvider().createUpdateTask(manager, instance, second, release.toModpack(), null);
         assertThrows(IOException.class, update::run);
-        assertEquals("first", Files.readString(root.resolve("first.txt")));
-        assertEquals(oldConfiguration, Files.readString(configuration));
+        assertEquals("2", Files.readString(settings));
+        assertEquals("2", Files.readString(root.resolve("added.txt")));
+        assertEquals("2", Files.readString(root.resolve("edited.txt")));
+        var partial = Objects.requireNonNull(JsonUtils.fromJsonFile(configuration, ModpackConfiguration.typeOf(ServerModpackManifest.class)));
+        assertEquals("1", partial.getVersion());
+        assertEquals("1", partial.getManifest().getVersion());
+        String writtenHash = DigestUtils.digestToString("SHA-1", settings);
+        assertEquals(Map.of("settings.txt", writtenHash, "added.txt", writtenHash, "edited.txt", writtenHash), overrideHashes(partial));
 
+        Files.writeString(root.resolve("edited.txt"), "edited after failure");
         Files.delete(blocker);
-        manifest.getProvider().createUpdateTask(manager, instance, archive, pack, null).run();
-        assertEquals("added", Files.readString(root.resolve("config/new.txt")));
-        assertEquals("updated", Files.readString(existing));
-        assertEquals("2", Objects.requireNonNull(JsonUtils.fromJsonFile(configuration, ModpackConfiguration.class)).getVersion());
+        TestRepository reopened = new TestRepository(directory);
+        reopened.refresh();
+        Path third = directory.resolve("third.zip");
+        var next = writeLocalServerRelease(third, "3");
+        next.getProvider().createUpdateTask(createOfflineGameInstaller(reopened, id, "1.21"), reopened.getInstance(id),
+                third, next.toModpack(), null).run();
+        assertEquals("3", Files.readString(settings));
+        assertEquals("3", Files.readString(root.resolve("added.txt")));
+        assertEquals("edited after failure", Files.readString(root.resolve("edited.txt")));
+        assertEquals("3", Files.readString(root.resolve("blocked/last.txt")));
+        assertEquals("3", Objects.requireNonNull(JsonUtils.fromJsonFile(configuration, ModpackConfiguration.class)).getVersion());
+    }
+
+    /// Creates a local server archive with a known extraction order and distinct contents per release.
+    private static ServerModpackManifest writeLocalServerRelease(Path archive, String version) throws IOException {
+        try (Zipper zip = new Zipper(archive)) {
+            for (String path : List.of("settings.txt", "added.txt", "edited.txt", "blocked/last.txt"))
+                zip.putTextFile(version, "overrides/" + path);
+        }
+        return new ServerModpackManifest("pack", "", version, "", "", List.of(),
+                List.of(new ServerModpackManifest.Addon("game", "1.21")));
+    }
+
+    /// Returns the installed override hashes by path.
+    private static @Unmodifiable Map<String, String> overrideHashes(ModpackConfiguration<?> configuration) {
+        return configuration.getOverrides().stream().collect(Collectors.toUnmodifiableMap(
+                ModpackConfiguration.FileInformation::getPath, ModpackConfiguration.FileInformation::getHash));
     }
 
     /// Failed server file downloads leave component updates available for a later attempt.
@@ -499,6 +522,9 @@ public final class DefaultGameRepositoryDraftTest {
         Path serverOnly = Files.writeString(mods.resolve("server.jar"), "old");
         Path unmanaged = Files.writeString(mods.resolve("never-client.jar"), "manual");
         Path unselected = Files.writeString(mods.resolve("previously-excluded.jar"), "manual");
+        Path configDir = Files.createDirectories(original.getInstanceRoot().resolve("config"));
+        Path local = Files.writeString(configDir.resolve("local.toml"), "user settings");
+        Path existingBackup = Files.writeString(configDir.resolve("local.toml.bak"), "earlier backup");
         Path payload = Files.writeString(directory.resolve("published.jar"), "new");
         Path addedSource = directory.resolve("added.jar");
         @Unmodifiable List<String> urls = List.of(payload.toUri().toString());
@@ -523,11 +549,12 @@ public final class DefaultGameRepositoryDraftTest {
         JsonUtils.writeToJsonFile(index, previous);
         Path selection = original.getInstanceRoot().resolve("excluded.json");
         JsonUtils.writeToJsonFile(selection, Set.of(oldOptional.key()));
-        String oldConfig = Files.readString(configuration);
         String oldIndex = Files.readString(index);
         Path archive = directory.resolve("update.mrpack");
         try (Zipper zip = new Zipper(archive)) {
             zip.putTextFile(JsonUtils.GSON.toJson(next), "modrinth.index.json");
+            zip.putTextFile("client settings", "client-overrides/config/local.toml");
+            zip.putTextFile("pack settings", "overrides/config/local.toml");
         }
         Modpack pack;
         try (var zip = CompressingUtils.openZipFile(archive)) {
@@ -538,8 +565,20 @@ public final class DefaultGameRepositoryDraftTest {
         repository.failDraftPublish = true;
         assertThrows(IllegalStateException.class, () -> ModrinthModpackProvider.INSTANCE
                 .createUpdateTask(manager, original, archive, pack, Set.of(newOptional.key())).run());
-        assertEquals(oldConfig, Files.readString(configuration));
+        var partial = Objects.requireNonNull(JsonUtils.fromJsonFile(configuration, ModpackConfiguration.typeOf(ModrinthManifest.class)));
+        assertEquals("1", partial.getVersion());
+        assertEquals(previous.getVersionId(), partial.getManifest().getVersionId());
         assertEquals(oldIndex, Files.readString(index));
+        assertEquals("pack settings", Files.readString(local));
+        assertEquals(Map.of("config/local.toml", DigestUtils.digestToString("SHA-1", local)), overrideHashes(partial));
+        Path backup;
+        try (var backups = Files.newDirectoryStream(configDir, file -> file.getFileName().toString().endsWith(".bak") && !file.equals(existingBackup))) {
+            var iterator = backups.iterator();
+            backup = iterator.next();
+            assertFalse(iterator.hasNext());
+        }
+        assertEquals("user settings", Files.readString(backup));
+        assertEquals("earlier backup", Files.readString(existingBackup));
         assertEquals("old", Files.readString(retained));
         assertTrue(Files.exists(removed));
 
@@ -558,16 +597,21 @@ public final class DefaultGameRepositoryDraftTest {
         assertTrue(Files.notExists(serverOnly));
         assertEquals("manual", Files.readString(unmanaged));
         assertEquals("manual", Files.readString(unselected));
+        assertEquals("pack settings", Files.readString(local));
+        assertEquals("user settings", Files.readString(backup));
         assertTrue(Files.notExists(mods.resolve("optional.jar")));
     }
 
-    /// A failed update keeps the previous override hashes, and retrying preserves user-edited retired overrides.
+    /// Failed builds retain the published pack metadata and the hashes of installed overrides.
     @Test
     void failedMcbbsUpdateKeepsPreviousConfiguration(@TempDir Path directory) throws Exception {
         FailingRepository repository = new FailingRepository(directory);
         GameInstanceID id = new GameInstanceID("mcbbs");
         repository.save(new GameInstanceManifest(id));
         var instance = repository.getInstance(id);
+        var previous = JsonUtils.fromNonNullJson("""
+                {"name":"pack","version":"1","addons":[{"id":"game","version":"1.21"}]}
+                """, McbbsModpackManifest.class);
         var manifest = JsonUtils.fromNonNullJson("""
                 {"name":"pack","version":"2","addons":[{"id":"game","version":"1.21"}]}
                 """, McbbsModpackManifest.class);
@@ -575,10 +619,9 @@ public final class DefaultGameRepositoryDraftTest {
         Path retired = Files.writeString(instance.getInstanceRoot().resolve("retired.txt"), "pack default");
         Path edited = Files.writeString(instance.getInstanceRoot().resolve("edited.txt"), "user settings");
         String installedHash = DigestUtils.digestToString("SHA-1", retired);
-        new ModpackConfiguration<>(manifest, manifest.getProvider().getName(), "pack", "1", List.of(
+        new ModpackConfiguration<>(previous, previous.getProvider().getName(), "pack", "1", List.of(
                 new ModpackConfiguration.FileInformation("retired.txt", installedHash),
                 new ModpackConfiguration.FileInformation("edited.txt", installedHash))).writeTo(config);
-        String previous = Files.readString(config);
         Path archive = directory.resolve("pack.zip");
         try (Zipper zip = new Zipper(archive)) {
             zip.putTextFile("updated", "overrides/local.txt");
@@ -588,8 +631,15 @@ public final class DefaultGameRepositoryDraftTest {
         var update = manifest.getProvider().createUpdateTask(manager, instance, archive, manifest.toModpack(), null);
         assertThrows(IllegalStateException.class, update::run);
         assertSame(instance, repository.getInstance(id));
-        assertEquals("updated", Files.readString(instance.getInstanceRoot().resolve("local.txt")));
-        assertEquals(previous, Files.readString(config));
+        Path local = instance.getInstanceRoot().resolve("local.txt");
+        assertEquals("updated", Files.readString(local));
+        var partial = Objects.requireNonNull(JsonUtils.fromJsonFile(config, ModpackConfiguration.typeOf(McbbsModpackManifest.class)));
+        assertEquals("1", partial.getVersion());
+        assertEquals("1", partial.getManifest().getVersion());
+        @Unmodifiable Map<String, String> hashes = overrideHashes(partial);
+        assertEquals(DigestUtils.digestToString("SHA-1", local), hashes.get("local.txt"));
+        assertTrue(Files.notExists(retired));
+        assertFalse(hashes.containsKey("retired.txt"));
         repository.failDraftPublish = false;
         manifest.getProvider().createUpdateTask(manager, instance, archive, manifest.toModpack(), null).run();
         assertEquals("user settings", Files.readString(edited));

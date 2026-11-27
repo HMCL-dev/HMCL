@@ -185,7 +185,8 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
         @Unmodifiable Set<String> previousExclusions = config == null ? Set.of() : ModrinthModpackProvider.readExcludedFiles(run);
         List<Task<?>> preparation = new ArrayList<>(3);
         @Unmodifiable List<String> subDirectories = List.of("/client-overrides", "/overrides");
-        preparation.add(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config).withStage(InstallStages.MODPACK));
+        preparation.add(new ModpackInstallTask(zipFile, run, subDirectories, any -> true,
+                updateTarget == null ? null : updateTarget.getModpackConfigurationFile()).withStage(InstallStages.MODPACK));
         var configuration = new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, ModrinthModpackProvider.INSTANCE,
                 manifest.getName(), manifest.getVersionId()).withStage(InstallStages.MODPACK);
         preparation.add(configuration);

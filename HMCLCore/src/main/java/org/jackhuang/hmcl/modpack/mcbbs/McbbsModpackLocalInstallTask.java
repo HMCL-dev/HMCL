@@ -33,8 +33,6 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
     /// Existing instance selecting update mode, or `null` for a new installation.
     private final @Nullable DefaultGameInstance updateTarget;
     private final DefaultGameRepository repository;
-    /// Previously installed configuration, or `null` if unavailable.
-    private final @Nullable ModpackConfiguration<McbbsModpackManifest> config;
 
     /// Creates a task that installs a new MCBBS modpack instance.
     ///
@@ -100,17 +98,16 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
         if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a Mcbbs modpack. Cannot update this instance.");
 
-        @Nullable ModpackConfiguration<McbbsModpackManifest> config = null;
         try {
             if (this.updateTarget != null && Files.exists(json)) {
-                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
+                @Nullable ModpackConfiguration<McbbsModpackManifest> config =
+                        JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
                 if (config == null || !McbbsModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Instance " + instanceId + " is not a Mcbbs modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
-        this.config = config;
     }
 
     /// Installs the instance, updates its patch and completes the modpack files.
@@ -133,7 +130,8 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
         }
         Path run = repository.getLayout().getInstanceRoot(instanceId);
         @Unmodifiable List<String> subDirectories = List.of("/overrides");
-        context.run(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config).withStage(InstallStages.MODPACK));
+        context.run(new ModpackInstallTask(zipFile, run, subDirectories, any -> true,
+                updateTarget == null ? null : updateTarget.getModpackConfigurationFile()).withStage(InstallStages.MODPACK));
         var configuration = context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, McbbsModpackProvider.INSTANCE,
                 modpack.getName(), modpack.getVersion()).withStage(InstallStages.MODPACK));
         builder.setModpackConfiguration(configuration);

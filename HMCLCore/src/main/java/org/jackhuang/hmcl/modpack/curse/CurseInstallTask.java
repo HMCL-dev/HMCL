@@ -197,7 +197,8 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
         }
         List<Task<?>> preparation = new ArrayList<>(2);
         @Unmodifiable List<String> directories = Collections.singletonList(manifest.overrides());
-        preparation.add(new ModpackInstallTask<>(zipFile, run, directories, any -> true, config).withStage(InstallStages.MODPACK));
+        preparation.add(new ModpackInstallTask(zipFile, run, directories, any -> true,
+                updateTarget == null ? null : updateTarget.getModpackConfigurationFile()).withStage(InstallStages.MODPACK));
 
         @Nullable String iconExtension = null;
         @Nullable Task<Path> iconTask = null;

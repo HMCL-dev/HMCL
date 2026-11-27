@@ -35,8 +35,6 @@ public class ServerModpackLocalInstallTask extends Task<@Nullable Void> {
     /// The dependency manager that reserves the instance at execution time.
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
-    /// Previously installed configuration, or `null` if unavailable.
-    private final @Nullable ModpackConfiguration<ServerModpackManifest> config;
 
     /// Creates a task that installs a new local server modpack instance.
     ///
@@ -102,17 +100,16 @@ public class ServerModpackLocalInstallTask extends Task<@Nullable Void> {
         if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
 
-        @Nullable ModpackConfiguration<ServerModpackManifest> config = null;
         try {
             if (this.updateTarget != null && Files.exists(json)) {
-                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
+                @Nullable ModpackConfiguration<ServerModpackManifest> config =
+                        JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
 
                 if (config == null || !ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
-        this.config = config;
     }
 
     /// Installs the game components and extracts the server modpack overrides.
@@ -130,8 +127,8 @@ public class ServerModpackLocalInstallTask extends Task<@Nullable Void> {
             }
             Path run = repository.getLayout().getInstanceRoot(instanceId);
             @Unmodifiable List<String> subDirectories = List.of("/overrides");
-            context.run(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config)
-                    .withStage(InstallStages.MODPACK));
+            context.run(new ModpackInstallTask(zipFile, run, subDirectories, any -> true,
+                    updateTarget == null ? null : updateTarget.getModpackConfigurationFile()).withStage(InstallStages.MODPACK));
             builder.setModpackConfiguration(context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest,
                     ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion()).withStage(InstallStages.MODPACK)));
             builder.build(context);
