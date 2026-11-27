@@ -37,7 +37,7 @@ public final class LaunchManifestNormalizer {
         }
 
         GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
-        GameInstanceManifest repaired = uniqueLibraries(manifest);
+        GameInstanceManifest repaired = removeCleanroomLwjgl2(uniqueLibraries(manifest), analyzer);
         @Nullable String mainClass = repaired.mainClass();
 
         if (GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN.equals(mainClass)) {
@@ -69,6 +69,28 @@ public final class LaunchManifestNormalizer {
 
         // Vanilla and Fabric/Quilt need no loader-specific argument repair here.
         return removeLegacyLog4jPatch(repaired);
+    }
+
+    /// Removes the LWJGL 2 libraries that Cleanroom replaces with its LWJGL 3 compatibility layer.
+    ///
+    /// Cleanroom excludes the complete `org.lwjgl.lwjgl` group from its runtime class path. Keeping
+    /// any of these libraries in the launch manifest can load LWJGL 2 classes before LWJGL 3 and
+    /// cause package sealing warnings or linkage errors.
+    private static GameInstanceManifest removeCleanroomLwjgl2(
+            GameInstanceManifest manifest,
+            GameComponentAnalyzer analyzer) {
+        if (!analyzer.has(GameComponentType.CLEANROOM)) {
+            return manifest;
+        }
+
+        List<Library> libraries = manifest.getLibraries();
+        if (libraries.stream().noneMatch(library -> "org.lwjgl.lwjgl".equals(library.groupId()))) {
+            return manifest;
+        }
+
+        return manifest.withLibraries(libraries.stream()
+                .filter(library -> !"org.lwjgl.lwjgl".equals(library.groupId()))
+                .toList());
     }
 
     /// Repairs LaunchWrapper tweak-class configuration.
