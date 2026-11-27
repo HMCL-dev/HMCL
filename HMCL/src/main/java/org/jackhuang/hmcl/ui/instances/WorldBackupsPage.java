@@ -238,7 +238,7 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+                JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
                 right.getChildren().add(btnReveal);
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
                 btnReveal.setOnAction(event -> skinnable.onReveal());
