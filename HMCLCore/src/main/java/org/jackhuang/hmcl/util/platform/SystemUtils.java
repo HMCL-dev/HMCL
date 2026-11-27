@@ -72,32 +72,11 @@ public final class SystemUtils {
         return callExternalProcess(new ProcessBuilder(command));
     }
 
-    /// Runs the command to completion, logging both output streams.
     public static int callExternalProcess(ProcessBuilder processBuilder) throws IOException, InterruptedException {
-        return callExternalProcess(processBuilder, null);
-    }
-
-    /// Runs the command and returns its exit code. With a cancellation check, cancellation
-    /// or interruption stops the direct child before the exception propagates.
-    public static int callExternalProcess(ProcessBuilder processBuilder, @Nullable Runnable checkCancellation) throws IOException, InterruptedException {
-        if (checkCancellation != null)
-            checkCancellation.run();
         ManagedProcess managedProcess = new ManagedProcess(processBuilder);
-        try {
-            managedProcess.pumpInputStream(SystemUtils::onLogLine);
-            managedProcess.pumpErrorStream(SystemUtils::onLogLine);
-            Process process = managedProcess.getProcess();
-            if (checkCancellation == null)
-                return process.waitFor();
-            while (!process.waitFor(100, TimeUnit.MILLISECONDS))
-                checkCancellation.run();
-            checkCancellation.run();
-            return process.exitValue();
-        } catch (InterruptedException | RuntimeException | Error e) {
-            if (checkCancellation != null)
-                managedProcess.stopAndWait();
-            throw e;
-        }
+        managedProcess.pumpInputStream(SystemUtils::onLogLine);
+        managedProcess.pumpErrorStream(SystemUtils::onLogLine);
+        return managedProcess.getProcess().waitFor();
     }
 
     private static final Duration DEFAULT_MAX_WAIT_TIME = Duration.ofSeconds(15);

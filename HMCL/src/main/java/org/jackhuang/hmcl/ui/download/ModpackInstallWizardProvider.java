@@ -28,7 +28,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class ModpackInstallWizardProvider implements WizardProvider {
     private final HMCLGameRepository repository;
     private final Path file;
-    private final String updateVersion;
+    /// The existing instance ID when updating, or null for a new installation.
+    private final @Nullable String updateVersion;
     private String iconUrl;
     private boolean hasSource;
 
@@ -120,9 +121,13 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             } else if (exception instanceof ModpackHelper.InvalidModpackConfigurationException) {
                 Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageType.ERROR, next);
             } else if (exception instanceof ModpackCompletionException) {
-                String message = exception.getCause() instanceof FileNotFoundException
-                        ? "modpack.type.curse.not_found" : "modpack.type.curse.error";
-                Controllers.dialog(i18n(message), i18n("message.warning"), MessageType.WARNING, next);
+                if (exception.getCause() instanceof FileNotFoundException) {
+                    Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
+                } else if (updateVersion != null) {
+                    Controllers.dialog(i18n("modpack.type.curse.error"), i18n("install.failed"), MessageType.ERROR, next);
+                } else {
+                    Controllers.dialog(i18n("install.success"), i18n("install.success"), MessageType.SUCCESS, next);
+                }
             } else {
                 UpdateInstallerWizardProvider.alertFailureMessage(exception, next);
             }

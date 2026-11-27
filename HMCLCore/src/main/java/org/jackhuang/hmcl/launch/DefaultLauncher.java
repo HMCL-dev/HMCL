@@ -674,7 +674,8 @@ public class DefaultLauncher extends Launcher {
         return launch(null, () -> true);
     }
 
-    /// A supplied cancellation check can stop the active pre-launch command or game process.
+    /// Checks for cancellation before the pre-launch command and before starting the game.
+    /// Cancellation during the pre-launch command takes effect after it exits.
     /// After game exit, the monitor may wait on `launchSucceeded` before running the post-exit command.
     protected ManagedProcess launch(@Nullable Runnable checkCancellation, BooleanSupplier launchSucceeded) throws IOException, InterruptedException {
         if (checkCancellation != null)
@@ -706,7 +707,9 @@ public class DefaultLauncher extends Launcher {
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
             ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), envVars)).directory(runDirectory.toFile());
             builder.environment().putAll(envVars);
-            SystemUtils.callExternalProcess(builder, checkCancellation);
+            if (checkCancellation != null)
+                checkCancellation.run();
+            SystemUtils.callExternalProcess(builder);
         }
 
         ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory.toFile());

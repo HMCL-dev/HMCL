@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.addon.update;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
-import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
@@ -59,7 +58,7 @@ public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
         }
         context.addStageItems(checks.size());
         try {
-            context.runAll(checks, FetchTask.getDownloadExecutorConcurrency());
+            context.runAll(checks);
         } catch (Exception failure) {
             if (context.isCancelled() || failure instanceof InterruptedException || failure instanceof CancellationException)
                 throw failure;

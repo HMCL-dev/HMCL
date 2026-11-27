@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -145,9 +146,9 @@ public final class ModpackHelper {
                 .withStageHints(MODPACK_STAGE_HINTS);
     }
 
-    /// Refreshes and enables isolation for complete installations and retained incomplete instances.
+    /// Refreshes and enables isolation after installation or a recoverable file completion failure.
     private static void refreshInstalledInstance(HMCLGameRepository repository, GameInstanceID instanceId, @Nullable Throwable failure) {
-        if (failure == null || failure instanceof ModpackCompletionException) {
+        if (failure == null || (failure instanceof ModpackCompletionException && !(failure.getCause() instanceof FileNotFoundException))) {
             repository.refresh();
             repository.getInstance(instanceId).enableIsolation();
         }
