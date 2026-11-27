@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
@@ -130,7 +132,24 @@ public final class WorldListPage extends ListPaneBase<World> {
         Task.supplyAsync(Schedulers.io(), () -> {
             // Ensure the game version number is parsed
             gameInstance.getVersion();
-            return World.getWorlds(savesDir);
+            if (!Files.exists(savesDir))
+                return List.<World>of();
+
+            try (Stream<Path> stream = Files.list(savesDir)) {
+                return stream.filter(Files::isDirectory)
+                        .flatMap(world -> {
+                            try {
+                                return Stream.of(new World(world.toAbsolutePath().normalize()));
+                            } catch (IOException e) {
+                                LOG.warning("Failed to read world " + world, e);
+                                return Stream.empty();
+                            }
+                        })
+                        .toList();
+            } catch (IOException e) {
+                LOG.warning("Failed to read saves", e);
+                return List.<World>of();
+            }
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
                 // A newer refresh task is running, discard this result

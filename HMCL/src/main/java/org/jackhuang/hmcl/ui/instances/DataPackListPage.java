@@ -13,6 +13,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -20,9 +21,9 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.image.Image;
-import javafx.scene.control.ListView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -30,8 +31,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.addon.datapack.DataPack;
-import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.addon.datapack.DataPackFile;
+import org.jackhuang.hmcl.addon.datapack.DataPackManager;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -42,11 +43,12 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.ImageContainer;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
-import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,25 +80,21 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
     /// Timer for debouncing search input to avoid executing search on every keystroke.
     private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
+    /// All loaded items before search filtering.
+    private final ObservableList<DataPackInfoObject> sourceItems = FXCollections.observableArrayList();
 
     /// Source items matching the current search.
-    private final FilteredList<DataPackInfoObject> filteredItems;
+    private final FilteredList<DataPackInfoObject> filteredItems = new FilteredList<>(sourceItems);
 
-    private final World world;
-    private final DataPack dataPack;
-    final BooleanProperty readOnly;
+    private final DataPackManager dataPackManager;
+    private final BooleanProperty readOnly;
 
     public DataPackListPage(WorldManagePage worldManagePage) {
-        world = worldManagePage.getWorld();
-        dataPack = new DataPack(world.getFile().resolve("datapacks"));
-        filteredItems = new FilteredList<>(MappedObservableList.create(dataPack.getPacks(), DataPackInfoObject::new));
+        dataPackManager = worldManagePage.getWorld().getDataPackManager();
         readOnly = worldManagePage.readOnlyProperty();
-        FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
-                this::installMultiDataPack, this::refresh);
-
-        refresh();
-
+        FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)), this::addFiles);
         initializeView();
+        refresh();
     }
 
     @Override
@@ -213,26 +211,46 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         }
     }
 
-    private void installMultiDataPack(List<Path> dataPackPath) {
-        dataPackPath.forEach(this::installSingleDataPack);
-        if (readOnly.get()) {
-            Controllers.showToast(i18n("datapack.reload.toast"));
-        }
+    private void addFiles(List<Path> files) {
+        List<Path> failures = new ArrayList<>();
+        Task.runAsync(() -> {
+            for (Path file : files) {
+                try {
+                    dataPackManager.importDataPack(file);
+                } catch (Exception e) {
+                    LOG.warning("Failed to add data pack", e);
+                    failures.add(file);
+                }
+            }
+        }).thenRunAsync(Schedulers.javafx(), () -> {
+            if (!failures.isEmpty()) {
+                StringBuilder failure = new StringBuilder(i18n("datapack.add.failed"));
+                for (Path file : failures) {
+                    failure.append("\n").append(file);
+                }
+                Controllers.dialog(failure.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+            if (readOnly.get())
+                Controllers.showToast(i18n("datapack.reload.toast"));
+            refresh();
+        }).start();
     }
 
-    private void installSingleDataPack(Path dataPack) {
-        try {
-            this.dataPack.installPack(dataPack, world.getGameVersion());
-        } catch (IOException | IllegalArgumentException e) {
-            LOG.warning("Unable to parse datapack file " + dataPack, e);
-        }
-    }
-
+    @Override
     public void refresh() {
         setLoading(true);
-        Task.runAsync(dataPack::loadFromDir)
-                .withRunAsync(Schedulers.javafx(), () -> setLoading(false))
-                .start();
+        Task.supplyAsync(Schedulers.io(), () -> {
+            dataPackManager.refresh();
+            return dataPackManager.getLocalFiles().stream().map(DataPackInfoObject::new).toList();
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception == null) {
+                sourceItems.setAll(result);
+            } else {
+                LOG.warning("Error refreshing data pack list page", exception);
+                sourceItems.clear();
+            }
+            setLoading(false);
+        }).start();
     }
 
     public void add() {
@@ -241,24 +259,21 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.datapack"), "*.zip"));
         List<Path> res = Controllers.showOpenMultipleDialog(chooser);
         if (res != null) {
-            installMultiDataPack(res);
+            addFiles(res);
         }
-
-        dataPack.loadFromDir();
     }
 
     void removeSelected(ObservableList<DataPackInfoObject> selectedItems) {
         List<String> failed = new ArrayList<>();
-        selectedItems.stream()
-                .map(DataPackInfoObject::getPackInfo)
-                .forEach(pack -> {
-                    try {
-                        dataPack.deletePack(pack);
-                    } catch (IOException e) {
-                        failed.add(pack.getPath().toString());
-                        LOG.warning("Failed to delete datapack \"" + pack.getId() + "\"", e);
-                    }
-                });
+        selectedItems.stream().map(DataPackInfoObject::getFile).forEach(dataPack -> {
+            try {
+                dataPackManager.removePack(dataPack);
+            } catch (IOException e) {
+                failed.add(dataPack.getFile().toString());
+                LOG.warning("Failed to delete datapack \"" + dataPack.getFileName() + "\"", e);
+            }
+        });
+        refresh();
         if (!failed.isEmpty())
             Controllers.dialog(i18n("datapack.delete.failed") + "\n" + String.join(",\n", failed),
                     i18n("message.error"), MessageDialogPane.MessageType.ERROR);
@@ -266,23 +281,21 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
 
     void setSelectedEnabled(ObservableList<DataPackInfoObject> selectedItems, boolean enabled) {
         List<String> failed = new ArrayList<>();
-        selectedItems.stream()
-                .map(DataPackInfoObject::getPackInfo)
-                .forEach(pack -> {
-                    try {
-                        pack.setActive(enabled);
-                    } catch (IOException e) {
-                        failed.add(pack.getPath().toString());
-                        LOG.warning("Failed to enable or disable datapack \"" + pack.getId() + "\"", e);
-                    }
-                });
+        selectedItems.stream().map(DataPackInfoObject::getFile).forEach(dataPack -> {
+            try {
+                dataPack.setActive(enabled);
+            } catch (IOException e) {
+                failed.add(dataPack.getFile().toString());
+                LOG.warning("Failed to enable or disable datapack \"" + dataPack.getFileName() + "\"", e);
+            }
+        });
         if (!failed.isEmpty())
             Controllers.dialog(i18n("datapack.toggle.failed") + "\n" + String.join(",\n", failed),
                     i18n("message.error"), MessageDialogPane.MessageType.ERROR);
     }
 
     void openDataPackFolder() {
-        FXUtils.openFolder(dataPack.getPath());
+        FXUtils.openFolder(dataPackManager.getDirectory());
     }
 
     /// Filters pack IDs and descriptions using the shared query syntax; invalid regular expressions leave the list empty.
@@ -304,7 +317,8 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
             }
 
             filteredItems.setPredicate(item -> {
-                return predicate.test(item.getTitle()) || predicate.test(item.getSubtitle());
+                DataPackFile file = item.getFile();
+                return predicate.test(file.getFileName()) || predicate.test(file.getDescription().toString());
             });
         }
     }
@@ -322,25 +336,16 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         }
     }
 
-    static class DataPackInfoObject {
-        private final DataPack.Pack packInfo;
-        private final ItemPropertyAsyncCache<Image, DataPackInfoObject> iconCache;
+    public static class DataPackInfoObject {
+        private final DataPackFile file;
+        private final ItemPropertyAsyncCache<Image, DataPackInfoObject> iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
 
-        DataPackInfoObject(DataPack.Pack packInfo) {
-            this.packInfo = packInfo;
-            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
+        public DataPackInfoObject(DataPackFile file) {
+            this.file = file;
         }
 
-        String getTitle() {
-            return packInfo.getId();
-        }
-
-        String getSubtitle() {
-            return packInfo.getDescription().toStringSingleLine();
-        }
-
-        DataPack.Pack getPackInfo() {
-            return packInfo;
+        public DataPackFile getFile() {
+            return file;
         }
 
         private Image getDefaultIcon() {
@@ -349,7 +354,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
 
         /// Loads the icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            Image icon = packInfo.loadIcon(ImageLoaders.DEFAULT);
+            Image icon = file.loadIcon(ImageLoaders.DEFAULT);
             return FXUtils.isValidIcon(icon) ? icon : getDefaultIcon();
         }
     }
@@ -359,7 +364,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
 
-        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(getItem().getPackInfo().isActive());
+        private final InvalidationListener activeListener = obs -> activeSwitch.setSelected(((BooleanProperty) obs).get());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
@@ -393,10 +398,10 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
             if (observedActiveProperty != null)
                 observedActiveProperty.removeListener(weakActiveListener);
             if (dataItem == null) return;
-            content.setTitle(dataItem.getTitle());
-            content.setSubtitle(dataItem.getSubtitle());
 
-            DataPack.Pack packInfo = dataItem.getPackInfo();
+            DataPackFile packInfo = dataItem.getFile();
+            content.setTitle(packInfo.getFileName());
+            content.setSubtitle(packInfo.getDescription().toStringSingleLine());
             (observedActiveProperty = packInfo.activeProperty()).addListener(weakActiveListener);
             activeSwitch.setDisableAnimation(true);
             activeSwitch.setSelected(packInfo.isActive());
@@ -404,7 +409,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
                 try {
                     packInfo.setActive(activeSwitch.isSelected());
                 } catch (IOException e) {
-                    LOG.warning("Unable to change state of datapack " + packInfo.getPath(), e);
+                    LOG.warning("Unable to change state of datapack " + packInfo.getFile(), e);
                     Controllers.showToast(i18n("datapack.toggle.failed"));
                 } finally {
                     activeSwitch.setSelected(packInfo.isActive());
