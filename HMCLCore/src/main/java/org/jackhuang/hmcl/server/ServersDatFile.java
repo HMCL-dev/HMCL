@@ -151,7 +151,7 @@ public class ServersDatFile {
     }
 
     public final class ServerEntry {
-        private volatile @NotNull Server server;
+        private @NotNull Server server;
 
         private ServerEntry(@NotNull Server server) {
             this.server = server;
@@ -159,6 +159,10 @@ public class ServersDatFile {
 
         public @NotNull Server getServer() {
             return server;
+        }
+
+        public boolean isValid() {
+            return ServersDatFile.this.entries.contains(this);
         }
 
         public void delete() throws IOException {
