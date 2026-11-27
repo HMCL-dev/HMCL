@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.MacOSNativeUtils;
 import org.jackhuang.hmcl.ui.WindowsNativeUtils;
 import org.jackhuang.hmcl.util.MathUtils;
+import org.jackhuang.hmcl.util.aprilfools.TheCopperAge;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OSVersion;
@@ -104,6 +105,7 @@ public final class Themes {
             if (FXUtils.ACCENT_COLOR != null) {
                 observables.add(FXUtils.ACCENT_COLOR);
             }
+            observables.add(TheCopperAge.colorProperty());
             bind(observables.toArray(new Observable[0]));
         }
 
@@ -182,11 +184,17 @@ public final class Themes {
                 return fallback;
             }
         }
+        if (themeColorType == ThemeColorType.COPPER) {
+            TheCopperAge.startOxidation();
+            return ThemeColor.of(TheCopperAge.getColor());
+        } else {
+            TheCopperAge.stopAndClearState();
+        }
         return switch (themeColorType) {
-            case DEFAULT -> ThemeColor.DEFAULT;
             case SYSTEM -> getSystemThemeColor();
             case CUSTOM -> fallback;
             case BACKGROUND -> resolveWallpaperThemeColor(fallback, backgroundType);
+            default -> ThemeColor.DEFAULT;
         };
     }
 
@@ -195,6 +203,7 @@ public final class Themes {
             ThemeColor fallback,
             @Nullable ThemeColorSource source,
             BackgroundType backgroundType) {
+        TheCopperAge.stopAndClearState();
         if (source == null) {
             return fallback;
         }
