@@ -32,7 +32,7 @@ HMCL 使用符合 IETF BCP 47 規範的語言標籤。
 
 在選取語言標籤時，我們會遵循以下原則:
 
-1. 對於 ISO 639 標準中定義的語言，如果已經在 [IANA 語言子標籤登錄檔](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)中註冊，我們總是使用經過註冊的標籤。
+1. 對於 ISO 639 標準中定義的語言，如果已經在 [IANA 語言子標籤登錄檔](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)中登錄，我們總是使用經過登錄的標籤。
 
    例如，對於英語，我們使用 `en` 而不是 `eng` 作為語言代碼。
 
@@ -166,7 +166,7 @@ HMCL 的維護者會替你完成其他步驟。
 
 1. 歸一化語言代碼
 
-   如果目前語言標籤中的語言代碼子標籤未在 IANA 語言子標籤登錄檔中進行註冊，HMCL 會先嘗試將其映射為登錄檔中已註冊的標籤。
+   如果目前語言標籤中的語言代碼子標籤未在 IANA 語言子標籤登錄檔中進行登錄，HMCL 會先嘗試將其映射為登錄檔中已登錄的標籤。
 
    例如，HMCL 會將語言代碼 `eng` 取代為 `en`。
 
