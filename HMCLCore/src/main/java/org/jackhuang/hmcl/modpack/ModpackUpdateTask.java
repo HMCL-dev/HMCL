@@ -54,8 +54,13 @@ public class ModpackUpdateTask extends Task<Void> {
     }
 
     /// Copies the instance directory into the backup directory.
+    ///
+    /// @throws IllegalStateException if the original instance is no longer published
     @Override
     public void execute() throws Exception {
+        if (instance.getRepository().getSnapshot().findInstance(instance.getId()) != instance)
+            throw new IllegalStateException("Game instance has changed: " + instance.getId());
+
         FileUtils.copyDirectory(instance.getInstanceRoot(), backupFolder);
     }
 
@@ -67,15 +72,24 @@ public class ModpackUpdateTask extends Task<Void> {
         return true;
     }
 
-    /// Retains the backup after success, or restores it and refreshes the repository after failure.
+    /// Retains the backup after success. On failure, restores the backup and refreshes the
+    /// repository unless the game installation stopped before reserving the target.
+    ///
+    /// @throws IOException if the repository layout has changed before rollback or the backup
+    ///                     cannot be restored
     @Override
     public void postExecute() throws Exception {
         if (isDependenciesSucceeded()) {
             // Keep backup game version for further repair.
             return;
         }
+        // The target may have been replaced between the backup and the reservation.
+        if (updateTask instanceof ModpackGameInstallTask installation && !installation.hasReservedInstance())
+            return;
 
         // Restore backup
+        if (instance.getRepository().getLayout() != instance.getLayout())
+            throw new IOException("Game directory has changed, backup retained at " + backupFolder);
         if (!instance.getRepository().removeInstanceFromDisk(instance.getId())) {
             throw new IOException("Failed to remove instance before restoring backup: " + instance.getId());
         }

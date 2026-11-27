@@ -6,7 +6,6 @@ import com.google.gson.JsonParseException;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
@@ -15,7 +14,9 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,34 +25,29 @@ import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ModrinthInstallTask extends Task<Void> {
+/// Installs or updates a Modrinth modpack from its archive.
+@NotNullByDefault
+public class ModrinthInstallTask extends ModpackGameInstallTask {
 
-    private final DefaultDependencyManager dependencyManager;
-    private final DefaultGameRepository repository;
-    private final Path zipFile;
-    private final Modpack modpack;
+    /// The manifest supplying installation metadata and game components.
     private final ModrinthManifest manifest;
-    private final GameInstanceID instanceId;
 
-    /// Existing instance selecting update mode, or `null` for a new installation.
-    private final @Nullable DefaultGameInstance updateTarget;
-
-    /// Optional remote icon URL supplied by the install source.
-    private final @Nullable String iconUrl;
+    /// The instance root receiving overrides and downloaded files.
     private final Path run;
 
     /// Previous modpack configuration when updating, or `null` for a new installation.
     private final @Nullable ModpackConfiguration<ModrinthManifest> config;
 
     /// Keys of optional files the user chose not to install; `null` or empty means install all.
-    private final @Nullable Set<String> excludedFiles;
+    private final @Nullable @Unmodifiable Set<String> excludedFiles;
 
     /// Validated extension of the scheduled icon download, or `null` when no icon is scheduled.
     private @Nullable String iconExt;
 
     /// Scheduled icon download corresponding to [#iconExt], or `null` when absent.
     private @Nullable Task<Path> downloadIconTask;
-    private final List<Task<?>> dependents = new ArrayList<>(4);
+
+    /// Tasks scheduled after the game and the archive contents have been installed.
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     /// Creates a task that installs a new Modrinth modpack instance.
@@ -64,8 +60,7 @@ public class ModrinthInstallTask extends Task<Void> {
     /// @param iconUrl           the optional icon URL, or `null`
     /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
     ///                          install all files. When non-null, must not contain `null` elements.
-    /// @throws IllegalStateException if the manifest declares an unsupported mod loader, the target
-    ///                               cannot be reserved, or another repository draft is open
+    /// @throws IllegalStateException if the manifest declares an unsupported loader
     public ModrinthInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -89,9 +84,7 @@ public class ModrinthInstallTask extends Task<Void> {
     ///                          install all files. When non-null, must not contain `null` elements.
     /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
-    /// @throws IllegalStateException    if the manifest declares an unsupported mod loader,
-    ///                                  `instance` is not the exact currently published object, or
-    ///                                  another repository draft is open
+    /// @throws IllegalStateException if the manifest declares an unsupported loader
     public ModrinthInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -114,10 +107,9 @@ public class ModrinthInstallTask extends Task<Void> {
     /// @param iconUrl           the optional icon URL, or `null`
     /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
     ///                          install all files. When non-null, must not contain `null` elements.
-    /// @throws IllegalArgumentException if an update target has no compatible configuration
-    /// @throws IllegalStateException    if the manifest declares an unsupported mod loader, the
-    ///                                  target cannot be reserved, an update target is not the exact
-    ///                                  published object, or another draft is open
+    /// @throws IllegalArgumentException if the update target belongs to another repository, has no
+    ///                                  modpack configuration, or records another provider type
+    /// @throws IllegalStateException if the manifest declares an unsupported loader
     private ModrinthInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -127,15 +119,9 @@ public class ModrinthInstallTask extends Task<Void> {
             @Nullable DefaultGameInstance updateTarget,
             @Nullable String iconUrl,
             @Nullable Set<String> excludedFiles) {
-        this.dependencyManager = dependencyManager;
-        this.zipFile = zipFile;
-        this.modpack = modpack;
+        super(dependencyManager, instanceId, updateTarget);
         this.manifest = manifest;
-        this.instanceId = instanceId;
-        this.updateTarget = updateTarget;
-        this.iconUrl = iconUrl;
         this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
-        this.repository = dependencyManager.getGameRepository();
         this.run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
@@ -154,18 +140,9 @@ public class ModrinthInstallTask extends Task<Void> {
         }
         this.config = config;
 
-        onDone().register(event -> {
-            @Nullable Exception ex = event.getTask().getException();
-            if (this.updateTarget == null && event.isFailed()) {
-                if (!(ex instanceof ModpackCompletionException)) {
-                    repository.removeInstanceFromDisk(instanceId);
-                }
-            }
-        });
-
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
-        dependents.add(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+        installTasks.add(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config).withStage("hmcl.modpack"));
+        installTasks.add(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
         @Nullable WebURL iconUri = NetworkUtils.toWebURLOrNull(iconUrl);
         if (iconUri != null) {
@@ -174,51 +151,48 @@ public class ModrinthInstallTask extends Task<Void> {
                 iconExt = ext;
 
                 DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
-                dependents.add(downloadIconTask = new CacheFileTask(downloadProvider.getDownloadCandidates(iconUrl)));
+                installTasks.add(downloadIconTask = new CacheFileTask(downloadProvider.getDownloadCandidates(iconUrl)));
             }
         }
 
-        try (GameBuilder builder = this.updateTarget == null
-                ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(this.updateTarget)) {
-            builder.enableIsolation();
-            builder.component(GameComponentType.GAME, manifest.getGameVersion());
-            for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
-                switch (modLoader.getKey()) {
-                    case "minecraft":
-                        break;
-                    case "forge":
-                        builder.component(GameComponentType.FORGE, modLoader.getValue());
-                        break;
-                    case "neoforge":
-                    // https://github.com/HMCL-dev/HMCL/pull/5170
-                    case "neo-forge":
-                        builder.component(GameComponentType.NEO_FORGE, modLoader.getValue());
-                        break;
-                    case "fabric-loader":
-                        builder.component(GameComponentType.FABRIC, modLoader.getValue());
-                        break;
-                    case "quilt-loader":
-                        builder.component(GameComponentType.QUILT, modLoader.getValue());
-                        break;
-                    default:
-                        throw new IllegalStateException("Unsupported mod loader " + modLoader.getKey());
-                }
+        components.put(GameComponentType.GAME, manifest.getGameVersion());
+        for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
+            switch (modLoader.getKey()) {
+                case "minecraft":
+                    break;
+                case "forge":
+                    components.put(GameComponentType.FORGE, modLoader.getValue());
+                    break;
+                case "neoforge":
+                // https://github.com/HMCL-dev/HMCL/pull/5170
+                case "neo-forge":
+                    components.put(GameComponentType.NEO_FORGE, modLoader.getValue());
+                    break;
+                case "fabric-loader":
+                    components.put(GameComponentType.FABRIC, modLoader.getValue());
+                    break;
+                case "quilt-loader":
+                    components.put(GameComponentType.QUILT, modLoader.getValue());
+                    break;
+                default:
+                    throw new IllegalStateException("Unsupported mod loader " + modLoader.getKey());
             }
-            dependents.add(0, builder.buildAsync());
         }
     }
 
+    /// Retains the installed instance if only modpack completion failed.
     @Override
-    public Collection<Task<?>> getDependents() {
-        return dependents;
+    protected boolean shouldRemoveFailedInstance(@Nullable Exception failure) {
+        return !(failure instanceof ModpackCompletionException);
     }
 
+    /// {@inheritDoc}
     @Override
     public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
 
+    /// Applies update removals, writes the Modrinth index and schedules file completion.
     @Override
     public void execute() throws Exception {
         if (config != null) {
