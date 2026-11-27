@@ -126,6 +126,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         return new ModListPageSkin(this);
     }
 
+    /// Opens mod details for the current instance, if one is selected.
+    private void showModInfo(ModInfoObject item) {
+        if (gameInstance != null) {
+            Controllers.dialog(new ModInfoDialog(item, gameInstance));
+        }
+    }
+
     public void refresh() {
         if (isLoading()) return;
 
@@ -511,10 +518,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 });
 
                 listView.setOnContextMenuRequested(event -> {
-                    ModListPage.ModInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
+                    @Nullable ModInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
                     if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                         listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ModListPage.ModInfoDialog(selectedItem));
+                        skinnable.showModInfo(selectedItem);
                     }
                 });
 
@@ -633,7 +640,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     private static final class ModInfoDialog extends JFXDialogLayout {
 
         /// Creates a dialog whose description viewport follows its content and the window height.
-        ModInfoDialog(ModInfoObject modInfo) {
+        ///
+        /// @param modInfo the installed mod to display
+        /// @param gameInstance the instance to use for downloads opened from this dialog
+        ModInfoDialog(ModInfoObject modInfo, HMCLGameInstance gameInstance) {
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
             titleContainer.setPadding(new Insets(0, 0, 12, 0));
@@ -718,7 +728,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                                     }
                                 }
 
-                                button.setExternalLink(remoteAddon.pageUrl());
+                                button.setOnAction(e -> {
+                                    fireEvent(new DialogCloseEvent());
+                                    Controllers.navigate(new DownloadPage(
+                                            new DownloadListPage(RemoteAddon.Type.MOD, repository),
+                                            remoteAddon, HMCLGameInstance.Optional.of(gameInstance),
+                                            org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD));
+                                });
                                 button.setDisable(false);
                             });
                         }
@@ -900,7 +916,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 popup.get().show(restoreButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, restoreButton.getHeight());
             });
             revealButton.setOnAction(e -> FXUtils.showFileInExplorer(modInfo.getFile()));
-            infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));
+            infoButton.setOnAction(e -> page.showModInfo(dataItem));
 
             if (!warning.isEmpty()) {
                 pseudoClassStateChanged(WARNING, true);

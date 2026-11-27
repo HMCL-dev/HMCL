@@ -195,6 +195,13 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
+    /// Shows the pack details with download links targeting the current instance.
+    private void showResourcePackInfo(ResourcePackInfoObject item) {
+        if (gameInstance != null) {
+            Controllers.dialog(new ResourcePackInfoDialog(item, gameInstance));
+        }
+    }
+
     private void onOpenFolder() {
         if (resourcePackDirectory != null) {
             FXUtils.openFolder(resourcePackDirectory);
@@ -423,10 +430,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 Bindings.bindContent(listView.getItems(), control.getItems());
 
                 listView.setOnContextMenuRequested(event -> {
-                    ResourcePackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
+                    @Nullable ResourcePackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
                     if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                         listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ResourcePackInfoDialog(selectedItem));
+                        control.showResourcePackInfo(selectedItem);
                     }
                 });
 
@@ -606,7 +613,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getFile()));
 
-            btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(item)));
+            btnInfo.setOnAction(e -> page.showResourcePackInfo(item));
 
             if (booleanProperty != null) {
                 activeSwitch.selectedProperty().unbindBidirectional(booleanProperty);
@@ -629,7 +636,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     private static final class ResourcePackInfoDialog extends JFXDialogLayout {
 
         /// Creates a dialog whose description viewport follows its content and the window height.
-        ResourcePackInfoDialog(ResourcePackInfoObject packInfoObject) {
+        /// Recognized projects open their version lists for the supplied instance.
+        ResourcePackInfoDialog(ResourcePackInfoObject packInfoObject, HMCLGameInstance gameInstance) {
             ResourcePackFile pack = packInfoObject.getFile();
 
             HBox titleContainer = new HBox();
@@ -676,7 +684,13 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     if (versionOptional.isPresent()) {
                         RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                         FXUtils.runInFX(() -> {
-                            button.setExternalLink(remoteAddon.pageUrl());
+                            button.setOnAction(e -> {
+                                fireEvent(new DialogCloseEvent());
+                                Controllers.navigate(new DownloadPage(
+                                        new DownloadListPage(RemoteAddon.Type.RESOURCE_PACK, repository),
+                                        remoteAddon, HMCLGameInstance.Optional.of(gameInstance),
+                                        org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK));
+                            });
                             button.setDisable(false);
                         });
                     }
