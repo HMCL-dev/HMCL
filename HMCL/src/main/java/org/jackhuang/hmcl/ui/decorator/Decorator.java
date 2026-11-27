@@ -170,6 +170,18 @@ public final class Decorator {
     /// Tracks the attached stage's content geometry, or `null` while detached.
     private @Nullable WindowBounds windowBounds;
 
+    /// The current top shadow inset.
+    private double currentTopInset = SHADOW_SIZE;
+
+    /// Distance over which the top shadow inset is collapsed when approaching the screen top.
+    private static final double TOP_COLLAPSE_DISTANCE = 48.0;
+
+    /// The last computed top inset target, used to avoid redundant layout passes.
+    private double lastTopInset = SHADOW_SIZE;
+
+    /// Recomputes the top-flush state whenever the native window geometry changes.
+    private final javafx.beans.value.ChangeListener<Number> stagePositionListener = (observable, oldValue, newValue) -> updateTopFlush();
+
     /// The title-bar state supplied by the current page, or `null` before navigation is initialized.
     private final ObjectProperty<DecoratorPage.@Nullable State> state = new SimpleObjectProperty<>(this, "state");
 
@@ -305,9 +317,57 @@ public final class Decorator {
     /// @param edgeToEdge whether the attached stage is maximized under [WindowState]'s policy or full-screen
     private void updateWindowDecoration(boolean edgeToEdge) {
         boolean customDecoration = !nativeDecorationEnabled && !edgeToEdge;
-        root.setPadding(customDecoration ? SHADOW_INSETS : Insets.EMPTY);
+        this.customDecoration = customDecoration;
+        applyWindowPadding();
         shadowContainer.setEffect(customDecoration ? windowShadow : null);
         mainWindowPane.setWindowCornersRounded(customDecoration);
+    }
+
+    /// Whether the current window state uses custom shadows.
+    private boolean customDecoration;
+
+    /// Applies the current (possibly animating) top inset to the scene root.
+    private void applyWindowPadding() {
+        if (!customDecoration) {
+            root.setPadding(Insets.EMPTY);
+        } else {
+            root.setPadding(new Insets(currentTopInset, SHADOW_SIZE, SHADOW_SIZE, SHADOW_SIZE));
+        }
+    }
+
+    /// Keeps the window content flush with the top of the screen while the frame touches the menu bar.
+    private void updateTopFlush() {
+        Stage currentStage = stage;
+        if (currentStage == null || nativeDecorationEnabled
+                || SystemInfo.CURRENT_OS != OperatingSystem.MACOS) {
+            if (currentTopInset != SHADOW_SIZE) {
+                currentTopInset = SHADOW_SIZE;
+                lastTopInset = SHADOW_SIZE;
+                applyWindowPadding();
+            }
+            return;
+        }
+
+        if (WindowState.isMaximized(currentStage) || currentStage.isFullScreen() || currentStage.isIconified()) {
+            if (currentTopInset != SHADOW_SIZE) {
+                currentTopInset = SHADOW_SIZE;
+                lastTopInset = SHADOW_SIZE;
+                applyWindowPadding();
+            }
+            return;
+        }
+
+        javafx.geometry.Rectangle2D visualBounds = javafx.stage.Screen.getScreensForRectangle(
+                        currentStage.getX(), currentStage.getY(), currentStage.getWidth(), currentStage.getHeight())
+                .stream().findFirst().orElse(javafx.stage.Screen.getPrimary()).getVisualBounds();
+
+        double distance = currentStage.getY() - visualBounds.getMinY();
+        double target = Math.max(0.0, Math.min(SHADOW_SIZE, SHADOW_SIZE * distance / TOP_COLLAPSE_DISTANCE));
+        if (Math.abs(target - lastTopInset) > 0.01) {
+            lastTopInset = target;
+            currentTopInset = target;
+            applyWindowPadding();
+        }
     }
 
     /// Returns the pane on which application dialogs are stacked.
@@ -864,6 +924,10 @@ public final class Decorator {
             stage = newStage;
             newStage.addEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
             newStage.addEventHandler(WindowEvent.WINDOW_HIDDEN, windowHiddenHandler);
+            newStage.xProperty().addListener(stagePositionListener);
+            newStage.yProperty().addListener(stagePositionListener);
+            newStage.widthProperty().addListener(stagePositionListener);
+            newStage.heightProperty().addListener(stagePositionListener);
             newStage.iconifiedProperty().addListener(iconifiedListener);
             newStage.maximizedProperty().addListener(stageDecorationListener);
             newStage.fullScreenProperty().addListener(stageDecorationListener);
@@ -900,6 +964,10 @@ public final class Decorator {
             Themes.windowTransparentProperty().removeListener(windowStyleListener);
             stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
             stage.removeEventHandler(WindowEvent.WINDOW_HIDDEN, windowHiddenHandler);
+            stage.xProperty().removeListener(stagePositionListener);
+            stage.yProperty().removeListener(stagePositionListener);
+            stage.widthProperty().removeListener(stagePositionListener);
+            stage.heightProperty().removeListener(stagePositionListener);
             stage.iconifiedProperty().removeListener(iconifiedListener);
             stage.maximizedProperty().removeListener(stageDecorationListener);
             stage.fullScreenProperty().removeListener(stageDecorationListener);
