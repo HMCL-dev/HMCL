@@ -43,6 +43,8 @@ public final class EntryPoint {
 
         if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
             System.getProperties().putIfAbsent("apple.awt.application.appearance", "system");
+            // AWT reads apple.awt.application.name once, when initIcon() starts the toolkit.
+            installMacApplicationName();
             if (!isInsideMacAppBundle())
                 initIcon();
         }
@@ -106,6 +108,14 @@ public final class EntryPoint {
             }
         }
         return false;
+    }
+
+    /// Publishes [Metadata#NAME] to AWT on macOS.
+    ///
+    /// An explicit `-Dapple.awt.application.name` is preserved. Other operating systems are unchanged.
+    static void installMacApplicationName() {
+        if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS)
+            System.getProperties().putIfAbsent("apple.awt.application.name", Metadata.NAME);
     }
 
     private static void initIcon() {

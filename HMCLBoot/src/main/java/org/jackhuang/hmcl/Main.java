@@ -10,6 +10,7 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
@@ -68,6 +69,7 @@ public final class Main {
     }
 
     static void showErrorAndExit(String[] args) {
+        initMacApplicationName();
         SwingUtils.initLookAndFeel();
 
         ResourceBundle resourceBundle = BootProperties.getResourceBundle();
@@ -92,16 +94,29 @@ public final class Main {
         System.exit(1);
     }
 
+    /// Names the application HMCL on macOS for boot error dialogs shown before `EntryPoint` runs.
+    ///
+    /// This fallback is used only when `Main` shows a Swing error dialog before `EntryPoint` (where
+    /// `Metadata` may not load); the normal launch path sets `apple.awt.application.name` from `Metadata.NAME`
+    /// in `EntryPoint` before AWT starts. An explicit `-Dapple.awt.application.name` is preserved.
+    static void initMacApplicationName() {
+        String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        if (osName.startsWith("mac") || osName.startsWith("darwin"))
+            System.getProperties().putIfAbsent("apple.awt.application.name", "HMCL");
+    }
+
     private static void checkDirectoryPath() {
         String currentDir = System.getProperty("user.dir", "");
         String jarPath = getThisJarPath();
         if (currentDir.contains("!")) {
+            initMacApplicationName();
             SwingUtils.initLookAndFeel();
             System.err.println("The current working path contains an exclamation mark: " + currentDir);
             // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
             SwingUtils.showErrorDialog("Exclamation mark(!) is not allowed in the working path.\n" + "The path is " + currentDir);
             System.exit(1);
         } else if (jarPath != null && jarPath.contains("!")) {
+            initMacApplicationName();
             SwingUtils.initLookAndFeel();
             System.err.println("The jar path contains an exclamation mark: " + jarPath);
             // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.

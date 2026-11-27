@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.MacOSNativeUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
@@ -82,6 +83,9 @@ public final class Launcher extends Application {
     @Override
     public void start(Stage primaryStage) {
         Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
+
+        // Rename the application menu before any startup alert is shown; the main stage applies it again when shown.
+        MacOSNativeUtils.setApplicationName(Metadata.NAME);
 
         CookieHandler.setDefault(COOKIE_MANAGER);
 
