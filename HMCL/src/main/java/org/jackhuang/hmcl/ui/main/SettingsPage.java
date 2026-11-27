@@ -179,6 +179,14 @@ public final class SettingsPage extends ScrollPane {
                 ComponentList miscPaneList = new ComponentList();
 
                 {
+                    LineSwitch autoCleanupGameProcesses = new LineSwitch();
+                    autoCleanupGameProcesses.setTitle(i18n("settings.launcher.auto_cleanup_game_processes"));
+                    autoCleanupGameProcesses.setSubtitle(i18n("settings.launcher.auto_cleanup_game_processes.subtitle"));
+                    autoCleanupGameProcesses.selectedProperty().bindBidirectional(settings().autoCleanupGameProcessesProperty());
+                    miscPaneList.getContent().add(autoCleanupGameProcesses);
+                }
+
+                {
                     LineSwitch disableAprilFools = new LineSwitch();
                     disableAprilFools.setTitle(i18n("settings.launcher.disable_april_fools"));
                     disableAprilFools.setSubtitle(i18n("settings.take_effect_after_restart"));

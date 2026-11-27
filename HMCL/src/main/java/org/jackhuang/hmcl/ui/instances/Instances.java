@@ -434,7 +434,7 @@ public final class Instances {
     public static void modifyGameSettings(HMCLGameInstance gameInstance) {
         Controllers.getGameInstancePage().setInstance(gameInstance.getId(), gameInstance.getRepository());
         Controllers.getGameInstancePage().showInstanceSettings();
-        // VersionPage.loadVersion will be invoked after navigation
+        // GameInstancePage::loadInstance will be invoked after navigation
         Controllers.navigate(Controllers.getGameInstancePage());
     }
 

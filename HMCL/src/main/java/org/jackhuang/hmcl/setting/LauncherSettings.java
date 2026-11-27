@@ -204,6 +204,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return disableAprilFools;
     }
 
+    /// Whether to automatically cleanup dead game processes.
+    @SerializedName("autoCleanupGameProcesses")
+    private final BooleanProperty autoCleanupGameProcesses = new SimpleBooleanProperty(true);
+
+    /// Returns the auto-cleanup game processes property.
+    public BooleanProperty autoCleanupGameProcessesProperty() {
+        return autoCleanupGameProcesses;
+    }
+
     /// The common Minecraft directory selection mode.
     @SerializedName("commonDirectoryType")
     private final ObjectProperty<EnumCommonDirectory> commonDirectoryType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);

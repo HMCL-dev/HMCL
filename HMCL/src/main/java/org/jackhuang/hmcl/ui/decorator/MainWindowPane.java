@@ -14,16 +14,19 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.glavo.monetfx.ColorRole;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.GameProcessManager;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.instances.GameProcessPage;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.TaskManager;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -204,6 +207,20 @@ final class MainWindowPane extends StackPane {
             }
         });
 
+        JFXButton processesButton = new JFXButton();
+        processesButton.setFocusTraversable(false);
+        processesButton.setGraphic(SVG.TERMINAL.createIcon(Themes.titleFillProperty()));
+        processesButton.setAccessibleText(i18n("game.process"));
+        processesButton.getStyleClass().add("jfx-decorator-button");
+        processesButton.setOnAction(event -> {
+            if (!(decorator.getNavigator().getCurrentPage() instanceof GameProcessPage))
+                Controllers.navigate(Controllers.getGameProcessPage());
+        });
+        var tooltip = new Tooltip();
+        tooltip.textProperty().bind(GameProcessManager.aliveProcessCount.asString(i18n("game.process") + " (%d)"));
+        FXUtils.installFastTooltip(processesButton, tooltip);
+        decorator.forbidDraggingWindow(processesButton);
+
         JFXButton helpButton = new JFXButton();
         helpButton.setFocusTraversable(false);
         helpButton.setGraphic(SVG.HELP.createIcon());
@@ -225,7 +242,7 @@ final class MainWindowPane extends StackPane {
         closeButton.setOnAction(event -> decorator.closeWindow());
         decorator.forbidDraggingWindow(closeButton);
 
-        buttons.getChildren().setAll(tasksButton, helpButton, minimizeButton, closeButton);
+        buttons.getChildren().setAll(tasksButton, processesButton, helpButton, minimizeButton, closeButton);
         return buttons;
     }
 
