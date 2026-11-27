@@ -21,15 +21,12 @@ import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
 import org.jenkinsci.constant_pool_scanner.Utf8Constant;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.attribute.PosixFileAttributeView;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.Lang.getOrDefault;
@@ -136,24 +133,27 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
             boolean hasLaunchWrapper = false;
             try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installerFile)) {
                 Path optiFineLibraryPath = gameRepository.getLayout().getLibraryFile(manifest.id(), optiFineLibrary);
-                boolean hasPatcher = Files.exists(fs.getPath("optifine/Patcher.class"));
-                Files.createDirectories(optiFineLibraryPath.toAbsolutePath().getParent());
-                FileUtils.replaceFile(optiFineLibraryPath, temporary -> {
-                    if (hasPatcher) {
-                        patchClient(context, installerFile, temporary);
-                    } else {
-                        FileUtils.copyFile(installerFile, temporary);
-                    }
-
-                    try (FileSystem patched = CompressingUtils.createZipFileSystem(temporary, false, true, null)) {
-                        Files.deleteIfExists(patched.getPath("/META-INF/mods.toml"));
-                    }
-                    if (hasPatcher && Files.isRegularFile(optiFineLibraryPath, LinkOption.NOFOLLOW_LINKS)
-                            && Files.getFileStore(temporary).supportsFileAttributeView(PosixFileAttributeView.class)) {
-                        Files.setPosixFilePermissions(temporary, Files.getPosixFilePermissions(optiFineLibraryPath));
-                    }
+                if (Files.exists(fs.getPath("optifine/Patcher.class"))) {
+                    String[] command = {
+                            JavaRuntime.getDefault().getBinary().toString(),
+                            "-cp",
+                            installerFile.toString(),
+                            "optifine.Patcher",
+                            minecraftJar.toAbsolutePath().normalize().toString(),
+                            installerFile.toString(),
+                            optiFineLibraryPath.toString()
+                    };
                     context.checkCancellation();
-                });
+                    int exitCode = SystemUtils.callExternalProcess(command);
+                    if (exitCode != 0)
+                        throw new IOException("OptiFine patcher failed, command: " + new CommandBuilder().addAll(Arrays.asList(command)));
+                } else {
+                    FileUtils.copyFile(installerFile, optiFineLibraryPath);
+                }
+
+                try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(optiFineLibraryPath)) {
+                    Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
+                }
 
                 Path launchWrapper2 = fs.getPath("launchwrapper-2.0.jar");
                 if (Files.exists(launchWrapper2)) {
@@ -212,15 +212,6 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
             context.tryRun(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()));
             return patch;
         }
-    }
-
-    /// Runs the installer's patcher against the vanilla client and waits for it to finish writing the output.
-    private void patchClient(TaskExecutionContext context, Path installerFile, Path output) throws IOException, InterruptedException {
-        @Unmodifiable List<String> command = List.of(JavaRuntime.getDefault().getBinary().toString(), "-cp", installerFile.toString(),
-                "optifine.Patcher", minecraftJar.toAbsolutePath().normalize().toString(), installerFile.toString(), output.toString());
-        int exitCode = SystemUtils.callExternalProcess(new ProcessBuilder(command), context::checkCancellation);
-        if (exitCode != 0)
-            throw new IOException("OptiFine patcher failed, command: " + new CommandBuilder().addAll(command));
     }
 
     /// Creates a task that installs OptiFine from a local installer JAR.

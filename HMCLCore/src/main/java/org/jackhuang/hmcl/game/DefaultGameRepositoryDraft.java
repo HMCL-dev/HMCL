@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -47,9 +46,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
     /// Completed primary JAR sources to copy into instance roots during commit.
     private final Map<GameInstanceID, Path> primaryJarSources = new TreeMap<>();
-
-    /// Modpack configurations to publish after the corresponding manifests and JARs are written.
-    private final Map<GameInstanceID, ModpackConfiguration<?>> modpackConfigurations = new TreeMap<>();
 
     /// Instance ids whose root directories were absent before this draft first added them.
     private final Set<GameInstanceID> createdIds = new TreeSet<>();
@@ -131,14 +127,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         }
     }
 
-    /// Includes the modpack's override baseline in the instance commit.
-    public void putModpackConfiguration(GameInstanceID instanceId, ModpackConfiguration<?> configuration) {
-        checkOpen();
-        if (!manifests.containsKey(instanceId))
-            throw new NoSuchGameInstanceException(instanceId);
-        modpackConfigurations.put(instanceId, configuration);
-    }
-
     /// {@inheritDoc}
     @Override
     public void remove(GameInstanceID instanceId) {
@@ -149,7 +137,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
         modifiedIds.remove(instanceId);
         primaryJarSources.remove(instanceId);
-        modpackConfigurations.remove(instanceId);
         removedIds.add(instanceId);
     }
 
@@ -187,10 +174,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         @Nullable Path primaryJarSource = primaryJarSources.remove(from);
         if (primaryJarSource != null) {
             primaryJarSources.put(to, primaryJarSource);
-        }
-        @Nullable ModpackConfiguration<?> configuration = modpackConfigurations.remove(from);
-        if (configuration != null) {
-            modpackConfigurations.put(to, configuration);
         }
 
         manifests.replaceAll((id, manifest) -> {
@@ -253,7 +236,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             }
             materializeCreatedInstanceRoots();
 
-            if (!removedIds.isEmpty() || !modifiedIds.isEmpty() || !primaryJarSources.isEmpty() || !modpackConfigurations.isEmpty()) {
+            if (!removedIds.isEmpty() || !modifiedIds.isEmpty() || !primaryJarSources.isEmpty()) {
                 Path currentRollbackDirectory = createRollbackDirectory();
                 rollbackDirectory = currentRollbackDirectory;
                 for (GameInstanceID id : removedIds) {
@@ -272,20 +255,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
                         throw new IllegalStateException("Modified manifest is missing: " + id);
                     }
                     applyManifest(id, manifest, currentRollbackDirectory, appliedFiles);
-                }
-                for (var entry : modpackConfigurations.entrySet()) {
-                    GameInstanceID id = entry.getKey();
-                    Path target = baseSnapshot.getLayout().getModpackConfigurationFile(id).toAbsolutePath().normalize();
-                    validateInstanceFileTarget(id, target, "Modpack configuration");
-                    @Nullable Path backup = null;
-                    if (Files.exists(target)) {
-                        if (Files.isSameFile(target, getManifestTarget(id)))
-                            throw new IOException("Modpack configuration conflicts with the instance manifest: " + target);
-                        backup = Files.createTempFile(currentRollbackDirectory, "modpack-", ".json");
-                        Files.copy(target, backup, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-                    }
-                    entry.getValue().writeTo(target);
-                    appliedFiles.add(new AppliedFile(target, backup));
                 }
             }
 

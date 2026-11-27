@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.io;
 
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 import kala.compress.archivers.zip.ZipArchiveEntry;
-import org.jackhuang.hmcl.util.DigestUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -24,9 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -44,45 +39,6 @@ public final class CompressingUtilsTest {
     /// Directory containing generated archives.
     @TempDir
     Path temporaryDirectory;
-
-    /// Skipping an existing file leaves it out of the recorded digests.
-    @Test
-    void unzipRecordsOnlyWrittenFiles() throws IOException {
-        Path archive = temporaryDirectory.resolve("pack.zip");
-        try (Zipper zip = new Zipper(archive)) {
-            zip.putTextFile("packed", "new.txt");
-            zip.putTextFile("unused", "existing.txt");
-        }
-        Path root = Files.createDirectory(temporaryDirectory.resolve("instance"));
-        Files.writeString(root.resolve("existing.txt"), "keep");
-        Map<String, String> hashes = new HashMap<>();
-        new Unzipper(archive, root).unzip("SHA-1", hashes);
-        assertEquals(Map.of("new.txt", DigestUtils.digestToString("SHA-1", root.resolve("new.txt"))), hashes);
-    }
-
-    /// A full volume preserves the existing override and its hash while retaining earlier successful writes.
-    @Test
-    void failedOverrideReplacementKeepsPreviousFile() throws IOException {
-        Path archive = temporaryDirectory.resolve("pack.zip");
-        try (Zipper zip = new Zipper(archive)) {
-            zip.putTextFile("installed", "overrides/first.txt");
-            zip.putTextFile("x".repeat(128 * 1024), "overrides/settings.txt");
-        }
-        try (var fs = Jimfs.newFileSystem(Configuration.unix().toBuilder().setMaxSize(32768).build())) {
-            Path root = Files.createDirectory(fs.getPath("/instance"));
-            Path existing = Files.writeString(root.resolve("settings.txt"), "previous");
-            String previousHash = DigestUtils.digestToString("SHA-1", existing);
-            Map<String, String> hashes = new HashMap<>(Map.of("settings.txt", previousHash));
-            Unzipper unzipper = new Unzipper(archive, root).setSubDirectory("/overrides").setReplaceExistentFile(true);
-            assertThrows(IOException.class, () -> unzipper.unzip("SHA-1", hashes));
-            Path first = root.resolve("first.txt");
-            assertEquals(Map.of("first.txt", DigestUtils.digestToString("SHA-1", first), "settings.txt", previousHash), hashes);
-            assertEquals("previous", Files.readString(existing));
-            try (var files = Files.list(root)) {
-                assertEquals(List.of(first, existing), files.sorted().toList());
-            }
-        }
-    }
 
     /// Supplies the original UTF-8 and GBK regression archives.
     public static Stream<Arguments> arguments() {

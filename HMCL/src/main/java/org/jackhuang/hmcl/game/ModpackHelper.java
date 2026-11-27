@@ -153,14 +153,6 @@ public final class ModpackHelper {
         }
     }
 
-    /// Refreshes the repository after a published update and preserves its completion exception.
-    private static Task<@Nullable Void> refreshAfterUpdate(HMCLGameRepository repository, Task<?> update) {
-        return update.whenCompleteAsync(Schedulers.io(), (ignored, failure) -> {
-            if (failure == null || failure instanceof ModpackCompletionException)
-                repository.refresh();
-        }).thenApply(ignored -> null);
-    }
-
     public static boolean isExternalGameNameConflicts(String name) {
         return Files.exists(Paths.get("externalgames").resolve(name));
     }
@@ -233,8 +225,8 @@ public final class ModpackHelper {
         return Task.composeAsync(Schedulers.io(), () -> {
             if (!ServerModpackRemoteInstallTask.MODPACK_TYPE.equals(readInstalledModpackType(instance)))
                 throw new UnsupportedModpackException();
-            return refreshAfterUpdate(repository, new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instance)
-                    .setName(i18n("modpack.update")));
+            return new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instance)
+                    .setName(i18n("modpack.update")).thenCompose(repository.refreshAsync());
         })
                 .withStage(InstallStages.MODPACK)
                 .withStageHints(MODPACK_STAGE_HINTS);
@@ -259,7 +251,7 @@ public final class ModpackHelper {
                     .setName(i18n("modpack.update"));
             if (modpack.getManifest() instanceof MultiMCInstanceConfiguration manifest)
                 update = update.thenCompose(createMultiMCPostUpdateTask(repository, manifest, instanceId));
-            return refreshAfterUpdate(repository, update);
+            return update.thenCompose(repository.refreshAsync());
         }).withStage(InstallStages.MODPACK).withStageHints(MODPACK_STAGE_HINTS);
     }
 

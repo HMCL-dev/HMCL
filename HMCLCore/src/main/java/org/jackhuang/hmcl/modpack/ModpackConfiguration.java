@@ -5,12 +5,9 @@ package org.jackhuang.hmcl.modpack;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -68,11 +65,6 @@ public final class ModpackConfiguration<T> implements Validation {
 
     public ModpackConfiguration<T> setVersion(String version) {
         return new ModpackConfiguration<>(manifest, type, name, version, overrides);
-    }
-
-    /// Publishes the complete configuration, preserving the permissions of an existing POSIX file.
-    public void writeTo(Path target) throws IOException {
-        JsonUtils.writeToJsonFileSafely(target, this);
     }
 
     public List<FileInformation> getOverrides() {

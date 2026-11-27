@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
@@ -11,18 +9,14 @@ import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
-import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
-import org.jackhuang.hmcl.modpack.ModpackExportTask;
-import org.jackhuang.hmcl.modpack.ModpackInstallTask;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
-import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackProvider;
@@ -32,7 +26,6 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -48,20 +41,15 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
-import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -80,160 +68,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @NotNullByDefault
 public final class DefaultGameInstanceTest {
 
-    /// Failing exports preserve prior output. A successful retry replaces it and excludes the
-    /// archive and its staging file from the exported instance files.
+    /// A failed export removes its incomplete destination.
     @Test
-    public void testModpackExportReplacesOnlyCompletedArchive(@TempDir Path tempDirectory) throws Exception {
-        TestRepository repository = new TestRepository(tempDirectory);
-        GameInstanceID id = new GameInstanceID("instance");
-        GameInstanceManifest manifest = new GameInstanceManifest(id);
-        Path output = Files.writeString(tempDirectory.resolve("export.zip"), "previous archive");
-        Files.writeString(tempDirectory.resolve("example.txt"), "content");
-        Task<?> failing = serverExport(repository.publish(id, manifest), output);
-        assertThrows(IOException.class, failing::run);
-        assertEquals("previous archive", Files.readString(output));
-        try (var paths = Files.list(tempDirectory)) {
-            assertTrue(paths.noneMatch(path -> path.getFileName().toString().startsWith(".hmcl-export-")));
-        }
-
-        writeVersionJar(repository.getLayout().getInstanceJarFile(id), "1.20.1");
-        serverExport(repository.publish(id, manifest), output).run();
-        try (ZipFile zip = new ZipFile(output.toFile())) {
-            assertTrue(zip.stream().anyMatch(entry -> entry.getName().equals("overrides/example.txt")));
-            assertTrue(zip.stream().anyMatch(entry -> entry.getName().equals("server-manifest.json")));
-            assertNull(zip.getEntry("overrides/export.zip"));
-            assertTrue(zip.stream().noneMatch(entry -> entry.getName().contains(".hmcl-export-")));
-        }
-    }
-
-    /// A personal server list preserved during an update stays out of subsequent Modrinth exports.
-    @Test
-    public void modrinthExportExcludesConflictBackups(@TempDir Path directory) throws Exception {
-        Path root = Files.createDirectory(directory.resolve("game"));
-        TestRepository repository = new TestRepository(root);
-        GameInstanceID id = new GameInstanceID("instance");
-        writeVersionJar(repository.getLayout().getInstanceJarFile(id), "1.20.1");
-        DefaultGameInstance instance = repository.publish(id, new GameInstanceManifest(id));
-        Path run = instance.getRunDirectory();
-        Files.writeString(run.resolve("servers.dat"), "personal servers");
-        String legacyBackup = "servers.dat.0cf28737-d434-47b1-83df-c02627aed6c5.bak";
-        Files.writeString(run.resolve(legacyBackup), "earlier personal servers");
-        Path archive = directory.resolve("update.zip");
-        try (Zipper zip = new Zipper(archive)) {
-            zip.putTextFile("pack servers", "overrides/servers.dat");
-        }
-        new ModpackInstallTask(archive, run, List.of("/overrides"), path -> true, instance.getModpackConfigurationFile()).run();
-        try (var backups = Files.list(run.resolve("backup"))) {
-            assertEquals("personal servers", Files.readString(backups.findFirst().orElseThrow()));
-        }
-        assertEquals(ModAdviser.ModSuggestion.HIDDEN, ModAdviser.suggestMod("backup/", true));
-        assertEquals(ModAdviser.ModSuggestion.HIDDEN, ModAdviser.suggestMod(legacyBackup, false));
-
-        Path output = directory.resolve("export.mrpack");
-        new ModrinthModpackExportTask(instance, new ModpackExportInfo(), output).run();
-        try (ZipFile zip = new ZipFile(output.toFile())) {
-            assertTrue(zip.stream().noneMatch(entry -> entry.getName().startsWith("client-overrides/backup/")));
-            assertNull(zip.getEntry("client-overrides/" + legacyBackup));
-            try (var input = zip.getInputStream(zip.getEntry("client-overrides/servers.dat"))) {
-                assertEquals("pack servers", new String(input.readAllBytes(), StandardCharsets.UTF_8));
-            }
-        }
-    }
-
-    /// New archives use ordinary file permissions and re-exporting preserves a custom mode.
-    @Test
-    public void testModpackExportPreservesPermissions(@TempDir Path directory) throws Exception {
+    public void failedExportRemovesIncompleteArchive(@TempDir Path directory) throws IOException {
         TestRepository repository = new TestRepository(directory);
         GameInstanceID id = new GameInstanceID("instance");
-        writeVersionJar(repository.getLayout().getInstanceJarFile(id), "1.20.1");
-        DefaultGameInstance instance = repository.publish(id, new GameInstanceManifest(id));
-        Configuration posix = Configuration.unix().toBuilder().setAttributeViews("basic", "posix")
-                .setDefaultAttributeValue("posix:permissions", "rw-r--r--").build();
-        try (FileSystem fileSystem = Jimfs.newFileSystem(posix)) {
-            Path exportDirectory = Files.getFileStore(directory).supportsFileAttributeView(PosixFileAttributeView.class)
-                    ? directory : fileSystem.getPath("/");
-            Path reference = Files.createFile(exportDirectory.resolve("reference.zip"));
-            Path archive = exportDirectory.resolve("new.zip");
-            serverExport(instance, archive).run();
-            assertEquals(Files.getPosixFilePermissions(reference), Files.getPosixFilePermissions(archive));
-
-            Path existing = Files.createFile(fileSystem.getPath("/existing.zip"));
-            Files.setPosixFilePermissions(existing, PosixFilePermissions.fromString("rw-r-----"));
-            serverExport(instance, existing).run();
-            assertEquals("rw-r-----", PosixFilePermissions.toString(Files.getPosixFilePermissions(existing)));
-        }
-    }
-
-    /// Cancellation stops writing entries, removes the staging file and preserves the original archive.
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    public void testModpackExportCancelledBeforeReplacement(boolean writeAnotherEntry, @TempDir Path directory) throws IOException {
-        TestRepository repository = new TestRepository(directory);
-        GameInstanceID id = new GameInstanceID("instance");
-        Path output = Files.writeString(directory.resolve("export.zip"), "previous archive");
-        var task = new ModpackExportTask(repository.publish(id, new GameInstanceManifest(id)), new ModpackExportInfo(), output) {
-            /// Writes one entry and requests cancellation before the archive is published.
-            @Override
-            protected void writeArchive(Zipper zip, Predicate<String> include, TaskExecutionContext context) throws IOException {
-                zip.putTextFile("content", "example.txt");
-                cancel();
-                if (writeAnotherEntry) {
-                    assertThrows(CancellationException.class, () -> include.test("next.txt"));
-                    assertThrows(CancellationException.class, () -> zip.putStream(new ByteArrayInputStream(new byte[1]), "next.txt"));
-                }
-            }
-        };
-        assertFalse(task.test());
-        assertInstanceOf(CancellationException.class, task.exceptionNow());
-        assertEquals("previous archive", Files.readString(output));
-        try (var paths = Files.list(directory)) {
-            assertEquals(List.of(output), paths.toList());
-        }
-    }
-
-    /// Creates a server export with a file API URL for the manifest.
-    private static ModpackExportTask serverExport(DefaultGameInstance instance, Path output) {
-        return new ServerModpackExportTask(instance, new ModpackExportInfo().setFileApi("https://example.org/"), output);
-    }
-
-    /// Only a completed bundle replaces the destination, even when it is inside the exported directory.
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    public void testBundledModpackExport(boolean cancelBundle, @TempDir Path directory) throws Exception {
-        TestRepository repository = new TestRepository(directory);
-        GameInstanceID id = new GameInstanceID("instance");
-        writeVersionJar(repository.getLayout().getInstanceJarFile(id), "1.20.1");
-        Path output = Files.writeString(directory.resolve("bundle.zip"), "previous bundle");
-        ModpackExportTask modpack = serverExport(repository.publish(id, new GameInstanceManifest(id)), output);
-        Task<?> task = new Task<@Nullable Void>() {
-            /// Packages the finished modpack before allowing the bundle to be published.
-            @Override
-            public @Nullable Void execute(TaskExecutionContext context) throws IOException {
-                modpack.export(context, (zip, archive) -> {
-                    try (ZipFile nested = new ZipFile(archive.toFile())) {
-                        assertTrue(nested.stream().anyMatch(entry -> entry.getName().equals("server-manifest.json")));
-                        assertNull(nested.getEntry("overrides/bundle.zip"));
-                        assertTrue(nested.stream().noneMatch(entry -> entry.getName().contains(".hmcl-export-")));
-                    }
-                    zip.putFile(archive, "modpack.zip");
-                    if (cancelBundle)
-                        cancel();
-                });
-                return null;
-            }
-        };
-        if (cancelBundle) {
-            assertThrows(CancellationException.class, task::run);
-            assertEquals("previous bundle", Files.readString(output));
-        } else {
-            task.run();
-            try (ZipFile bundle = new ZipFile(output.toFile())) {
-                assertTrue(bundle.stream().anyMatch(entry -> entry.getName().equals("modpack.zip")));
-            }
-        }
-        try (var paths = Files.list(directory)) {
-            assertTrue(paths.noneMatch(path -> path.getFileName().toString().startsWith(".hmcl-export-")));
-        }
+        Path archive = directory.resolve("pack.zip");
+        var export = new ServerModpackExportTask(repository.publish(id, new GameInstanceManifest(id)), new ModpackExportInfo(), archive);
+        assertThrows(IOException.class, export::run);
+        assertTrue(Files.notExists(archive));
     }
 
     /// Launch repair for ModLauncher adds support metadata without materializing bundled files.
@@ -866,6 +709,9 @@ public final class DefaultGameInstanceTest {
         DefaultGameInstance original = repository.getInstance(id);
         Path instanceJar = repository.getLayout().getInstanceJarFile(id);
         writeVersionJar(instanceJar, "old");
+        Path icon = Files.writeString(original.getInstanceRoot().resolve("icon.png"), "user icon");
+        Path library = Files.createDirectories(original.getInstanceRoot().resolve("libraries")).resolve("embedded.jar");
+        Files.writeString(library, "old library");
         String oldHash = DigestUtils.digestToString("SHA-1", instanceJar);
 
         Path client = directory.resolve("client.jar");
@@ -878,7 +724,9 @@ public final class DefaultGameInstanceTest {
 
         Path archive = directory.resolve("pack.zip");
         try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(archive))) {
-            writeZipEntry(zip, "instance.cfg", "name=Test");
+            writeZipEntry(zip, "instance.cfg", "name=Test\niconKey=custom");
+            writeZipEntry(zip, "custom.png", "new icon");
+            writeZipEntry(zip, "libraries/embedded.jar", "new library");
             writeZipEntry(zip, "mmc-pack.json", """
                     {"formatVersion":1,"components":[{"uid":"net.minecraft","version":"1.21"}]}
                     """);
@@ -909,10 +757,14 @@ public final class DefaultGameInstanceTest {
         if (missingMod) {
             assertThrows(IOException.class, update::run);
             assertSame(original, repository.getInstance(id));
+            assertEquals("user icon", Files.readString(icon));
+            assertEquals("old library", Files.readString(library));
             assertEquals(oldHash, DigestUtils.digestToString("SHA-1", instanceJar));
         } else {
             update.run();
             assertEquals(clientHash, repository.getInstance(id).getManifest().getDownloadInfo().getSha1());
+            assertEquals("new icon", Files.readString(icon));
+            assertEquals("new library", Files.readString(library));
             assertEquals("patched", CompressingUtils.readTextZipEntry(instanceJar, "patch.txt"));
         }
         assertEquals(clientHash, DigestUtils.digestToString("SHA-1", cachedClient));

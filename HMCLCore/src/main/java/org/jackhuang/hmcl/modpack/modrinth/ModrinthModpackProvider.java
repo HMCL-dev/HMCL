@@ -15,28 +15,17 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Set;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModrinthModpackProvider implements ModpackProvider {
     public static final ModrinthModpackProvider INSTANCE = new ModrinthModpackProvider();
-
-    /// Reads the optional files excluded from this installation. Older instances may have no selection file.
-    static @Unmodifiable Set<String> readExcludedFiles(Path root) throws IOException {
-        Path selection = root.resolve("excluded.json");
-        if (Files.notExists(selection))
-            return Set.of();
-        return Set.copyOf(Objects.requireNonNull(JsonUtils.fromJsonFile(selection, JsonUtils.listTypeOf(String.class))));
-    }
 
     @Override
     public String getName() {

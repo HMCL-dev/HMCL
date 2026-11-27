@@ -15,11 +15,11 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 
 /// Installs or updates a local MCBBS modpack using the mode selected at construction.
@@ -33,6 +33,8 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
     /// Existing instance selecting update mode, or `null` for a new installation.
     private final @Nullable DefaultGameInstance updateTarget;
     private final DefaultGameRepository repository;
+    /// Previously installed configuration, or `null` if unavailable.
+    private final @Nullable ModpackConfiguration<McbbsModpackManifest> config;
 
     /// Creates a task that installs a new MCBBS modpack instance.
     ///
@@ -98,16 +100,17 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
         if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a Mcbbs modpack. Cannot update this instance.");
 
+        @Nullable ModpackConfiguration<McbbsModpackManifest> config = null;
         try {
             if (this.updateTarget != null && Files.exists(json)) {
-                @Nullable ModpackConfiguration<McbbsModpackManifest> config =
-                        JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
                 if (config == null || !McbbsModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Instance " + instanceId + " is not a Mcbbs modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
+        this.config = config;
     }
 
     /// Installs the instance, updates its patch and completes the modpack files.
@@ -129,19 +132,17 @@ public final class McbbsModpackLocalInstallTask extends Task<@Nullable Void> {
                 builder.component(componentType, addon.getVersion());
         }
         Path run = repository.getLayout().getInstanceRoot(instanceId);
-        @Unmodifiable List<String> subDirectories = List.of("/overrides");
-        context.run(new ModpackInstallTask(zipFile, run, subDirectories, any -> true,
-                updateTarget == null ? null : updateTarget.getModpackConfigurationFile()).withStage(InstallStages.MODPACK));
-        var configuration = context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, McbbsModpackProvider.INSTANCE,
-                modpack.getName(), modpack.getVersion()).withStage(InstallStages.MODPACK));
-        builder.setModpackConfiguration(configuration);
+        Task<?> overrides = new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config).withStage(InstallStages.MODPACK);
+        var instanceTask = new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, McbbsModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId));
+
+        context.runAll(List.of(overrides, instanceTask.withStage(InstallStages.MODPACK)));
         // Existing packs without this patch manage their libraries separately.
         @Nullable GameInstancePatch patch = updateTarget == null ? new GameInstancePatch(PATCH_NAME)
                 : updateTarget.getManifest().getPatches().stream().filter(p -> PATCH_NAME.equals(p.id())).findFirst().orElse(null);
         if (patch != null)
             builder.addPatch(patch.withLibraries(manifest.getLibraries()));
         DefaultGameInstance instance = builder.build(context);
-        context.run(new McbbsModpackCompletionTask(dependencyManager, instance, configuration));
+        context.run(new McbbsModpackCompletionTask(dependencyManager, instance, instanceTask.resultNow()));
     }
 
     private static final String PATCH_NAME = "mcbbs";

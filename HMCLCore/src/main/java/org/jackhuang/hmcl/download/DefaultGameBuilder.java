@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskStage;
@@ -41,7 +40,7 @@ public class DefaultGameBuilder extends GameBuilder {
     /// Whether installation has started and configuration is frozen.
     private boolean buildStarted;
 
-    /// Published manifest identifying a new installation that this builder can still roll back.
+    /// Manifest published by this builder, used to verify ownership during rollback.
     private @Nullable GameInstanceManifest committedManifest;
 
     /// Whether instance isolation was requested for this build.
@@ -67,16 +66,15 @@ public class DefaultGameBuilder extends GameBuilder {
         return dependencyManager;
     }
 
+    /// Returns the manifest published by this build, or null before publication.
+    public @Nullable GameInstanceManifest getCommittedManifest() {
+        return committedManifest;
+    }
+
     /// Includes a modpack patch in the manifest published by this build.
     public void addPatch(GameInstancePatch patch) {
         checkOpen();
         initialManifest = initialManifest.addPatch(patch);
-    }
-
-    /// Publishes the modpack configuration together with the built instance.
-    public void setModpackConfiguration(ModpackConfiguration<?> configuration) {
-        checkOpen();
-        draft.putModpackConfiguration(instanceId, configuration);
     }
 
     /// {@inheritDoc}
@@ -160,8 +158,7 @@ public class DefaultGameBuilder extends GameBuilder {
             draft.putPrimaryJar(instanceId, minecraftJar);
             beforePublication.run();
             DefaultGameInstance instance = draft.commit().getInstance(instanceId);
-            if (updateTarget == null)
-                committedManifest = instance.getManifest();
+            committedManifest = instance.getManifest();
             onInstanceCommitted(instance);
             return instance;
         }
@@ -196,7 +193,7 @@ public class DefaultGameBuilder extends GameBuilder {
     /// @throws IllegalStateException if another draft prevents removal of the committed instance
     public void rollback() throws IOException {
         abort();
-        if (committedManifest == null)
+        if (updateTarget != null || committedManifest == null)
             return;
 
         try (DefaultGameRepositoryDraft removal = dependencyManager.getGameRepository().openDraft()) {

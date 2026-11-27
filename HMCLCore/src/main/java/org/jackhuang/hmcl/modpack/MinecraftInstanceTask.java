@@ -6,44 +6,40 @@ import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// Reads an archive's override hashes for a pending modpack installation.
 public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>> {
 
     private final Path zipFile;
-    /// Normalized paths of the archive's override directories.
-    private final @Unmodifiable List<String> subDirectories;
+    private final List<String> subDirectories;
+    private final Path jsonFile;
     private final T manifest;
     private final String type;
     private final String name;
-    /// Pack version, when supplied by the archive format.
-    private final @Nullable String version;
+    private final String version;
 
-    /// Scans the selected override directories for the new modpack configuration.
-    public MinecraftInstanceTask(Path zipFile, List<String> subDirectories, T manifest, ModpackProvider modpackProvider, String name, @Nullable String version) {
+    public MinecraftInstanceTask(Path zipFile, List<String> subDirectories, T manifest, ModpackProvider modpackProvider, String name, String version, Path jsonFile) {
         this.zipFile = zipFile;
         this.subDirectories = subDirectories.stream().map(FileUtils::normalizePath).toList();
         this.manifest = manifest;
+        this.jsonFile = jsonFile;
         this.type = modpackProvider.getName();
         this.name = name;
         this.version = version;
     }
 
-    private static void getOverrides(Map<String, ModpackConfiguration.FileInformation> overrides,
+    private static void getOverrides(List<ModpackConfiguration.FileInformation> overrides,
                                      ZipFileTree tree,
                                      ArchiveFileTree.Dir<ZipArchiveEntry> dir,
                                      List<String> names) throws IOException {
@@ -56,8 +52,7 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
             try (InputStream input = tree.getInputStream(entry.getValue())) {
                 hash = DigestUtils.digestToString("SHA-1", input);
             }
-            String path = prefix + entry.getKey();
-            overrides.put(path, new ModpackConfiguration.FileInformation(path, hash));
+            overrides.add(new ModpackConfiguration.FileInformation(prefix + entry.getKey(), hash));
         }
 
         for (ArchiveFileTree.Dir<ZipArchiveEntry> subDir : dir.getSubDirs().values()) {
@@ -67,10 +62,10 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
         }
     }
 
-    /// Returns the configuration without publishing it to the installed instance.
+    /// Scans the override directories and writes the resulting instance configuration.
     @Override
     public ModpackConfiguration<T> execute(TaskExecutionContext context) throws Exception {
-        Map<String, ModpackConfiguration.FileInformation> overrides = new LinkedHashMap<>();
+        List<ModpackConfiguration.FileInformation> overrides = new ArrayList<>();
 
         try (var tree = new ZipFileTree(CompressingUtils.openZipFile(zipFile))) {
             for (String subDirectory : subDirectories) {
@@ -81,6 +76,9 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
                 getOverrides(overrides, tree, root, names);
             }
         }
-        return new ModpackConfiguration<>(manifest, type, name, version, List.copyOf(overrides.values()));
+        ModpackConfiguration<T> configuration = new ModpackConfiguration<>(manifest, type, name, version, overrides);
+        Files.createDirectories(jsonFile.getParent());
+        JsonUtils.writeToJsonFile(jsonFile, configuration);
+        return configuration;
     }
 }

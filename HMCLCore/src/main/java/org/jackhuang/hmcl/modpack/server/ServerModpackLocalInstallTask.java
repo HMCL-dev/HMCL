@@ -14,11 +14,11 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 
 /// Installs or updates a local server modpack using the mode selected at construction.
@@ -35,6 +35,8 @@ public class ServerModpackLocalInstallTask extends Task<@Nullable Void> {
     /// The dependency manager that reserves the instance at execution time.
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
+    /// Previously installed configuration, or `null` if unavailable.
+    private final @Nullable ModpackConfiguration<ServerModpackManifest> config;
 
     /// Creates a task that installs a new local server modpack instance.
     ///
@@ -100,16 +102,17 @@ public class ServerModpackLocalInstallTask extends Task<@Nullable Void> {
         if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
 
+        @Nullable ModpackConfiguration<ServerModpackManifest> config = null;
         try {
             if (this.updateTarget != null && Files.exists(json)) {
-                @Nullable ModpackConfiguration<ServerModpackManifest> config =
-                        JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
 
                 if (config == null || !ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
+        this.config = config;
     }
 
     /// Installs the game components and extracts the server modpack overrides.
@@ -126,11 +129,9 @@ public class ServerModpackLocalInstallTask extends Task<@Nullable Void> {
                     builder.component(componentType, addon.getVersion());
             }
             Path run = repository.getLayout().getInstanceRoot(instanceId);
-            @Unmodifiable List<String> subDirectories = List.of("/overrides");
-            context.run(new ModpackInstallTask(zipFile, run, subDirectories, any -> true,
-                    updateTarget == null ? null : updateTarget.getModpackConfigurationFile()).withStage(InstallStages.MODPACK));
-            builder.setModpackConfiguration(context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest,
-                    ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion()).withStage(InstallStages.MODPACK)));
+            Task<?> overrides = new ModpackInstallTask<>(zipFile, run, Collections.singletonList("/overrides"), any -> true, config);
+            Task<?> instance = new MinecraftInstanceTask<>(zipFile, Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId));
+            context.runAll(List.of(overrides.withStage(InstallStages.MODPACK), instance.withStage(InstallStages.MODPACK)));
             builder.build(context);
         });
         return null;

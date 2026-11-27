@@ -26,7 +26,6 @@ public interface ModAdviser {
     List<String> MODPACK_BLACK_LIST = List.of(
         "regex:(.*?)\\.log",
         "regex:.*\\.dat_old$", "regex:.*\\.old$", // Backup files
-        "regex:.*\\.[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\\.bak", // Older HMCL conflict backups
         "regex:.*\\.BakaCoreInfo$", // BakaXL
         "regex:.*-natives",
         "usernamecache.json", "usercache.json", // Minecraft

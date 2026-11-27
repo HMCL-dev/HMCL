@@ -4,20 +4,13 @@ package org.jackhuang.hmcl.util.io;
 
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
-import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.util.HexFormat;
-import java.util.Map;
-import java.util.Objects;
 
 public final class Unzipper {
     private final Path zipFile, dest;
@@ -69,17 +62,12 @@ public final class Unzipper {
     ///
     /// @throws IOException if zip file is malformed or filesystem error.
     public void unzip() throws IOException {
-        unzip(null, null);
-    }
-
-    /// Updates the supplied mutable map after each file or symbolic link is written. If extraction fails,
-    /// completed entries retain their new digests. A null algorithm skips hashing and allows a null map.
-    public void unzip(@Nullable String algorithm, @Nullable Map<String, String> hashes) throws IOException {
-        if (algorithm != null)
-            Objects.requireNonNull(hashes, "hashes");
-        @Nullable MessageDigest digest = algorithm == null ? null : DigestUtils.getDigest(algorithm);
         Path destDir = this.dest.toAbsolutePath().normalize();
         Files.createDirectories(destDir);
+
+        CopyOption[] copyOptions = replaceExistentFile
+                ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING}
+                : new CopyOption[]{};
 
         long entryCount = 0L;
         try (ZipArchiveReader reader = CompressingUtils.openZipFile(zipFile)) {
@@ -107,13 +95,14 @@ public final class Unzipper {
                     Files.createDirectories(destFile);
                 } else {
                     Files.createDirectories(destFile.getParent());
-                    if (digest != null)
-                        digest.reset();
                     if (entry.isUnixSymlink()) {
                         String linkTarget = reader.getUnixSymlink(entry);
+                        if (replaceExistentFile)
+                            Files.deleteIfExists(destFile);
+
                         Path targetPath;
                         try {
-                            targetPath = destFile.getFileSystem().getPath(linkTarget);
+                            targetPath = Path.of(linkTarget);
                         } catch (InvalidPathException e) {
                             throw new IOException("Zip entry has an invalid symlink target: " + entry.getName(), e);
                         }
@@ -122,30 +111,22 @@ public final class Unzipper {
                             throw new IOException("Zip entry is trying to create a symlink outside of the destination directory: " + entry.getName());
                         }
 
-                        if (digest != null) {
-                            try (InputStream input = reader.getInputStream(entry)) {
-                                DigestUtils.updateDigest(digest, input);
-                            }
+                        try {
+                            Files.createSymbolicLink(destFile, targetPath);
+                        } catch (FileAlreadyExistsException ignored) {
                         }
-                        if (replaceExistentFile) {
-                            FileUtils.replaceFile(destFile, temporary -> {
-                                Files.delete(temporary);
-                                Files.createSymbolicLink(temporary, targetPath);
-                            });
-                        } else {
-                            try {
-                                Files.createSymbolicLink(destFile, targetPath);
-                            } catch (FileAlreadyExistsException ignored) {
-                                continue;
-                            }
+                    } else {
+                        try (InputStream input = reader.getInputStream(entry)) {
+                            Files.copy(input, destFile, copyOptions);
+                        } catch (FileAlreadyExistsException e) {
+                            if (replaceExistentFile)
+                                throw e;
                         }
-                    } else if (replaceExistentFile) {
-                        FileUtils.replaceFile(destFile, temporary -> extractFile(reader, entry, temporary, true, digest));
-                    } else if (!extractFile(reader, entry, destFile, false, digest)) {
-                        continue;
+
+                        if ((entry.getUnixMode() & 0777) != 0 && SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS) {
+                            Files.setPosixFilePermissions(destFile, FileUtils.parsePosixFilePermission(entry.getUnixMode()));
+                        }
                     }
-                    if (digest != null)
-                        hashes.put(relativePath, HexFormat.of().formatHex(digest.digest()));
                 }
             }
 
@@ -153,29 +134,6 @@ public final class Unzipper {
                 throw new NoSuchFileException("Subdirectory " + subDirectory + " does not exist in the zip file.");
             }
         }
-    }
-
-    /// Applies the archived permissions and returns whether the file contents were written.
-    private static boolean extractFile(ZipArchiveReader reader, ZipArchiveEntry entry, Path file, boolean replace,
-                                       @Nullable MessageDigest digest) throws IOException {
-        boolean extracted = true;
-        InputStream contents = reader.getInputStream(entry);
-        try (InputStream input = digest == null ? contents : new DigestInputStream(contents, digest)) {
-            if (replace) {
-                try (var output = Files.newOutputStream(file)) {
-                    input.transferTo(output);
-                }
-            } else {
-                try {
-                    Files.copy(input, file);
-                } catch (FileAlreadyExistsException ignored) {
-                    extracted = false;
-                }
-            }
-        }
-        if ((entry.getUnixMode() & 0777) != 0 && SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS)
-            Files.setPosixFilePermissions(file, FileUtils.parsePosixFilePermission(entry.getUnixMode()));
-        return extracted;
     }
 
     @FunctionalInterface

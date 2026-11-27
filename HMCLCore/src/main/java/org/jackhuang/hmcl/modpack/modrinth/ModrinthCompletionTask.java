@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -94,7 +95,13 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
                 Path manifestFile = root.resolve("modrinth.index.json");
                 if (Files.exists(manifestFile))
                     manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
-                excludedFiles = ModrinthModpackProvider.readExcludedFiles(root);
+                Path excludedFile = root.resolve("excluded.json");
+                if (Files.exists(excludedFile)) {
+                    excludedFiles = Set.copyOf(Objects.requireNonNull(
+                            JsonUtils.fromJsonFile(excludedFile, JsonUtils.listTypeOf(String.class))));
+                } else {
+                    excludedFiles = null;
+                }
             } catch (Exception e) {
                 LOG.warning("Unable to read Modrinth modpack manifest.json", e);
             }
@@ -106,8 +113,18 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
         Path runDirectory = FileUtils.toAbsolute(instance.getRunDirectory());
         Path modsDirectory = runDirectory.resolve("mods");
 
+        if (excludedFiles != null) {
+            JsonUtils.writeToJsonFile(
+                    instance.getInstanceRoot().resolve("excluded.json"),
+                    List.copyOf(excludedFiles));
+        }
+
         for (ModrinthManifest.File file : manifest.getFiles()) {
-            if (!file.isSelectedForClient(excludedFiles))
+            if (file.env() != null && file.env().getOrDefault("client", "required").equals("unsupported"))
+                continue;
+            if (file.downloads().isEmpty())
+                continue;
+            if (excludedFiles != null && excludedFiles.contains(file.key()))
                 continue;
 
             Path filePath = runDirectory.resolve(file.path()).toAbsolutePath().normalize();
@@ -120,7 +137,9 @@ public class ModrinthCompletionTask extends Task<@Nullable Void> {
                 continue;
 
             DownloadProvider downloadProvider = dependency.getDownloadProvider();
-            var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(file.downloads()), filePath);
+            var task = new FileDownloadTask(
+                    downloadProvider.getDownloadCandidates(file.downloads()),
+                    filePath);
             task.setCacheRepository(dependency.getCacheRepository());
             task.setCaching(true);
             dependencies.add(task.withCounter());

@@ -22,14 +22,11 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.util.*;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// A task transforming MultiMC Modpack Scheme to Official Launcher Scheme.
 /// The transforming process contains 7 stage:
@@ -60,6 +57,9 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
     private final DefaultGameRepository repository;
     private final DefaultDependencyManager dependencyManager;
+
+    /// Previous modpack configuration when updating, or `null` for a new installation.
+    private final @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config;
 
     /// Creates a MultiMC modpack installation task.
     ///
@@ -125,34 +125,37 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a MultiMC modpack. Cannot update this instance.");
 
+        @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
         try {
             if (this.updateTarget != null && Files.exists(json)) {
-                @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config =
-                        JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
 
                 if (config == null || !MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Instance " + instanceId + " is not a MultiMC modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
+        this.config = config;
     }
 
-    /// Extracts the pack files and returns their configuration for the repository commit.
-    private Task<ModpackConfiguration<MultiMCInstanceConfiguration>> prepareOverrides() throws IOException {
-        Path run = repository.getLayout().getInstanceRoot(instanceId);
-        String mcDirectory;
-        try (FileSystem fs = openModpack()) {
-            mcDirectory = getRootPath(fs).resolve(".minecraft").toAbsolutePath().normalize().toString();
+    /// Prepares the extraction tasks and returns the task that assembles the pack's patches.
+    private MMCInstancePatchesAssembleTask prepareInstallation(List<Task<?>> preparation) throws Exception {
+        // Stage #0: General Setup
+        {
+            Path run = repository.getLayout().getInstanceRoot(instanceId);
+
+            String mcDirectory;
+            try (FileSystem fs = openModpack()) {
+                mcDirectory = getRootPath(fs).resolve(".minecraft").toAbsolutePath().normalize().toString();
+            }
+
+            // TODO: Optimize unbearably slow ModpackInstallTask
+            preparation.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(mcDirectory), any -> true, config).withStage(InstallStages.MODPACK));
+            preparation.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getLayout().getModpackConfigurationFile(instanceId)).withStage(InstallStages.MODPACK));
         }
-        @Unmodifiable List<String> directories = List.of(mcDirectory);
-        return new ModpackInstallTask(zipFile, run, directories, any -> true,
-                updateTarget == null ? null : updateTarget.getModpackConfigurationFile())
-                .thenCompose(new MinecraftInstanceTask<>(zipFile, directories, manifest, MultiMCModpackProvider.INSTANCE,
-                        manifest.getName(), null)).withStage(InstallStages.MODPACK);
-    }
 
-    /// Resolves the instance patches from the archive and MultiMC's metadata service.
-    private MMCInstancePatchesAssembleTask preparePatches() throws Exception {
+        // Stage #1: Load all related Json-Patch from meta maven or local mod pack.
+
         try (FileSystem fs = openModpack()) {
             Path root = getRootPath(fs);
 
@@ -234,7 +237,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         }
     }
 
-    /// Reserves the target before writing files and commits the manifest and completed client JAR together.
+    /// Reserves the target before writing files and commits the installed manifest.
     /// Closing an uncommitted draft removes files under a newly reserved instance root.
     @Override
     public MultiMCInstancePatch.ResolvedInstance execute(TaskExecutionContext context) throws Exception {
@@ -242,46 +245,37 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             @Nullable DefaultGameInstance current = draft.getBaseSnapshot().findInstance(instanceId);
             if (updateTarget == null && current != null)
                 throw new IllegalStateException("Game instance already exists: " + instanceId);
-            if (updateTarget != null && current == null)
-                throw new IllegalStateException("Game instance no longer exists: " + instanceId);
             if (current != updateTarget)
                 throw new IllegalStateException("Game instance has changed: " + instanceId);
 
-            context.checkCancellation();
             draft.put(new GameInstanceManifest(instanceId));
-            MultiMCInstancePatch.ResolvedInstance artifact = prepareInstance(context, draft);
-            Path clientJar = downloadGame(context, artifact);
-            context.checkCancellation();
-            List<String> jarMods = artifact.getJarModFileNames();
-            @Nullable Path patchedJar = jarMods.isEmpty() ? null : Files.createTempFile("hmcl-multimc-", ".jar");
+            @Nullable Path backup = updateTarget == null ? null : Modpack.createUpdateBackup(updateTarget);
             try {
-                if (patchedJar != null) {
-                    Files.copy(clientJar, patchedJar, StandardCopyOption.REPLACE_EXISTING);
-                    applyJarMods(context, patchedJar, jarMods);
-                }
+                MultiMCInstancePatch.ResolvedInstance artifact = install(context);
                 draft.put(artifact.getManifest());
-                draft.putPrimaryJar(instanceId, patchedJar != null ? patchedJar : clientJar);
                 context.commit();
                 draft.commit();
                 return artifact;
-            } finally {
-                if (patchedJar != null) {
+            } catch (Exception | Error failure) {
+                if (backup != null && updateTarget != null) {
                     try {
-                        Files.deleteIfExists(patchedJar);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to delete temporary MultiMC client JAR " + patchedJar, e);
+                        draft.close();
+                        Modpack.restoreUpdateBackup(updateTarget, backup, null);
+                    } catch (Exception | Error cleanup) {
+                        failure.addSuppressed(cleanup);
                     }
                 }
+                throw failure;
             }
         }
     }
 
     /// Resolves the pack's patches and installs its files under the reserved instance root.
-    private MultiMCInstancePatch.ResolvedInstance prepareInstance(TaskExecutionContext context, DefaultGameRepositoryDraft draft) throws Exception {
-        var overrides = prepareOverrides();
-        MMCInstancePatchesAssembleTask patches = preparePatches();
-        context.runAll(overrides, patches);
-        draft.putModpackConfiguration(instanceId, overrides.resultNow());
+    private MultiMCInstancePatch.ResolvedInstance install(TaskExecutionContext context) throws Exception {
+        List<Task<?>> preparation = new ArrayList<>();
+        MMCInstancePatchesAssembleTask patches = prepareInstallation(preparation);
+        preparation.add(patches);
+        context.runAll(preparation);
         MultiMCInstancePatch.ResolvedInstance artifact = MultiMCInstancePatch.resolveArtifact(patches.resultNow(), instanceId);
 
         // Stage #4: Copy embedded files.
@@ -324,31 +318,58 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             }
         }
 
-        return artifact;
-    }
+        List<Task<?>> dependencies = new ArrayList<>();
+        // Stage #5: Assemble game files.
+        {
+            GameInstanceManifest instanceManifest = artifact.getManifest();
+            dependencies.add(new GameAssetDownloadTask(dependencyManager, instanceManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true));
+            dependencies.add(new GameLibrariesTask(
+                    dependencyManager,
+                    // TODO: check integrity of maven-only files when launching games?
+                    instanceManifest.withLibraries(Lang.merge(instanceManifest.getLibraries(), artifact.getMavenOnlyFiles())),
+                    true
+            ));
 
-    /// Downloads the game's dependencies and returns the unmodified cached client JAR.
-    private Path downloadGame(TaskExecutionContext context, MultiMCInstancePatch.ResolvedInstance artifact) throws Exception {
-        GameInstanceManifest instanceManifest = artifact.getManifest();
-        Task<Path> client = new GameDownloadTask(dependencyManager, instanceManifest).withStage(InstallStages.MODPACK_DOWNLOAD);
-        context.runAll(client,
-                new GameAssetDownloadTask(dependencyManager, instanceManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
-                new GameLibrariesTask(dependencyManager,
-                        instanceManifest.withLibraries(Lang.merge(instanceManifest.getLibraries(), artifact.getMavenOnlyFiles())), true));
-        return client.resultNow();
-    }
+            Path instanceJar = getPrimaryJarFile();
+            dependencies.add(new GameDownloadTask(dependencyManager, instanceManifest)
+                    .thenAcceptAsync(cachedJar -> FileUtils.copyFile(cachedJar, instanceJar))
+                    .withStage(InstallStages.MODPACK_DOWNLOAD));
+        }
 
-    /// Applies the pack's JAR mods in order to a private copy of the client.
-    private void applyJarMods(TaskExecutionContext context, Path clientJar, List<String> jarMods) throws IOException {
-        try (FileSystem fs = openModpack(); FileSystem mc = CompressingUtils.writable(clientJar).build()) {
-            Path root = getRootPath(fs).resolve("jarmods");
-            for (String fileName : jarMods) {
-                context.checkCancellation();
-                try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).build()) {
-                    FileUtils.copyDirectory(jm.getPath("/"), mc.getPath("/"));
+        context.runAll(dependencies);
+
+        List<String> files = artifact.getJarModFileNames();
+        if (!files.isEmpty()) {
+            // Stage #7: Apply jar mods.
+            try (FileSystem fs = openModpack()) {
+                Path root = getRootPath(fs).resolve("jarmods");
+
+                try (FileSystem mc = CompressingUtils.writable(getPrimaryJarFile()).build()) {
+                    for (String fileName : files) {
+                        try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).build()) {
+                            FileUtils.copyDirectory(jm.getPath("/"), mc.getPath("/"));
+                        }
+                    }
                 }
             }
         }
+
+        return artifact;
+    }
+
+    /// Returns the primary JAR path retained by the current draft.
+    ///
+    /// Updates use the existing manifest's sibling JAR, while new installations use the layout's
+    /// conventional path.
+    ///
+    /// @return the primary JAR destination
+    private Path getPrimaryJarFile() {
+        if (updateTarget == null) {
+            return repository.getLayout().getInstanceJarFile(instanceId);
+        }
+
+        Path manifestFile = updateTarget.getManifestFile();
+        return manifestFile.resolveSibling(FileUtils.getNameWithoutExtension(manifestFile) + ".jar");
     }
 
     private FileSystem openModpack() throws IOException {

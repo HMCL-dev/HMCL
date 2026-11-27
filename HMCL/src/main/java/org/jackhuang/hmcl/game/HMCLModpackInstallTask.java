@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.nio.file.NoSuchFileException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -95,24 +95,28 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
         this.instanceId = instanceId;
         this.updateTarget = updateTarget;
         this.modpack = modpack;
-        this.modpackName = modpack.getName();
-        this.modpackVersion = modpack.getVersion();
+
         if (updateTarget != null)
             dependency.validateGameInstance(updateTarget);
+        this.modpackName = modpack.getName();
+        this.modpackVersion = modpack.getVersion();
     }
 
-    /// Rejects an update if the installed configuration is missing or records a different provider.
-    private void validateUpdateConfiguration(Path file) {
-        @Nullable ModpackConfiguration<?> config;
-        try {
-            config = JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
-        } catch (NoSuchFileException e) {
-            config = null;
-        } catch (JsonParseException | IOException ignored) {
-            return;
+    /// Reads the previous override hashes after reserving the update target.
+    private @Nullable ModpackConfiguration<?> readConfiguration() {
+        if (updateTarget == null)
+            return null;
+        Path file = updateTarget.getModpackConfigurationFile();
+        if (Files.exists(file)) {
+            try {
+                @Nullable ModpackConfiguration<?> config = JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
+                if (config != null && HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
+                    return config;
+            } catch (JsonParseException | IOException ignored) {
+                return null;
+            }
         }
-        if (config == null || !HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
-            throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
+        throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
     }
 
     /// Reserves the target before extracting the pack and installs its recognized components.
@@ -123,14 +127,13 @@ public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
     public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         Modpack.installWithGameBuilder(context, dependency, instanceId, updateTarget, false, builder -> {
             DefaultGameRepositoryLayout layout = dependency.getGameRepository().getLayout();
-            @Nullable Path configurationFile = updateTarget == null ? null : updateTarget.getModpackConfigurationFile();
-            if (configurationFile != null)
-                validateUpdateConfiguration(configurationFile);
             @Unmodifiable List<String> subDirectories = List.of("/minecraft");
-            context.run(new ModpackInstallTask(zipFile, layout.getInstanceRoot(instanceId), subDirectories,
-                    path -> !"pack.json".equals(path), configurationFile));
-            builder.setModpackConfiguration(context.run(new MinecraftInstanceTask<>(zipFile, subDirectories, modpack,
-                    HMCLModpackProvider.INSTANCE, modpackName, modpackVersion).withStage(InstallStages.MODPACK)));
+            context.runAll(
+                    new ModpackInstallTask<>(zipFile, layout.getInstanceRoot(instanceId), subDirectories,
+                            path -> !"pack.json".equals(path), readConfiguration()),
+                    new MinecraftInstanceTask<>(zipFile, subDirectories, modpack, HMCLModpackProvider.INSTANCE,
+                            modpackName, modpackVersion, layout.getModpackConfigurationFile(instanceId))
+                            .withStage(InstallStages.MODPACK));
             String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
             GameInstanceManifest originalManifest = JsonUtils.fromNonNullJson(json, GameInstanceManifest.class)
                     .withId(instanceId)

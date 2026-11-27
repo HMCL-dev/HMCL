@@ -165,13 +165,9 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
         }
 
         for (McbbsModpackManifest.File file : localFiles.keySet()) {
-            if (file instanceof McbbsModpackManifest.AddonFile override) {
-                Modpack.removeUnmodifiedOverride(instance.getRunDirectory(), override.getPath(), override.getHash(), context);
-            } else {
-                @Nullable Path actualPath = getFilePath(file);
-                if (actualPath != null)
-                    Files.deleteIfExists(actualPath);
-            }
+            @Nullable Path actualPath = getFilePath(file);
+            if (actualPath != null)
+                Modpack.removePackFile(instance.getRunDirectory(), actualPath);
         }
 
         McbbsModpackManifest updated = remoteManifest.setFiles(newFiles);

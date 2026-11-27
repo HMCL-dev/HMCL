@@ -5,26 +5,19 @@ package org.jackhuang.hmcl.modpack;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
-import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
+import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.PosixFileAttributeView;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Predicate;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
-/// Exports a game instance to a temporary archive and replaces the destination after the archive closes.
+/// Exports the selected files from an instance and removes incomplete archives.
 @NotNullByDefault
 public abstract class ModpackExportTask extends Task<@Nullable Void> {
     /// The instance snapshot supplying the game files and manifest.
@@ -45,72 +38,34 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
 
     /// Writes the format-specific entries. The predicate selects files and directories by their
     /// slash-separated paths relative to the instance's run directory.
-    protected abstract void writeArchive(Zipper zip, Predicate<String> include, TaskExecutionContext context) throws IOException;
+    protected abstract void writeArchive(Zipper zip, Predicate<String> include, TaskProgress progress) throws IOException;
 
-    /// Writes and closes a temporary archive before replacing the destination. A failure while
-    /// writing or cancellation observed before replacement leaves an existing destination intact.
+    /// Writes the archive directly to the destination and removes it if the export fails.
     @Override
-    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
-        export(context, null);
-        return null;
-    }
-
-    /// Writes the modpack and commits the supplied context immediately before replacing the destination.
-    /// If present, the bundler writes the final ZIP using the completed modpack at the supplied path.
-    public final void export(TaskExecutionContext context,
-                             @Nullable ExceptionalBiConsumer<Zipper, Path, IOException> bundle) throws IOException {
-        context.checkCancellation();
-        Path runDirectory = instance.getRunDirectory().toRealPath();
-        @Nullable Path parent = destination.toAbsolutePath().getParent();
-        if (parent == null || Files.isDirectory(destination))
-            throw new IOException("Expected an archive file: " + destination);
-        Path output = parent.toRealPath().resolve(destination.getFileName());
-
+    public @Nullable Void execute(TaskExecutionContext context) throws IOException {
+        Path runDirectory = instance.getRunDirectory().toAbsolutePath().normalize();
+        Path output = destination.toAbsolutePath().normalize();
         List<String> exclusions = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         exclusions.add(instance.getId() + ".jar");
         exclusions.add(instance.getId() + ".json");
-        // An export inside the run directory must skip prior output and concurrent staging files.
-        exclusions.add("regex:(?:.*/)?\\.hmcl-export-[^/]+\\.tmp");
 
-        LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
-        // A first export uses ordinary file creation so the destination directory and umask determine its mode.
-        Path temporary = Files.notExists(output)
-                ? Files.createFile(output.resolveSibling(".hmcl-export-" + UUID.randomUUID() + ".tmp"))
-                : Files.createTempFile(output.getParent(), ".hmcl-export-", ".tmp");
-        try {
-            Predicate<String> include = path -> {
+        context.checkCancellation();
+        try (Zipper zip = new Zipper(output)) {
+            writeArchive(zip, path -> {
                 context.checkCancellation();
                 return !output.equals(runDirectory.resolve(path)) && Modpack.acceptFile(path, exclusions, info.getWhitelist());
-            };
-            try (Zipper zip = new Zipper(temporary, false, context::checkCancellation)) {
-                if (bundle == null) {
-                    writeArchive(zip, include, context);
-                } else {
-                    Path modpack = Files.createTempFile(output.getParent(), ".hmcl-export-", ".tmp");
-                    try (Closeable cleanupModpack = () -> Files.delete(modpack)) {
-                        try (Zipper nested = new Zipper(modpack, false, context::checkCancellation)) {
-                            writeArchive(nested, include, context);
-                        }
-                        context.checkCancellation();
-                        bundle.accept(zip, modpack);
-                    }
-                }
-            }
-            if (!Files.notExists(output) && Files.getFileStore(temporary).supportsFileAttributeView(PosixFileAttributeView.class))
-                Files.setPosixFilePermissions(temporary, Files.getPosixFilePermissions(output));
+            }, context.progress());
             context.commit();
-            try {
-                Files.move(temporary, output, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            } catch (AtomicMoveNotSupportedException e) {
-                Files.move(temporary, output, StandardCopyOption.REPLACE_EXISTING);
-            }
         } catch (IOException | RuntimeException | Error failure) {
-            try {
-                Files.deleteIfExists(temporary);
-            } catch (IOException cleanup) {
-                failure.addSuppressed(cleanup);
+            if (Files.isRegularFile(output)) {
+                try {
+                    Files.deleteIfExists(output);
+                } catch (IOException cleanup) {
+                    failure.addSuppressed(cleanup);
+                }
             }
             throw failure;
         }
+        return null;
     }
 }

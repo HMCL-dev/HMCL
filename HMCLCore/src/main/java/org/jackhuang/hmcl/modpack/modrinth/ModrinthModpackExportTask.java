@@ -12,7 +12,6 @@ import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.ModpackExportTask;
-import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.task.TaskProgress;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -52,9 +51,8 @@ public class ModrinthModpackExportTask extends ModpackExportTask {
     ///
     /// @param file         the local file
     /// @param relativePath the archive-relative path
-    /// @param context      the export's cancellation context
     /// @return the remote-file entry, or `null` when the file must be included in overrides
-    private @Nullable ModrinthManifest.File tryGetRemoteFile(Path file, String relativePath, TaskExecutionContext context) throws IOException {
+    private @Nullable ModrinthManifest.File tryGetRemoteFile(Path file, String relativePath) throws IOException {
         if (info.isNoCreateRemoteFiles()) {
             return null;
         }
@@ -74,7 +72,6 @@ public class ModrinthModpackExportTask extends ModpackExportTask {
         }
 
         if (!info.isSkipCurseForgeRemoteFiles() && CurseForgeRemoteAddonRepository.isAvailable()) {
-            context.checkCancellation();
             try {
                 curseForgeVersion = CurseForgeRemoteAddonRepository.getInstance().getRemoteVersionByLocalFile(file);
             } catch (IOException e) {
@@ -87,8 +84,8 @@ public class ModrinthModpackExportTask extends ModpackExportTask {
         }
 
         Map<String, String> hashes = new HashMap<>();
-        hashes.put("sha1", DigestUtils.digestToString("SHA-1", file, context::checkCancellation));
-        hashes.put("sha512", DigestUtils.digestToString("SHA-512", file, context::checkCancellation));
+        hashes.put("sha1", DigestUtils.digestToString("SHA-1", file));
+        hashes.put("sha512", DigestUtils.digestToString("SHA-512", file));
 
         @Nullable Map<String, String> env = null;
         if (isDisabled) {
@@ -115,8 +112,7 @@ public class ModrinthModpackExportTask extends ModpackExportTask {
 
     /// {@inheritDoc}
     @Override
-    protected void writeArchive(Zipper zip, Predicate<String> include, TaskExecutionContext context) throws IOException {
-        TaskProgress progress = context.progress();
+    protected void writeArchive(Zipper zip, Predicate<String> include, TaskProgress progress) throws IOException {
         Path runDirectory = instance.getRunDirectory();
         List<ModrinthManifest.File> files = new ArrayList<>();
         Set<String> filesInManifest = new HashSet<>();
@@ -126,17 +122,12 @@ public class ModrinthModpackExportTask extends ModpackExportTask {
         List<Path> paths = new ArrayList<>();
         for (Path dir : resourceDirs) {
             try (var stream = Files.walk(dir)) {
-                stream.forEach(path -> {
-                    context.checkCancellation();
-                    if (Files.isRegularFile(path))
-                        paths.add(path);
-                });
+                paths.addAll(stream.filter(Files::isRegularFile).toList());
             }
         }
 
         long current = 0;
         for (var file : paths) {
-            context.checkCancellation();
             progress.update(0.5 * ++current / paths.size());
             String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
 
@@ -145,7 +136,7 @@ public class ModrinthModpackExportTask extends ModpackExportTask {
             }
 
             try {
-                @Nullable ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath, context);
+                @Nullable ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
                 if (fileEntry != null) {
                     files.add(fileEntry);
                     filesInManifest.add(relativePath);

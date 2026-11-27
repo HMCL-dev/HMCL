@@ -4,15 +4,13 @@ package org.jackhuang.hmcl.modpack.server;
 
 import com.google.gson.JsonParseException;
 import org.glavo.url.WebURL;
-import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
-import org.jackhuang.hmcl.modpack.ModpackConfiguration.FileInformation;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
@@ -25,7 +23,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -111,40 +108,44 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
         }
 
         if (!toMap(installed.getManifest().getAddons()).equals(toMap(remoteManifest.getAddons()))) {
-            try (DefaultGameBuilder builder = dependencyManager.newGameBuilder(instance)) {
+            try (var builder = dependencyManager.newGameBuilder(instance)) {
                 for (ServerModpackManifest.Addon addon : remoteManifest.getAddons()) {
-                    @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
-                    if (componentType != null)
-                        builder.component(componentType, addon.getVersion());
+                    @Nullable GameComponentType type = GameComponentType.fromPatchId(addon.getId());
+                    if (type != null)
+                        builder.component(type, addon.getVersion());
                 }
-                syncFiles(context, installed, remoteManifest, false);
-                builder.setModpackConfiguration(configurationFor(installed, remoteManifest));
-                builder.buildAsTaskResult(context);
+                syncFiles(context, installed, remoteManifest);
+                DefaultGameInstance updated = builder.buildAsTaskResult(context);
+                try (var draft = instance.getRepository().openDraft()) {
+                    if (draft.getBaseSnapshot().findInstance(instance.getId()) == updated)
+                        writeConfiguration(installed, remoteManifest);
+                }
             }
         } else {
-            syncFiles(context, installed, remoteManifest, true);
+            syncFiles(context, installed, remoteManifest);
+            context.commit();
+            writeConfiguration(installed, remoteManifest);
         }
         return null;
     }
 
-    /// Synchronizes overrides and records their installed hashes for the next update.
-    /// When a component build is pending, its draft publishes the remote component versions.
+    /// Downloads changed files and removes entries dropped by the remote pack.
     private void syncFiles(TaskExecutionContext context, ModpackConfiguration<ServerModpackManifest> installed,
-                           ServerModpackManifest remoteManifest, boolean finalPublication) throws Exception {
-        Files.createDirectories(configurationFile.getParent());
-        Map<FileInformation, Task<?>> downloads = new LinkedHashMap<>();
+                           ServerModpackManifest remoteManifest) throws Exception {
+        List<Task<?>> dependencies = new ArrayList<>();
         Path rootPath = instance.getInstanceRoot().toAbsolutePath().normalize();
-        Map<String, FileInformation> previousFiles = installed.getManifest().getFiles().stream()
-                .collect(Collectors.toMap(FileInformation::getPath, Function.identity()));
-        Set<String> remotePaths = new HashSet<>();
+        Map<String, ModpackConfiguration.FileInformation> files = installed.getManifest().getFiles().stream()
+                .collect(Collectors.toMap(ModpackConfiguration.FileInformation::getPath,
+                        Function.identity()));
+
+        Set<String> remoteFiles = remoteManifest.getFiles().stream().map(ModpackConfiguration.FileInformation::getPath)
+                .collect(Collectors.toSet());
 
         Path runDirectory = instance.getRunDirectory().toAbsolutePath().normalize();
         Path modsDirectory = runDirectory.resolve("mods");
 
         // for files in new modpack
-        for (FileInformation file : remoteManifest.getFiles()) {
-            remotePaths.add(file.getPath());
-            @Nullable FileInformation previous = previousFiles.get(file.getPath());
+        for (ModpackConfiguration.FileInformation file : remoteManifest.getFiles()) {
             Path actualPath = rootPath.resolve(file.getPath()).toAbsolutePath().normalize();
             String fileName = actualPath.getFileName().toString();
 
@@ -160,7 +161,7 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
 
             if (isModDisabled) {
                 download = false;
-            } else if (previous == null) {
+            } else if (!files.containsKey(file.getPath())) {
                 // If old modpack does not have this entry, download it
                 download = true;
             } else if (!Files.exists(actualPath)) {
@@ -170,12 +171,12 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
             } else {
                 // If user modified this entry file, we will not replace this file since this modified file is that user expects.
                 String fileHash = DigestUtils.digestToString("SHA-1", actualPath);
-                String oldHash = previous.getHash();
-                download = !file.getHash().equalsIgnoreCase(oldHash) && fileHash.equalsIgnoreCase(oldHash);
+                String oldHash = files.get(file.getPath()).getHash();
+                download = !Objects.equals(oldHash, file.getHash()) && Objects.equals(oldHash, fileHash);
             }
 
             if (download) {
-                downloads.put(file, new FileDownloadTask(
+                dependencies.add(new FileDownloadTask(
                         remoteManifest.getFileApi() + "/overrides/" + file.getPath(),
                         actualPath,
                         new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
@@ -183,86 +184,22 @@ public class ServerModpackCompletionTask extends Task<@Nullable Void> {
             }
         }
 
-        Set<String> removed = new HashSet<>();
-        try {
-            for (FileInformation previous : installed.getManifest().getFiles()) {
-                if (!remotePaths.contains(previous.getPath())) {
-                    Modpack.removeUnmodifiedOverride(rootPath, previous.getPath(), previous.getHash(), context);
-                    removed.add(previous.getPath());
-                }
-            }
-            context.addStageItems(downloads.size());
-            context.runAll(downloads.values(), FetchTask.getDownloadExecutorConcurrency());
-            if (finalPublication) {
-                context.commit();
-                configurationFor(installed, remoteManifest).writeTo(configurationFile);
-                return;
-            }
-        } catch (Exception | Error failure) {
-            // All admitted downloads have stopped. Record only files that actually reached the destination.
-            boolean interrupted = Thread.interrupted();
-            try {
-                saveFileProgress(installed, downloads, removed, rootPath, failure);
-            } catch (Exception | Error writeFailure) {
-                failure.addSuppressed(writeFailure);
-            } finally {
-                if (interrupted)
-                    Thread.currentThread().interrupt();
-            }
-            throw failure;
+        // If old modpack have this entry, and new modpack deleted it. Delete this file.
+        for (ModpackConfiguration.FileInformation file : installed.getManifest().getFiles()) {
+            Path actualPath = rootPath.resolve(file.getPath());
+            if (!remoteFiles.contains(file.getPath()))
+                Modpack.removePackFile(rootPath, actualPath);
         }
 
-        saveFileProgress(installed, downloads, removed, rootPath, null);
+        context.addStageItems(dependencies.size());
+
+        context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
     }
 
-    /// Updates the two installed file lists without publishing pending component or pack versions.
-    private void saveFileProgress(ModpackConfiguration<ServerModpackManifest> installed,
-                                  Map<FileInformation, Task<?>> downloads, Set<String> removed,
-                                  Path rootPath, @Nullable Throwable failure) throws IOException {
-        Map<String, FileInformation> written = new LinkedHashMap<>();
-        for (var entry : downloads.entrySet()) {
-            FileInformation file = entry.getKey();
-            if (failure == null || wasDownloaded(entry.getValue(), rootPath.resolve(file.getPath()), file.getHash(), failure))
-                written.put(file.getPath(), file);
-        }
-        if (written.isEmpty() && removed.isEmpty())
-            return;
-
-        ServerModpackManifest previous = installed.getManifest();
-        ServerModpackManifest synced = previous.withFiles(updatedFiles(previous.getFiles(), written, removed));
-        new ModpackConfiguration<>(synced, installed.getType(), installed.getName(), installed.getVersion(),
-                updatedFiles(installed.getOverrides(), written, removed)).writeTo(configurationFile);
-    }
-
-    /// Applies file replacements and removals, retaining entries specific to the supplied list.
-    private static @Unmodifiable List<FileInformation> updatedFiles(List<FileInformation> previous,
-                                                                    Map<String, FileInformation> written, Set<String> removed) {
-        Map<String, FileInformation> result = new LinkedHashMap<>();
-        for (FileInformation file : previous) {
-            if (!removed.contains(file.getPath()))
-                result.put(file.getPath(), file);
-        }
-        result.putAll(written);
-        return List.copyOf(result.values());
-    }
-
-    /// Returns whether a download installed the expected content, including before a late cancellation.
-    private static boolean wasDownloaded(Task<?> download, Path path, String hash, Throwable failure) {
-        if (download.getState() == Task.State.SUCCEEDED)
-            return true;
-        if (download.getState() == Task.State.NEW)
-            return false;
-        try {
-            return Files.isRegularFile(path) && hash.equalsIgnoreCase(DigestUtils.digestToString("SHA-1", path));
-        } catch (IOException e) {
-            failure.addSuppressed(e);
-            return false;
-        }
-    }
-
-    /// Pairs the manifest and its override hashes with the installed pack's metadata.
-    private static ModpackConfiguration<ServerModpackManifest> configurationFor(
-            ModpackConfiguration<ServerModpackManifest> installed, ServerModpackManifest manifest) {
-        return new ModpackConfiguration<>(manifest, installed.getType(), installed.getName(), installed.getVersion(), manifest.getFiles());
+    /// Records the remote file list alongside the component versions known to the installation.
+    private void writeConfiguration(ModpackConfiguration<ServerModpackManifest> installed, ServerModpackManifest remote) throws IOException {
+        Files.createDirectories(configurationFile.getParent());
+        JsonUtils.writeToJsonFile(configurationFile, new ModpackConfiguration<>(remote, installed.getType(),
+                installed.getName(), installed.getVersion(), remote.getFiles()));
     }
 }

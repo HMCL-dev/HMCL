@@ -19,7 +19,6 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -195,10 +194,9 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
                 builder.component(GameComponentType.NEO_FORGE, modLoader.id().substring("neoforge-".length()));
             }
         }
-        List<Task<?>> preparation = new ArrayList<>(2);
-        @Unmodifiable List<String> directories = Collections.singletonList(manifest.overrides());
-        preparation.add(new ModpackInstallTask(zipFile, run, directories, any -> true,
-                updateTarget == null ? null : updateTarget.getModpackConfigurationFile()).withStage(InstallStages.MODPACK));
+        List<Task<?>> preparation = new ArrayList<>(4);
+        preparation.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(manifest.overrides()), any -> true, config).withStage(InstallStages.MODPACK));
+        preparation.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage(InstallStages.MODPACK));
 
         @Nullable String iconExtension = null;
         @Nullable Task<Path> iconTask = null;
@@ -214,18 +212,43 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
         }
 
         context.runAll(preparation);
-        var configuration = context.run(new MinecraftInstanceTask<>(zipFile, directories, manifest, CurseModpackProvider.INSTANCE,
-                manifest.name(), manifest.version()).withStage(InstallStages.MODPACK));
         DefaultGameInstance instance = builder.build(context);
-        Path root = instance.getInstanceRoot();
-        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
-            if (draft.getBaseSnapshot().findInstance(instanceId) != instance)
-                throw new IllegalStateException("Game instance has changed: " + instanceId);
-            if (config != null)
-                removeOutdatedFiles(config.getManifest());
-            JsonUtils.writeToJsonFileSafely(root.resolve("manifest.json"), manifest);
-            configuration.writeTo(instance.getModpackConfigurationFile());
+        if (config != null) {
+            Set<String> newOverridesMods = getNewOverridesMods();
+            Set<CurseManifestFile> newManifestFiles = manifest.files() != null ? new HashSet<>(manifest.files()) : Collections.emptySet();
+
+            // For update, remove mods not listed in new manifest.
+            // ModpackConfiguration stored in modpack.json preserves the raw
+            // CurseForge manifest where fileName is missing. CurseCompletionTask
+            // resolves those file names and writes the enriched manifest to
+            // manifest.json, so read from there when available.
+            Path oldManifestFile = repository.getLayout().getInstanceRoot(instanceId).resolve("manifest.json");
+            @Nullable List<CurseManifestFile> oldFiles = config.getManifest().files();
+            if (Files.exists(oldManifestFile)) {
+                try {
+                    @Nullable CurseManifest oldManifest = JsonUtils.fromJsonFile(oldManifestFile, CurseManifest.class);
+                    if (oldManifest != null) {
+                        oldFiles = oldManifest.files();
+                    }
+                } catch (IOException | JsonParseException ignored) {
+                }
+            }
+            if (oldFiles == null) {
+                oldFiles = Collections.emptyList();
+            }
+            for (CurseManifestFile oldCurseManifestFile : oldFiles) {
+                if (StringUtils.isBlank(oldCurseManifestFile.fileName())) continue;
+                String relativePath = "mods/" + oldCurseManifestFile.fileName();
+                Path oldFile = run.resolve(relativePath);
+                if (Files.notExists(oldFile)) continue;
+                if (!newManifestFiles.contains(oldCurseManifestFile) && !newOverridesMods.contains(relativePath))
+                    Modpack.removePackFile(run, oldFile);
+            }
         }
+
+        Path root = repository.getLayout().getInstanceRoot(instanceId);
+        Files.createDirectories(root);
+        JsonUtils.writeToJsonFile(root.resolve("manifest.json"), manifest);
 
         if (iconExtension != null
                 && iconTask != null
@@ -237,33 +260,7 @@ public final class CurseInstallTask extends Task<@Nullable Void> {
             }
         }
 
+        // The game builder publishes the instance before file completion starts.
         context.run(new CurseCompletionTask(dependencyManager, instance, manifest, excludedFiles));
-    }
-
-    /// Removes obsolete mods while the previous configuration is available as a fallback.
-    private void removeOutdatedFiles(CurseManifest previous) throws IOException {
-        Set<String> newOverridesMods = getNewOverridesMods();
-        Set<CurseManifestFile> newManifestFiles = manifest.files() != null ? new HashSet<>(manifest.files()) : Collections.emptySet();
-
-        // Completion fills in file names that are absent from the raw CurseForge manifest.
-        Path oldManifestFile = run.resolve("manifest.json");
-        @Nullable List<CurseManifestFile> oldFiles = previous.files();
-        if (Files.exists(oldManifestFile)) {
-            try {
-                @Nullable CurseManifest enriched = JsonUtils.fromJsonFile(oldManifestFile, CurseManifest.class);
-                if (enriched != null)
-                    oldFiles = enriched.files();
-            } catch (IOException | JsonParseException ignored) {
-            }
-        }
-        if (oldFiles == null)
-            return;
-        for (CurseManifestFile old : oldFiles) {
-            if (StringUtils.isBlank(old.fileName()))
-                continue;
-            String relativePath = "mods/" + old.fileName();
-            if (!newManifestFiles.contains(old) && !newOverridesMods.contains(relativePath))
-                Files.deleteIfExists(run.resolve(relativePath));
-        }
     }
 }
