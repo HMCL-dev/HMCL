@@ -84,7 +84,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> implements PageAware {
+public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> implements PageAware, SearchablePage {
     /// Switches between toolbar modes.
     private final TransitionPane toolbarPane = new TransitionPane();
     /// Actions available while browsing.
@@ -167,18 +167,9 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
                 }
             });
 
-            JFXButton closeSearchBar = createToolbarButton(null, SVG.CLOSE,
-                    () -> {
-                        changeToolbar(toolbarNormal);
+            JFXButton closeSearchBar = createToolbarButton(null, SVG.CLOSE, this::closeSearch);
 
-                        searchField.clear();
-                        searchPause.stop();
-
-                        isSearching.set(false);
-                        filteredItems.setPredicate(null);
-                    });
-
-            onEscPressed(searchField, closeSearchBar::fire);
+            onEscPressed(searchField, this::closeSearch);
 
             searchBar.getChildren().setAll(searchField, closeSearchBar);
 
@@ -248,11 +239,16 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
 
             setToolbar(toolbarPane);
 
-            // Clear selection when pressing ESC
-            addEventHandler(KeyEvent.KEY_PRESSED, e -> {
-                if (e.getCode() == KeyCode.ESCAPE) {
+            addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+                if (e.isShortcutDown() && e.getCode() == KeyCode.F) {
+                    openSearch();
+                    e.consume();
+                } else if (e.getCode() == KeyCode.ESCAPE) {
                     if (listView.getSelectionModel().getSelectedItem() != null) {
                         listView.getSelectionModel().clearSelection();
+                        e.consume();
+                    } else if (isSearchBarVisible()) {
+                        closeSearch();
                         e.consume();
                     }
                 }
@@ -504,6 +500,27 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
         return gameInstance != null ? gameInstance.getId() : null;
     }
 
+    @Override
+    public void openSearch() {
+        changeToolbar(searchBar);
+    }
+
+    @Override
+    public boolean isSearchBarVisible() {
+        return toolbarPane.getCurrentNode() == searchBar;
+    }
+
+    @Override
+    public void closeSearch() {
+        changeToolbar(toolbarNormal);
+
+        searchField.clear();
+        searchPause.stop();
+
+        isSearching.set(false);
+        filteredItems.setPredicate(null);
+    }
+
     /// Shows the requested toolbar and focuses the search input when appropriate.
     private void changeToolbar(HBox newToolbar) {
         Node oldToolbar = toolbarPane.getCurrentNode();
@@ -512,6 +529,8 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
             if (newToolbar == searchBar) {
                 Platform.runLater(searchField::requestFocus);
             }
+        } else if (newToolbar == searchBar) {
+            Platform.runLater(searchField::requestFocus);
         }
     }
 

@@ -6,6 +6,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -19,6 +20,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -94,6 +97,16 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, e -> gameList.scrollToSelected());
 
+        addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            if (e.isShortcutDown() && e.getCode() == KeyCode.F) {
+                gameList.openSearch();
+                e.consume();
+            } else if (e.getCode() == KeyCode.ESCAPE && gameList.isSearchBarVisible()) {
+                gameList.closeSearch();
+                e.consume();
+            }
+        });
+
         FXUtils.applyDragListener(this, file -> ModpackHelper.isFileModpackByExtension(file) || "json".equalsIgnoreCase(FileUtils.getNameWithoutExtension(file)), files -> {
             Path file = files.get(0);
 
@@ -114,7 +127,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         return state.getReadOnlyProperty();
     }
 
-    private static class GameList extends ListPaneBase<GameListItem> {
+    private static class GameList extends ListPaneBase<GameListItem> implements SearchablePage {
         /// Switches between toolbar modes.
         private final TransitionPane toolbarPane = new TransitionPane();
         /// Actions available while browsing.
@@ -259,11 +272,36 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             if (newToolbar != oldToolbar) {
                 toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
                 if (newToolbar == searchBar) {
-                    runInFX(searchField::requestFocus);
+                    Platform.runLater(searchField::requestFocus);
 
                     isSearching.set(true);
                 }
+            } else if (newToolbar == searchBar) {
+                Platform.runLater(searchField::requestFocus);
             }
+        }
+
+        /// Opens the search bar and focuses the input field.
+        public void openSearch() {
+            changeToolbar(searchBar);
+        }
+
+        /// Returns whether the search mechanism is currently active.
+        public boolean isSearching() {
+            return isSearching.get();
+        }
+
+        @Override
+        public boolean isSearchBarVisible() {
+            return toolbarPane.getCurrentNode() == searchBar;
+        }
+
+        /// Closes the search bar and resets the filter.
+        public void closeSearch() {
+            changeToolbar(toolbarNormal);
+            searchField.clear();
+            filteredList.setPredicate(null);
+            isSearching.set(false);
         }
     }
 }

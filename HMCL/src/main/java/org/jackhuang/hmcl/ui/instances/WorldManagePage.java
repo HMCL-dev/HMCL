@@ -5,6 +5,8 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.property.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -75,6 +77,26 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
+
+        this.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            TabItem<?> selected = tabController.getSelectedTab();
+            if (selected != null && selected.isInitialized() && selected.getNode() instanceof SearchablePage page) {
+                if (e.isShortcutDown() && e.getCode() == KeyCode.F) {
+                    page.openSearch();
+                    e.consume();
+                }
+            }
+        });
+
+        this.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+            TabItem<?> selected = tabController.getSelectedTab();
+            if (selected != null && selected.isInitialized() && selected.getNode() instanceof SearchablePage page) {
+                if (e.getCode() == KeyCode.ESCAPE && page.isSearchBarVisible()) {
+                    page.closeSearch();
+                    e.consume();
+                }
+            }
+        });
 
         setContent(transitionPane);
         initializeSidebar();
