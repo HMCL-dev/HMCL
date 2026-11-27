@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModLocalization;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -45,6 +46,7 @@ import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.game.HMCLGameLauncher;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -323,7 +325,8 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
             try {
-                modManager.refresh();
+                modManager.refresh(HMCLGameLauncher.modLocalizationLanguageTag(
+                        I18n.getLocale().getDisplayLocale(), modManager.getInstance().getVersion()));
                 return modManager.getLocalFiles().stream().map(ModInfoObject::new).toList();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
@@ -506,7 +509,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
 
     /// Shows the requested toolbar and focuses the search input when appropriate.
     private void changeToolbar(HBox newToolbar) {
-        Node oldToolbar = toolbarPane.getCurrentNode();
+        @Nullable Node oldToolbar = toolbarPane.getCurrentNode();
         if (newToolbar != oldToolbar) {
             toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
             if (newToolbar == searchBar) {
@@ -519,7 +522,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
     private void search() {
         isSearching.set(true);
 
-        String queryString = searchField.getText();
+        @Nullable String queryString = searchField.getText();
         if (StringUtils.isBlank(queryString)) {
             filteredItems.setPredicate(null);
         } else {
@@ -534,7 +537,9 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
 
             filteredItems.setPredicate(item -> {
                 LocalModFile modInfo = item.getModInfo();
-                return predicate.test(modInfo.getFileName())
+                return predicate.test(item.localization.name())
+                        || predicate.test(String.join(" ", item.localization.languages()))
+                        || predicate.test(modInfo.getFileName())
                         || predicate.test(modInfo.getName())
                         || predicate.test(modInfo.getVersion())
                         || predicate.test(modInfo.getGameVersion())
@@ -545,20 +550,34 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
         }
     }
 
+    /// Holds the local mod, its display metadata, and its cached icon.
     public static final class ModInfoObject {
+        /// The mod file represented by this list item.
         private final LocalModFile localModFile;
+        /// Localized metadata and available languages read from the mod archive.
+        private final ModLocalization localization;
+        /// Abbreviation of the matched project, or an empty string when unavailable.
+        private final String abbreviation;
         /// Matching project metadata, or null if the local mod cannot be identified.
         private final @Nullable ModProjectInfo projectInfo;
 
+        /// Loads and caches the mod icon for the list row and the details dialog.
         private final ItemPropertyAsyncCache<Image, ModInfoObject> iconCache;
 
+        /// Resolves project metadata and prepares the icon cache for the mod file.
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
             this.projectInfo = AddonProjectInfoRegistry.MOD.getInfo(localModFile.getId(), localModFile.getName());
+            this.abbreviation = projectInfo != null && StringUtils.isNotBlank(projectInfo.abbrName())
+                    ? projectInfo.abbrName()
+                    : "";
+
+            this.localization = localModFile.getLocalization();
 
             this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
+        /// Returns the mod file represented by this list item.
         public LocalModFile getModInfo() {
             return localModFile;
         }
@@ -568,13 +587,34 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
             return projectInfo;
         }
 
+        /// Prefers the mod archive's localized name, then the Chinese project name when applicable.
+        private String getDisplayName() {
+            String displayName = localModFile.getName();
+            if (StringUtils.isBlank(displayName) && projectInfo != null && StringUtils.isNotBlank(projectInfo.subName()))
+                displayName = projectInfo.subName();
+            if (StringUtils.isBlank(displayName))
+                displayName = localModFile.getFileName();
+            String localizedName = localization.name();
+            if (!localizedName.isEmpty())
+                return (abbreviation.isEmpty() ? "" : "[" + abbreviation.trim() + "] ")
+                        + localizedName + " (" + displayName + ")";
+            if (projectInfo != null && I18n.isUseChinese()) {
+                String chineseName = projectInfo.mainName();
+                if (StringUtils.containsChinese(chineseName) && StringUtils.isNotBlank(chineseName)
+                        && !displayName.equalsIgnoreCase(chineseName))
+                    return chineseName + " (" + displayName + ")";
+            }
+            return displayName;
+        }
+
+        /// Returns the default icon for the mod loader.
         private Image getDefaultIcon() {
             return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
         }
 
         /// Loads the icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            Image icon = localModFile.loadIcon(ImageLoaders.DEFAULT);
+            @Nullable Image icon = localModFile.loadIcon(ImageLoaders.DEFAULT);
             return FXUtils.isValidIcon(icon) ? icon : getDefaultIcon();
         }
     }
@@ -595,15 +635,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
             titleContainer.setAlignment(Pos.CENTER_LEFT);
             modInfo.iconCache.attachValue(imageContainer.imageProperty(), null);
 
-            String displayName = modInfo.getModInfo().getName();
-            if (modInfo.getProjectInfo() != null && I18n.isUseChinese()) {
-                String chineseName = modInfo.getProjectInfo().mainName();
-                if (StringUtils.containsChinese(chineseName)) {
-                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName))
-                        displayName = chineseName + " (" + displayName + ")";
-                }
-            }
-            Text titleText = new Text(displayName);
+            Text titleText = new Text(modInfo.getDisplayName());
             TextFlow title = new TextFlow(titleText);
             title.getStyleClass().add("title");
 
@@ -629,7 +661,8 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
             titleContainer.getChildren().setAll(imageContainer, details);
             setHeading(titleContainer);
 
-            Label description = new Label(modInfo.getModInfo().getDescription().toString());
+            Label description = new Label(!modInfo.localization.description().isEmpty()
+                    ? modInfo.localization.description() : modInfo.getModInfo().getDescription().toString());
             description.setWrapText(true);
             FXUtils.copyOnDoubleClick(description);
 
@@ -795,21 +828,11 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
             var tags = new ArrayList<Tag>(2);
 
             LocalModFile modInfo = dataItem.getModInfo();
-            @Nullable ModProjectInfo projectInfo = dataItem.getProjectInfo();
-
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
             dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
 
-            String displayName = modInfo.getName();
-            if (projectInfo != null && I18n.isUseChinese()) {
-                String chineseName = projectInfo.mainName();
-                if (StringUtils.containsChinese(chineseName)) {
-                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName))
-                        displayName = chineseName + " (" + displayName + ")";
-                }
-            }
-            content.setTitle(displayName);
+            content.setTitle(dataItem.getDisplayName());
 
             StringJoiner joiner = new StringJoiner(" | ");
             if (modLoaderType != ModLoaderType.UNKNOWN && StringUtils.isNotBlank(modInfo.getId()))
