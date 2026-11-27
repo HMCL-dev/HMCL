@@ -12,11 +12,11 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.Node;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -355,25 +355,21 @@ public class InstallerItem extends Control {
             });
             buttonsContainer.getChildren().add(removeButton);
 
-            JFXButton installButton = new JFXButton();
-            installButton.graphicProperty().bind(Bindings.createObjectBinding(() ->
+            Label installIcon = new Label();
+            installIcon.setMouseTransparent(true);
+            installIcon.graphicProperty().bind(Bindings.createObjectBinding(() ->
                             control.resolvedStateProperty.get() instanceof InstallableState ?
                                     SVG.ARROW_FORWARD.createIcon() :
                                     SVG.UPDATE.createIcon(),
                     control.resolvedStateProperty
             ));
-            installButton.getStyleClass().add("toggle-icon4");
-            installButton.visibleProperty().bind(Bindings.createBooleanBinding(
+            installIcon.getStyleClass().add("toggle-icon4");
+            installIcon.visibleProperty().bind(Bindings.createBooleanBinding(
                     control::canInstall, control.resolvedStateProperty, control.onInstall));
-            installButton.managedProperty().bind(installButton.visibleProperty());
-            installButton.setOnAction(e -> {
-                Runnable onInstall = control.getOnInstall();
-                if (onInstall != null)
-                    onInstall.run();
-            });
-            buttonsContainer.getChildren().add(installButton);
+            installIcon.managedProperty().bind(installIcon.visibleProperty());
+            buttonsContainer.getChildren().add(installIcon);
 
-            FXUtils.onChangeAndOperate(installButton.visibleProperty(), clickable -> {
+            FXUtils.onChangeAndOperate(installIcon.visibleProperty(), clickable -> {
                 if (clickable) {
                     container.setOnMouseClicked(control::handleInstallClick);
                     pane.setCursor(Cursor.HAND);
