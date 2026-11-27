@@ -45,4 +45,9 @@ public interface ModpackFile {
     ///
     /// @return `true` when remote addon metadata has been queried
     boolean addonQueried();
+
+    /// Returns if one file looks like another file and can be considered a match in an update scenario.
+    /// @param other the other file to compare with
+    /// @return `true` if this file looks like the other file
+    boolean looksLike(ModpackFile other);
 }
