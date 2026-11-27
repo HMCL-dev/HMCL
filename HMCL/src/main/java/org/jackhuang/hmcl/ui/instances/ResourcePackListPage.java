@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -324,11 +325,12 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
 
     }
 
+    /// Opens a resource pack chooser and adds the selected archives.
     public void onAddFiles() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("resourcepack.add"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"));
-        List<Path> files = Controllers.showOpenMultipleDialog(fileChooser);
+        @Nullable @Unmodifiable List<Path> files = new PathChooser().setTitle(i18n("resourcepack.add"))
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT)
+                .showMulti();
         if (files != null && !files.isEmpty()) {
             addFiles(files);
         }

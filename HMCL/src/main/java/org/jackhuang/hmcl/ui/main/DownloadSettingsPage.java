@@ -101,9 +101,8 @@ public class DownloadSettingsPage extends StackPane {
                 MultiFileItem<EnumCommonDirectory> fileCommonLocation = new MultiFileItem<>();
                 fileCommonLocation.loadChildren(Arrays.asList(
                         new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
-                        new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
+                        new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM, FileSelector.SelectionMode.DIRECTORY)
                                 .setChooserTitle(i18n("launcher.cache_directory.choose"))
-                                .setSelectionMode(FileSelector.SelectionMode.DIRECTORY)
                                 .bindBidirectional(settings().commonDirectoryProperty())
                 ));
                 fileCommonLocation.selectedDataProperty().bindBidirectional(settings().commonDirectoryTypeProperty());

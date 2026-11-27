@@ -216,15 +216,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                         javaVersionTextField,
                         GameSettings::customJavaVersionProperty);
 
-                javaCustomSelector = new FileSelector()
-                        .setChooserTitle(i18n("settings.game.java_directory.choose"));
+                javaCustomSelector = new FileSelector(FileSelector.SelectionMode.OPEN_FILE);
+                javaCustomSelector.getChooser().setTitle(i18n("settings.game.java_directory.choose"));
                 javaCustomOption = createJavaPayloadChoice(
                         i18n("settings.custom"),
                         pair(JavaVersionType.CUSTOM, null),
                         javaCustomSelector,
                         GameSettings::customJavaPathProperty);
                 if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
-                    javaCustomSelector.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("settings.game.java_directory"), "java.exe"));
+                    javaCustomSelector.getChooser().setExtensionFilters(new FileChooser.ExtensionFilter(i18n("settings.game.java_directory"), "java.exe"));
 
                 holder.add(FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), allJava -> {
                     var options = new ArrayList<RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>>>();
@@ -319,7 +319,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 }
             });
 
-            javaCustomSelector.valueProperty().addListener((observable, oldValue, newValue) -> {
+            javaCustomSelector.textProperty().addListener((observable, oldValue, newValue) -> {
                 S setting = currentSetting.get();
                 if (setting != null && javaCustomOption.isSelected() && !updatingSelectedJava) {
                     setPropertyOverridden(setting, setting.javaTypeProperty(), true);
@@ -579,12 +579,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var runningDirPane = new LinePane();
                 runningDirPane.setTitle(i18n("settings.game.running_directory"));
                 {
-                    var runningDirSelector = new FileSelector()
-                            .setChooserTitle(i18n("settings.game.working_directory.choose"))
-                            .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
+                    var runningDirSelector = new FileSelector(FileSelector.SelectionMode.DIRECTORY);
+                    runningDirSelector.getChooser().setTitle(i18n("settings.game.working_directory.choose"))
+                            .setChooserContext(PathChooser.ChooserContext.GAME(gameInstance::get));
                     runningDirSelector.setPrefWidth(400);
                     runningDirPane.setRight(runningDirSelector);
-                    bindRunningDirectoryProperty(runningDirPane, runningDirSelector.valueProperty(), runningDirSelector);
+                    bindRunningDirectoryProperty(runningDirPane, runningDirSelector.textProperty(), runningDirSelector);
                 }
 
                 var gameArgsPane = new LinePane();
@@ -824,13 +824,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             nativeLibrarySettings.getContent().add(nativesDirPane);
             nativesDirPane.setTitle(i18n("settings.advanced.natives_directory"));
             {
-                var nativesDirSelector = new FileSelector()
-                        .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
+                var nativesDirSelector = new FileSelector(FileSelector.SelectionMode.DIRECTORY);
+                nativesDirSelector.getChooser().setChooserContext(PathChooser.ChooserContext.GAME(gameInstance::get));
                 nativesDirSelector.setPrefWidth(400);
                 nativesDirPane.setRight(nativesDirSelector);
                 bindInheritableStringProperty(
                         nativesDirPane,
-                        nativesDirSelector.valueProperty(),
+                        nativesDirSelector.textProperty(),
                         GameSettings::nativesDirectoryProperty);
             }
 
@@ -2509,7 +2509,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         switch (javaType) {
             case CUSTOM:
                 javaCustomOption.setSelected(true);
-                javaCustomSelector.setValue(getEffectiveValue(setting, GameSettings::customJavaPathProperty));
+                javaCustomSelector.setText(getEffectiveValue(setting, GameSettings::customJavaPathProperty));
                 break;
             case VERSION:
                 javaVersionOption.setSelected(true);

@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -155,11 +156,12 @@ public final class WorldListPage extends ListPaneBase<World> {
         }
     }
 
+    /// Opens a world archive chooser and imports the first selected world.
     public void add() {
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("world.add.title"));
-        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.world"), "*.zip"));
-        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
+        @Nullable @Unmodifiable List<Path> res = new PathChooser().setTitle(i18n("world.add.title"))
+                .setExtensionFilters(new FileChooser.ExtensionFilter(i18n("extension.world"), "*.zip"))
+                .setChooserContext(PathChooser.ChooserContext.IMPORT)
+                .showMulti();
 
         if (res == null || res.isEmpty()) return;
         installWorld(res.get(0));

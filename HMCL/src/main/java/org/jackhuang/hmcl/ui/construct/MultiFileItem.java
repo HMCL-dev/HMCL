@@ -234,41 +234,37 @@ public final class MultiFileItem<T> extends VBox {
     }
 
     public static final class FileOption<T> extends Option<T> {
-        private final FileSelector selector = new FileSelector();
+        private final FileSelector selector;
 
-        public FileOption(String title, T data) {
+        public FileOption(String title, T data, FileSelector.SelectionMode mode) {
             super(title, data);
+            selector = new FileSelector(mode);
         }
 
         public String getValue() {
-            return selector.getValue();
+            return selector.getText();
         }
 
         public StringProperty valueProperty() {
-            return selector.valueProperty();
+            return selector.textProperty();
         }
 
         public void setValue(String value) {
-            selector.setValue(value);
-        }
-
-        public FileOption<T> setSelectionMode(FileSelector.SelectionMode selectionMode) {
-            selector.setSelectionMode(selectionMode);
-            return this;
+            selector.setText(value);
         }
 
         public FileOption<T> bindBidirectional(Property<String> property) {
-            selector.valueProperty().bindBidirectional(property);
+            selector.textProperty().bindBidirectional(property);
             return this;
         }
 
         public FileOption<T> setChooserTitle(String chooserTitle) {
-            selector.setChooserTitle(chooserTitle);
+            selector.getChooser().setTitle(chooserTitle);
             return this;
         }
 
-        public FileOption<T> addExtensionFilter(FileChooser.ExtensionFilter filter) {
-            selector.getExtensionFilters().add(filter);
+        public FileOption<T> setExtensionFilters(FileChooser.ExtensionFilter... filter) {
+            selector.getChooser().setExtensionFilters(filter);
             return this;
         }
 

@@ -5,11 +5,7 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.Property;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -19,19 +15,14 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.UnknownNullability;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Collection;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /// A vertical single-selection list backed by radio buttons.
 ///
@@ -380,50 +371,38 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
     /// @param <T> the selected value type
     public static final class FileChoice<T extends @UnknownNullability Object> extends Choice<T> {
         /// The file selector attached to this choice.
-        private final FileSelector selector = new FileSelector();
+        private final FileSelector selector;
 
         /// Creates a file choice.
-        public FileChoice(String title, T value) {
+        public FileChoice(String title, T value, FileSelector.SelectionMode mode) {
             super(title, value);
+            selector = new FileSelector(mode);
         }
 
         /// Returns the selected path.
-        public String getPath() {
-            return selector.getValue();
+        public @Nullable String getPath() {
+            return selector.getText();
         }
 
         /// Returns the selected path property.
         public StringProperty pathProperty() {
-            return selector.valueProperty();
+            return selector.textProperty();
         }
 
         /// Sets the selected path.
         public void setPath(String value) {
-            selector.setValue(value);
-        }
-
-        /// Sets the file selector mode.
-        public FileChoice<T> setSelectionMode(FileSelector.SelectionMode selectionMode) {
-            selector.setSelectionMode(selectionMode);
-            return this;
+            selector.setText(value);
         }
 
         /// Binds the selected path to another property.
         public FileChoice<T> bindPathBidirectional(Property<String> property) {
-            selector.valueProperty().bindBidirectional(property);
+            selector.textProperty().bindBidirectional(property);
             return this;
         }
 
-        /// Sets the chooser title.
-        public FileChoice<T> setChooserTitle(String chooserTitle) {
-            selector.setChooserTitle(chooserTitle);
-            return this;
-        }
-
-        /// Adds an extension filter to the chooser.
-        public FileChoice<T> addExtensionFilter(FileChooser.ExtensionFilter filter) {
-            selector.getExtensionFilters().add(filter);
-            return this;
+        /// Gets the selector.
+        public FileSelector getSelector() {
+            return selector;
         }
 
         /// Creates the right-side file selector.

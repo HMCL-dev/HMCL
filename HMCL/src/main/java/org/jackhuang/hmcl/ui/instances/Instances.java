@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.PathChooser;
 import org.jackhuang.hmcl.ui.account.CreateAccountPane;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -45,6 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -297,21 +300,18 @@ public final class Instances {
     @SafeVarargs
     public static void generateLaunchScript(HMCLGameInstance gameInstance, Consumer<LauncherHelper>... injecters) {
         ensureSelectedAccount(account -> {
-            Path runDirectory = gameInstance.getRunDirectory();
-            FileChooser chooser = new FileChooser();
-            if (Files.isDirectory(runDirectory))
-                chooser.setInitialDirectory(runDirectory.toFile());
-            chooser.setTitle(i18n("instance.launch_script.save"));
+            List<FileChooser.ExtensionFilter> filters = new ArrayList<>();
             if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
-                chooser.getExtensionFilters().add(
-                        new FileChooser.ExtensionFilter(i18n("extension.command"), "*.command")
-                );
+                filters.add(new FileChooser.ExtensionFilter(i18n("extension.command"), "*.command"));
             }
-            chooser.getExtensionFilters().add(SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS
+            filters.add(SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
-            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
-            Path file = Controllers.showSaveDialog(chooser);
+            filters.add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
+            Path file = new PathChooser().setTitle(i18n("instance.launch_script.save"))
+                    .setExtensionFilters(filters)
+                    .setChooserContext(PathChooser.ChooserContext.EXPORT)
+                    .showSave();
             if (file != null) {
                 if (!isValidScriptExtension(FileUtils.getExtension(file))) {
                     String defaultExt = getDefaultScriptExtension();
