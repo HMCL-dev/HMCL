@@ -370,10 +370,10 @@ public class DefaultLauncher extends Launcher {
 
             try {
                 ServerAddress parsed = ServerAddress.parse(address);
-                if (World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
+                if (QuickPlayOption.isSupportedVersion(GameVersionNumber.asGameVersion(gameVersion))) {
 
                     String quickPlayMultiplayerArg;
-                    if (World.supportQueryArgServerAddress(GameVersionNumber.asGameVersion(gameVersion))) {
+                    if (QuickPlayOption.supportQueryArgServerAddress(GameVersionNumber.asGameVersion(gameVersion))) {
                         // keep original address.
                         quickPlayMultiplayerArg = parsed.getRawAddress();
                     } else {
@@ -402,11 +402,11 @@ public class DefaultLauncher extends Launcher {
                 LOG.warning("Invalid server address: " + address, e);
             }
         } else if (options.getQuickPlayOption() instanceof QuickPlayOption.SinglePlayer singlePlayer
-                && World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
+                && QuickPlayOption.isSupportedVersion(GameVersionNumber.asGameVersion(gameVersion))) {
             res.add("--quickPlaySingleplayer");
             res.add(singlePlayer.worldFolderName());
         } else if (options.getQuickPlayOption() instanceof QuickPlayOption.Realm realm
-                && World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
+                && QuickPlayOption.isSupportedVersion(GameVersionNumber.asGameVersion(gameVersion))) {
             res.add("--quickPlayRealms");
             res.add(realm.realmID());
         }

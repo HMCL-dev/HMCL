@@ -15,6 +15,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.game.WorldManager;
 import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -92,23 +93,21 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
                 try (Stream<Path> paths = Files.list(backupsDir)) {
                     ArrayList<BackupInfo> result = new ArrayList<>();
 
-                    paths.forEach(path -> {
-                        if (Files.isRegularFile(path)) {
-                            try {
-                                Matcher matcher = backupFileNamePattern.matcher(path.getFileName().toString());
-                                if (matcher.matches()) {
-                                    LocalDateTime time = LocalDateTime.parse(matcher.group("datetime"), TIME_FORMATTER);
-                                    int count = 0;
+                    paths.filter(Files::isRegularFile).forEach(path -> {
+                        try {
+                            Matcher matcher = backupFileNamePattern.matcher(path.getFileName().toString());
+                            if (matcher.matches()) {
+                                LocalDateTime time = LocalDateTime.parse(matcher.group("datetime"), TIME_FORMATTER);
+                                int count = 0;
 
-                                    if (matcher.group("count") != null) {
-                                        count = Integer.parseInt(matcher.group("count"));
-                                    }
-
-                                    result.add(new BackupInfo(path, new World(path), time, count));
+                                if (matcher.group("count") != null) {
+                                    count = Integer.parseInt(matcher.group("count"));
                                 }
-                            } catch (Throwable e) {
-                                LOG.warning("Failed to load backup file " + path, e);
+
+                                result.add(new BackupInfo(path, WorldManager.getWorldInfoFromZip(path, true), time, count));
                             }
+                        } catch (Throwable e) {
+                            LOG.warning("Failed to load backup file " + path, e);
                         }
                     });
 
@@ -129,7 +128,7 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
     }
 
     void createBackup() {
-        Controllers.taskDialog(new WorldBackupTask(world, backupsDir, false).setName(i18n("world.backup.processing")).thenApplyAsync(path -> {
+        Controllers.taskDialog(new WorldBackupTask(world, backupsDir).setName(i18n("world.backup.processing")).thenApplyAsync(path -> {
             Matcher matcher = backupFileNamePattern.matcher(path.getFileName().toString());
             if (!matcher.matches()) {
                 throw new AssertionError("Wrong backup file name" + path);
@@ -142,7 +141,7 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
                 count = Integer.parseInt(matcher.group("count"));
             }
 
-            return Pair.pair(path, new BackupInfo(path, new World(path), time, count));
+            return Pair.pair(path, new BackupInfo(path, WorldManager.getWorldInfoFromZip(path, true), time, count));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
@@ -159,18 +158,18 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
 
     public final class BackupInfo extends Control implements Comparable<BackupInfo> {
         private final Path file;
-        private final World backupWorld;
+        private final WorldManager.WorldInfo backupWorld;
         private final LocalDateTime backupTime;
         private final int count;
 
-        public BackupInfo(Path file, World backupWorld, LocalDateTime backupTime, int count) {
+        public BackupInfo(Path file, WorldManager.WorldInfo backupWorld, LocalDateTime backupTime, int count) {
             this.file = file;
             this.backupWorld = backupWorld;
             this.backupTime = backupTime;
             this.count = count;
         }
 
-        public World getBackupWorld() {
+        public WorldManager.WorldInfo getBackupWorld() {
             return backupWorld;
         }
 
@@ -204,7 +203,7 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
         BackupInfoSkin(BackupInfo skinnable) {
             super(skinnable);
 
-            World world = skinnable.getBackupWorld();
+            WorldManager.WorldInfo world = skinnable.getBackupWorld();
 
             skinnable.setPickOnBounds(false);
             BorderPane root = new BorderPane();
@@ -218,19 +217,18 @@ public final class WorldBackupsPage extends ListPaneBase<WorldBackupsPage.Backup
 
                 var imageView = new ImageContainer(32);
                 left.getChildren().add(imageView);
-                imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
+                imageView.setImage(world.icon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.icon());
             }
 
             {
                 TwoLineListItem item = new TwoLineListItem();
                 root.setCenter(item);
 
-                if (skinnable.getBackupWorld().getWorldName() != null)
-                    item.setTitle(parseColorEscapes(skinnable.getBackupWorld().getWorldName()));
+                item.setTitle(parseColorEscapes(world.levelData().levelName().get()));
                 item.setSubtitle(formatDateTime(skinnable.getBackupTime()) + (skinnable.count == 0 ? "" : " (" + skinnable.count + ")"));
 
-                if (world.getGameVersion() != null)
-                    item.addTag(I18n.getDisplayVersion(world.getGameVersion()));
+                if (world.levelData().getGameVersion() != null)
+                    item.addTag(I18n.getDisplayVersion(world.levelData().getGameVersion()));
             }
 
             {
