@@ -15,12 +15,14 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  *
@@ -167,7 +169,16 @@ public abstract class Modpack {
     /// Copies the reserved instance to a new backup retained after the update.
     public static Path createUpdateBackup(DefaultGameInstance instance) throws IOException {
         Path parent = Files.createDirectories(instance.getLayout().getBaseDirectory().resolve("backup"));
-        Path backup = Files.createTempDirectory(parent, instance.getId() + "-");
+        Path backup;
+        while (true) {
+            backup = parent.resolve(instance.getId() + "-" + ThreadLocalRandom.current().nextInt(10_000_000));
+            try {
+                Files.createDirectory(backup);
+                break;
+            } catch (FileAlreadyExistsException ignored) {
+                // Reserve a different name without touching an existing backup.
+            }
+        }
         FileUtils.copyDirectory(instance.getInstanceRoot(), backup);
         return backup;
     }

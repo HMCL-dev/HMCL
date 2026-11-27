@@ -380,7 +380,12 @@ public final class DefaultGameRepositoryDraftTest {
 
         CurseModpackProvider.INSTANCE.createUpdateTask(createOfflineGameInstaller(repository, id, "1.21"), instance, archive, pack, null).run();
         try (var backups = Files.list(directory.resolve("backup"))) {
-            assertEquals("manually installed", Files.readString(backups.findFirst().orElseThrow().resolve("mods/optional.jar")));
+            Path backup = backups.findFirst().orElseThrow();
+            assertEquals("manually installed", Files.readString(backup.resolve("mods/optional.jar")));
+            if (Files.getFileStore(backup).supportsFileAttributeView("posix")) {
+                Path sibling = Files.createDirectory(backup.resolveSibling("reference"));
+                assertEquals(Files.getPosixFilePermissions(sibling), Files.getPosixFilePermissions(backup));
+            }
         }
     }
 

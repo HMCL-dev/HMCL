@@ -313,7 +313,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
                     failures.add(file);
                 }
             }
-        }).thenRunAsync(Schedulers.javafx(), () -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (@Nullable Void ignored, @Nullable Throwable exception) -> {
             if (!failures.isEmpty()) {
                 StringBuilder failure = new StringBuilder(i18n("resourcepack.add.failed"));
                 for (Path file: failures) {

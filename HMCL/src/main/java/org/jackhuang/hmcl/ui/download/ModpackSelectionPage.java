@@ -115,7 +115,8 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         Controllers.prompt(i18n("modpack.choose.remote.tooltip"), (url, handler) -> {
             try {
                 Task<?> download;
-                if (url.endsWith("server-manifest.json")) {
+                boolean serverManifest = url.endsWith("server-manifest.json");
+                if (serverManifest) {
                     download = new GetTask(WebURL.parse(url)).thenAcceptAsync(Schedulers.javafx(), result -> {
                         @Nullable ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
                         if (manifest == null) {
@@ -140,7 +141,14 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                     public void onExecutionFinished(Task<?> root, boolean success) {
                         if (!success) {
                             Throwable failure = root.exceptionNow();
-                            Platform.runLater(() -> handler.reject(failure instanceof CancellationException ? "" : I18n.localizeErrorMessage(failure)));
+                            Platform.runLater(() -> {
+                                if (failure instanceof CancellationException)
+                                    handler.reject("");
+                                else if (serverManifest)
+                                    handler.reject(I18n.localizeErrorMessage(failure));
+                                else
+                                    handler.reject(failure.getMessage());
+                            });
                         }
                     }
                 });
