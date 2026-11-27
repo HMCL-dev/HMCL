@@ -59,19 +59,27 @@ public final class ExportWizardProvider implements WizardProvider {
     /// Writes the selected modpack and optionally bundles it with the launcher.
     private Task<?> exportWithLauncher(String modpackType, ModpackExportInfo exportInfo, Path modpackFile) {
         @Nullable Path launcherJar = exportInfo.isPackWithLauncher() ? JarUtils.thisJarPath() : null;
-        if (launcherJar == null)
-            return createExportTask(modpackType, exportInfo, modpackFile);
         return new Task<@Nullable Void>() {
-            /// Exports the nested modpack before writing the launcher bundle.
+            /// Exports the current instance, then writes the launcher bundle if requested.
             @Override
             public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                if (launcherJar == null) {
+                    // The export task makes the final cancellation check for the destination.
+                    context.commit();
+                    return context.run(createExportTask(modpackType, exportInfo, modpackFile));
+                }
+
                 Path archive = Files.createTempFile("hmcl", ".zip");
                 try {
                     context.run(createExportTask(modpackType, exportInfo, archive));
                     context.commit();
                     bundleLauncher(modpackType, modpackFile, archive, launcherJar);
                 } finally {
-                    Files.deleteIfExists(archive);
+                    try {
+                        Files.deleteIfExists(archive);
+                    } catch (IOException | SecurityException ignored) {
+                        // The temporary archive does not affect the export result.
+                    }
                 }
                 return null;
             }
@@ -79,7 +87,7 @@ public final class ExportWizardProvider implements WizardProvider {
     }
 
     /// Creates an export task for the selected format.
-    private Task<?> createExportTask(String type, ModpackExportInfo info, Path destination) {
+    private Task<@Nullable Void> createExportTask(String type, ModpackExportInfo info, Path destination) {
         HMCLGameInstance instance = resolveCurrentGameInstance();
         return switch (type) {
             case ModpackTypeSelectionPage.MODPACK_TYPE_MCBBS -> new McbbsModpackExportTask(instance, info, destination);

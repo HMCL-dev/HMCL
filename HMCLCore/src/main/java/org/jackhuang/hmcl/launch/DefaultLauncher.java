@@ -31,7 +31,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -671,13 +670,12 @@ public class DefaultLauncher extends Launcher {
     /// {@inheritDoc}
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        return launch(null, () -> true);
+        return launch(null);
     }
 
     /// Checks for cancellation before the pre-launch command and before starting the game.
     /// Cancellation during the pre-launch command takes effect after it exits.
-    /// After game exit, the monitor may wait on `launchSucceeded` before running the post-exit command.
-    protected ManagedProcess launch(@Nullable Runnable checkCancellation, BooleanSupplier launchSucceeded) throws IOException, InterruptedException {
+    protected ManagedProcess launch(@Nullable Runnable checkCancellation) throws IOException, InterruptedException {
         if (checkCancellation != null)
             checkCancellation.run();
         final Command command = generateCommandLine();
@@ -732,7 +730,7 @@ public class DefaultLauncher extends Launcher {
             if (checkCancellation != null)
                 checkCancellation.run();
             if (listener != null)
-                startMonitors(process, envVars, listener, command.encoding, daemon, launchSucceeded);
+                startMonitors(process, envVars, listener, command.encoding, daemon);
             if (checkCancellation != null)
                 checkCancellation.run();
             return process;
@@ -1052,7 +1050,7 @@ public class DefaultLauncher extends Launcher {
 
     /// Forwards game output and notifies the listener before evaluating the post-exit command.
     private void startMonitors(ManagedProcess managedProcess, Map<String, String> envVars, ProcessListener processListener,
-                               Charset encoding, boolean isDaemon, BooleanSupplier launchSucceeded) {
+                               Charset encoding, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, false);
@@ -1066,21 +1064,17 @@ public class DefaultLauncher extends Launcher {
         managedProcess.addRelatedThread(stderr);
         managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), (exitCode, exitType) -> {
             processListener.onExit(exitCode, exitType);
-            runPostExitCommand(options.getPostExitCommand(), options.getGameDir(), envVars, launchSucceeded);
-        }), "exit-waiter", isDaemon));
-    }
 
-    /// Runs the configured command after a successful launch.
-    private static void runPostExitCommand(@Nullable String command, Path directory, Map<String, String> envVars, BooleanSupplier launchSucceeded) {
-        if (StringUtils.isBlank(command) || !launchSucceeded.getAsBoolean())
-            return;
-        try {
-            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(command, envVars)).directory(directory.toFile());
-            builder.environment().putAll(envVars);
-            SystemUtils.callExternalProcess(builder);
-        } catch (Throwable e) {
-            LOG.warning("An Exception happened while running exit command.", e);
-        }
+            if (StringUtils.isNotBlank(options.getPostExitCommand())) {
+                try {
+                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), envVars)).directory(options.getGameDir().toFile());
+                    builder.environment().putAll(envVars);
+                    SystemUtils.callExternalProcess(builder);
+                } catch (Throwable e) {
+                    LOG.warning("An Exception happened while running exit command.", e);
+                }
+            }
+        }), "exit-waiter", isDaemon));
     }
 
     private record Command(

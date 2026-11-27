@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.util.*;
-import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -135,11 +134,11 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
     /// Applies instance options after checking for cancellation, when requested.
     @Override
-    protected ManagedProcess launch(@Nullable Runnable checkCancellation, BooleanSupplier launchSucceeded) throws IOException, InterruptedException {
+    protected ManagedProcess launch(@Nullable Runnable checkCancellation) throws IOException, InterruptedException {
         if (checkCancellation != null)
             checkCancellation.run();
         generateOptionsTxt();
-        return super.launch(checkCancellation, launchSucceeded);
+        return super.launch(checkCancellation);
     }
 
     @Override

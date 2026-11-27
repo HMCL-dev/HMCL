@@ -23,6 +23,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -79,6 +81,12 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
     /// Stages one download beside its destination and accepts cancellation until replacement begins.
     private Task<@Nullable Void> update(SelectedUpdate selected) {
         return new Task<@Nullable Void>() {
+            /// Creates and moves the staged file on the I/O executor.
+            @Override
+            protected Executor getExecutor() {
+                return Schedulers.io();
+            }
+
             /// Downloads the new file before renaming the installed add-on.
             @Override
             public @Nullable Void execute(TaskExecutionContext context) throws Exception {
@@ -87,11 +95,7 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
                 try {
                     context.run(new FileDownloadTask(downloadProvider.getDownloadCandidates(remote.file().url()), temporary)
                             .setName(remote.name()));
-                    context.call(Schedulers.javafx(), () -> {
-                        context.commit();
-                        replace(selected, temporary);
-                        return null;
-                    });
+                    replace(context, selected, temporary);
                 } catch (Exception | Error failure) {
                     try {
                         Files.deleteIfExists(temporary);
@@ -105,32 +109,46 @@ public class AddonUpdateTask extends Task<@Nullable Void> {
         }.setSignificance(TaskSignificance.MINOR).withCounter();
     }
 
-    /// Replaces the add-on on the JavaFX thread, restoring its previous state if the rename fails.
-    private void replace(SelectedUpdate selected, Path temporary) throws IOException {
+    /// Moves the downloaded file and publishes or restores the add-on state on JavaFX.
+    private void replace(TaskExecutionContext context, SelectedUpdate selected, Path temporary) throws Exception {
         LocalAddonFile<?> local = selected.update().localAddonFile();
         String fileName = selected.update().targetVersion().file().filename();
         String newFileName = selected.disabled() ? StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION) : fileName;
         Path target = addonDirectory.resolve(newFileName);
-        local.setOld(true);
+        AtomicBoolean markedOld = new AtomicBoolean();
         try {
+            context.call(Schedulers.javafx(), () -> {
+                context.commit();
+                local.setOld(true);
+                markedOld.set(true);
+                return null;
+            });
             Files.move(temporary, target);
-        } catch (IOException | RuntimeException | Error failure) {
-            try {
-                local.setOld(false);
-                if (selected.disabled())
-                    local.markDisabled();
-            } catch (IOException | RuntimeException | Error cleanup) {
-                failure.addSuppressed(cleanup);
+        } catch (Exception | Error failure) {
+            if (markedOld.get()) {
+                try {
+                    context.call(Schedulers.javafx(), () -> {
+                        local.setOld(false);
+                        if (selected.disabled())
+                            local.markDisabled();
+                        return null;
+                    });
+                } catch (Exception | Error cleanup) {
+                    failure.addSuppressed(cleanup);
+                }
             }
             throw failure;
         }
-        local.onUpdated(newFileName);
-        if (!local.keepOldFiles()) {
-            try {
-                local.delete();
-            } catch (IOException e) {
-                LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
+        context.call(Schedulers.javafx(), () -> {
+            local.onUpdated(newFileName);
+            if (!local.keepOldFiles()) {
+                try {
+                    local.delete();
+                } catch (IOException e) {
+                    LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
+                }
             }
-        }
+            return null;
+        });
     }
 }

@@ -160,8 +160,8 @@ public final class LauncherHelper {
 
         HMCLGameRepository repository = repository();
         DefaultDependencyManager dependencyManager = repository.getDependency();
+        boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
         CountDownLatch launchingLatch = new CountDownLatch(1);
-        CompletableFuture<Boolean> launchSucceeded = new CompletableFuture<>();
         List<String> javaAgents = new ArrayList<>(0);
         List<String> javaArguments = new ArrayList<>(0);
 
@@ -187,7 +187,6 @@ public final class LauncherHelper {
                     context.launchManifest = NativePatcher.patchNative(gameInstance, context.launchManifest, java, setting, javaArguments);
                     if (setting.getInheritable(GameSettings::notCheckGameProperty))
                         return null;
-                    boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
                     return Task.allOf(
                             dependencyManager.checkGameCompletionAsync(gameInstance, context.launchManifest, integrityCheck),
                             Task.composeOptionalAsync(() -> {
@@ -324,7 +323,7 @@ public final class LauncherHelper {
                         /// Records the process before cancellation can discard this task's result.
                         @Override
                         public @Nullable Void execute(TaskExecutionContext execution) throws IOException, InterruptedException {
-                            ManagedProcess process = launcher.launch(execution::checkCancellation, launchSucceeded::join);
+                            ManagedProcess process = launcher.launch(execution::checkCancellation);
                             context.process = process;
                             PROCESSES.add(new WeakReference<>(process));
                             if (launcherVisibility == LauncherVisibility.CLOSE)
@@ -347,7 +346,6 @@ public final class LauncherHelper {
             /// Releases the game process on failure and reports the outcome on the JavaFX thread.
             @Override
             public void onExecutionFinished(Task<?> task, boolean success) {
-                launchSucceeded.complete(success);
                 @Nullable ManagedProcess process = context.process;
                 context.process = null;
                 if (!success && process != null)
