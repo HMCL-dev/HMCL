@@ -488,12 +488,42 @@ public final class NetworkUtils {
         if (code / 100 != 2)
             throw new ResponseCodeException(url, conn.getResponseCode());
 
-        String disposition = conn.getHeaderField("Content-Disposition");
-        if (disposition == null || !disposition.contains("filename=")) {
-            String u = conn.getURL().toString();
-            return decodeURL(substringAfterLast(u, '/'));
-        } else {
+        return detectFileName(conn.getURL().toString(), conn.getHeaderField("Content-Disposition"));
+    }
+
+    /// Reads a filename from the disposition header, or derives it from the final URL.
+    private static String detectFileName(String finalUrl, @Nullable String disposition) {
+        if (disposition == null || !disposition.contains("filename="))
+            return decodeURL(substringAfterLast(finalUrl.split("[?#]", 2)[0], '/'));
+        else
             return decodeURL(removeSurrounding(substringAfter(disposition, "filename="), "\""));
+    }
+
+    /// A file detected at a remote address.
+    public record RemoteFile(String url, String fileName, @Nullable String contentType) {
+    }
+
+    /// Returns the remote file at the given address, or `null` when the response declares no size.
+    public static @Nullable RemoteFile detectFile(WebURL url) throws IOException {
+        HttpURLConnection conn = resolveConnection(createHttpConnection(url));
+        try {
+            int code = conn.getResponseCode();
+            if (code / 100 == 4)
+                throw new FileNotFoundException();
+            if (code / 100 != 2)
+                throw new ResponseCodeException(url, code);
+
+            if (conn.getHeaderField("Content-Length") == null)
+                return null;
+
+            String finalUrl = conn.getURL().toString();
+            return new RemoteFile(
+                    finalUrl,
+                    detectFileName(finalUrl, conn.getHeaderField("Content-Disposition")),
+                    conn.getHeaderField("Content-Type")
+            );
+        } finally {
+            conn.disconnect();
         }
     }
 

@@ -340,6 +340,21 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
         return StringUtils.isBlank(id) ? null : getCurseForgeMap().get(id);
     }
 
+    /// Returns the first project with the exact mcmod identifier, or `null` if the identifier
+    /// is not positive or unknown.
+    ///
+    /// @param id the mcmod identifier
+    public @Nullable I getInfoByMcmodId(int id) {
+        if (id <= 0)
+            return null;
+
+        for (I info : getInfos()) {
+            if (info.mcmodId() == id)
+                return info;
+        }
+        return null;
+    }
+
     /// Finds a project by its cleaned secondary name, falling back to its exact mod ID.
     /// A name match is accepted only when the ID is blank or belongs to that mod project.
     /// Null and blank inputs are absent; returns `null` if neither lookup matches.
