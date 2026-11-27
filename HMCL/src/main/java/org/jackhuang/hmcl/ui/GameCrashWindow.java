@@ -36,12 +36,10 @@ import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -64,7 +62,7 @@ public class GameCrashWindow extends Stage {
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final TextFlow feedbackTextFlow = new TextFlow();
 
-    private final ManagedProcess managedProcess;
+    private final ProcessInfo managedProcess;
     private final ProcessListener.ExitType exitType;
     private final LaunchOptions launchOptions;
     private final View view;
@@ -72,7 +70,7 @@ public class GameCrashWindow extends Stage {
 
     private final List<Log> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, HMCLGameInstance gameInstance, LaunchOptions launchOptions, List<Log> logs) {
+    public GameCrashWindow(ProcessInfo managedProcess, ProcessListener.ExitType exitType, HMCLGameInstance gameInstance, LaunchOptions launchOptions, List<Log> logs) {
         Themes.applyNativeDarkMode(this);
 
         this.managedProcess = managedProcess;
@@ -249,9 +247,9 @@ public class GameCrashWindow extends Stage {
     private void showLogWindow() {
         LogWindow logWindow = new LogWindow(managedProcess);
 
-        logWindow.logLine(new Log(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO));
-        if (managedProcess.getClasspath() != null)
-            logWindow.logLine(new Log("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO));
+        logWindow.logLine(new Log(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.commands())), Log4jLevel.INFO));
+        if (managedProcess.classpath() != null)
+            logWindow.logLine(new Log("ClassPath: " + managedProcess.classpath(), Log4jLevel.INFO));
         logWindow.logLines(logs);
         logWindow.show();
     }
@@ -262,19 +260,10 @@ public class GameCrashWindow extends Stage {
         return CompletableFuture.supplyAsync(() ->
                         logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
                 .thenComposeAsync(logs -> {
-                    long processStartTime = managedProcess.getProcess().info()
-                            .startInstant()
-                            .map(Instant::toEpochMilli).orElseGet(() -> {
-                                try {
-                                    return ManagementFactory.getRuntimeMXBean().getStartTime();
-                                } catch (Throwable e) {
-                                    LOG.warning("Failed to get process start time", e);
-                                    return 0L;
-                                }
-                            });
+                    long processStartTime = managedProcess.processStartTime();
 
                     return LogExporter.exportLogs(logFile, gameInstance, launchOptions, logs,
-                            new CommandBuilder().addAll(managedProcess.getCommands()).toString(),
+                            new CommandBuilder().addAll(managedProcess.commands()).toString(),
                             path -> {
                                 try {
                                     FileTime lastModifiedTime = Files.getLastModifiedTime(path);

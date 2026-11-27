@@ -53,6 +53,7 @@ val embedResources = configurations.register("embedResources")
 dependencies {
     implementation(project(":HMCLCore"))
     implementation(project(":HMCLBoot"))
+    implementation(project(":HMCLMonitor"))
     implementation("libs:JFoenix")
     implementation(libs.jwebp)
     implementation(libs.fxsvgimage)
@@ -160,6 +161,7 @@ tasks.shadowJar {
         exclude(dependency("net.java.dev.jna:jna:.*"))
         exclude(dependency("libs:JFoenix:.*"))
         exclude(project(":HMCLBoot"))
+        exclude(project(":HMCLMonitor"))
     }
 
     manifest.attributes(
