@@ -30,7 +30,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.addon.datapack.DataPack;
+import org.jackhuang.hmcl.addon.pack.datapack.DataPack;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.task.Schedulers;

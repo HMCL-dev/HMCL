@@ -20,12 +20,12 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.addon.shader.ShaderPackFile;
 import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
-import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.image.ImageLoaders;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
@@ -45,10 +45,10 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
+import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
-import org.jackhuang.hmcl.util.javafx.Subscription;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -287,21 +287,21 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     .getIcon();
             }
 
-            return null;
+            if (data.localAddonFile() instanceof ShaderPackFile shaderPackFile) {
+                return switch (shaderPackFile.getShaderLoaderType()) {
+                    case OPTIFINE_IRIS -> FXUtils.newBuiltinImage("/assets/img/opti-iris.png");
+                    default -> FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+                };
+            }
+
+            return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
         }
 
         /// Loads the addon icon, falling back to the mod loader icon or null for other addons.
-        private @Nullable Image loadIcon() {
-            @Nullable Image image;
-            if (data.localAddonFile() instanceof LocalModFile localModFile) {
-                image = localModFile.loadIcon(ImageLoaders.DEFAULT);
-            } else if (data.localAddonFile() instanceof ResourcePackFile resourcePackFile) {
-                image = resourcePackFile.loadIcon(ImageLoaders.DEFAULT);
-            } else {
-                return getDefaultIcon();
-            }
+        private Image loadIcon() {
+            Image icon = data.localAddonFile().loadIcon(ImageLoaders.DEFAULT, 80, 80, true, true);
 
-            return FXUtils.isValidIcon(image) ? image : this.getDefaultIcon();
+            return FXUtils.isValidIcon(icon) ? icon : this.getDefaultIcon();
         }
     }
 
@@ -384,12 +384,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             tags.add(new Tag(item.getTargetVersionType()));
             content.getTags().setAll(tags);
 
-            if (addonFile instanceof LocalModFile modFile) {
-                content.setTitle(modFile.getName());
-            } else if (addonFile instanceof ResourcePackFile resourcePackFile) {
-                content.setTitle(resourcePackFile.getFileName());
-            }
-
+            content.setTitle(addonFile.getName());
             content.setSubtitle(item.getCurrentVersion() + " → " + item.getTargetVersion());
 
             setGraphic(pane);

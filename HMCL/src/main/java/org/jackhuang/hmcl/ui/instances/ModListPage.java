@@ -60,12 +60,10 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -73,7 +71,7 @@ import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.CancellationException;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
@@ -440,30 +438,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
             return;
         }
 
-        Path modDirectory = gameInstance.getModManager().getDirectory();
-        Runnable action = () -> Controllers.taskDialog(Task
-                        .composeAsync(() -> {
-                            GameVersionNumber version = gameInstance.getVersion();
-                            if (version != GameVersionNumber.unknown()) {
-                                return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), mods);
-                            } else {
-                                LOG.warning("Failed to check for updates, due to unable to get instance game version");
-                                return null;
-                            }
-                        })
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                            if (exception instanceof CancellationException) return;
-                            if (exception != null || result == null) {
-                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-                                if (exception != null) LOG.warning("Failed to check for updates", exception);
-                            } else if (result.commonUpdates().isEmpty()) {
-                                Controllers.dialog(i18n("addon.check_update.empty"));
-                            } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), modDirectory, result));
-                            }
-                        })
-                        .withStagesHints("update.checking"),
-                i18n("addon.check_update"), TaskCancellationAction.NORMAL);
+        Runnable action = () -> AddonCheckUpdatesTask.openAddonsCheckUpdateDialog(gameInstance, mods, gameInstance.getModsDirectory());
 
         if (gameInstance.isModpack()) {
             Controllers.confirm(

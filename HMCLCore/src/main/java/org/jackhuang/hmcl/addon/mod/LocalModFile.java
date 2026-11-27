@@ -15,6 +15,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -90,6 +91,7 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
         return mod.getId();
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -112,24 +114,6 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
 
     public String getUrl() {
         return url;
-    }
-
-    public <I> @Nullable I loadIcon(ImageLoader<I> loader) {
-        if (StringUtils.isBlank(logoPath))
-            return null;
-
-        try (var zipFileTree = CompressingUtils.openZipTree(getFile())) {
-            @Nullable var iconEntry = zipFileTree.getEntry(logoPath);
-            if (iconEntry == null)
-                return null;
-
-            try (var inputStream = zipFileTree.getInputStream(iconEntry)) {
-                return loader.load(inputStream, name, 80, 80, true, true);
-            }
-        } catch (Exception e) {
-            LOG.warning("Failed to load mod icon: " + getFile(), e);
-            return null;
-        }
     }
 
     public ReadOnlyBooleanProperty activeProperty() {
@@ -183,8 +167,20 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
     }
 
     @Override
-    public void delete() throws IOException {
-        Files.deleteIfExists(file);
+    public @Nullable <I> I loadIcon(ImageLoader<I> imageLoader, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+        if (StringUtils.isBlank(logoPath))
+            return null;
+
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file)) {
+            Path iconPath = fs.getPath(logoPath);
+            if (Files.isRegularFile(iconPath)) {
+                return imageLoader.load(iconPath, requestedWidth, requestedHeight, preserveRatio, smooth);
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to load mod icons", e);
+        }
+
+        return null;
     }
 
     @Override

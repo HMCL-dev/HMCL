@@ -5,20 +5,56 @@ package org.jackhuang.hmcl.addon.update;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.instances.AddonUpdatesPage;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
+
+    public static TaskExecutorDialogPane openAddonsCheckUpdateDialog(HMCLGameInstance instance, Collection<? extends LocalAddonFile<?>> addons, Path addonsDirectory) {
+        return Controllers.taskDialog(
+                Task.composeAsync(() -> {
+                    GameVersionNumber version = instance.getVersion();
+                    if (version != GameVersionNumber.unknown()) {
+                        return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), addons);
+                    } else {
+                        LOG.warning("Failed to check for updates, due to unable to get instance game version");
+                        return null;
+                    }
+                }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception instanceof CancellationException) return;
+                    if (exception != null || result == null) {
+                        Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                        if (exception != null) LOG.warning("Failed to check for updates", exception);
+                    } else if (result.commonUpdates().isEmpty()) {
+                        Controllers.dialog(i18n("addon.check_update.empty"));
+                    } else {
+                        Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), addonsDirectory, result));
+                    }
+                }).withStagesHints("update.checking"),
+                i18n("addon.check_update"), TaskCancellationAction.NORMAL);
+    }
+
     private final List<Task<Pair<AddonUpdate, @Nullable AddonUpdate>>> dependents;
 
     public AddonCheckUpdatesTask(DownloadProvider downloadProvider, String gameVersion, Collection<? extends LocalAddonFile<?>> addons) {
