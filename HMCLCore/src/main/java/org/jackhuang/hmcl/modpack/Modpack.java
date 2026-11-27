@@ -182,6 +182,12 @@ public abstract class Modpack {
     /// Removes a retired override only if the original file still has its installed SHA-1.
     public static void removeUnmodifiedOverride(Path directory, String relativePath, @Nullable String installedHash,
                                                 TaskExecutionContext context) throws IOException {
+        removeUnmodifiedFile(directory, relativePath, "SHA-1", installedHash, context);
+    }
+
+    /// Removes a managed file only if its contents still match the installed digest.
+    public static void removeUnmodifiedFile(Path directory, String relativePath, String algorithm, @Nullable String installedHash,
+                                            TaskExecutionContext context) throws IOException {
         context.checkCancellation();
         Path root = directory.toAbsolutePath().normalize();
         Path file = root.resolve(relativePath).normalize();
@@ -189,7 +195,7 @@ public abstract class Modpack {
             return;
         // A directory in the original path may have been replaced with a link.
         if (file.toRealPath().equals(root.toRealPath().resolve(root.relativize(file)))
-                && installedHash.equalsIgnoreCase(DigestUtils.digestToString("SHA-1", file, context::checkCancellation))) {
+                && installedHash.equalsIgnoreCase(DigestUtils.digestToString(algorithm, file, context::checkCancellation))) {
             context.checkCancellation();
             Files.deleteIfExists(file);
         }

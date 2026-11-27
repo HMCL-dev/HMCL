@@ -11,15 +11,18 @@ import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
+import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.ModpackExportTask;
+import org.jackhuang.hmcl.modpack.ModpackInstallTask;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackProvider;
@@ -100,6 +103,40 @@ public final class DefaultGameInstanceTest {
             assertTrue(zip.stream().anyMatch(entry -> entry.getName().equals("server-manifest.json")));
             assertNull(zip.getEntry("overrides/export.zip"));
             assertTrue(zip.stream().noneMatch(entry -> entry.getName().contains(".hmcl-export-")));
+        }
+    }
+
+    /// A personal server list preserved during an update stays out of subsequent Modrinth exports.
+    @Test
+    public void modrinthExportExcludesConflictBackups(@TempDir Path directory) throws Exception {
+        Path root = Files.createDirectory(directory.resolve("game"));
+        TestRepository repository = new TestRepository(root);
+        GameInstanceID id = new GameInstanceID("instance");
+        writeVersionJar(repository.getLayout().getInstanceJarFile(id), "1.20.1");
+        DefaultGameInstance instance = repository.publish(id, new GameInstanceManifest(id));
+        Path run = instance.getRunDirectory();
+        Files.writeString(run.resolve("servers.dat"), "personal servers");
+        String legacyBackup = "servers.dat.0cf28737-d434-47b1-83df-c02627aed6c5.bak";
+        Files.writeString(run.resolve(legacyBackup), "earlier personal servers");
+        Path archive = directory.resolve("update.zip");
+        try (Zipper zip = new Zipper(archive)) {
+            zip.putTextFile("pack servers", "overrides/servers.dat");
+        }
+        new ModpackInstallTask(archive, run, List.of("/overrides"), path -> true, instance.getModpackConfigurationFile()).run();
+        try (var backups = Files.list(run.resolve("backup"))) {
+            assertEquals("personal servers", Files.readString(backups.findFirst().orElseThrow()));
+        }
+        assertEquals(ModAdviser.ModSuggestion.HIDDEN, ModAdviser.suggestMod("backup/", true));
+        assertEquals(ModAdviser.ModSuggestion.HIDDEN, ModAdviser.suggestMod(legacyBackup, false));
+
+        Path output = directory.resolve("export.mrpack");
+        new ModrinthModpackExportTask(instance, new ModpackExportInfo(), output).run();
+        try (ZipFile zip = new ZipFile(output.toFile())) {
+            assertTrue(zip.stream().noneMatch(entry -> entry.getName().startsWith("client-overrides/backup/")));
+            assertNull(zip.getEntry("client-overrides/" + legacyBackup));
+            try (var input = zip.getInputStream(zip.getEntry("client-overrides/servers.dat"))) {
+                assertEquals("pack servers", new String(input.readAllBytes(), StandardCharsets.UTF_8));
+            }
         }
     }
 

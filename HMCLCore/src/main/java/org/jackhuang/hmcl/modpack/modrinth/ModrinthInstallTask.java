@@ -13,7 +13,6 @@ import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutionContext;
-import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -184,7 +183,7 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
         }
         @Unmodifiable Set<String> previousExclusions = config == null ? Set.of() : ModrinthModpackProvider.readExcludedFiles(run);
         List<Task<?>> preparation = new ArrayList<>(3);
-        @Unmodifiable List<String> subDirectories = List.of("/client-overrides", "/overrides");
+        @Unmodifiable List<String> subDirectories = List.of("/overrides", "/client-overrides");
         preparation.add(new ModpackInstallTask(zipFile, run, subDirectories, any -> true,
                 updateTarget == null ? null : updateTarget.getModpackConfigurationFile()).withStage(InstallStages.MODPACK));
         var configuration = new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, ModrinthModpackProvider.INSTANCE,
@@ -212,7 +211,7 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
                 throw new IllegalStateException("Game instance has changed: " + instanceId);
             var current = configuration.resultNow();
             if (config != null)
-                removeOutdatedFiles(instance.getRunDirectory(), config.getManifest(), previousExclusions, current);
+                removeOutdatedFiles(instance.getRunDirectory(), config.getManifest(), previousExclusions, current, context);
             publishManifests(current);
 
             if (iconExtension != null
@@ -228,9 +227,9 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
         }
     }
 
-    /// Removes obsolete files while preserving replacements already downloaded by an interrupted update.
+    /// Removes obsolete index entries whose installed files still match the previous release.
     private void removeOutdatedFiles(Path runDirectory, ModrinthManifest previous, Set<String> previousExclusions,
-                                     ModpackConfiguration<ModrinthManifest> current) throws IOException {
+                                     ModpackConfiguration<ModrinthManifest> current, TaskExecutionContext context) throws IOException {
         Set<String> overrides = new HashSet<>();
         for (var override : current.getOverrides())
             overrides.add(override.getPath());
@@ -241,16 +240,14 @@ public class ModrinthInstallTask extends Task<@Nullable Void> {
         for (var old : previous.getFiles()) {
             if (!old.isSelectedForClient(previousExclusions) || overrides.contains(old.path()))
                 continue;
-            Path file = runDirectory.resolve(old.path());
             @Nullable ModrinthManifest.File replacement = newFiles.get(old.path());
-            if (replacement != null && replacement.isSelectedForClient(excludedFiles)) {
-                if (old.equals(replacement))
-                    continue;
-                if (Files.isRegularFile(file) && Files.size(file) == replacement.fileSize()
-                        && DigestUtils.digestToString("SHA-512", file).equalsIgnoreCase(replacement.hashes().get("sha512")))
-                    continue;
-            }
-            Files.deleteIfExists(file);
+            @Nullable String oldHash = old.hashes().get("sha512");
+            if (oldHash == null)
+                continue;
+            if (replacement != null && replacement.isSelectedForClient(excludedFiles)
+                    && oldHash.equalsIgnoreCase(replacement.hashes().get("sha512")))
+                continue;
+            Modpack.removeUnmodifiedFile(runDirectory, old.path(), "SHA-512", oldHash, context);
         }
     }
 

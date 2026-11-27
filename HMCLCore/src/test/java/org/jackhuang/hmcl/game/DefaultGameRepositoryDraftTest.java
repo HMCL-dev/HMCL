@@ -519,6 +519,9 @@ public final class DefaultGameRepositoryDraftTest {
         Path mods = Files.createDirectories(original.getRunDirectory().resolve("mods"));
         Path retained = Files.writeString(mods.resolve("changed.jar"), "old");
         Path removed = Files.writeString(mods.resolve("removed.jar"), "old");
+        Path resourcepacks = Files.createDirectories(original.getRunDirectory().resolve("resourcepacks"));
+        Path editedRemoved = Files.writeString(resourcepacks.resolve("removed.zip"), "own");
+        Path editedReplacement = Files.writeString(resourcepacks.resolve("changed.zip"), "own");
         Path serverOnly = Files.writeString(mods.resolve("server.jar"), "old");
         Path unmanaged = Files.writeString(mods.resolve("never-client.jar"), "manual");
         Path unselected = Files.writeString(mods.resolve("previously-excluded.jar"), "manual");
@@ -538,9 +541,12 @@ public final class DefaultGameRepositoryDraftTest {
         var previous = new ModrinthManifest("minecraft", 1, "1", "pack", null, List.of(
                 new ModrinthManifest.File("mods/changed.jar", oldHashes, null, urls, 3),
                 new ModrinthManifest.File("mods/removed.jar", oldHashes, null, urls, 3),
+                new ModrinthManifest.File("resourcepacks/removed.zip", oldHashes, null, urls, 3),
+                new ModrinthManifest.File("resourcepacks/changed.zip", oldHashes, null, urls, 3),
                 new ModrinthManifest.File("mods/server.jar", oldHashes, null, urls, 3), neverClient, oldOptional), dependencies);
         var next = new ModrinthManifest("minecraft", 1, "2", "pack", null, List.of(
                 new ModrinthManifest.File("mods/changed.jar", newHashes, null, urls, 3),
+                new ModrinthManifest.File("resourcepacks/changed.zip", newHashes, null, urls, 3),
                 new ModrinthManifest.File("mods/added.jar", addedHashes, null, List.of(addedSource.toUri().toString()), 5),
                 new ModrinthManifest.File("mods/server.jar", oldHashes, Map.of("client", "unsupported"), urls, 3), neverClient, newOptional), dependencies);
         Path configuration = repository.getLayout().getModpackConfigurationFile(id);
@@ -569,10 +575,10 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals("1", partial.getVersion());
         assertEquals(previous.getVersionId(), partial.getManifest().getVersionId());
         assertEquals(oldIndex, Files.readString(index));
-        assertEquals("pack settings", Files.readString(local));
+        assertEquals("client settings", Files.readString(local));
         assertEquals(Map.of("config/local.toml", DigestUtils.digestToString("SHA-1", local)), overrideHashes(partial));
         Path backup;
-        try (var backups = Files.newDirectoryStream(configDir, file -> file.getFileName().toString().endsWith(".bak") && !file.equals(existingBackup))) {
+        try (var backups = Files.newDirectoryStream(original.getInstanceRoot().resolve("backup"), "local.toml.*.bak")) {
             var iterator = backups.iterator();
             backup = iterator.next();
             assertFalse(iterator.hasNext());
@@ -585,7 +591,9 @@ public final class DefaultGameRepositoryDraftTest {
         assertThrows(ModpackCompletionException.class, () -> ModrinthModpackProvider.INSTANCE
                 .createUpdateTask(manager, repository.getInstance(id), archive, pack, Set.of(newOptional.key())).run());
         assertEquals("2", Objects.requireNonNull(JsonUtils.fromJsonFile(index, ModrinthManifest.class)).getVersionId());
-        assertEquals("2", Objects.requireNonNull(JsonUtils.fromJsonFile(configuration, ModpackConfiguration.class)).getVersion());
+        var updated = Objects.requireNonNull(JsonUtils.fromJsonFile(configuration, ModpackConfiguration.typeOf(ModrinthManifest.class)));
+        assertEquals("2", updated.getVersion());
+        assertEquals(overrideHashes(partial), overrideHashes(updated));
         assertEquals(List.of(newOptional.key()), JsonUtils.fromJsonFile(selection, JsonUtils.listTypeOf(String.class)));
         assertEquals("new", Files.readString(retained));
         Files.delete(payload);
@@ -597,7 +605,9 @@ public final class DefaultGameRepositoryDraftTest {
         assertTrue(Files.notExists(serverOnly));
         assertEquals("manual", Files.readString(unmanaged));
         assertEquals("manual", Files.readString(unselected));
-        assertEquals("pack settings", Files.readString(local));
+        assertEquals("client settings", Files.readString(local));
+        assertEquals("own", Files.readString(editedRemoved));
+        assertEquals("own", Files.readString(editedReplacement));
         assertEquals("user settings", Files.readString(backup));
         assertTrue(Files.notExists(mods.resolve("optional.jar")));
     }

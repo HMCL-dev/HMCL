@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +43,7 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
         this.version = version;
     }
 
-    private static void getOverrides(List<ModpackConfiguration.FileInformation> overrides,
+    private static void getOverrides(Map<String, ModpackConfiguration.FileInformation> overrides,
                                      ZipFileTree tree,
                                      ArchiveFileTree.Dir<ZipArchiveEntry> dir,
                                      List<String> names) throws IOException {
@@ -55,7 +56,8 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
             try (InputStream input = tree.getInputStream(entry.getValue())) {
                 hash = DigestUtils.digestToString("SHA-1", input);
             }
-            overrides.add(new ModpackConfiguration.FileInformation(prefix + entry.getKey(), hash));
+            String path = prefix + entry.getKey();
+            overrides.put(path, new ModpackConfiguration.FileInformation(path, hash));
         }
 
         for (ArchiveFileTree.Dir<ZipArchiveEntry> subDir : dir.getSubDirs().values()) {
@@ -68,7 +70,7 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
     /// Returns the configuration without publishing it to the installed instance.
     @Override
     public ModpackConfiguration<T> execute(TaskExecutionContext context) throws Exception {
-        List<ModpackConfiguration.FileInformation> overrides = new ArrayList<>();
+        Map<String, ModpackConfiguration.FileInformation> overrides = new LinkedHashMap<>();
 
         try (var tree = new ZipFileTree(CompressingUtils.openZipFile(zipFile))) {
             for (String subDirectory : subDirectories) {
@@ -79,6 +81,6 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
                 getOverrides(overrides, tree, root, names);
             }
         }
-        return new ModpackConfiguration<>(manifest, type, name, version, overrides);
+        return new ModpackConfiguration<>(manifest, type, name, version, List.copyOf(overrides.values()));
     }
 }

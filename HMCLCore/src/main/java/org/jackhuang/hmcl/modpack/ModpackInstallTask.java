@@ -109,7 +109,10 @@ public final class ModpackInstallTask extends Task<@Nullable Void> {
         if (!Files.notExists(file, LinkOption.NOFOLLOW_LINKS)) {
             if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS) && !Files.isSymbolicLink(file))
                 throw new IOException("Expected a file at override path: " + file);
-            Path backup = file.resolveSibling(file.getFileName() + "." + UUID.randomUUID() + ".bak");
+            Path backups = dest.resolve("backup");
+            if (!Files.isDirectory(backups, LinkOption.NOFOLLOW_LINKS))
+                Files.createDirectory(backups);
+            Path backup = backups.resolve(file.getFileName() + "." + UUID.randomUUID() + ".bak");
             Files.copy(file, backup, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES);
         }
         return true;
