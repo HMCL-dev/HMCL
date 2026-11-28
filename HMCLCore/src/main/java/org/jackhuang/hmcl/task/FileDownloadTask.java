@@ -119,10 +119,22 @@ public class FileDownloadTask extends FetchTask<@Nullable Void> {
         integrityCheckHandlers.add(Objects.requireNonNull(handler));
     }
 
+    /// Copies a verified cache entry to the destination or downloads the file on a cache miss or copy failure.
     @Override
-    protected @Nullable Path findCachedFile() {
-        if (integrityCheck == null || !caching) return null;
-        return repository.checkExistentFile(candidate, integrityCheck.algorithm(), integrityCheck.checksum()).orElse(null);
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        if (integrityCheck != null && caching) {
+            var cached = repository.checkExistentFile(candidate, integrityCheck.algorithm(), integrityCheck.checksum());
+            if (cached.isPresent()) {
+                try {
+                    useCachedResult(cached.get());
+                    LOG.trace("Successfully verified file " + file + " from " + candidates.getPrimaryCandidate().url());
+                    return null;
+                } catch (IOException e) {
+                    LOG.warning("Failed to copy cache files", e);
+                }
+            }
+        }
+        return super.execute(context);
     }
 
     @Override

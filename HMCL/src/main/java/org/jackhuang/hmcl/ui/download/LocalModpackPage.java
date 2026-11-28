@@ -160,7 +160,7 @@ public final class LocalModpackPage extends ModpackPage {
         Objects.requireNonNull(manifest);
         loadingOptionalFiles.set(true);
         loadedOptionalFiles.set(false);
-        Task.supplyAsync(Schedulers.io(), () -> manifest.getManifest().getProvider().loadFiles(DownloadProviders.getDownloadProvider(), manifest.getManifest()))
+        Task.supplyAsync(() -> manifest.getManifest().getProvider().loadFiles(DownloadProviders.getDownloadProvider(), manifest.getManifest()))
                 .whenCompleteAsync(Schedulers.javafx(), (manifest1, exception) -> {
                     loadingOptionalFiles.set(false);
                     List<? extends ModpackFile> files = ((ModpackManifest.SupportOptional) manifest1).getFiles();

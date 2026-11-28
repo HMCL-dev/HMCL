@@ -66,6 +66,11 @@ class FetchTaskResultTest {
             Path streamedFile = Objects.requireNonNull(runWithCache(new CacheFileTask(candidates, sha1), repository));
             assertArrayEquals(bytes, Files.readAllBytes(streamedFile));
             assertEquals(streamedFile, runWithCache(new CacheFileTask(candidates, sha1), repository));
+            Path destination = directory.resolve("downloaded");
+            var download = new FileDownloadTask(candidates, destination, new FileDownloadTask.IntegrityCheck(CacheRepository.SHA1, sha1));
+            download.setCaching(true);
+            runWithCache(download, repository);
+            assertArrayEquals(bytes, Files.readAllBytes(destination));
             assertEquals(2, requests.get());
         } finally {
             server.stop(0);

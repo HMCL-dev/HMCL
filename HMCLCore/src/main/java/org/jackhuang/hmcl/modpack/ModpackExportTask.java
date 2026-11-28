@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /// Exports the selected files from an instance and removes incomplete archives.
 @NotNullByDefault
 public abstract class ModpackExportTask extends Task<@Nullable Void> {
@@ -50,6 +52,7 @@ public abstract class ModpackExportTask extends Task<@Nullable Void> {
         exclusions.add(instance.getId() + ".json");
 
         context.checkCancellation();
+        LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (Zipper zip = new Zipper(output)) {
             writeArchive(zip, path -> {
                 context.checkCancellation();

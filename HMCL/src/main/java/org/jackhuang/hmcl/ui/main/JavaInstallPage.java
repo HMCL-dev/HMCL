@@ -17,7 +17,6 @@ import org.jackhuang.hmcl.java.HMCLJavaRepository;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -64,7 +63,7 @@ public final class JavaInstallPage extends WizardSinglePage {
     @Override
     protected Object finish() {
         Task<JavaRuntime> installTask = JavaManager.getInstallJavaTask(info.getPlatform(), nameProperty.get(), update, file);
-        return remoteVersion == null ? installTask : installTask.whenCompleteAsync(Schedulers.io(), (ignored, exception) -> {
+        return remoteVersion == null ? installTask : installTask.whenCompleteAsync((ignored, exception) -> {
             try {
                 Files.delete(file);
             } catch (IOException e) {

@@ -72,8 +72,6 @@ public abstract class TaskDialogWizardDisplayer extends AbstractWizardDisplayer 
                 Controllers.dialog(message, null, MessageType.SUCCESS, this::onEnd);
             else if (!settings.containsKey("forbid_success_message"))
                 Controllers.dialog(i18n("message.success"), null, MessageType.SUCCESS, this::onEnd);
-            else
-                onEnd();
             return;
         }
 
@@ -105,7 +103,5 @@ public abstract class TaskDialogWizardDisplayer extends AbstractWizardDisplayer 
             Controllers.dialog(StringUtils.getStackTrace(failure), message, MessageType.ERROR, this::onEnd);
         else if (!settings.containsKey("forbid_failure_message"))
             Controllers.dialog(StringUtils.getStackTrace(failure), i18n("wizard.failed"), MessageType.ERROR, this::onEnd);
-        else
-            onEnd();
     }
 }
