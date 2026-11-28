@@ -2,68 +2,70 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.task;
 
-import java.util.EventListener;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-/**
- *
- * @author huangyuhui
- */
+import java.util.EventListener;
+import java.util.List;
+
+/// Observes execution of a root task and the children it dispatches.
+/// A task publishes its terminal state and outcome before its finish notification.
+/// Different tasks can invoke the same listener concurrently, including progress updates for the same stage.
+///
+/// @see Task#addTaskListener(TaskListener)
+/// @author huangyuhui
+@NotNullByDefault
 public abstract class TaskListener implements EventListener {
 
-    /**
-     * Executed when a Task execution chain starts.
-     */
-    public void onStart() {
+    /// Called on the submitting thread before the root runs.
+    public void onExecutionStarted(Task<?> root) {
     }
 
-    /**
-     * Executed before the task's pre-execution and dependents execution.
-     *
-     * TaskState of this task is READY.
-     *
-     * @param task the task that gets ready.
-     */
-    public void onReady(Task<?> task) {
+    /// Called after the root publishes its terminal outcome.
+    ///
+    /// @param success whether execution succeeded, including when the root recovered from a child failure
+    public void onExecutionFinished(Task<?> root, boolean success) {
     }
 
-    /**
-     * Executed when the task's execution starts.
-     *
-     * TaskState of this task is RUNNING.
-     *
-     * @param task the task which is being run.
-     */
-    public void onRunning(Task<?> task) {
+    /// Called after the task enters [Task.State#RUNNING], before its body is invoked.
+    ///
+    /// @param scope the task's declared or inherited stage scope, or `null` if neither applies
+    public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
     }
 
-    /**
-     * Executed after the task's dependencies and post-execution finished.
-     *
-     * TaskState of the task is EXECUTED.
-     *
-     * @param task the task which finishes its work.
-     */
-    public void onFinished(Task<?> task) {
+    /// Called on the reporting worker for every progress report, with a fraction between zero and one.
+    /// Workers contributing to the same task may report concurrently.
+    public void onTaskProgress(Task<?> task, double fraction) {
     }
 
-    /**
-     * Executed when an exception occurred during the task's execution.
-     *
-     * @param task the task which finishes its work.
-     */
-    public void onFailed(Task<?> task, Throwable throwable) {
-        onFinished(task);
+    /// Called once after the task succeeds, fails, or is cancelled. If it finishes before
+    /// its body starts, this can occur without a preceding [#onTaskStarted(Task, TaskStage.Scope)].
+    ///
+    /// @param scope the task's declared or inherited stage scope, or `null` if neither applies
+    /// @param failure the failure cause, including cancellation or an [Error], or `null`
+    ///                on success, when [Task#resultNow()] is available
+    public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
     }
 
-    /**
-     * Executed when the task execution chain stopped.
-     *
-     * @param success true if no error occurred during task execution.
-     * @param executor the task executor with responsibility to the task execution.
-     */
-    public void onStop(boolean success, TaskExecutor executor) {
+    /// Announces ordered stage presentation hints when their declaring task is dispatched,
+    /// before its stage starts.
+    public void onStagesDeclared(@Unmodifiable List<TaskStage.Hint> hints) {
     }
 
-    public void onPropertiesUpdate(Task<?> task) {
+    /// Called when the task declaring a stage is dispatched, before its body starts.
+    public void onStageStarted(TaskStage.Scope scope) {
+    }
+
+    /// Called after the declaring task's terminal state and result or failure are published.
+    ///
+    /// @param scope the same scope supplied to [#onStageStarted(TaskStage.Scope)]
+    /// @param failure the cause of the task's failure, including cancellation, or `null` on success
+    public void onStageFinished(TaskStage.Scope scope, @Nullable Throwable failure) {
+    }
+
+    /// Called when a task adds to the completed or total item count of its effective stage.
+    /// Both deltas are relative to the counts already reported.
+    public void onStageProgress(TaskStage.Scope scope, int completedDelta, int totalDelta) {
     }
 }

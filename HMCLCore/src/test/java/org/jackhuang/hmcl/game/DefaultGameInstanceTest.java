@@ -5,25 +5,41 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
+import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
 import org.jackhuang.hmcl.modpack.Modpack;
+import org.jackhuang.hmcl.modpack.ModpackCompletionException;
+import org.jackhuang.hmcl.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
+import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
+import org.jackhuang.hmcl.task.DownloadException;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -31,15 +47,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -49,6 +67,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// Tests snapshot-bound behavior of [DefaultGameInstance].
 @NotNullByDefault
 public final class DefaultGameInstanceTest {
+
+    /// A failed export removes its incomplete destination.
+    @Test
+    public void failedExportRemovesIncompleteArchive(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Path archive = directory.resolve("pack.zip");
+        var export = new ServerModpackExportTask(repository.publish(id, new GameInstanceManifest(id)), new ModpackExportInfo(), archive);
+        assertThrows(IOException.class, export::run);
+        assertTrue(Files.notExists(archive));
+    }
 
     /// Launch repair for ModLauncher adds support metadata without materializing bundled files.
     @Test
@@ -76,6 +105,27 @@ public final class DefaultGameInstanceTest {
 
         assertFalse(Files.exists(transformerFile));
         assertEquals(repaired, LaunchManifestNormalizer.repairForLaunch(repaired));
+    }
+
+    /// Local installers check the client JAR available when installation starts.
+    @Test
+    public void testLocalInstallerChecksVersionAtExecution(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultCacheRepository cache = new DefaultCacheRepository(tempDirectory.resolve("cache"));
+        DefaultDependencyManager manager = new DefaultDependencyManager(repository, new TestDownloadProvider(cache), cache);
+        GameInstanceID id = new GameInstanceID("instance");
+        TestGameInstance instance = repository.publish(id, new GameInstanceManifest(id).withMainClass(GameComponentAnalyzer.VANILLA_MAIN));
+        Path installer = tempDirectory.resolve("installer.jar");
+        try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(installer))) {
+            writeZipEntry(output, "install_profile.json", """
+                    {"spec": 1, "minecraft": "1.20.1", "json": "version.json", "version": "forge-test"}
+                    """);
+        }
+
+        Task<?> install = manager.installComponentLocalAsync(instance, installer);
+        writeVersionJar(instance.getInstanceJarFile(), "1.21.1");
+        VersionMismatchException failure = assertThrows(VersionMismatchException.class, install::run);
+        assertEquals("1.21.1", failure.getActual());
     }
 
     /// Loader libraries precede vanilla libraries while preserving their declared order.
@@ -132,7 +182,7 @@ public final class DefaultGameInstanceTest {
                 LaunchManifestNormalizer.repairForLaunch(instance.getResolvedManifest()),
                 true);
 
-        assertTrue(repair.executor().test());
+        assertTrue(repair.test());
         assertEquals(gameVersion, dependencyManager.requestedGameVersion);
         assertEquals(optiFineVersion, dependencyManager.requestedComponentVersion);
     }
@@ -190,7 +240,7 @@ public final class DefaultGameInstanceTest {
                 instance.getAssetObject(assetId, assetName));
         assertEquals(Optional.empty(), instance.getAssetObject(assetId, "missing"));
         assertEquals(repository.getLayout().getAssetDirectory(), instance.getActualAssetDirectory(assetId));
-        assertEquals(instance.getInstanceRoot().resolve("modpack.json"), instance.getModpackConfigurationFile());
+        assertEquals(instance.getInstanceRoot().resolve("modpack.cfg"), instance.getModpackConfigurationFile());
     }
 
     /// The selected primary jar follows the resolved manifest's `jar` field.
@@ -258,7 +308,7 @@ public final class DefaultGameInstanceTest {
         var task = new GameDownloadTask(dependencyManager, manifest)
                 .thenAcceptAsync(cachedJar -> Files.copy(cachedJar, destination));
 
-        assertTrue(task.executor().test());
+        assertTrue(task.test());
         assertEquals("client", Files.readString(destination));
         assertEquals("client", Files.readString(cached));
     }
@@ -285,8 +335,8 @@ public final class DefaultGameInstanceTest {
 
         GameDownloadTask task = new GameDownloadTask(dependencyManager, manifest);
 
-        assertTrue(task.executor().test());
-        assertEquals(cached, task.getResult());
+        assertTrue(task.test());
+        assertEquals(cached, task.resultNow());
         assertFalse(Files.exists(cacheDirectory.resolve("jars")));
         assertFalse(cached.startsWith(repository.getLayout().getInstanceRoot(manifest.id())));
     }
@@ -321,15 +371,9 @@ public final class DefaultGameInstanceTest {
                 new GameInstanceManifest(new GameInstanceID("instance")),
                 minecraftJar,
                 "forge-test",
-                installer) {
-            @Override
-            protected void updateProgressImmediately(double progress) {
-                // Avoid JavaFX toolkit initialization in this isolated processor test.
-            }
-        };
+                installer);
 
-        var executor = task.executor();
-        assertTrue(executor.test(), () -> String.valueOf(executor.getException()));
+        assertTrue(task.test(), () -> String.valueOf(task.exceptionNowOrNull()));
         assertTrue(Files.isRegularFile(minecraftJar));
     }
 
@@ -359,20 +403,15 @@ public final class DefaultGameInstanceTest {
                 new GameInstanceManifest(new GameInstanceID("instance")),
                 minecraftJar,
                 "forge-test",
-                installer) {
-            @Override
-            protected void updateProgressImmediately(double progress) {
-                // Avoid JavaFX toolkit initialization in this isolated processor test.
-            }
-        };
+                installer);
 
-        assertFalse(task.executor().test());
+        assertFalse(task.test());
         assertEquals("client", Files.readString(minecraftJar));
     }
 
     /// Legacy verification fixes the captured instance jar rather than a newer same-id snapshot.
     @Test
-    public void testVerificationFixKeepsCapturedInstance(@TempDir Path tempDirectory) throws IOException {
+    public void testVerificationFixKeepsCapturedInstance(@TempDir Path tempDirectory) throws Exception {
         TestRepository repository = new TestRepository(tempDirectory);
         GameInstanceID instanceId = new GameInstanceID("instance");
         GameInstanceManifest manifest = new GameInstanceManifest(instanceId).withLibraries(List.of(
@@ -390,7 +429,7 @@ public final class DefaultGameInstanceTest {
                 tempDirectory.resolve("versions/instance/current.json"));
         writeSignedJar(current.getInstanceJarFile());
 
-        new GameVerificationFixTask(captured, GameVersionNumber.asGameVersion("1.5.2"), manifest).execute();
+        new GameVerificationFixTask(captured, GameVersionNumber.asGameVersion("1.5.2"), manifest).run();
 
         assertFalse(hasZipEntry(captured.getInstanceJarFile(), "META-INF/MOJANG_C.DSA"));
         assertFalse(hasZipEntry(captured.getInstanceJarFile(), "META-INF/MOJANG_C.SF"));
@@ -520,24 +559,74 @@ public final class DefaultGameInstanceTest {
         }
     }
 
-    /// A synchronous build-configuration failure aborts the builder's reserved draft.
-    @Test
-    public void testGameBuilderBuildFailureAbortsReservedDraft(@TempDir Path tempDirectory)
-            throws IOException {
-        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
-        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("cache"));
-        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
-                repository,
-                new TestDownloadProvider(cacheRepository),
-                cacheRepository);
-        DefaultGameBuilder builder = dependencyManager.newGameBuilder(new GameInstanceID("instance"));
-
-        IllegalStateException exception = assertThrows(IllegalStateException.class, builder::buildAsync);
-
-        assertEquals("GameBuilder.gameVersion must be set", exception.getMessage());
-        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
-            assertTrue(draft.isOpen());
+    /// Missing CurseForge files report incomplete installation unless the user cancels while the batch drains.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void testMissingMcbbsDownload(boolean cancel, @TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        repository.save(new GameInstanceManifest(id));
+        DefaultCacheRepository cache = new DefaultCacheRepository(directory.resolve("cache"));
+        DefaultDependencyManager manager = new DefaultDependencyManager(repository, new TestDownloadProvider(cache), cache);
+        var file = new McbbsModpackManifest.CurseFile(false, 1, 2, "missing.jar", directory.resolve("missing.jar").toUri().toASCIIString());
+        var manifest = new McbbsModpackManifest().setFiles(List.of(file));
+        Task<?> completion = new McbbsModpackCompletionTask(manager, repository.getInstance(id),
+                new ModpackConfiguration<>(manifest, "MCBBS", "pack", "1", List.of()));
+        if (cancel) {
+            completion.addTaskListener(new TaskListener() {
+                /// Cancels after the missing download has already published its failure.
+                @Override
+                public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+                    if (task instanceof FileDownloadTask && failure != null)
+                        completion.cancel();
+                }
+            });
+            assertThrows(CancellationException.class, completion::run);
+        } else {
+            var incomplete = assertThrows(ModpackCompletionException.class, completion::run);
+            assertInstanceOf(DownloadException.class, incomplete.getSuppressed()[0]);
         }
+    }
+
+    /// Replacing an instance just before an update reserves its draft leaves the replacement untouched.
+    @ParameterizedTest
+    @ValueSource(strings = {"Server", "MultiMC"})
+    void staleModpackUpdatePreservesReplacement(String format, @TempDir Path directory) throws Exception {
+        GameInstanceID id = new GameInstanceID("instance");
+        var repository = new TestRepository(directory) {
+            /// Replaces the instance at the first reservation attempted by the queued update.
+            private boolean replaceOnNextDraft;
+
+            /// Publishes an independent replacement before granting the update's reservation.
+            @Override
+            public DefaultGameRepositoryDraft openDraft() {
+                if (replaceOnNextDraft) {
+                    replaceOnNextDraft = false;
+                    assertTrue(removeInstanceFromDisk(id));
+                    assertDoesNotThrow(() -> {
+                        save(new GameInstanceManifest(id).withMainClass("replacement.Main"));
+                        Files.writeString(getInstance(id).getInstanceRoot().resolve("marker.txt"), "replacement");
+                    });
+                }
+                return super.openDraft();
+            }
+        };
+        repository.save(new GameInstanceManifest(id));
+        DefaultGameInstance original = repository.getInstance(id);
+        Path marker = Files.writeString(original.getInstanceRoot().resolve("marker.txt"), "original");
+        Modpack pack = format.equals("MultiMC") ? createMultiMCModpack(createMultiMCConfiguration())
+                : new ServerModpackManifest("Test", "", "1", "", "", List.of(),
+                        List.of(new ServerModpackManifest.Addon("game", "1.21.1"))).toModpack();
+        JsonUtils.writeToJsonFile(repository.getLayout().getModpackConfigurationFile(id),
+                new ModpackConfiguration<>(pack.getManifest(), format, "Test", "1", List.of()));
+        DefaultCacheRepository cache = new DefaultCacheRepository(directory.resolve("cache"));
+        DefaultDependencyManager manager = new DefaultDependencyManager(repository, new TestDownloadProvider(cache), cache);
+        Task<?> update = pack.getManifest().getProvider().createUpdateTask(
+                manager, original, directory.resolve("modpack.zip"), pack, null);
+        repository.replaceOnNextDraft = true;
+        assertThrows(IllegalStateException.class, update::run);
+        assertEquals("replacement.Main", repository.getInstanceManifest(id).mainClass());
+        assertEquals("replacement", Files.readString(marker));
     }
 
     /// A MultiMC task declared as a new installation rejects an existing id without deleting it.
@@ -566,16 +655,119 @@ public final class DefaultGameInstanceTest {
                 manifest,
                 instanceId);
 
-        assertFalse(task.executor().test());
+        assertFalse(task.test());
 
         assertEquals(
                 "Game instance already exists: instance",
-                Objects.requireNonNull(task.getException()).getMessage());
+                task.exceptionNow().getMessage());
         assertSame(instance, repository.getInstance(instanceId));
         assertEquals("existing", Files.readString(marker));
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
             assertTrue(draft.isOpen());
         }
+    }
+
+    /// A patch failure after extraction removes the new instance files and releases the draft.
+    @Test
+    public void testFailedMultiMCInstallCleansReservedRoot(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultCacheRepository cache = new DefaultCacheRepository(tempDirectory.resolve("cache"));
+        DefaultDependencyManager manager = new DefaultDependencyManager(repository, new TestDownloadProvider(cache), cache);
+        Path archive = tempDirectory.resolve("modpack.zip");
+        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(archive))) {
+            writeZipEntry(zip, "instance.cfg", "name=Test");
+            writeZipEntry(zip, "mmc-pack.json", """
+                    {"formatVersion": 1, "components": [{"uid": "net.minecraft", "version": "1.21.1"}]}
+                    """);
+            writeZipEntry(zip, "patches/net.minecraft.json", """
+                    {"uid": "net.minecraft", "formatVersion": 2}
+                    """);
+            writeZipEntry(zip, ".minecraft/marker.txt", "extracted");
+        }
+
+        GameInstanceID id = new GameInstanceID("instance");
+        Modpack pack;
+        try (var zip = CompressingUtils.openZipFile(archive)) {
+            pack = MultiMCModpackProvider.INSTANCE.readManifest(zip, archive);
+        }
+        Task<?> install = pack.getInstallTask(manager, archive, id, "", null);
+        assertThrows(UnsupportedOperationException.class, install::run);
+        assertFalse(repository.hasInstance(id));
+        assertTrue(Files.notExists(repository.getLayout().getInstanceRoot(id)));
+        try (DefaultGameRepositoryDraft retry = repository.openDraft()) {
+            retry.put(new GameInstanceManifest(id));
+        }
+    }
+
+    /// MultiMC publishes the patched JAR with its manifest only after all JAR mods can be applied.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void multiMCUpdatePublishesPatchedClient(boolean missingMod, @TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        repository.save(new GameInstanceManifest(id).withMainClass("original.Main"));
+        DefaultGameInstance original = repository.getInstance(id);
+        Path instanceJar = repository.getLayout().getInstanceJarFile(id);
+        writeVersionJar(instanceJar, "old");
+        Path icon = Files.writeString(original.getInstanceRoot().resolve("icon.png"), "user icon");
+        Path library = Files.createDirectories(original.getInstanceRoot().resolve("libraries")).resolve("embedded.jar");
+        Files.writeString(library, "old library");
+        String oldHash = DigestUtils.digestToString("SHA-1", instanceJar);
+
+        Path client = directory.resolve("client.jar");
+        writeVersionJar(client, "new");
+        String clientHash = DigestUtils.digestToString("SHA-1", client);
+        DefaultCacheRepository cache = new DefaultCacheRepository(directory.resolve("cache"));
+        Path cachedClient = cache.cacheFile(client, "SHA-1", clientHash);
+        DefaultDependencyManager manager = new DefaultDependencyManager(repository, new TestDownloadProvider(cache), cache);
+        Path index = Files.writeString(directory.resolve("index.json"), "{\"objects\":{}}");
+
+        Path archive = directory.resolve("pack.zip");
+        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(archive))) {
+            writeZipEntry(zip, "instance.cfg", "name=Test\niconKey=custom");
+            writeZipEntry(zip, "custom.png", "new icon");
+            writeZipEntry(zip, "libraries/embedded.jar", "new library");
+            writeZipEntry(zip, "mmc-pack.json", """
+                    {"formatVersion":1,"components":[{"uid":"net.minecraft","version":"1.21"}]}
+                    """);
+            writeZipEntry(zip, "patches/net.minecraft.json", """
+                    {"uid":"net.minecraft","formatVersion":1,"version":"1.21",
+                     "mainJar":{"name":"test:client:1","downloads":{"artifact":{"url":"https://example.invalid/client.jar","sha1":"%s"}}},
+                     "assetIndex":{"id":"test","url":"%s"},"libraries":[{"name":"test:library:1"}],
+                     "jarMods":[{"name":"test:patch:1","filename":"patch.jar"}]}
+                    """.formatted(clientHash, index.toUri()));
+            if (!missingMod) {
+                Path patch = directory.resolve("patch.jar");
+                try (Zipper jar = new Zipper(patch)) {
+                    jar.putTextFile("patched", "patch.txt");
+                }
+                zip.putNextEntry(new ZipEntry("jarmods/patch.jar"));
+                Files.copy(patch, zip);
+                zip.closeEntry();
+            }
+        }
+        writeVersionJar(repository.getLayout().getLibraryFile(id, new Library("test", "library", "1")), "1");
+        Modpack pack;
+        try (var zip = CompressingUtils.openZipFile(archive)) {
+            pack = MultiMCModpackProvider.INSTANCE.readManifest(zip, archive);
+        }
+        JsonUtils.writeToJsonFile(repository.getLayout().getModpackConfigurationFile(id),
+                new ModpackConfiguration<>(pack.getManifest(), "MultiMC", "Test", "1", List.of()));
+        Task<?> update = MultiMCModpackProvider.INSTANCE.createUpdateTask(manager, original, archive, pack, null);
+        if (missingMod) {
+            assertThrows(IOException.class, update::run);
+            assertEquals("original.Main", repository.getInstance(id).getManifest().mainClass());
+            assertEquals("user icon", Files.readString(icon));
+            assertEquals("old library", Files.readString(library));
+            assertEquals(oldHash, DigestUtils.digestToString("SHA-1", instanceJar));
+        } else {
+            update.run();
+            assertEquals(clientHash, repository.getInstance(id).getManifest().getDownloadInfo().getSha1());
+            assertEquals("new icon", Files.readString(icon));
+            assertEquals("new library", Files.readString(library));
+            assertEquals("patched", CompressingUtils.readTextZipEntry(instanceJar, "patch.txt"));
+        }
+        assertEquals(clientHash, DigestUtils.digestToString("SHA-1", cachedClient));
     }
 
     /// Non-conventional JSON/jar basenames are kept on disk and recorded on the instance.
@@ -732,7 +924,7 @@ public final class DefaultGameInstanceTest {
 
     /// Minimal repository implementation for snapshot-bound instance tests.
     @NotNullByDefault
-    private static final class TestRepository extends DefaultGameRepository {
+    private static class TestRepository extends DefaultGameRepository {
 
         /// Creates a test repository rooted at the given directory.
         ///

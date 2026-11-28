@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.download.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -26,7 +27,7 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskDialogPane;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -36,6 +37,7 @@ import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -62,6 +64,15 @@ import static org.jackhuang.hmcl.util.logging.Logger.TIME_FORMATTER;
 import static org.jackhuang.hmcl.util.platform.SystemInfo.SYSTEM_PLATFORM;
 
 public final class LauncherHelper {
+
+    /// Locates a suitable Java runtime for the game.
+    private static final TaskStage JAVA_STAGE = new TaskStage("launch.state.java");
+    /// Groups the game files prepared for launch.
+    private static final TaskStage DEPENDENCIES_STAGE = new TaskStage("launch.state.dependencies");
+    /// Signs in the selected account.
+    private static final TaskStage LOGIN_STAGE = new TaskStage("launch.state.logging_in");
+    /// Waits for the game to start.
+    private static final TaskStage LAUNCH_STAGE = new TaskStage("launch.state.waiting_launching");
 
     private static final String LWJGL_3_4_1_TIP = "lwjgl3.4.1-ffm";
 
@@ -91,7 +102,8 @@ public final class LauncherHelper {
         return gameInstance.getRepository();
     }
 
-    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+    /// Displays the tasks for this launch.
+    private final TaskDialogPane launchingStepsPane = new TaskDialogPane(TaskCancellationAction.NORMAL);
 
     public Account getAccount() {
         return account;
@@ -142,6 +154,8 @@ public final class LauncherHelper {
             volatile GameInstanceManifest launchManifest;
             volatile JavaRuntime javaRuntime;
             volatile Path javaExecutable;
+            /// Held until the root launch task publishes its outcome.
+            volatile @Nullable ManagedProcess process;
         };
 
         HMCLGameRepository repository = repository();
@@ -151,11 +165,13 @@ public final class LauncherHelper {
         List<String> javaAgents = new ArrayList<>(0);
         List<String> javaArguments = new ArrayList<>(0);
 
-        // Resolve already deduplicated libraries; apply loader-specific argument repairs for this launch.
-        context.launchManifest = LaunchManifestNormalizer.repairForLaunch(gameInstance.getResolvedManifest());
-
-        TaskExecutor executor = checkGameState(gameInstance, setting, context.launchManifest)
-                .thenComposeAsync(java -> {
+        JavaVersionType javaVersionType = setting.getInheritable(GameSettings::javaTypeProperty);
+        boolean skipJavaCheck = setting.getInheritable(GameSettings::notCheckJVMProperty);
+        Task<?> task = Task.composeAsync(() -> {
+                    context.launchManifest = LaunchManifestNormalizer.repairForLaunch(gameInstance.getResolvedManifest());
+                    return checkGameState(context.launchManifest, javaVersionType, skipJavaCheck);
+                }).withStage(JAVA_STAGE)
+                .thenComposeOptionalAsync(java -> {
                     context.javaRuntime = Objects.requireNonNull(java);
                     context.javaExecutable = java.getBinary();
                     if (java.getPlatform().os() == OperatingSystem.WINDOWS
@@ -173,7 +189,7 @@ public final class LauncherHelper {
                         return null;
                     return Task.allOf(
                             dependencyManager.checkGameCompletionAsync(gameInstance, context.launchManifest, integrityCheck),
-                            Task.composeAsync(() -> {
+                            Task.composeOptionalAsync(() -> {
                                 try {
                                     @Nullable ModpackConfiguration<?> configuration =
                                             gameInstance.readModpackConfiguration();
@@ -188,13 +204,13 @@ public final class LauncherHelper {
                                     return null;
                                 }
                             }),
-                            Task.composeAsync(() -> {
+                            Task.composeOptionalAsync(() -> {
                                 if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS
                                         || !(setting.getRenderer(gameInstance.getVersion()) instanceof Renderer.Driver renderer)
                                         || renderer.mesaDriverName() == null)
                                     return null;
 
-                                Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, SystemInfo.SYSTEM_VERSION);
+                                @Nullable Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, SystemInfo.SYSTEM_VERSION);
                                 if (lib == null)
                                     return null;
                                 Path file = gameInstance.getLayout().getLibraryFile(gameInstance.getId(), lib);
@@ -204,7 +220,6 @@ public final class LauncherHelper {
                                 }
 
                                 String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.mesaDriverName();
-
                                 if (GameLibrariesTask.shouldDownloadLibrary(repository, context.launchManifest, lib, integrityCheck)) {
                                     return new LibraryDownloadTask(dependencyManager, file, lib)
                                             .thenRunAsync(() -> javaAgents.add(agent));
@@ -213,8 +228,8 @@ public final class LauncherHelper {
                                     return null;
                                 }
                             })
-                    );
-                }).withStage("launch.state.dependencies")
+                    ).withStage(DEPENDENCIES_STAGE);
+                })
                 .thenComposeAsync(() -> new GameVerificationFixTask(gameInstance, gameInstance.getVersion(), context.launchManifest))
                 .thenComposeAsync(() -> {
                     if (setting.getInheritable(GameSettings::allowAutoAgentProperty)
@@ -238,7 +253,7 @@ public final class LauncherHelper {
                         return Task.fromCompletableFuture(future);
                     }
                 })
-                .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
+                .thenComposeAsync(() -> logIn(account).withStage(LOGIN_STAGE))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions.Builder launchOptionsBuilder = gameInstance.getLaunchOptions(
                             context.javaRuntime,
@@ -297,54 +312,56 @@ public final class LauncherHelper {
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
                                     : new HMCLProcessListener(authInfo, launchOptions, launchingLatch, gameInstance.getVersion().compareTo(GameVersionNumber.unknown()) != 0)
                     );
-                }).thenComposeAsync(launcher -> { // launcher is prev task's result
-                    if (scriptFile == null) {
-                        return Task.supplyAsync(launcher::launch);
-                    } else {
-                        return Task.supplyAsync(() -> {
+                }).thenComposeAsync(launcher -> {
+                    if (scriptFile != null) {
+                        return Task.runAsync(() -> {
                             launcher.makeLaunchScript(scriptFile);
                             launchingLatch.countDown();
+                        });
+                    }
+                    return new Task<@Nullable Void>() {
+                        /// Records the process before cancellation can discard this task's result.
+                        @Override
+                        public @Nullable Void execute(TaskExecutionContext execution) throws IOException, InterruptedException {
+                            ManagedProcess process = launcher.launch(execution::checkCancellation);
+                            context.process = process;
+                            PROCESSES.add(new WeakReference<>(process));
+                            if (launcherVisibility == LauncherVisibility.CLOSE)
+                                launchingLatch.countDown();
                             return null;
-                        });
-                    }
-                }).thenAcceptAsync(process -> { // process is LaunchTask's result
-                    if (scriptFile == null) {
-                        PROCESSES.add(new WeakReference<>(process));
-                        if (launcherVisibility == LauncherVisibility.CLOSE)
-                            Launcher.stopApplication();
-                        else
-                            launchingStepsPane.setCancel(it -> {
-                                process.stop();
-                                it.fireEvent(new DialogCloseEvent());
-                            });
-                    } else {
-                        runLater(() -> {
-                            launchingStepsPane.fireEvent(new DialogCloseEvent());
-                            Controllers.dialog(i18n("instance.launch_script.success", FileUtils.getAbsolutePath(scriptFile)));
-                        });
-                    }
+                        }
+                    }.setSignificance(TaskSignificance.MODERATE);
                 }).withFakeProgress(
-                        i18n("message.doing"),
+                        new TaskName.Simple(i18n("message.doing")),
                         () -> launchingLatch.getCount() == 0, 6.95
-                ).withStage("launch.state.waiting_launching"))
-                .withStagesHints(
-                        new Task.StagesHint("launch.state.java"),
-                        new Task.StagesHint("launch.state.dependencies", List.of("hmcl.install.assets", "hmcl.install.libraries", "hmcl.modpack.download")),
-                        new Task.StagesHint("launch.state.logging_in"),
-                        new Task.StagesHint("launch.state.waiting_launching"))
-                .executor();
-        launchingStepsPane.setExecutor(executor, false);
-        executor.addTaskListener(new TaskListener() {
+                ).withStage(LAUNCH_STAGE))
+                .withStageHints(
+                        new TaskStage.Hint(JAVA_STAGE),
+                        new TaskStage.Hint(DEPENDENCIES_STAGE, List.of(InstallStages.ASSETS, InstallStages.LIBRARIES, InstallStages.MODPACK_DOWNLOAD)),
+                        new TaskStage.Hint(LOGIN_STAGE),
+                        new TaskStage.Hint(LAUNCH_STAGE));
+        launchingStepsPane.setTask(task, false);
+        task.addTaskListener(new TaskListener() {
 
+            /// Releases the game process on failure and reports the outcome on the JavaFX thread.
             @Override
-            public void onStop(boolean success, TaskExecutor executor) {
+            public void onExecutionFinished(Task<?> task, boolean success) {
+                @Nullable ManagedProcess process = context.process;
+                context.process = null;
+                if (!success && process != null)
+                    process.stopAndWait();
+
                 runLater(() -> {
-                    // Check if the application has stopped
-                    // because onStop will be invoked if tasks fail when the executor service shut down.
                     if (!Controllers.isStopped()) {
                         launchingStepsPane.fireEvent(new DialogCloseEvent());
-                        if (!success) {
-                            Exception ex = executor.getException();
+                        if (success) {
+                            if (scriptFile != null) {
+                                Controllers.dialog(i18n("instance.launch_script.success", FileUtils.getAbsolutePath(scriptFile)));
+                            } else if (process != null) {
+                                finishLaunch(process);
+                            }
+                        } else {
+                            @Nullable Throwable ex = task.exceptionNowOrNull();
                             if (ex != null && !(ex instanceof CancellationException)) {
                                 String message;
                                 if (ex instanceof ModpackCompletionException) {
@@ -424,18 +441,18 @@ public final class LauncherHelper {
                             }
                         }
                     }
-                    launchingStepsPane.setExecutor(null);
+                    launchingStepsPane.setTask(null);
                 });
             }
         });
 
-        launchingStepsPane.startExecutor();
+        launchingStepsPane.startTask().exceptionally(Lang::handleUncaughtException);
     }
 
     /// Checks launch requirements, allowing required Java downloads to share this launch's execution slot.
-    private Task<JavaRuntime> checkGameState(HMCLGameInstance gameInstance, GameSettings.Effective setting, GameInstanceManifest manifest) {
-        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, gameInstance.getVersion());
+    private Task<JavaRuntime> checkGameState(GameInstanceManifest manifest, JavaVersionType javaVersionType, boolean skipJavaCheck) {
         GameVersionNumber gameVersion = gameInstance.getVersion();
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, gameVersion);
 
         Task<JavaRuntime> getJavaTask = Task.supplyAsync(() -> {
             try {
@@ -444,12 +461,10 @@ public final class LauncherHelper {
                 throw new CancellationException();
             }
         });
-        Task<JavaRuntime> task;
-        JavaVersionType javaVersionType = setting.getInheritable(GameSettings::javaTypeProperty);
-        if (setting.getInheritable(GameSettings::notCheckJVMProperty)) {
-            task = getJavaTask.thenApplyAsync(java -> Lang.requireNonNullElse(java, JavaRuntime.getDefault()));
+        if (skipJavaCheck) {
+            return getJavaTask.thenApplyAsync(java -> Lang.requireNonNullElse(java, JavaRuntime.getDefault()));
         } else if (javaVersionType == JavaVersionType.AUTO || javaVersionType == JavaVersionType.VERSION) {
-            task = getJavaTask.thenComposeAsync(Schedulers.javafx(), java -> {
+            return getJavaTask.thenComposeAsync(Schedulers.javafx(), java -> {
                 if (java != null) {
                     return Task.completed(java);
                 }
@@ -521,7 +536,7 @@ public final class LauncherHelper {
                 return result;
             });
         } else {
-            task = getJavaTask.thenComposeAsync(java -> {
+            return getJavaTask.thenComposeAsync(java -> {
                 Set<JavaVersionConstraint> violatedMandatoryConstraints = EnumSet.noneOf(JavaVersionConstraint.class);
                 Set<JavaVersionConstraint> violatedSuggestedConstraints = EnumSet.noneOf(JavaVersionConstraint.class);
 
@@ -731,8 +746,6 @@ public final class LauncherHelper {
                 return result;
             });
         }
-
-        return task.withStage("launch.state.java");
     }
 
     /// Prompts for and downloads Java as a required child of this launch operation.
@@ -749,7 +762,7 @@ public final class LauncherHelper {
                     }
                     DownloadProvider downloadProvider = repository.getDependency().getDownloadProvider();
                     Controllers.taskDialog(JavaManager.getDownloadJavaTask(downloadProvider, SYSTEM_PLATFORM, javaVersion)
-                            .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
                                     future.complete(result);
                                 } else {
@@ -806,6 +819,30 @@ public final class LauncherHelper {
         });
     }
 
+    /// Applies the selected launcher visibility on the JavaFX thread after a successful launch.
+    private void finishLaunch(ManagedProcess process) {
+        @Nullable Stage stage = Controllers.getStage();
+        switch (launcherVisibility) {
+            case CLOSE -> Launcher.stopApplication();
+            case HIDE_AND_REOPEN -> {
+                if (stage != null && process.isRunning()) {
+                    stage.setIconified(false);
+                    stage.hide();
+                }
+            }
+            case HIDE -> {
+                if (stage != null && process.isRunning()) {
+                    stage.close();
+                    Controllers.shutdown();
+                    Schedulers.shutdown();
+                    System.gc();
+                }
+            }
+            case KEEP -> {
+            }
+        }
+    }
+
     private void checkExit() {
         switch (launcherVisibility) {
             case HIDE_AND_REOPEN:
@@ -843,16 +880,14 @@ public final class LauncherHelper {
         }
     }
 
-    /// The managed process listener.
-    /// Guarantee that one Java [Process], one [HMCLProcessListener].
-    /// Because every time we launched a game, we generates a new [HMCLProcessListener]
+    /// Collects logs and handles exit for a single game process.
     private final class HMCLProcessListener implements ProcessListener {
 
         private final ReentrantLock lock = new ReentrantLock();
         private final LaunchOptions launchOptions;
         private ManagedProcess process;
-        private volatile boolean lwjgl;
-        private LogWindow logWindow;
+        /// Log window owned by the JavaFX thread once initialization succeeds.
+        private @Nullable LogWindow logWindow;
         private final boolean detectWindow;
         private final CircularArrayList<Log> logs;
         private final CountDownLatch launchingLatch;
@@ -882,30 +917,27 @@ public final class LauncherHelper {
             }
 
             if (showLogs) {
-                CountDownLatch logWindowLatch = new CountDownLatch(1);
+                // JavaFX runs this before any log updates queued by the submitter below.
                 runLater(() -> {
                     logWindow = new LogWindow(process, logs);
                     logWindow.show();
-                    logWindowLatch.countDown();
                 });
 
                 logBuffer = new LinkedBlockingQueue<>();
                 submitLogThread = Lang.thread(new Runnable() {
+                    /// Pending messages collected by the submitter.
                     private final ArrayList<Log> currentLogs = new ArrayList<>();
-                    private final Semaphore semaphore = new Semaphore(0);
 
+                    /// Queues a stable batch so process cleanup can finish even after JavaFX stops.
                     private void submitLogs() {
-                        if (currentLogs.size() == 1) {
-                            Log log = currentLogs.get(0);
-                            runLater(() -> logWindow.logLine(log));
-                        } else {
-                            runLater(() -> {
-                                logWindow.logLines(currentLogs);
-                                semaphore.release();
-                            });
-                            semaphore.acquireUninterruptibly();
-                        }
+                        if (currentLogs.isEmpty())
+                            return;
+                        @Unmodifiable List<Log> batch = List.copyOf(currentLogs);
                         currentLogs.clear();
+                        runLater(() -> {
+                            if (logWindow != null)
+                                logWindow.logLines(batch);
+                        });
                     }
 
                     @Override
@@ -928,48 +960,7 @@ public final class LauncherHelper {
                         } while (logBuffer.drainTo(currentLogs) > 0);
                     }
                 }, "Game Log Submitter", true);
-
-                try {
-                    logWindowLatch.await();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-
-        private void finishLaunch() {
-            switch (launcherVisibility) {
-                case HIDE_AND_REOPEN:
-                    runLater(() -> {
-                        // If application was stopped and execution services did not finish termination,
-                        // these codes will be executed.
-                        @Nullable Stage stage = Controllers.getStage();
-                        if (stage != null) {
-                            stage.setIconified(false);
-                            stage.hide();
-                            launchingLatch.countDown();
-                        }
-                    });
-                    break;
-                case CLOSE:
-                    // Never come to here.
-                    break;
-                case KEEP:
-                    runLater(launchingLatch::countDown);
-                    break;
-                case HIDE:
-                    launchingLatch.countDown();
-                    runLater(() -> {
-                        // If application was stopped and execution services did not finish termination,
-                        // these codes will be executed.
-                        if (Controllers.getStage() != null) {
-                            Controllers.getStage().close();
-                            Controllers.shutdown();
-                            Schedulers.shutdown();
-                            System.gc();
-                        }
-                    });
-                    break;
+                process.addRelatedThread(submitLogThread);
             }
         }
 
@@ -1000,19 +991,10 @@ public final class LauncherHelper {
                 }
             }
 
-            if (!lwjgl) {
+            if (launchingLatch.getCount() != 0) {
                 String lowerCaseLog = log.toLowerCase(Locale.ROOT);
-                if (!detectWindow || lowerCaseLog.contains("lwjgl version") || lowerCaseLog.contains("lwjgl openal")) {
-                    lock.lock();
-                    try {
-                        if (!lwjgl) {
-                            lwjgl = true;
-                            finishLaunch();
-                        }
-                    } finally {
-                        lock.unlock();
-                    }
-                }
+                if (!detectWindow || lowerCaseLog.contains("lwjgl version") || lowerCaseLog.contains("lwjgl openal"))
+                    launchingLatch.countDown();
             }
         }
 
@@ -1032,17 +1014,6 @@ public final class LauncherHelper {
 
             if (exitType == ExitType.INTERRUPTED)
                 return;
-
-            // Game crashed before opening the game window.
-            if (!lwjgl) {
-                lock.lock();
-                try {
-                    if (!lwjgl)
-                        finishLaunch();
-                } finally {
-                    lock.unlock();
-                }
-            }
 
             if (exitType != ExitType.NORMAL) {
                 gameInstance.markLaunchedAbnormally();

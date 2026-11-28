@@ -4,6 +4,8 @@ package org.jackhuang.hmcl.ui.instances;
 
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -30,14 +32,15 @@ public final class WorldBackupTask extends Task<Path> {
         this.needLock = needLock;
     }
 
+    /// Creates a ZIP backup and returns its absolute path.
     @Override
-    public void execute() throws Exception {
-        try (FileChannel lockChannel = needLock ? world.lock() : null) {
+    public Path execute(TaskExecutionContext context) throws Exception {
+        try (@Nullable FileChannel lockChannel = needLock ? world.lock() : null) {
             Files.createDirectories(backupsDir);
             String time = LocalDateTime.now().format(WorldBackupsPage.TIME_FORMATTER);
             String baseName = time + "_" + world.getFileName();
-            Path backupFile = null;
-            OutputStream outputStream = null;
+            @Nullable Path backupFile = null;
+            @Nullable OutputStream outputStream = null;
 
             int count;
             for (count = 0; count < 256; count++) {
@@ -49,7 +52,7 @@ public final class WorldBackupTask extends Task<Path> {
                 }
             }
 
-            if (outputStream == null)
+            if (outputStream == null || backupFile == null)
                 throw new IOException("Too many attempts");
 
             try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(outputStream))) {
@@ -69,7 +72,7 @@ public final class WorldBackupTask extends Task<Path> {
                 });
             }
 
-            setResult(backupFile);
+            return backupFile;
         }
     }
 }

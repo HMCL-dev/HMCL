@@ -7,13 +7,12 @@ import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /// Downloads the base game component and returns its manifest patch without publishing it.
 ///
@@ -29,14 +28,8 @@ public class GameInstallTask extends Task<GameInstancePatch> {
     /// Working instance manifest that will receive the game patch.
     private final GameInstanceManifest manifest;
 
-    /// Selected remote game version.
-    private final GameRemoteVersion remote;
-
-    /// Task that downloads the selected version's manifest JSON.
-    private final GameInstanceJsonDownloadTask downloadTask;
-
-    /// Downloads scheduled after the remote manifest has been decoded.
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
+    /// Version id used to look up the manifest and identify the game patch.
+    private final String gameVersion;
 
     /// Creates a base-game installation task.
     ///
@@ -44,50 +37,27 @@ public class GameInstallTask extends Task<GameInstancePatch> {
     /// @param manifest          the working instance manifest
     /// @param remoteVersion     the selected remote game version
     public GameInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, GameRemoteVersion remoteVersion) {
-        this.dependencyManager = dependencyManager;
+        this.dependencyManager = Objects.requireNonNull(dependencyManager);
         this.manifest = manifest;
-        this.remote = remoteVersion;
-        this.downloadTask = new GameInstanceJsonDownloadTask(remoteVersion.getGameVersion().toString(), dependencyManager);
+        this.gameVersion = remoteVersion.getGameVersion().toString();
     }
 
-    /// {@inheritDoc}
+    /// Downloads the base manifest and attempts to install the client, assets and libraries in parallel.
+    /// Returns the patch even if one of those file downloads fails.
     @Override
-    public Collection<Task<?>> getDependents() {
-        return Collections.singleton(downloadTask);
-    }
-
-    /// {@inheritDoc}
-    @Override
-    public Collection<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    /// {@inheritDoc}
-    @Override
-    public boolean isRelyingOnDependencies() {
-        return false;
-    }
-
-    /// Decodes the downloaded game manifest and schedules its files without saving repository state.
-    @Override
-    public void execute() throws Exception {
+    public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
+        String json = context.run(new GameInstanceJsonDownloadTask(gameVersion, dependencyManager));
         GameInstancePatch patch = GameInstancePatch.fromManifest(
-                JsonUtils.fromNonNullJson(downloadTask.getResult(), GameInstanceManifest.class),
+                JsonUtils.fromNonNullJson(json, GameInstanceManifest.class),
                 GameComponentType.GAME.getPatchId(),
-                remote.getGameVersion().toString(),
+                gameVersion,
                 GameInstancePatch.PRIORITY_MC).withJar(null);
-        setResult(patch);
 
         GameInstanceManifest newManifest = new GameInstanceManifest(this.manifest.id()).addPatch(patch).reconstructByPatches();
-        dependencies.add(Task.allOf(
+        context.tryRunAll(List.of(
                 new GameDownloadTask(dependencyManager, newManifest),
-                Task.allOf(
-                        new GameAssetDownloadTask(dependencyManager, newManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
-                        new GameLibrariesTask(dependencyManager, newManifest, true)
-                ).withRunAsync(() -> {
-                    // ignore failure
-                })
-        ));
+                new GameAssetDownloadTask(dependencyManager, newManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
+                new GameLibrariesTask(dependencyManager, newManifest, true)));
+        return patch;
     }
-
 }

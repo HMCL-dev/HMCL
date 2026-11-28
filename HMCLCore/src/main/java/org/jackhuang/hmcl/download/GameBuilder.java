@@ -3,7 +3,8 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.game.GameComponentType;
-import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.game.GameInstance;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 
@@ -11,9 +12,9 @@ import java.util.EnumMap;
 
 /// Configures the components used to install or update a game instance.
 ///
-/// A builder owns an exclusive repository draft from construction until it is closed or transfers
-/// that draft to the task returned by [#buildAsync()]. Builders are single-use and are not
-/// thread-safe.
+/// A builder reserves its target until installation finishes or the builder is closed.
+/// Use it in a try-with-resources block. Configuration ends when the build starts or the
+/// builder is closed. Builders are single-use and are not thread-safe.
 ///
 /// @author huangyuhui
 @NotNullByDefault
@@ -22,25 +23,11 @@ public abstract class GameBuilder implements AutoCloseable {
     /// Components to install, keyed by their manifest patch type.
     protected final EnumMap<GameComponentType, Object /* String | RemoteVersion */> components = new EnumMap<>(GameComponentType.class);
 
-    /// Enables instance isolation for the built instance.
-    ///
-    /// Component-provided run-directory files, such as loader-provided mods, are installed under
-    /// the instance root. The concrete builder must also ensure subsequent launches use that same
-    /// directory.
-    ///
-    /// @return this builder
-    /// @throws IllegalStateException if this builder is closed or has already created its build task
+    /// Uses the instance root as the run directory during installation and subsequent launches.
     @Contract("-> this")
     public abstract GameBuilder enableIsolation();
 
-    /// Configures a component by its remote version id.
-    ///
-    /// Reconfiguring the same component type replaces its previous value.
-    ///
-    /// @param componentType the component type
-    /// @param version       the remote version id
-    /// @return this builder
-    /// @throws IllegalStateException if this builder is closed or has already created its build task
+    /// Selects a remote version id, replacing the previous selection for this component.
     @Contract("_, _ -> this")
     public GameBuilder component(GameComponentType componentType, String version) {
         checkOpen();
@@ -48,13 +35,7 @@ public abstract class GameBuilder implements AutoCloseable {
         return this;
     }
 
-    /// Configures a component using an already resolved remote version.
-    ///
-    /// Reconfiguring the same component type replaces its previous value.
-    ///
-    /// @param remoteVersion the remote component version
-    /// @return this builder
-    /// @throws IllegalStateException if this builder is closed or has already created its build task
+    /// Selects a resolved version, replacing the previous selection for its component.
     @Contract("_ -> this")
     public GameBuilder component(ComponentRemoteVersion remoteVersion) {
         checkOpen();
@@ -62,25 +43,14 @@ public abstract class GameBuilder implements AutoCloseable {
         return this;
     }
 
-    /// Creates the task that installs the configured components and publishes the target instance.
-    ///
-    /// This operation may be invoked once. On success, ownership of the builder's exclusive
-    /// repository draft is transferred to the returned task. Closing the builder after that
-    /// transfer has no effect. If this method fails before returning a task, the draft is aborted.
-    ///
-    /// @return the instance build task
-    public abstract Task<?> buildAsync();
+    /// Installs the configured game and components in the current task and returns the published instance.
+    /// Failure or cancellation releases the reservation.
+    public abstract GameInstance build(TaskExecutionContext context) throws Exception;
 
-    /// Abandons this builder and aborts its exclusive repository draft unless ownership has already
-    /// been transferred to a build task.
-    ///
-    /// This operation has no effect after a successful [#buildAsync()] call or after the builder has
-    /// already been closed.
+    /// Releases the reservation if the build has not run.
     @Override
     public abstract void close();
 
-    /// Ensures this builder still accepts configuration or task creation.
-    ///
-    /// @throws IllegalStateException if this builder is closed or has already created its build task
+    /// Throws [IllegalStateException] if this builder is closed or the build has started.
     protected abstract void checkOpen();
 }

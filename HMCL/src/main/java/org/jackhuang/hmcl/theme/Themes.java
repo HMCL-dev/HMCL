@@ -640,7 +640,7 @@ public final class Themes {
         }
         Task.supplyAsync(Schedulers.io(), Themes::loadBackground)
                 .setName("Update background")
-                .whenComplete(Schedulers.javafx(), (newLoadedBackground, exception) -> {
+                .whenCompleteAsync(Schedulers.javafx(), (newLoadedBackground, exception) -> {
                     if (exception == null) {
                         applyLoadedBackground(newLoadedBackground, currentGeneration);
                     } else {

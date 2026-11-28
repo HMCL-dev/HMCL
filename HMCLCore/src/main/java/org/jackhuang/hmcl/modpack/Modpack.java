@@ -3,13 +3,27 @@
 package org.jackhuang.hmcl.modpack;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DefaultGameBuilder;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
+import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  *
@@ -109,6 +123,121 @@ public abstract class Modpack {
             GameInstanceID instanceId,
             String iconUrl,
             @Nullable Set<String> excludedFiles);
+
+    /// Reserves the target and checks cancellation before accepting the installation result.
+    /// Updates retain a backup on success and restore it on failure.
+    /// Failure rolls back a new instance if its manifest is still current, except when
+    /// `keepIncompleteInstance` allows manual recovery from a [ModpackCompletionException].
+    /// Cleanup failures are suppressed on the installation failure.
+    ///
+    /// @param updateTarget the exact published instance to update, or `null` for a new installation
+    /// @param install must finish preparatory writes before building and all instance writes before returning
+    public static void installWithGameBuilder(
+            TaskExecutionContext context, DefaultDependencyManager dependencyManager, GameInstanceID instanceId,
+            @Nullable DefaultGameInstance updateTarget, boolean keepIncompleteInstance,
+            ExceptionalConsumer<? super DefaultGameBuilder, Exception> install) throws Exception {
+        try (DefaultGameBuilder builder = updateTarget == null
+                ? dependencyManager.newGameBuilder(instanceId)
+                : dependencyManager.newGameBuilder(updateTarget)) {
+            installWithGameBuilder(context, builder, keepIncompleteInstance, () -> install.accept(builder));
+        }
+    }
+
+    /// Installs into a caller-owned draft after validation, backing up an update before the first write.
+    /// The caller closes the builder after this method returns or throws.
+    public static void installWithGameBuilder(
+            TaskExecutionContext context, DefaultGameBuilder builder, boolean keepIncompleteInstance,
+            ExceptionalRunnable<Exception> install) throws Exception {
+        context.checkCancellation();
+        @Nullable DefaultGameInstance updateTarget = builder.getUpdateTarget();
+        @Nullable Path backup = updateTarget == null ? null : createUpdateBackup(updateTarget);
+        context.checkCancellation();
+        try {
+            try {
+                install.run();
+            } catch (ModpackCompletionException incomplete) {
+                if (keepIncompleteInstance)
+                    context.commit();
+                throw incomplete;
+            }
+            context.commit();
+        } catch (Exception | Error failure) {
+            try {
+                if (backup != null && updateTarget != null) {
+                    builder.abort();
+                    restoreUpdateBackup(updateTarget, backup, builder.getCommittedManifest());
+                } else if (!(keepIncompleteInstance && failure instanceof ModpackCompletionException)) {
+                    builder.rollback();
+                }
+            } catch (Exception | Error cleanup) {
+                failure.addSuppressed(cleanup);
+            }
+            throw failure;
+        }
+    }
+
+    /// Copies the reserved instance to a new backup retained after the update.
+    public static Path createUpdateBackup(DefaultGameInstance instance) throws IOException {
+        Path parent = Files.createDirectories(instance.getLayout().getBaseDirectory().resolve("backup"));
+        Path backup;
+        while (true) {
+            backup = parent.resolve(instance.getId() + "-" + ThreadLocalRandom.current().nextInt(10_000_000));
+            try {
+                Files.createDirectory(backup);
+                break;
+            } catch (FileAlreadyExistsException ignored) {
+                // Reserve a different name without touching an existing backup.
+            }
+        }
+        FileUtils.copyDirectory(instance.getInstanceRoot(), backup);
+        return backup;
+    }
+
+    /// Restores the backup if the instance still owns the directory, then refreshes the repository.
+    public static void restoreUpdateBackup(DefaultGameInstance instance, Path backup, @Nullable GameInstanceManifest published) throws IOException {
+        var repository = instance.getRepository();
+        try (var draft = repository.openDraft()) {
+            @Nullable DefaultGameInstance current = draft.getBaseSnapshot().findInstance(instance.getId());
+            if (current == null || current.getManifest() != (published == null ? instance.getManifest() : published))
+                throw new IllegalStateException("Game instance changed before backup restoration: " + instance.getId());
+            Path root = instance.getInstanceRoot();
+            FileUtils.deleteDirectory(root);
+            FileUtils.copyDirectory(backup, root);
+        }
+        repository.refresh();
+    }
+
+    /// Removes a retired file or symbolic link inside the pack directory without following the link.
+    public static void removePackFile(Path directory, Path file) throws IOException {
+        Path root = directory.toAbsolutePath().normalize();
+        Path target = file.toAbsolutePath().normalize();
+        if (!target.startsWith(root) || target.equals(root))
+            return;
+        if (!Files.isRegularFile(target, LinkOption.NOFOLLOW_LINKS) && !Files.isSymbolicLink(target))
+            return;
+        Path parent = target.getParent();
+        if (parent.toRealPath().equals(root.toRealPath().resolve(root.relativize(parent))))
+            Files.deleteIfExists(target);
+    }
+
+    /// Downloads missing pack files. Cancellation or interruption takes precedence over incomplete files.
+    public static void completeDownloads(TaskExecutionContext context, List<? extends Task<?>> downloads,
+                                         @Nullable ModpackCompletionException incomplete) throws Exception {
+        if (!downloads.isEmpty())
+            context.addStageItems(downloads.size());
+        try {
+            context.runAll(downloads, FetchTask.getDownloadExecutorConcurrency());
+        } catch (InterruptedException | CancellationException cancelled) {
+            throw cancelled;
+        } catch (Exception failure) {
+            if (incomplete == null)
+                incomplete = new ModpackCompletionException();
+            incomplete.addSuppressed(failure);
+        }
+        context.checkCancellation();
+        if (incomplete != null)
+            throw incomplete;
+    }
 
     public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {
         if (path.isEmpty())

@@ -351,6 +351,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
         }, Schedulers.javafx());
     }
 
+    /// Prompts for mod files and reports which ones were added.
     public void add() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.add.title"));
@@ -375,7 +376,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
                     // Actually addMod will not throw exceptions because FileChooser has already filtered files.
                 }
             }
-        }).withRunAsync(Schedulers.javafx(), () -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (@Nullable Void ignored, @Nullable Throwable failure) -> {
             List<String> prompt = new ArrayList<>(1);
             if (!succeeded.isEmpty())
                 prompt.add(i18n("mods.add.success", String.join(", ", succeeded)));
@@ -442,7 +443,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
 
         Path modDirectory = gameInstance.getModManager().getDirectory();
         Runnable action = () -> Controllers.taskDialog(Task
-                        .composeAsync(() -> {
+                        .composeOptionalAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
                             if (version != GameVersionNumber.unknown()) {
                                 return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), mods);
@@ -451,7 +452,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
                                 return null;
                             }
                         })
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                             if (exception instanceof CancellationException) return;
                             if (exception != null || result == null) {
                                 Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
@@ -462,7 +463,7 @@ public final class ModListPage extends ListPaneBase<ModListPage.ModInfoObject> i
                                 Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), modDirectory, result));
                             }
                         })
-                        .withStagesHints("update.checking"),
+                        .withStageHints(AddonCheckUpdatesTask.STAGE),
                 i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
         if (gameInstance.isModpack()) {

@@ -5,19 +5,26 @@ package org.jackhuang.hmcl.modpack.server;
 import com.google.gson.JsonParseException;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.modpack.ModpackConfiguration.FileInformation;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskSignificance;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,7 +37,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Synchronizes an installed server modpack with its remote manifest.
 @NotNullByDefault
-public class ServerModpackCompletionTask extends Task<Void> {
+public class ServerModpackCompletionTask extends Task<@Nullable Void> {
 
     /// The dependency manager used for downloads and game-component updates.
     private final DefaultDependencyManager dependencyManager;
@@ -41,17 +48,8 @@ public class ServerModpackCompletionTask extends Task<Void> {
     /// The fixed configuration-file path for [#instance].
     private final Path configurationFile;
 
-    /// The installed configuration supplied by the caller or loaded from disk.
-    private @Nullable ModpackConfiguration<ServerModpackManifest> manifest;
-
-    /// The remote-manifest request created during [#preExecute()].
-    private @Nullable GetTask dependent;
-
-    /// The remote manifest parsed during [#execute()].
-    private @Nullable ServerModpackManifest remoteManifest;
-
-    /// Download and game-builder tasks produced during [#execute()].
-    private final List<Task<?>> dependencies = new ArrayList<>();
+    /// The supplied configuration, or `null` to load the installed configuration during execution.
+    private final @Nullable ModpackConfiguration<ServerModpackManifest> manifest;
 
     /// Creates a task that loads the installed configuration from disk.
     ///
@@ -74,86 +72,81 @@ public class ServerModpackCompletionTask extends Task<Void> {
         this.dependencyManager = dependencyManager;
         this.instance = instance;
         this.configurationFile = instance.getModpackConfigurationFile();
+        this.manifest = manifest;
 
-        if (manifest == null) {
-            try {
-                if (Files.exists(configurationFile)) {
-                    this.manifest = JsonUtils.fromJsonFile(configurationFile, ModpackConfiguration.typeOf(ServerModpackManifest.class));
-                }
-            } catch (Exception e) {
-                LOG.warning("Unable to read Server modpack manifest.json", e);
-            }
-        } else {
-            this.manifest = manifest;
-        }
-
-        setStage("hmcl.modpack.download");
         setSignificance(TaskSignificance.MODERATE);
-    }
-
-    @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() throws Exception {
-        if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
-        dependent = new GetTask(WebURL.parse(manifest.getManifest().getFileApi() + "/server-manifest.json"));
-    }
-
-    @Override
-    public Collection<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public Collection<Task<?>> getDependents() {
-        return dependent == null ? Collections.emptySet() : Collections.singleton(dependent);
     }
 
     private Map<String, String> toMap(Collection<ServerModpackManifest.Addon> addons) {
         return addons.stream().collect(Collectors.toMap(ServerModpackManifest.Addon::getId, ServerModpackManifest.Addon::getVersion));
     }
 
+    /// Returns the stage for modpack downloads.
     @Override
-    public void execute() throws Exception {
-        if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
+    public TaskStage getStage() {
+        return InstallStages.MODPACK_DOWNLOAD;
+    }
 
+    /// Synchronizes game components and files against the remote manifest.
+    @Override
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        @Nullable ModpackConfiguration<ServerModpackManifest> installed = manifest;
+        if (installed == null) {
+            try {
+                if (Files.exists(configurationFile))
+                    installed = JsonUtils.fromJsonFile(configurationFile, ModpackConfiguration.typeOf(ServerModpackManifest.class));
+            } catch (Exception e) {
+                LOG.warning("Unable to read Server modpack manifest.json", e);
+            }
+        }
+        if (installed == null || StringUtils.isBlank(installed.getManifest().getFileApi())) return null;
+
+        String json = context.run(new GetTask(WebURL.parse(installed.getManifest().getFileApi() + "/server-manifest.json")));
+        ServerModpackManifest remoteManifest;
         try {
-            remoteManifest = JsonUtils.fromNonNullJson(dependent.getResult(), ServerModpackManifest.class);
+            remoteManifest = JsonUtils.fromNonNullJson(json, ServerModpackManifest.class);
         } catch (JsonParseException e) {
             throw new IOException(e);
         }
 
-        Map<String, String> oldAddons = toMap(manifest.getManifest().getAddons());
-        Map<String, String> newAddons = toMap(remoteManifest.getAddons());
-        if (!Objects.equals(oldAddons, newAddons)) {
-            try (GameBuilder builder = dependencyManager.newGameBuilder(instance)) {
+        if (!toMap(installed.getManifest().getAddons()).equals(toMap(remoteManifest.getAddons()))) {
+            try (var builder = dependencyManager.newGameBuilder(instance)) {
                 for (ServerModpackManifest.Addon addon : remoteManifest.getAddons()) {
-                    @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
-                    if (componentType != null)
-                        builder.component(componentType, addon.getVersion());
+                    @Nullable GameComponentType type = GameComponentType.fromPatchId(addon.getId());
+                    if (type != null)
+                        builder.component(type, addon.getVersion());
                 }
-
-                dependencies.add(builder.buildAsync());
+                syncFiles(context, installed, remoteManifest, false);
+                DefaultGameInstance updated = builder.buildAsTaskResult(context);
+                try (var draft = instance.getRepository().openDraft()) {
+                    @Nullable DefaultGameInstance current = draft.getBaseSnapshot().findInstance(instance.getId());
+                    // Unrelated saves rebind the instance to a new snapshot but retain its manifest.
+                    if (current != null && current.getManifest() == updated.getManifest())
+                        writeConfiguration(installed, remoteManifest, remoteManifest.getFiles());
+                }
             }
+        } else {
+            syncFiles(context, installed, remoteManifest, true);
         }
+        return null;
+    }
 
+    /// Records installed file hashes even if the batch fails or a component build is still pending.
+    private void syncFiles(TaskExecutionContext context, ModpackConfiguration<ServerModpackManifest> installed,
+                           ServerModpackManifest remoteManifest, boolean publishManifest) throws Exception {
+        Map<FileInformation, Task<?>> downloads = new LinkedHashMap<>();
         Path rootPath = instance.getInstanceRoot().toAbsolutePath().normalize();
-        Map<String, ModpackConfiguration.FileInformation> files = manifest.getManifest().getFiles().stream()
-                .collect(Collectors.toMap(ModpackConfiguration.FileInformation::getPath,
-                        Function.identity()));
+        Map<String, FileInformation> files = installed.getManifest().getFiles().stream()
+                .collect(Collectors.toMap(FileInformation::getPath, Function.identity()));
 
-        Set<String> remoteFiles = remoteManifest.getFiles().stream().map(ModpackConfiguration.FileInformation::getPath)
+        Set<String> remoteFiles = remoteManifest.getFiles().stream().map(FileInformation::getPath)
                 .collect(Collectors.toSet());
 
         Path runDirectory = instance.getRunDirectory().toAbsolutePath().normalize();
         Path modsDirectory = runDirectory.resolve("mods");
 
-        int total = 0;
         // for files in new modpack
-        for (ModpackConfiguration.FileInformation file : remoteManifest.getFiles()) {
+        for (FileInformation file : remoteManifest.getFiles()) {
             Path actualPath = rootPath.resolve(file.getPath()).toAbsolutePath().normalize();
             String fileName = actualPath.getFileName().toString();
 
@@ -184,35 +177,88 @@ public class ServerModpackCompletionTask extends Task<Void> {
             }
 
             if (download) {
-                total++;
-                dependencies.add(new FileDownloadTask(
+                downloads.put(file, new FileDownloadTask(
                         remoteManifest.getFileApi() + "/overrides/" + file.getPath(),
                         actualPath,
                         new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
-                        .withCounter("hmcl.modpack.download"));
+                        .withCounter());
             }
         }
 
-        // If old modpack have this entry, and new modpack deleted it. Delete this file.
-        for (ModpackConfiguration.FileInformation file : manifest.getManifest().getFiles()) {
-            Path actualPath = rootPath.resolve(file.getPath());
-            if (Files.exists(actualPath) && !remoteFiles.contains(file.getPath()))
-                Files.deleteIfExists(actualPath);
+        Set<String> removed = new HashSet<>();
+        try {
+            for (FileInformation file : installed.getManifest().getFiles()) {
+                if (!remoteFiles.contains(file.getPath())) {
+                    Modpack.removePackFile(rootPath, rootPath.resolve(file.getPath()));
+                    removed.add(file.getPath());
+                }
+            }
+            context.addStageItems(downloads.size());
+            context.runAll(downloads.values(), FetchTask.getDownloadExecutorConcurrency());
+            if (publishManifest) {
+                context.commit();
+                writeConfiguration(installed, remoteManifest, remoteManifest.getFiles());
+                return;
+            }
+        } catch (Exception | Error failure) {
+            boolean interrupted = Thread.interrupted();
+            try {
+                downloads.entrySet().removeIf(entry -> !wasDownloaded(entry.getValue(), rootPath, entry.getKey(), failure));
+                recordFileChanges(installed, downloads.keySet(), removed);
+            } catch (Exception | Error cleanup) {
+                failure.addSuppressed(cleanup);
+            } finally {
+                if (interrupted)
+                    Thread.currentThread().interrupt();
+            }
+            throw failure;
         }
-
-        getProperties().put("total", dependencies.size());
-        notifyPropertiesChanged();
+        recordFileChanges(installed, downloads.keySet(), removed);
     }
 
-    @Override
-    public boolean doPostExecute() {
-        return true;
+    /// A failed or cancelled download may already have replaced its destination.
+    private static boolean wasDownloaded(Task<?> task, Path root, FileInformation file, Throwable failure) {
+        if (task.getState() == Task.State.SUCCEEDED)
+            return true;
+        if (task.getState() == Task.State.NEW)
+            return false;
+        Path path = root.resolve(file.getPath());
+        try {
+            return Files.isRegularFile(path) && file.getHash().equalsIgnoreCase(DigestUtils.digestToString("SHA-1", path));
+        } catch (IOException e) {
+            failure.addSuppressed(e);
+            return false;
+        }
     }
 
-    @Override
-    public void postExecute() throws Exception {
-        if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
+    /// Preserves the installed pack metadata and applies the same changes to both file lists.
+    private void recordFileChanges(ModpackConfiguration<ServerModpackManifest> installed,
+                                   Collection<FileInformation> written, Set<String> removed) throws IOException {
+        if (written.isEmpty() && removed.isEmpty())
+            return;
+        ServerModpackManifest previous = installed.getManifest();
+        ServerModpackManifest partial = previous.withFiles(updatedFiles(previous.getFiles(), written, removed));
+        writeConfiguration(installed, partial, updatedFiles(installed.getOverrides(), written, removed));
+    }
+
+    /// Replaces written entries by path, leaving unrelated entries in their original order.
+    private static @Unmodifiable List<FileInformation> updatedFiles(List<FileInformation> previous,
+            Collection<FileInformation> written, Set<String> removed) {
+        Map<String, FileInformation> result = new LinkedHashMap<>();
+        for (FileInformation file : previous) {
+            if (!removed.contains(file.getPath()))
+                result.put(file.getPath(), file);
+        }
+        for (FileInformation file : written)
+            result.put(file.getPath(), file);
+        return List.copyOf(result.values());
+    }
+
+    /// Persists the component versions and file hashes known to the installation.
+    private void writeConfiguration(ModpackConfiguration<ServerModpackManifest> installed, ServerModpackManifest remote,
+                                    List<FileInformation> overrides) throws IOException {
         Files.createDirectories(configurationFile.getParent());
-        JsonUtils.writeToJsonFile(configurationFile, new ModpackConfiguration<>(remoteManifest, this.manifest.getType(), this.manifest.getName(), this.manifest.getVersion(), remoteManifest.getFiles()));
+        JsonUtils.writeToJsonFile(configurationFile, new ModpackConfiguration<>(remote, installed.getType(),
+                installed.getName(), installed.getVersion(), overrides));
     }
 }

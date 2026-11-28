@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.modpack.multimc;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
@@ -12,8 +13,10 @@ import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackInstallTask;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -24,8 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.util.*;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// A task transforming MultiMC Modpack Scheme to Official Launcher Scheme.
 /// The transforming process contains 7 stage:
@@ -55,18 +56,10 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     private final @Nullable DefaultGameInstance updateTarget;
 
     private final DefaultGameRepository repository;
-    private final List<Task<?>> dependents = new ArrayList<>();
-    private final List<Task<?>> dependencies = new ArrayList<>();
     private final DefaultDependencyManager dependencyManager;
 
     /// Previous modpack configuration when updating, or `null` for a new installation.
     private final @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config;
-
-    /// The repository transaction that owns a newly created instance root until publication.
-    private @Nullable DefaultGameRepositoryDraft draft;
-
-    /// Whether this task successfully reserved a previously absent instance in its draft.
-    private boolean newInstallationReserved;
 
     /// Creates a MultiMC modpack installation task.
     ///
@@ -143,46 +136,10 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         } catch (JsonParseException | IOException ignore) {
         }
         this.config = config;
-
-        onDone().register(event -> {
-            abortOpenDraft();
-            if (event.isFailed() && newInstallationReserved)
-                repository.removeInstanceFromDisk(instanceId);
-        });
     }
 
-    @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    /// Reserves the instance in a repository draft before preparing tasks that write its root.
-    @Override
-    public void preExecute() throws Exception {
-        DefaultGameRepositoryDraft openedDraft = repository.openDraft();
-        draft = openedDraft;
-        try {
-            // Construction fixes the mode; the captured snapshot only verifies that it is still valid.
-            boolean targetExists = openedDraft.getBaseSnapshot().hasInstance(instanceId);
-            if (this.updateTarget == null && targetExists) {
-                throw new IllegalStateException("Game instance already exists: " + instanceId);
-            }
-            if (this.updateTarget != null && !targetExists) {
-                throw new IllegalStateException("Game instance no longer exists: " + instanceId);
-            }
-
-            openedDraft.put(new GameInstanceManifest(instanceId));
-            newInstallationReserved = this.updateTarget == null;
-        } catch (IOException | RuntimeException e) {
-            try {
-                openedDraft.abort();
-            } catch (IOException cleanupFailure) {
-                e.addSuppressed(cleanupFailure);
-            }
-            draft = null;
-            throw e;
-        }
-
+    /// Prepares the extraction tasks and returns the task that assembles the pack's patches.
+    private MMCInstancePatchesAssembleTask prepareInstallation(List<Task<?>> preparation) throws Exception {
         // Stage #0: General Setup
         {
             Path run = repository.getLayout().getInstanceRoot(instanceId);
@@ -193,8 +150,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             }
 
             // TODO: Optimize unbearably slow ModpackInstallTask
-            dependents.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
-            dependents.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+            preparation.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(mcDirectory), any -> true, config).withStage(InstallStages.MODPACK));
+            preparation.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getLayout().getModpackConfigurationFile(instanceId)).withStage(InstallStages.MODPACK));
         }
 
         // Stage #1: Load all related Json-Patch from meta maven or local mod pack.
@@ -236,7 +193,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                     );
                 }
             }
-            dependents.add(new MMCInstancePatchesAssembleTask(patches, mcVersion));
+            return new MMCInstancePatchesAssembleTask(patches, mcVersion);
         }
     }
 
@@ -249,18 +206,12 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             this.mcVersion = mcVersion;
         }
 
+        /// Resolves the initial patches and any transitive requirements discovered in them.
         @Override
-        public Collection<? extends Task<?>> getDependents() {
-            return patches;
-        }
-
-        @Override
-        public void execute() throws Exception {
+        public List<MultiMCInstancePatch> execute(TaskExecutionContext context) throws Exception {
             Map<String, MultiMCInstancePatch> existed = new LinkedHashMap<>();
-            for (Task<MultiMCInstancePatch> patch : patches) {
-                MultiMCInstancePatch result = patch.getResult();
-
-                existed.put(result.getID(), result);
+            for (MultiMCInstancePatch patch : context.runAll(patches, FetchTask.getDownloadExecutorConcurrency())) {
+                existed.put(patch.getID(), patch);
             }
 
             checking:
@@ -272,9 +223,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                             Task<MultiMCInstancePatch> task = new GetTask(MultiMCComponents.getMetaURL(
                                     componentID, Lang.requireNonNullElse(require.getEqualsVersion(), require.getSuggests()), mcVersion
                             )).thenApplyAsync(s -> MultiMCInstancePatch.read(componentID, s));
-                            task.run();
-
-                            MultiMCInstancePatch result = Objects.requireNonNull(task.getResult());
+                            MultiMCInstancePatch result = context.run(task);
                             existed.put(result.getID(), result);
                             continue checking;
                         }
@@ -284,29 +233,50 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                 break;
             }
 
-            setResult(new ArrayList<>(existed.values()));
+            return new ArrayList<>(existed.values());
         }
     }
 
+    /// Reserves the target before writing files and commits the installed manifest.
+    /// Closing an uncommitted draft removes files under a newly reserved instance root.
     @Override
-    public List<Task<?>> getDependents() {
-        // Stage #2: Resolve all Json-Patch
-        return dependents;
-    }
+    public MultiMCInstancePatch.ResolvedInstance execute(TaskExecutionContext context) throws Exception {
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            @Nullable DefaultGameInstance current = draft.getBaseSnapshot().findInstance(instanceId);
+            if (updateTarget == null && current != null)
+                throw new IllegalStateException("Game instance already exists: " + instanceId);
+            if (current != updateTarget)
+                throw new IllegalStateException("Game instance has changed: " + instanceId);
 
-    /// {@inheritDoc}
-    @Override
-    public void execute() throws Exception {
-        // Stage #3: Build Json-Patch artifact.
-        @Nullable MultiMCInstancePatch.ResolvedInstance artifact = null;
-        for (int i = dependents.size() - 1; i >= 0; i--) {
-            Task<?> task = dependents.get(i);
-            if (task instanceof MMCInstancePatchesAssembleTask) {
-                artifact = MultiMCInstancePatch.resolveArtifact(((MMCInstancePatchesAssembleTask) task).getResult(), instanceId);
-                break;
+            draft.put(new GameInstanceManifest(instanceId));
+            @Nullable Path backup = updateTarget == null ? null : Modpack.createUpdateBackup(updateTarget);
+            try {
+                MultiMCInstancePatch.ResolvedInstance artifact = install(context);
+                draft.put(artifact.getManifest());
+                context.commit();
+                draft.commit();
+                return artifact;
+            } catch (Exception | Error failure) {
+                if (backup != null && updateTarget != null) {
+                    try {
+                        draft.close();
+                        Modpack.restoreUpdateBackup(updateTarget, backup, null);
+                    } catch (Exception | Error cleanup) {
+                        failure.addSuppressed(cleanup);
+                    }
+                }
+                throw failure;
             }
         }
-        Objects.requireNonNull(artifact, "artifact");
+    }
+
+    /// Resolves the pack's patches and installs its files under the reserved instance root.
+    private MultiMCInstancePatch.ResolvedInstance install(TaskExecutionContext context) throws Exception {
+        List<Task<?>> preparation = new ArrayList<>();
+        MMCInstancePatchesAssembleTask patches = prepareInstallation(preparation);
+        preparation.add(patches);
+        context.runAll(preparation);
+        MultiMCInstancePatch.ResolvedInstance artifact = MultiMCInstancePatch.resolveArtifact(patches.resultNow(), instanceId);
 
         // Stage #4: Copy embedded files.
         try (FileSystem fs = openModpack()) {
@@ -348,11 +318,10 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             }
         }
 
+        List<Task<?>> dependencies = new ArrayList<>();
         // Stage #5: Assemble game files.
         {
             GameInstanceManifest instanceManifest = artifact.getManifest();
-            requireDraft().put(instanceManifest);
-
             dependencies.add(new GameAssetDownloadTask(dependencyManager, instanceManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true));
             dependencies.add(new GameLibrariesTask(
                     dependencyManager,
@@ -364,33 +333,12 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             Path instanceJar = getPrimaryJarFile();
             dependencies.add(new GameDownloadTask(dependencyManager, instanceManifest)
                     .thenAcceptAsync(cachedJar -> FileUtils.copyFile(cachedJar, instanceJar))
-                    .withStage("hmcl.modpack.download"));
+                    .withStage(InstallStages.MODPACK_DOWNLOAD));
         }
 
-        setResult(artifact);
-    }
-
-    @Override
-    public List<Task<?>> getDependencies() {
-        // Stage #6: Download game files.
-        return dependencies;
-    }
-
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    /// Applies JAR mods after downloads succeed and then publishes the completed manifest.
-    @Override
-    public void postExecute() throws Exception {
-        MultiMCInstancePatch.ResolvedInstance artifact = Objects.requireNonNull(getResult(), "ResolvedInstance");
+        context.runAll(dependencies);
 
         List<String> files = artifact.getJarModFileNames();
-        if (!isDependenciesSucceeded()) {
-            return;
-        }
-
         if (!files.isEmpty()) {
             // Stage #7: Apply jar mods.
             try (FileSystem fs = openModpack()) {
@@ -406,7 +354,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             }
         }
 
-        requireDraft().commit();
+        return artifact;
     }
 
     /// Returns the primary JAR path retained by the current draft.
@@ -422,31 +370,6 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
         Path manifestFile = updateTarget.getManifestFile();
         return manifestFile.resolveSibling(FileUtils.getNameWithoutExtension(manifestFile) + ".jar");
-    }
-
-    /// Returns the open draft associated with this task.
-    ///
-    /// @return the open draft
-    /// @throws IllegalStateException if the task has not reserved a draft or already released it
-    private DefaultGameRepositoryDraft requireDraft() {
-        @Nullable DefaultGameRepositoryDraft currentDraft = draft;
-        if (currentDraft == null || !currentDraft.isOpen()) {
-            throw new IllegalStateException("MultiMC installation draft is not open");
-        }
-        return currentDraft;
-    }
-
-    /// Aborts the task's draft when execution ends before commit.
-    private void abortOpenDraft() {
-        @Nullable DefaultGameRepositoryDraft currentDraft = draft;
-        if (currentDraft == null || !currentDraft.isOpen()) {
-            return;
-        }
-        try {
-            currentDraft.abort();
-        } catch (IOException e) {
-            LOG.warning("Failed to abort MultiMC installation draft for " + instanceId, e);
-        }
     }
 
     private FileSystem openModpack() throws IOException {

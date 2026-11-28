@@ -5,6 +5,8 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -15,18 +17,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 
-/// Installs a new game instance or replaces an existing instance in an exclusive
-/// [GameRepositoryDraft], then publishes the completed instance once.
-///
-/// Each builder receives a target already reserved by its dependency manager in an exclusive
-/// draft. An update requires the supplied snapshot-bound instance to remain the exact currently
-/// published object when the manager creates the builder.
-///
-/// Replacement starts from an empty manifest with the target id and installs only the configured
-/// components. It retains the existing run directory unless isolation is explicitly enabled.
-///
-/// Shared libraries, assets, and download caches may remain after failure. The instance manifest
-/// and primary JAR enter the instance tree only when the draft commits.
+/// Publishes the manifest and primary JAR together. Replacement builds retain the existing run
+/// directory unless isolation is enabled. Shared libraries, assets, and caches may remain after failure.
 @NotNullByDefault
 public class DefaultGameBuilder extends GameBuilder {
 
@@ -39,27 +31,23 @@ public class DefaultGameBuilder extends GameBuilder {
     /// Existing instance selecting update mode, or `null` for a new installation.
     private final @Nullable DefaultGameInstance updateTarget;
 
-    /// Exclusive repository draft retained until the build task takes ownership or this builder closes.
+    /// Exclusive repository draft used to publish the build.
     private final DefaultGameRepositoryDraft draft;
 
-    /// Empty manifest reserved in the draft for the target instance.
-    private final GameInstanceManifest initialManifest;
+    /// Manifest to which the selected game components will be added.
+    private GameInstanceManifest initialManifest;
 
-    /// Whether ownership of [#draft] has been transferred to the task returned by [#buildAsync()].
-    private boolean draftTransferred;
+    /// Whether installation has started and configuration is frozen.
+    private boolean buildStarted;
+
+    /// Manifest published by this builder, used to verify ownership during rollback.
+    private @Nullable GameInstanceManifest committedManifest;
 
     /// Whether instance isolation was requested for this build.
     protected boolean isolationEnabled;
 
-    /// Creates a builder around a target already reserved by its dependency manager.
-    ///
-    /// @param dependencyManager the dependency manager for the target repository
-    /// @param instanceId        the id of the reserved instance and `initialManifest`
-    /// @param updateTarget      the exact update target retained by the draft, or `null` for install
-    /// @param draft             the open draft containing `initialManifest`; it must belong to
-    ///                          `dependencyManager`
-    /// @param initialManifest   the empty target manifest retained by `draft`; its id must equal
-    ///                          `instanceId`
+    /// Uses the manager's open draft containing the empty manifest for `instanceId`.
+    /// For an update, `updateTarget` must be the published instance reserved in that draft.
     protected DefaultGameBuilder(
             DefaultDependencyManager dependencyManager,
             GameInstanceID instanceId,
@@ -74,10 +62,24 @@ public class DefaultGameBuilder extends GameBuilder {
     }
 
     /// Returns the dependency manager used by this builder.
-    ///
-    /// @return the dependency manager
     public DefaultDependencyManager getDependencyManager() {
         return dependencyManager;
+    }
+
+    /// Returns the instance reserved for an update, or null for a new installation.
+    public @Nullable DefaultGameInstance getUpdateTarget() {
+        return updateTarget;
+    }
+
+    /// Returns the manifest published by this build, or null before publication.
+    public @Nullable GameInstanceManifest getCommittedManifest() {
+        return committedManifest;
+    }
+
+    /// Includes a modpack patch in the manifest published by this build.
+    public void addPatch(GameInstancePatch patch) {
+        checkOpen();
+        initialManifest = initialManifest.addPatch(patch);
     }
 
     /// {@inheritDoc}
@@ -90,35 +92,37 @@ public class DefaultGameBuilder extends GameBuilder {
     }
 
     /// {@inheritDoc}
-    ///
-    /// Installs the configured game and optional loaders into the draft reserved by this builder,
-    /// resolves the launch view, and commits it with the original patches once. Failure or
-    /// cancellation aborts the transferred draft.
-    ///
-    /// @return the build task
-    /// @throws IllegalStateException if the configured game version is absent, the builder is
-    ///                               closed, or this method has already returned a task
     @Override
-    public Task<?> buildAsync() {
+    public DefaultGameInstance build(TaskExecutionContext context) throws Exception {
+        return build(context, context::checkCancellation);
+    }
+
+    /// Publishes the instance as the task's result, accepting cancellation until publication begins.
+    public DefaultGameInstance buildAsTaskResult(TaskExecutionContext context) throws Exception {
+        return build(context, context::commit);
+    }
+
+    /// Prepares the manifest and client JAR, then checks cancellation before publishing both.
+    private DefaultGameInstance build(TaskExecutionContext context, Runnable beforePublication) throws Exception {
         checkOpen();
-        try {
+        buildStarted = true;
+        try (draft) {
+            context.checkCancellation();
             @Nullable String gameVersion = (String) components.get(GameComponentType.GAME);
             if (gameVersion == null)
                 throw new IllegalStateException("GameBuilder.gameVersion must be set");
 
-            var hints = new ArrayList<Task.StagesHint>();
+            var hints = new ArrayList<TaskStage.Hint>();
 
             components.forEach((componentType, version) -> {
-                hints.add(new Task.StagesHint(
-                        "hmcl.install.%s:%s".formatted(
-                                componentType.getPatchId(),
-                                version instanceof ComponentRemoteVersion remoteVersion
-                                        ? remoteVersion.getSelfVersion()
-                                        : (String) version)));
+                hints.add(new TaskStage.Hint(InstallStages.component(componentType,
+                        version instanceof ComponentRemoteVersion remoteVersion
+                                ? remoteVersion.getSelfVersion()
+                                : (String) version)));
 
                 if (componentType == GameComponentType.GAME) {
-                    hints.add(new Task.StagesHint("hmcl.install.libraries"));
-                    hints.add(new Task.StagesHint("hmcl.install.assets"));
+                    hints.add(new TaskStage.Hint(InstallStages.LIBRARIES));
+                    hints.add(new TaskStage.Hint(InstallStages.ASSETS));
                 }
             });
 
@@ -151,29 +155,17 @@ public class DefaultGameBuilder extends GameBuilder {
                 }
             }
 
-            Task<?> buildTask = libraryTask.thenComposeAsync(manifest -> {
-                        GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
-                        return new GameDownloadTask(dependencyManager, resolved)
-                                .withStage("hmcl.install.game:" + gameVersion)
-                                .thenApplyAsync(minecraftJar -> {
-                                    draft.put(resolved.withPatches(manifest.patches()));
-                                    draft.putPrimaryJar(instanceId, minecraftJar);
-                                    DefaultGameInstance instance = draft.commit().getInstance(instanceId);
-                                    onInstanceCommitted(instance);
-                                    return instance;
-                                });
-                    })
-                    .whenComplete(exception -> {
-                        if (draft.isOpen()) {
-                            draft.abort();
-                        }
-                    })
-                    .withStagesHints(hints);
-            draftTransferred = true;
-            return buildTask;
-        } catch (RuntimeException | Error failure) {
-            DefaultDependencyManager.abortDraftAfterFailure(draft, failure);
-            throw failure;
+            GameInstanceManifest manifest = context.run(libraryTask.withStageHints(hints));
+            GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
+            Path minecraftJar = context.run(new GameDownloadTask(dependencyManager, resolved)
+                    .withStage(InstallStages.component(GameComponentType.GAME, gameVersion)));
+            draft.put(resolved.withPatches(manifest.patches()));
+            draft.putPrimaryJar(instanceId, minecraftJar);
+            beforePublication.run();
+            DefaultGameInstance instance = draft.commit().getInstance(instanceId);
+            committedManifest = instance.getManifest();
+            onInstanceCommitted(instance);
+            return instance;
         }
     }
 
@@ -182,48 +174,52 @@ public class DefaultGameBuilder extends GameBuilder {
     /// @throws UncheckedIOException if reserved instance files cannot be cleaned up
     @Override
     public void close() {
-        if (draftTransferred || !draft.isOpen()) {
-            return;
-        }
-
         try {
-            draft.abort();
+            draft.close();
         } catch (IOException e) {
             throw new UncheckedIOException("Cannot abort game builder draft", e);
         }
     }
 
-    /// Aborts this builder's open draft, including after ownership has passed to its build task.
-    ///
-    /// If [#buildAsync()] has returned a task, the caller must ensure its executor has stopped
-    /// before invoking this method. This operation does not cancel or wait for task execution.
-    /// It has no effect if the draft has already committed or aborted, and does not undo a
-    /// committed installation. Subsequent calls have no effect after cleanup has completed or
-    /// failed. Shared download caches are retained.
+    /// Aborts an open draft after all work on the reserved instance has stopped.
+    /// Committed installations and shared download caches are retained.
     ///
     /// @throws IOException if reserved instance files cannot be removed; draft exclusivity is
     ///                     released even in this case
     public void abort() throws IOException {
-        if (draft.isOpen()) {
-            draft.abort();
+        draft.close();
+    }
+
+    /// Aborts an open draft and removes a new instance this builder has already published if its
+    /// stored manifest is still current. Updates and subsequently replaced instances are retained.
+    /// All work using this builder or writing the target instance must have stopped before this call.
+    ///
+    /// @throws IOException if the draft cannot be aborted or the new instance cannot be removed
+    /// @throws IllegalStateException if another draft prevents removal of the committed instance
+    public void rollback() throws IOException {
+        abort();
+        if (updateTarget != null || committedManifest == null)
+            return;
+
+        try (DefaultGameRepositoryDraft removal = dependencyManager.getGameRepository().openDraft()) {
+            @Nullable DefaultGameInstance current = removal.getBaseSnapshot().findInstance(instanceId);
+            if (current != null && current.getManifest() == committedManifest) {
+                removal.remove(instanceId);
+                removal.commit();
+            }
+            committedManifest = null;
         }
     }
 
-    /// Performs repository-specific initialization after an instance is committed.
-    ///
-    /// This method is invoked after the repository has published the committed snapshot and before
-    /// the build task completes. The default implementation does nothing. An unchecked exception
-    /// prevents the task from completing successfully but does not roll back the committed instance.
-    ///
-    /// @param instance the committed instance from the published snapshot
+    /// Runs after publication. If initialization fails, the build fails and the instance remains published.
     protected void onInstanceCommitted(DefaultGameInstance instance) {
     }
 
     /// {@inheritDoc}
     @Override
     protected final void checkOpen() {
-        if (draftTransferred) {
-            throw new IllegalStateException("GameBuilder has already created its build task");
+        if (buildStarted) {
+            throw new IllegalStateException("GameBuilder has already started its build");
         }
         if (!draft.isOpen()) {
             throw new IllegalStateException("GameBuilder is closed");

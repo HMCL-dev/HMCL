@@ -7,7 +7,6 @@ import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -53,23 +52,12 @@ public final class TerracottaBundle {
 
     public Task<Path> download(AbstractTerracottaProvider.DownloadContext context) {
         return Task.supplyAsync(() -> Files.createTempFile("terracotta-", ".tar.gz"))
-                .thenComposeAsync(Schedulers.javafx(), pkg -> {
+                .thenComposeAsync(pkg -> {
                     FileDownloadTask download = new FileDownloadTask(links, pkg, hash) {
                         @Override
-                        protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
-                            FetchTask.Context delegate = super.getContext(response, checkETag, bmclapiHash);
-                            return new Context() {
-                                @Override
-                                public void withResult(boolean success) {
-                                    super.withResult(success);
-                                    delegate.withResult(success);
-                                }
-
-                                @Override
-                                public void reset() throws IOException {
-                                    delegate.reset();
-                                }
-
+                        protected Context<@Nullable Void> getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
+                            FetchTask.Context<@Nullable Void> delegate = super.getContext(response, checkETag, bmclapiHash);
+                            return new Context<>() {
                                 @Override
                                 public void write(byte[] buffer, int offset, int len) throws IOException {
                                     context.checkCancellation();
@@ -77,18 +65,20 @@ public final class TerracottaBundle {
                                 }
 
                                 @Override
-                                public void close() throws IOException {
-                                    if (isSuccess()) {
-                                        context.checkCancellation();
-                                    }
+                                public @Nullable Void finish() throws IOException {
+                                    context.checkCancellation();
+                                    return delegate.finish();
+                                }
 
+                                @Override
+                                public void close() throws IOException {
                                     delegate.close();
                                 }
                             };
                         }
                     };
 
-                    context.bindProgress(download.progressProperty());
+                    context.trackDownload(download);
                     return download.thenSupplyAsync(() -> pkg);
                 });
     }
@@ -127,7 +117,7 @@ public final class TerracottaBundle {
                     }
                 }
             }
-        }).whenComplete(exception -> {
+        }).whenComplete((ignored, exception) -> {
             if (exception != null) {
                 FileUtils.deleteDirectory(root);
             }

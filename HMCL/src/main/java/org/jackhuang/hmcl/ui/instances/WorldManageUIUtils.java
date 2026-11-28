@@ -37,7 +37,7 @@ public final class WorldManageUIUtils {
                 i18n("world.delete"),
                 () -> Task.runAsync(() -> closeSessionLockChannel(world, sessionLockChannel))
                         .thenRunAsync(world::delete)
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                             if (exception == null) {
                                 runnable.run();
                             } else if (exception instanceof WorldLockedException) {
@@ -91,7 +91,7 @@ public final class WorldManageUIUtils {
                                             runnable.run();
                                         }
                                     }
-                            ).whenComplete(Schedulers.javafx(), (throwable) -> {
+                            ).whenCompleteAsync(Schedulers.javafx(), (ignored, throwable) -> {
                                 if (throwable == null) {
                                     handler.resolve();
                                 } else {

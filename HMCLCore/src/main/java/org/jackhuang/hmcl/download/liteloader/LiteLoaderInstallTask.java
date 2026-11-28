@@ -3,14 +3,13 @@
 package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.Lang;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Note: LiteLoader must be installed after Forge.
@@ -22,8 +21,6 @@ public final class LiteLoaderInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final LiteLoaderRemoteVersion remote;
-    private final List<Task<?>> dependents = new ArrayList<>();
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     public LiteLoaderInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, LiteLoaderRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
@@ -31,34 +28,25 @@ public final class LiteLoaderInstallTask extends Task<GameInstancePatch> {
         this.remote = remoteVersion;
     }
 
+    /// Downloads the libraries referenced by the LiteLoader patch and returns the patch.
     @Override
-    public Collection<Task<?>> getDependents() {
-        return dependents;
-    }
-
-    @Override
-    public Collection<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public void execute() {
+    public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
         Library library = new Library(
                 new Artifact("com.mumfrey", "liteloader", remote.getSelfVersion()),
                 "https://dl.liteloader.com/versions/",
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(null, remote.getUrls().get(0)))
         );
 
-        setResult(new GameInstancePatch(GameComponentType.LITELOADER.getPatchId(),
+        // Disable the official logging configuration because some mods produce malformed XML.
+        GameInstancePatch patch = new GameInstancePatch(GameComponentType.LITELOADER.getPatchId(),
                 remote.getSelfVersion(),
                 60000,
                 new Arguments().addGameArguments("--tweakClass", "com.mumfrey.liteloader.launch.LiteLoaderTweaker"),
                 GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN,
                 Lang.merge(remote.getLibraries(), Collections.singleton(library)))
-                .withLogging(Collections.emptyMap()) // Mods may log in malformed format, causing XML parser to crash. So we suppress using official log4j configuration
-        );
+                .withLogging(Collections.emptyMap());
 
-        dependencies.add(new org.jackhuang.hmcl.download.game.GameLibrariesTask(dependencyManager, manifest, true, getResult().getLibraries()));
+        context.run(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()));
+        return patch;
     }
-
 }

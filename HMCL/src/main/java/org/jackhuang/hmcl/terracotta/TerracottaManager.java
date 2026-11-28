@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.terracotta;
 
 import com.google.gson.JsonObject;
 import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import org.glavo.url.WebURL;
@@ -14,6 +13,7 @@ import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FXThread;
@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -142,8 +143,9 @@ public final class TerracottaManager {
         return !FileUtils.getName(file).equalsIgnoreCase(TerracottaMetadata.PACKAGE_NAME);
     }
 
+    /// Starts a download and returns its preparation state, or `null` if preparation cannot begin.
     @FXThread
-    public static TerracottaState.Preparing download() {
+    public static TerracottaState.@Nullable Preparing download() {
         FXUtils.checkFxUserThread();
 
         TerracottaState state = STATE_V.get();
@@ -152,10 +154,10 @@ public final class TerracottaManager {
             return null;
         }
 
-        TerracottaState.Preparing preparing = new TerracottaState.Preparing(new ReadOnlyDoubleWrapper(-1), true);
+        TerracottaState.Preparing preparing = new TerracottaState.Preparing(true);
 
         Task.composeAsync(() -> getProvider().download(preparing))
-                .thenComposeAsync(pkg -> {
+                .thenComposeOptionalAsync(pkg -> {
                     if (!preparing.requestInstallFence()) {
                         return null;
                     }
@@ -166,21 +168,22 @@ public final class TerracottaManager {
                             launch(launching, true);
                         }
                     });
-                }).whenComplete(exception -> {
-                    if (exception instanceof CancellationException) {
-                        // no-op
-                    } else if (exception instanceof DownloadException) {
+                }).whenComplete((ignored, exception) -> {
+                    if (exception == null || exception instanceof CancellationException)
+                        return;
+                    if (exception instanceof DownloadException) {
                         compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.NETWORK));
                     } else {
                         compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
                     }
-                }).start();
+                }).addTaskListener(preparing.downloadListener()).start();
 
         return compareAndSet(state, preparing) ? preparing : null;
     }
 
+    /// Installs a local bundle and returns the preparation state if this starts a new preparation.
     @FXThread
-    public static TerracottaState.Preparing install(Path bundle) {
+    public static TerracottaState.@Nullable Preparing install(Path bundle) {
         FXUtils.checkFxUserThread();
         if (isInvalidBundle(bundle)) {
             return null;
@@ -191,7 +194,7 @@ public final class TerracottaManager {
         if (state instanceof TerracottaState.Preparing previousPreparing && previousPreparing.requestInstallFence()) {
             preparing = previousPreparing;
         } else if (state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable()) {
-            preparing = new TerracottaState.Preparing(new ReadOnlyDoubleWrapper(-1), false);
+            preparing = new TerracottaState.Preparing(false);
         } else {
             return null;
         }
@@ -203,8 +206,9 @@ public final class TerracottaManager {
                         launch(launching, true);
                     }
                 })
-                .whenComplete(exception -> {
-                    compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
+                .whenComplete((ignored, exception) -> {
+                    if (exception != null)
+                        compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
                 }).start();
 
         return state != preparing && compareAndSet(state, preparing) ? preparing : null;
@@ -258,7 +262,7 @@ public final class TerracottaManager {
                     }
                 }
             }
-        }).whenComplete(Schedulers.javafx(), (port, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (port, exception) -> {
             TerracottaState next;
             if (exception == null) {
                 next = new TerracottaState.Unknown(port);
@@ -275,7 +279,7 @@ public final class TerracottaManager {
     public static Task<String> exportLogs() {
         if (STATE_V.get() instanceof TerracottaState.PortSpecific portSpecific) {
             return new GetTask(WebURL.parse(String.format("http://127.0.0.1:%d/log?fetch=true", portSpecific.port)))
-                    .setSignificance(Task.TaskSignificance.MINOR);
+                    .setSignificance(TaskSignificance.MINOR);
         }
         return Task.completed(null);
     }
@@ -284,7 +288,7 @@ public final class TerracottaManager {
         TerracottaState state = STATE_V.get();
         if (state instanceof TerracottaState.PortSpecific portSpecific) {
             new GetTask(WebURL.parse(String.format("http://127.0.0.1:%d/state/ide", portSpecific.port)))
-                    .setSignificance(Task.TaskSignificance.MINOR)
+                    .setSignificance(TaskSignificance.MINOR)
                     .start();
             return new TerracottaState.Waiting(-1, -1, null);
         }
@@ -308,7 +312,7 @@ public final class TerracottaManager {
                         }
                         return new GetTask(NetworkUtils.withQuery(
                                 "http://127.0.0.1:%d/state/scanning".formatted(portSpecific.port), query
-                        )).setSignificance(Task.TaskSignificance.MINOR);
+                        )).setSignificance(TaskSignificance.MINOR);
                     }).start();
 
             return new TerracottaState.HostScanning(-1, -1, null);
@@ -328,9 +332,9 @@ public final class TerracottaManager {
                             query.add(pair("public_nodes", node.toString()));
                         }
                         return new GetTask(NetworkUtils.withQuery("http://127.0.0.1:%d/state/guesting".formatted(portSpecific.port), query))
-                                .setSignificance(Task.TaskSignificance.MINOR)
+                                .setSignificance(TaskSignificance.MINOR)
                                 .thenSupplyAsync(() -> new TerracottaState.GuestConnecting(-1, -1, null))
-                                .setSignificance(Task.TaskSignificance.MINOR);
+                                .setSignificance(TaskSignificance.MINOR);
                     });
         } else {
             return null;

@@ -18,6 +18,7 @@ import org.jackhuang.hmcl.setting.ProxyType;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ScrollUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
@@ -340,6 +341,7 @@ public class DownloadSettingsPage extends StackPane {
     @FXThread
     private boolean cleaningCache = false;
 
+    /// Clears the common cache directory and shows a spinner until the operation finishes.
     private void clearCacheDirectory(JFXButton cleanButton) {
         if (cleaningCache) return;
         String commonDirectory = settings().getResolvedCommonDirectory();
@@ -351,12 +353,14 @@ public class DownloadSettingsPage extends StackPane {
             var spinner = new JFXSpinner();
             spinner.setRadius(8);
             cleanButton.setGraphic(spinner);
-            Task.runAsync("Clear Cache Directory", Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")))
-                    .whenComplete(Schedulers.javafx(), ignored -> {
+            Task.runAsync(Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")))
+                    .setName("Clear Cache Directory")
+                    .setSignificance(TaskSignificance.MAJOR)
+                    .whenCompleteAsync(Schedulers.javafx(), (ignored, failure) -> {
                         cleanButton.setGraphic(null);
                         cleanButton.setText(txt);
                         cleaningCache = false;
-                    }).setSignificance(Task.TaskSignificance.MINOR)
+                    }).setSignificance(TaskSignificance.MINOR)
                     .start();
         }
     }

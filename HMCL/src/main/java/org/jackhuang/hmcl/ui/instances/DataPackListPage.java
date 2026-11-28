@@ -228,10 +228,11 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
         }
     }
 
+    /// Reloads data packs and clears the loading indicator when the attempt finishes.
     public void refresh() {
         setLoading(true);
         Task.runAsync(dataPack::loadFromDir)
-                .withRunAsync(Schedulers.javafx(), () -> setLoading(false))
+                .whenCompleteAsync(Schedulers.javafx(), (@Nullable Void ignored, @Nullable Throwable exception) -> setLoading(false))
                 .start();
     }
 

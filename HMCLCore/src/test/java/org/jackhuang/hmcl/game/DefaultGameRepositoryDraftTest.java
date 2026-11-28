@@ -2,18 +2,48 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersionList;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DefaultGameBuilder;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.download.InstallStages;
+import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricAPIRemoteVersion;
+import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
+import org.jackhuang.hmcl.modpack.Modpack;
+import org.jackhuang.hmcl.modpack.curse.CurseManifest;
+import org.jackhuang.hmcl.modpack.curse.CurseManifestFile;
+import org.jackhuang.hmcl.modpack.curse.CurseModpackProvider;
+import org.jackhuang.hmcl.modpack.ModpackCompletionException;
+import org.jackhuang.hmcl.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
+import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
+import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
+import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,20 +56,582 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Tests exclusive repository drafts and their filesystem visibility boundary.
 @NotNullByDefault
 public final class DefaultGameRepositoryDraftTest {
+
+    /// Failed server file downloads leave component updates available for a later attempt.
+    @Test
+    void serverModpackFileFailurePrecedesComponentUpdate(@TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("server");
+        repository.save(new GameInstanceManifest(id));
+        DefaultGameInstance instance = repository.getInstance(id);
+        Path existing = Files.writeString(instance.getInstanceRoot().resolve("settings.txt"), "old");
+        String oldHash = DigestUtils.digestToString("SHA-1", existing);
+        String newHash = DigestUtils.digestToString("SHA-1", "updated".getBytes(StandardCharsets.UTF_8));
+        var installed = publishServerUpdate(directory, List.of(new ModpackConfiguration.FileInformation("settings.txt", oldHash)),
+                List.of(new ModpackConfiguration.FileInformation("settings.txt", newHash)));
+        Path overrides = Files.createDirectories(directory.resolve("published/overrides"));
+        var manager = createOfflineGameInstaller(repository, id, "1.21");
+        var task = new ServerModpackCompletionTask(manager, instance);
+        JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), installed);
+        assertThrows(DownloadException.class, task::run);
+        var saved = readServerManifest(instance);
+        assertEquals("1.20", saved.getAddons().get(0).getVersion());
+        assertEquals(oldHash, saved.getFiles().get(0).getHash());
+        assertEquals("old", Files.readString(existing));
+
+        Files.writeString(overrides.resolve("settings.txt"), "updated");
+        new ServerModpackCompletionTask(manager, instance).run();
+        assertEquals("updated", Files.readString(existing));
+        assertEquals(newHash, readServerManifest(repository.getInstance(id)).getFiles().get(0).getHash());
+    }
+
+    /// A later release replaces files installed by a partial update while preserving user edits.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void serverUpdateAfterPartialDownload(boolean updateComponents, @TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("server");
+        repository.save(new GameInstanceManifest(id));
+        DefaultGameInstance instance = repository.getInstance(id);
+        Path root = instance.getInstanceRoot();
+        Path published = directory.resolve("published");
+        Path overrides = published.resolve("overrides");
+        var releaseA = publishServerRelease(published, "A", "1.20", List.of("managed.txt", "retry.txt", "edited.txt"));
+        for (var file : releaseA.getFiles()) {
+            Files.copy(overrides.resolve(file.getPath()), root.resolve(file.getPath()));
+        }
+        Files.writeString(root.resolve("edited.txt"), "user edit");
+        var localOverride = new ModpackConfiguration.FileInformation("archive-only.txt", "0".repeat(40));
+        var installedOverrides = new ArrayList<>(releaseA.getFiles());
+        installedOverrides.add(localOverride);
+        JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), new ModpackConfiguration<>(releaseA, "Server", "pack", "A", installedOverrides));
+
+        String gameVersion = updateComponents ? "1.21" : "1.20";
+        @Unmodifiable List<String> paths = List.of("managed.txt", "retry.txt", "edited.txt", "added.txt");
+        publishServerRelease(published, "B", gameVersion, paths);
+        Files.delete(overrides.resolve("added.txt"));
+        Files.delete(overrides.resolve("retry.txt"));
+        var manager = createOfflineGameInstaller(repository, id, gameVersion);
+        assertThrows(DownloadException.class, new ServerModpackCompletionTask(manager, instance)::run);
+        assertEquals("B managed.txt", Files.readString(root.resolve("managed.txt")));
+        assertEquals("A retry.txt", Files.readString(root.resolve("retry.txt")));
+        assertFalse(Files.exists(root.resolve("added.txt")));
+        var partial = Objects.requireNonNull(JsonUtils.fromJsonFile(instance.getModpackConfigurationFile(),
+                ModpackConfiguration.typeOf(ServerModpackManifest.class)));
+        assertEquals("1.20", partial.getManifest().getAddons().get(0).getVersion());
+        for (var files : List.of(partial.getManifest().getFiles(), partial.getOverrides())) {
+            for (String path : List.of("managed.txt", "retry.txt")) {
+                var entry = files.stream().filter(file -> file.getPath().equals(path)).findFirst().orElseThrow();
+                assertEquals(DigestUtils.digestToString("SHA-1", root.resolve(path)), entry.getHash(), path);
+            }
+            assertTrue(files.stream().noneMatch(file -> file.getPath().equals("added.txt")));
+        }
+        assertTrue(partial.getOverrides().stream().anyMatch(file -> file.getPath().equals(localOverride.getPath())));
+
+        publishServerRelease(published, "C", gameVersion, paths);
+        new ServerModpackCompletionTask(manager, instance).run();
+        assertEquals("C managed.txt", Files.readString(root.resolve("managed.txt")));
+        assertEquals("C retry.txt", Files.readString(root.resolve("retry.txt")));
+        assertEquals("C added.txt", Files.readString(root.resolve("added.txt")));
+        assertEquals("user edit", Files.readString(root.resolve("edited.txt")));
+        assertEquals("C", readServerManifest(repository.getInstance(id)).getVersion());
+    }
+
+    /// Publishes a server manifest and override files with distinct content for each release and path.
+    private static ServerModpackManifest publishServerRelease(Path directory, String version, String gameVersion,
+                                                              List<String> paths) throws IOException {
+        Path overrides = Files.createDirectories(directory.resolve("overrides"));
+        List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
+        for (String path : paths) {
+            Path file = Files.writeString(overrides.resolve(path), version + " " + path);
+            files.add(new ModpackConfiguration.FileInformation(path, DigestUtils.digestToString("SHA-1", file)));
+        }
+        var manifest = new ServerModpackManifest("pack", "", version, "", directory.toUri().toASCIIString(),
+                files, List.of(new ServerModpackManifest.Addon("game", gameVersion)));
+        JsonUtils.writeToJsonFile(directory.resolve("server-manifest.json"), manifest);
+        return manifest;
+    }
+
+    /// A queued update cannot delete files or rewrite the configuration of a replacement instance.
+    @Test
+    void staleServerUpdateLeavesReplacementUntouched(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("server");
+        repository.save(new GameInstanceManifest(id));
+        var installed = publishServerUpdate(directory,
+                List.of(new ModpackConfiguration.FileInformation("settings.txt", "0".repeat(40))), List.of());
+        var update = new ServerModpackCompletionTask(createDependencyManager(repository), repository.getInstance(id), installed);
+
+        assertTrue(repository.removeInstanceFromDisk(id));
+        repository.save(new GameInstanceManifest(id).withMainClass("replacement.Main"));
+        DefaultGameInstance replacement = repository.getInstance(id);
+        Path settings = Files.writeString(replacement.getInstanceRoot().resolve("settings.txt"), "replacement settings");
+        Path config = Files.writeString(replacement.getModpackConfigurationFile(), "replacement config");
+        assertThrows(IllegalStateException.class, update::run);
+        assertEquals("replacement settings", Files.readString(settings));
+        assertEquals("replacement config", Files.readString(config));
+    }
+
+    /// A save after the build only prevents publication if it replaced the updated instance.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void serverUpdatePublishesToCurrentInstanceAfterBuild(boolean replaceTarget, @TempDir Path directory) throws Exception {
+        GameInstanceID id = new GameInstanceID("server");
+        var repository = new TestRepository(directory) {
+            /// Enables one intervening save after the build releases its draft.
+            private boolean saveOnCommit;
+
+            /// Saves either the replacement or an unrelated instance before the task resumes.
+            @Override
+            void releaseDraft(DefaultGameRepositoryDraft draft) {
+                super.releaseDraft(draft);
+                if (saveOnCommit && draft.getState() == GameRepositoryDraft.State.COMMITTED) {
+                    saveOnCommit = false;
+                    assertDoesNotThrow(() -> {
+                        if (replaceTarget) {
+                            assertTrue(removeInstanceFromDisk(id));
+                            save(new GameInstanceManifest(id).withMainClass("replacement.Main"));
+                            Files.writeString(getInstance(id).getModpackConfigurationFile(), "replacement config");
+                        } else {
+                            save(new GameInstanceManifest(new GameInstanceID("other")));
+                        }
+                    });
+                }
+            }
+        };
+        repository.save(new GameInstanceManifest(id));
+        DefaultGameInstance instance = repository.getInstance(id);
+        JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), publishServerUpdate(directory, List.of(), List.of()));
+
+        var update = new ServerModpackCompletionTask(createOfflineGameInstaller(repository, id, "1.21"), instance);
+        repository.saveOnCommit = true;
+        update.run();
+        if (replaceTarget) {
+            assertEquals("replacement.Main", repository.getInstanceManifest(id).mainClass());
+            assertEquals("replacement config", Files.readString(repository.getInstance(id).getModpackConfigurationFile()));
+        } else {
+            assertEquals("1.21", readServerManifest(repository.getInstance(id)).getAddons().get(0).getVersion());
+        }
+    }
+
+    /// Publishes a local 1.20 to 1.21 server update and returns its previously installed configuration.
+    private static ModpackConfiguration<ServerModpackManifest> publishServerUpdate(
+            Path directory, List<ModpackConfiguration.FileInformation> oldFiles,
+            List<ModpackConfiguration.FileInformation> newFiles) throws IOException {
+        Path published = directory.resolve("published");
+        String fileApi = published.toUri().toASCIIString();
+        ServerModpackManifest old = new ServerModpackManifest("pack", "", "1", "", fileApi, oldFiles,
+                List.of(new ServerModpackManifest.Addon("game", "1.20")));
+        ServerModpackManifest remote = new ServerModpackManifest("pack", "", "2", "", fileApi, newFiles,
+                List.of(new ServerModpackManifest.Addon("game", "1.21")));
+        Files.createDirectory(published);
+        JsonUtils.writeToJsonFile(published.resolve("server-manifest.json"), remote);
+        return new ModpackConfiguration<>(old, "Server", "pack", "1", oldFiles);
+    }
+
+    /// Reads the manifest a later launcher process would use for synchronization.
+    private static ServerModpackManifest readServerManifest(DefaultGameInstance instance) throws IOException {
+        return Objects.requireNonNull(JsonUtils.fromJsonFile(instance.getModpackConfigurationFile(),
+                ModpackConfiguration.typeOf(ServerModpackManifest.class))).getManifest();
+    }
+
+    /// The displayed game stage carries the selected version for a build or a component install.
+    @Test
+    void componentVersionStageMatchesTheBuildPlan(@TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        String version = "1.21.2:local";
+        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, version);
+        TaskStage expected = new TaskStage("hmcl.install.game", version);
+
+        Set<TaskStage.Hint> declared = ConcurrentHashMap.newKeySet();
+        Set<TaskStage> gameStages = ConcurrentHashMap.newKeySet();
+        TaskListener listener = new TaskListener() {
+            /// Records the plan's stage hints as the build enters the task tree.
+            @Override
+            public void onStagesDeclared(@Unmodifiable List<TaskStage.Hint> hints) {
+                declared.addAll(hints);
+            }
+
+            /// Collects the version labels shown for game installation.
+            @Override
+            public void onStageStarted(TaskStage.Scope scope) {
+                if (scope.stage().key().equals(expected.key()))
+                    gameStages.add(scope.stage());
+            }
+        };
+        try (var builder = manager.newGameBuilder(id)) {
+            Task<GameInstance> build = buildTask(builder.component(GameComponentType.GAME, version));
+            build.addTaskListener(listener);
+            GameInstance installed = build.run();
+            assertSame(repository.getInstance(id), installed);
+        }
+        assertTrue(declared.containsAll(List.of(new TaskStage.Hint(expected), new TaskStage.Hint(InstallStages.LIBRARIES),
+                new TaskStage.Hint(InstallStages.ASSETS))), declared::toString);
+        assertEquals(Set.of(expected), gameStages);
+
+        DefaultGameInstance instance = repository.getInstance(id);
+        Task<?> install = manager.installComponentRemoteAsync(instance, instance.getManifest(),
+                version, GameComponentType.GAME, version);
+        gameStages.clear();
+        install.addTaskListener(listener).run();
+        assertEquals(Set.of(expected), gameStages);
+    }
+
+    /// A missing game version releases the target for a subsequent installation.
+    @Test
+    void invalidBuildReleasesTarget(@TempDir Path directory) {
+        DefaultDependencyManager manager = createDependencyManager(new TestRepository(directory));
+        GameInstanceID id = new GameInstanceID("instance");
+        Task<GameInstance> build = buildTask(manager.newGameBuilder(id));
+        assertThrows(IllegalStateException.class, build::run);
+        manager.newGameBuilder(id).close();
+    }
+
+    /// Cancellation before installation removes prepared files and releases the target.
+    @Test
+    void cancelledBuildReleasesPreparedInstance(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        DefaultDependencyManager manager = createDependencyManager(repository);
+        Path instanceRoot = repository.getLayout().getInstanceRoot(id);
+        Task<GameInstance> build = new Task<>() {
+            /// Cancels after reserving and preparing the target, just before the build starts.
+            @Override
+            public GameInstance execute(TaskExecutionContext context) throws Exception {
+                GameBuilder builder = manager.newGameBuilder(id).component(GameComponentType.GAME, "1.21.2");
+                Files.createDirectories(instanceRoot);
+                Files.writeString(instanceRoot.resolve("override.txt"), "prepared");
+                cancel();
+                return builder.build(context);
+            }
+        };
+        assertThrows(CancellationException.class, build::run);
+        assertFalse(repository.hasInstance(id));
+        assertFalse(Files.exists(instanceRoot));
+        manager.newGameBuilder(id).close();
+    }
+
+    /// An unavailable API mod JAR allows the instance update to complete.
+    @Test
+    void apiModUpdateToleratesMissingJar(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        repository.save(new GameInstanceManifest(id).withMainClass(GameComponentAnalyzer.VANILLA_MAIN));
+        DefaultDependencyManager manager = createDependencyManager(repository);
+        GameVersionNumber game = GameVersionNumber.asGameVersion("1.20.1");
+        String url = directory.resolve("missing.jar").toUri().toString();
+        RemoteAddon.File file = new RemoteAddon.File(Map.of(), url, "mod.jar");
+        RemoteAddon.Version version = new RemoteAddon.Version(RemoteAddon.Source.MODRINTH, "v1", "mod", "Mod", "1",
+                Instant.EPOCH, RemoteAddon.VersionType.Release, file, List.of(), List.of("1.20.1"), List.of());
+
+        for (ComponentRemoteVersion remote : List.of(
+                new FabricAPIRemoteVersion(game, "1", "1", Instant.EPOCH, version, List.of(url)),
+                new LegacyFabricAPIRemoteVersion(game, "1", "1", Instant.EPOCH, version, List.of(url)),
+                new QuiltAPIRemoteVersion(game, "1", "1", Instant.EPOCH, version, List.of(url)))) {
+            Task<?> update = manager.updateInstanceAsync(id, instance ->
+                    manager.installComponentRemoteAsync(instance, instance.getManifest(), remote));
+            assertDoesNotThrow(update::run, remote.getComponentType().getPatchId());
+        }
+    }
+
+    /// Only formats allowing manual completion retain a committed instance after a completion failure.
+    @ParameterizedTest
+    @CsvSource({"false,true", "true,false", "true,true"})
+    void modpackFailureAfterGameCommit(boolean completionFailure, boolean keepIncomplete, @TempDir Path directory)
+            throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, "1.21.2");
+        Exception failure = completionFailure ? new ModpackCompletionException() : new IOException();
+        Task<?> install = installTask(manager, id, null, keepIncomplete, (builder, context) -> {
+            builder.component(GameComponentType.GAME, "1.21.2").build(context);
+            assertTrue(repository.hasInstance(id));
+            throw failure;
+        });
+        assertSame(failure, assertThrows(Exception.class, install::run));
+        assertEquals(completionFailure && keepIncomplete, repository.hasInstance(id));
+        assertEquals(completionFailure && keepIncomplete, Files.exists(repository.getLayout().getInstanceRoot(id)));
+    }
+
+    /// Failed updates restore original files before and after component publication.
+    @ParameterizedTest
+    @CsvSource({"false,false", "true,false", "true,true"})
+    void failedModpackUpdateRestoresBackup(boolean writeOverrides, boolean publishBuild,
+                                                  @TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        String version = "1.21.2";
+        repository.save(new GameInstanceManifest(id).withMainClass("original.Main"));
+        DefaultGameInstance original = repository.getInstance(id);
+        Path marker = Files.writeString(original.getInstanceRoot().resolve("settings.txt"), "original");
+        Path added = original.getInstanceRoot().resolve("added.txt");
+        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, version);
+        IOException failure = new IOException("Update failed");
+        Task<?> update = installTask(manager, id, original, false, (builder, context) -> {
+            assertTrue(Files.isDirectory(directory.resolve("backup")));
+            if (writeOverrides) {
+                Files.writeString(marker, "updated");
+                Files.writeString(added, "new");
+            }
+            if (publishBuild)
+                builder.component(GameComponentType.GAME, version).build(context);
+            throw failure;
+        });
+        assertSame(failure, assertThrows(IOException.class, update::run));
+        assertEquals("original", Files.readString(marker));
+        assertTrue(Files.notExists(added));
+        try (var backups = Files.list(directory.resolve("backup"))) {
+            assertEquals("original", Files.readString(backups.findFirst().orElseThrow().resolve("settings.txt")));
+        }
+        assertEquals("original.Main", repository.getInstanceManifest(id).mainClass());
+        assertNotSame(original, repository.getInstance(id));
+        manager.newGameBuilder(repository.getInstance(id)).close();
+    }
+
+    /// Failure after another installation reuses the same id preserves the replacement and its files.
+    @Test
+    void modpackRollbackPreservesReplacement(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, "1.21.2");
+        IOException failure = new IOException();
+        Path marker = repository.getLayout().getInstanceRoot(id).resolve("replacement.txt");
+        Task<?> install = installTask(manager, id, null, false, (builder, context) -> {
+            builder.component(GameComponentType.GAME, "1.21.2").build(context);
+            assertTrue(repository.removeInstanceFromDisk(id));
+            repository.save(new GameInstanceManifest(id).withMainClass("replacement.Main"));
+            Files.writeString(marker, "replacement");
+            throw failure;
+        });
+        assertSame(failure, assertThrows(IOException.class, install::run));
+        assertEquals("replacement.Main", repository.getInstanceManifest(id).mainClass());
+        assertEquals("replacement", Files.readString(marker));
+    }
+
+    /// Retired pack files may be links, but cleanup must not follow a linked parent directory.
+    @Test
+    void retiredPackFileMayBeASymbolicLink() throws IOException {
+        try (var fs = Jimfs.newFileSystem(Configuration.unix())) {
+            Path pack = Files.createDirectory(fs.getPath("/pack"));
+            Path shared = Files.createDirectory(fs.getPath("/shared"));
+            Path mod = Files.writeString(shared.resolve("mod.jar"), "shared mod");
+            Path link = Files.createSymbolicLink(pack.resolve("mod.jar"), mod);
+            Path linkedDirectory = Files.createSymbolicLink(pack.resolve("mods"), shared);
+
+            Modpack.removePackFile(pack, link);
+            Modpack.removePackFile(pack, linkedDirectory.resolve("mod.jar"));
+
+            assertFalse(Files.isSymbolicLink(link));
+            assertEquals("shared mod", Files.readString(mod));
+        }
+    }
+
+    /// A successful CurseForge update retains the player's copy of a retired optional mod in the backup.
+    @Test
+    void curseUpdateRetainsPreUpdateBackup(@TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("curse");
+        repository.save(new GameInstanceManifest(id));
+        var instance = repository.getInstance(id);
+        Path root = instance.getInstanceRoot();
+        var optional = new CurseManifestFile(1, 2, "optional.jar", null, false);
+        Path archive = directory.resolve("curse.zip");
+        try (Zipper zip = new Zipper(archive)) {
+            zip.putTextFile("""
+                    {"name":"pack","version":"2","overrides":"overrides","minecraft":{"version":"1.21","modLoaders":[]},"files":[]}
+                    """, "manifest.json");
+        }
+        Modpack pack;
+        try (var zip = CompressingUtils.openZipFile(archive)) {
+            pack = CurseModpackProvider.INSTANCE.readManifest(zip, archive);
+        }
+        var previous = ((CurseManifest) pack.getManifest()).setFiles(List.of(optional));
+        JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), new ModpackConfiguration<>(previous, "Curse", "pack", "1", List.of()));
+        JsonUtils.writeToJsonFile(root.resolve("manifest.json"), previous);
+        JsonUtils.writeToJsonFile(root.resolve("excluded.json"), List.of(optional.key()));
+        Path local = Files.createDirectories(root.resolve("mods")).resolve("optional.jar");
+        Files.writeString(local, "manually installed");
+
+        CurseModpackProvider.INSTANCE.createUpdateTask(createOfflineGameInstaller(repository, id, "1.21"), instance, archive, pack, null).run();
+        try (var backups = Files.list(directory.resolve("backup"))) {
+            Path backup = backups.findFirst().orElseThrow();
+            assertEquals("manually installed", Files.readString(backup.resolve("mods/optional.jar")));
+            if (Files.getFileStore(backup).supportsFileAttributeView("posix")) {
+                Path sibling = Files.createDirectory(backup.resolveSibling("reference"));
+                assertEquals(Files.getPosixFilePermissions(sibling), Files.getPosixFilePermissions(backup));
+            }
+        }
+    }
+
+    /// A failed MCBBS build restores the original overrides and pack metadata.
+    @Test
+    void failedMcbbsUpdateKeepsPreviousConfiguration(@TempDir Path directory) throws Exception {
+        FailingRepository repository = new FailingRepository(directory);
+        GameInstanceID id = new GameInstanceID("mcbbs");
+        repository.save(new GameInstanceManifest(id));
+        var instance = repository.getInstance(id);
+        var previous = JsonUtils.fromNonNullJson("""
+                {"name":"pack","version":"1","addons":[{"id":"game","version":"1.21"}]}
+                """, McbbsModpackManifest.class);
+        var manifest = JsonUtils.fromNonNullJson("""
+                {"name":"pack","version":"2","addons":[{"id":"game","version":"1.21"}]}
+                """, McbbsModpackManifest.class);
+        Path config = instance.getModpackConfigurationFile();
+        Path retired = Files.writeString(instance.getInstanceRoot().resolve("retired.txt"), "pack default");
+        Path edited = Files.writeString(instance.getInstanceRoot().resolve("edited.txt"), "user settings");
+        String installedHash = DigestUtils.digestToString("SHA-1", retired);
+        JsonUtils.writeToJsonFile(config, new ModpackConfiguration<>(previous, previous.getProvider().getName(), "pack", "1", List.of(
+                new ModpackConfiguration.FileInformation("retired.txt", installedHash),
+                new ModpackConfiguration.FileInformation("edited.txt", installedHash))));
+        Path archive = directory.resolve("pack.zip");
+        try (Zipper zip = new Zipper(archive)) {
+            zip.putTextFile("updated", "overrides/local.txt");
+        }
+        var manager = createOfflineGameInstaller(repository, id, "1.21");
+        repository.failDraftPublish = true;
+        var update = manifest.getProvider().createUpdateTask(manager, instance, archive, manifest.toModpack(), null);
+        assertThrows(IllegalStateException.class, update::run);
+        assertTrue(Files.notExists(instance.getInstanceRoot().resolve("local.txt")));
+        assertEquals("pack default", Files.readString(retired));
+        assertEquals("user settings", Files.readString(edited));
+        var restored = Objects.requireNonNull(JsonUtils.fromJsonFile(config, ModpackConfiguration.typeOf(McbbsModpackManifest.class)));
+        assertEquals("1", restored.getVersion());
+        assertEquals("1", restored.getManifest().getVersion());
+    }
+
+    /// An incomplete MCBBS install keeps its patch unless cancellation wins.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void incompleteMcbbsInstallKeepsPublishedPatch(boolean cancel, @TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("mcbbs");
+        String fileApi = directory.toUri().toASCIIString();
+        String metadata = """
+                {"name":"local","version":"1","addons":[{"id":"game","version":"1.21"}],"fileApi":"%s"}
+                """.formatted(fileApi);
+        var manifest = JsonUtils.fromNonNullJson(metadata, McbbsModpackManifest.class);
+        Files.writeString(directory.resolve("manifest.json"), """
+                {"name":"remote","version":"2","files":[
+                  {"type":"curse","projectID":1,"fileID":2,"fileName":"missing.jar","url":"%s"}
+                ]}
+                """.formatted(directory.resolve("missing.jar").toUri().toASCIIString()));
+        Path archive = directory.resolve("pack.zip");
+        try (Zipper zip = new Zipper(archive)) {
+            zip.putTextFile("local", "overrides/local.txt");
+        }
+        Task<?> install = manifest.toModpack().getInstallTask(createOfflineGameInstaller(repository, id, "1.21"),
+                archive, id, "", null);
+        if (cancel) {
+            install.addTaskListener(new TaskListener() {
+                /// Cancels after the download failure has been published to the installer.
+                @Override
+                public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+                    if (task instanceof McbbsModpackCompletionTask && failure instanceof ModpackCompletionException)
+                        install.cancel();
+                }
+            });
+            assertThrows(CancellationException.class, install::run);
+            assertFalse(repository.hasInstance(id));
+        } else {
+            assertThrows(ModpackCompletionException.class, install::run);
+            DefaultGameInstance instance = repository.getInstance(id);
+            assertTrue(instance.getManifest().getPatches().stream().anyMatch(patch -> "mcbbs".equals(patch.id())));
+        }
+    }
+
+    /// Cancellation from the final child's completion rolls back the newly built instance.
+    @Test
+    void cancellationDuringFinalInstallNotificationRollsBack(@TempDir Path directory) throws IOException {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        String version = "1.21.2";
+        ServerModpackManifest manifest = new ServerModpackManifest("pack", "", "1", "", "", List.of(),
+                List.of(new ServerModpackManifest.Addon("game", version)));
+        Task<?> install = new ServerModpackRemoteInstallTask(createOfflineGameInstaller(repository, id, version), manifest, id);
+        install.addTaskListener(new TaskListener() {
+            /// Requests cancellation after the final child has published success.
+            @Override
+            public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+                if (task instanceof ServerModpackCompletionTask && failure == null)
+                    install.cancel();
+            }
+        });
+        assertThrows(CancellationException.class, install::run);
+        assertFalse(repository.hasInstance(id));
+        assertFalse(Files.exists(repository.getLayout().getInstanceRoot(id)));
+    }
+
+    /// Runs an installation or update with its task's cancellation boundary.
+    private static Task<@Nullable Void> installTask(
+            DefaultDependencyManager manager, GameInstanceID id, @Nullable DefaultGameInstance updateTarget,
+            boolean keepIncomplete, ExceptionalBiConsumer<DefaultGameBuilder, TaskExecutionContext, Exception> install) {
+        return new Task<>() {
+            /// Runs the installation in its owning task tree.
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                Modpack.installWithGameBuilder(context, manager, id, updateTarget, keepIncomplete, builder -> install.accept(builder, context));
+                return null;
+            }
+        };
+    }
+
+    /// Creating and cancelling a queued installation leaves the repository available to other writers.
+    @Test
+    void modpackCancelledBeforeExecutionDoesNotReserveInstance(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("cancelled");
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            Task<?> task = new ServerModpackRemoteInstallTask(createDependencyManager(repository), new ServerModpackManifest(), id);
+            task.cancel();
+            assertFalse(task.test());
+            assertInstanceOf(CancellationException.class, task.exceptionNow());
+            assertTrue(draft.isOpen());
+        }
+        assertFalse(Files.exists(repository.getLayout().getInstanceRoot(id)));
+    }
+
+    /// An invalid pack releases its reservation, and a later install cannot remove an existing instance.
+    @Test
+    void modpackFailureRollsBackOnlyItsOwnReservation(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        DefaultDependencyManager manager = createDependencyManager(repository);
+        GameInstanceID id = new GameInstanceID("instance");
+        ServerModpackManifest missingGame = new ServerModpackManifest();
+        assertThrows(IllegalStateException.class, new ServerModpackRemoteInstallTask(manager, missingGame, id)::run);
+        assertFalse(Files.exists(repository.getLayout().getInstanceRoot(id)));
+
+        Task<?> competingInstall = new ServerModpackRemoteInstallTask(manager, missingGame, id);
+        GameInstanceManifest existing = new GameInstanceManifest(id).withMainClass("existing.Main");
+        repository.save(existing);
+        assertThrows(IllegalStateException.class, competingInstall::run);
+        assertEquals(existing, repository.getInstance(id).getManifest());
+        assertTrue(Files.isRegularFile(repository.getLayout().getInstanceJson(id)));
+    }
 
     /// Finds a manifest among unrelated and malformed JSON files and preserves its storage path.
     @Test
@@ -366,7 +958,7 @@ public final class DefaultGameRepositoryDraftTest {
 
         Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, workingInstance -> Task.supplyAsync(() ->
                 workingInstance.getManifest().withMainClass("updated.Main")));
-        assertTrue(update.executor().test());
+        assertTrue(update.test());
 
         assertEquals("updated.Main", repository.getInstance(id).getManifest().mainClass());
         assertEquals("custom client", Files.readString(target));
@@ -397,7 +989,7 @@ public final class DefaultGameRepositoryDraftTest {
                     assertEquals(original, repository.getInstance(id).getManifest());
                     return replacement;
                 }));
-        assertTrue(update.executor().test());
+        assertTrue(update.test());
 
         assertEquals(replacement, repository.getInstance(id).getManifest());
         assertTrue(replacement.getDownloadInfo().validateChecksum(target, false));
@@ -439,16 +1031,7 @@ public final class DefaultGameRepositoryDraftTest {
                         componentType.getPatchId(), "1.21.2", GameInstancePatch.PRIORITY_MC)
                 : new GameInstancePatch(componentType.getPatchId(), "0.16.0", GameInstancePatch.PRIORITY_LOADER,
                         null, "net.fabricmc.loader.impl.launch.knot.KnotClient", List.of());
-        ComponentRemoteVersion remote = new ComponentRemoteVersion(componentType,
-                GameVersionNumber.asGameVersion(installGame ? "1.21.2" : "1.21.1"),
-                Objects.requireNonNull(patch.version()), null, ComponentRemoteVersion.Type.RELEASE, List.of()) {
-            /// Supplies a fixed installer result while exercising the actual installation and commit pipeline.
-            @Override
-            public Task<GameInstancePatch> getInstallTask(
-                    DefaultDependencyManager dependencyManager, GameInstanceManifest baseManifest, Path modsDirectory) {
-                return Task.completed(patch);
-            }
-        };
+        ComponentRemoteVersion remote = fixedComponent(componentType, installGame ? "1.21.2" : "1.21.1", patch);
 
         assertTrue(manager.updateInstanceAsync(id, instance -> manager
                 .installComponentRemoteAsync(instance, instance.getManifest(), remote)
@@ -456,7 +1039,7 @@ public final class DefaultGameRepositoryDraftTest {
                     assertEquals(sharedJar, repository.getInstance(id).getInstanceJarFile());
                     assertFalse(Files.exists(target));
                     return manifest;
-                })).executor().test());
+                })).test());
 
         repository.refresh();
         DefaultGameInstance updated = repository.getInstance(id);
@@ -484,7 +1067,7 @@ public final class DefaultGameRepositoryDraftTest {
                 new DownloadInfo("https://example.invalid/new.jar", "A".repeat(40))));
 
         assertTrue(createDependencyManager(repository).updateInstanceAsync(id,
-                instance -> Task.completed(replacement)).executor().test());
+                instance -> Task.completed(replacement)).test());
 
         assertEquals(replacement, repository.getInstance(id).getManifest());
         assertEquals("custom client", Files.readString(target));
@@ -507,7 +1090,7 @@ public final class DefaultGameRepositoryDraftTest {
                         "cache-control", List.of("max-age=3600")), (name, value) -> true)), "new client");
         GameInstanceManifest replacement = original.withDownloads(Map.of(DownloadType.CLIENT, new DownloadInfo(newUrl)));
 
-        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).executor().test());
+        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).test());
 
         assertEquals(replacement, repository.getInstance(id).getManifest());
         assertEquals("new client", Files.readString(target));
@@ -532,7 +1115,7 @@ public final class DefaultGameRepositoryDraftTest {
                         new DownloadInfo("https://example.invalid/client.jar", sha1))),
                 GameComponentType.GAME.getPatchId(), "new-version", GameInstancePatch.PRIORITY_MC)));
 
-        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).executor().test());
+        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).test());
 
         assertEquals(replacement, repository.getInstance(id).getManifest());
         assertEquals("new client", Files.readString(target));
@@ -561,7 +1144,7 @@ public final class DefaultGameRepositoryDraftTest {
         GameInstanceManifest replacement = original.withJar(useOwnJar ? id : sharedId)
                 .withDownloads(Map.of(DownloadType.CLIENT, download));
 
-        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).executor().test());
+        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).test());
 
         assertEquals(useOwnJar ? "shared client" : "custom client", Files.readString(target));
         assertEquals("shared client", Files.readString(sharedJar));
@@ -584,7 +1167,7 @@ public final class DefaultGameRepositoryDraftTest {
                 new DownloadInfo("file:///missing-client.jar", "0".repeat(40))));
         Task<?> update = createDependencyManager(repository).updateInstanceAsync(id,
                 instance -> Task.completed(replacement));
-        assertFalse(update.executor().test());
+        assertFalse(update.test());
 
         assertEquals(original, repository.getInstance(id).getManifest());
         assertEquals(originalJson, Files.readString(manifestFile));
@@ -616,7 +1199,7 @@ public final class DefaultGameRepositoryDraftTest {
                 .withDownloads(Map.of(DownloadType.CLIENT,
                         new DownloadInfo("https://example.invalid/client.jar", sha1)));
         Task<?> update = manager.updateInstanceAsync(id, instance -> Task.completed(replacement));
-        assertFalse(update.executor().test());
+        assertFalse(update.test());
 
         assertEquals(original, repository.getInstance(id).getManifest());
         assertEquals(originalJson, Files.readString(manifestFile));
@@ -638,7 +1221,7 @@ public final class DefaultGameRepositoryDraftTest {
 
         Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, workingInstance ->
                 Task.supplyAsync(() -> workingInstance.getManifest().withId(otherId)));
-        assertFalse(update.executor().test());
+        assertFalse(update.test());
 
         assertEquals("original.Main", repository.getInstance(id).getManifest().mainClass());
         assertFalse(repository.hasInstance(otherId));
@@ -655,7 +1238,7 @@ public final class DefaultGameRepositoryDraftTest {
 
         Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, workingInstance ->
                 Task.completed(workingInstance.getManifest()));
-        assertFalse(update.executor().test());
+        assertFalse(update.test());
 
         try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
             assertTrue(ignored.isOpen());
@@ -672,11 +1255,94 @@ public final class DefaultGameRepositoryDraftTest {
         Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, workingInstance -> {
             throw new IOException("Simulated updater failure");
         });
-        assertFalse(update.executor().test());
+        assertFalse(update.test());
 
         try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
             assertTrue(ignored.isOpen());
         }
+    }
+
+    /// Cancellation in the updater releases the draft even when its returned task never starts.
+    @Test
+    public void testUpdateInstanceAsyncAbortsDraftBeforeChildStarts(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceManifest original = new GameInstanceManifest(id).withMainClass("original.Main");
+        repository.save(original);
+        DefaultDependencyManager manager = createDependencyManager(repository);
+        GameInstanceManifest replacement = original.withMainClass("updated.Main");
+        Task<@Nullable Void> root = new Task<>() {
+            /// Cancels the tree while the updater owns the draft.
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                return context.run(manager.updateInstanceAsync(id, instance -> {
+                    cancel();
+                    return Task.completed(replacement);
+                }));
+            }
+        };
+
+        assertThrows(CancellationException.class, root::run);
+        assertEquals(original, repository.getInstance(id).getManifest());
+        manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).run();
+        assertEquals(replacement, repository.getInstanceManifest(id));
+    }
+
+    /// Cancellation observed by a snapshot listener preserves a published installation or update.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void cancellationDuringPublicationPreservesTaskResult(boolean update, @TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Task<?> operation;
+        if (update) {
+            repository.save(new GameInstanceManifest(id));
+            operation = createDependencyManager(repository).updateInstanceAsync(id, instance ->
+                    Task.completed(instance.getManifest().withMainClass(GameComponentAnalyzer.VANILLA_MAIN)));
+        } else {
+            DefaultDependencyManager manager = createOfflineGameInstaller(repository, id, "1.21.2");
+            operation = new Task<DefaultGameInstance>() {
+                /// Builds the instance as the final result of this installation.
+                @Override
+                public DefaultGameInstance execute(TaskExecutionContext context) throws Exception {
+                    try (DefaultGameBuilder builder = manager.newGameBuilder(id)) {
+                        builder.component(GameComponentType.GAME, "1.21.2");
+                        return builder.buildAsTaskResult(context);
+                    }
+                }
+            };
+        }
+        repository.snapshotProperty().addListener((observable, previous, current) -> operation.cancel());
+
+        operation.run();
+        assertTrue(operation.isCancellationRequested());
+        assertEquals(GameComponentAnalyzer.VANILLA_MAIN, repository.getInstance(id).getResolvedManifest().mainClass());
+    }
+
+    /// Releases the draft when the updater's task raises an error during execution.
+    @Test
+    public void testUpdateInstanceAsyncAbortsDraftOnTaskError(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        repository.save(new GameInstanceManifest(id));
+
+        AssertionError error = new AssertionError("updater task");
+        Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, instance -> Task.failed(error));
+        assertSame(error, assertThrows(AssertionError.class, update::run));
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            assertTrue(draft.isOpen());
+        }
+    }
+
+    /// Runs a configured game build as a root task.
+    private static Task<GameInstance> buildTask(GameBuilder builder) {
+        return new Task<>() {
+            /// {@inheritDoc}
+            @Override
+            public GameInstance execute(TaskExecutionContext context) throws Exception {
+                return builder.build(context);
+            }
+        };
     }
 
     /// Writes a minimal client JAR whose version can be detected after committing and refreshing.
@@ -693,6 +1359,45 @@ public final class DefaultGameRepositoryDraftTest {
         DefaultCacheRepository cacheRepository =
                 new DefaultCacheRepository(repository.getBaseDirectory().resolve("cache"));
         return new DefaultDependencyManager(repository, new TestDownloadProvider(cacheRepository), cacheRepository);
+    }
+
+    /// Provides a fixed game patch and cached JAR for offline game builder installations.
+    private static DefaultDependencyManager createOfflineGameInstaller(
+            TestRepository repository, GameInstanceID id, String version) throws IOException {
+        DefaultCacheRepository cache = new DefaultCacheRepository(repository.getBaseDirectory().resolve("cache"));
+        Path jar = repository.getBaseDirectory().resolve("client.jar");
+        writeVersionJar(jar, version);
+        String sha1 = DigestUtils.digestToString("SHA-1", jar);
+        cache.cacheFile(jar, "SHA-1", sha1);
+        GameInstanceManifest manifest = new GameInstanceManifest(id)
+                .withMainClass(GameComponentAnalyzer.VANILLA_MAIN)
+                .withDownloads(Map.of(DownloadType.CLIENT, new DownloadInfo("https://example.invalid/client.jar", sha1)));
+        GameInstancePatch patch = GameInstancePatch.fromManifest(manifest, GameComponentType.GAME.getPatchId(),
+                version, GameInstancePatch.PRIORITY_MC);
+        ComponentRemoteVersion remote = fixedComponent(GameComponentType.GAME, version, patch);
+        DownloadProvider provider = new DownloadProvider() {
+            /// Supplies the local game version for the build task.
+            @Override
+            protected Task<? extends ComponentRemoteVersionList<?>> fetchVersionsAsync(
+                    GameComponentType type, @Nullable GameVersionNumber gameVersion) {
+                return Task.completed(ComponentRemoteVersionList.of(type, new TreeSet<>(List.of(remote))));
+            }
+        };
+        return new DefaultDependencyManager(repository, provider, cache);
+    }
+
+    /// Creates a component version whose install task returns the supplied patch.
+    private static ComponentRemoteVersion fixedComponent(GameComponentType componentType, String gameVersion,
+                                                         GameInstancePatch patch) {
+        return new ComponentRemoteVersion(componentType, GameVersionNumber.asGameVersion(gameVersion),
+                Objects.requireNonNull(patch.version()), null, ComponentRemoteVersion.Type.RELEASE, List.of()) {
+            /// Supplies a fixed installer result while exercising the actual installation and commit pipeline.
+            @Override
+            public Task<GameInstancePatch> getInstallTask(
+                    DefaultDependencyManager dependencyManager, GameInstanceManifest baseManifest, Path modsDirectory) {
+                return Task.completed(patch);
+            }
+        };
     }
 
     /// Minimal repository implementation for draft tests.

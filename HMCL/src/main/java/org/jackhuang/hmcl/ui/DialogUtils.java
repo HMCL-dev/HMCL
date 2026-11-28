@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 public final class DialogUtils {
@@ -33,6 +34,12 @@ public final class DialogUtils {
     public static final String PROPERTY_PARENT_DIALOG_REF = DialogUtils.class.getName() + ".dialog.parentDialogRef";
 
     public static final String PROPERTY_DIALOG_SHOW_LATER = DialogUtils.class.getName() + ".dialog.showLater";
+
+    /// Returns whether the UI should show a failure suppressed on the cancellation or its underlying interruption.
+    public static boolean shouldReportCancellation(CancellationException cancellation) {
+        return cancellation.getSuppressed().length > 0
+                || (cancellation.getCause() instanceof InterruptedException cause && cause.getSuppressed().length > 0);
+    }
 
     /// Shows content in the main-window dialog stack owned by `decorator`.
     ///

@@ -440,11 +440,7 @@ public class DefaultLauncher extends Launcher {
         return new Command(res, tempNativeFolder, javaNativeFolder, encoding);
     }
 
-    /// Returns the feature flags used to evaluate conditional game arguments.
-    /// The `has_custom_resolution` flag is enabled when both dimensions are non-null and nonzero
-    /// and the game version is at least `1.6` (snapshot `13w25a`).
-    ///
-    /// @return an unmodifiable snapshot containing the custom resolution flag
+    /// The `has_custom_resolution` flag requires nonzero dimensions and Minecraft 1.6 (13w25a) or later.
     public @Unmodifiable Map<String, Boolean> getFeatures() {
         boolean hasCustomResolution = options.getHeight() != null && options.getHeight() != 0
                 && options.getWidth() != null && options.getWidth() != 0
@@ -469,11 +465,7 @@ public class DefaultLauncher extends Launcher {
         return Arguments.DEFAULT_GAME_ARGUMENTS;
     }
 
-    /// Do something here.
-    /// i.e.
-    /// -Dminecraft.launcher.version=<Your launcher name>
-    /// -Dminecraft.launcher.brand=<Your launcher version>
-    /// -Dlog4j.configurationFile=<Your custom log4j configuration>
+    /// Allows subclasses to append launcher-specific JVM arguments.
     protected void appendJvmArgs(CommandBuilder result) {
     }
 
@@ -675,8 +667,17 @@ public class DefaultLauncher extends Launcher {
         );
     }
 
+    /// {@inheritDoc}
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
+        return launch(null);
+    }
+
+    /// Checks for cancellation before the pre-launch command and before starting the game.
+    /// Cancellation during the pre-launch command takes effect after it exits.
+    protected ManagedProcess launch(@Nullable Runnable checkCancellation) throws IOException, InterruptedException {
+        if (checkCancellation != null)
+            checkCancellation.run();
         final Command command = generateCommandLine();
         final Map<String, String> envVars = generateEnvVars();
 
@@ -704,28 +705,39 @@ public class DefaultLauncher extends Launcher {
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
             ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), envVars)).directory(runDirectory.toFile());
             builder.environment().putAll(envVars);
+            if (checkCancellation != null)
+                checkCancellation.run();
             SystemUtils.callExternalProcess(builder);
         }
 
-        Process process;
+        ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory.toFile());
+        if (listener == null)
+            builder.inheritIO();
+        @Nullable Path appdata = options.getGameDir().toAbsolutePath().getParent();
+        if (appdata != null)
+            builder.environment().put("APPDATA", appdata.toString());
+        builder.environment().putAll(envVars);
+        if (checkCancellation != null)
+            checkCancellation.run();
+        ManagedProcess process;
         try {
-            ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory.toFile());
-            if (listener == null) {
-                builder.inheritIO();
-            }
-            Path appdata = options.getGameDir().toAbsolutePath().getParent();
-            if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
-
-            builder.environment().putAll(envVars);
-            process = builder.start();
+            process = new ManagedProcess(builder.start(), builder.command());
         } catch (IOException e) {
             throw new ProcessCreationException(e);
         }
 
-        ManagedProcess p = new ManagedProcess(process, rawCommandLine);
-        if (listener != null)
-            startMonitors(p, envVars, listener, command.encoding, daemon);
-        return p;
+        try {
+            if (checkCancellation != null)
+                checkCancellation.run();
+            if (listener != null)
+                startMonitors(process, envVars, listener, command.encoding, daemon);
+            if (checkCancellation != null)
+                checkCancellation.run();
+            return process;
+        } catch (RuntimeException | Error e) {
+            process.stopAndWait();
+            throw e;
+        }
     }
 
     @Contract(value = " -> new", pure = true)
@@ -1036,7 +1048,9 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, Map<String, String> envVars, ProcessListener processListener, Charset encoding, boolean isDaemon) {
+    /// Forwards game output and notifies the listener before evaluating the post-exit command.
+    private void startMonitors(ManagedProcess managedProcess, Map<String, String> envVars, ProcessListener processListener,
+                               Charset encoding, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, false);

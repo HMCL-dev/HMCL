@@ -5,17 +5,16 @@ package org.jackhuang.hmcl.download.legacyfabric;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
+import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public final class LegacyFabricInstallTask extends Task<GameInstancePatch> {
@@ -23,44 +22,23 @@ public final class LegacyFabricInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final LegacyFabricRemoteVersion remote;
-    private final GetTask launchMetaTask;
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
+    /// Creates an installation task for the selected Legacy Fabric loader version.
     public LegacyFabricInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, LegacyFabricRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
         this.remote = remoteVersion;
+    }
 
-        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
-        launchMetaTask = new GetTask(downloadProvider.getDownloadCandidates(remoteVersion));
+    /// Reads the loader metadata and returns its patch after attempting to download the required libraries.
+    @Override
+    public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
+        GetTask launchMetaTask = new GetTask(dependencyManager.getDownloadProvider().getDownloadCandidates(remote));
         launchMetaTask.setCacheRepository(dependencyManager.getCacheRepository());
-    }
+        GameInstancePatch patch = getPatch(JsonUtils.GSON.fromJson(context.run(launchMetaTask), FabricInstallTask.FabricInfo.class), remote.getGameVersion(), remote.getSelfVersion());
 
-    @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public Collection<Task<?>> getDependents() {
-        return Collections.singleton(launchMetaTask);
-    }
-
-    @Override
-    public Collection<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean isRelyingOnDependencies() {
-        return false;
-    }
-
-    @Override
-    public void execute() {
-        setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), FabricInstallTask.FabricInfo.class), remote.getGameVersion(), remote.getSelfVersion()));
-
-        dependencies.add(new org.jackhuang.hmcl.download.game.GameLibrariesTask(dependencyManager, manifest, true, getResult().getLibraries()));
+        context.tryRun(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()));
+        return patch;
     }
 
     private GameInstancePatch getPatch(FabricInstallTask.FabricInfo legacyFabricInfo, GameVersionNumber gameVersion, String loaderVersion) {

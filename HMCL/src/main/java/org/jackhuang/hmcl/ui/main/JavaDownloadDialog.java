@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -47,6 +46,8 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -56,7 +57,6 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -146,6 +146,7 @@ public final class JavaDownloadDialog extends StackPane {
                 setActions(warningLabel, acceptPane, cancelButton);
         }
 
+        /// Closes the dialog and downloads the selected Java versions, reporting failures together.
         @Override
         protected void onAccept() {
             fireEvent(new DialogCloseEvent());
@@ -160,13 +161,15 @@ public final class JavaDownloadDialog extends StackPane {
             if (selectedVersions.isEmpty())
                 return;
 
-            Task<Void> task = Task.allOf(selectedVersions.stream().map(javaVersion -> JavaManager.getDownloadJavaTask(downloadProvider, platform, javaVersion).wrapResult()).toList())
-                    .whenComplete(Schedulers.javafx(), (results, exception) -> {
-                        Throwable exceptionToDisplay;
+            Task<?> task = Task.allOf(selectedVersions.stream()
+                            .map(javaVersion -> JavaManager.getDownloadJavaTask(downloadProvider, platform, javaVersion)
+                                    .handle((runtime, failure) -> failure))
+                            .toList())
+                    .whenCompleteAsync(Schedulers.javafx(), (results, exception) -> {
+                        @Nullable Throwable exceptionToDisplay;
                         if (exception == null) {
-                            List<Throwable> exceptions = results.stream()
-                                    .filter(Result::isFailure)
-                                    .map(Result::getException)
+                            @Unmodifiable List<Throwable> exceptions = results.stream()
+                                    .filter(Objects::nonNull)
                                     .map(Lang::resolveException)
                                     .filter(it -> !(it instanceof CancellationException))
                                     .toList();
@@ -185,7 +188,7 @@ public final class JavaDownloadDialog extends StackPane {
                             exceptionToDisplay = exception;
                         }
 
-                        if (exceptionToDisplay != null) {
+                        if (exceptionToDisplay != null && !(exceptionToDisplay instanceof CancellationException)) {
                             LOG.warning("Failed to download java", exceptionToDisplay);
                             Controllers.dialog(I18n.localizeErrorMessage(exceptionToDisplay), i18n("install.failed"));
                         }
@@ -357,7 +360,6 @@ public final class JavaDownloadDialog extends StackPane {
                 return;
 
             Controllers.taskDialog(new GetTask(downloadProvider.getDownloadCandidates(version.getLinks().pkgInfoUri()))
-                    .setExecutor(Schedulers.io())
                     .thenComposeAsync(json -> {
                         DiscoResult<DiscoRemoteFileInfo> result = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoRemoteFileInfo.class));
                         if (result.getResult().size() != 1)
@@ -399,7 +401,7 @@ public final class JavaDownloadDialog extends StackPane {
                                 })
                                 .thenSupplyAsync(() -> targetFile);
                     })
-                    .whenComplete(Schedulers.javafx(), ((result, exception) -> {
+                    .whenCompleteAsync(Schedulers.javafx(), ((result, exception) -> {
                         if (exception == null) {
                             String javaVersion = version.getJavaVersion();
                             JavaInfo info = new JavaInfo(platform, javaVersion, distribution.getVendor());
@@ -415,12 +417,9 @@ public final class JavaDownloadDialog extends StackPane {
                             String defaultName = distribution.getApiParameter() + "-" + javaVersion + "-" + packageType.name().toLowerCase(Locale.ROOT);
                             Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller ->
                                     new JavaInstallPage(controller::onFinish, info, version, updateInfo, defaultName, result)));
-                        } else {
+                        } else if (!(exception instanceof CancellationException)) {
                             LOG.warning("Failed to download java", exception);
-                            Throwable resolvedException = resolveException(exception);
-                            if (!(resolvedException instanceof CancellationException)) {
-                                Controllers.dialog(I18n.localizeErrorMessage(resolvedException), i18n("install.failed"));
-                            }
+                            Controllers.dialog(I18n.localizeErrorMessage(exception), i18n("install.failed"));
                         }
                     })), i18n("java.download"), TaskCancellationAction.NORMAL);
 
@@ -431,7 +430,7 @@ public final class JavaDownloadDialog extends StackPane {
                 return null;
             return javaVersionLists.computeIfAbsent(distribution, it -> {
                 DiscoJavaVersionList versionList = new DiscoJavaVersionList(it);
-                new DiscoFetchJavaListTask(downloadProvider, it, platform).setExecutor(Schedulers.io()).thenApplyAsync(versions -> {
+                new DiscoFetchJavaListTask(downloadProvider, it, platform).thenApplyAsync(versions -> {
                     EnumMap<JavaPackageType, ObservableList<DiscoJavaRemoteVersion>> result = new EnumMap<>(JavaPackageType.class);
                     if (versions.isEmpty())
                         return result;
@@ -447,7 +446,7 @@ public final class JavaDownloadDialog extends StackPane {
                     for (List<DiscoJavaRemoteVersion> l : result.values())
                         Collections.reverse(l);
                     return result;
-                }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
+                }).whenCompleteAsync(Schedulers.javafx(), ((result, exception) -> {
                     if (exception == null) {
                         versionList.status = DiscoJavaVersionList.Status.SUCCESS;
                         versionList.versions = result;

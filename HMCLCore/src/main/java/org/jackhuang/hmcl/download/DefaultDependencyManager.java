@@ -11,6 +11,8 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -93,16 +95,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 this, updateTarget.getId(), updateTarget, draft, initialManifest);
     }
 
-    /// Opens an exclusive draft and reserves a builder target in it.
+    /// Reserves the empty target manifest in an exclusive draft. A null `updateTarget` requires a
+    /// new id. An update requires the exact instance from the current snapshot.
     ///
-    /// The exact `updateTarget` object must be present in the draft's base snapshot. An empty target
-    /// manifest is retained before this method returns. Any validation or reservation failure aborts
-    /// the draft before it is propagated.
-    ///
-    /// @param initialManifest the empty target manifest to reserve
-    /// @param updateTarget    the exact published instance with the same id required for an update,
-    ///                        or `null`
-    /// @return the open draft containing the reserved target
     /// @throws IllegalArgumentException if `updateTarget` belongs to another repository
     /// @throws IllegalStateException    if the target conflicts with the selected operation, cannot
     ///                                  be reserved, or another repository draft is open
@@ -137,11 +132,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         }
     }
 
-    /// Aborts a draft and attaches a cleanup failure to the triggering failure.
-    ///
-    /// @param draft   the draft to abort
-    /// @param failure the triggering failure that receives any cleanup failure as suppressed
-    static void abortDraftAfterFailure(
+    /// Aborts a draft and attaches any cleanup failure to the triggering failure.
+    private static void abortDraftAfterFailure(
             DefaultGameRepositoryDraft draft,
             Throwable failure) {
         try {
@@ -151,57 +143,42 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         }
     }
 
-    /// Creates a task that updates an instance's manifest and its own client JAR in one draft.
+    /// Updates the published instance with a manifest of the same id. The manifest and any new
+    /// client JAR are committed together. Failure or cancellation before commit preserves the
+    /// installed files and releases the draft.
     ///
-    /// The updater receives the published instance and must return a manifest with the same id.
-    /// If the updated manifest uses this instance's own JAR, that JAR is replaced when the resolved
-    /// client download changes or the previous manifest used another instance's JAR. Downloads are
-    /// compared by SHA-1 when either declares a checksum, otherwise by URL and size. Matching
-    /// checksums identify the same client even when the URLs differ. Referenced JARs are not modified.
-    ///
-    /// A replacement is obtained through this manager's download provider and cache before the
-    /// manifest and JAR are committed together. A task failure aborts the draft and retains the
-    /// previously published instance files. Shared cache files written by the tasks are retained.
-    ///
-    /// @param <E>        the checked exception type thrown while creating the update task
-    /// @param instanceId the instance to update
-    /// @param updater    the asynchronous manifest update
-    /// @return the task that commits the updated instance
-    public <E extends Exception> Task<Void> updateInstanceAsync(
+    /// The instance's own JAR is replaced when switching from a referenced JAR or changing the
+    /// client download. Downloads are compared by SHA-1 when either has a checksum, otherwise by
+    /// URL and size. Other instances' JARs and shared cache files are retained.
+    public <E extends Exception> Task<@Nullable Void> updateInstanceAsync(
             GameInstanceID instanceId,
             ExceptionalFunction<GameInstance, Task<GameInstanceManifest>, E> updater) {
-        return Task.composeAsync(() -> {
-            DefaultGameRepositoryDraft draft = repository.openDraft();
-            try {
-                GameInstance instance = draft.getBaseSnapshot().getInstance(instanceId);
-                return Objects.requireNonNull(updater.apply(instance), "Instance updater returned null")
-                        .thenComposeAsync(manifest -> {
-                            if (!instanceId.equals(manifest.id())) {
-                                throw new IllegalArgumentException(
-                                        "Instance updater changed id from " + instanceId + " to " + manifest.id());
-                            }
-                            GameInstanceManifest previous = instance.getResolvedManifest();
-                            GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
-                            draft.put(manifest);
-                            if (instanceId.equals(resolved.jar())
-                                    && (!instanceId.equals(previous.jar())
-                                    || !isSameClientDownload(previous.getDownloadInfo(), resolved.getDownloadInfo()))) {
-                                return new GameDownloadTask(this, resolved).thenAcceptAsync(
-                                        jar -> draft.putPrimaryJar(instanceId, jar));
-                            }
-                            return null;
-                        }).thenRunAsync(() -> {
-                            draft.commit();
-                        }).whenComplete(exception -> {
-                            if (draft.isOpen()) {
-                                draft.abort();
-                            }
-                        });
-            } catch (Throwable exception) {
-                abortDraftAfterFailure(draft, exception);
-                throw exception;
+        return new Task<@Nullable Void>() {
+            /// {@inheritDoc}
+            @Override
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+                    GameInstance instance = draft.getBaseSnapshot().getInstance(instanceId);
+                    Task<GameInstanceManifest> update = Objects.requireNonNull(updater.apply(instance), "Instance updater returned null");
+                    GameInstanceManifest manifest = context.run(update);
+                    if (!instanceId.equals(manifest.id())) {
+                        throw new IllegalArgumentException(
+                                "Instance updater changed id from " + instanceId + " to " + manifest.id());
+                    }
+                    GameInstanceManifest previous = instance.getResolvedManifest();
+                    GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
+                    draft.put(manifest);
+                    if (instanceId.equals(resolved.jar())
+                            && (!instanceId.equals(previous.jar())
+                            || !isSameClientDownload(previous.getDownloadInfo(), resolved.getDownloadInfo()))) {
+                        draft.putPrimaryJar(instanceId, context.run(new GameDownloadTask(DefaultDependencyManager.this, resolved)));
+                    }
+                    context.commit();
+                    draft.commit();
+                    return null;
+                }
             }
-        });
+        }.setName("Update instance " + instanceId).setSignificance(TaskSignificance.MODERATE);
     }
 
     /// Compares client identity by checksum, falling back to URL and size when neither has one.
@@ -222,16 +199,16 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         validateGameInstance(instance);
 
         return Task.allOf(
-                Task.composeAsync(() -> {
+                Task.composeOptionalAsync(() -> {
                     Path instanceJar = instance.getInstanceJarFile();
 
                     return Files.notExists(instanceJar) || FileUtils.size(instanceJar) == 0L
                             ? new GameDownloadTask(this, manifest).thenAcceptAsync(
                             cachedJar -> FileUtils.copyFile(cachedJar, instanceJar))
                             : null;
-                }).thenComposeAsync(checkPatchCompletionAsync(instance, manifest, integrityCheck)),
+                }).thenCompose(checkPatchCompletionAsync(instance, manifest, integrityCheck)),
                 new GameAssetDownloadTask(this, manifest, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)
-                        .setSignificance(Task.TaskSignificance.MODERATE),
+                        .setSignificance(TaskSignificance.MODERATE),
                 new GameLibrariesTask(this, manifest, integrityCheck)
         );
     }
@@ -248,7 +225,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             boolean integrityCheck) {
         validateGameInstance(instance);
 
-        return Task.composeAsync(() -> {
+        return Task.composeOptionalAsync(() -> {
             List<Task<?>> tasks = new ArrayList<>(0);
 
             GameVersionNumber detectedVersion = instance.getVersion();
@@ -334,9 +311,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                                         : updated;
                             });
                 })
-                .withStage("hmcl.install.%s:%s".formatted(
-                        componentVersion.getComponentType().getPatchId(),
-                        componentVersion.getSelfVersion()));
+                .withStage(InstallStages.component(componentVersion.getComponentType(), componentVersion.getSelfVersion()));
     }
 
     /// Resolves and installs a component into an unpublished working manifest.
@@ -360,7 +335,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         Optional.ofNullable(versions.getRemoteVersion(componentVersion))
                                 .orElseThrow(() -> new IOException(
                                         "Remote component " + componentType + " has no version " + componentVersion))))
-                .withStage("hmcl.install.%s:%s".formatted(componentType, componentVersion));
+                .withStage(InstallStages.component(componentType, componentVersion));
     }
 
     /// Installs a component using a working manifest that may be ahead of the instance's stored state.
@@ -415,7 +390,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         Optional.ofNullable(versions.getRemoteVersion(componentVersion))
                                 .orElseThrow(() -> new IOException(
                                         "Remote component " + componentType + " has no version " + componentVersion))))
-                .withStage("hmcl.install.%s:%s".formatted(componentType, componentVersion));
+                .withStage(InstallStages.component(componentType, componentVersion));
     }
 
     /// Installs a component from a local installer jar into a registered instance.
@@ -432,34 +407,39 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             throw new IllegalArgumentException("Cannot install component into a non-modifiable manifest");
         }
 
-        String gameVersion = instance.getVersion().toString();
-
         return Task.composeAsync(() -> {
-                    try {
-                        return CleanroomInstallTask.install(this, baseManifest, gameVersion, installer);
-                    } catch (IOException ignore) {
-                    }
+            String gameVersion = instance.getVersion().toString();
+            return detectLocalInstaller(baseManifest, gameVersion, installer)
+                    .thenApplyAsync(patch -> patch == null
+                            ? baseManifest
+                            : baseManifest.withBaseGamePatch(gameVersion).addPatch(patch).reconstructByPatches());
+        });
+    }
 
-                    try {
-                        return NeoForgeInstallTask.install(this, baseManifest, gameVersion, installer);
-                    } catch (IOException ignore) {
-                    }
+    /// Selects the first installer that recognizes the local archive.
+    private Task<GameInstancePatch> detectLocalInstaller(GameInstanceManifest baseManifest, String gameVersion, Path installer)
+            throws VersionMismatchException, UnsupportedInstallationException, UnsupportedLibraryInstallerException {
+        try {
+            return CleanroomInstallTask.install(this, baseManifest, gameVersion, installer);
+        } catch (IOException ignore) {
+        }
 
-                    try {
-                        return ForgeInstallTask.install(this, baseManifest, gameVersion, installer);
-                    } catch (IOException ignore) {
-                    }
+        try {
+            return NeoForgeInstallTask.install(this, baseManifest, gameVersion, installer);
+        } catch (IOException ignore) {
+        }
 
-                    try {
-                        return OptiFineInstallTask.install(this, baseManifest, gameVersion, installer);
-                    } catch (IOException ignore) {
-                    }
+        try {
+            return ForgeInstallTask.install(this, baseManifest, gameVersion, installer);
+        } catch (IOException ignore) {
+        }
 
-                    throw new UnsupportedLibraryInstallerException();
-                })
-                .thenApplyAsync(patch -> patch == null
-                        ? baseManifest
-                        : baseManifest.withBaseGamePatch(gameVersion).addPatch(patch).reconstructByPatches());
+        try {
+            return OptiFineInstallTask.install(this, baseManifest, gameVersion, installer);
+        } catch (IOException ignore) {
+        }
+
+        throw new UnsupportedLibraryInstallerException();
     }
 
     /// Indicates that a local library installer is not recognized by any supported installer.
@@ -478,7 +458,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public Task<GameInstanceManifest> removeComponentAsync(GameInstance instance, GameComponentType componentType) {
         validateGameInstance(instance);
         GameInstanceManifest workingManifest = instance.getManifest();
-        validateGameInstance(instance);
         if (!instance.getId().equals(workingManifest.id())) {
             throw new IllegalArgumentException("workingManifest id does not match instance");
         }

@@ -131,7 +131,7 @@ public final class WorldListPage extends ListPaneBase<World> {
             // Ensure the game version number is parsed
             gameInstance.getVersion();
             return World.getWorlds(savesDir);
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
                 // A newer refresh task is running, discard this result
                 return;
@@ -174,13 +174,15 @@ public final class WorldListPage extends ListPaneBase<World> {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
         Task.supplyAsync(() -> new World(zipFile))
-                .whenComplete(Schedulers.javafx(), world -> {
+                .thenAcceptAsync(Schedulers.javafx(), world -> {
                     Controllers.prompt(i18n("world.name.enter"), (name, handler) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
-                                .whenComplete(Schedulers.javafx(), () -> {
+                                .thenRunAsync(Schedulers.javafx(), () -> {
                                     handler.resolve();
                                     refresh();
-                                }, e -> {
+                                }).whenCompleteAsync(Schedulers.javafx(), (ignored, e) -> {
+                                    if (e == null) return;
+
                                     if (e instanceof FileAlreadyExistsException)
                                         handler.reject(i18n("world.add.failed", i18n("world.add.already_exists")));
                                     else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
@@ -189,9 +191,11 @@ public final class WorldListPage extends ListPaneBase<World> {
                                         handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                                 }).start();
                     }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
-                }, e -> {
-                    LOG.warning("Unable to parse world file " + zipFile, e);
-                    Controllers.dialog(i18n("world.add.invalid"));
+                }).whenCompleteAsync(Schedulers.javafx(), (ignored, e) -> {
+                    if (e != null) {
+                        LOG.warning("Unable to parse world file " + zipFile, e);
+                        Controllers.dialog(i18n("world.add.invalid"));
+                    }
                 }).start();
     }
 

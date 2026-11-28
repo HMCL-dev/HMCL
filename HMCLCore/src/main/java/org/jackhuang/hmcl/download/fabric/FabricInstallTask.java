@@ -5,15 +5,16 @@ package org.jackhuang.hmcl.download.fabric;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -30,9 +31,10 @@ public final class FabricInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final FabricRemoteVersion remote;
-    private final GetTask launchMetaTask;
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
+    /// Creates an installation task for the selected Fabric loader version.
+    ///
+    /// @throws IllegalArgumentException if `manifest` is not modifiable
     public FabricInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, FabricRemoteVersion remoteVersion) {
         if (!manifest.isModifiable()) {
             throw new IllegalArgumentException("Manifest is not modifiable");
@@ -41,47 +43,24 @@ public final class FabricInstallTask extends Task<GameInstancePatch> {
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
         this.remote = remoteVersion;
-
-        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
-        launchMetaTask = new GetTask(downloadProvider.getDownloadCandidates(remoteVersion));
-        launchMetaTask.setCacheRepository(dependencyManager.getCacheRepository());
     }
 
+    /// Reads the loader metadata and returns its patch after attempting to download the required libraries.
     @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() throws Exception {
+    public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
         if (!Objects.equals(GameComponentAnalyzer.VANILLA_MAIN, manifest.mainClass()))
             throw new UnsupportedInstallationException(FABRIC_NOT_COMPATIBLE_WITH_FORGE);
-    }
 
-    @Override
-    public Collection<Task<?>> getDependents() {
-        return Collections.singleton(launchMetaTask);
-    }
-
-    @Override
-    public Collection<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean isRelyingOnDependencies() {
-        return false;
-    }
-
-    @Override
-    public void execute() throws IOException {
-        FabricInfo fabricInfo = JsonUtils.GSON.fromJson(launchMetaTask.getResult(), FabricInfo.class);
+        GetTask launchMetaTask = new GetTask(dependencyManager.getDownloadProvider().getDownloadCandidates(remote));
+        launchMetaTask.setCacheRepository(dependencyManager.getCacheRepository());
+        @Nullable FabricInfo fabricInfo = JsonUtils.GSON.fromJson(context.run(launchMetaTask), FabricInfo.class);
         if (fabricInfo == null)
             throw new IOException("Fabric metadata is invalid");
 
-        setResult(getPatch(fabricInfo, remote.getGameVersion(), remote.getSelfVersion()));
+        GameInstancePatch patch = getPatch(fabricInfo, remote.getGameVersion(), remote.getSelfVersion());
 
-        dependencies.add(new GameLibrariesTask(dependencyManager, manifest, true, getResult().getLibraries()));
+        context.tryRun(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()));
+        return patch;
     }
 
     private GameInstancePatch getPatch(FabricInfo fabricInfo, GameVersionNumber gameVersion, String loaderVersion) {

@@ -12,11 +12,14 @@ import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -32,10 +35,10 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
     /// Minecraft version whose vanilla client JAR is required by the installer processors.
     private final GameVersionNumber gameVersion;
     private final @Nullable CleanroomRemoteVersion remote;
-    private @Nullable Path installer;
-    private @Nullable FileDownloadTask dependent;
-    private @Nullable Task<GameInstancePatch> task;
-    private @Nullable String selfVersion;
+    /// The local installer supplied by the caller, or `null` to download it.
+    private final @Nullable Path installer;
+    /// The local installer version, or `null` for a remote installation.
+    private final @Nullable String selfVersion;
 
     /// Creates a Cleanroom task that downloads the selected installer.
     ///
@@ -50,6 +53,8 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
         this.manifest = manifest;
         this.gameVersion = remoteVersion.getGameVersion();
         this.remote = remoteVersion;
+        this.installer = null;
+        this.selfVersion = null;
 
         setSignificance(TaskSignificance.MODERATE);
     }
@@ -77,68 +82,31 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
         setSignificance(TaskSignificance.MODERATE);
     }
 
+    /// Obtains the installer and returns its Cleanroom patch for the matching vanilla client JAR.
     @Override
-    public boolean doPreExecute() {
-        return true;
-    }
+    public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
+        if (installer != null) {
+            return install(context, installer, Objects.requireNonNull(selfVersion));
+        }
 
-    @Override
-    public void preExecute() throws Exception {
-        if (installer == null) {
-            installer = Files.createTempFile("cleanroom-installer", ".jar");
-
-            CleanroomRemoteVersion remoteVersion = Objects.requireNonNull(remote);
+        CleanroomRemoteVersion remoteVersion = Objects.requireNonNull(remote);
+        Path downloadedInstaller = Files.createTempFile("cleanroom-installer", ".jar");
+        try (Closeable cleanup = () -> Files.deleteIfExists(downloadedInstaller)) {
             DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
-            dependent = new FileDownloadTask(
-                    downloadProvider.getDownloadCandidates(remoteVersion),
-                    installer, null);
-            dependent.setCacheRepository(dependencyManager.getCacheRepository());
-            dependent.setCaching(true);
-            dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
+            var download = new FileDownloadTask(downloadProvider.getDownloadCandidates(remoteVersion), downloadedInstaller, null);
+            download.setCacheRepository(dependencyManager.getCacheRepository());
+            download.setCaching(true);
+            download.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
+            context.run(download);
+            return install(context, downloadedInstaller, remoteVersion.getSelfVersion());
         }
     }
 
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    @Override
-    public void postExecute() throws Exception {
-        if (remote != null) {
-            Files.deleteIfExists(Objects.requireNonNull(installer));
-        }
-
-        setResult(Objects.requireNonNull(task).getResult());
-    }
-
-    @Override
-    public Collection<Task<?>> getDependents() {
-        return dependent == null ? Collections.emptySet() : Collections.singleton(dependent);
-    }
-
-    @Override
-    public Collection<Task<?>> getDependencies() {
-        return Collections.singleton(Objects.requireNonNull(task));
-    }
-
-    @Override
-    public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
-        String cleanroomVersion;
-        if (selfVersion == null) {
-            cleanroomVersion = Objects.requireNonNull(remote).getSelfVersion();
-        } else {
-            cleanroomVersion = selfVersion;
-        }
-
-        task = new GameDownloadTask(dependencyManager, manifest)
-                .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
-                        dependencyManager,
-                        manifest,
-                        minecraftJar,
-                        cleanroomVersion,
-                        Objects.requireNonNull(installer)))
-                .thenApplyAsync(patch -> patch.withId(GameComponentType.CLEANROOM));
+    /// Applies the downloaded or caller-supplied Cleanroom installer to the matching vanilla client JAR.
+    private GameInstancePatch install(TaskExecutionContext context, Path installerFile, String cleanroomVersion) throws Exception {
+        Path minecraftJar = context.run(new GameDownloadTask(dependencyManager, manifest));
+        return context.run(new ForgeNewInstallTask(dependencyManager, manifest, minecraftJar, cleanroomVersion, installerFile))
+                .withId(GameComponentType.CLEANROOM);
     }
 
     /// Creates a task that installs Cleanroom from a local installer JAR.

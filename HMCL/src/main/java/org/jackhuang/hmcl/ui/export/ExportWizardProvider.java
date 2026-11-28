@@ -15,6 +15,7 @@ import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
@@ -23,10 +24,9 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -53,163 +53,84 @@ public final class ExportWizardProvider implements WizardProvider {
         String modpackType = settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
 
         settings.put("title", i18n("install.modpack.export", exportInfo.getName()));
-        return exportWithLauncher(modpackType, exportInfo, modpackFile);
+        return exportWithLauncher(modpackType, exportInfo, modpackFile).setName(i18n("modpack.export"));
     }
 
+    /// Writes the selected modpack and optionally bundles it with the launcher.
     private Task<?> exportWithLauncher(String modpackType, ModpackExportInfo exportInfo, Path modpackFile) {
-        @Nullable Path launcherJar = JarUtils.thisJarPath();
-        boolean packWithLauncher = exportInfo.isPackWithLauncher() && launcherJar != null;
-        return new Task<>() {
-            @Nullable Path tempModpack;
-            @Nullable Task<?> exportTask;
-
-            {
-                setSignificance(TaskSignificance.MODERATE);
-            }
-
+        @Nullable Path launcherJar = exportInfo.isPackWithLauncher() ? JarUtils.thisJarPath() : null;
+        return new Task<@Nullable Void>() {
+            /// Exports the current instance, then writes the launcher bundle if requested.
             @Override
-            public boolean doPreExecute() {
-                return true;
-            }
-
-            @Override
-            public void preExecute() throws Exception {
-                Path dest;
-                if (packWithLauncher) {
-                    dest = tempModpack = Files.createTempFile("hmcl", ".zip");
-                } else {
-                    dest = modpackFile;
+            public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+                if (launcherJar == null) {
+                    // The export task makes the final cancellation check for the destination.
+                    context.commit();
+                    return context.run(createExportTask(modpackType, exportInfo, modpackFile));
                 }
 
-                switch (modpackType) {
-                    case ModpackTypeSelectionPage.MODPACK_TYPE_MCBBS:
-                        exportTask = exportAsMcbbs(exportInfo, dest);
-                        break;
-                    case ModpackTypeSelectionPage.MODPACK_TYPE_SERVER:
-                        exportTask = exportAsServer(exportInfo, dest);
-                        break;
-                    case ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH:
-                        exportTask = exportAsModrinth(exportInfo, dest);
-                        break;
-                    default:
-                        throw new IllegalStateException("Unrecognized modpack type " + modpackType);
-                }
-
-            }
-
-            @Override
-            public Collection<Task<?>> getDependents() {
-                return Collections.singleton(exportTask);
-            }
-
-            @Override
-            public void execute() throws Exception {
-                if (!packWithLauncher) return;
-                try (Zipper zip = new Zipper(modpackFile)) {
-                    LauncherSettings exported = new LauncherSettings();
-                    LauncherSettings current = settings();
-
-                    exported.versionListSourceProperty().set(current.versionListSourceProperty().get());
-                    exported.fileDownloadSourceProperty().set(current.fileDownloadSourceProperty().get());
-                    exported.preferredLoginTypeProperty().set(current.preferredLoginTypeProperty().get());
-
-                    zip.putTextFile(exported.toJson(), ".hmcl/config/launcher-settings.json");
-                    AuthlibInjectorServerList exportedServers = new AuthlibInjectorServerList();
-                    exportedServers.getServers().setAll(SettingsManager.getAuthlibInjectorServers());
-                    zip.putTextFile(
-                            JsonUtils.GSON.toJson(exportedServers, AuthlibInjectorServerList.class),
-                            ".hmcl/config/authlib-injector-servers.json");
-
-                    // Bundled package under .hmcl/modpack/ (not the process workdir).
-                    String packageName = ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
-                            ? "modpack.mrpack"
-                            : "modpack.zip";
-                    zip.putFile(tempModpack, ".hmcl/" + Metadata.BUNDLED_MODPACK_DIRECTORY_NAME + "/" + packageName);
-
-                    for (String extension : FontManager.FONT_EXTENSIONS) {
-                        String fileName = "font." + extension;
-                        Path font = Metadata.HMCL_LOCAL_HOME.resolve(fileName);
-                        if (!Files.isRegularFile(font))
-                            font = Metadata.CURRENT_DIRECTORY.resolve(fileName);
-                        if (Files.isRegularFile(font))
-                            zip.putFile(font, ".hmcl/" + fileName);
-                    }
-
-                    zip.putFile(launcherJar, launcherJar.getFileName().toString());
+                Path archive = Files.createTempFile("hmcl", ".zip");
+                try {
+                    context.run(createExportTask(modpackType, exportInfo, archive));
+                    context.commit();
+                    bundleLauncher(modpackType, modpackFile, archive, launcherJar);
                 } finally {
-                    if (tempModpack != null) {
-                        try {
-                            Files.deleteIfExists(tempModpack);
-                        } catch (Exception ignored) {
-                        }
+                    try {
+                        Files.deleteIfExists(archive);
+                    } catch (IOException | SecurityException ignored) {
+                        // The temporary archive does not affect the export result.
                     }
                 }
+                return null;
             }
         };
     }
 
-    private Task<?> exportAsMcbbs(ModpackExportInfo exportInfo, Path modpackFile) {
-        return new Task<Void>() {
-            @Nullable Task<?> dependency;
-
-            {
-                setSignificance(TaskSignificance.MODERATE);
-            }
-
-            @Override
-            public void execute() {
-                dependency = new McbbsModpackExportTask(resolveCurrentGameInstance(), exportInfo, modpackFile);
-            }
-
-            @Override
-            public Collection<Task<?>> getDependencies() {
-                return Collections.singleton(dependency);
-            }
+    /// Creates an export task for the selected format.
+    private Task<@Nullable Void> createExportTask(String type, ModpackExportInfo info, Path destination) {
+        HMCLGameInstance instance = resolveCurrentGameInstance();
+        return switch (type) {
+            case ModpackTypeSelectionPage.MODPACK_TYPE_MCBBS -> new McbbsModpackExportTask(instance, info, destination);
+            case ModpackTypeSelectionPage.MODPACK_TYPE_SERVER -> new ServerModpackExportTask(instance, info, destination);
+            case ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH -> new ModrinthModpackExportTask(instance, info, destination);
+            default -> throw new IllegalStateException("Unrecognized modpack type " + type);
         };
     }
 
-    private Task<?> exportAsServer(ModpackExportInfo exportInfo, Path modpackFile) {
-        return new Task<Void>() {
-            @Nullable Task<?> dependency;
+    /// Bundles the exported modpack, launcher and user settings into a ZIP file.
+    private void bundleLauncher(String modpackType, Path modpackFile, Path tempModpack, Path launcherJar) throws IOException {
+        try (Zipper zip = new Zipper(modpackFile)) {
+            LauncherSettings exported = new LauncherSettings();
+            LauncherSettings current = settings();
 
-            {
-                setSignificance(TaskSignificance.MODERATE);
+            exported.versionListSourceProperty().set(current.versionListSourceProperty().get());
+            exported.fileDownloadSourceProperty().set(current.fileDownloadSourceProperty().get());
+            exported.preferredLoginTypeProperty().set(current.preferredLoginTypeProperty().get());
+
+            zip.putTextFile(exported.toJson(), ".hmcl/config/launcher-settings.json");
+            AuthlibInjectorServerList exportedServers = new AuthlibInjectorServerList();
+            exportedServers.getServers().setAll(SettingsManager.getAuthlibInjectorServers());
+            zip.putTextFile(
+                    JsonUtils.GSON.toJson(exportedServers, AuthlibInjectorServerList.class),
+                    ".hmcl/config/authlib-injector-servers.json");
+
+            // Bundled package under .hmcl/modpack/ (not the process workdir).
+            String packageName = ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
+                    ? "modpack.mrpack"
+                    : "modpack.zip";
+            zip.putFile(tempModpack, ".hmcl/" + Metadata.BUNDLED_MODPACK_DIRECTORY_NAME + "/" + packageName);
+
+            for (String extension : FontManager.FONT_EXTENSIONS) {
+                String fileName = "font." + extension;
+                Path font = Metadata.HMCL_LOCAL_HOME.resolve(fileName);
+                if (!Files.isRegularFile(font))
+                    font = Metadata.CURRENT_DIRECTORY.resolve(fileName);
+                if (Files.isRegularFile(font))
+                    zip.putFile(font, ".hmcl/" + fileName);
             }
 
-            @Override
-            public void execute() {
-                dependency = new ServerModpackExportTask(resolveCurrentGameInstance(), exportInfo, modpackFile);
-            }
-
-            @Override
-            public Collection<Task<?>> getDependencies() {
-                return Collections.singleton(dependency);
-            }
-        };
-    }
-
-    private Task<?> exportAsModrinth(ModpackExportInfo exportInfo, Path modpackFile) {
-        return new Task<Void>() {
-            @Nullable Task<?> dependency;
-
-            {
-                setSignificance(TaskSignificance.MODERATE);
-            }
-
-            @Override
-            public void execute() {
-                dependency = new ModrinthModpackExportTask(
-                        resolveCurrentGameInstance(),
-                        exportInfo,
-                        modpackFile
-                );
-            }
-
-            @Override
-            public Collection<Task<?>> getDependencies() {
-                return Collections.singleton(dependency);
-            }
-        };
+            zip.putFile(launcherJar, launcherJar.getFileName().toString());
+        }
     }
 
     /// Returns the current registered snapshot for the instance selected by this wizard.

@@ -6,9 +6,12 @@ import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,7 +21,7 @@ import java.nio.file.Path;
 
 /// Removes obsolete signature files from a legacy Forge instance's fixed client jar.
 @NotNullByDefault
-public final class GameVerificationFixTask extends Task<Void> {
+public final class GameVerificationFixTask extends Task<@Nullable Void> {
 
     /// The snapshot-bound instance whose client jar may be modified.
     private final GameInstance instance;
@@ -42,11 +45,11 @@ public final class GameVerificationFixTask extends Task<Void> {
         setSignificance(TaskSignificance.MODERATE);
     }
 
-    /// Removes legacy Mojang signature entries when this is a pre-1.6 Forge installation.
+    /// Removes obsolete Mojang signatures from pre-1.6 Forge client JARs.
     ///
-    /// @throws IOException if the client jar cannot be opened or modified
+    /// @throws IOException if the client JAR cannot be opened or modified
     @Override
-    public void execute() throws IOException {
+    public @Nullable Void execute(TaskExecutionContext context) throws IOException {
         Path jar = instance.getInstanceJarFile();
 
         if (Files.exists(jar) && gameVersion.compareTo("1.6") < 0 && instance.hasComponent(GameComponentType.FORGE)) {
@@ -55,5 +58,6 @@ public final class GameVerificationFixTask extends Task<Void> {
                 Files.deleteIfExists(fs.getPath("META-INF/MOJANG_C.SF"));
             }
         }
+        return null;
     }
 }

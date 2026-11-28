@@ -19,33 +19,42 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.FXThread;
+import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.WeakReference;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.ui.DialogUtils.shouldReportCancellation;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+/// Displays running tasks, retained failures, and the stages reported by a root task.
 public final class TaskListPane extends StackPane {
     private static final Insets DEFAULT_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 0);
     private static final Insets STAGED_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 26);
 
-    private TaskExecutor executor;
+    /// The root task whose queued notifications may update the list.
+    private @Nullable Task<?> rootTask;
     private final JFXListView<Node> listView = new JFXListView<>();
-    private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
-    private final Map<String, StageNode> stageNodes = new HashMap<>();
+    /// The listener receiving updates for this pane.
+    private @Nullable TaskListener listener;
+    /// Maps each stage to its row for the current execution.
+    private final Map<TaskStage, StageNode> stageNodes = new HashMap<>();
+    /// Tracks the outermost active stage scopes contributing to each display row.
+    private final Map<TaskStage.Scope, StageNode> activeScopes = new HashMap<>();
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
     private final DoubleProperty cellWidth = new SimpleDoubleProperty();
 
@@ -61,134 +70,187 @@ public final class TaskListPane extends StackPane {
         getChildren().setAll(listView);
     }
 
+    /// Returns the display row for a stage, appending it when first observed.
     @FXThread
-    private void addStagesHints(@NotNull Collection<Task.StagesHint> hints) {
-        for (Task.StagesHint hint : hints) {
-            StageNode node = stageNodes.get(hint.stage());
+    private StageNode stageNode(TaskStage stage) {
+        return stageNodes.computeIfAbsent(stage, key -> {
+            StageNode node = new StageNode(key);
+            listView.getItems().add(node);
+            progressNodePadding.set(STAGED_PROGRESS_NODE_PADDING);
+            return node;
+        });
+    }
 
-            if (node == null) {
-                node = new StageNode(hint.stage());
-                stageNodes.put(hint.stage(), node);
-                listView.getItems().add(node);
-            }
-            for (String stage : hint.aliases()) {
-                stageNodes.put(stage, node);
-            }
+    /// Appends new rows in declaration order. Each stage keeps its first row.
+    @FXThread
+    private void declareStages(@Unmodifiable List<TaskStage.Hint> hints) {
+        for (TaskStage.Hint hint : hints) {
+            StageNode node = stageNode(hint.stage());
+            for (TaskStage groupedStage : hint.groupedStages())
+                stageNodes.putIfAbsent(groupedStage, node);
         }
     }
 
-    @FXThread
-    private void updateProgressNodePadding() {
-        progressNodePadding.set(stageNodes.isEmpty() ? DEFAULT_PROGRESS_NODE_PADDING : STAGED_PROGRESS_NODE_PADDING);
+    /// Returns the game component whose installation this stage represents.
+    private static @Nullable GameComponentType installComponent(TaskStage stage) {
+        String prefix = "hmcl.install.";
+        return stage.key().startsWith(prefix) ? GameComponentType.fromPatchId(stage.key().substring(prefix.length())) : null;
     }
 
-    public void setExecutor(TaskExecutor executor) {
-        this.executor = executor;
-        executor.addTaskListener(new TaskListener() {
-            @Override
-            public void onStart() {
-                Platform.runLater(() -> {
-                    stageNodes.clear();
-                    listView.getItems().clear();
-                    addStagesHints(executor.getHints());
-                    updateProgressNodePadding();
-                });
-            }
+    /// Returns whether the task should appear as a separate progress row.
+    private static boolean shouldShowTaskRow(Task<?> task, TaskStage.@Nullable Scope scope) {
+        return task.getSignificance().shouldShow()
+                && !(task instanceof GameInstallTask && scope != null && installComponent(scope.stage()) == GameComponentType.GAME);
+    }
 
-            @Override
-            public void onReady(Task<?> task) {
-                if (task instanceof Task.StagesHintTask) {
-                    Platform.runLater(() -> {
-                        addStagesHints(((Task<?>.StagesHintTask) task).getHints());
-                        updateProgressNodePadding();
-                    });
+    /// Displays a task below its stage or at the top of the list when it has no stage.
+    @FXThread
+    private void addTaskRow(ProgressListNode node, TaskStage.@Nullable Scope scope) {
+        int index = scope == null ? 0 : listView.getItems().indexOf(stageNode(scope.stage())) + 1;
+        listView.getItems().add(index, node);
+    }
+
+    /// Clears the display and observes subsequent events from the supplied root task, or detaches on null.
+    @FXThread
+    public void setTask(@Nullable Task<?> rootTask) {
+        if (this.rootTask == rootTask)
+            return;
+        if (this.rootTask != null && listener != null)
+            this.rootTask.removeTaskListener(listener);
+        this.rootTask = rootTask;
+        listener = null;
+        stageNodes.clear();
+        activeScopes.clear();
+        listView.getItems().clear();
+        progressNodePadding.set(DEFAULT_PROGRESS_NODE_PADDING);
+        if (rootTask == null)
+            return;
+        listener = new TaskListener() {
+            /// Displayable tasks that can still receive progress from workers.
+            private final Map<Task<?>, TaskRowUpdate> running = new ConcurrentHashMap<>();
+
+            /// Creates the display row only when the JavaFX thread needs it.
+            private final class TaskRowUpdate {
+                /// Title captured when the task is first reported.
+                private final String title;
+                /// Stage under which the row belongs.
+                private final TaskStage.@Nullable Scope scope;
+                /// Applies only the latest pending row change on the JavaFX thread.
+                private final InvocationDispatcher<Runnable> updates = InvocationDispatcher.runOn(action -> update(action), Runnable::run);
+                /// Displayed row, accessed only on the JavaFX thread.
+                private @Nullable ProgressListNode row;
+                /// Prevents a worker holding this row from replacing its final update.
+                private boolean finished;
+
+                /// Captures the display details before the task body runs or its rejection is reported.
+                TaskRowUpdate(Task<?> task, TaskStage.@Nullable Scope scope) {
+                    this.title = I18n.translateTaskName(task);
+                    this.scope = scope;
                 }
 
-                if (task.getStage() != null) {
-                    Platform.runLater(() -> {
-                        StageNode node = stageNodes.get(task.getStage());
-                        if (node != null)
-                            node.begin();
-                    });
-                }
-            }
-
-            @Override
-            public void onRunning(Task<?> task) {
-                if (!task.getSignificance().shouldShow() || task.getName() == null)
-                    return;
-
-                if (task instanceof GameInstallTask
-                        && task.getInheritedStage() != null
-                        && task.getInheritedStage().startsWith("hmcl.install.game")) {
-                    return;
-                }
-
-                @Nullable String localizedName = I18n.translateTaskName(task);
-                if (localizedName != null)
-                    task.setName(localizedName);
-
-                Platform.runLater(() -> {
-                    ProgressListNode node = new ProgressListNode(task);
-                    nodes.put(task, node);
-                    StageNode stageNode = stageNodes.get(task.getInheritedStage());
-                    listView.getItems().add(listView.getItems().indexOf(stageNode) + 1, node);
-                });
-            }
-
-            @Override
-            public void onFinished(Task<?> task) {
-                Platform.runLater(() -> {
-                    if (task.getStage() != null) {
-                        StageNode stageNode = stageNodes.get(task.getStage());
-                        if (stageNode != null)
-                            stageNode.succeed();
+                /// Returns the displayed row, adding it on first use.
+                @FXThread
+                private ProgressListNode show() {
+                    if (row == null) {
+                        row = new ProgressListNode(title);
+                        addTaskRow(row, scope);
                     }
+                    return row;
+                }
 
-                    ProgressListNode node = nodes.remove(task);
-                    if (node != null) {
-                        node.unbind();
-                        listView.getItems().remove(node);
-                    }
+                /// Shows the latest fraction on the row.
+                synchronized void report(double fraction) {
+                    if (!finished)
+                        updates.accept(() -> show().progress.set(fraction));
+                }
+
+                /// Replaces any pending progress with the final display change.
+                synchronized void finish(@Nullable Throwable failure) {
+                    finished = true;
+                    updates.accept(() -> {
+                        if (failure != null)
+                            show().setThrowable(failure);
+                        else if (row != null)
+                            listView.getItems().remove(row);
+                    });
+                }
+            }
+
+            /// Queues a change on the JavaFX thread while this root task is attached.
+            private void update(Runnable action) {
+                Platform.runLater(() -> {
+                    if (listener == this)
+                        action.run();
                 });
             }
 
             @Override
-            public void onFailed(Task<?> task, Throwable throwable) {
-                if (task.getStage() != null) {
-                    Platform.runLater(() -> {
-                        StageNode stageNode = stageNodes.get(task.getStage());
-                        if (stageNode != null)
-                            stageNode.fail();
-                    });
-                }
-                ProgressListNode node = nodes.remove(task);
-                if (node != null)
-                    Platform.runLater(() -> node.setThrowable(throwable));
+            public void onStagesDeclared(@Unmodifiable List<TaskStage.Hint> hints) {
+                update(() -> declareStages(hints));
             }
 
             @Override
-            public void onPropertiesUpdate(Task<?> task) {
-                if (task instanceof Task.CountTask) {
-                    runInFX(() -> {
-                        StageNode stageNode = stageNodes.get(((Task<?>.CountTask) task).getCountStage());
-                        if (stageNode != null)
-                            stageNode.count();
-                    });
+            public void onStageStarted(TaskStage.Scope scope) {
+                update(() -> {
+                    StageNode node = stageNode(scope.stage());
+                    // An enclosing stage on this row owns the outcome, including any failures it handles.
+                    for (TaskStage.@Nullable Scope parent = scope.parent(); parent != null; parent = parent.parent()) {
+                        if (activeScopes.get(parent) == node)
+                            return;
+                    }
+                    activeScopes.put(scope, node);
+                    node.begin();
+                });
+            }
 
-                    return;
-                }
+            @Override
+            public void onStageFinished(TaskStage.Scope scope, @Nullable Throwable failure) {
+                update(() -> {
+                    @Nullable StageNode node = activeScopes.remove(scope);
+                    if (node != null)
+                        node.finish(failure == null);
+                });
+            }
 
-                if (task.getStage() != null) {
-                    int total = tryCast(task.getProperties().get("total"), Integer.class).orElse(0);
-                    runInFX(() -> {
-                        StageNode stageNode = stageNodes.get(task.getStage());
-                        if (stageNode != null)
-                            stageNode.addTotal(total);
-                    });
+            /// Adds visible running tasks to their stage.
+            @Override
+            public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
+                if (shouldShowTaskRow(task, scope)) {
+                    TaskRowUpdate pending = new TaskRowUpdate(task, scope);
+                    running.put(task, pending);
+                    pending.report(ProgressIndicator.INDETERMINATE_PROGRESS);
                 }
             }
-        });
+
+            /// Submits the latest progress for a visible row to the JavaFX thread.
+            @Override
+            public void onTaskProgress(Task<?> task, double fraction) {
+                @Nullable TaskRowUpdate pending = running.get(task);
+                if (pending != null)
+                    pending.report(fraction);
+            }
+
+            /// Removes successful or quietly cancelled tasks and retains failures that need reporting.
+            @Override
+            public void onTaskFinished(Task<?> task, TaskStage.@Nullable Scope scope, @Nullable Throwable failure) {
+                @Nullable TaskRowUpdate pending = running.remove(task);
+                if (failure instanceof CancellationException cancellation && !shouldReportCancellation(cancellation))
+                    failure = null;
+                if (pending == null) {
+                    if (failure == null || !shouldShowTaskRow(task, scope))
+                        return;
+                    pending = new TaskRowUpdate(task, scope);
+                }
+                pending.finish(failure);
+            }
+
+            /// Applies both increments to the display row for this stage.
+            @Override
+            public void onStageProgress(TaskStage.Scope scope, int completedDelta, int totalDelta) {
+                update(() -> stageNode(scope.stage()).addProgress(completedDelta, totalDelta));
+            }
+        };
+        rootTask.addTaskListener(listener);
     }
 
     private final class Cell extends ListCell<Node> {
@@ -313,12 +375,13 @@ public final class TaskListPane extends StackPane {
         }
     }
 
-    private static abstract class Node {
+    private static sealed abstract class Node {
 
     }
 
     private static final class StageNode extends Node {
-        private int runningTasksCount = 0;
+        /// Number of independent stages that have started on this row and have yet to finish.
+        private int activeStageCount;
 
         private enum Status {
             WAITING(SVG.MORE_HORIZ),
@@ -339,76 +402,46 @@ public final class TaskListPane extends StackPane {
         private int count = 0;
         private int total = 0;
 
-        private StageNode(String stage) {
-            String stageKey;
-            String stageValue;
-
-            int idx = stage.indexOf(':');
-            if (idx >= 0) {
-                stageKey = stage.substring(0, idx);
-                stageValue = stage.substring(idx + 1);
+        /// Creates a row labeled with its localized stage name and component version when supplied.
+        private StageNode(TaskStage stage) {
+            @Nullable GameComponentType component = installComponent(stage);
+            if (component != null) {
+                String name = i18n("install.installer." + component.getPatchId());
+                @Nullable String version = stage.qualifier();
+                message = i18n("install.installer.install", version == null ? name : name + " " + version);
             } else {
-                stageKey = stage;
-                stageValue = null;
+                message = switch (stage.key()) {
+                    case "hmcl.modpack" -> i18n("install.modpack");
+                    case "hmcl.modpack.download" -> i18n("launch.state.modpack");
+                    case "hmcl.install.assets" -> i18n("assets.download");
+                    case "hmcl.install.libraries" -> i18n("libraries.download");
+                    default -> i18n(stage.key());
+                };
             }
-
-            // CHECKSTYLE:OFF
-            // @formatter:off
-            message = switch (stageKey) {
-                case "hmcl.modpack" ->                  i18n("install.modpack");
-                case "hmcl.modpack.download" ->         i18n("launch.state.modpack");
-                case "hmcl.install.assets" ->           i18n("assets.download");
-                case "hmcl.install.libraries" ->        i18n("libraries.download");
-                case "hmcl.install.game" ->             i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue);
-                case "hmcl.install.forge" ->            i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue);
-                case "hmcl.install.cleanroom" ->        i18n("install.installer.install", i18n("install.installer.cleanroom") + " " + stageValue);
-                case "hmcl.install.neoforge" ->         i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue);
-                case "hmcl.install.liteloader" ->       i18n("install.installer.install", i18n("install.installer.liteloader") + " " + stageValue);
-                case "hmcl.install.optifine" ->         i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue);
-                case "hmcl.install.fabric" ->           i18n("install.installer.install", i18n("install.installer.fabric") + " " + stageValue);
-                case "hmcl.install.fabric-api" ->       i18n("install.installer.install", i18n("install.installer.fabric-api") + " " + stageValue);
-                case "hmcl.install.legacyfabric" ->     i18n("install.installer.install", i18n("install.installer.legacyfabric") + " " + stageValue);
-                case "hmcl.install.legacyfabric-api" -> i18n("install.installer.install", i18n("install.installer.legacyfabric-api") + " " + stageValue);
-                case "hmcl.install.quilt" ->            i18n("install.installer.install", i18n("install.installer.quilt") + " " + stageValue);
-                case "hmcl.install.quilt-api" ->        i18n("install.installer.install", i18n("install.installer.quilt-api") + " " + stageValue);
-                default -> i18n(stageKey);
-            };
-            // @formatter:on
-            // CHECKSTYLE:ON
 
             title.set(message);
         }
 
+        /// Marks an independent stage running, retaining any failure already reported on this row.
         private void begin() {
-            runningTasksCount++;
-            if (status.get() == Status.WAITING || status.get() == Status.SUCCESS) {
+            activeStageCount++;
+            if (status.get() != Status.FAILED)
                 status.set(Status.RUNNING);
-            }
         }
 
-        public void succeed() {
-            runningTasksCount = Math.max(0, runningTasksCount - 1);
-
-            if (runningTasksCount == 0) {
+        /// Records a failure immediately or marks the row successful after all its stages succeed.
+        private void finish(boolean success) {
+            activeStageCount--;
+            if (!success)
+                status.set(Status.FAILED);
+            else if (activeStageCount == 0 && status.get() != Status.FAILED)
                 status.set(Status.SUCCESS);
-            }
         }
 
-        public void fail() {
-            runningTasksCount = Math.max(0, runningTasksCount - 1);
-            status.set(Status.FAILED);
-        }
-
-        public void count() {
-            updateCounter(++count, total);
-        }
-
-        public void addTotal(int n) {
-            this.total += n;
-            updateCounter(count, total);
-        }
-
-        public void updateCounter(int count, int total) {
+        /// Accumulates progress from all stages sharing this row.
+        private void addProgress(int completedDelta, int totalDelta) {
+            count += completedDelta;
+            total += totalDelta;
             title.setValue(total > 0
                     ? message + " - " + count + "/" + total
                     : message
@@ -419,19 +452,16 @@ public final class TaskListPane extends StackPane {
     private static final class ProgressListNode extends Node {
         private final String title;
         private final StringProperty message = new SimpleStringProperty("");
-        private final DoubleProperty progress = new SimpleDoubleProperty(0.0);
+        /// The progress shown on this row, initially indeterminate.
+        private final DoubleProperty progress = new SimpleDoubleProperty(ProgressIndicator.INDETERMINATE_PROGRESS);
 
-        private ProgressListNode(Task<?> task) {
-            this.title = task.getName();
-            progress.bind(task.progressProperty());
+        /// Creates a row with the task's display title.
+        private ProgressListNode(String title) {
+            this.title = title;
         }
 
-        public void unbind() {
-            progress.unbind();
-        }
-
+        /// Retains the failure message on the row and resets its progress.
         public void setThrowable(Throwable throwable) {
-            unbind();
             message.set(throwable.getLocalizedMessage());
             progress.set(0.);
         }

@@ -22,17 +22,17 @@ import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.CreateAccountPane;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskDialogPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -50,6 +50,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.ui.DialogUtils.shouldReportCancellation;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -89,11 +90,11 @@ public final class Instances {
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+        TaskDialogPane pane = new TaskDialogPane(TaskCancellationAction.NORMAL);
         pane.setTitle(i18n("modpack.download.title", file.file().filename()));
-        TaskExecutor executor = new FileDownloadTask(downloadURLs, modpack)
+        Task<?> task = new FileDownloadTask(downloadURLs, modpack)
                 .setName(file.name())
-                .whenComplete(Schedulers.javafx(), (@Nullable Exception e) -> {
+                .whenCompleteAsync(Schedulers.javafx(), (ignored, e) -> {
                     if (e == null) {
                         ModpackInstallWizardProvider installWizardProvider;
                         if (instanceId != null)
@@ -111,10 +112,10 @@ public final class Instances {
                                 i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
                                 i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
                     }
-                }).executor();
-        pane.setExecutor(executor);
+                });
+        pane.setTask(task);
         Controllers.dialog(pane);
-        pane.startExecutor();
+        pane.startTask().exceptionally(Lang::handleUncaughtException);
     }
 
     public static void deleteInstance(HMCLGameInstance gameInstance) {
@@ -129,7 +130,7 @@ public final class Instances {
         deleteButton.getStyleClass().add("dialog-error");
         deleteButton.setOnAction(e -> {
             Task.supplyAsync(Schedulers.io(), () -> repository.removeInstanceFromDisk(instanceId))
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null || !Boolean.TRUE.equals(result)) {
                             Controllers.dialog(i18n("instance.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                         }
@@ -173,6 +174,7 @@ public final class Instances {
         FXUtils.openFolder(gameInstance.getRunDirectory());
     }
 
+    /// Installs an instance from a local game manifest. Asset and library downloads are optional.
     public static void installFromJson(HMCLGameRepository repository, Path file) {
         GameInstanceManifest manifest;
         try {
@@ -205,37 +207,37 @@ public final class Instances {
                                 activeDraft.set(draft);
                                 return draft;
                             })
-                            .thenComposeAsync(draft -> Task.allOf(
-                                    gameDownloadTask,
-                                    Task.allOf(
-                                            new GameAssetDownloadTask(
-                                                    dependencyManager,
-                                                    newManifest,
-                                                    GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY,
-                                                    true),
-                                            new GameLibrariesTask(dependencyManager, newManifest, true))
-                                            .withRunAsync(() -> {
-                                                // ignore failure
-                                            })))
+                            .thenComposeAsync(draft -> {
+                                Task<@Nullable Void> optionalDownloads = Task.allOf(
+                                        new GameAssetDownloadTask(dependencyManager, newManifest,
+                                                GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
+                                        new GameLibrariesTask(dependencyManager, newManifest, true)
+                                ).handle((@Nullable var ignored, @Nullable var failure) -> {
+                                    if (failure != null && (failure instanceof CancellationException || !(failure instanceof Exception)))
+                                        Lang.rethrow(failure);
+                                    return null;
+                                });
+                                return Task.allOf(gameDownloadTask, optionalDownloads);
+                            })
                             .thenAcceptAsync(ignored -> {
                                 GameRepositoryDraft draft = activeDraft.get();
                                 if (draft == null) {
                                     throw new IllegalStateException("Game repository draft is unavailable");
                                 }
                                 draft.put(newManifest);
-                                draft.putPrimaryJar(instanceId, gameDownloadTask.getResult());
+                                draft.putPrimaryJar(instanceId, gameDownloadTask.resultNow());
                                 draft.commit();
                             })
-                            .whenComplete(exception -> {
+                            .whenComplete((ignored, exception) -> {
                                 GameRepositoryDraft draft = activeDraft.getAndSet(null);
                                 if (draft != null && draft.isOpen()) {
                                     draft.abort();
                                 }
                             })
-                            .whenComplete(Schedulers.javafx(), (exception) -> {
+                            .whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
                                 if (exception == null) {
                                     repository.setSelectedInstance(repository.getInstance(instanceId));
-                                } else {
+                                } else if (!(exception instanceof CancellationException cancellation) || shouldReportCancellation(cancellation)) {
                                     Controllers.dialog(
                                             I18n.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
                                 }
@@ -252,8 +254,8 @@ public final class Instances {
                     GameInstanceID newInstanceId = new GameInstanceID(newInstanceName);
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
                     Task.runAsync(() -> repository.duplicateInstance(instanceId, newInstanceId, copySaves))
-                            .thenComposeAsync(repository.refreshAsync())
-                            .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            .thenCompose(repository.refreshAsync())
+                            .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
                                     handler.resolve();
                                 } else {

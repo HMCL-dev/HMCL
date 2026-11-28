@@ -4,13 +4,15 @@ package org.jackhuang.hmcl.download.optifine;
 
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
+import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -20,6 +22,7 @@ import org.jenkinsci.constant_pool_scanner.ConstantType;
 import org.jenkinsci.constant_pool_scanner.Utf8Constant;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -42,9 +45,6 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
     /// Vanilla client JAR used as patcher input.
     private final Path minecraftJar;
     private final @Nullable Path installer;
-    private final List<Task<?>> dependents = new ArrayList<>(0);
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
-    private @Nullable Path dest;
 
     private final Library optiFineLibrary;
     private final Library optiFineInstallerLibrary;
@@ -95,144 +95,123 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
         );
     }
 
+    /// Applies the installer to the vanilla client and returns the generated OptiFine patch.
     @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() throws Exception {
+    public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
         Path installerFile = Files.createTempFile("optifine-installer", ".jar");
-        dest = installerFile;
-
-        if (installer == null) {
-            DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
-            var task = new FileDownloadTask(
-                    downloadProvider.getDownloadCandidates(remote),
-                    installerFile, null);
-            task.setCacheRepository(dependencyManager.getCacheRepository());
-            task.setCaching(true);
-            dependents.add(task);
-        } else {
-            FileUtils.copyFile(installer, installerFile);
-        }
-    }
-
-    @Override
-    public Collection<Task<?>> getDependents() {
-        return dependents;
-    }
-
-    @Override
-    public Collection<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean isRelyingOnDependencies() {
-        return false;
-    }
-
-    @Override
-    public void execute() throws Exception {
-        if (!Files.isRegularFile(minecraftJar)) {
-            throw new IOException("Minecraft client JAR not found: " + minecraftJar);
-        }
-        Path installerFile = Objects.requireNonNull(dest);
-        String originalMainClass = manifest.mainClass();
-        if (!GameComponentAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
-            throw new UnsupportedInstallationException(UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER);
-
-        List<Library> libraries = new ArrayList<>(4);
-        libraries.add(optiFineLibrary);
-
-        Path optiFineInstallerLibraryPath = gameRepository.getLayout().getLibraryFile(manifest.id(), optiFineInstallerLibrary);
-        FileUtils.copyFile(installerFile, optiFineInstallerLibraryPath);
-
-        try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(optiFineInstallerLibraryPath)) {
-            Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
-        }
-
-        // Install launch wrapper modified by OptiFine
-        boolean hasLaunchWrapper = false;
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installerFile)) {
-            Path optiFineLibraryPath = gameRepository.getLayout().getLibraryFile(manifest.id(), optiFineLibrary);
-            if (Files.exists(fs.getPath("optifine/Patcher.class"))) {
-                String[] command = {
-                        JavaRuntime.getDefault().getBinary().toString(),
-                        "-cp",
-                        installerFile.toString(),
-                        "optifine.Patcher",
-                        minecraftJar.toAbsolutePath().normalize().toString(),
-                        installerFile.toString(),
-                        optiFineLibraryPath.toString()
-                };
-                int exitCode = SystemUtils.callExternalProcess(command);
-                if (exitCode != 0)
-                    throw new IOException("OptiFine patcher failed, command: " + new CommandBuilder().addAll(Arrays.asList(command)));
+        try (Closeable cleanup = () -> Files.deleteIfExists(installerFile)) {
+            if (installer == null) {
+                DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+                var task = new FileDownloadTask(
+                        downloadProvider.getDownloadCandidates(remote),
+                        installerFile, null);
+                task.setCacheRepository(dependencyManager.getCacheRepository());
+                task.setCaching(true);
+                context.run(task);
             } else {
-                FileUtils.copyFile(installerFile, optiFineLibraryPath);
+                FileUtils.copyFile(installer, installerFile);
             }
 
-            try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(optiFineLibraryPath)) {
+            if (!Files.isRegularFile(minecraftJar)) {
+                throw new IOException("Minecraft client JAR not found: " + minecraftJar);
+            }
+            String originalMainClass = manifest.mainClass();
+            if (!GameComponentAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
+                throw new UnsupportedInstallationException(UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER);
+
+            List<Library> libraries = new ArrayList<>(4);
+            libraries.add(optiFineLibrary);
+
+            Path optiFineInstallerLibraryPath = gameRepository.getLayout().getLibraryFile(manifest.id(), optiFineInstallerLibrary);
+            FileUtils.copyFile(installerFile, optiFineInstallerLibraryPath);
+
+            try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(optiFineInstallerLibraryPath)) {
                 Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
             }
 
-            Path launchWrapper2 = fs.getPath("launchwrapper-2.0.jar");
-            if (Files.exists(launchWrapper2)) {
-                Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper", "2.0"));
-                Path launchWrapperFile = gameRepository.getLayout().getLibraryFile(manifest.id(), launchWrapper);
-                Files.createDirectories(launchWrapperFile.toAbsolutePath().getParent());
-                FileUtils.copyFile(launchWrapper2, launchWrapperFile);
-                hasLaunchWrapper = true;
-                libraries.add(launchWrapper);
-            }
+            // Install launch wrapper modified by OptiFine
+            boolean hasLaunchWrapper = false;
+            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installerFile)) {
+                Path optiFineLibraryPath = gameRepository.getLayout().getLibraryFile(manifest.id(), optiFineLibrary);
+                if (Files.exists(fs.getPath("optifine/Patcher.class"))) {
+                    String[] command = {
+                            JavaRuntime.getDefault().getBinary().toString(),
+                            "-cp",
+                            installerFile.toString(),
+                            "optifine.Patcher",
+                            minecraftJar.toAbsolutePath().normalize().toString(),
+                            installerFile.toString(),
+                            optiFineLibraryPath.toString()
+                    };
+                    context.checkCancellation();
+                    int exitCode = SystemUtils.callExternalProcess(command);
+                    if (exitCode != 0)
+                        throw new IOException("OptiFine patcher failed, command: " + new CommandBuilder().addAll(Arrays.asList(command)));
+                } else {
+                    FileUtils.copyFile(installerFile, optiFineLibraryPath);
+                }
 
-            Path launchWrapperVersionText = fs.getPath("launchwrapper-of.txt");
-            if (Files.exists(launchWrapperVersionText)) {
-                String launchWrapperVersion = Files.readString(launchWrapperVersionText).trim();
-                Path launchWrapperJar = fs.getPath("launchwrapper-of-" + launchWrapperVersion + ".jar");
+                try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(optiFineLibraryPath)) {
+                    Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
+                }
 
-                Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper-of", launchWrapperVersion));
-
-                if (Files.exists(launchWrapperJar)) {
+                Path launchWrapper2 = fs.getPath("launchwrapper-2.0.jar");
+                if (Files.exists(launchWrapper2)) {
+                    Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper", "2.0"));
                     Path launchWrapperFile = gameRepository.getLayout().getLibraryFile(manifest.id(), launchWrapper);
                     Files.createDirectories(launchWrapperFile.toAbsolutePath().getParent());
-                    FileUtils.copyFile(launchWrapperJar, launchWrapperFile);
-
+                    FileUtils.copyFile(launchWrapper2, launchWrapperFile);
                     hasLaunchWrapper = true;
                     libraries.add(launchWrapper);
                 }
-            }
 
-            Path buildofText = fs.getPath("buildof.txt");
-            if (Files.exists(buildofText)) {
-                String buildof = Files.readString(buildofText).trim();
-                VersionNumber buildofVer = VersionNumber.asVersion(buildof);
+                Path launchWrapperVersionText = fs.getPath("launchwrapper-of.txt");
+                if (Files.exists(launchWrapperVersionText)) {
+                    String launchWrapperVersion = Files.readString(launchWrapperVersionText).trim();
+                    Path launchWrapperJar = fs.getPath("launchwrapper-of-" + launchWrapperVersion + ".jar");
 
-                if (GameComponentAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass)) {
-                    // OptiFine H1 Pre2+ is compatible with Forge 1.17
-                    if (buildofVer.compareTo("20210924-190833") < 0) {
-                        throw new UnsupportedInstallationException(UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2);
+                    Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper-of", launchWrapperVersion));
+
+                    if (Files.exists(launchWrapperJar)) {
+                        Path launchWrapperFile = gameRepository.getLayout().getLibraryFile(manifest.id(), launchWrapper);
+                        Files.createDirectories(launchWrapperFile.toAbsolutePath().getParent());
+                        FileUtils.copyFile(launchWrapperJar, launchWrapperFile);
+
+                        hasLaunchWrapper = true;
+                        libraries.add(launchWrapper);
+                    }
+                }
+
+                Path buildofText = fs.getPath("buildof.txt");
+                if (Files.exists(buildofText)) {
+                    String buildof = Files.readString(buildofText).trim();
+                    VersionNumber buildofVer = VersionNumber.asVersion(buildof);
+
+                    if (GameComponentAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass)) {
+                        // OptiFine H1 Pre2+ is compatible with Forge 1.17
+                        if (buildofVer.compareTo("20210924-190833") < 0) {
+                            throw new UnsupportedInstallationException(UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2);
+                        }
                     }
                 }
             }
+
+            if (!hasLaunchWrapper) {
+                libraries.add(new Library(new Artifact("net.minecraft", "launchwrapper", "1.12")));
+            }
+
+            GameInstancePatch patch = new GameInstancePatch(
+                    GameComponentType.OPTIFINE.getPatchId(),
+                    remote.getSelfVersion(),
+                    10000,
+                    new Arguments().addGameArguments("--tweakClass", "optifine.OptiFineTweaker"),
+                    GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN,
+                    libraries
+            );
+
+            context.tryRun(new GameLibrariesTask(dependencyManager, manifest, true, patch.getLibraries()));
+            return patch;
         }
-
-        if (!hasLaunchWrapper) {
-            libraries.add(new Library(new Artifact("net.minecraft", "launchwrapper", "1.12")));
-        }
-
-        setResult(new GameInstancePatch(
-                GameComponentType.OPTIFINE.getPatchId(),
-                remote.getSelfVersion(),
-                10000,
-                new Arguments().addGameArguments("--tweakClass", "optifine.OptiFineTweaker"),
-                GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN,
-                libraries
-        ));
-
-        dependencies.add(new org.jackhuang.hmcl.download.game.GameLibrariesTask(dependencyManager, manifest, true, getResult().getLibraries()));
     }
 
     /// Creates a task that installs OptiFine from a local installer JAR.

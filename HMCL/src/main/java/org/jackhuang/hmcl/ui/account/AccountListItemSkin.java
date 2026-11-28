@@ -115,7 +115,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnRefresh.setOnAction(e -> {
             spinnerRefresh.showSpinner();
             skinnable.refreshAsync()
-                    .whenComplete(Schedulers.javafx(), ex -> {
+                    .whenCompleteAsync(Schedulers.javafx(), (ignored, ex) -> {
                         spinnerRefresh.hideSpinner();
 
                         if (ex != null) {
@@ -135,7 +135,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
             if (uploadTask != null) {
                 spinnerUpload.showSpinner();
                 uploadTask
-                        .whenComplete(Schedulers.javafx(), ex -> spinnerUpload.hideSpinner())
+                        .whenCompleteAsync(Schedulers.javafx(), (ignored, ex) -> spinnerUpload.hideSpinner())
                         .start();
             }
         });

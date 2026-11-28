@@ -10,7 +10,6 @@ import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
-import org.jackhuang.hmcl.modpack.ModpackUpdateTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
         if (!(modpack.getManifest() instanceof MultiMCInstanceConfiguration multiMCInstanceConfiguration))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(instance, new MultiMCModpackInstallTask(dependencyManager, zipFile, modpack, multiMCInstanceConfiguration, instance));
+        return new MultiMCModpackInstallTask(dependencyManager, zipFile, modpack, multiMCInstanceConfiguration, instance);
     }
 
     private static String getRootEntryName(ZipArchiveReader file) throws IOException {

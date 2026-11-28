@@ -15,9 +15,14 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URLConnection;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.DigestOutputStream;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -31,7 +36,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Downloads candidate URLs in order, with retries, HTTP caching, and supported range resumption.
 @NotNullByDefault
-public abstract class FetchTask<T extends @UnknownNullability Object> extends Task<T> {
+public abstract class FetchTask<T extends @Nullable Object> extends Task<T> {
 
     protected static final int DEFAULT_RETRY = 5;
 
@@ -45,7 +50,12 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
     /// @throws NullPointerException if the list or any element is null
     public FetchTask(DownloadCandidates candidates) {
         this.candidates = candidates;
-        setExecutor(DOWNLOAD_EXECUTOR);
+    }
+
+    /// Returns the shared executor for downloads.
+    @Override
+    protected Executor getExecutor() {
+        return DOWNLOAD_EXECUTOR;
     }
 
     public void setCacheRepository(CacheRepository repository) {
@@ -59,27 +69,34 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
     protected void beforeDownload(WebURL url) throws IOException {
     }
 
-    protected abstract void useCachedResult(Path cachedFile) throws IOException;
+    /// Reads or installs a cached response and returns the task result.
+    protected abstract T useCachedResult(Path cachedFile) throws IOException;
 
-    protected abstract EnumCheckETag shouldCheckETag();
-
-    private Context getContext() throws IOException {
-        return getContext(null, false, null);
+    /// Returns a cached file usable before the first request, or null on a cache miss.
+    protected @Nullable Path findCachedFile() {
+        return null;
     }
 
-    protected abstract Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException;
+    /// Returns whether to consult HTTP cache metadata for this download.
+    protected boolean shouldCheckETag() {
+        return true;
+    }
+
+    /// Opens a sink for an attempt, optionally using HTTP cache and checksum metadata.
+    protected abstract Context<T> getContext(@Nullable UrlResponseInfo response, boolean checkETag,
+                                             @Nullable String bmclapiHash) throws IOException;
 
     @Override
-    public void execute() throws Exception {
-        boolean checkETag;
-        switch (shouldCheckETag()) {
-            case CHECK_E_TAG -> checkETag = true;
-            case NOT_CHECK_E_TAG -> checkETag = false;
-            default -> {
-                return;
+    public T execute(TaskExecutionContext execution) throws Exception {
+        @Nullable Path cached = findCachedFile();
+        if (cached != null) {
+            try {
+                return useCachedResult(cached);
+            } catch (IOException e) {
+                LOG.warning("Failed to use cached file " + cached, e);
             }
         }
-
+        boolean checkETag = shouldCheckETag();
         @Nullable ArrayList<DownloadException> exceptions = null;
 
         if (SEMAPHORE != null)
@@ -100,30 +117,25 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
 
                 try {
                     if (NetworkUtils.isHttpUri(url))
-                        downloadHttp(url, retry, connectTimeout, readTimeout, checkETag);
-                    else
-                        downloadNotHttp(url, retry, connectTimeout, readTimeout);
-                    return;
+                        return downloadHttp(execution, url, retry, connectTimeout, readTimeout, checkETag);
+                    return downloadNotHttp(execution, url, retry, connectTimeout, readTimeout);
                 } catch (DownloadException e) {
                     if (exceptions == null)
                         exceptions = new ArrayList<>();
                     exceptions.add(e);
                 }
             }
-        } catch (InterruptedException ignored) {
-            // Cancelled
         } finally {
             if (SEMAPHORE != null)
                 SEMAPHORE.release();
         }
 
-        if (exceptions != null) {
-            DownloadException last = exceptions.remove(exceptions.size() - 1);
-            for (DownloadException exception : exceptions) {
-                last.addSuppressed(exception);
-            }
-            throw last;
+        if (exceptions == null) throw new IOException("No download candidates");
+        DownloadException last = exceptions.remove(exceptions.size() - 1);
+        for (DownloadException exception : exceptions) {
+            last.addSuppressed(exception);
         }
+        throw last;
     }
 
     private static final class HttpResumeContext {
@@ -227,17 +239,18 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
         }
     }
 
-    private void download(Context context,
+    /// Copies the decoded response to the sink, closing the input and reporting cancellation as an interruption.
+    private void download(TaskExecutionContext execution, Context<T> context,
                           @Nullable FetchTask.HttpResumeContext resume, InputStream inputStream,
                           long contentLength,
                           ContentEncoding contentEncoding) throws IOException, InterruptedException {
-        boolean success;
         try (var counter = new CounterInputStream(inputStream);
              var input = contentEncoding.wrap(counter)) {
             long lastDownloaded = 0L;
+            TaskProgress progress = execution.progress();
             byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
             while (true) {
-                if (isCancelled()) break;
+                if (execution.isCancelled()) break;
 
                 int len = input.read(buffer);
                 if (len == -1) break;
@@ -252,45 +265,38 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                 if (resume != null)
                     resume.countUncompressed += len;
 
-                if (contentLength >= 0) {
-                    // Update progress information per second
-                    updateProgress(counter.downloaded, contentLength);
-                }
+                if (contentLength >= 0)
+                    progress.update(counter.downloaded, contentLength);
 
                 updateDownloadSpeed(counter.downloaded - lastDownloaded);
                 lastDownloaded = counter.downloaded;
             }
 
-            if (isCancelled())
+            if (execution.isCancelled())
                 throw new InterruptedException();
 
             updateDownloadSpeed(counter.downloaded - lastDownloaded);
 
             if (contentLength >= 0 && counter.downloaded != contentLength)
                 throw new IOException("Unexpected file size: " + counter.downloaded + ", expected: " + contentLength);
-
-            success = true;
-        }
-
-        if (success) {
-            context.withResult(true);
         }
     }
 
     /// Downloads an HTTP candidate, following HTTP(S) redirects and retrying recoverable failures.
-    private void downloadHttp(WebURL url, int retry, Duration connectTimeout, Duration readTimeout, boolean checkETag) throws DownloadException, InterruptedException {
+    private T downloadHttp(TaskExecutionContext execution, WebURL url, int retry, Duration connectTimeout,
+                           Duration readTimeout, boolean checkETag) throws DownloadException, InterruptedException {
         if (checkETag) {
             // Handle cache
             try {
                 Path cache = repository.getCachedRemoteFile(url, true);
-                useCachedResult(cache);
+                T result = useCachedResult(cache);
                 LOG.info("Using cached file for " + NetworkUtils.dropQuery(url));
-                return;
+                return result;
             } catch (IOException ignored) {
             }
         }
 
-        @Nullable Context context = null;
+        @Nullable Context<T> context = null;
         @Nullable HttpResumeContext resumeContext = null;
 
         @Nullable ArrayList<Exception> exceptions = null;
@@ -299,14 +305,14 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
         boolean useCachedResult = true;
         try {
             for (int attempts = 0, attemptsLimit = retry + 1; attempts < attemptsLimit; attempts++) {
-                if (isCancelled()) {
+                if (execution.isCancelled()) {
                     throw new InterruptedException();
                 }
 
                 @Nullable List<WebURL> redirects = null;
                 try {
                     beforeDownload(url);
-                    updateProgress(0);
+                    execution.progress().update(0);
 
                     @Nullable HttpURLConnection connection;
                     UrlResponseInfo responseInfo;
@@ -340,9 +346,9 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                             if (DigestUtils.isSha1Digest(bmclapiHash)) {
                                 Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
                                 if (cache.isPresent()) {
-                                    useCachedResult(cache.get());
+                                    T result = useCachedResult(cache.get());
                                     LOG.info("Using cached file for " + NetworkUtils.dropQuery(url));
-                                    return;
+                                    return result;
                                 }
                             }
 
@@ -381,7 +387,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                     try {
                         if (resumeRequested && responseCode == 416) {
                             resumeContext = null;
-                            discardContext(context);
+                            IOUtils.closeQuietly(context);
                             context = null;
                             attemptsLimit++;
                             continue;
@@ -391,9 +397,9 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                             // Handle cache
                             try {
                                 Path cache = repository.getCachedRemoteFile(responseInfo.url(), false);
-                                useCachedResult(cache);
+                                T result = useCachedResult(cache);
                                 LOG.info("Using cached file for " + NetworkUtils.dropQuery(url));
-                                return;
+                                return result;
                             } catch (CacheRepository.CacheExpiredException e) {
                                 LOG.info("Cache expired for " + NetworkUtils.dropQuery(url));
                             } catch (IOException e) {
@@ -424,20 +430,20 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                             } else {
                                 // Failed to resume download, so we will retry from the beginning
                                 resumeContext = null;
-                                discardContext(context);
+                                IOUtils.closeQuietly(context);
                                 context = null;
                                 attemptsLimit++;
                                 continue;
                             }
                         } else {
-                            discardContext(context);
+                            IOUtils.closeQuietly(context);
                             context = getContext(responseInfo, checkETag, bmclapiHash);
                             resumeContext = HttpResumeContext.of(responseInfo);
                         }
 
                         try {
                             inputStream = connection.getInputStream();
-                            download(context,
+                            download(execution, context,
                                     resumeContext, inputStream,
                                     contentLength,
                                     contentEncoding);
@@ -451,23 +457,17 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                             }
                             throw e;
                         }
-                        try {
-                            context.close();
-                        } catch (IOException | RuntimeException | Error e) {
-                            context.withResult(false);
-                            IOUtils.closeQuietly(context, e);
+                        try (Context<T> completed = context) {
                             context = null;
                             resumeContext = null;
-                            throw e;
+                            return completed.finish();
                         }
-                        context = null;
-                        return;
                     } finally {
                         IOUtils.closeQuietly(inputStream);
                         if (connection != null && !responseBodyConsumed)
                             closeHttpConnection(connection);
                     }
-                } catch (InterruptedException e) {
+                } catch (InterruptedException | CancellationException e) {
                     throw e;
                 } catch (FileNotFoundException ex) {
                     LOG.warning("Failed to download " + url + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
@@ -505,36 +505,30 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
         connection.disconnect();
     }
 
-    private static void discardContext(@Nullable Context context) {
-        if (context != null) {
-            context.withResult(false);
-            IOUtils.closeQuietly(context);
-        }
-    }
-
     /// Downloads a non-HTTP candidate through its installed URL handler, retrying I/O failures.
-    private void downloadNotHttp(WebURL url, int retry, Duration connectTimeout, Duration readTimeout) throws DownloadException, InterruptedException {
+    private T downloadNotHttp(TaskExecutionContext execution, WebURL url, int retry, Duration connectTimeout,
+                              Duration readTimeout) throws DownloadException, InterruptedException {
         @Nullable ArrayList<Exception> exceptions = null;
         for (int attempts = 0, attemptsLimit = retry + 1; attempts < attemptsLimit; attempts++) {
-            if (isCancelled()) {
+            if (execution.isCancelled()) {
                 throw new InterruptedException();
             }
 
             try {
                 beforeDownload(url);
-                updateProgress(0);
+                execution.progress().update(0);
 
                 URLConnection conn = NetworkUtils.createConnection(url);
                 conn.setConnectTimeout((int) connectTimeout.toMillis());
                 conn.setReadTimeout((int) readTimeout.toMillis());
-                try (Context context = getContext()) {
-                    download(context,
+                try (Context<T> context = getContext(null, false, null)) {
+                    download(execution, context,
                             null, conn.getInputStream(),
                             conn.getContentLengthLong(),
                             ContentEncoding.fromConnection(conn));
+                    return context.finish();
                 }
-                return;
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | CancellationException e) {
                 throw e;
             } catch (FileNotFoundException ex) {
                 LOG.warning("Failed to download " + url + ", not found", ex);
@@ -634,45 +628,90 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
         }
     }
 
-    protected static abstract class Context implements Closeable {
-        private boolean success;
+    /// Receives one response body and releases temporary resources on close.
+    protected abstract static class Context<R extends @Nullable Object> implements Closeable {
+        /// Marks a sink that has failed during a write and cannot resume.
         private boolean broken;
 
-        protected final boolean isSuccess() {
-            return success;
-        }
-
-        public void withResult(boolean success) {
-            this.success = success;
-        }
-
-        public abstract void reset() throws IOException;
-
+        /// Writes a slice of the response body.
         public abstract void write(byte[] buffer, int offset, int len) throws IOException;
 
+        /// Commits the complete response and returns the result. The caller closes the sink afterwards.
+        public abstract R finish() throws IOException;
+
+        /// Releases temporary resources, including after a failed or abandoned attempt.
         @Override
-        public abstract void close() throws IOException;
+        public void close() throws IOException {
+        }
     }
 
-    protected enum EnumCheckETag {
-        CHECK_E_TAG,
-        NOT_CHECK_E_TAG,
-        CACHED
-    }
+    /// Stages one download in a temporary file until it is ready to verify or install.
+    abstract static class FileContext<R extends @Nullable Object> extends Context<R> {
+        /// File owned by the context until it is moved or deleted.
+        private final Path temp;
 
+        /// Stream writing the response and optionally computing its digest.
+        private final OutputStream output;
+
+        /// Creates a temporary file and opens it for writing.
+        FileContext(@Nullable MessageDigest digest) throws IOException {
+            temp = Files.createTempFile("hmcl-download-", null);
+            try {
+                OutputStream stream = Files.newOutputStream(temp);
+                output = digest == null ? stream : new DigestOutputStream(stream, digest);
+            } catch (IOException e) {
+                deleteTempFile();
+                throw e;
+            }
+        }
+
+        @Override
+        public final void write(byte[] buffer, int offset, int len) throws IOException {
+            output.write(buffer, offset, len);
+        }
+
+        @Override
+        public final R finish() throws IOException {
+            output.close();
+            return commit(temp);
+        }
+
+        /// Verifies or installs the closed temporary file and returns the download result.
+        abstract R commit(Path temp) throws IOException;
+
+        @Override
+        public final void close() throws IOException {
+            try {
+                output.close();
+            } finally {
+                deleteTempFile();
+            }
+        }
+
+        /// Removes any remaining temporary file after a successful or abandoned attempt.
+        private void deleteTempFile() {
+            try {
+                Files.deleteIfExists(temp);
+            } catch (IOException e) {
+                LOG.warning("Failed to delete temporary file " + temp, e);
+            }
+        }
+    }
 
     public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
-    private static int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
 
-    // For Java 21 or later, DOWNLOAD_EXECUTOR dispatches tasks to virtual threads, and concurrency is controlled by SEMAPHORE.
-    // For versions earlier than Java 21, DOWNLOAD_EXECUTOR is a ThreadPoolExecutor, SEMAPHORE is null, and concurrency is controlled by the thread pool size.
+    /// The configured download limit shared by the settings thread and download batches.
+    private static volatile int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
 
+    /// Runs downloads on virtual threads when available, otherwise on a bounded platform thread pool.
     private static final ExecutorService DOWNLOAD_EXECUTOR;
+
+    /// Limits concurrent downloads when each submission has its own virtual thread.
     private static final @Nullable Semaphore SEMAPHORE;
 
     static {
-        ExecutorService executorService = Schedulers.newVirtualThreadPerTaskExecutor("Download");
-        if (executorService != null) {
+        //noinspection resource
+        if (Schedulers.io() instanceof UnboundedExecutorService executorService && executorService.isVirtual()) {
             DOWNLOAD_EXECUTOR = executorService;
             SEMAPHORE = new Semaphore(DEFAULT_CONCURRENCY);
         } else {
@@ -721,6 +760,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
         }
     }
 
+    /// Returns the current limit on concurrent downloads.
     public static int getDownloadExecutorConcurrency() {
         return downloadExecutorConcurrency;
     }

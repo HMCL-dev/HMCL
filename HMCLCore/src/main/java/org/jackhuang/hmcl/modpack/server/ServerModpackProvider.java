@@ -9,7 +9,6 @@ import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.modpack.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
-import org.jackhuang.hmcl.modpack.ModpackUpdateTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -42,7 +41,7 @@ public final class ServerModpackProvider implements ModpackProvider {
         if (!(modpack.getManifest() instanceof ServerModpackManifest serverModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(instance, new ServerModpackLocalInstallTask(dependencyManager, zipFile, modpack, serverModpackManifest, instance));
+        return new ServerModpackLocalInstallTask(dependencyManager, zipFile, modpack, serverModpackManifest, instance);
     }
 
     @Override

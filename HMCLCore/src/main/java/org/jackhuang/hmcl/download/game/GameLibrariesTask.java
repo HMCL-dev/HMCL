@@ -5,9 +5,15 @@ package org.jackhuang.hmcl.download.game;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskProgress;
+import org.jackhuang.hmcl.task.TaskSignificance;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -30,13 +36,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Downloads game libraries after the game and its loader installation tasks have finished.
 ///
 /// @author huangyuhui
-public final class GameLibrariesTask extends Task<Void> {
+public final class GameLibrariesTask extends Task<@Nullable Void> {
 
     private final AbstractDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final boolean integrityCheck;
     private final List<Library> libraries;
-    private final List<Task<?>> dependencies = new ArrayList<>();
 
     /**
      * Constructor.
@@ -60,13 +65,7 @@ public final class GameLibrariesTask extends Task<Void> {
         this.integrityCheck = integrityCheck;
         this.libraries = libraries;
 
-        setStage("hmcl.install.libraries");
         setSignificance(TaskSignificance.MODERATE);
-    }
-
-    @Override
-    public List<Task<?>> getDependencies() {
-        return dependencies;
     }
 
     /// Checks whether a library is absent or fails the requested checksum and archive integrity checks.
@@ -111,10 +110,18 @@ public final class GameLibrariesTask extends Task<Void> {
         }
     }
 
-    /// {@inheritDoc}
+    /// Returns the stage for game library downloads.
     @Override
-    public void execute() throws IOException {
-        int progress = 0;
+    public TaskStage getStage() {
+        return InstallStages.LIBRARIES;
+    }
+
+    /// Checks applicable libraries and downloads missing or invalid files in parallel.
+    @Override
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        List<Task<?>> dependencies = new ArrayList<>();
+        TaskProgress progress = context.progress();
+        int completed = 0;
         GameRepository gameRepository = dependencyManager.getGameRepository();
         for (Library library : libraries) {
             if (!library.appliesToCurrentEnvironment()) {
@@ -135,7 +142,7 @@ public final class GameLibrariesTask extends Task<Void> {
                             DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
                             DownloadCandidates urls = downloadProvider.getDownloadCandidates(fmlLib.downloadUrl());
                             dependencies.add(new FileDownloadTask(urls, file)
-                                    .withCounter("hmcl.install.libraries"));
+                                    .withCounter());
                         }
                     }
                 }
@@ -176,18 +183,19 @@ public final class GameLibrariesTask extends Task<Void> {
             }
 
             if (shouldDownloadLibrary(gameRepository, manifest, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.groupId()))) {
-                dependencies.add(new LibraryDownloadTask(dependencyManager, file, library).withCounter("hmcl.install.libraries"));
+                dependencies.add(new LibraryDownloadTask(dependencyManager, file, library).withCounter());
             } else {
                 dependencyManager.getCacheRepository().tryCacheLibrary(library, file);
             }
 
-            updateProgress(++progress, libraries.size());
+            progress.update(++completed, libraries.size());
         }
 
         if (!dependencies.isEmpty()) {
-            getProperties().put("total", dependencies.size());
-            notifyPropertiesChanged();
+            context.addStageItems(dependencies.size());
         }
+        context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
+        return null;
     }
 
     private static @Nullable List<FMLLib> getFMLLibs(String forgeVersion) {

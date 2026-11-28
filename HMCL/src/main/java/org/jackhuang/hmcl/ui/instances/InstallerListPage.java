@@ -110,7 +110,7 @@ public class InstallerListPage extends ListPaneBase<InstallerItem> {
                             publishedInstance -> repository.getDependency().removeComponentAsync(
                                     publishedInstance,
                                     component.getComponentType()))
-                    .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
+                    .whenCompleteAsync(Schedulers.javafx(), (@Nullable Void ignored, @Nullable Throwable exception) -> reloadCurrentInstance())
                     .start());
 
             getItems().add(component);
@@ -130,7 +130,7 @@ public class InstallerListPage extends ListPaneBase<InstallerItem> {
                             publishedInstance -> repository.getDependency().removeComponentAsync(
                                     publishedInstance,
                                     mark.componentType()))
-                    .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
+                    .whenCompleteAsync(Schedulers.javafx(), (@Nullable Void ignored, @Nullable Throwable exception) -> reloadCurrentInstance())
                     .start());
 
             getItems().add(installerItem);
@@ -161,7 +161,7 @@ public class InstallerListPage extends ListPaneBase<InstallerItem> {
                 gameInstance.getId(),
                 publishedInstance -> repository.getDependency().installComponentLocalAsync(publishedInstance, file));
         task.setName(i18n("install.installer.install_offline"));
-        Controllers.taskDialog(task.whenComplete(Schedulers.javafx(), (@Nullable Exception exception) -> {
+        Controllers.taskDialog(task.whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
             if (exception == null) {
                 reloadCurrentInstance();
                 Controllers.dialog(i18n("install.success"));

@@ -14,19 +14,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Downloads a remote file to a cache repository.
+/// Downloads a remote file to a cache repository. Returns the cached path, or null
+/// if the server's cache policy prevents storage and no checksum was supplied.
 ///
 /// @author Glavo
-public final class CacheFileTask extends FetchTask<Path> {
+public final class CacheFileTask extends FetchTask<@Nullable Path> {
 
     /// Expected SHA-1 checksum, or `null` when the remote cache policy determines reuse.
     private final @Nullable String expectedSha1;
@@ -82,18 +79,17 @@ public final class CacheFileTask extends FetchTask<Path> {
 
     /// Selects a verified content-addressed entry or the applicable remote-cache policy.
     ///
-    /// @return the cache action to perform before downloading
+    /// @return the reusable file, or null on a cache miss
     @Override
-    protected EnumCheckETag shouldCheckETag() {
+    protected @Nullable Path findCachedFile() {
         if (expectedSha1 != null) {
             Optional<Path> cached = repository.checkExistentFile(
                     null, CacheRepository.SHA1, expectedSha1);
             if (cached.isPresent()) {
-                setResult(cached.get());
                 LOG.info("Using cached file with SHA-1 " + expectedSha1);
-                return EnumCheckETag.CACHED;
+                return cached.get();
             }
-            return EnumCheckETag.NOT_CHECK_E_TAG;
+            return null;
         }
 
         // Check cache
@@ -102,20 +98,25 @@ public final class CacheFileTask extends FetchTask<Path> {
             if (url == null) continue;
 
             try {
-                setResult(repository.getCachedRemoteFile(url, true));
+                Path cached = repository.getCachedRemoteFile(url, true);
                 LOG.info("Using cached file for " + NetworkUtils.dropQuery(url));
-                return EnumCheckETag.CACHED;
+                return cached;
             } catch (CacheRepository.CacheExpiredException e) {
                 LOG.info("Cache expired for " + NetworkUtils.dropQuery(url));
             } catch (IOException ignored) {
             }
         }
-        return EnumCheckETag.CHECK_E_TAG;
+        return null;
     }
 
     @Override
-    protected void useCachedResult(Path cache) {
-        setResult(cache);
+    protected boolean shouldCheckETag() {
+        return expectedSha1 == null;
+    }
+
+    @Override
+    protected Path useCachedResult(Path cache) {
+        return cache;
     }
 
     /// Creates a temporary sink that publishes a successful download to the cache repository.
@@ -126,68 +127,19 @@ public final class CacheFileTask extends FetchTask<Path> {
     /// @return the temporary download sink
     /// @throws IOException if the temporary file cannot be created
     @Override
-    protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
+    protected Context<@Nullable Path> getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
         if (expectedSha1 == null && (!checkETag || response == null)) {
             throw new IOException("Remote response metadata is unavailable");
         }
 
-        return new Context() {
-            private final Path temp = Files.createTempFile("hmcl-download-", null);
-            private final FileChannel fileOutput = FileChannel.open(temp,
-                    StandardOpenOption.WRITE,
-                    StandardOpenOption.TRUNCATE_EXISTING,
-                    StandardOpenOption.CREATE);
-
+        return new FileContext<>(null) {
             @Override
-            public void reset() throws IOException {
-                fileOutput.truncate(0L);
-            }
-
-            @Override
-            public void write(byte[] buffer, int offset, int len) throws IOException {
-                ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, offset, len);
-                while (byteBuffer.hasRemaining()) {
-                    //noinspection ResultOfMethodCallIgnored
-                    fileOutput.write(byteBuffer);
+            @Nullable Path commit(Path temp) throws IOException {
+                if (expectedSha1 != null) {
+                    ChecksumMismatchException.verifyChecksum(temp, CacheRepository.SHA1, expectedSha1);
+                    return repository.cacheFile(temp, CacheRepository.SHA1, expectedSha1);
                 }
-            }
-
-            @Override
-            public void close() throws IOException {
-                try {
-                    fileOutput.close();
-                } catch (IOException e) {
-                    LOG.warning("Failed to close file: " + temp, e);
-                    deleteTempFile();
-                    throw e;
-                }
-
-                if (!isSuccess()) {
-                    deleteTempFile();
-                    return;
-                }
-
-                try {
-                    if (expectedSha1 != null) {
-                        ChecksumMismatchException.verifyChecksum(
-                                temp, CacheRepository.SHA1, expectedSha1);
-                        setResult(repository.cacheFile(
-                                temp, CacheRepository.SHA1, expectedSha1));
-                    } else {
-                        setResult(repository.cacheRemoteFile(
-                                Objects.requireNonNull(response), temp));
-                    }
-                } finally {
-                    deleteTempFile();
-                }
-            }
-
-            private void deleteTempFile() {
-                try {
-                    Files.deleteIfExists(temp);
-                } catch (IOException e) {
-                    LOG.warning("Failed to delete file: " + temp, e);
-                }
+                return repository.cacheRemoteFile(Objects.requireNonNull(response), temp);
             }
         };
     }

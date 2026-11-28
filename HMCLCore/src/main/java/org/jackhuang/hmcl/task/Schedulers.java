@@ -4,22 +4,26 @@ package org.jackhuang.hmcl.task;
 
 import javafx.application.Platform;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.MathUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// @author huangyuhui
+/// Supplies executors used for task bodies, blocking I/O, and JavaFX callbacks.
 public final class Schedulers {
 
+    /// Prevents instantiation.
     private Schedulers() {
     }
 
+    /// Virtual-thread executor factory, absent on runtimes older than Java 21.
     private static final @Nullable Function<String, ExecutorService> NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR;
 
     static {
@@ -53,13 +57,14 @@ public final class Schedulers {
         }
     }
 
-    /// @return Returns null if the Java version is below 21, otherwise always returns a non-null value.
-    public static ExecutorService newVirtualThreadPerTaskExecutor(String name) {
+    /// Creates an unbounded service that starts a named virtual thread for each submission.
+    /// Returns `null` on runtimes older than Java 21.
+    public static @Nullable ExecutorService newVirtualThreadPerTaskExecutor(String name) {
         if (NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR == null) {
             return null;
         }
 
-        return NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR.apply(name);
+        return new UnboundedExecutorService(NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR.apply(name), true);
     }
 
     /// This thread pool is suitable for network and local I/O operations.
@@ -71,17 +76,21 @@ public final class Schedulers {
         return Holder.IO_EXECUTOR;
     }
 
+    /// Executes task bodies on virtual threads when available, or on a private fork/join
+    /// pool that can compensate for workers waiting on child tasks.
+    static Executor tasks() {
+        return Holder.TASK_EXECUTOR;
+    }
+
+    /// Dispatches work to the JavaFX application thread.
     public static Executor javafx() {
-        return Platform::runLater;
+        return JAVAFX_EXECUTOR;
     }
 
-    /// Default thread pool, equivalent to [ForkJoinPool#commonPool()].
-    ///
-    /// It is recommended to perform computation tasks on this thread pool. For I/O operations, please use [#io()].
-    public static Executor defaultScheduler() {
-        return ForkJoinPool.commonPool();
-    }
+    /// The shared executor identity used when a JavaFX callback waits for a task.
+    private static final Executor JAVAFX_EXECUTOR = Platform::runLater;
 
+    /// Logs the application shutdown request.
     public static void shutdown() {
         LOG.info("Shutting down executor services.");
 
@@ -90,15 +99,31 @@ public final class Schedulers {
         // Sometimes it resolves the problem that the app does not exit.
     }
 
+    /// Initializes shared executors on first use.
     private static final class Holder {
+        /// Workers used by task bodies that synchronously coordinate child tasks.
+        private static final ExecutorService TASK_EXECUTOR;
+
+        /// Workers used by tasks that perform blocking I/O.
         private static final ExecutorService IO_EXECUTOR;
 
         static {
-            //noinspection resource
-            ExecutorService vtExecutor = newVirtualThreadPerTaskExecutor("IO");
-            IO_EXECUTOR = vtExecutor != null
-                    ? vtExecutor
-                    : Executors.newCachedThreadPool(Lang.counterThreadFactory("IO", true));
+            @Nullable ExecutorService virtualThreads = newVirtualThreadPerTaskExecutor("HMCL Worker");
+            if (virtualThreads != null) {
+                TASK_EXECUTOR = virtualThreads;
+                IO_EXECUTOR = virtualThreads;
+            } else {
+                int parallelism = MathUtils.clamp(Runtime.getRuntime().availableProcessors(), 4, 32);
+                var workerIds = new AtomicLong();
+                // Task submissions are not joined as ForkJoinTasks, so use local FIFO scheduling.
+                TASK_EXECUTOR = new ForkJoinPool(parallelism, pool -> {
+                    ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
+                    worker.setName("HMCL Worker #" + workerIds.incrementAndGet());
+                    return worker;
+                }, null, true);
+
+                IO_EXECUTOR = new UnboundedExecutorService(Executors.newCachedThreadPool(Lang.counterThreadFactory("IO", true)), false);
+            }
         }
     }
 

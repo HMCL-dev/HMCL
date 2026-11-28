@@ -283,7 +283,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             } finally {
                 handleLock.unlock();
             }
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
                 // A newer refresh task is running, discard this result
                 return;
@@ -321,7 +321,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
 
         Task.supplyAsync(Schedulers.io(), () ->
                 new ServersDatFile(toInstance.getServersDatFilePath())
-        ).whenComplete(Schedulers.javafx(), (datFile, exception) -> {
+        ).whenCompleteAsync(Schedulers.javafx(), (datFile, exception) -> {
             if (exception != null) {
                 LOG.warning("Failed to load servers from dat file: " + toInstance.getServersDatFilePath(), exception);
             }
@@ -346,7 +346,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
             } finally {
                 handleLock.unlock();
             }
-        }).whenComplete(Schedulers.javafx(), (serverEntry, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (serverEntry, exception) -> {
             if (exception != null) {
                 LOG.warning("Failed to save server data.", exception);
             }
@@ -389,7 +389,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
                             .withIcon(newServer.getIcon())
                     );
                     return item.storageEntry.getServer();
-                }).whenComplete(Schedulers.javafx(), (updatedServer, exception) -> {
+                }).whenCompleteAsync(Schedulers.javafx(), (updatedServer, exception) -> {
                     if (exception != null) {
                         LOG.warning("Failed to save server data.", exception);
                     }
@@ -435,7 +435,7 @@ public class ServersPage extends ListPaneBase<ServersPage.ServerListItem> {
                         }
                     }
                     return result;
-                }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                     if (exception != null) {
                         LOG.warning("Failed to delete server data.", exception);
                     }

@@ -14,12 +14,14 @@ import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.RegionUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 
 /// @author Glavo
 @NotNullByDefault
@@ -259,36 +261,21 @@ public final class HMCLDownloadProvider extends DownloadProvider {
         private final Task<? extends T> task;
         private final Task<? extends T> fallback;
 
-        private List<Task<?>> dependencies = List.of();
-
         public FallbackTask(Task<? extends T> task, Task<? extends T> fallback) {
             this.task = task;
             this.fallback = fallback;
         }
 
+        /// Tries the alternate source if the primary source fails.
         @Override
-        public Collection<? extends Task<?>> getDependents() {
-            return List.of(task);
-        }
-
-        @Override
-        public boolean isRelyingOnDependents() {
-            return false;
-        }
-
-        @Override
-        public void execute() throws Exception {
-            if (isDependentsSucceeded()) {
-                setResult(task.getResult());
-            } else {
-                dependencies = List.of(fallback);
-                fallback.storeTo(this::setResult);
+        public T execute(TaskExecutionContext context) throws Exception {
+            try {
+                return context.run(task);
+            } catch (Exception failure) {
+                if (context.isCancelled() || failure instanceof InterruptedException || failure instanceof CancellationException)
+                    throw failure;
+                return context.run(fallback);
             }
-        }
-
-        @Override
-        public List<Task<?>> getDependencies() {
-            return dependencies;
         }
     }
 

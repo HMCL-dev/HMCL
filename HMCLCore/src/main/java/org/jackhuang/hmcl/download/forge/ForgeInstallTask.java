@@ -10,16 +10,17 @@ import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.download.UnsupportedInstallationException.CLEANROOM_NOT_COMPATIBLE_WITH_FORGE;
@@ -35,10 +36,7 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
-    private Path installer;
     private final ForgeRemoteVersion remote;
-    private FileDownloadTask dependent;
-    private Task<GameInstancePatch> dependency;
 
     public ForgeInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, ForgeRemoteVersion remoteVersion) {
         if (!manifest.isModifiable()) {
@@ -51,64 +49,40 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
         setSignificance(TaskSignificance.MODERATE);
     }
 
+    /// Downloads the installer and returns the patch produced by the matching Forge installer format.
     @Override
-    public boolean doPreExecute() {
-        return true;
-    }
+    public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
+        Path installer = Files.createTempFile("forge-installer", ".jar");
+        try (Closeable cleanup = () -> Files.deleteIfExists(installer)) {
+            DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+            var download = new FileDownloadTask(
+                    downloadProvider.getDownloadCandidates(remote),
+                    installer, null);
+            download.setCacheRepository(dependencyManager.getCacheRepository());
+            download.setCaching(true);
+            download.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
+            context.run(download);
 
-    @Override
-    public void preExecute() throws Exception {
-        installer = Files.createTempFile("forge-installer", ".jar");
+            String originalMainClass = manifest.mainClass();
+            if (GameVersionNumber.asGameVersion("1.13").compareTo(remote.getGameVersion()) <= 0) {
+                // Forge 1.13 is not compatible with fabric.
+                if (!GameComponentAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
+                    throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
+            }
 
-        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
-        dependent = new FileDownloadTask(
-                downloadProvider.getDownloadCandidates(remote),
-                installer, null);
-        dependent.setCacheRepository(dependencyManager.getCacheRepository());
-        dependent.setCaching(true);
-        dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
-    }
-
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    @Override
-    public void postExecute() throws Exception {
-        Files.deleteIfExists(installer);
-        setResult(dependency.getResult());
-    }
-
-    @Override
-    public Collection<Task<?>> getDependents() {
-        return Collections.singleton(dependent);
-    }
-
-    @Override
-    public Collection<Task<?>> getDependencies() {
-        return Collections.singleton(dependency);
-    }
-
-    @Override
-    public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
-        String originalMainClass = manifest.mainClass();
-        if (GameVersionNumber.asGameVersion("1.13").compareTo(remote.getGameVersion()) <= 0) {
-            // Forge 1.13 is not compatible with fabric.
-            if (!GameComponentAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
-                throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
-        }
-
-        if (detectForgeInstallerType(remote.getGameVersion(), installer)) {
-            dependency = new GameDownloadTask(dependencyManager, manifest)
-                    .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
-                            dependencyManager,
-                            manifest,
-                            minecraftJar,
-                            remote.getSelfVersion(),
-                            installer));
-        } else {
-            dependency = new ForgeOldInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
+            Task<GameInstancePatch> install;
+            if (detectForgeInstallerType(remote.getGameVersion(), installer)) {
+                install = new GameDownloadTask(dependencyManager, manifest)
+                        .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
+                                dependencyManager,
+                                manifest,
+                                minecraftJar,
+                                remote.getSelfVersion(),
+                                installer));
+            } else {
+                install = new ForgeOldInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
+            }
+            return context.run(install);
         }
     }
 

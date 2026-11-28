@@ -5,64 +5,66 @@ package org.jackhuang.hmcl.download.game;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskProgress;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- *
- * @author huangyuhui
- */
-public final class GameAssetDownloadTask extends Task<Void> {
+/// Downloads the assets listed by a game manifest's asset index.
+///
+/// @author huangyuhui
+public final class GameAssetDownloadTask extends Task<@Nullable Void> {
 
+    /// Supplies the asset layout, download sources and cache.
     private final AbstractDependencyManager dependencyManager;
+    /// Identifies the asset index to install.
     private final GameInstanceManifest manifest;
-    private final AssetIndexInfo assetIndexInfo;
-    private final Path assetIndexFile;
+    /// Whether to download the index even when a valid local copy exists.
+    private final boolean forceDownloadingIndex;
+    /// Whether to verify existing asset files against their recorded hashes.
     private final boolean integrityCheck;
-    private final List<Task<?>> dependents = new ArrayList<>(1);
-    private final List<Task<?>> dependencies = new ArrayList<>();
 
-    /// Constructor.
+    /// Creates a task that installs the asset index and its referenced assets.
     ///
-    /// @param dependencyManager the dependency manager that can provides [GameRepository]
-    /// @param manifest the game version
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param manifest the game manifest that declares the asset index
+    /// @param forceDownloadingIndex whether to download the index even if the local copy is valid
+    /// @param integrityCheck whether to verify the hashes of existing asset files
     public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean forceDownloadingIndex, boolean integrityCheck) {
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
-        this.assetIndexInfo = this.manifest.getAssetIndex();
-        GameRepository gameRepository = dependencyManager.getGameRepository();
-        String assetId = assetIndexInfo.getId();
-        this.assetIndexFile = gameRepository.getLayout().getAssetIndexFile(assetId);
+        this.forceDownloadingIndex = forceDownloadingIndex;
         this.integrityCheck = integrityCheck;
-
-        setStage("hmcl.install.assets");
-        dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.manifest, forceDownloadingIndex));
     }
 
+    /// Returns the stage for game asset downloads.
     @Override
-    public Collection<Task<?>> getDependents() {
-        return dependents;
+    public TaskStage getStage() {
+        return InstallStages.ASSETS;
     }
 
+    /// Obtains the asset index, verifies existing assets and downloads the missing or invalid files in parallel.
     @Override
-    public Collection<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        context.run(new GameAssetIndexDownloadTask(dependencyManager, manifest, forceDownloadingIndex));
+        GameRepositoryLayout layout = dependencyManager.getGameRepository().getLayout();
+        Path assetIndexFile = layout.getAssetIndexFile(manifest.getAssetIndex().getId());
+        List<Task<?>> dependencies = new ArrayList<>();
         AssetIndex index;
         try {
             index = JsonUtils.fromNonNullJson(Files.readString(assetIndexFile), AssetIndex.class);
@@ -70,13 +72,13 @@ public final class GameAssetDownloadTask extends Task<Void> {
             throw new GameAssetIndexDownloadTask.GameAssetIndexMalformedException();
         }
 
-        int progress = 0;
+        TaskProgress progress = context.progress();
+        int completed = 0;
         for (AssetObject assetObject : index.getObjects().values()) {
-            if (isCancelled())
+            if (context.isCancelled())
                 throw new InterruptedException();
 
-            GameRepository gameRepository = dependencyManager.getGameRepository();
-            Path file = gameRepository.getLayout().getAssetObject(assetObject);
+            Path file = layout.getAssetObject(assetObject);
             boolean download = !Files.isRegularFile(file);
             try {
                 if (!download && integrityCheck && !assetObject.validateChecksum(file, true))
@@ -92,20 +94,23 @@ public final class GameAssetDownloadTask extends Task<Void> {
                         .resolve("assets").resolve("objects").resolve(assetObject.getLocation()));
                 task.setCacheRepository(dependencyManager.getCacheRepository());
                 task.setCaching(true);
-                dependencies.add(task.withCounter("hmcl.install.assets"));
+                dependencies.add(task.withCounter());
             } else {
                 dependencyManager.getCacheRepository().tryCacheFile(file, CacheRepository.SHA1, assetObject.hash());
             }
 
-            updateProgress(++progress, index.getObjects().size());
+            progress.update(++completed, index.getObjects().size());
         }
 
         if (!dependencies.isEmpty()) {
-            getProperties().put("total", dependencies.size());
-            notifyPropertiesChanged();
+            context.addStageItems(dependencies.size());
         }
+        context.runAll(dependencies, FetchTask.getDownloadExecutorConcurrency());
+        return null;
     }
 
+    /// Downloads the index even when the local copy is valid.
     public static final boolean DOWNLOAD_INDEX_FORCIBLY = true;
+    /// Reuses a valid local index.
     public static final boolean DOWNLOAD_INDEX_IF_NECESSARY = false;
 }

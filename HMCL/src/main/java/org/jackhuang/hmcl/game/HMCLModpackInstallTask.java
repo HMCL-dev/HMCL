@@ -4,38 +4,49 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.download.DefaultGameBuilder;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 
 /// Installs or updates an HMCL modpack by rebuilding its recognized game components.
 @NotNullByDefault
-public final class HMCLModpackInstallTask extends Task<Void> {
+public final class HMCLModpackInstallTask extends Task<@Nullable Void> {
+    /// Archive containing the pack manifest and the files to extract.
     private final Path zipFile;
+
+    /// Identifier reserved before installation begins.
     private final GameInstanceID instanceId;
 
     /// Existing instance selecting update mode, or `null` for a new installation.
     private final @Nullable DefaultGameInstance updateTarget;
 
-    private final HMCLGameRepository repository;
+    /// Dependency manager for the target repository.
     private final DefaultDependencyManager dependency;
+
+    /// Parsed metadata to write to the new configuration.
     private final Modpack modpack;
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
-    private final List<Task<?>> dependents = new ArrayList<>(4);
+
+    /// Name captured for the instance configuration when the task was created.
+    private final @Nullable String modpackName;
+
+    /// Version captured for the instance configuration when the task was created.
+    private final @Nullable String modpackVersion;
 
     /// Creates a task that installs a new HMCL modpack instance.
     ///
@@ -57,8 +68,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     /// @param zipFile    the HMCL modpack archive
     /// @param modpack    the parsed modpack metadata
     /// @param instance   the existing instance to update
-    /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
-    ///                                  modpack configuration, or records another provider type
+    /// @throws IllegalArgumentException if `instance` belongs to another repository
     public HMCLModpackInstallTask(
             HMCLGameRepository repository,
             Path zipFile,
@@ -74,97 +84,94 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     /// @param modpack      the parsed modpack metadata
     /// @param instanceId   the target instance id
     /// @param updateTarget the existing instance selecting update mode, or `null` for install
-    /// @throws IllegalArgumentException if an update target belongs to another repository or has
-    ///                                  no compatible configuration
+    /// @throws IllegalArgumentException if an update target belongs to another repository
     private HMCLModpackInstallTask(
             HMCLGameRepository repository,
             Path zipFile,
             Modpack modpack,
             GameInstanceID instanceId,
             @Nullable DefaultGameInstance updateTarget) {
-        this.repository = repository;
         this.dependency = repository.getDependency();
         this.zipFile = zipFile;
         this.instanceId = instanceId;
         this.updateTarget = updateTarget;
         this.modpack = modpack;
-        if (this.updateTarget != null) {
-            dependency.validateGameInstance(this.updateTarget);
-        }
 
-        Path run = repository.getLayout().getInstanceRoot(this.instanceId);
-        Path json = repository.getLayout().getModpackConfigurationFile(this.instanceId);
-        if (this.updateTarget != null && Files.notExists(json))
-            throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
+        if (updateTarget != null)
+            dependency.validateGameInstance(updateTarget);
+        this.modpackName = modpack.getName();
+        this.modpackVersion = modpack.getVersion();
+    }
 
-        @Nullable ModpackConfiguration<Modpack> config = null;
-        try {
-            if (this.updateTarget != null && Files.exists(json)) {
-                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(Modpack.class));
-
-                if (config == null || !HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
-                    throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
+    /// Reads the previous override hashes after reserving the update target.
+    private @Nullable ModpackConfiguration<?> readConfiguration() {
+        if (updateTarget == null)
+            return null;
+        Path file = updateTarget.getModpackConfigurationFile();
+        if (Files.exists(file)) {
+            try {
+                @Nullable ModpackConfiguration<?> config = JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
+                if (config != null && HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
+                    return config;
+            } catch (JsonParseException | IOException ignored) {
+                return null;
             }
-        } catch (JsonParseException | IOException ignore) {
         }
-
-        onDone().register(event -> {
-            if (this.updateTarget == null && event.isFailed()) {
-                repository.removeInstanceFromDisk(this.instanceId);
-            }
-        });
-
-        dependents.add(new ModpackInstallTask<>(zipFile, run, List.of("/minecraft"), it -> !"pack.json".equals(it), config));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, List.of("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(this.instanceId)).withStage("hmcl.modpack"));
+        throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
     }
 
-    @Override
-    public List<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public List<Task<?>> getDependents() {
-        return dependents;
-    }
-
-    /// Reads the legacy pack manifest and schedules one builder for all recognized components.
+    /// Reserves the target before extracting the pack and installs its recognized components.
     ///
     /// The pack manifest is used only for component detection. The builder creates a new
     /// patch-structured manifest instead of attempting to mutate the legacy flattened manifest.
     @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        try (DefaultGameBuilder builder = updateTarget == null
+                ? dependency.newGameBuilder(instanceId)
+                : dependency.newGameBuilder(updateTarget)) {
+            context.checkCancellation();
+            @Nullable ModpackConfiguration<?> config = readConfiguration();
+            Modpack.installWithGameBuilder(context, builder, false, () -> install(context, builder, config));
+        }
+        return null;
+    }
+
+    /// Extracts the overrides and builds the components declared by the pack.
+    private void install(TaskExecutionContext context, DefaultGameBuilder builder, @Nullable ModpackConfiguration<?> config) throws Exception {
+        DefaultGameRepositoryLayout layout = dependency.getGameRepository().getLayout();
+        @Unmodifiable List<String> subDirectories = List.of("/minecraft");
+        context.runAll(
+                new ModpackInstallTask<>(zipFile, layout.getInstanceRoot(instanceId), subDirectories,
+                        path -> !"pack.json".equals(path), config),
+                new MinecraftInstanceTask<>(zipFile, subDirectories, modpack, HMCLModpackProvider.INSTANCE,
+                        modpackName, modpackVersion, layout.getModpackConfigurationFile(instanceId))
+                        .withStage(InstallStages.MODPACK));
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
         GameInstanceManifest originalManifest = JsonUtils.fromNonNullJson(json, GameInstanceManifest.class)
                 .withId(instanceId)
                 .withJar(null);
         GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(originalManifest, null);
+        builder.enableIsolation();
 
-        try (GameBuilder builder = updateTarget == null
-                ? dependency.newGameBuilder(instanceId)
-                : dependency.newGameBuilder(updateTarget)) {
-            builder.enableIsolation();
-
-            String gameVersion = modpack.getGameVersion();
-            builder.component(GameComponentType.GAME, gameVersion);
-            for (GameComponentAnalyzer.Mark mark : analyzer) {
-                if (mark.componentType() == GameComponentType.GAME) {
-                    continue;
-                }
-
-                @Nullable String componentVersion = mark.version();
-                if (componentVersion != null) {
-                    if (mark.componentType() == GameComponentType.OPTIFINE) {
-                        Matcher matcher = GameComponentAnalyzer.OPTIFINE_VERSION_PATTERN.matcher(componentVersion);
-                        if (matcher.matches()) {
-                            componentVersion = matcher.group("optifine");
-                        }
-                    }
-                    builder.component(mark.componentType(), componentVersion);
-                }
+        String gameVersion = modpack.getGameVersion();
+        builder.component(GameComponentType.GAME, gameVersion);
+        for (GameComponentAnalyzer.Mark mark : analyzer) {
+            if (mark.componentType() == GameComponentType.GAME) {
+                continue;
             }
-            dependencies.add(builder.buildAsync());
+
+            @Nullable String componentVersion = mark.version();
+            if (componentVersion != null) {
+                if (mark.componentType() == GameComponentType.OPTIFINE) {
+                    Matcher matcher = GameComponentAnalyzer.OPTIFINE_VERSION_PATTERN.matcher(componentVersion);
+                    if (matcher.matches()) {
+                        componentVersion = matcher.group("optifine");
+                    }
+                }
+                builder.component(mark.componentType(), componentVersion);
+            }
         }
+        builder.build(context);
     }
 
 }

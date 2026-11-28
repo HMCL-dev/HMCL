@@ -5,7 +5,9 @@ package org.jackhuang.hmcl.download.java.disco;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.java.JavaPackageType;
 import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.NativePlatform;
@@ -13,6 +15,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.*;
+import java.util.concurrent.Executor;
 
 /**
  * @author Glavo
@@ -21,14 +24,30 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
 
     public static final String API_ROOT = System.getProperty("hmcl.discoapi.override", "https://api.foojay.io/disco/v3.0");
 
+    /// Supplies candidate URLs for the package query.
+    private final DownloadProvider downloadProvider;
+    /// Distribution whose packages are requested.
     private final DiscoJavaDistribution distribution;
-    private final String archiveType;
-    private final Task<String> fetchPackagesTask;
+    /// Platform for which packages must be available.
+    private final NativePlatform platform;
 
+    /// Creates a package query for the selected distribution and platform.
     public DiscoFetchJavaListTask(DownloadProvider downloadProvider, DiscoJavaDistribution distribution, NativePlatform platform) {
-        this.distribution = distribution;
-        this.archiveType = platform.os() == OperatingSystem.WINDOWS ? "zip" : "tar.gz";
+        this.downloadProvider = Objects.requireNonNull(downloadProvider);
+        this.distribution = Objects.requireNonNull(distribution);
+        this.platform = Objects.requireNonNull(platform);
+    }
 
+    /// Runs the package query and catalog processing on the I/O scheduler.
+    @Override
+    protected Executor getExecutor() {
+        return Schedulers.io();
+    }
+
+    /// Returns the latest matching distribution version per JDK major version and package type.
+    @Override
+    public EnumMap<JavaPackageType, TreeMap<Integer, DiscoJavaRemoteVersion>> execute(TaskExecutionContext context) throws Exception {
+        String archiveType = platform.os() == OperatingSystem.WINDOWS ? "zip" : "tar.gz";
         HashMap<String, String> params = new HashMap<>();
         params.put("distribution", distribution.getApiParameter());
         params.put("operating_system", platform.os().getCheckedName());
@@ -38,17 +57,8 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
         if (platform.os() == OperatingSystem.LINUX)
             params.put("lib_c_type", "glibc");
 
-        this.fetchPackagesTask = new GetTask(downloadProvider.getDownloadCandidates(NetworkUtils.withQuery(API_ROOT + "/packages", params)));
-    }
-
-    @Override
-    public Collection<Task<?>> getDependents() {
-        return Collections.singleton(fetchPackagesTask);
-    }
-
-    @Override
-    public void execute() throws Exception {
-        String json = fetchPackagesTask.getResult();
+        String url = NetworkUtils.withQuery(API_ROOT + "/packages", params);
+        String json = context.run(new GetTask(downloadProvider.getDownloadCandidates(url)));
         List<DiscoJavaRemoteVersion> list = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoJavaRemoteVersion.class)).getResult();
         EnumMap<JavaPackageType, TreeMap<Integer, DiscoJavaRemoteVersion>> result = new EnumMap<>(JavaPackageType.class);
 
@@ -70,7 +80,6 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
                 map.put(jdkVersion, version);
         }
 
-        setResult(result);
+        return result;
     }
-
 }

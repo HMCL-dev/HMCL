@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.terracotta.provider;
 
-import javafx.beans.value.ObservableDoubleValue;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaBundle;
-import org.jackhuang.hmcl.util.FXThread;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -20,8 +18,8 @@ public abstract class AbstractTerracottaProvider {
     }
 
     public interface DownloadContext {
-        @FXThread
-        void bindProgress(ObservableDoubleValue progress);
+        /// Selects the task whose progress represents the bundle download.
+        void trackDownload(Task<?> task);
 
         void checkCancellation() throws CancellationException;
     }

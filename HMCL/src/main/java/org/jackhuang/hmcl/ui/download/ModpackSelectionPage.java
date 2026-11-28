@@ -19,6 +19,8 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -29,9 +31,12 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_FILE;
 import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_NAME;
@@ -109,39 +114,45 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
     private void onChooseRemoteFile() {
         Controllers.prompt(i18n("modpack.choose.remote.tooltip"), (url, handler) -> {
             try {
-                if (url.endsWith("server-manifest.json")) {
-                    // if urlString ends with .json, we assume that the url is server-manifest.json
-                    Controllers.taskDialog(new GetTask(WebURL.parse(url)).whenComplete(Schedulers.javafx(), (result, e) -> {
-                        ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
+                Task<?> download;
+                boolean serverManifest = url.endsWith("server-manifest.json");
+                if (serverManifest) {
+                    download = new GetTask(WebURL.parse(url)).thenAcceptAsync(Schedulers.javafx(), result -> {
+                        @Nullable ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
                         if (manifest == null) {
                             handler.reject(i18n("modpack.type.server.malformed"));
-                        } else if (e == null) {
+                        } else {
                             handler.resolve();
                             controller.getSettings().put(MODPACK_SERVER_MANIFEST, manifest);
                             controller.onNext();
-                        } else {
-                            handler.reject(e.getMessage());
                         }
-                    }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+                    });
                 } else {
-                    // otherwise we still consider the file as modpack zip file
-                    // since casually the url may not ends with ".zip"
                     Path modpack = Files.createTempFile("modpack", ".zip");
-                    Controllers.taskDialog(
-                            new FileDownloadTask(url, modpack)
-                                    .whenComplete(Schedulers.javafx(), e -> {
-                                        if (e == null) {
-                                            handler.resolve();
-                                            controller.getSettings().put(MODPACK_FILE, modpack);
-                                            controller.onNext();
-                                        } else {
-                                            handler.reject(e.getMessage());
-                                        }
-                                    }),
-                            i18n("message.downloading"),
-                            TaskCancellationAction.NORMAL
-                    );
+                    download = new FileDownloadTask(url, modpack).thenRunAsync(Schedulers.javafx(), () -> {
+                        handler.resolve();
+                        controller.getSettings().put(MODPACK_FILE, modpack);
+                        controller.onNext();
+                    });
                 }
+                download.addTaskListener(new TaskListener() {
+                    /// Releases the prompt even when the download was cancelled before starting.
+                    @Override
+                    public void onExecutionFinished(Task<?> root, boolean success) {
+                        if (!success) {
+                            Throwable failure = root.exceptionNow();
+                            Platform.runLater(() -> {
+                                if (failure instanceof CancellationException)
+                                    handler.reject("");
+                                else if (serverManifest)
+                                    handler.reject(I18n.localizeErrorMessage(failure));
+                                else
+                                    handler.reject(failure.getMessage());
+                            });
+                        }
+                    }
+                });
+                Controllers.taskDialog(download, i18n("message.downloading"), TaskCancellationAction.NORMAL);
             } catch (Exception e) {
                 handler.reject(i18n("message.failed"));
             }

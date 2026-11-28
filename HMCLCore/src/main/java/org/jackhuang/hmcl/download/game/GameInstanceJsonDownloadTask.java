@@ -6,11 +6,12 @@ import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskSignificance;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.Objects;
 
 /**
  *
@@ -19,35 +20,22 @@ import java.util.List;
 public final class GameInstanceJsonDownloadTask extends Task<String> {
     private final String gameVersion;
     private final DefaultDependencyManager dependencyManager;
-    private final Task<ComponentRemoteVersionList<?>> getGameVersionsTask;
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
+    /// Creates a lookup for the requested version's remote manifest.
     public GameInstanceJsonDownloadTask(String gameVersion, DefaultDependencyManager dependencyManager) {
         this.gameVersion = gameVersion;
-        this.dependencyManager = dependencyManager;
-
-        getGameVersionsTask = dependencyManager.getDownloadProvider()
-                .getVersionsAsync(GameComponentType.GAME, null, false);
-
+        this.dependencyManager = Objects.requireNonNull(dependencyManager);
         setSignificance(TaskSignificance.MODERATE);
     }
 
+    /// Returns the remote manifest JSON for the requested game version.
     @Override
-    public Collection<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public Collection<Task<?>> getDependents() {
-        return List.of(getGameVersionsTask);
-    }
-
-    @Override
-    public void execute() throws IOException {
-        ComponentRemoteVersion remoteVersion = getGameVersionsTask.getResult().getRemoteVersion(gameVersion);
+    public String execute(TaskExecutionContext context) throws Exception {
+        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+        ComponentRemoteVersionList<?> versions = context.run(downloadProvider.getVersionsAsync(GameComponentType.GAME, null, false));
+        @Nullable ComponentRemoteVersion remoteVersion = versions.getRemoteVersion(gameVersion);
         if (remoteVersion == null)
             throw new IOException(new IOException("Cannot find specific version " + gameVersion + " in remote repository"));
-        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
-        dependencies.add(new GetTask(downloadProvider.getDownloadCandidates(remoteVersion)).storeTo(this::setResult));
+        return context.run(new GetTask(downloadProvider.getDownloadCandidates(remoteVersion)));
     }
 }

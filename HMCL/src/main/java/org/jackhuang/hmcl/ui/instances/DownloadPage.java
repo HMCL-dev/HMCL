@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -80,7 +81,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         Task.supplyAsync(() -> {
             Stream<RemoteAddon.Version> versions = addon.data().loadVersions(repository, page.getDownloadProvider());
             return sortVersions(versions);
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 this.versions = result;
 
@@ -597,7 +598,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
-                            .setSignificance(Task.TaskSignificance.MINOR)
+                            .setSignificance(TaskSignificance.MINOR)
                             .thenAcceptAsync(Schedulers.javafx(), dep -> {
                                 if (dep == RemoteAddon.BROKEN) {
                                     hasBroken.set(true);
@@ -608,7 +609,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 dependencyAddonItem.getProperties().put("DependencyAddonItem.width", listener);
                                 dependencies.get(dependency.getType()).value().add(dependencyAddonItem);
                             })
-                            .setSignificance(Task.TaskSignificance.MINOR));
+                            .setSignificance(TaskSignificance.MINOR));
                 }
 
                 return Task.allOf(queue).thenSupplyAsync(() -> {
@@ -630,7 +631,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         );
                     }
                 });
-            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     dependenciesList.getContent().setAll(result.toList());
                     spinnerPane.setFailedReason(null);
@@ -644,7 +645,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         private void loadVersionPageUrl(RemoteAddon.Version version, RemoteAddonRepository repo, JFXHyperlink button) {
             Task.supplyAsync(() -> repo.getVersionPageUrl(version))
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                         if (exception == null && StringUtils.isNotBlank(result)) {
                             button.setExternalLink(result);
                             button.setDisable(false);
@@ -699,7 +700,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 if ("238222".equals(version.projectId())) // https://github.com/HMCL-dev/HMCL/pull/4828#issuecomment-3791068569 FUCK YOU JEI, FUCK YOU CURSEFORGE
                     return raw;
                 return StringUtils.convertToHtml(raw);
-            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     String changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));

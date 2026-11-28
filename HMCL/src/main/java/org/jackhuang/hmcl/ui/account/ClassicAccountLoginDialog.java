@@ -88,11 +88,13 @@ public class ClassicAccountLoginDialog extends StackPane {
         progressBar.setVisible(true);
         lblCreationWarning.setText("");
         Task.supplyAsync(() -> oldAccount.logInWithPassword(password))
-                .whenComplete(Schedulers.javafx(), authInfo -> {
+                .thenAcceptAsync(Schedulers.javafx(), authInfo -> {
                     success.accept(authInfo);
                     fireEvent(new DialogCloseEvent());
                     progressBar.setVisible(false);
-                }, e -> {
+                }).whenCompleteAsync(Schedulers.javafx(), (ignored, e) -> {
+                    if (e == null) return;
+
                     LOG.info("Failed to login with password: " + oldAccount, e);
                     if (e instanceof NoSelectedCharacterException) {
                         fireEvent(new DialogCloseEvent());

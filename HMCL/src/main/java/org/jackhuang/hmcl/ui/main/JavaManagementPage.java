@@ -125,7 +125,7 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
         chooser.setTitle(i18n("settings.game.java_directory.choose"));
         Path file = Controllers.showOpenDialog(chooser);
         if (file != null) {
-            JavaManager.getAddJavaTask(file).whenComplete(Schedulers.javafx(), exception -> {
+            JavaManager.getAddJavaTask(file).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
                 if (exception != null) {
                     LOG.warning("Failed to add java", exception);
                     Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
@@ -142,7 +142,7 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
     }
 
     private void onAddJavaBinary(Path file) {
-        JavaManager.getAddJavaTask(file).whenComplete(Schedulers.javafx(), exception -> {
+        JavaManager.getAddJavaTask(file).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
             if (exception != null) {
                 LOG.warning("Failed to add java", exception);
                 Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
@@ -156,7 +156,7 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
             if (Files.notExists(releaseFile))
                 throw new IOException("Missing release file " + releaseFile);
             return JavaManager.getAddJavaTask(file.resolve("bin").resolve(SystemInfo.CURRENT_OS.getJavaExecutable()));
-        }).whenComplete(Schedulers.javafx(), exception -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
             if (exception != null) {
                 LOG.warning("Failed to add java", exception);
                 Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
@@ -174,7 +174,7 @@ public final class JavaManagementPage extends ListPaneBase<JavaRuntime> {
 
                 return Pair.pair(tree.getRoot().getSubDirs().keySet().iterator().next(), info);
             }
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller ->
                         new JavaInstallPage(controller::onFinish, result.getValue(), null, null, result.getKey(), file)));

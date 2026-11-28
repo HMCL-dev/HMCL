@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -282,7 +283,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
             } finally {
                 lock.unlock();
             }
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 if (result != null) {
                     sourceItems.setAll(result);
@@ -298,6 +299,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
         }).start();
     }
 
+    /// Imports the resource packs, reports individual failures, and refreshes the list.
     public void addFiles(List<Path> files) {
         if (resourcePackManager == null) return;
 
@@ -311,7 +313,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
                     failures.add(file);
                 }
             }
-        }).withRunAsync(Schedulers.javafx(), () -> {
+        }).whenCompleteAsync(Schedulers.javafx(), (@Nullable Void ignored, @Nullable Throwable exception) -> {
             if (!failures.isEmpty()) {
                 StringBuilder failure = new StringBuilder(i18n("resourcepack.add.failed"));
                 for (Path file: failures) {
@@ -404,7 +406,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
 
         Path resourcePackDirectory = gameInstance.getResourcePackManager().getDirectory();
         Runnable action = () -> Controllers.taskDialog(Task
-                        .composeAsync(() -> {
+                        .composeOptionalAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
                             if (version != GameVersionNumber.unknown()) {
                                 return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), resourcePacks);
@@ -413,7 +415,8 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
                                 return null;
                             }
                         })
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        .whenCompleteAsync(Schedulers.javafx(), (result, exception) -> {
+                            if (exception instanceof CancellationException) return;
                             if (exception != null || result == null) {
                                 Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
                             } else if (result.commonUpdates().isEmpty()) {
@@ -422,7 +425,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
                                 Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), resourcePackDirectory, result));
                             }
                         })
-                        .withStagesHints("update.checking"),
+                        .withStageHints(AddonCheckUpdatesTask.STAGE),
                 i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
         if (gameInstance.isModpack()) {

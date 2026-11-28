@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -73,7 +72,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
     private final BooleanProperty logging = new SimpleBooleanProperty();
 
-    private TaskExecutor loginTask;
+    /// The most recent login attempt, available for cancellation.
+    private @Nullable Task<?> loginTask;
 
     public CreateAccountPane() {
         this((AccountFactory<?>) null);
@@ -214,7 +214,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             logging.set(true);
 
             loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
-                    .whenComplete(Schedulers.javafx(), account -> {
+                    .thenAcceptAsync(Schedulers.javafx(), account -> {
                         if (Accounts.isAccountFilesReadOnly(account)) {
                             body.setDisable(false);
                             spinner.hideSpinner();
@@ -226,7 +226,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         }
 
                         completeLogin(account);
-                    }, exception -> {
+                    }).whenCompleteAsync(Schedulers.javafx(), (ignored, exception) -> {
+                        if (exception == null) return;
+
                         if (exception instanceof NoSelectedCharacterException) {
                             fireEvent(new DialogCloseEvent());
                         } else {
@@ -234,7 +236,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         }
                         body.setDisable(false);
                         spinner.hideSpinner();
-                    }).executor(true);
+                    });
+            loginTask.start();
         };
 
         if (factory instanceof OfflineAccountFactory && username != null && (!USERNAME_CHECKER_PATTERN.matcher(username).matches() || username.length() > 16)) {

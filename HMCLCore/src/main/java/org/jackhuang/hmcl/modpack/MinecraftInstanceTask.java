@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.modpack;
 
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -61,8 +62,9 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
         }
     }
 
+    /// Scans the override directories and writes the resulting instance configuration.
     @Override
-    public void execute() throws Exception {
+    public ModpackConfiguration<T> execute(TaskExecutionContext context) throws Exception {
         List<ModpackConfiguration.FileInformation> overrides = new ArrayList<>();
 
         try (var tree = new ZipFileTree(CompressingUtils.openZipFile(zipFile))) {
@@ -77,6 +79,6 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
         ModpackConfiguration<T> configuration = new ModpackConfiguration<>(manifest, type, name, version, overrides);
         Files.createDirectories(jsonFile.getParent());
         JsonUtils.writeToJsonFile(jsonFile, configuration);
-        setResult(configuration);
+        return configuration;
     }
 }

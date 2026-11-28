@@ -3,6 +3,8 @@
 package org.jackhuang.hmcl.upgrade;
 
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,9 +18,10 @@ final class HMCLDownloadTask extends FileDownloadTask {
         archiveFormat = version.type();
     }
 
+    /// Downloads the update and validates its archive format.
     @Override
-    public void execute() throws Exception {
-        super.execute();
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        super.execute(context);
 
         try {
             Path target = getPath();
@@ -36,6 +39,7 @@ final class HMCLDownloadTask extends FileDownloadTask {
             }
             throw e;
         }
+        return null;
     }
 
 }

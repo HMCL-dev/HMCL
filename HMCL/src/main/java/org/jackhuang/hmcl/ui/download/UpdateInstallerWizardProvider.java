@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -54,18 +55,19 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     /// Creates a task that updates components and synchronizes the client JAR with the resulting manifest.
     @Override
     public Object finish(SettingsMap settings) {
+        settings.put(WAIT_FOR_CANCELLATION, true);
         settings.put("title", i18n("install.change_version.process"));
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (settings1, exception, next) -> alertFailureMessage(exception, next));
 
-        var hints = new ArrayList<Task.StagesHint>();
+        var hints = new ArrayList<TaskStage.Hint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof ComponentRemoteVersion remoteVersion) {
-                hints.add(new Task.StagesHint("hmcl.install.libraries"));
+                hints.add(new TaskStage.Hint(InstallStages.LIBRARIES));
 
-                hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getComponentType().getPatchId(), remoteVersion.getSelfVersion())));
+                hints.add(new TaskStage.Hint(InstallStages.component(remoteVersion.getComponentType(), remoteVersion.getSelfVersion())));
                 if (remoteVersion.getComponentType() == GameComponentType.GAME) {
-                    hints.add(new Task.StagesHint("hmcl.install.assets"));
+                    hints.add(new TaskStage.Hint(InstallStages.ASSETS));
                 }
             }
         }
@@ -83,7 +85,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                 }
             }
             return update;
-        }).withStagesHints(hints);
+        }).withStageHints(hints);
     }
 
     @Override
@@ -118,7 +120,8 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         return true;
     }
 
-    public static void alertFailureMessage(Exception exception, Runnable next) {
+    /// Shows the installation failure and invokes the optional `next` after the dialog closes. Cancellation is ignored.
+    public static void alertFailureMessage(Throwable exception, @Nullable Runnable next) {
         if (exception instanceof LibraryDownloadException) {
             String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().name()) + "\n";
             if (exception.getCause() instanceof ResponseCodeException rce) {

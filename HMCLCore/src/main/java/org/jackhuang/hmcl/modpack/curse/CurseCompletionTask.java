@@ -8,20 +8,27 @@ import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.InstallStages;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskProgress;
+import org.jackhuang.hmcl.task.TaskSignificance;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -33,7 +40,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Completes missing files for an installed CurseForge modpack.
 @NotNullByDefault
-public final class CurseCompletionTask extends Task<Void> {
+public final class CurseCompletionTask extends Task<@Nullable Void> {
 
     /// The dependency manager used to resolve and download remote files.
     private final DefaultDependencyManager dependency;
@@ -44,23 +51,11 @@ public final class CurseCompletionTask extends Task<Void> {
     /// The mod manager associated with [#instance].
     private final ModManager modManager;
 
-    /// The manifest supplied by the caller or loaded from disk, if available.
-    private @Nullable CurseManifest manifest;
+    /// The supplied manifest, or `null` to load the installed manifest during execution.
+    private final @Nullable CurseManifest manifest;
 
     /// Keys of optional files the user chose not to install; `null` means install all.
-    private @Nullable Set<String> excludedFiles;
-
-    /// Download tasks produced during [#execute()].
-    private List<Task<?>> dependencies = List.of();
-
-    /// Whether every manifest file name could be resolved.
-    private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
-
-    /// The number of manifest entries processed in the current phase.
-    private final AtomicInteger finished = new AtomicInteger(0);
-
-    /// Whether a manifest entry refers to a deleted remote file.
-    private final AtomicBoolean notFound = new AtomicBoolean(false);
+    private final @Nullable @Unmodifiable Set<String> excludedFiles;
 
     /// Creates a task that completes the installed CurseForge modpack.
     ///
@@ -89,50 +84,56 @@ public final class CurseCompletionTask extends Task<Void> {
         this.manifest = manifest;
         this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
 
-        if (manifest == null)
+        setSignificance(TaskSignificance.MODERATE);
+    }
+
+    /// Returns the stage for modpack downloads.
+    @Override
+    public TaskStage getStage() {
+        return InstallStages.MODPACK_DOWNLOAD;
+    }
+
+    /// Resolves missing files and waits for all requested downloads to finish.
+    @Override
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
+        @Nullable CurseManifest manifest = this.manifest;
+        @Nullable @Unmodifiable Set<String> excludedFiles = this.excludedFiles;
+        if (manifest == null) {
             try {
                 Path root = instance.getInstanceRoot();
                 Path manifestFile = root.resolve("manifest.json");
                 if (Files.exists(manifestFile))
-                    this.manifest = JsonUtils.fromJsonFile(manifestFile, CurseManifest.class);
+                    manifest = JsonUtils.fromJsonFile(manifestFile, CurseManifest.class);
                 Path excludedFile = root.resolve("excluded.json");
                 if (Files.exists(excludedFile)) {
-                    this.excludedFiles = Set.copyOf(Objects.requireNonNull(
+                    excludedFiles = Set.copyOf(Objects.requireNonNull(
                             JsonUtils.fromJsonFile(excludedFile, JsonUtils.listTypeOf(String.class))));
                 } else {
-                    this.excludedFiles = null;
+                    excludedFiles = null;
                 }
             } catch (Exception e) {
                 LOG.warning("Unable to read CurseForge modpack manifest.json", e);
             }
-
-        setStage("hmcl.modpack.download");
-        setSignificance(TaskSignificance.MODERATE);
+        }
+        if (manifest != null)
+            complete(context, manifest, excludedFiles);
+        return null;
     }
 
-    @Override
-    public Collection<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean isRelyingOnDependencies() {
-        return false;
-    }
-
-    @Override
-    public void execute() throws Exception {
-        if (manifest == null)
-            return;
-
+    /// Resolves the selected files and records the resulting manifest in the instance.
+    private void complete(TaskExecutionContext context, CurseManifest manifest, @Nullable @Unmodifiable Set<String> excludedFiles) throws Exception {
+        AtomicBoolean notFound = new AtomicBoolean();
+        AtomicBoolean allNameKnown = new AtomicBoolean(true);
+        TaskProgress progress = context.progress();
+        AtomicInteger finished = new AtomicInteger();
         Path root = instance.getInstanceRoot();
 
         // Because in China, Curse is too difficult to visit,
         // if failed, ignore it and retry next time.
-        CurseManifest newManifest = manifest.setFiles(
+        CurseManifest newManifest = manifest.setFiles(context.call(Schedulers.io(), () ->
                 manifest.files().parallelStream()
                         .map(file -> {
-                            updateProgress(finished.incrementAndGet(), manifest.files().size());
+                            progress.update(finished.incrementAndGet(), manifest.files().size());
                             if (StringUtils.isBlank(file.fileName()) || file.url() == null) {
                                 try {
                                     RemoteAddon.File remoteFile = CurseForgeRemoteAddonRepository.getInstance().getAddonFile(Integer.toString(file.projectID()), Integer.toString(file.fileID()));
@@ -153,7 +154,7 @@ public final class CurseCompletionTask extends Task<Void> {
                                 return file;
                             }
                         })
-                        .toList());
+                        .toList()));
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
         if (excludedFiles != null) {
             JsonUtils.writeToJsonFile(
@@ -165,7 +166,7 @@ public final class CurseCompletionTask extends Task<Void> {
         Path resourcePacksRoot = versionRoot.resolve("resourcepacks");
         Path shaderPacksRoot = versionRoot.resolve("shaderpacks");
         finished.set(0);
-        dependencies = newManifest.files()
+        @Unmodifiable List<Task<?>> dependencies = context.call(Schedulers.io(), () -> newManifest.files()
                 .stream().parallel()
                 .filter(f -> f.fileName() != null)
                 .filter(f -> excludedFiles == null || !excludedFiles.contains(f.key()))
@@ -179,20 +180,22 @@ public final class CurseCompletionTask extends Task<Void> {
                         var task = new FileDownloadTask(f.url(), path, f.getIntegrityCheck());
                         task.setCacheRepository(dependency.getCacheRepository());
                         task.setCaching(true);
-                        return Stream.<Task<?>>of(task.withCounter("hmcl.modpack.download"));
+                        return Stream.<Task<?>>of(task.withCounter());
                     } catch (IOException e) {
                         LOG.warning("Could not query api.curseforge.com for mod: " + f.projectID() + ", " + f.fileID(), e);
                         return Stream.empty(); // Ignore this file.
                     } finally {
-                        updateProgress(finished.incrementAndGet(), newManifest.files().size());
+                        progress.update(finished.incrementAndGet(), newManifest.files().size());
                     }
                 })
-                .toList();
+                .toList());
 
-        if (!dependencies.isEmpty()) {
-            getProperties().put("total", dependencies.size());
-            notifyPropertiesChanged();
-        }
+        @Nullable ModpackCompletionException incomplete = null;
+        if (notFound.get())
+            incomplete = new ModpackCompletionException(new FileNotFoundException());
+        else if (!allNameKnown.get())
+            incomplete = new ModpackCompletionException();
+        Modpack.completeDownloads(context, dependencies, incomplete);
     }
 
     /// Returns the destination for a missing CurseForge file based on its project class.
@@ -224,20 +227,5 @@ public final class CurseCompletionTask extends Task<Void> {
                 yield modManager.getSimpleModPath(fileName);
             }
         };
-    }
-
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    @Override
-    public void postExecute() throws Exception {
-        // Let this task fail if the curse manifest has not been completed.
-        // But continue other downloads.
-        if (notFound.get())
-            throw new ModpackCompletionException(new FileNotFoundException());
-        if (!allNameKnown.get() || !isDependenciesSucceeded())
-            throw new ModpackCompletionException();
     }
 }

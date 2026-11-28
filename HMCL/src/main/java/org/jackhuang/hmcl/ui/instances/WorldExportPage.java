@@ -7,11 +7,11 @@ import javafx.beans.property.StringProperty;
 import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.ui.wizard.WizardSinglePage;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -58,8 +58,11 @@ public class WorldExportPage extends WizardSinglePage {
         return i18n("world.export.wizard", world.getFileName());
     }
 
+    /// Creates the task that exports the world to the selected path.
     @Override
     protected Object finish() {
-        return Task.runAsync(i18n("world.export.wizard", worldName.get()), () -> world.export(Paths.get(path.get()), worldName.get()));
+        return Task.runAsync(() -> world.export(Path.of(path.get()), worldName.get()))
+                .setName(i18n("world.export.wizard", worldName.get()))
+                .setSignificance(TaskSignificance.MAJOR);
     }
 }

@@ -10,6 +10,8 @@ import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.InputStream;
@@ -17,8 +19,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -29,7 +29,6 @@ public class ForgeOldInstallTask extends Task<GameInstancePatch> {
     private final GameInstanceManifest manifest;
     private final Path installer;
     private final String selfVersion;
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     ForgeOldInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
@@ -40,18 +39,11 @@ public class ForgeOldInstallTask extends Task<GameInstancePatch> {
         setSignificance(TaskSignificance.MAJOR);
     }
 
+    /// Extracts the universal JAR and resolves the libraries listed by the installer.
     @Override
-    public List<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void execute() throws Exception {
+    public GameInstancePatch execute(TaskExecutionContext context) throws Exception {
+        GameInstancePatch patch;
+        Task<?> completion;
         try (ZipFile zipFile = new ZipFile(installer.toFile())) {
             InputStream stream = zipFile.getInputStream(zipFile.getEntry("install_profile.json"));
             if (stream == null)
@@ -70,14 +62,16 @@ public class ForgeOldInstallTask extends Task<GameInstancePatch> {
                 is.transferTo(os);
             }
 
-            setResult(GameInstancePatch.fromManifest(
+            patch = GameInstancePatch.fromManifest(
                     installProfile.versionInfo(),
                     GameComponentType.FORGE.getPatchId(),
                     selfVersion,
-                    GameInstancePatch.PRIORITY_LOADER));
-            dependencies.add(dependencyManager.checkComponentCompletionAsync(installProfile.versionInfo(), true));
+                    GameInstancePatch.PRIORITY_LOADER);
+            completion = dependencyManager.checkComponentCompletionAsync(installProfile.versionInfo(), true);
         } catch (ZipException ex) {
             throw new ArtifactMalformedException("Malformed forge installer file", ex);
         }
+        context.run(completion);
+        return patch;
     }
 }

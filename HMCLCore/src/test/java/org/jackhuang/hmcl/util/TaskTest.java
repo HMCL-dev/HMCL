@@ -4,241 +4,213 @@ package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.TaskName;
+import org.jackhuang.hmcl.task.TaskStage;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIf;
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/// Tests task names, continuations, and failure reporting.
 public class TaskTest {
-    /**
-     * TaskExecutor will not catch error and will be thrown to global handler.
-     */
+    /// Structured and literal names can be assigned and cleared through either overload.
     @Test
-    public void expectErrorUncaught() {
-        AtomicReference<Throwable> throwable = new AtomicReference<>();
-        Thread.setDefaultUncaughtExceptionHandler((t, e) -> throwable.set(e));
-        assertFalse(Task.composeAsync(() -> Task.allOf(
-                Task.allOf(Task.runAsync(() -> {
-                    throw new Error();
-                }))
-        )).whenComplete(Assertions::assertNull).test());
+    public void testCustomTaskName() {
+        Task<?> task = Task.completed(42);
+        String className = task.getClass().getName();
+        assertNull(task.getName());
+        String unnamedDescription = task.toString();
 
-        assertInstanceOf(Error.class, throwable.get(), "Error has not been thrown to uncaught exception handler");
+        TaskName name = () -> "custom";
+        task.setName(name);
+        assertSame(name, task.getName());
+        assertEquals(className + "[custom]", task.toString());
+
+        task.setName((TaskName) null);
+        assertNull(task.getName());
+        assertEquals(unnamedDescription, task.toString());
+
+        assertSame(task, task.setName("literal"));
+        assertEquals(new TaskName.Simple("literal"), task.getName());
+        assertEquals(className + "[literal]", task.toString());
+
+        task.setName((String) null);
+        assertNull(task.getName());
+        assertEquals(unnamedDescription, task.toString());
     }
 
-    /// Verifies that OOM completes the task lifecycle and still reaches the global handler.
+    /// A factory captures its caller before the task name is read.
     @Test
-    public void testOutOfMemoryErrorLifecycle() {
-        OutOfMemoryError normalTaskError = new OutOfMemoryError("normal task");
-        assertOutOfMemoryErrorLifecycle(Task.runAsync(() -> {
-            throw normalTaskError;
-        }), normalTaskError);
-
-        OutOfMemoryError futureTaskError = new OutOfMemoryError("completable future task");
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        future.completeExceptionally(futureTaskError);
-        assertOutOfMemoryErrorLifecycle(Task.fromCompletableFuture(future), futureTaskError);
+    public void testCallSiteTaskName() {
+        Task<?> task = createTaskWithCallSiteName();
+        TaskName.CallSite name = assertInstanceOf(TaskName.CallSite.class, task.getName());
+        StackTraceElement frame = name.frame();
+        assertEquals(TaskTest.class.getName(), frame.getClassName());
+        assertEquals("createTaskWithCallSiteName", frame.getMethodName());
+        assertEquals(TaskTest.class.getName() + ".createTaskWithCallSiteName(TaskTest.java:" + frame.getLineNumber() + ")", name.text());
     }
 
-    /// Checks the lifecycle events and recorded exceptions for one OOM task.
-    private void assertOutOfMemoryErrorLifecycle(Task<?> task, OutOfMemoryError error) {
-        AtomicInteger doneCount = new AtomicInteger();
-        AtomicReference<@Nullable Boolean> doneFailed = new AtomicReference<>();
-        AtomicInteger failedCount = new AtomicInteger();
-        AtomicReference<@Nullable Throwable> failedThrowable = new AtomicReference<>();
-        AtomicInteger stopCount = new AtomicInteger();
-        AtomicReference<@Nullable Boolean> stopSuccess = new AtomicReference<>();
+    /// Creates a task whose factory call can be distinguished from the code reading its name.
+    private static Task<Integer> createTaskWithCallSiteName() {
+        return Task.supplyAsync(() -> 42);
+    }
+
+    /// A fatal failure from an adapted future reaches the root, its observers, and the uncaught handler.
+    @Test
+    public void reportsFatalChildFailure() {
+        OutOfMemoryError error = new OutOfMemoryError("Child failed");
+        Task<?> child = Task.fromCompletableFuture(CompletableFuture.failedFuture(error));
+        List<@Nullable Throwable> observed = new ArrayList<>();
+        Task<?> root = Task.allOf(child).whenComplete((result, failure) -> observed.add(failure));
+        List<Boolean> finished = new ArrayList<>();
+        root.addTaskListener(new TaskListener() {
+            /// Records the root outcome delivered to listeners.
+            @Override
+            public void onExecutionFinished(Task<?> task, boolean success) {
+                finished.add(success);
+            }
+        });
+
         AtomicReference<@Nullable Throwable> uncaught = new AtomicReference<>();
-
-        task.onDone().register(event -> {
-            doneCount.incrementAndGet();
-            doneFailed.set(event.isFailed());
-        });
-        TaskExecutor executor = task.executor(new TaskListener() {
-            @Override
-            public void onFailed(Task<?> failedTask, Throwable throwable) {
-                failedCount.incrementAndGet();
-                failedThrowable.set(throwable);
-            }
-
-            @Override
-            public void onStop(boolean success, TaskExecutor taskExecutor) {
-                stopCount.incrementAndGet();
-                stopSuccess.set(success);
-            }
-        });
-
-        @Nullable Thread.UncaughtExceptionHandler previousHandler = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.@Nullable UncaughtExceptionHandler previous = Thread.getDefaultUncaughtExceptionHandler();
         try {
-            Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> uncaught.set(throwable));
-            assertFalse(executor.test());
+            Thread.setDefaultUncaughtExceptionHandler((thread, failure) -> uncaught.set(failure));
+            assertFalse(root.test());
         } finally {
-            Thread.setDefaultUncaughtExceptionHandler(previousHandler);
+            Thread.setDefaultUncaughtExceptionHandler(previous);
         }
-
-        assertEquals(1, doneCount.get());
-        assertEquals(Boolean.TRUE, doneFailed.get());
-        assertEquals(1, failedCount.get());
-        assertSame(error, failedThrowable.get());
-        assertEquals(1, stopCount.get());
-        assertEquals(Boolean.FALSE, stopSuccess.get());
-        assertEquals(Task.TaskState.FAILED, task.getState());
-        assertNotNull(task.getException());
-        assertSame(error, task.getException().getCause());
-        assertNotNull(executor.getException());
-        assertSame(error, executor.getException().getCause());
+        assertEquals(List.of(error), observed);
+        assertEquals(List.of(false), finished);
+        assertSame(error, root.exceptionNow());
         assertSame(error, uncaught.get());
     }
 
-    /**
-     *
-     */
+    /// Completion observers preserve the source value for downstream continuations, including null.
+    @Test
+    public void testWhenCompletePreservesResult() throws Exception {
+        StringBuilder value = new StringBuilder("result");
+        Task<StringBuilder> observed = Task.completed(value).whenComplete((result, failure) -> {
+            assertSame(value, result);
+            assertNull(failure);
+            value.append('!');
+        });
+        assertEquals("result!", observed.thenApply(StringBuilder::toString).run());
+        assertSame(value, observed.resultNow());
+
+        Task<@Nullable String> nullable = Task.<@Nullable String>completed(null).whenComplete((result, failure) -> {
+            assertNull(result);
+            assertNull(failure);
+        });
+        assertNull(nullable.run());
+    }
+
+    /// A callback failure is suppressed when the source failed and propagates when the source succeeded.
     @Test
     public void testWhenComplete() {
-        boolean result = Task.supplyAsync(() -> {
-            throw new IllegalStateException();
-        }).whenComplete(exception -> {
-            assertInstanceOf(IllegalStateException.class, exception);
-        }).test();
+        AssertionError source = new AssertionError("source");
+        IOException callback = new IOException("callback");
+        Task<?> failedCallback = Task.completed(1).thenAcceptAsync(Schedulers.io(), value -> { throw source; });
+        Task<?> observed = failedCallback.whenCompleteAsync(Schedulers.io(), (value, failure) -> {
+            assertNull(value);
+            assertSame(source, failure);
+            throw callback;
+        });
+        assertSame(source, assertThrows(AssertionError.class, observed::run));
+        assertArrayEquals(new Throwable[]{callback}, source.getSuppressed());
 
-        assertFalse(result, "Task should fail at this case");
+        IOException sourceException = new IOException("source");
+        AssertionError callbackError = new AssertionError("callback");
+        Task<?> failedCleanup = Task.failed(sourceException).whenComplete((value, failure) -> { throw callbackError; });
+        assertSame(sourceException, assertThrows(IOException.class, failedCleanup::run));
+        assertArrayEquals(new Throwable[]{callbackError}, sourceException.getSuppressed());
+
+        Task<?> rethrown = Task.failed(callback).whenComplete((value, failure) -> { throw callback; });
+        assertSame(callback, assertThrows(IOException.class, rethrown::run));
+        assertEquals(0, callback.getSuppressed().length);
+
+        Task<?> successfulSource = Task.completed(1).whenComplete((value, failure) -> {
+            assertEquals(1, value);
+            assertNull(failure);
+            throw callback;
+        });
+        assertSame(callback, assertThrows(IOException.class, successfulSource::run));
     }
 
+    /// A handler can transform a success, return null, or recover from a child failure.
     @Test
-    public void testWithCompose() {
-        AtomicBoolean bool = new AtomicBoolean();
-        boolean success = Task.supplyAsync(() -> {
-            throw new IllegalStateException();
-        }).withRunAsync(() -> {
-            bool.set(true);
-        }).test();
+    public void testHandleOutcome() throws Exception {
+        assertEquals("42", Task.completed(42).handle((value, failure) -> {
+            assertNull(failure);
+            return String.valueOf(value);
+        }).run());
+        assertEquals("empty", Task.completed(null).handle((value, failure) -> {
+            assertNull(value);
+            assertNull(failure);
+            return "empty";
+        }).run());
+        assertNull(Task.completed(42).handle((value, failure) -> null).run());
 
-        assertTrue(success, "Task should success because withRunAsync will ignore previous exception");
-        assertTrue(bool.get(), "withRunAsync should be executed");
+        for (Throwable cause : List.of(new IOException(), new AssertionError(), new CancellationException())) {
+            assertEquals("recovered", Task.failed(cause).handle((value, failure) -> {
+                assertNull(value);
+                assertSame(cause, failure);
+                return "recovered";
+            }).run());
+        }
     }
 
+    /// A throwing handler determines the failure and is never called again with its own exception.
     @Test
-    @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
-    public void testThenAccept() {
-        AtomicBoolean flag = new AtomicBoolean();
-        Object obj = new Object();
-        boolean result = Task.supplyAsync(() -> obj)
-                .thenAcceptAsync(Schedulers.io(), o -> {
-                    flag.set(true);
-                    assertSame(obj, o);
-                })
-                .test();
-
-        assertTrue(result, "Task does not succeed");
-        assertTrue(flag.get(), "ThenAccept has not been executed");
+    public void testHandleFailure() {
+        IOException cause = new IOException("Source failed");
+        IOException callbackFailure = new IOException("Handler failed");
+        for (Task<Integer> source : List.of(Task.completed(42), Task.<Integer>failed(cause))) {
+            AtomicInteger calls = new AtomicInteger();
+            Task<?> handled = source.handle((value, failure) -> {
+                calls.incrementAndGet();
+                throw callbackFailure;
+            });
+            assertSame(callbackFailure, assertThrows(IOException.class, handled::run));
+            assertEquals(1, calls.get());
+        }
     }
 
-    /// Verifies that cancellation lets a running task finish but prevents its continuation from running.
+    /// A handler cannot recover from root cancellation, and a pre-cancelled root skips the handler.
     @Test
-    public void testCancellation() throws InterruptedException, ExecutionException, TimeoutException {
-        AtomicBoolean taskCompleted = new AtomicBoolean();
-        AtomicBoolean continuationExecuted = new AtomicBoolean();
-        CountDownLatch taskStarted = new CountDownLatch(1);
-        CountDownLatch releaseTask = new CountDownLatch(1);
-        CompletableFuture<Boolean> stopped = new CompletableFuture<>();
-        Task<?> task = Task.runAsync(() -> {
-            taskStarted.countDown();
-            releaseTask.await();
-            taskCompleted.set(true);
-        }).thenRunAsync(() -> continuationExecuted.set(true));
-        TaskExecutor executor = task.executor(new TaskListener() {
-            /// Publishes the execution result to the waiting test thread.
+    public void testHandleRootCancellation() {
+        Task<?> skipped = Task.completed(1).handle((value, failure) -> fail("Unexpected handler"));
+        skipped.cancel();
+        assertThrows(CancellationException.class, skipped::run);
+
+        Task<Integer> source = Task.completed(1);
+        Task<Integer> root = source.handle((value, failure) -> 2);
+        root.addTaskListener(new TaskListener() {
+            /// Cancels the whole tree while the source is running.
             @Override
-            public void onStop(boolean success, TaskExecutor taskExecutor) {
-                stopped.complete(success);
+            public void onTaskStarted(Task<?> task, TaskStage.@Nullable Scope scope) {
+                if (task == source)
+                    root.cancel();
             }
         });
-        try {
-            executor.start();
-            assertTrue(taskStarted.await(30, TimeUnit.SECONDS), "Task should start before cancellation");
-            executor.cancel();
-        } finally {
-            // Keep the task running until cancellation is requested, and release it even if setup fails.
-            releaseTask.countDown();
-        }
-
-        assertFalse(stopped.get(30, TimeUnit.SECONDS), "Task should fail because we have cancelled it");
-        assertInstanceOf(CancellationException.class, executor.getException(), "CancellationException should be recorded");
-        assertInstanceOf(CancellationException.class, task.getException(), "CancellationException should be recorded");
-        assertTrue(taskCompleted.get(), "Cancellation should not interrupt the running task");
-        assertFalse(continuationExecuted.get(), "Continuation should not run after cancellation");
+        assertThrows(CancellationException.class, root::run);
+        assertTrue(source.isCancelled());
+        assertTrue(root.isCancelled());
     }
 
+    /// Wrapping a failed task preserves the original throwable.
     @Test
-    public void testCompletableFutureCancellation() throws Throwable {
-        AtomicBoolean flag = new AtomicBoolean(false);
-        CountDownLatch latch = new CountDownLatch(1);
-        CompletableFuture<?> task = CompletableFuture.runAsync(() -> {
-            latch.countDown();
-            System.out.println("Sleep");
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            // default executor cannot interrupt task.
-            flag.getAndSet(true);
-            System.out.println("End");
-        }).thenComposeAsync(non -> {
-            System.out.println("compose");
-            return CompletableFuture.allOf(CompletableFuture.runAsync(() -> {
-                System.out.println("No way!");
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                fail("Cannot reach here");
-            }));
-        });
-        Lang.thread(() -> {
-            try {
-                latch.await();
-                System.out.println("Main thread start waiting");
-                Thread.sleep(100);
-                System.out.println("Cancel");
-                task.cancel(true);
-            } catch (InterruptedException e) {
-                fail(e);
-            }
-        });
-        System.out.println("Start");
-        try {
-            task.get();
-        } catch (CancellationException e) {
-            System.out.println("Successfully cancelled");
+    public void testWrapResultPreservesFailure() throws Exception {
+        for (Throwable source : List.of(new IOException(), new AssertionError(), new CancellationException(), new Throwable())) {
+            assertSame(source, Task.failed(source).wrapResult().run().getException());
         }
-        //Assert.assertFalse("Task should fail because we have cancelled it", );
-        Thread.sleep(4000);
-        //Assert.assertNull("CancellationException should not be recorded.", executor.getException());
-        //Assert.assertTrue("Thread.sleep cannot be interrupted", flag.get());
-    }
-
-    public void testRejectedExecutionException() {
-        Schedulers.defaultScheduler();
-        Schedulers.shutdown();
-
-        Task<?> task = Task.runAsync(() -> {
-            Thread.sleep(1000);
-        });
-
-        boolean result = task.test();
-
-        assertFalse(result, "Task should fail since ExecutorService is shut down and RejectedExecutionException should be thrown");
-        assertInstanceOf(RejectedExecutionException.class, task.getException(), "RejectedExecutionException should be recorded");
     }
 }

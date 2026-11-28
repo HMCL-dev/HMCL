@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.java.JavaInstallTask;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.ModpackInstallTask;
-import org.jackhuang.hmcl.modpack.ModpackUpdateTask;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.modpack.curse.CurseInstallTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
@@ -41,6 +40,7 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackLocalInstallTask;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskName;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
@@ -58,6 +58,8 @@ import java.nio.file.AccessDeniedException;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.concurrent.CancellationException;
+
+import static org.jackhuang.hmcl.ui.DialogUtils.shouldReportCancellation;
 
 public final class I18n {
 
@@ -177,7 +179,12 @@ public final class I18n {
                 : StringUtils.capitalizeWords(loader.name());
     }
 
-    public static @Nullable String translateTaskName(Task<?> task) {
+    /// Returns the task name if present, otherwise a localized title for known task types
+    /// or the task's string representation.
+    public static String translateTaskName(Task<?> task) {
+        @Nullable TaskName name = task.getName();
+        if (name != null)
+            return name.text();
         if (task instanceof GameAssetDownloadTask) {
             return i18n("assets.download_all");
         } else if (task instanceof GameInstallTask) {
@@ -206,8 +213,6 @@ public final class I18n {
             return i18n("modpack.completion");
         } else if (task instanceof ModpackInstallTask) {
             return i18n("modpack.installing");
-        } else if (task instanceof ModpackUpdateTask) {
-            return i18n("modpack.update");
         } else if (task instanceof CurseInstallTask) {
             return i18n("modpack.installing.given", i18n("modpack.type.curse"));
         } else if (task instanceof MultiMCModpackInstallTask) {
@@ -228,7 +233,7 @@ public final class I18n {
             return i18n("java.installing");
         }
 
-        return null;
+        return task.toString();
     }
 
     public static String localizeErrorMessage(Throwable exception) {
@@ -258,7 +263,7 @@ public final class I18n {
             }
         } else if (exception instanceof ArtifactMalformedException) {
             return i18n("exception.artifact_malformed");
-        } else if (exception instanceof CancellationException) {
+        } else if (exception instanceof CancellationException cancellation && !shouldReportCancellation(cancellation)) {
             return i18n("message.cancelled");
         }
         return StringUtils.getStackTrace(exception);

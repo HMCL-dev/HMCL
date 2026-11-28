@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskSignificance;
 import org.jackhuang.hmcl.terracotta.TerracottaManager;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.terracotta.TerracottaState;
@@ -225,14 +226,14 @@ public class TerracottaControllerPage extends StackPane {
                     Controllers.prompt(i18n("terracotta.status.waiting.guest.prompt.title"), (code, handler) -> {
                         Task<TerracottaState.GuestConnecting> task = TerracottaManager.setGuesting(code);
                         if (task != null) {
-                            task.whenComplete(Schedulers.javafx(), (s, e) -> {
+                            task.whenCompleteAsync(Schedulers.javafx(), (s, e) -> {
                                 if (e != null) {
                                     handler.reject(i18n("terracotta.status.waiting.guest.prompt.invalid"));
                                 } else {
                                     handler.resolve();
                                     UI_STATE.set(s);
                                 }
-                            }).setSignificance(Task.TaskSignificance.MINOR).start();
+                            }).setSignificance(TaskSignificance.MINOR).start();
                         } else {
                             handler.resolve();
                         }
@@ -456,9 +457,9 @@ public class TerracottaControllerPage extends StackPane {
                         FXUtils.showFileInExplorer(path);
                     }).thenRunAsync(
                             () -> Thread.sleep(3000)
-                    ).whenComplete(
+                    ).whenCompleteAsync(
                             Schedulers.javafx(),
-                            e -> exportLog.setLoading(false)
+                            (ignored, e) -> exportLog.setLoading(false)
                     ).start();
                 });
 

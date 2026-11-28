@@ -3,15 +3,17 @@
 package org.jackhuang.hmcl.modpack;
 
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutionContext;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class ModpackInstallTask<T> extends Task<Void> {
+public class ModpackInstallTask<T> extends Task<@Nullable Void> {
 
     private final Path modpackFile;
     private final Path dest;
@@ -26,7 +28,7 @@ public class ModpackInstallTask<T> extends Task<Void> {
     /// @param subDirectories   the subdirectory of zip file to unpack
     /// @param callback         test whether the file (given full path) in zip file should be unpacked or not
     /// @param oldConfiguration old modpack information if upgrade
-    public ModpackInstallTask(Path modpackFile, Path dest, List<String> subDirectories, Predicate<String> callback, ModpackConfiguration<T> oldConfiguration) {
+    public ModpackInstallTask(Path modpackFile, Path dest, List<String> subDirectories, Predicate<String> callback, @Nullable ModpackConfiguration<T> oldConfiguration) {
         this.modpackFile = modpackFile;
         this.dest = dest;
         this.subDirectories = subDirectories;
@@ -38,8 +40,9 @@ public class ModpackInstallTask<T> extends Task<Void> {
             overrides = oldConfiguration.getOverrides();
     }
 
+    /// Extracts selected overrides and removes files dropped by an update.
     @Override
-    public void execute() throws Exception {
+    public @Nullable Void execute(TaskExecutionContext context) throws Exception {
         Set<String> entries = new HashSet<>();
         Files.createDirectories(dest);
 
@@ -77,8 +80,9 @@ public class ModpackInstallTask<T> extends Task<Void> {
         // If old modpack have this entry, and new modpack deleted it. Delete this file.
         for (ModpackConfiguration.FileInformation file : overrides) {
             Path original = dest.resolve(file.getPath());
-            if (Files.exists(original) && !entries.contains(file.getPath()))
-                Files.deleteIfExists(original);
+            if (!entries.contains(file.getPath()))
+                Modpack.removePackFile(dest, original);
         }
+        return null;
     }
 }

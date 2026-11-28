@@ -4,15 +4,19 @@ package org.jackhuang.hmcl.terracotta;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
-import javafx.beans.value.ObservableDoubleValue;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.terracotta.profile.TerracottaProfile;
 import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
+import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.gson.JsonSubtype;
 import org.jackhuang.hmcl.util.gson.JsonType;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -50,12 +54,15 @@ public abstract sealed class TerracottaState {
     }
 
     public static final class Preparing extends TerracottaState implements AbstractTerracottaProvider.DownloadContext {
-        private final ReadOnlyDoubleWrapper progress;
+        /// Latest download progress visible to the UI, initially indeterminate.
+        private final ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(-1);
+        /// The download selected by the provider before its body starts.
+        private volatile @Nullable Task<?> downloadTask;
 
         private final AtomicBoolean hasInstallFence;
 
-        Preparing(ReadOnlyDoubleWrapper progress, boolean hasInstallFence) {
-            this.progress = progress;
+        /// Creates the preparation state for a download or local installation.
+        Preparing(boolean hasInstallFence) {
             this.hasInstallFence = new AtomicBoolean(hasInstallFence);
         }
 
@@ -71,9 +78,25 @@ public abstract sealed class TerracottaState {
             return hasInstallFence.get();
         }
 
+        /// {@inheritDoc}
         @Override
-        public void bindProgress(ObservableDoubleValue progress) {
-            this.progress.bind(progress);
+        public void trackDownload(Task<?> task) {
+            downloadTask = task;
+        }
+
+        /// Observes the selected download and publishes its latest progress on the JavaFX thread.
+        TaskListener downloadListener() {
+            return new TaskListener() {
+                /// Coalesces worker updates until the JavaFX thread consumes them.
+                private final InvocationDispatcher<Double> updates = InvocationDispatcher.runOn(Platform::runLater, progress::set);
+
+                /// {@inheritDoc}
+                @Override
+                public void onTaskProgress(Task<?> task, double fraction) {
+                    if (task == downloadTask)
+                        updates.accept(fraction);
+                }
+            };
         }
 
         @Override

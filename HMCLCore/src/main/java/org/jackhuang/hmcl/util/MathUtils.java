@@ -19,6 +19,12 @@ public final class MathUtils {
         return Math.min(max, Math.max(value, min));
     }
 
+    /// Clamp value to fit between min and max.
+    public static int clamp(int value, int min, int max) {
+        assert min <= max;
+        return Math.min(max, Math.max(value, min));
+    }
+
     private MathUtils() {
     }
 }
