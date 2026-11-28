@@ -193,7 +193,7 @@ public abstract class Modpack {
         return backup;
     }
 
-    /// Checks ownership after the install draft closes and refreshes a rolled-back publication.
+    /// Restores the backup if the instance still owns the directory, then refreshes the repository.
     public static void restoreUpdateBackup(DefaultGameInstance instance, Path backup, @Nullable GameInstanceManifest published) throws IOException {
         var repository = instance.getRepository();
         try (var draft = repository.openDraft()) {
@@ -204,16 +204,19 @@ public abstract class Modpack {
             FileUtils.deleteDirectory(root);
             FileUtils.copyDirectory(backup, root);
         }
-        if (published != null)
-            repository.refresh();
+        repository.refresh();
     }
 
-    /// Removes a retired pack file only when its path resolves inside the pack directory.
+    /// Removes a retired file or symbolic link inside the pack directory without following the link.
     public static void removePackFile(Path directory, Path file) throws IOException {
         Path root = directory.toAbsolutePath().normalize();
         Path target = file.toAbsolutePath().normalize();
-        if (target.startsWith(root) && Files.isRegularFile(target, LinkOption.NOFOLLOW_LINKS)
-                && target.toRealPath().equals(root.toRealPath().resolve(root.relativize(target))))
+        if (!target.startsWith(root) || target.equals(root))
+            return;
+        if (!Files.isRegularFile(target, LinkOption.NOFOLLOW_LINKS) && !Files.isSymbolicLink(target))
+            return;
+        Path parent = target.getParent();
+        if (parent.toRealPath().equals(root.toRealPath().resolve(root.relativize(parent))))
             Files.deleteIfExists(target);
     }
 

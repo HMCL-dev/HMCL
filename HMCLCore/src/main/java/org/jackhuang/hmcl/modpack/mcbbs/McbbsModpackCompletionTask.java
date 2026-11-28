@@ -100,13 +100,13 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
         if (manifest == null)
             return null;
         if (StringUtils.isNotBlank(manifest.getFileApi()))
-            installed = updateManifest(context, installed, manifest);
-        completeCurseFiles(context, installed);
+            manifest = updateManifest(context, installed, manifest);
+        completeCurseFiles(context, installed, manifest);
         return null;
     }
 
     /// Fetches the remote manifest, applies its file changes and records the updated manifest.
-    private ModpackConfiguration<McbbsModpackManifest> updateManifest(TaskExecutionContext context,
+    private McbbsModpackManifest updateManifest(TaskExecutionContext context,
             ModpackConfiguration<McbbsModpackManifest> configuration, McbbsModpackManifest manifest) throws Exception {
         String remoteManifestJson = context.run(new GetTask(WebURL.parse(manifest.getFileApi() + "/manifest.json")));
         McbbsModpackManifest remoteManifest;
@@ -179,13 +179,12 @@ public class McbbsModpackCompletionTask extends Task<@Nullable Void> {
         }
         var updatedConfiguration = new ModpackConfiguration<>(updated, configuration.getType(), updated.getName(), updated.getVersion(), overrides);
         JsonUtils.writeToJsonFile(configurationFile, updatedConfiguration);
-        return updatedConfiguration;
+        return updated;
     }
 
     /// Resolves names for CurseForge entries and downloads missing files concurrently.
     private void completeCurseFiles(TaskExecutionContext context,
-                                    ModpackConfiguration<McbbsModpackManifest> configuration) throws Exception {
-        McbbsModpackManifest manifest = configuration.getManifest();
+                                    ModpackConfiguration<McbbsModpackManifest> configuration, McbbsModpackManifest manifest) throws Exception {
         AtomicBoolean allNameKnown = new AtomicBoolean(true);
         TaskProgress progress = context.progress();
         AtomicInteger finished = new AtomicInteger();

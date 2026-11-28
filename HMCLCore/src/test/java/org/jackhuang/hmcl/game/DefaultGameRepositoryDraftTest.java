@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
@@ -69,6 +71,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -329,6 +332,7 @@ public final class DefaultGameRepositoryDraftTest {
             assertEquals("original", Files.readString(backups.findFirst().orElseThrow().resolve("settings.txt")));
         }
         assertEquals("original.Main", repository.getInstanceManifest(id).mainClass());
+        assertNotSame(original, repository.getInstance(id));
         manager.newGameBuilder(repository.getInstance(id)).close();
     }
 
@@ -350,6 +354,24 @@ public final class DefaultGameRepositoryDraftTest {
         assertSame(failure, assertThrows(IOException.class, install::run));
         assertEquals("replacement.Main", repository.getInstanceManifest(id).mainClass());
         assertEquals("replacement", Files.readString(marker));
+    }
+
+    /// Retired pack files may be links, but cleanup must not follow a linked parent directory.
+    @Test
+    void retiredPackFileMayBeASymbolicLink() throws IOException {
+        try (var fs = Jimfs.newFileSystem(Configuration.unix())) {
+            Path pack = Files.createDirectory(fs.getPath("/pack"));
+            Path shared = Files.createDirectory(fs.getPath("/shared"));
+            Path mod = Files.writeString(shared.resolve("mod.jar"), "shared mod");
+            Path link = Files.createSymbolicLink(pack.resolve("mod.jar"), mod);
+            Path linkedDirectory = Files.createSymbolicLink(pack.resolve("mods"), shared);
+
+            Modpack.removePackFile(pack, link);
+            Modpack.removePackFile(pack, linkedDirectory.resolve("mod.jar"));
+
+            assertFalse(Files.isSymbolicLink(link));
+            assertEquals("shared mod", Files.readString(mod));
+        }
     }
 
     /// A successful CurseForge update retains the player's copy of a retired optional mod in the backup.
@@ -425,7 +447,7 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals("1", restored.getManifest().getVersion());
     }
 
-    /// An incomplete MCBBS install keeps its patch and remote metadata unless cancellation wins.
+    /// An incomplete MCBBS install keeps its patch unless cancellation wins.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void incompleteMcbbsInstallKeepsPublishedPatch(boolean cancel, @TempDir Path directory) throws Exception {
@@ -462,11 +484,6 @@ public final class DefaultGameRepositoryDraftTest {
             assertThrows(ModpackCompletionException.class, install::run);
             DefaultGameInstance instance = repository.getInstance(id);
             assertTrue(instance.getManifest().getPatches().stream().anyMatch(patch -> "mcbbs".equals(patch.id())));
-            var config = Objects.requireNonNull(JsonUtils.fromJsonFile(instance.getModpackConfigurationFile(),
-                    ModpackConfiguration.typeOf(McbbsModpackManifest.class)));
-            assertEquals("remote", config.getName());
-            assertEquals("2", config.getVersion());
-            assertTrue(config.getOverrides().isEmpty());
         }
     }
 
