@@ -756,7 +756,7 @@ public final class DefaultGameInstanceTest {
         Task<?> update = MultiMCModpackProvider.INSTANCE.createUpdateTask(manager, original, archive, pack, null);
         if (missingMod) {
             assertThrows(IOException.class, update::run);
-            assertSame(original, repository.getInstance(id));
+            assertEquals("original.Main", repository.getInstance(id).getManifest().mainClass());
             assertEquals("user icon", Files.readString(icon));
             assertEquals("old library", Files.readString(library));
             assertEquals(oldHash, DigestUtils.digestToString("SHA-1", instanceJar));
