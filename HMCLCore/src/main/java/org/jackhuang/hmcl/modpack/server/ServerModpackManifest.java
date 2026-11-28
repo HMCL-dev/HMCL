@@ -68,6 +68,11 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
         return files;
     }
 
+    /// Returns this pack's metadata with the supplied file list.
+    ServerModpackManifest withFiles(List<ModpackConfiguration.FileInformation> files) {
+        return new ServerModpackManifest(name, author, version, description, fileApi, files, addons);
+    }
+
     public List<Addon> getAddons() {
         return addons;
     }

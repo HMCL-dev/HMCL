@@ -57,6 +57,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -108,6 +109,73 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals(newHash, readServerManifest(repository.getInstance(id)).getFiles().get(0).getHash());
     }
 
+    /// A later release replaces files installed by a partial update while preserving user edits.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void serverUpdateAfterPartialDownload(boolean updateComponents, @TempDir Path directory) throws Exception {
+        TestRepository repository = new TestRepository(directory);
+        GameInstanceID id = new GameInstanceID("server");
+        repository.save(new GameInstanceManifest(id));
+        DefaultGameInstance instance = repository.getInstance(id);
+        Path root = instance.getInstanceRoot();
+        Path published = directory.resolve("published");
+        Path overrides = published.resolve("overrides");
+        var releaseA = publishServerRelease(published, "A", "1.20", List.of("managed.txt", "retry.txt", "edited.txt"));
+        for (var file : releaseA.getFiles()) {
+            Files.copy(overrides.resolve(file.getPath()), root.resolve(file.getPath()));
+        }
+        Files.writeString(root.resolve("edited.txt"), "user edit");
+        var localOverride = new ModpackConfiguration.FileInformation("archive-only.txt", "0".repeat(40));
+        var installedOverrides = new ArrayList<>(releaseA.getFiles());
+        installedOverrides.add(localOverride);
+        JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), new ModpackConfiguration<>(releaseA, "Server", "pack", "A", installedOverrides));
+
+        String gameVersion = updateComponents ? "1.21" : "1.20";
+        @Unmodifiable List<String> paths = List.of("managed.txt", "retry.txt", "edited.txt", "added.txt");
+        publishServerRelease(published, "B", gameVersion, paths);
+        Files.delete(overrides.resolve("added.txt"));
+        Files.delete(overrides.resolve("retry.txt"));
+        var manager = createOfflineGameInstaller(repository, id, gameVersion);
+        assertThrows(DownloadException.class, new ServerModpackCompletionTask(manager, instance)::run);
+        assertEquals("B managed.txt", Files.readString(root.resolve("managed.txt")));
+        assertEquals("A retry.txt", Files.readString(root.resolve("retry.txt")));
+        assertFalse(Files.exists(root.resolve("added.txt")));
+        var partial = Objects.requireNonNull(JsonUtils.fromJsonFile(instance.getModpackConfigurationFile(),
+                ModpackConfiguration.typeOf(ServerModpackManifest.class)));
+        assertEquals("1.20", partial.getManifest().getAddons().get(0).getVersion());
+        for (var files : List.of(partial.getManifest().getFiles(), partial.getOverrides())) {
+            for (String path : List.of("managed.txt", "retry.txt")) {
+                var entry = files.stream().filter(file -> file.getPath().equals(path)).findFirst().orElseThrow();
+                assertEquals(DigestUtils.digestToString("SHA-1", root.resolve(path)), entry.getHash(), path);
+            }
+            assertTrue(files.stream().noneMatch(file -> file.getPath().equals("added.txt")));
+        }
+        assertTrue(partial.getOverrides().stream().anyMatch(file -> file.getPath().equals(localOverride.getPath())));
+
+        publishServerRelease(published, "C", gameVersion, paths);
+        new ServerModpackCompletionTask(manager, instance).run();
+        assertEquals("C managed.txt", Files.readString(root.resolve("managed.txt")));
+        assertEquals("C retry.txt", Files.readString(root.resolve("retry.txt")));
+        assertEquals("C added.txt", Files.readString(root.resolve("added.txt")));
+        assertEquals("user edit", Files.readString(root.resolve("edited.txt")));
+        assertEquals("C", readServerManifest(repository.getInstance(id)).getVersion());
+    }
+
+    /// Publishes a server manifest and override files with distinct content for each release and path.
+    private static ServerModpackManifest publishServerRelease(Path directory, String version, String gameVersion,
+                                                              List<String> paths) throws IOException {
+        Path overrides = Files.createDirectories(directory.resolve("overrides"));
+        List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
+        for (String path : paths) {
+            Path file = Files.writeString(overrides.resolve(path), version + " " + path);
+            files.add(new ModpackConfiguration.FileInformation(path, DigestUtils.digestToString("SHA-1", file)));
+        }
+        var manifest = new ServerModpackManifest("pack", "", version, "", directory.toUri().toASCIIString(),
+                files, List.of(new ServerModpackManifest.Addon("game", gameVersion)));
+        JsonUtils.writeToJsonFile(directory.resolve("server-manifest.json"), manifest);
+        return manifest;
+    }
+
     /// A queued update cannot delete files or rewrite the configuration of a replacement instance.
     @Test
     void staleServerUpdateLeavesReplacementUntouched(@TempDir Path directory) throws IOException {
@@ -128,24 +196,29 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals("replacement config", Files.readString(config));
     }
 
-    /// A completed update cannot overwrite a replacement made as the build releases its draft.
-    @Test
-    void serverUpdateCannotPublishToReplacementAfterBuild(@TempDir Path directory) throws Exception {
+    /// A save after the build only prevents publication if it replaced the updated instance.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void serverUpdatePublishesToCurrentInstanceAfterBuild(boolean replaceTarget, @TempDir Path directory) throws Exception {
         GameInstanceID id = new GameInstanceID("server");
         var repository = new TestRepository(directory) {
-            /// Enables replacement for the build's commit after the initial installation is ready.
-            private boolean replaceOnCommit;
+            /// Enables one intervening save after the build releases its draft.
+            private boolean saveOnCommit;
 
-            /// Installs a replacement as soon as the writer can acquire a new draft.
+            /// Saves either the replacement or an unrelated instance before the task resumes.
             @Override
             void releaseDraft(DefaultGameRepositoryDraft draft) {
                 super.releaseDraft(draft);
-                if (replaceOnCommit && draft.getState() == GameRepositoryDraft.State.COMMITTED) {
-                    replaceOnCommit = false;
-                    assertTrue(removeInstanceFromDisk(id));
+                if (saveOnCommit && draft.getState() == GameRepositoryDraft.State.COMMITTED) {
+                    saveOnCommit = false;
                     assertDoesNotThrow(() -> {
-                        save(new GameInstanceManifest(id).withMainClass("replacement.Main"));
-                        Files.writeString(getInstance(id).getModpackConfigurationFile(), "replacement config");
+                        if (replaceTarget) {
+                            assertTrue(removeInstanceFromDisk(id));
+                            save(new GameInstanceManifest(id).withMainClass("replacement.Main"));
+                            Files.writeString(getInstance(id).getModpackConfigurationFile(), "replacement config");
+                        } else {
+                            save(new GameInstanceManifest(new GameInstanceID("other")));
+                        }
                     });
                 }
             }
@@ -155,10 +228,14 @@ public final class DefaultGameRepositoryDraftTest {
         JsonUtils.writeToJsonFile(instance.getModpackConfigurationFile(), publishServerUpdate(directory, List.of(), List.of()));
 
         var update = new ServerModpackCompletionTask(createOfflineGameInstaller(repository, id, "1.21"), instance);
-        repository.replaceOnCommit = true;
+        repository.saveOnCommit = true;
         update.run();
-        assertEquals("replacement.Main", repository.getInstanceManifest(id).mainClass());
-        assertEquals("replacement config", Files.readString(repository.getInstance(id).getModpackConfigurationFile()));
+        if (replaceTarget) {
+            assertEquals("replacement.Main", repository.getInstanceManifest(id).mainClass());
+            assertEquals("replacement config", Files.readString(repository.getInstance(id).getModpackConfigurationFile()));
+        } else {
+            assertEquals("1.21", readServerManifest(repository.getInstance(id)).getAddons().get(0).getVersion());
+        }
     }
 
     /// Publishes a local 1.20 to 1.21 server update and returns its previously installed configuration.
