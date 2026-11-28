@@ -349,7 +349,7 @@ public final class DataPackListPage extends ListPaneBase<DataPackListPage.DataPa
 
         /// Loads the icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            Image icon = packInfo.loadIcon(ImageLoaders.DEFAULT);
+            Image icon = packInfo.loadIcon(ImageLoaders.PACK_ICON);
             return FXUtils.isValidIcon(icon) ? icon : getDefaultIcon();
         }
     }

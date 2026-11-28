@@ -296,7 +296,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             if (data.localAddonFile() instanceof LocalModFile localModFile) {
                 image = localModFile.loadIcon(ImageLoaders.DEFAULT);
             } else if (data.localAddonFile() instanceof ResourcePackFile resourcePackFile) {
-                image = resourcePackFile.loadIcon(ImageLoaders.DEFAULT);
+                image = resourcePackFile.loadIcon(ImageLoaders.PACK_ICON);
             } else {
                 return getDefaultIcon();
             }

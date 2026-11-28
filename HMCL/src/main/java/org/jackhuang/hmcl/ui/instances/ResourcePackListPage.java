@@ -504,7 +504,7 @@ public final class ResourcePackListPage extends ListPaneBase<ResourcePackListPag
 
         /// Loads the resource-pack icon, using the default icon if it is absent or invalid.
         private Image loadIcon() {
-            Image icon = file.loadIcon(ImageLoaders.DEFAULT);
+            Image icon = file.loadIcon(ImageLoaders.PACK_ICON);
             return FXUtils.isValidIcon(icon) ? icon : getDefaultIcon();
         }
     }

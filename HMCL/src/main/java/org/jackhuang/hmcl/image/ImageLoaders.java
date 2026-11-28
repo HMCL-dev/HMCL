@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import javax.imageio.ImageIO;
+import javax.imageio.stream.MemoryCacheImageInputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -238,6 +240,47 @@ public final class ImageLoaders {
                 String fileName = path.substring(path.lastIndexOf('/') + 1);
                 return loader.load(input, fileName,
                         requestedWidth, requestedHeight, preserveRatio, smooth);
+            }
+        }
+    };
+
+    /// Loads pack icons with the normal decoder, subsampling large PNGs to at most 64 pixels per side.
+    /// Rejects PNGs above 16,384 pixels on either side or 64 megapixels.
+    public static final ImageLoader<Image> PACK_ICON = (input, fileName, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+        try (var bufferedInput = new BufferedInputStream(input)) {
+            // The PNG signature and IHDR dimensions occupy the first 24 bytes.
+            bufferedInput.mark(24);
+            byte[] header = bufferedInput.readNBytes(24);
+            bufferedInput.reset();
+            if (header.length < 24 || !Arrays.equals(header, 0, 8, ImageLoaders.PNG_HEADER, 0, 8))
+                return DEFAULT.load(bufferedInput, fileName, requestedWidth, requestedHeight, preserveRatio, smooth);
+
+            var dimensions = ByteBuffer.wrap(header);
+            int width = dimensions.getInt(16);
+            int height = dimensions.getInt(20);
+            int longestSide = Math.max(width, height);
+            if (width <= 0 || height <= 0 || longestSide > 16_384 || (long) width * height > 64L * 1024 * 1024)
+                throw new IOException("Unsupported pack icon dimensions: " + width + "x" + height);
+
+            if (longestSide <= 1024)
+                return DEFAULT.load(bufferedInput, fileName, requestedWidth, requestedHeight, preserveRatio, smooth);
+
+            int sample = (longestSide - 1) / 64 + 1;
+            var reader = ImageIO.getImageReadersByFormatName("PNG").next();
+            try (var imageInput = new MemoryCacheImageInputStream(bufferedInput)) {
+                reader.setInput(imageInput, true, true);
+                var parameters = reader.getDefaultReadParam();
+                parameters.setSourceSubsampling(sample, sample, 0, 0);
+                var thumbnail = reader.read(0, parameters);
+                int resultWidth = thumbnail.getWidth();
+                int resultHeight = thumbnail.getHeight();
+                int[] pixels = thumbnail.getRGB(0, 0, resultWidth, resultHeight, null, 0, resultWidth);
+                var image = new WritableImage(resultWidth, resultHeight);
+                image.getPixelWriter().setPixels(0, 0, resultWidth, resultHeight,
+                        PixelFormat.getIntArgbInstance(), pixels, 0, resultWidth);
+                return image;
+            } finally {
+                reader.dispose();
             }
         }
     };
