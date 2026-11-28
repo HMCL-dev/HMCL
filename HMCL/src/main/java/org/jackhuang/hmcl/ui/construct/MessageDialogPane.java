@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.event.ActionEvent;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
@@ -73,18 +74,28 @@ public final class MessageDialogPane extends HBox {
 
             StackPane content = new StackPane();
             content.getStyleClass().add("jfx-layout-body");
-            EnhancedTextFlow textFlow = new EnhancedTextFlow(text);
+            TextFlow textFlow = new TextFlow();
+            textFlow.getChildren().setAll(FXUtils.parseSegment(text, Controllers::onHyperlinkAction));
             textFlow.setStyle("-fx-font-size: 14px;");
-            if (textFlow.computePrefHeight(400.0) <= 350.0)
-                content.getChildren().setAll(textFlow);
-            else {
-                ScrollPane scrollPane = new ScrollPane(textFlow);
-                ScrollUtils.installSmoothScrolling(scrollPane);
-                scrollPane.setPrefHeight(350);
-                VBox.setVgrow(scrollPane, Priority.ALWAYS);
-                scrollPane.setFitToWidth(true);
-                content.getChildren().setAll(scrollPane);
-            }
+            ScrollPane scrollPane = new ScrollPane(textFlow) {
+                /// The preferred height depends on the width available for wrapping.
+                @Override
+                public Orientation getContentBias() {
+                    return Orientation.HORIZONTAL;
+                }
+
+                /// Includes the control insets around the capped preferred viewport.
+                @Override
+                protected double computePrefHeight(double width) {
+                    double viewportWidth = width < 0 ? -1 : Math.max(1, width - snappedLeftInset() - snappedRightInset());
+                    return snappedTopInset() + Math.min(350, Math.ceil(textFlow.prefHeight(viewportWidth))) + snappedBottomInset();
+                }
+            };
+            scrollPane.setFitToWidth(true);
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            scrollPane.setMinSize(0, 0);
+            ScrollUtils.installSmoothScrolling(scrollPane);
+            content.getChildren().setAll(scrollPane);
 
             actions = new HBox();
             actions.getStyleClass().add("jfx-layout-actions");
@@ -112,17 +123,6 @@ public final class MessageDialogPane extends HBox {
 
     public ButtonBase getCancelButton() {
         return cancelButton;
-    }
-
-    private static final class EnhancedTextFlow extends TextFlow {
-        EnhancedTextFlow(String text) {
-            this.getChildren().setAll(FXUtils.parseSegment(text, Controllers::onHyperlinkAction));
-        }
-
-        @Override
-        public double computePrefHeight(double width) {
-            return super.computePrefHeight(width);
-        }
     }
 
     public static class Builder {
