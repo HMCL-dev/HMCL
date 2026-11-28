@@ -146,7 +146,9 @@ public abstract class Task<T extends @Nullable Object> {
     /// If interrupted while waiting on another worker,
     /// the caller waits for the submitted work to finish before the interruption is reported.
     /// A caller running directly on a custom executor must leave a worker available if the task
-    /// requires that executor. Use [TaskExecutionContext#run(Task)] from another task.
+    /// requires that executor. A root submitted synchronously from another task keeps its own
+    /// lifecycle, but workers waiting on the caller can service its callbacks.
+    /// Use [TaskExecutionContext#run(Task)] to run it as a child.
     ///
     /// @throws Exception if execution fails, is cancelled, or the wait is interrupted
     /// @throws IllegalStateException if the caller would wait on itself, an active ancestor,

@@ -69,6 +69,9 @@ final class TaskExecution {
     /// The task waiting for this root's synchronous submission, through its completion callbacks.
     private volatile @Nullable Binding synchronousCaller;
 
+    /// Work blocked in the call that submitted this root synchronously.
+    private @Nullable Work<?> synchronousParent;
+
     /// The execution and logical parent of an admitted task. A completed child drops both references.
     @NotNullByDefault
     static final class Binding {
@@ -225,6 +228,7 @@ final class TaskExecution {
     /// Runs a ready root and returns its outcome, preserving the waiting thread's interrupt status.
     boolean test(Task<?> root) {
         synchronousCaller = currentTask();
+        synchronousParent = CURRENT_WORK.get();
         notifyExecutionStarted(root);
         return runToCompletion(root);
     }
@@ -232,6 +236,7 @@ final class TaskExecution {
     /// Runs a ready root synchronously and propagates its failure to the caller.
     <T extends @Nullable Object> T run(Task<T> root) throws Exception {
         synchronousCaller = currentTask();
+        synchronousParent = CURRENT_WORK.get();
         notifyExecutionStarted(root);
         try {
             return runRoot(root, true);
@@ -290,6 +295,7 @@ final class TaskExecution {
         } finally {
             taskListeners = FINISHED;
             synchronousCaller = null;
+            synchronousParent = null;
         }
     }
 
@@ -827,7 +833,7 @@ final class TaskExecution {
         /// Shared with the batch window or created on the first wait for this submission.
         private @Nullable Condition changed;
 
-        /// Submission in this task tree that created this work.
+        /// Enclosing submission, including one synchronously running this root.
         private final @Nullable Work<?> parent;
 
         /// Accepted, unclaimed descendants on constrained executors, guarded by the enclosing lock.
@@ -862,7 +868,7 @@ final class TaskExecution {
             this.window = window;
             this.changed = window == null ? null : window.changed;
             @Nullable Work<?> current = CURRENT_WORK.get();
-            this.parent = current != null && current.owner() == TaskExecution.this ? current : null;
+            this.parent = current != null && current.owner() == TaskExecution.this ? current : synchronousParent;
         }
 
         /// Returns the task tree owning this submission.
@@ -893,19 +899,42 @@ final class TaskExecution {
                 if (!canBeHelped || dispatchState == DispatchState.STARTED)
                     return;
                 dispatchState = DispatchState.QUEUED;
-                // Index only this work's ancestors. A waiting worker can then claim a
-                // descendant without scanning or recursively entering unrelated siblings.
-                for (@Nullable Work<?> node = parent; node != null; node = node.parent) {
-                    if (node.pending == null)
-                        node.pending = new IdentityHashMap<>();
-                    node.pending.computeIfAbsent(executor, ignored -> new LinkedHashSet<>()).add(this);
-                    if (node.changed != null)
-                        node.changed.signal();
-                }
+                updateAncestors(true);
                 if (sharedChanged != null)
                     sharedChanged.signalAll();
             } finally {
                 lock.unlock();
+            }
+        }
+
+        /// Updates each ancestor's index under its own lock. Cross-tree locks are acquired only
+        /// from a synchronously started root toward its caller, never in the opposite direction.
+        private void updateAncestors(boolean enqueue) {
+            for (@Nullable Work<?> node = parent; node != null; node = node.parent) {
+                TaskExecution ancestor = node.owner();
+                boolean foreign = ancestor != TaskExecution.this;
+                if (foreign)
+                    ancestor.lock.lock();
+                try {
+                    if (enqueue) {
+                        if (node.pending == null)
+                            node.pending = new IdentityHashMap<>();
+                        node.pending.computeIfAbsent(executor, ignored -> new LinkedHashSet<>()).add(this);
+                        if (node.changed != null)
+                            node.changed.signal();
+                        if (foreign && ancestor.sharedChanged != null)
+                            ancestor.sharedChanged.signalAll();
+                    } else {
+                        var index = Objects.requireNonNull(node.pending);
+                        var available = Objects.requireNonNull(index.get(executor));
+                        available.remove(this);
+                        if (available.isEmpty())
+                            index.remove(executor);
+                    }
+                } finally {
+                    if (foreign)
+                        ancestor.lock.unlock();
+                }
             }
         }
 
@@ -976,13 +1005,7 @@ final class TaskExecution {
                 dispatchState = DispatchState.STARTED;
                 if (previous == DispatchState.UNREGISTERED)
                     return true;
-                for (@Nullable Work<?> node = parent; node != null; node = node.parent) {
-                    Map<Executor, Set<Work<?>>> index = Objects.requireNonNull(node.pending);
-                    Set<Work<?>> available = index.get(executor);
-                    available.remove(this);
-                    if (available.isEmpty())
-                        index.remove(executor);
-                }
+                updateAncestors(false);
                 return true;
             } finally {
                 lock.unlock();

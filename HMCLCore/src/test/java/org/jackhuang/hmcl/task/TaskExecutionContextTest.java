@@ -131,6 +131,22 @@ final class TaskExecutionContextTest {
         assertTrue(check.get(10, TimeUnit.SECONDS));
     }
 
+    /// The JavaFX thread can service a nested root when it submits or observes the outer root.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
+    void nestedRootReturnsToJavaFxCaller(boolean alreadyStarted) throws Exception {
+        Task<Boolean> nested = task(context -> context.call(Schedulers.javafx(), Platform::isFxApplicationThread));
+        Task<Boolean> outer = Task.supplyAsync(nested::run);
+        FutureTask<Boolean> check = new FutureTask<>(() -> {
+            if (alreadyStarted)
+                outer.start();
+            return outer.run();
+        });
+        Platform.runLater(check);
+        assertTrue(check.get(10, TimeUnit.SECONDS));
+    }
+
     /// The JavaFX callback leaves the event loop available and its child inherits the task body's executor.
     @Test
     @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
